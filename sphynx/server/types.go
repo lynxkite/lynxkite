@@ -61,7 +61,7 @@ func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
 		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
 		// MappingToOrdered is not here on purpose. This is used for writing out
-		// data to Prdered Sphynx Disk. MappingToOrdered can be generated from MappingToUnordered
+		// data to Ordered Sphynx Disk. MappingToOrdered can be generated from MappingToUnordered
 		// on demand.
 	}
 }
@@ -111,7 +111,7 @@ type VertexSet struct {
 }
 
 func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
-	if len(vs.MappingToOrdered) == 0 {
+	if vs.MappingToOrdered == nil {
 		for i, j := range vs.MappingToUnordered {
 			vs.MappingToOrdered[j] = i
 		}

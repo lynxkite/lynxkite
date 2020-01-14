@@ -115,13 +115,13 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
 
   def getGUIDPath(e: MetaGraphEntity): String
 
-  def relocateFromSpark(e: MetaGraphEntity, source: SparkDomain): SafeFuture[Unit] = {
+  def relocateFromSpark(e: MetaGraphEntity, source: SparkDomain) = SafeFuture.async[Unit] {
     def writeRDD(rdd: RDD[Row], schema: StructType, e: MetaGraphEntity) = {
       val dstPath = getGUIDPath(e)
       val df = source.sparkSession.createDataFrame(rdd, schema)
       df.write.parquet(dstPath)
     }
-    SafeFuture.async[Unit](source.getData(e) match {
+    source.getData(e) match {
       case v: VertexSetData => {
         val rdd = v.rdd.map {
           case (k, _) => Row(k)
@@ -169,7 +169,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
       }
       // TODO: Relocate scalars.
       case _ => ???
-    })
+    }
   }
 }
 
@@ -183,7 +183,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case _: SphynxMemory => true
-      case source: SparkDomain => if (source.isLocal) true else false
+      case source: SparkDomain => source.isLocal
       case _: UnorderedSphynxSparkDisk => true
       case _ => false
     }
@@ -210,10 +210,14 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
           val srcDir = source.dataDir / e.gUID.toString
           val srcFiles = (srcDir / "part-*").list
           val dstDir = s"${dataDir}/${e.gUID.toString}"
-          Try(srcFiles.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))) match {
-            case Success(t) => (new File(s"${dstDir}/_SUCCESS")).createNewFile()
-            case Failure(err) => throw new AssertionError(s"Failed to relocate $e from $source: $err")
+          try {
+            for (f <- srcFiles) {
+              f.copyToLocalFile(s"${dstDir}/${f.name}")
+            }
+          } catch {
+            case t: Throwable => throw new AssertionError(s"Failed to relocate $e from $source", t)
           }
+          new File(s"${dstDir}/_SUCCESS").createNewFile()
         })
       }
       case _ => throw new AssertionError(s"Cannot fetch $e from $source")
@@ -249,11 +253,14 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
             val srcDir = new File(source.getGUIDPath(e))
             srcDir.listFiles.filter(_.getName.startsWith("part-"))
         }
-
-        Try(srcFiles.foreach(f => (dstDir / f.getName()).copyFromLocalFile(f.getPath()))) match {
-          case Success(t) => (dstDir / "_SUCCESS").create()
-          case Failure(err) => throw new AssertionError(s"Failed to relocate $e from $source: $err")
+        try {
+          for (f <- srcFiles) {
+            (dstDir / f.getName()).copyFromLocalFile(f.getPath())
+          }
+        } catch {
+          case t: Throwable => throw new AssertionError(s"Failed to relocate $e from $source", t)
         }
+        (dstDir / "_SUCCESS").create()
       })
       case source: SparkDomain => relocateFromSpark(e, source)
     }

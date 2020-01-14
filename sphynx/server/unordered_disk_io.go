@@ -98,9 +98,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
-		if err != nil {
-			return nil, err
-		}
 		for sphynxId, def := range e.Defined {
 			if def {
 				sparkId := vs1.MappingToUnordered[sphynxId]
@@ -129,9 +126,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
-		}
-		if err != nil {
-			return nil, err
 		}
 		for sphynxId, def := range e.Defined {
 			if def {
@@ -188,8 +182,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *Scalar:
 		scalarJSON, err := json.Marshal(e.Value)
-		fmt.Println("scalarJSON")
-		fmt.Println(string(scalarJSON))
 		if err != nil {
 			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
 		}
@@ -231,6 +223,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			fileReaders = append(fileReaders, fr)
 		}
 	}
+	var entity Entity
 	switch in.Type {
 	case "VertexSet":
 		rawVertexSet := make([]Vertex, 0)
@@ -255,13 +248,10 @@ func (s *Server) ReadFromUnorderedDisk(
 			mappingToUnordered[i] = v.Id
 			mappingToOrdered[v.Id] = i
 		}
-		s.Lock()
-		s.entities[GUID(in.Guid)] = &VertexSet{
+		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
 			MappingToOrdered:   mappingToOrdered,
 		}
-		s.Unlock()
-		return &pb.ReadFromUnorderedDiskReply{}, nil
 	case "EdgeBundle":
 		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
 		if err != nil {
@@ -297,14 +287,11 @@ func (s *Server) ReadFromUnorderedDisk(
 			src[i] = mappingToOrdered1[rawEdge.Src]
 			dst[i] = mappingToOrdered2[rawEdge.Dst]
 		}
-		s.Lock()
-		s.entities[GUID(in.Guid)] = &EdgeBundle{
+		entity = &EdgeBundle{
 			Src:         src,
 			Dst:         dst,
 			EdgeMapping: edgeMapping,
 		}
-		s.Unlock()
-		return &pb.ReadFromUnorderedDiskReply{}, nil
 	case "Attribute":
 		attributeType := in.AttributeType[len("TypeTag[") : len(in.AttributeType)-1]
 		switch attributeType {
@@ -337,12 +324,10 @@ func (s *Server) ReadFromUnorderedDisk(
 				values[orderedId] = singleAttr.Value
 				defined[orderedId] = true
 			}
-			s.Lock()
-			s.entities[GUID(in.Guid)] = &StringAttribute{
+			entity = &StringAttribute{
 				Values:  values,
 				Defined: defined,
 			}
-			s.Unlock()
 			return &pb.ReadFromUnorderedDiskReply{}, nil
 		case "Double":
 			vs, err := s.getVertexSet(GUID(in.Vsguid1))
@@ -373,13 +358,10 @@ func (s *Server) ReadFromUnorderedDisk(
 				values[orderedId] = singleAttr.Value
 				defined[orderedId] = true
 			}
-			s.Lock()
-			s.entities[GUID(in.Guid)] = &DoubleAttribute{
+			entity = &DoubleAttribute{
 				Values:  values,
 				Defined: defined,
 			}
-			s.Unlock()
-			return &pb.ReadFromUnorderedDiskReply{}, nil
 		case "(Double, Double)":
 			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
@@ -411,18 +393,19 @@ func (s *Server) ReadFromUnorderedDisk(
 				values2[orderedId] = singleAttr.Value2
 				defined[orderedId] = true
 			}
-			s.Lock()
-			s.entities[GUID(in.Guid)] = &DoubleTuple2Attribute{
+			entity = &DoubleTuple2Attribute{
 				Values1: values1,
 				Values2: values2,
 				Defined: defined,
 			}
-			s.Unlock()
-			return &pb.ReadFromUnorderedDiskReply{}, nil
 		default:
 			return nil, fmt.Errorf("Can't reindex attribute of type %v with GUID %v to use Sphynx IDs.", attributeType, in.Guid)
 		}
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
+	s.Lock()
+	s.entities[GUID(in.Guid)] = entity
+	s.Unlock()
+	return &pb.ReadFromUnorderedDiskReply{}, nil
 }
