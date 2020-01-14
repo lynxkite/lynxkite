@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 )
 
 type EntityAccessor struct {
@@ -55,6 +56,45 @@ func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
 
 func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
 	return ea.inputs[name].(*DoubleTuple2Attribute)
+}
+
+func (ea *EntityAccessor) GetStringParam(name string) string {
+	v := reflect.ValueOf(ea.opInst.Operation.Data)
+	if v.Kind() != reflect.String {
+		return ""
+	} else {
+		return v.FieldByName(name).String()
+	}
+}
+
+func (ea *EntityAccessor) GetFloatParam(name string) float64 {
+	v := reflect.ValueOf(ea.opInst.Operation.Data)
+	if v.Kind() != reflect.Float64 {
+		return 0
+	} else {
+		return v.FieldByName(name).Float()
+	}
+}
+
+func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
+	err := saveToOrderedDisk(ea.inputs[name], ea.server.dataDir, ea.opInst.Inputs[name])
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%v/%v/", ea.server.dataDir, ea.opInst.Inputs[name]), nil
+}
+
+func (ea *EntityAccessor) NameOnDisk(name string) string {
+	return fmt.Sprintf("%v/%v", ea.server.dataDir, ea.opInst.Outputs[name])
+}
+
+func (ea *EntityAccessor) OutputOnDisk(name string) error {
+	entity, err := loadFromOrderedDisk(ea.server.dataDir, ea.opInst.Outputs[name])
+	if err != nil {
+		return err
+	}
+	ea.output(name, entity)
+	return nil
 }
 
 type Operation struct {
