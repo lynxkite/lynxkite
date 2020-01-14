@@ -138,16 +138,6 @@ case class EntryList(
 case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardEntryRequest(name: String)
 
-// A request for the execution of a FE operation on a specific project. The project might be
-// a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
-// project. In this case, the project parameter has the format:
-// rootProjectName.childSegmentationName.grandChildSegmentationName.greatChild..
-case class ProjectOperationRequest(project: String, op: FEOperationSpec)
-// Represents an operation executed on a subproject. It is only meaningful in the context of
-// a root project. path specifies the offspring project in question, e.g. it could be sg like:
-// Seq(childSegmentationName, grandChildSegmentationName, ...)
-case class SubProjectOperation(path: Seq[String], op: FEOperationSpec)
-
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
 case class ProjectFilterRequest(
     project: String,
@@ -263,24 +253,6 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     DirectoryEntry.rootDirectory.remove()
   }
 
-  def projectOp(user: serving.User, request: ProjectOperationRequest): Unit = metaManager.synchronized {
-    ??? // TODO: Build the workflow.
-  }
-
-  def filterProject(user: serving.User, request: ProjectFilterRequest): Unit = metaManager.synchronized {
-    val vertexParams = request.vertexFilters.map {
-      f => s"filterva_${f.attributeName}" -> f.valueSpec
-    }
-    val edgeParams = request.edgeFilters.map {
-      f => s"filterea_${f.attributeName}" -> f.valueSpec
-    }
-    projectOp(user, ProjectOperationRequest(
-      project = request.project,
-      op = FEOperationSpec(
-        id = "Filter-by-attributes",
-        parameters = (vertexParams ++ edgeParams).toMap)))
-  }
-
   def forkEntry(user: serving.User, request: ForkEntryRequest): Unit = metaManager.synchronized {
     val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertReadAllowedFrom(user)
@@ -306,7 +278,9 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val union = gotReadAccess union gotWriteAccess
     val notAllowed =
       if (p.parent.isEmpty) Set()
-      else union.map(email => serving.User(email, false)).filter(!p.parent.get.readAllowedFrom(_))
+      else union
+        .map(email => serving.User(email, false, false))
+        .filter(!p.parent.get.readAllowedFrom(_))
 
     assert(
       notAllowed.isEmpty,

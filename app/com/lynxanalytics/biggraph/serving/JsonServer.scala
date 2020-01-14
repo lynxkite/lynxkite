@@ -40,7 +40,7 @@ abstract class JsonServer extends mvc.Controller {
 
   def getUser(request: mvc.Request[_], withAuth: Boolean = productionMode): Option[User] = {
     if (withAuth) userController.get(request)
-    else Some(User.fake)
+    else Some(User.singleuser)
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
@@ -272,8 +272,6 @@ object FrontendJson {
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
   implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
   implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
-  implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
-  implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
@@ -286,7 +284,6 @@ object FrontendJson {
   implicit val wFEEntryListElement = json.Json.writes[FEEntryListElement]
   implicit val wEntryList = json.Json.writes[EntryList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
-  implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
 
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
@@ -426,7 +423,6 @@ object ProductionJsonServer extends JsonServer {
   def discardEntry = jsonPost(bigGraphController.discardEntry)
   def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
-  def projectOp = jsonPost(bigGraphController.projectOp)
   def entryList = jsonGet(bigGraphController.entryList)
   def entrySearch = jsonGet(bigGraphController.entrySearch)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
