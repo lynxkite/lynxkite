@@ -63,6 +63,23 @@ case class CommonProjectState(
 object CommonProjectState {
   val emptyState = CommonProjectState(
     None, Map(), None, Map(), Map(), Map(), "", Map())
+
+  // We need to define this manually because of the cyclic reference.
+  implicit val fSegmentationState = new json.Format[SegmentationState] {
+    def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
+      json.JsSuccess(SegmentationState(
+        jsonToCommonProjectState(j \ "state"),
+        (j \ "belongsToGUID").as[Option[UUID]]))
+    }
+    def writes(o: SegmentationState): json.JsValue =
+      Json.obj(
+        "state" -> commonProjectStateToJSon(o.state),
+        "belongsToGUID" -> o.belongsToGUID)
+  }
+  implicit val fCommonProjectState = Json.format[CommonProjectState]
+  private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
+  private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
+    j.as[CommonProjectState]
 }
 
 // This gets written into a checkpoint.
@@ -482,28 +499,8 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 object CheckpointRepository {
   private val checkpointFilePrefix = "save-"
 
-  implicit val fFEOperationSpec = Json.format[FEOperationSpec]
-  implicit val fSubProjectOperation = Json.format[SubProjectOperation]
-
-  // We need to define this manually because of the cyclic reference.
-  implicit val fSegmentationState = new json.Format[SegmentationState] {
-    def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
-      json.JsSuccess(SegmentationState(
-        jsonToCommonProjectState(j \ "state"),
-        (j \ "belongsToGUID").as[Option[UUID]]))
-    }
-    def writes(o: SegmentationState): json.JsValue =
-      Json.obj(
-        "state" -> commonProjectStateToJSon(o.state),
-        "belongsToGUID" -> o.belongsToGUID)
-  }
   import WorkspaceJsonFormatters._
   implicit val fCheckpointObject = Json.format[CheckpointObject]
-  implicit val fCommonProjectState = Json.format[CommonProjectState]
-
-  private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
-  private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
-    j.as[CommonProjectState]
 }
 class CheckpointRepository(val baseDir: String) {
   import CheckpointRepository.fCheckpointObject
@@ -1040,10 +1037,22 @@ abstract class ObjectFrame(path: SymbolPath)(
   // ObjectFrames (workspaces and snapshots) do not have ACLs on their own right, they use their
   // parent's ACL.
   override def readAllowedFrom(user: User): Boolean = {
-    parent.get.readAllowedFrom(user)
+    if (user.wizardOnly) {
+      parent.get.readAllowedFrom(user) &&
+        (this match {
+          case wsf: WorkspaceFrame => wsf.workspace.isWizard
+          case _ => false
+        })
+    } else parent.get.readAllowedFrom(user)
   }
   override def writeAllowedFrom(user: User): Boolean = {
-    parent.get.writeAllowedFrom(user)
+    if (user.wizardOnly) {
+      parent.get.writeAllowedFrom(user) &&
+        (this match {
+          case wsf: WorkspaceFrame => wsf.workspace.isWizard && wsf.workspace.inProgress
+          case _ => false
+        })
+    } else parent.get.writeAllowedFrom(user)
   }
 }
 
