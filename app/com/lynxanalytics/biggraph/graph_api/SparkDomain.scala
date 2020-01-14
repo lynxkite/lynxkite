@@ -355,8 +355,8 @@ class SparkDomain(
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case source: ScalaDomain => true
-      case source: UnorderedSphynxLocalDisk => if (isLocal) true else false
-      case source: UnorderedSphynxSparkDisk => if (isLocal) false else true
+      case source: UnorderedSphynxLocalDisk => isLocal
+      case source: UnorderedSphynxSparkDisk => !isLocal
       case _ => false
     }
   }

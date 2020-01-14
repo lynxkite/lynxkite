@@ -33,7 +33,7 @@ func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
 }
 
 func NewServer() Server {
-	dataDir := os.Getenv("SPHYNX_DATA_DIR")
+	dataDir := os.Getenv("ORDERED_SPHYNX_DATA_DIR")
 	unorderedDataDir := os.Getenv("UNORDERED_SPHYNX_DATA_DIR")
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
