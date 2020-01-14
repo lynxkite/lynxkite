@@ -52,18 +52,13 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 }
 
 // Temporary solution: Relocating to OrderedSphynxDisk is done here,
-// we simply save any output, except the scalars.
-// TODO 1: Saving should not be done automatically here
-// TODO 2 Scalars are not saved in order to prevent getScalar from OrderedSphynxDomain
+// we simply save any output.
+// TODO: Saving should not be done automatically here
 func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 	for guid, entity := range outputs {
-		switch e := entity.(type) {
-		case *Scalar: // Do nothing
-		default:
-			err := saveToOrderedDisk(e, dataDir, guid)
-			if err != nil {
-				log.Printf("Error while saving %v (guid: %v): %v", e, guid, err)
-			}
+		err := saveToOrderedDisk(entity, dataDir, guid)
+		if err != nil {
+			log.Printf("Error while saving %v (guid: %v): %v", entity, guid, err)
 		}
 	}
 }
