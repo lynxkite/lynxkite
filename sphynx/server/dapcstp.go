@@ -27,10 +27,10 @@ func graph(
 		}
 	}
 
-	origNarcs := len(edgeCosts.Values)
+	origNArcs := len(edgeCosts.Values)
 	origNNodes := len(gain.Values)
 	nnodes := origNNodes + 1
-	narcs := origNarcs + len(roots)
+	narcs := origNArcs + len(roots)
 	g := dapcstp.Graph{
 		Arcs:     narcs,
 		Cost:     make([]dapcstp.Value, narcs),
@@ -54,7 +54,7 @@ func graph(
 		g.Terminal[i] = prize > 0.0
 	}
 
-	for i := 0; i < origNarcs; i++ {
+	for i := 0; i < origNArcs; i++ {
 		src := int(edges.Src[i])
 		dst := int(edges.Dst[i])
 		g.Src[i] = src
@@ -75,7 +75,7 @@ func graph(
 
 	// Setup the edges going from the root node to the potential tree roots
 	for i, vid := range roots {
-		eid := i + origNarcs
+		eid := i + origNArcs
 		g.Src[eid] = g.Root
 		g.Dst[eid] = vid
 		g.Cost[eid] = dapcstp.Value(rootCosts.Values[vid])
