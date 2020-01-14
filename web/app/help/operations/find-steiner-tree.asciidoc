@@ -4,7 +4,7 @@ Given a directed graph in which each vertex has two associated quantities, the "
 and the "root cost", and each edge has an associated quantity, the "cost",
 this operation will yield a forest (a set of trees) that is a subgraph of the given
 graph. Furthermore, in this subgraph, the sum of the gains
-minus the sum of the (edge and root) costs are maximal.
+minus the sum of the (edge and root) costs approximate the maximal possible value.
 
 The operation will result in four outputs: (1) A new edge attribute, which will specify which
 edges are part of the optimal solution. Its value will be 1.0 for edges that
