@@ -14,7 +14,7 @@ type Server struct {
 type GUID string
 type OperationDescription struct {
 	Class string
-	Data  interface{}
+	Data  map[string]interface{}
 }
 type OperationInstance struct {
 	GUID      GUID
