@@ -241,7 +241,7 @@ export KITE_EXTRA_JARS=
 # If any of these is unset, no Sphynx server is assumed.
 export SPHYNX_HOST=localhost
 export SPHYNX_PORT=50051
-# export SPHYNX_CERT_DIR
+export SPHYNX_CERT_DIR=sphynx
 # Specify the PID file for Sphynx.
 export SPHYNX_PID_FILE=$HOME/sphynx.pid
 # Specify the directory where Sphynx stores graph data.
