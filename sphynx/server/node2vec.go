@@ -18,7 +18,7 @@ func init() {
 			}
 			cmd := exec.Command(
 				"python", "python/node2vec.py",
-				fmt.Sprintf("%v", len(vs.Mapping)),
+				fmt.Sprintf("%v", len(vs.MappingToUnordered)),
 				fmt.Sprintf("%v", ea.GetFloatParam("iterations")),
 				es)
 			cmd.Stderr = os.Stderr
