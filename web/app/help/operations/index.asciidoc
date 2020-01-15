@@ -207,6 +207,8 @@ include::compute-hyperbolic-edge-probability.asciidoc[]
 
 include::compute-inputs.asciidoc[]
 
+include::find-steiner-tree.asciidoc[]
+
 include::compute-pagerank.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]

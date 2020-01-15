@@ -160,7 +160,7 @@ gulp.task('quick', gulp.series('eslint', 'html', 'asciidoctor'));
 gulp.task('serve', gulp.series('quick', function serve() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
-  const proxy = httpProxy.createProxyServer();
+  const proxy = httpProxy.createProxyServer({ secure: false });
   proxy.on('error', function(err, req, res) {
     // Lot of ECONNRESET when live-reloading for some reason. Ignore them.
     res.end();

@@ -7,7 +7,6 @@ POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.j
 POST /ajax/createDirectory         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
 POST /ajax/discardEntry            com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardEntry
 POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardAll
-POST /ajax/projectOp               com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
 GET  /ajax/entryList               com.lynxanalytics.biggraph.serving.ProductionJsonServer.entryList
 GET  /ajax/entrySearch             com.lynxanalytics.biggraph.serving.ProductionJsonServer.entrySearch
 POST /ajax/forkEntry               com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkEntry
