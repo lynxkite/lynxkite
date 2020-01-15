@@ -87,19 +87,21 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Derive edge attribute")(new ProjectTransformation(_) {
     params ++= List(
-      Param("output", "Save as", defaultValue = "x"),
+      Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "scala"),
       Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
     def enabled = project.hasEdgeBundle
     override def summary = {
-      val name = params("output")
-      val expr = params("expr")
+      val name = if (params("output").nonEmpty) params("output") else "?"
+      val expr = if (params("expr").nonEmpty) params("expr") else "?"
       s"Derive edge attribute: $name = $expr"
     }
-    def apply() = {
+    def apply(): Unit = {
+      val output = params("output")
       val expr = params("expr")
+      if (output.isEmpty || expr.isEmpty) return
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
       val namedEdgeAttributes = ScalaUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
@@ -125,7 +127,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
         expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs, persist)
 
-      project.newEdgeAttribute(params("output"), result, expr + help)
+      project.newEdgeAttribute(output, result, expr + help)
     }
   })
 

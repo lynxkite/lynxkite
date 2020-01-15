@@ -135,20 +135,21 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
-      Param("output", "Save as", defaultValue = "x"),
+      Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "scala"),
       Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
     def enabled = project.hasVertexSet
     override def summary = {
-      val name = params("output")
-      val expr = params("expr")
+      val name = if (params("output").nonEmpty) params("output") else "?"
+      val expr = if (params("expr").nonEmpty) params("expr") else "?"
       s"Derive vertex attribute: $name = $expr"
     }
-    def apply() = {
-      assert(params("output").nonEmpty, "Please set an output attribute name.")
+    def apply(): Unit = {
+      val output = params("output")
       val expr = params("expr")
+      if (output.isEmpty || expr.isEmpty) return
       val vertexSet = project.vertexSet
       val namedAttributes =
         ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
@@ -159,7 +160,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
         expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs, persist)
 
-      project.newVertexAttribute(params("output"), result, expr + help)
+      project.newVertexAttribute(output, result, expr + help)
     }
   })
 
