@@ -59,12 +59,7 @@ func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Att
 }
 
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
-	fmt.Println(ea.opInst.Operation.Data)
-	param, ok := ea.opInst.Operation.Data[name]
-	if !ok {
-		return 0
-	}
-	return param.(float64)
+	return ea.opInst.Operation.Data[name].(float64)
 }
 
 func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
