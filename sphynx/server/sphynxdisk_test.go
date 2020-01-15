@@ -16,7 +16,7 @@ func TestEntityIO(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	data := map[string]Entity{}
-	data["VertexSet"] = &VertexSet{Mapping: []int64{0, 1, 2, 3}}
+	data["VertexSet"] = &VertexSet{MappingToUnordered: []int64{0, 1, 2, 3}}
 	data["StringAttribute"] = &StringAttribute{
 		Values:  []string{"Adam", "Eve", "Bob", "Isolated Joe"},
 		Defined: []bool{true, true, true, true}}
@@ -29,8 +29,8 @@ func TestEntityIO(t *testing.T) {
 		Values2: []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
 		Defined: []bool{true, true, true, true}}
 	data["EdgeBundle"] = &EdgeBundle{
-		Src:         []int64{0, 1, 2, 2},
-		Dst:         []int64{1, 0, 0, 1},
+		Src:         []int{0, 1, 2, 2},
+		Dst:         []int{1, 0, 0, 1},
 		EdgeMapping: []int64{0, 1, 2, 3},
 	}
 	data["Scalar_String"] = &Scalar{Value: "Hello world! 😀 "}
