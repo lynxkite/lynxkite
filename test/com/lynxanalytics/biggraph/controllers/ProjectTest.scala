@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.serving.User
 
 class ProjectTest extends FunSuite with TestGraphOp {
 
-  def user(email: String) = User(email, isAdmin = false)
+  def user(email: String) = User(email, isAdmin = false, wizardOnly = false)
 
   def assertReaders(p: DirectoryEntry)(yes: String*)(no: String*): Unit = {
     for (email <- yes) {

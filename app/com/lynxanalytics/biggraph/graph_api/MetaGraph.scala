@@ -38,6 +38,7 @@ sealed trait MetaGraphEntity extends Serializable {
   override def toString = s"$gUID (${name.name} of $source)"
   lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
   def manager = source.manager
+  lazy val typeString = this.getClass.getSimpleName
 }
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
   lazy val asString: String = {

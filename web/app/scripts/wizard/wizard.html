@@ -55,7 +55,8 @@
       </div>
       <div class="entry-list" style="background: transparent; box-shadow: none; text-align: right;">
         <a href class="btn btn-warning btn-lg" style="color: black;" ng-href="/workspace/{{ workspace.name }}">
-          Fine tune in workspace <i class="fa fa-chevron-right"></i></a>
+          {{ util.user.wizardOnly ? 'View workspace' : 'Fine tune in workspace' }}
+          <i class="fa fa-chevron-right"></i></a>
       </div>
     </div>
   </div>

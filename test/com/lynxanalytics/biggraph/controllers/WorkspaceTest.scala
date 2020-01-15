@@ -12,7 +12,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
   BuiltIns.createBuiltIns(metaGraphManager)
-  val user = serving.User.fake
+  val user = serving.User.singleuser
   def context(ws: Workspace, params: (String, String)*) = ws.context(user, ops, params.toMap)
 
   def create(name: String) =

@@ -30,8 +30,17 @@ message WriteToUnorderedDiskRequest {
   string guid = 1;
   string vsguid1 = 2;
   string vsguid2 = 3;
-
 }
+
+message ReadFromUnorderedDiskRequest {
+  string guid = 1;
+  string type = 2;
+  string vsguid1 = 3;
+  string vsguid2 = 4;
+  string attributeType = 5;
+}
+
+message ReadFromUnorderedDiskReply {}
 
 message HasInSphynxMemoryRequest {
   string guid = 1;
@@ -63,6 +72,7 @@ service Sphynx {
   rpc Compute (ComputeRequest) returns (ComputeReply);
   rpc GetScalar (GetScalarRequest) returns (GetScalarReply);
   rpc WriteToUnorderedDisk (WriteToUnorderedDiskRequest) returns (WriteToUnorderedDiskReply);
+  rpc ReadFromUnorderedDisk (ReadFromUnorderedDiskRequest) returns (ReadFromUnorderedDiskReply);
   rpc ReadFromOrderedSphynxDisk(ReadFromOrderedSphynxDiskRequest) returns (ReadFromOrderedSphynxDiskReply);
   rpc HasOnOrderedSphynxDisk(HasOnOrderedSphynxDiskRequest) returns (HasOnOrderedSphynxDiskReply);
   rpc HasInSphynxMemory(HasInSphynxMemoryRequest) returns (HasInSphynxMemoryReply);

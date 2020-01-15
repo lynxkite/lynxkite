@@ -59,7 +59,10 @@ func (e *Scalar) fields() []EntityField {
 }
 func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
-		EntityField{fieldName: "Mapping", data: &e.Mapping},
+		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
+		// MappingToOrdered is not here on purpose. This is used for writing out
+		// data to Ordered Sphynx Disk. MappingToOrdered can be generated from MappingToUnordered
+		// on demand.
 	}
 }
 func (e *EdgeBundle) fields() []EntityField {
@@ -98,13 +101,24 @@ func (server *Server) get(guid GUID) (Entity, bool) {
 }
 
 type EdgeBundle struct {
-	Src         []int64
-	Dst         []int64
+	Src         []int
+	Dst         []int
 	EdgeMapping []int64
 }
 type VertexSet struct {
-	Mapping []int64
+	MappingToUnordered []int64
+	MappingToOrdered   map[int64]int
 }
+
+func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+	if vs.MappingToOrdered == nil {
+		for i, j := range vs.MappingToUnordered {
+			vs.MappingToOrdered[j] = i
+		}
+	}
+	return vs.MappingToOrdered
+}
+
 type Scalar struct {
 	Value interface{}
 }

@@ -310,6 +310,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToCSV(
     user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     downloadableExportToFile(
       user,
       request.dfSpec,
@@ -374,6 +375,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     file: String,
     format: String,
     options: Map[String, String] = Map()): Unit = {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     // TODO: #2889 (special characters in S3 passwords).
     HadoopFile(file).assertWriteAllowedFrom(user) // TODO: Do we need this?
     val table = dfSpec.globalSQL(user)

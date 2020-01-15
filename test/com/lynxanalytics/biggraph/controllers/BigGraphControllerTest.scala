@@ -84,7 +84,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("attempt to create directory without authorization") {
-    val nonAdmin = User("nonAdmin", isAdmin = false)
+    val nonAdmin = User("nonAdmin", isAdmin = false, wizardOnly = false)
     controller.createDirectory(user, CreateDirectoryRequest(
       name = "foo", privacy = "public-read"))
     val e1 = intercept[java.lang.AssertionError] {
@@ -103,7 +103,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
 
   test("attempt to probe private directory") {
-    val nonAdmin = User("nonAdmin", isAdmin = false)
+    val nonAdmin = User("nonAdmin", isAdmin = false, wizardOnly = false)
     controller.createDirectory(user, CreateDirectoryRequest(
       name = "foo", privacy = "private"))
     controller.createDirectory(user, CreateDirectoryRequest(

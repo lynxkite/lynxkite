@@ -10,11 +10,13 @@ import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import reflect.runtime.universe.typeTag
 import java.nio.file.Paths
+import play.api.libs.json
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
@@ -35,6 +37,7 @@ class SparkDomain(
     UDF.register(sqlContext.udf)
     sqlContext
   }
+  val isLocal = sparkSession.sparkContext.isLocal
   // Access to the following collections must always be synchronized on SparkDomain.
   // But do not hold the locks for long. Don't call potentially slow methods, like getData().
   private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
@@ -352,7 +355,8 @@ class SparkDomain(
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case source: ScalaDomain => true
-      case source: UnorderedSphynxDisk => true
+      case source: UnorderedSphynxLocalDisk => isLocal
+      case source: UnorderedSphynxSparkDisk => !isLocal
       case _ => false
     }
   }
@@ -390,25 +394,18 @@ class SparkDomain(
         }
       case source: UnorderedSphynxDisk =>
         {
+          val srcPath = source.getGUIDPath(e)
           import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
           import com.lynxanalytics.biggraph.spark_util.Implicits._
-          def readRDD(e: MetaGraphEntity) = {
-            val srcEntityPath = Paths.get(s"${source.dataDir}/${e.gUID.toString}")
-            val entityPath = repositoryPath / "from_sphynx" / e.gUID.toString
-            val stream = entityPath.create()
-            try java.nio.file.Files.copy(srcEntityPath, stream)
-            finally stream.close()
-            sparkSession.read.parquet(entityPath.resolvedName).rdd
-          }
           e match {
             case e: VertexSet => SafeFuture.async({
-              val rdd = readRDD(e)
+              val rdd = sparkSession.read.parquet(srcPath).rdd
               val size = rdd.count()
               new VertexSetData(e, rdd.map(r => (r.getAs[Long]("id"), ()))
                 .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
             })
             case e: EdgeBundle => SafeFuture.async({
-              val rdd = readRDD(e)
+              val rdd = sparkSession.read.parquet(srcPath).rdd
               val size = rdd.count()
               new EdgeBundleData(e, rdd.map(r =>
                 (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst"))))
@@ -418,7 +415,7 @@ class SparkDomain(
               def attr(e: Attribute[(Double, Double)]) = {
                 val vs = getData(e.vertexSet)
                 val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val rdd = readRDD(e)
+                val rdd = sparkSession.read.parquet(srcPath).rdd
                 val size = rdd.count()
                 new AttributeData[(Double, Double)](e, rdd.map(r =>
                   (r.getAs[Long]("id"), (r.getAs[Double]("value1"), r.getAs[Double]("value2"))))
@@ -429,13 +426,26 @@ class SparkDomain(
               def attr[T: reflect.ClassTag](e: Attribute[T]) = {
                 val vs = getData(e.vertexSet)
                 val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val rdd = readRDD(e)
+                val rdd = sparkSession.read.parquet(srcPath).rdd
                 val size = rdd.count()
                 new AttributeData[T](e, rdd.map(r =>
                   (r.getAs[Long]("id"), r.getAs[T]("value")))
                   .sortUnique(partitioner), Some(size))
               }
               SafeFuture.async(attr(e)(e.classTag))
+            case s: Scalar[_] =>
+              SafeFuture.async({
+                val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
+                val jsonString = source match {
+                  case source: UnorderedSphynxSparkDisk =>
+                    (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
+                  case source: UnorderedSphynxLocalDisk =>
+                    val fname = s"${srcPath}/serialized_data"
+                    Source.fromFile(fname).getLines.mkString
+                }
+                val value = format.reads(json.Json.parse(jsonString)).get
+                new ScalarData(s, value)
+              })
             case _ => throw new AssertionError(s"Cannot fetch $e from $source")
           }
         }
