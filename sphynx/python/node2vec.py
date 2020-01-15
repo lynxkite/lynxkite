@@ -1,7 +1,8 @@
+'''Creates a node embedding using PyTorch Geometric.'''
 import json
 import numpy as np
 import os
-import pygob
+import pygob  # TODO: Switch to Parquet.
 import sys
 import torch
 from torch.utils.data import DataLoader
@@ -62,6 +63,7 @@ model.eval()
 with torch.no_grad():
   z = model(torch.arange(num_nodes, device=device))
 
+# TODO: Switch to Parquet.
 print(json.dumps({
     'pagerank': {'TypeName': 'DoubleAttribute', 'Data': {
       'Defined': [True] * num_nodes,

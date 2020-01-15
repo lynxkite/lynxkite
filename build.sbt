@@ -154,6 +154,7 @@ mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring"
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
+mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
 mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",

@@ -70,6 +70,7 @@ func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
 	return fmt.Sprintf("%v/%v/", ea.server.dataDir, ea.opInst.Inputs[name]), nil
 }
 
+// TODO: Replace this with writing Parquet from Python.
 func (ea *EntityAccessor) OutputJson(raw []byte) error {
 	type JsonEntity struct {
 		TypeName string

@@ -1,4 +1,4 @@
-// Implements the ExampleGraph operation
+// Node2Vec is a node embedding operation implemented in Python.
 
 package main
 
@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	operationRepository["PageRank"] = Operation{
+	operationRepository["Node2Vec"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			vs := ea.getVertexSet("vs")
 			es, err := ea.WriteToDisk("es")
@@ -17,7 +17,7 @@ func init() {
 				return nil
 			}
 			cmd := exec.Command(
-				"python", "node2vec.py",
+				"python", "python/node2vec.py",
 				fmt.Sprintf("%v", len(vs.Mapping)),
 				fmt.Sprintf("%v", ea.GetFloatParam("iterations")),
 				es)
