@@ -28,39 +28,34 @@ class ParameterHolder(context: Operation.Context) {
   private val errors = collection.mutable.Buffer[Throwable]()
 
   private def getNamesAndGuids(boxOutputState: BoxOutputState, kind: String): List[(String, UUID)] = {
-    if (boxOutputState.state.isEmpty) {
-      List[(String, UUID)]()
-    } else {
-      (boxOutputState.state.get \ kind).as[Map[String, UUID]]
-    }.toList
+    boxOutputState.state match {
+      case Some(state) => (state \ kind).as[Map[String, UUID]].toList
+      case None => List[(String, UUID)]()
+    }
   }
 
   private def getNamesAndTypes(
     context: Operation.Context,
     kind: String): List[(String, String)] = {
-    val states = context.inputs.values
-    states.map {
-      case x => getNamesAndGuids(x, kind)
-    }.flatten.map {
-      x =>
-        val attrName = x._1
-        val guid = x._2
+    context.inputs.values.flatMap {
+      case state => getNamesAndGuids(state, kind)
+    }.map {
+      case (attrName, guid) =>
         val typeName = context.manager.attribute(guid).typeTag.tpe.toString
         (attrName, typeName)
     }.toList
   }
 
-  private def toCode(attributes: List[(String, String)]): String = {
-    attributes.map {
-      x => s"""Attribute("${x._1}", "${x._2}")"""
-    }.mkString(",")
-  }
-
   def apply(name: String): String = {
     if (context.box.parametricParameters.contains(name)) {
-      val vertexAttributes = toCode(getNamesAndTypes(context, "vertexAttributeGUIDs"))
-      val edgeAttributes = toCode(getNamesAndTypes(context, "edgeAttributeGUIDs"))
-
+      val vertexAttributes = getNamesAndTypes(context, "vertexAttributeGUIDs")
+        .map {
+          case (name, typeName) => s"""Attribute("${name}", "${typeName}")"""
+        }.mkString(",")
+      val edgeAttributes = getNamesAndTypes(context, "edgeAttributeGUIDs")
+        .map {
+          case (name, typeName) => s"""Attribute("${name}", "${typeName}")"""
+        }.mkString(",")
       val extraParameters =
         s"""
            case class Attribute(name: String, typeName: String)
