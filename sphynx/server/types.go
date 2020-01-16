@@ -87,8 +87,7 @@ func (e *StringAttribute) fields() []EntityField {
 }
 func (e *DoubleTuple2Attribute) fields() []EntityField {
 	return []EntityField{
-		EntityField{fieldName: "Values1", data: &e.Values1},
-		EntityField{fieldName: "Values2", data: &e.Values2},
+		EntityField{fieldName: "Values", data: &e.Values},
 		EntityField{fieldName: "Defined", data: &e.Defined},
 	}
 }
@@ -131,12 +130,14 @@ type StringAttribute struct {
 	Values  []string
 	Defined []bool
 }
+type DoubleTuple2AttributeValue struct {
+	X float64 `parquet:"name=x, type=DOUBLE"`
+	Y float64 `parquet:"name=y, type=DOUBLE"`
+}
 type DoubleTuple2Attribute struct {
-	Values1 []float64
-	Values2 []float64
+	Values  []DoubleTuple2AttributeValue
 	Defined []bool
 }
-
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
 }
@@ -154,7 +155,6 @@ type SingleDoubleAttribute struct {
 	Value float64 `parquet:"name=value, type=DOUBLE"`
 }
 type SingleDoubleTuple2Attribute struct {
-	Id     int64   `parquet:"name=id, type=INT64"`
-	Value1 float64 `parquet:"name=value1, type=DOUBLE"`
-	Value2 float64 `parquet:"name=value2, type=DOUBLE"`
+	Id    int64                      `parquet:"name=id, type=INT64"`
+	Value DoubleTuple2AttributeValue `parquet:"name=value"`
 }

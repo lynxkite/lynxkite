@@ -34,8 +34,10 @@ func init() {
 			}
 			ea.output("income", income)
 			location := &DoubleTuple2Attribute{
-				Values1: []float64{40.71448, 47.5269674, 1.352083, -33.8674869},
-				Values2: []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
+				Values: []DoubleTuple2AttributeValue{{40.71448, -74.00598},
+					{47.5269674, 19.0323968},
+					{1.352083, 103.819836},
+					{-33.8674869, 151.2069902}},
 				Defined: []bool{true, true, true, true},
 			}
 			ea.output("location", location)
