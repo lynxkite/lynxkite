@@ -171,6 +171,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       attr.runtimeSafeCast[Long].asDouble
     else if (attr.is[Int])
       attr.runtimeSafeCast[Int].asDouble
+    else if (attr.is[Double])
+      attr.runtimeSafeCast[Double]
     else
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
