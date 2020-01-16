@@ -419,10 +419,9 @@ class SparkDomain(
                 val rdd = df.rdd
                 val size = rdd.count()
                 val valueIdx = df.schema.fieldIndex("value")
-                val castRDD = rdd.map(r =>
-                  (r.getAs[Long]("id"), (r.getStruct(valueIdx)))).map {
-                  case (id, Row(x: Double, y: Double)) => (id, (x, y))
-                }
+                val castRDD = rdd
+                  .map(r => (r.getAs[Long]("id"), (r.getStruct(valueIdx))))
+                  .mapValues { case Row(x: Double, y: Double) => (x, y) }
                 new AttributeData[(Double, Double)](e, castRDD.sortUnique(partitioner), Some(size))
               }
               SafeFuture.async(attr(e.asInstanceOf[Attribute[(Double, Double)]]))
