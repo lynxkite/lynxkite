@@ -18,8 +18,7 @@
 //
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import play.api.libs.json.JsObject
+import java.util.UUID
 
 import scala.util._
 
@@ -28,11 +27,49 @@ class ParameterHolder(context: Operation.Context) {
   private val metaMap = collection.mutable.Map[String, OperationParameterMeta]()
   private val errors = collection.mutable.Buffer[Throwable]()
 
+  private def getNamesAndGuids(boxOutputState: BoxOutputState, kind: String): List[(String, UUID)] = {
+    if (boxOutputState.state.isEmpty) {
+      List[(String, UUID)]()
+    } else {
+      (boxOutputState.state.get \ kind).as[Map[String, UUID]]
+    }.toList
+  }
+
+  private def getNamesAndTypes(
+    context: Operation.Context,
+    kind: String): List[(String, String)] = {
+    val states = context.inputs.values
+    states.map {
+      case x => getNamesAndGuids(x, kind)
+    }.flatten.map {
+      x =>
+        val attrName = x._1
+        val guid = x._2
+        val typeName = context.manager.attribute(guid).typeTag.tpe.toString
+        (attrName, typeName)
+    }.toList
+  }
+
+  private def toCode(attributes: List[(String, String)]): String = {
+    attributes.map {
+      x => s"""Attribute("${x._1}", "${x._2}")"""
+    }.mkString(",")
+  }
+
   def apply(name: String): String = {
     if (context.box.parametricParameters.contains(name)) {
+      val vertexAttributes = toCode(getNamesAndTypes(context, "vertexAttributeGUIDs"))
+      val edgeAttributes = toCode(getNamesAndTypes(context, "edgeAttributeGUIDs"))
+
+      val extraParameters =
+        s"""
+           case class Attribute(name: String, typeName: String)
+           val vertexAttributes = List[Attribute]($vertexAttributes)
+           val edgeAttributes = List[Attribute]($edgeAttributes)
+        """.stripMargin
       com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
-        context.workspaceParameters)
+        context.workspaceParameters, extraParameters)
     } else if (context.box.parameters.contains(name)) {
       context.box.parameters(name)
     } else if (metaMap.contains(name)) {
