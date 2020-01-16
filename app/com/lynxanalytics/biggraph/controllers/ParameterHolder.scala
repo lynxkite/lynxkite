@@ -56,7 +56,7 @@ class ParameterHolder(context: Operation.Context) {
         .map {
           case (name, typeName) => s"""Attribute("${name}", "${typeName}")"""
         }.mkString(",")
-      val extraParameters =
+      val extraCode =
         s"""
            case class Attribute(name: String, typeName: String)
            val vertexAttributes = List[Attribute]($vertexAttributes)
@@ -64,7 +64,7 @@ class ParameterHolder(context: Operation.Context) {
         """.stripMargin
       com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
-        context.workspaceParameters, extraParameters)
+        context.workspaceParameters, extraCode)
     } else if (context.box.parameters.contains(name)) {
       context.box.parameters(name)
     } else if (metaMap.contains(name)) {
