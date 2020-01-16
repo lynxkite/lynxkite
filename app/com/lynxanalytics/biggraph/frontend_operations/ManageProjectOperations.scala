@@ -155,12 +155,12 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           s"${before} to ${after}"
       }
       val deleteStrings = deletedAttrs.keys
-      val renameSummary = {
-        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
-      }
-      val deleteSummary = {
-        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
-      }
+      val renameSummary =
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}"
+      val deleteSummary =
+        if (deleteStrings.isEmpty) ""
+        else if (renameStrings.isEmpty) s"Delete ${deleteStrings.mkString(", ")}"
+        else s" and delete ${deleteStrings.mkString(", ")}"
       renameSummary + deleteSummary
     }
     def apply() = {
@@ -235,12 +235,12 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           s"${before} to ${after}"
       }
       val deleteStrings = deletedAttrs.keys
-      val renameSummary = {
-        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
-      }
-      val deleteSummary = {
-        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
-      }
+      val renameSummary =
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}"
+      val deleteSummary =
+        if (deleteStrings.isEmpty) ""
+        else if (renameStrings.isEmpty) s"Delete ${deleteStrings.mkString(", ")}"
+        else s" and delete ${deleteStrings.mkString(", ")}"
       renameSummary + deleteSummary
     }
     def apply() = {
