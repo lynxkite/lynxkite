@@ -323,6 +323,7 @@ startSphynx () {
         exit 1
     fi
     if [ ! -f "${SPHYNX_CERT_DIR}/cert.pem" ]; then
+      mkdir -p ${SPHYNX_CERT_DIR}
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
