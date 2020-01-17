@@ -29,8 +29,8 @@ func init() {
 			}
 			ea.output("gender", gender)
 			income := &DoubleAttribute{
-				Values:  []float64{1000, 0, 0, 2000},
-				Defined: []bool{true, false, false, true},
+				Values:  []float64{1000, 0, 2000, 0},
+				Defined: []bool{true, false, true, false},
 			}
 			ea.output("income", income)
 			location := &DoubleTuple2Attribute{
