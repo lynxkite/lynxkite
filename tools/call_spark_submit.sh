@@ -79,6 +79,7 @@ addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
 addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
 addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
+addJPropIfNonEmpty authentication.google.clientId "${KITE_GOOGLE_CLIENT_ID}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
 addJPropIfNonEmpty pidfile.path "/dev/null"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
