@@ -556,7 +556,7 @@ object ProductionJsonServer extends JsonServer {
     GlobalSettings(
       hasAuth = productionMode,
       authMethods = getAuthMethods,
-      googleClientId = UserController.googleClientId,
+      googleClientId = GoogleAuth.clientId,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics evolved"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
