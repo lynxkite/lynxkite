@@ -16,7 +16,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
         Thread.sleep(3000L)
       """
     intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, Map(), 2L)
+      ScalaScript.run(code, Map(), "", 2L)
     }
   }
 

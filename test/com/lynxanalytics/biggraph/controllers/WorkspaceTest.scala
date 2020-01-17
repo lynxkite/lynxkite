@@ -333,6 +333,22 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }.getMessage.contains("Unrecognized parameter: p3"))
   }
 
+  test("parametric parameters - access attributes") {
+    val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val const = Box(
+      "const", "Add constant vertex attribute",
+      Map("value" -> "1", "type" -> "String"),
+      0, 20,
+      Map("project" -> eg.output("project")),
+      Map("name" ->
+        """${vertexAttributes.filter(_.typeName == "Double").map(_.name).mkString("-")}"""))
+    val ws = Workspace(List(anchorBox, eg, const))
+    assert(
+      context(ws).allStates(const.output("project")).project
+        .vertexAttributes.contains("age-income"))
+  }
+
   test("parametric parameters - import CSV") {
     val anchor = anchorWithParams(("PREFIX", "text", "IMPORTGRAPHTEST$"))
     val csv = {
