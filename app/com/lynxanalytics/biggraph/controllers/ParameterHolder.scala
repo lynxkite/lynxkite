@@ -20,6 +20,8 @@ package com.lynxanalytics.biggraph.controllers
 
 import java.util.UUID
 
+import play.api.libs.json.JsResultException
+
 import scala.util._
 
 class ParameterHolder(context: Operation.Context) {
@@ -29,7 +31,12 @@ class ParameterHolder(context: Operation.Context) {
 
   private def getNamesAndGuids(boxOutputState: BoxOutputState, kind: String): List[(String, UUID)] = {
     boxOutputState.state match {
-      case Some(state) => (state \ kind).as[Map[String, UUID]].toList
+      case Some(state) =>
+        try {
+          (state \ kind).as[Map[String, UUID]].toList
+        } catch {
+          case e: JsResultException => List[(String, UUID)]()
+        }
       case None => List[(String, UUID)]()
     }
   }
