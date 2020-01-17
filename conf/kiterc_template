@@ -160,9 +160,13 @@ export KITE_EXTRA_JARS=
 # export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 # ===========================================================
 
-# The LynxKite Google client secret is only needed for Google Authenticator. Ask the Lynx R&D
-# team for further instructions if you think you need this feature.
+# The following settings configure Google OAuth for LynxKite.
 # export KITE_GOOGLE_CLIENT_SECRET='???'
+# export KITE_GOOGLE_CLIENT_ID='???.apps.googleusercontent.com'
+# export KITE_GOOGLE_HOSTED_DOMAIN='example.com'
+# export KITE_GOOGLE_REQUIRED_SUFFIX='@example.com'
+# export KITE_GOOGLE_WIZARD_ONLY='yes'
+# export KITE_GOOGLE_PUBLIC_ACCESS='yes'
 
 # Use the following configurations to set up LDAP authentication.
 
