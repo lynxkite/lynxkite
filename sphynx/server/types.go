@@ -111,6 +111,7 @@ type VertexSet struct {
 
 func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
 	if vs.MappingToOrdered == nil {
+		vs.MappingToOrdered = make(map[int64]int)
 		for i, j := range vs.MappingToUnordered {
 			vs.MappingToOrdered[j] = i
 		}
