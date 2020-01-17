@@ -34,6 +34,9 @@ SPHYNX_PID_FILE=${TMP}/sphynx_pid
 cat > "$TMP/overrides"  <<EOF
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
+export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
+export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
+export SPHYNX_CERT_DIR=$TMP/sphynx_cert
 export KITE_HTTP_PORT=$HTTP_PORT
 export KITE_HTTPS_PORT=$HTTPS_PORT
 export KITE_APPLICATION_SECRET='<random>'
@@ -48,12 +51,16 @@ EOF
 KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
 KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../stage/bin/biggraph start
 KITE_PID=`cat ${PID_FILE}`
+SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
 function kill_backend {
   echo "Shutting down server on port $HTTP_PORT"
   kill $KITE_PID
   while kill -0 $KITE_PID 2> /dev/null; do sleep 1; done
-  rm -rf "$TMP"
   rm -f "$KITE_USERS_FILE"
+  echo "Shutting down Sphynx."
+  kill $SPHYNX_PID
+  while kill -0 $SPHYNX_PID 2> /dev/null; do sleep 1; done
+  rm -rf "$TMP"
 }
 trap kill_backend EXIT ERR
 $(dirname $0)/wait_for_port.sh $HTTP_PORT
