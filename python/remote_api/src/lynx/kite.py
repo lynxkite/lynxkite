@@ -696,7 +696,7 @@ class LynxKite:
 
   def import_box(self, boxes: List[SerializedBox], box_id: str) -> List[SerializedBox]:
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
-    boxes = json.loads(json.dumps(boxes, default=_json_encode))
+    boxes = to_simple_dicts(boxes)
     for box in boxes:
       if box['id'] == box_id:
         import_result = self._send('/ajax/importBox', {'box': box})
@@ -1949,6 +1949,11 @@ def _json_encode(obj):
   if isinstance(obj, types.SimpleNamespace):
     return obj.__dict__
   return obj
+
+
+def to_simple_dicts(obj):
+  '''Converts a SimpleNamespace structure (as returned from LynxKite requests) into simple dicts.'''
+  return json.loads(json.dumps(obj, default=_json_encode))
 
 
 class PizzaBox(LynxKite):
