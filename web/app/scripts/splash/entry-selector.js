@@ -248,7 +248,7 @@ angular.module('biggraph').directive('entrySelector',
         });
 
         function showTutorial() {
-          if (localStorage.getItem('entry-selector tutorial done')) {
+          if (util.user.wizardOnly || localStorage.getItem('entry-selector tutorial done')) {
             return;
           }
           /* global Tour */

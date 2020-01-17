@@ -788,7 +788,7 @@ angular.module('biggraph')
           };
 
           function showTutorial() {
-            if (localStorage.getItem('workspace-drawing-board tutorial done')) {
+            if (util.user.wizardOnly || localStorage.getItem('workspace-drawing-board tutorial done')) {
               return;
             }
             /* global Tour */
