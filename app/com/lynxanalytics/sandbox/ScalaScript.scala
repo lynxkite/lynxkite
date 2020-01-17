@@ -106,6 +106,7 @@ object ScalaScript {
   def run(
     code: String,
     bindings: Map[String, String] = Map(),
+    extraCode: String = "",
     timeoutInSeconds: Long = 10L): String = {
     import org.apache.commons.lang.StringEscapeUtils
     val binds = bindings.map {
@@ -113,6 +114,7 @@ object ScalaScript {
     }.mkString("\n")
     val fullCode = s"""
     $binds
+    $extraCode
     val result = {
       $code
     }.toString

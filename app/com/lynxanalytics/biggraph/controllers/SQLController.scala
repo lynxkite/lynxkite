@@ -146,7 +146,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
-      user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
+      user, box, inputs = Map[String, BoxOutputState](),
+      workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext())
     val table = ImportDataFrame.run(df)
