@@ -155,6 +155,7 @@ case class AuthMethod(id: String, name: String)
 case class GlobalSettings(
     hasAuth: Boolean,
     authMethods: List[AuthMethod],
+    googleClientId: String,
     title: String,
     tagline: String,
     workspaceParameterKinds: List[String],
@@ -555,6 +556,7 @@ object ProductionJsonServer extends JsonServer {
     GlobalSettings(
       hasAuth = productionMode,
       authMethods = getAuthMethods,
+      googleClientId = GoogleAuth.clientId,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics evolved"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
