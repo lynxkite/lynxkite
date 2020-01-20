@@ -516,7 +516,7 @@ class LynxKite:
 
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP JSON request to LynxKite and returns the response when it arrives.'''
-    data = json.dumps(payload)
+    data = json.dumps(payload, default=_json_encode)
     return self._post(endpoint, data=data, headers={'Content-Type': 'application/json'})
 
   def _send(self, command, payload={}, raw=False):
@@ -532,7 +532,7 @@ class LynxKite:
     '''Sends a JSON GET request.'''
     resp = self._get(
         command,
-        params=dict(q=json.dumps(payload)),
+        params=dict(q=json.dumps(payload, default=_json_encode)),
         headers={'X-Requested-With': 'XMLHttpRequest'})
     return json.loads(resp.text, object_hook=_asobject)
 
@@ -694,10 +694,9 @@ class LynxKite:
   def get_workspace_boxes(self, path: str, stack: List[str] = []) -> List[types.SimpleNamespace]:
     return self.get_workspace(path, stack).workspace.boxes
 
-  # TODO: deprecate?
   def import_box(self, boxes: List[SerializedBox], box_id: str) -> List[SerializedBox]:
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
-    boxes = copy.deepcopy(boxes)
+    boxes = to_simple_dicts(boxes)
     for box in boxes:
       if box['id'] == box_id:
         import_result = self._send('/ajax/importBox', {'box': box})
@@ -706,7 +705,6 @@ class LynxKite:
         return boxes
     raise KeyError(box_id)
 
-  # TODO: deprecate?
   def export_box(self, outputs: Dict[Tuple[str, str], types.SimpleNamespace],
                  box_id: str) -> types.SimpleNamespace:
     '''Equivalent to triggering the export. Returns the exportResult output.'''
@@ -1945,6 +1943,17 @@ class LynxException(Exception):
 def _asobject(dic):
   '''Wraps the dict in a namespace for easier access. I.e. d["x"] becomes d.x.'''
   return types.SimpleNamespace(**dic)
+
+
+def _json_encode(obj):
+  if isinstance(obj, types.SimpleNamespace):
+    return obj.__dict__
+  return obj
+
+
+def to_simple_dicts(obj):
+  '''Converts a SimpleNamespace structure (as returned from LynxKite requests) into simple dicts.'''
+  return json.loads(json.dumps(obj, default=_json_encode))
 
 
 class PizzaBox(LynxKite):

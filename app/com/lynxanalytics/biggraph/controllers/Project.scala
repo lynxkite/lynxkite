@@ -1037,22 +1037,10 @@ abstract class ObjectFrame(path: SymbolPath)(
   // ObjectFrames (workspaces and snapshots) do not have ACLs on their own right, they use their
   // parent's ACL.
   override def readAllowedFrom(user: User): Boolean = {
-    if (user.wizardOnly) {
-      parent.get.readAllowedFrom(user) &&
-        (this match {
-          case wsf: WorkspaceFrame => wsf.workspace.isWizard
-          case _ => false
-        })
-    } else parent.get.readAllowedFrom(user)
+    parent.get.readAllowedFrom(user)
   }
   override def writeAllowedFrom(user: User): Boolean = {
-    if (user.wizardOnly) {
-      parent.get.writeAllowedFrom(user) &&
-        (this match {
-          case wsf: WorkspaceFrame => wsf.workspace.isWizard && wsf.workspace.inProgress
-          case _ => false
-        })
-    } else parent.get.writeAllowedFrom(user)
+    parent.get.writeAllowedFrom(user)
   }
 }
 
