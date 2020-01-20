@@ -29,6 +29,7 @@ EOF
 KITE_DEPLOYMENT_CONFIG_DIR="$(dirname $0)/../test"
 export HTTP_PORT=$[ 9100 + RANDOM % 100 ]
 export HTTPS_PORT=$[ 9200 + RANDOM % 100 ]
+export SPHYNX_PORT=$[ 9300 + RANDOM % 100 ]
 PID_FILE=${TMP}/pid
 SPHYNX_PID_FILE=${TMP}/sphynx_pid
 cat > "$TMP/overrides"  <<EOF
@@ -37,6 +38,7 @@ export KITE_DATA_DIR="file:$TMP/data"
 export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
 export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
 export SPHYNX_CERT_DIR=$TMP/sphynx_cert
+export SPHYNX_PORT=$SPHYNX_PORT
 export KITE_HTTP_PORT=$HTTP_PORT
 export KITE_HTTPS_PORT=$HTTPS_PORT
 export KITE_APPLICATION_SECRET='<random>'
@@ -63,6 +65,8 @@ function kill_backend {
   rm -rf "$TMP"
 }
 trap kill_backend EXIT ERR
+$(dirname $0)/wait_for_port.sh $SPHYNX_PORT
+echo "Sphynx running on port $SPHYNX_PORT"
 $(dirname $0)/wait_for_port.sh $HTTP_PORT
 echo "Kite running on port $HTTP_PORT (http) and port $HTTPS_PORT (https)"
 
