@@ -6,7 +6,7 @@ the workspace of a LK and then copying it to the clipboard. We make sure
 that there is exactly one anchor box
 (see https://app.asana.com/0/search/1145664077193860/1136708269731017).
 '''
-import yaml
+from ruamel import yaml
 import argparse
 import lynx.kite
 
