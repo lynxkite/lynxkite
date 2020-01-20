@@ -288,6 +288,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult])
+    kryo.register(classOf[scala.math.Numeric$DoubleAsIfIntegral$])
+    kryo.register(classOf[scala.math.Numeric$DoubleIsFractional$])
+    kryo.register(classOf[org.apache.spark.sql.types.DoubleType$$anon$1])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

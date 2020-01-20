@@ -163,9 +163,8 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 			if def {
 				sparkId := vs1.MappingToUnordered[sphynxId]
 				err := pw.Write(SingleDoubleTuple2Attribute{
-					Id:     sparkId,
-					Value1: e.Values1[sphynxId],
-					Value2: e.Values2[sphynxId],
+					Id:    sparkId,
+					Value: e.Values[sphynxId],
 				})
 				if err != nil {
 					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
@@ -328,7 +327,6 @@ func (s *Server) ReadFromUnorderedDisk(
 				Values:  values,
 				Defined: defined,
 			}
-			return &pb.ReadFromUnorderedDiskReply{}, nil
 		case "Double":
 			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
@@ -383,19 +381,16 @@ func (s *Server) ReadFromUnorderedDisk(
 				pr.ReadStop()
 				rawAttribute = append(rawAttribute, partialRawAttribute...)
 			}
-			values1 := make([]float64, numVS)
-			values2 := make([]float64, numVS)
+			values := make([]DoubleTuple2AttributeValue, numVS)
 			defined := make([]bool, numVS)
 			mappingToOrdered := vs.GetMappingToOrdered()
 			for _, singleAttr := range rawAttribute {
 				orderedId := mappingToOrdered[singleAttr.Id]
-				values1[orderedId] = singleAttr.Value1
-				values2[orderedId] = singleAttr.Value2
+				values[orderedId] = singleAttr.Value
 				defined[orderedId] = true
 			}
 			entity = &DoubleTuple2Attribute{
-				Values1: values1,
-				Values2: values2,
+				Values:  values,
 				Defined: defined,
 			}
 		default:

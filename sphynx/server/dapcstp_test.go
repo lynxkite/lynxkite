@@ -9,8 +9,8 @@ func TestDacstp(t *testing.T) {
 	// the net gain is 42 plus the length of the shortest path, this way
 	// we have a positive gain.
 	edges := &EdgeBundle{
-		Src:         []int64{0, 0, 1, 2, 4, 3},
-		Dst:         []int64{1, 2, 2, 4, 3, 5},
+		Src:         []int{0, 0, 1, 2, 4, 3},
+		Dst:         []int{1, 2, 2, 4, 3, 5},
 		EdgeMapping: nil, // Not used in dapcstp
 	}
 	cost := &DoubleAttribute{

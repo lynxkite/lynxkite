@@ -7,7 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import org.apache.spark
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{ SQLContext, Row }
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.io.Source
@@ -415,11 +415,14 @@ class SparkDomain(
               def attr(e: Attribute[(Double, Double)]) = {
                 val vs = getData(e.vertexSet)
                 val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val rdd = sparkSession.read.parquet(srcPath).rdd
+                val df = sparkSession.read.parquet(srcPath)
+                val rdd = df.rdd
                 val size = rdd.count()
-                new AttributeData[(Double, Double)](e, rdd.map(r =>
-                  (r.getAs[Long]("id"), (r.getAs[Double]("value1"), r.getAs[Double]("value2"))))
-                  .sortUnique(partitioner), Some(size))
+                val valueIdx = df.schema.fieldIndex("value")
+                val castRDD = rdd
+                  .map(r => (r.getAs[Long]("id"), (r.getStruct(valueIdx))))
+                  .mapValues { case Row(x: Double, y: Double) => (x, y) }
+                new AttributeData[(Double, Double)](e, castRDD.sortUnique(partitioner), Some(size))
               }
               SafeFuture.async(attr(e.asInstanceOf[Attribute[(Double, Double)]]))
             case e: Attribute[_] =>
