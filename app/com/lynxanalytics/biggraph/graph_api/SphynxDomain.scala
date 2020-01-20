@@ -34,7 +34,14 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
     client.compute(jsonMeta).map(_ => ())
   }
 
+  val supportedTypes = List(typeTag[String], typeTag[Double], typeTag[(Double, Double)])
+
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    for (e <- instance.inputs.attributes.values) {
+      if (!supportedTypes.contains(e.typeTag)) {
+        return false
+      }
+    }
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
     client.canCompute(jsonMeta)
   }
