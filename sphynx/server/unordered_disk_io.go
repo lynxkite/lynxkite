@@ -327,7 +327,6 @@ func (s *Server) ReadFromUnorderedDisk(
 				Values:  values,
 				Defined: defined,
 			}
-			return &pb.ReadFromUnorderedDiskReply{}, nil
 		case "Double":
 			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
