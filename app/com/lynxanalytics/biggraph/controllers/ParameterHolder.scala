@@ -59,22 +59,22 @@ class ParameterHolder(context: Operation.Context) {
     if (context.box.parametricParameters.contains(name)) {
       val vertexAttributes = getNamesAndTypes(context, "vertexAttributeGUIDs")
         .map {
-          case (name, typeName) => s"""NamesAndTypes("${name}", "${typeName}")"""
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
         }.mkString(",")
       val edgeAttributes = getNamesAndTypes(context, "edgeAttributeGUIDs")
         .map {
-          case (name, typeName) => s"""NamesAndTypes("${name}", "${typeName}")"""
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
         }.mkString(",")
       val scalars = getNamesAndTypes(context, "scalarGUIDs")
         .map {
-          case (name, typeName) => s"""NamesAndTypes("${name}", "${typeName}")"""
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
         }.mkString(",")
       val extraCode =
         s"""
            case class NamesAndTypes(name: String, typeName: String)
-           val vertexAttributes = List[NamesAndTypes]($vertexAttributes)
-           val edgeAttributes = List[NamesAndTypes]($edgeAttributes)
-           val scalars = List[NamesAndTypes]($scalars)
+           val vertexAttributes = List[Entity]($vertexAttributes)
+           val edgeAttributes = List[Entity]($edgeAttributes)
+           val scalars = List[Entity]($scalars)
         """.stripMargin
       com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
