@@ -71,7 +71,7 @@ class ParameterHolder(context: Operation.Context) {
         }.mkString(",")
       val extraCode =
         s"""
-           case class NamesAndTypes(name: String, typeName: String)
+           case class Entity(name: String, typeName: String)
            val vertexAttributes = List[Entity]($vertexAttributes)
            val edgeAttributes = List[Entity]($edgeAttributes)
            val scalars = List[Entity]($scalars)
