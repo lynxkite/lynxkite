@@ -34,8 +34,8 @@
             <span class="lead">{{ step.title }}</span>
           </div>
 
-          <div ng-show="$parent.expanded === $index && step.description" class="container-fluid">
-            {{ step.description }}
+          <div ng-show="$parent.expanded === $index && step.description" class="container-fluid"
+            trusted-html="step.html">
           </div>
 
           <box-editor
