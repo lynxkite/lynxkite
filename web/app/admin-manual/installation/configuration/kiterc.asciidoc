@@ -339,7 +339,7 @@ If any of these is unset, no Sphynx server is assumed.
 ```
 export SPHYNX_HOST=localhost
 export SPHYNX_PORT=50051
-# export SPHYNX_CERT_DIR
+export SPHYNX_CERT_DIR=$HOME/sphynx_cert
 ```
 Specify the PID file for Sphynx.
 ```

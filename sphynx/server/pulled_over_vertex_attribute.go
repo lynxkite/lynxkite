@@ -40,14 +40,12 @@ func init() {
 				ea.output("pulledAttr", &destAttr)
 			case *DoubleTuple2Attribute:
 				destAttr := DoubleTuple2Attribute{
-					make([]float64, len(destinationVS.MappingToUnordered)),
-					make([]float64, len(destinationVS.MappingToUnordered)),
+					make([]DoubleTuple2AttributeValue, len(destinationVS.MappingToUnordered)),
 					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
 				for destId := range destinationVS.MappingToUnordered {
 					origId := destToOrig[destId]
-					destAttr.Values1[destId] = origAttr.Values1[origId]
-					destAttr.Values2[destId] = origAttr.Values2[origId]
+					destAttr.Values[destId] = origAttr.Values[origId]
 					destAttr.Defined[destId] = true
 				}
 				ea.output("pulledAttr", &destAttr)

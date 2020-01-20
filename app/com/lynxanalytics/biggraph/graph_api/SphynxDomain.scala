@@ -34,7 +34,14 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
     client.compute(jsonMeta).map(_ => ())
   }
 
+  val supportedTypes = List(typeTag[String], typeTag[Double], typeTag[(Double, Double)])
+
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    for (e <- instance.inputs.attributes.values) {
+      if (!supportedTypes.contains(e.typeTag)) {
+        return false
+      }
+    }
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
     client.canCompute(jsonMeta)
   }
@@ -159,12 +166,14 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
       }
       case a: AttributeData[_] if a.typeTag == typeTag[(Double, Double)] => {
         val rdd = a.rdd.map {
-          case (id, (value1, value2)) => Row(id, value1, value2)
+          case (id, (x, y)) => Row(id, Row.fromSeq(List(x, y)))
         }
         val schema = StructType(Seq(
           StructField("id", LongType, false),
-          StructField("value1", DoubleType, false),
-          StructField("value2", DoubleType, false)))
+          StructField("value", StructType(
+            Seq(
+              StructField("x", DoubleType, false),
+              StructField("y", DoubleType, false))), false)))
         writeRDD(rdd, schema, e)
       }
       // TODO: Relocate scalars.

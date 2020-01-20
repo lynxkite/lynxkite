@@ -107,7 +107,8 @@ class DataManager(
     val f = e match {
       // The base vertex set must be present for edges and attributes before we can relocate them.
       case e: Attribute[_] => combineFutures(Seq(ensure(e, directSrc), ensure(e.vertexSet, dst)))
-      case e: EdgeBundle => combineFutures(Seq(ensure(e, directSrc), ensure(e.idSet, dst)))
+      case e: EdgeBundle => combineFutures(Seq(
+        ensure(e, directSrc), ensure(e.idSet, dst), ensure(e.srcVertexSet, dst), ensure(e.dstVertexSet, dst)))
       case _ => ensure(e, directSrc)
     }
     f.flatMap(_ => dst.relocateFrom(e, directSrc))
