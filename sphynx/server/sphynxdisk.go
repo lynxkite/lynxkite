@@ -46,6 +46,17 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	log.Printf("saveToOrderedDisk guid %v", guid)
 	typeName := e.typeName()
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
+	_ = os.Mkdir(dirName, 0775)
+	typeFName := fmt.Sprintf("%v/type_name", dirName)
+	typeFile, err := os.Create(typeFName)
+	if err != nil {
+		return err
+	}
+	tfw := bufio.NewWriter(typeFile)
+	if _, err := tfw.WriteString(string(typeName)); err != nil {
+		return fmt.Errorf("Failed to create type file: %v", err)
+	}
+	tfw.Flush()
 	switch e := e.(type) {
 	case ParquetEntity:
 		onDisk, err := hasOnDisk(dataDir, guid)
@@ -57,9 +68,7 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 			return nil
 		}
 		const numGoRoutines int64 = 4
-		_ = os.Mkdir(dirName, 0775)
 		fname := fmt.Sprintf("%v/data.parquet", dirName)
-		typeFName := fmt.Sprintf("%v/type_name", dirName)
 		successFile := fmt.Sprintf("%v/_SUCCESS", dirName)
 		fw, err := local.NewLocalFileWriter(fname)
 		defer fw.Close()
@@ -79,12 +88,6 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 		if err = pw.WriteStop(); err != nil {
 			return fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
-		typeFile, err := os.Create(typeFName)
-		tfw := bufio.NewWriter(typeFile)
-		if _, err := tfw.WriteString(string(typeName)); err != nil {
-			return fmt.Errorf("Failed to create type file: %v", err)
-		}
-		tfw.Flush()
 		err = ioutil.WriteFile(successFile, nil, 0775)
 		if err != nil {
 			return fmt.Errorf("Failed to write success file: %v", err)
@@ -133,8 +136,15 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		numRows := int(pr.GetNumRows())
 		e.readFromOrdered(pr, numRows)
 		pr.ReadStop()
+	case *Scalar:
+		if err := e.read(dirName); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("Failed to read entity with GUID %v from Ordered Sphynx Disk.", guid)
 	}
 	return e, nil
+
 }
 
 func hasOnDisk(dataDir string, guid GUID) (bool, error) {

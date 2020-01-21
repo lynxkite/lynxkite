@@ -233,3 +233,14 @@ func (s *Scalar) write(dirName string) error {
 	}
 	return nil
 }
+func (s *Scalar) read(dirName string) error {
+	fname := fmt.Sprintf("%v/serialized_data", dirName)
+	scalarJSON, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return fmt.Errorf("Failed to read file: %v", err)
+	}
+	if err := json.Unmarshal(scalarJSON, &s.Value); err != nil {
+		return fmt.Errorf("Failed to parse JSON: %v", err)
+	}
+	return nil
+}
