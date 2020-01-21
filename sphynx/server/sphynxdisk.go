@@ -44,11 +44,10 @@ func createEntity(typeName string) (Entity, error) {
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	log.Printf("saveToOrderedDisk guid %v", guid)
-	// e.writeOrdered(dataDir, guid)
 	typeName := e.typeName()
-	i := interface{}(e)
-	entity, ok := i.(ParquetEntity)
-	if ok {
+	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
+	switch e := e.(type) {
+	case ParquetEntity:
 		onDisk, err := hasOnDisk(dataDir, guid)
 		if err != nil {
 			return err
@@ -58,7 +57,6 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 			return nil
 		}
 		const numGoRoutines int64 = 4
-		dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 		_ = os.Mkdir(dirName, 0775)
 		fname := fmt.Sprintf("%v/data.parquet", dirName)
 		typeFName := fmt.Sprintf("%v/type_name", dirName)
@@ -68,11 +66,11 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 		if err != nil {
 			return fmt.Errorf("Failed to create file: %v", err)
 		}
-		pw, err := writer.NewParquetWriter(fw, entity.orderedRow(), numGoRoutines)
+		pw, err := writer.NewParquetWriter(fw, e.orderedRow(), numGoRoutines)
 		if err != nil {
 			return fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
-		rows := entity.toOrderedRows()
+		rows := e.toOrderedRows()
 		for _, row := range rows {
 			if err := pw.Write(row); err != nil {
 				return fmt.Errorf("Failed to write parquet file: %v", err)
@@ -92,10 +90,10 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 			return fmt.Errorf("Failed to write success file: %v", err)
 		}
 		return nil
-
-	} else {
-		log.Println(e)
-		return nil
+	case *Scalar:
+		return e.write(dirName)
+	default:
+		return fmt.Errorf("Can't write entity with GUID %v to Ordered Sphynx Disk.", guid)
 	}
 }
 

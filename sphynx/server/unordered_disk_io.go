@@ -3,9 +3,7 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -176,20 +174,9 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *Scalar:
-		scalarJSON, err := json.Marshal(e.Value)
+		err = e.write(dirName)
 		if err != nil {
-			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
-		}
-		fname := fmt.Sprintf("%v/serialized_data", dirName)
-		f, err := os.Create(fname)
-		fw := bufio.NewWriter(f)
-		if _, err := fw.WriteString(string(scalarJSON)); err != nil {
-			return nil, fmt.Errorf("Writing scalar to file failed: %v", err)
-		}
-		fw.Flush()
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
+			return nil, err
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:

@@ -2,8 +2,12 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/xitongsys/parquet-go/reader"
+	"io/ioutil"
+	"os"
 )
 
 type Entity interface {
@@ -208,4 +212,24 @@ type SingleDoubleAttribute struct {
 type SingleDoubleTuple2Attribute struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleTuple2AttributeValue `parquet:"name=value"`
+}
+
+func (s *Scalar) write(dirName string) error {
+	scalarJSON, err := json.Marshal(s.Value)
+	if err != nil {
+		return fmt.Errorf("Converting scalar to json failed: %v", err)
+	}
+	fname := fmt.Sprintf("%v/serialized_data", dirName)
+	f, err := os.Create(fname)
+	fw := bufio.NewWriter(f)
+	if _, err := fw.WriteString(string(scalarJSON)); err != nil {
+		return fmt.Errorf("Writing scalar to file failed: %v", err)
+	}
+	fw.Flush()
+	successFile := fmt.Sprintf("%v/_SUCCESS", dirName)
+	err = ioutil.WriteFile(successFile, nil, 0775)
+	if err != nil {
+		return fmt.Errorf("Failed to write success file: %v", err)
+	}
+	return nil
 }
