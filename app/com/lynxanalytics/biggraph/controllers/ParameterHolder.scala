@@ -48,7 +48,9 @@ class ParameterHolder(context: Operation.Context) {
       case state => getNamesAndGuids(state, kind)
     }.map {
       case (attrName, guid) =>
-        val typeName = context.manager.attribute(guid).typeTag.tpe.toString
+        val typeName =
+          if (kind == "scalarGUIDs") context.manager.scalar(guid).typeTag.tpe.toString
+          else context.manager.attribute(guid).typeTag.tpe.toString
         (attrName, typeName)
     }.toList
   }
@@ -57,17 +59,22 @@ class ParameterHolder(context: Operation.Context) {
     if (context.box.parametricParameters.contains(name)) {
       val vertexAttributes = getNamesAndTypes(context, "vertexAttributeGUIDs")
         .map {
-          case (name, typeName) => s"""Attribute("${name}", "${typeName}")"""
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
         }.mkString(",")
       val edgeAttributes = getNamesAndTypes(context, "edgeAttributeGUIDs")
         .map {
-          case (name, typeName) => s"""Attribute("${name}", "${typeName}")"""
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
+        }.mkString(",")
+      val scalars = getNamesAndTypes(context, "scalarGUIDs")
+        .map {
+          case (name, typeName) => s"""Entity("${name}", "${typeName}")"""
         }.mkString(",")
       val extraCode =
         s"""
-           case class Attribute(name: String, typeName: String)
-           val vertexAttributes = List[Attribute]($vertexAttributes)
-           val edgeAttributes = List[Attribute]($edgeAttributes)
+           case class Entity(name: String, typeName: String)
+           val vertexAttributes = List[Entity]($vertexAttributes)
+           val edgeAttributes = List[Entity]($edgeAttributes)
+           val scalars = List[Entity]($scalars)
         """.stripMargin
       com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
