@@ -18,10 +18,6 @@ import (
 	"strings"
 )
 
-func writeSuccessFile(dirName string) {
-
-}
-
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
