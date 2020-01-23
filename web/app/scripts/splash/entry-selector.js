@@ -70,6 +70,9 @@ angular.module('biggraph').directive('entrySelector',
           scope.nextData = req;
           req.then(res => {
             if (req === scope.nextData) {
+              if (util.user.wizardOnly) {
+                filterWizardOnly(res);
+              }
               scope.data = res;
               delete scope.nextData;
             }
@@ -77,6 +80,14 @@ angular.module('biggraph').directive('entrySelector',
           window.sessionStorage.setItem('last_selector_path', scope.path);
           window.localStorage.setItem('last_selector_path', scope.path);
         };
+
+        // Wizard-only users still have access to custom boxes and such because they
+        // need it to execute the workspaces and it's also useful if they want to learn
+        // LynxKite. But we hide these on the UI to create a more focused view.
+        function filterWizardOnly(data) {
+          data.directories = data.directories.filter(d => d !== 'built-ins' && d !== 'custom_boxes');
+          data.objects = data.objects.filter(o => o.objectType.startsWith('wizard'));
+        }
 
         function basicWatch(before, after) {
           scope.opened = {};
