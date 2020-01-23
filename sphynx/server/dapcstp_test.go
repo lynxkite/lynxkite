@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -32,8 +33,11 @@ func TestDacstp(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error during dapcstp computation err: %v", err)
 	}
-	expected := Scalar{Value: 42.0}
-	if solution.Profit != expected {
+	expected, err := ScalarFrom(42.0)
+	if err != nil {
+		t.Error(err)
+	}
+	if !bytes.Equal(solution.Profit, expected) {
 		t.Errorf("Error: expected profit was: 42, got: %v\nSolution: %v\n",
 			solution.Profit, solution)
 	}

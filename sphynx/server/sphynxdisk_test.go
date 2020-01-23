@@ -36,8 +36,6 @@ func TestEntityIO(t *testing.T) {
 		Dst:         []int{1, 0, 0, 1},
 		EdgeMapping: []int64{0, 1, 2, 3},
 	}
-	data["Scalar_String"] = &Scalar{Value: "Hello world! 😀 "}
-	data["Scalar_number"] = &Scalar{Value: 42}
 
 	for g, entity := range data {
 		// We use readable "guids" but it doesn't really matter
@@ -53,5 +51,71 @@ func TestEntityIO(t *testing.T) {
 		if !reflect.DeepEqual(entity, loaded) {
 			t.Errorf("Entities (saved) %v and %v (reloaded) differ", entity, loaded)
 		}
+	}
+}
+
+func TestScalarIO(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	scalarValues := make(map[string]interface{})
+	loadedScalars := make(map[string]*Scalar)
+
+	scalarValues["ScalarString"] = "Hello world! 😀 "
+	var scalarInt int = 42
+	scalarValues["ScalarInt"] = scalarInt
+	scalarSlice := []int{1, 2, 3, 4}
+	scalarValues["ScalarSlice"] = scalarSlice
+
+	for g, value := range scalarValues {
+		entity, err := ScalarFrom(&value)
+		if err != nil {
+			t.Error(err)
+		}
+		guid := GUID(g)
+		err = saveToOrderedDisk(&entity, dir, guid)
+		if err != nil {
+			t.Errorf("Error while saving %v: %v", guid, err)
+		}
+		loadedEntity, err := loadFromOrderedDisk(dir, guid)
+		if err != nil {
+			t.Errorf("Error while loading %v: %v", guid, err)
+		}
+		loadedScalar, ok := loadedEntity.(*Scalar)
+		if !ok {
+			t.Errorf("Loaded entity %v is not a scalar", guid)
+		}
+		loadedScalars[g] = loadedScalar
+	}
+
+	value := scalarValues["ScalarString"]
+	loadedScalar := loadedScalars["ScalarString"]
+	var loadedString string
+	if err = loadedScalar.loadTo(&loadedString); err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(value, loadedString) {
+		t.Errorf("Scalars (saved) %v and %v (reloaded) differ", value, loadedString)
+	}
+	value = scalarValues["ScalarInt"]
+	loadedScalar = loadedScalars["ScalarInt"]
+	var loadedInt int
+	if err = loadedScalar.loadTo(&loadedInt); err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(value, loadedInt) {
+		t.Errorf("Scalars (saved) %v and %v (reloaded) differ", value, loadedInt)
+	}
+	value = scalarValues["ScalarSlice"]
+	loadedScalar = loadedScalars["ScalarSlice"]
+	var loadedSlice []int
+	if err = loadedScalar.loadTo(&loadedSlice); err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(value, loadedSlice) {
+		t.Errorf("Scalars (saved) %v and %v (reloaded) differ", value, loadedSlice)
 	}
 }

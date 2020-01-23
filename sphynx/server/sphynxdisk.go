@@ -144,7 +144,6 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		return nil, fmt.Errorf("Failed to read entity with GUID %v from Ordered Sphynx Disk.", guid)
 	}
 	return e, nil
-
 }
 
 func hasOnDisk(dataDir string, guid GUID) (bool, error) {

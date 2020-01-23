@@ -2,6 +2,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -55,8 +57,22 @@ func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
 	return vs.MappingToOrdered
 }
 
-type Scalar struct {
-	Value interface{}
+// A scalar is stored as its JSON encoding. If you need the real value, unmarshal it for yourself.
+type Scalar []byte
+
+func ScalarFrom(value interface{}) (Scalar, error) {
+	jsonEncoding, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("Error while marshaling scalar: %v", err)
+	}
+	return Scalar(jsonEncoding), nil
+}
+
+func (scalar *Scalar) loadTo(dst interface{}) error {
+	if err := json.Unmarshal([]byte(*scalar), dst); err != nil {
+		return fmt.Errorf("Error while unmarshaling scalar: %v", err)
+	}
+	return nil
 }
 
 type DoubleAttribute struct {
