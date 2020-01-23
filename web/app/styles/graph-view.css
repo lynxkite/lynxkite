@@ -6,10 +6,23 @@ svg.graph-view {
   user-select: none;
 }
 svg.graph-view.loading {
+  --c: #39bcf340;
   /* Because of the !important background above, these need to be !important too. */
-  background-image: linear-gradient(45deg, #1e1e1e 25%, #262626 25%, #262626 50%, #1e1e1e 50%, #1e1e1e 75%, #262626 75%, #262626) !important;
-  background-size: 40px 40px !important;
-  animation: progress-bar-stripes 2s linear infinite;
+  background-image: linear-gradient(
+    45deg, transparent 25%, var(--c) 25%, var(--c) 26%,
+    transparent 26%, transparent 27%, var(--c) 27%, var(--c) 50%,
+    transparent 50%, transparent 75%, var(--c) 75%, var(--c) 76%,
+    transparent 76%, transparent 77%, var(--c) 77%, var(--c)) !important;
+  background-size: 200px 200px !important;
+  animation: graph-view-loading 2s cubic-bezier(0.5, 0.2, 0.5, 0.8) infinite;
+}
+@keyframes graph-view-loading {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 400px 0;
+  }
 }
 svg.graph-view.graphray {
   display: none;
