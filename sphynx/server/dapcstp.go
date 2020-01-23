@@ -110,6 +110,10 @@ func doDapcstp(
 
 	// But this wrapper should be of the same size
 	// as the original input
+	profitScalar, err := ScalarFrom(float64(solution.Profit))
+	if err != nil {
+		return SolutionWrapper{}, err
+	}
 	wrapper := SolutionWrapper{
 		Arcs: DoubleAttribute{
 			Values:  make([]float64, len(edges.Dst)),
@@ -123,7 +127,7 @@ func doDapcstp(
 			Values:  make([]float64, len(gain.Values)),
 			Defined: make([]bool, len(gain.Values)),
 		},
-		Profit: Scalar{float64(solution.Profit)},
+		Profit: profitScalar,
 	}
 
 	for i := 0; i < len(wrapper.Arcs.Values); i++ {

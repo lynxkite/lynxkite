@@ -3,7 +3,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"github.com/xitongsys/parquet-go/reader"
 	"io/ioutil"
@@ -215,14 +214,10 @@ type SingleDoubleTuple2Attribute struct {
 }
 
 func (s *Scalar) write(dirName string) error {
-	scalarJSON, err := json.Marshal(s.Value)
-	if err != nil {
-		return fmt.Errorf("Converting scalar to json failed: %v", err)
-	}
 	fname := fmt.Sprintf("%v/serialized_data", dirName)
 	f, err := os.Create(fname)
 	fw := bufio.NewWriter(f)
-	if _, err := fw.WriteString(string(scalarJSON)); err != nil {
+	if _, err := fw.Write([]byte(*s)); err != nil {
 		return fmt.Errorf("Writing scalar to file failed: %v", err)
 	}
 	fw.Flush()
@@ -235,12 +230,11 @@ func (s *Scalar) write(dirName string) error {
 }
 func (s *Scalar) read(dirName string) error {
 	fname := fmt.Sprintf("%v/serialized_data", dirName)
-	scalarJSON, err := ioutil.ReadFile(fname)
+	jsonEncoding, err := ioutil.ReadFile(fname)
 	if err != nil {
 		return fmt.Errorf("Failed to read file: %v", err)
 	}
-	if err := json.Unmarshal(scalarJSON, &s.Value); err != nil {
-		return fmt.Errorf("Failed to parse JSON: %v", err)
-	}
+	scalar := Scalar(jsonEncoding)
+	*s = scalar
 	return nil
 }
