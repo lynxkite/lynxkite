@@ -70,32 +70,14 @@ func (scalar *Scalar) LoadTo(dst interface{}) error {
 	return nil
 }
 
-type Attribute interface {
-	GetValues() interface{}
-	GetDefined() []bool
-}
 type DoubleAttribute struct {
 	Values  []float64
 	Defined []bool
 }
 
-func (a *DoubleAttribute) GetValues() interface{} {
-	return a.Values
-}
-func (a *DoubleAttribute) GetDefined() []bool {
-	return a.Defined
-}
-
 type StringAttribute struct {
 	Values  []string
 	Defined []bool
-}
-
-func (a *StringAttribute) GetValues() interface{} {
-	return a.Values
-}
-func (a *StringAttribute) GetDefined() []bool {
-	return a.Defined
 }
 
 type DoubleTuple2AttributeValue struct {
@@ -105,11 +87,4 @@ type DoubleTuple2AttributeValue struct {
 type DoubleTuple2Attribute struct {
 	Values  []DoubleTuple2AttributeValue
 	Defined []bool
-}
-
-func (a *DoubleTuple2Attribute) GetValues() interface{} {
-	return a.Values
-}
-func (a *DoubleTuple2Attribute) GetDefined() []bool {
-	return a.Defined
 }

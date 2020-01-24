@@ -16,8 +16,8 @@ func init() {
 				destToOrig[function.Src[i]] = function.Dst[i]
 			}
 			numVS := len(destinationVS.MappingToUnordered)
-			origAttr := ea.inputs["originalAttr"].(Attribute)
-			origValues := reflect.ValueOf(origAttr.GetValues())
+			origAttr := ea.inputs["originalAttr"]
+			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			attrType := reflect.Indirect(reflect.ValueOf(origAttr)).Type()
 			destAttr := reflect.New(attrType)
 			destValues := destAttr.Elem().FieldByName("Values")
@@ -33,7 +33,7 @@ func init() {
 				destDefined.Index(destId).SetBool(true)
 			}
 			destAttrValue := destAttr.Interface()
-			ea.output("pulledAttr", interface{}(destAttrValue).(Entity))
+			ea.output("pulledAttr", destAttrValue.(Entity))
 			return nil
 		},
 	}
