@@ -3,9 +3,7 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -17,10 +15,6 @@ import (
 	"os"
 	"strings"
 )
-
-func writeSuccessFile(dirName string) {
-
-}
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
@@ -180,20 +174,9 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *Scalar:
-		scalarJSON, err := json.Marshal(e.Value)
+		err = e.write(dirName)
 		if err != nil {
-			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
-		}
-		fname := fmt.Sprintf("%v/serialized_data", dirName)
-		f, err := os.Create(fname)
-		fw := bufio.NewWriter(f)
-		if _, err := fw.WriteString(string(scalarJSON)); err != nil {
-			return nil, fmt.Errorf("Writing scalar to file failed: %v", err)
-		}
-		fw.Flush()
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
+			return nil, err
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:
@@ -396,6 +379,12 @@ func (s *Server) ReadFromUnorderedDisk(
 		default:
 			return nil, fmt.Errorf("Can't reindex attribute of type %v with GUID %v to use Sphynx IDs.", attributeType, in.Guid)
 		}
+	case "Scalar":
+		sc, err := readScalar(dirName)
+		if err != nil {
+			return nil, err
+		}
+		entity = &sc
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}

@@ -52,7 +52,10 @@ func init() {
 				Defined: []bool{true, true, true, true},
 			}
 			ea.output("weight", weight)
-			greeting := Scalar{Value: "Hello world! 😀 "}
+			greeting, err := ScalarFrom("Hello world! 😀 ")
+			if err != nil {
+				return err
+			}
 			ea.output("greeting", &greeting)
 			return nil
 		},
