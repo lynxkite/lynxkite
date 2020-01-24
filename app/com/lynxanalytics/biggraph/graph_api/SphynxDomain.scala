@@ -14,6 +14,7 @@ import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import scala.util.{ Try, Success, Failure }
+import java.io.{ FileWriter, BufferedWriter }
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
@@ -176,8 +177,28 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
               StructField("y", DoubleType, false))), false)))
         writeRDD(rdd, schema, e)
       }
-      // TODO: Relocate scalars.
-      case _ => ???
+      case s: ScalarData[_] => {
+        val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
+        val jsonString = Json.stringify(format.writes(s.value))
+        val dir = new File(getGUIDPath(e))
+        if (!dir.exists()) dir.mkdir()
+        this match {
+          case dst: UnorderedSphynxSparkDisk =>
+            val fname = (dst.dataDir / s.gUID.toString / "serialized_data")
+            val successFile = (dst.dataDir / s.gUID.toString / "_SUCCESS")
+            fname.createFromStrings(jsonString)
+            successFile.create()
+          case dst: UnorderedSphynxLocalDisk =>
+            val fname = s"${dst.getGUIDPath(e)}/serialized_data"
+            val successFile = s"${dst.getGUIDPath(e)}/_SUCCESS"
+            val file = new File(fname)
+            val bw = new BufferedWriter(new FileWriter(file))
+            bw.write(jsonString)
+            bw.close()
+            new File(successFile).createNewFile()
+        }
+      }
+      case e => ???
     }
   }
 }

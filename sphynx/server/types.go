@@ -2,6 +2,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -26,70 +28,6 @@ type OperationInstance struct {
 type EntityField struct {
 	fieldName string
 	data      interface{}
-}
-
-type Entity interface {
-	typeName() string      // This will help deserializing a serialized entity
-	fields() []EntityField // Which fields should be serialized
-}
-
-func (e *Scalar) typeName() string {
-	return "Scalar"
-}
-func (e *VertexSet) typeName() string {
-	return "VertexSet"
-}
-func (e *EdgeBundle) typeName() string {
-	return "EdgeBundle"
-}
-func (e *DoubleAttribute) typeName() string {
-	return "DoubleAttribute"
-}
-func (e *StringAttribute) typeName() string {
-	return "StringAttribute"
-}
-func (e *DoubleTuple2Attribute) typeName() string {
-	return "DoubleTuple2Attribute"
-}
-
-func (e *Scalar) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "Value", data: &e.Value},
-	}
-}
-func (e *VertexSet) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
-		// MappingToOrdered is not here on purpose. This is used for writing out
-		// data to Ordered Sphynx Disk. MappingToOrdered can be generated from MappingToUnordered
-		// on demand.
-	}
-}
-func (e *EdgeBundle) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "Src", data: &e.Src},
-		EntityField{fieldName: "Dst", data: &e.Dst},
-		EntityField{fieldName: "EdgeMapping", data: &e.EdgeMapping},
-	}
-}
-func (e *DoubleAttribute) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "Values", data: &e.Values},
-		EntityField{fieldName: "Defined", data: &e.Defined},
-	}
-}
-
-func (e *StringAttribute) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "Values", data: &e.Values},
-		EntityField{fieldName: "Defined", data: &e.Defined},
-	}
-}
-func (e *DoubleTuple2Attribute) fields() []EntityField {
-	return []EntityField{
-		EntityField{fieldName: "Values", data: &e.Values},
-		EntityField{fieldName: "Defined", data: &e.Defined},
-	}
 }
 
 func (server *Server) get(guid GUID) (Entity, bool) {
@@ -119,8 +57,22 @@ func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
 	return vs.MappingToOrdered
 }
 
-type Scalar struct {
-	Value interface{}
+// A scalar is stored as its JSON encoding. If you need the real value, unmarshal it for yourself.
+type Scalar []byte
+
+func ScalarFrom(value interface{}) (Scalar, error) {
+	jsonEncoding, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("Error while marshaling scalar: %v", err)
+	}
+	return Scalar(jsonEncoding), nil
+}
+
+func (scalar *Scalar) LoadTo(dst interface{}) error {
+	if err := json.Unmarshal([]byte(*scalar), dst); err != nil {
+		return fmt.Errorf("Error while unmarshaling scalar: %v", err)
+	}
+	return nil
 }
 
 type DoubleAttribute struct {
@@ -138,24 +90,4 @@ type DoubleTuple2AttributeValue struct {
 type DoubleTuple2Attribute struct {
 	Values  []DoubleTuple2AttributeValue
 	Defined []bool
-}
-type Vertex struct {
-	Id int64 `parquet:"name=id, type=INT64"`
-}
-type Edge struct {
-	Id  int64 `parquet:"name=id, type=INT64"`
-	Src int64 `parquet:"name=src, type=INT64"`
-	Dst int64 `parquet:"name=dst, type=INT64"`
-}
-type SingleStringAttribute struct {
-	Id    int64  `parquet:"name=id, type=INT64"`
-	Value string `parquet:"name=value, type=UTF8"`
-}
-type SingleDoubleAttribute struct {
-	Id    int64   `parquet:"name=id, type=INT64"`
-	Value float64 `parquet:"name=value, type=DOUBLE"`
-}
-type SingleDoubleTuple2Attribute struct {
-	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleTuple2AttributeValue `parquet:"name=value"`
 }

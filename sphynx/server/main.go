@@ -114,11 +114,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	}
 	switch scalar := entity.(type) {
 	case *Scalar:
-		scalarJSON, err := json.Marshal(scalar.Value)
-		if err != nil {
-			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
-		}
-		return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
+		return &pb.GetScalarReply{Scalar: string([]byte(*scalar))}, nil
 	default:
 		return nil, fmt.Errorf("entity %v (guid %v) is not a Scalar", scalar, guid)
 	}
