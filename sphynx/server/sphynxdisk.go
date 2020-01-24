@@ -137,7 +137,8 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		e.readFromOrdered(pr, numRows)
 		pr.ReadStop()
 	case *Scalar:
-		if err := e.read(dirName); err != nil {
+		*e, err = readScalar(dirName)
+		if err != nil {
 			return nil, err
 		}
 	default:
