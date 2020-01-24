@@ -379,6 +379,12 @@ func (s *Server) ReadFromUnorderedDisk(
 		default:
 			return nil, fmt.Errorf("Can't reindex attribute of type %v with GUID %v to use Sphynx IDs.", attributeType, in.Guid)
 		}
+	case "Scalar":
+		sc, err := readScalar(dirName)
+		if err != nil {
+			return nil, err
+		}
+		entity = &sc
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}

@@ -105,6 +105,7 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
       case a: Attribute[_] => requestBuilder
         .setAttributeType(a.typeTag.toString)
         .setVsguid1(a.vertexSet.gUID.toString).build()
+      case s: Scalar[_] => requestBuilder.build()
       case _ => ???
     }
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.ReadFromUnorderedDiskReply]
