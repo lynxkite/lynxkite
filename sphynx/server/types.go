@@ -25,11 +25,6 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
-type EntityField struct {
-	fieldName string
-	data      interface{}
-}
-
 func (server *Server) get(guid GUID) (Entity, bool) {
 	server.Lock()
 	defer server.Unlock()
@@ -42,6 +37,7 @@ type EdgeBundle struct {
 	Dst         []int
 	EdgeMapping []int64
 }
+
 type VertexSet struct {
 	MappingToUnordered []int64
 	MappingToOrdered   map[int64]int
@@ -67,7 +63,6 @@ func ScalarFrom(value interface{}) (Scalar, error) {
 	}
 	return Scalar(jsonEncoding), nil
 }
-
 func (scalar *Scalar) LoadTo(dst interface{}) error {
 	if err := json.Unmarshal([]byte(*scalar), dst); err != nil {
 		return fmt.Errorf("Error while unmarshaling scalar: %v", err)
@@ -75,14 +70,34 @@ func (scalar *Scalar) LoadTo(dst interface{}) error {
 	return nil
 }
 
+type Attribute interface {
+	GetValues() interface{}
+	GetDefined() []bool
+}
 type DoubleAttribute struct {
 	Values  []float64
 	Defined []bool
 }
+
+func (a *DoubleAttribute) GetValues() interface{} {
+	return a.Values
+}
+func (a *DoubleAttribute) GetDefined() []bool {
+	return a.Defined
+}
+
 type StringAttribute struct {
 	Values  []string
 	Defined []bool
 }
+
+func (a *StringAttribute) GetValues() interface{} {
+	return a.Values
+}
+func (a *StringAttribute) GetDefined() []bool {
+	return a.Defined
+}
+
 type DoubleTuple2AttributeValue struct {
 	X float64 `parquet:"name=x, type=DOUBLE"`
 	Y float64 `parquet:"name=y, type=DOUBLE"`
@@ -90,4 +105,11 @@ type DoubleTuple2AttributeValue struct {
 type DoubleTuple2Attribute struct {
 	Values  []DoubleTuple2AttributeValue
 	Defined []bool
+}
+
+func (a *DoubleTuple2Attribute) GetValues() interface{} {
+	return a.Values
+}
+func (a *DoubleTuple2Attribute) GetDefined() []bool {
+	return a.Defined
 }

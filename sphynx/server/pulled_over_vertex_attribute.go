@@ -2,56 +2,38 @@
 
 package main
 
-import "fmt"
+import (
+	"reflect"
+)
 
 func init() {
 	operationRepository["PulledOverVertexAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
-			attributeEntity := ea.inputs["originalAttr"]
-
 			destToOrig := make(map[int]int, len(function.Src))
 			for i := range function.Src {
 				destToOrig[function.Src[i]] = function.Dst[i]
 			}
-			switch origAttr := attributeEntity.(type) {
-			case *DoubleAttribute:
-				destAttr := DoubleAttribute{
-					make([]float64, len(destinationVS.MappingToUnordered)),
-					make([]bool, len(destinationVS.MappingToUnordered)),
-				}
-				for destId := range destinationVS.MappingToUnordered {
-					origId := destToOrig[destId]
-					destAttr.Values[destId] = origAttr.Values[origId]
-					destAttr.Defined[destId] = true
-				}
-				ea.output("pulledAttr", &destAttr)
-			case *StringAttribute:
-				destAttr := StringAttribute{
-					make([]string, len(destinationVS.MappingToUnordered)),
-					make([]bool, len(destinationVS.MappingToUnordered)),
-				}
-				for destId := range destinationVS.MappingToUnordered {
-					origId := destToOrig[destId]
-					destAttr.Values[destId] = origAttr.Values[origId]
-					destAttr.Defined[destId] = origAttr.Defined[origId]
-				}
-				ea.output("pulledAttr", &destAttr)
-			case *DoubleTuple2Attribute:
-				destAttr := DoubleTuple2Attribute{
-					make([]DoubleTuple2AttributeValue, len(destinationVS.MappingToUnordered)),
-					make([]bool, len(destinationVS.MappingToUnordered)),
-				}
-				for destId := range destinationVS.MappingToUnordered {
-					origId := destToOrig[destId]
-					destAttr.Values[destId] = origAttr.Values[origId]
-					destAttr.Defined[destId] = true
-				}
-				ea.output("pulledAttr", &destAttr)
-			default:
-				return fmt.Errorf("Not attribute type: %v", origAttr)
+			numVS := len(destinationVS.MappingToUnordered)
+			origAttr := ea.inputs["originalAttr"].(Attribute)
+			origValues := reflect.ValueOf(origAttr.GetValues())
+			attrType := reflect.Indirect(reflect.ValueOf(origAttr)).Type()
+			destAttr := reflect.New(attrType)
+			destValues := destAttr.Elem().FieldByName("Values")
+			newValues := reflect.MakeSlice(destValues.Type(), numVS, numVS)
+			destValues.Set(newValues)
+			destDefined := destAttr.Elem().FieldByName("Defined")
+			newDefined := reflect.MakeSlice(destDefined.Type(), numVS, numVS)
+			destDefined.Set(newDefined)
+			for destId := range destinationVS.MappingToUnordered {
+				origId := destToOrig[destId]
+				value := origValues.Index(origId)
+				destValues.Index(destId).Set(value)
+				destDefined.Index(destId).SetBool(true)
 			}
+			destAttrValue := destAttr.Interface()
+			ea.output("pulledAttr", interface{}(destAttrValue).(Entity))
 			return nil
 		},
 	}

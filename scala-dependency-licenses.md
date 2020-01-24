@@ -61,7 +61,7 @@ Apache | [Apache License, Version 2.0](http://www.opensource.org/licenses/apache
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe # config # 1.2.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.akka # akka-actor_2.11 # 2.3.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.akka # akka-slf4j_2.11 # 2.3.4 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.13 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.14 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-io # commons-io # 2.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty # 3.9.3.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-all # 4.1.30.Final | <notextile></notextile>
