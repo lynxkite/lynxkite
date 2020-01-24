@@ -65,10 +65,8 @@ func TestScalarIO(t *testing.T) {
 	loadedScalars := make(map[string]*Scalar)
 
 	scalarValues["ScalarString"] = "Hello world! 😀 "
-	var scalarInt int = 42
-	scalarValues["ScalarInt"] = scalarInt
-	scalarSlice := []int{1, 2, 3, 4}
-	scalarValues["ScalarSlice"] = scalarSlice
+	scalarValues["ScalarInt"] = int(42)
+	scalarValues["ScalarSlice"] = []int{1, 2, 3, 4}
 
 	for g, value := range scalarValues {
 		entity, err := ScalarFrom(&value)
@@ -94,7 +92,7 @@ func TestScalarIO(t *testing.T) {
 	value := scalarValues["ScalarString"]
 	loadedScalar := loadedScalars["ScalarString"]
 	var loadedString string
-	if err = loadedScalar.loadTo(&loadedString); err != nil {
+	if err = loadedScalar.LoadTo(&loadedString); err != nil {
 		t.Error(err)
 	}
 	if !reflect.DeepEqual(value, loadedString) {
@@ -103,7 +101,7 @@ func TestScalarIO(t *testing.T) {
 	value = scalarValues["ScalarInt"]
 	loadedScalar = loadedScalars["ScalarInt"]
 	var loadedInt int
-	if err = loadedScalar.loadTo(&loadedInt); err != nil {
+	if err = loadedScalar.LoadTo(&loadedInt); err != nil {
 		t.Error(err)
 	}
 	if !reflect.DeepEqual(value, loadedInt) {
@@ -112,7 +110,7 @@ func TestScalarIO(t *testing.T) {
 	value = scalarValues["ScalarSlice"]
 	loadedScalar = loadedScalars["ScalarSlice"]
 	var loadedSlice []int
-	if err = loadedScalar.loadTo(&loadedSlice); err != nil {
+	if err = loadedScalar.LoadTo(&loadedSlice); err != nil {
 		t.Error(err)
 	}
 	if !reflect.DeepEqual(value, loadedSlice) {

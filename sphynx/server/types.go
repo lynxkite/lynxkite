@@ -68,7 +68,7 @@ func ScalarFrom(value interface{}) (Scalar, error) {
 	return Scalar(jsonEncoding), nil
 }
 
-func (scalar *Scalar) loadTo(dst interface{}) error {
+func (scalar *Scalar) LoadTo(dst interface{}) error {
 	if err := json.Unmarshal([]byte(*scalar), dst); err != nil {
 		return fmt.Errorf("Error while unmarshaling scalar: %v", err)
 	}

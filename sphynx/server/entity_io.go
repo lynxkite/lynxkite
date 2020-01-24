@@ -216,6 +216,7 @@ type SingleDoubleTuple2Attribute struct {
 func (s *Scalar) write(dirName string) error {
 	fname := fmt.Sprintf("%v/serialized_data", dirName)
 	f, err := os.Create(fname)
+	defer f.Close()
 	fw := bufio.NewWriter(f)
 	if _, err := fw.Write([]byte(*s)); err != nil {
 		return fmt.Errorf("Writing scalar to file failed: %v", err)
@@ -228,13 +229,11 @@ func (s *Scalar) write(dirName string) error {
 	}
 	return nil
 }
-func (s *Scalar) read(dirName string) error {
+func readScalar(dirName string) (Scalar, error) {
 	fname := fmt.Sprintf("%v/serialized_data", dirName)
 	jsonEncoding, err := ioutil.ReadFile(fname)
 	if err != nil {
-		return fmt.Errorf("Failed to read file: %v", err)
+		return nil, fmt.Errorf("Failed to read file: %v", err)
 	}
-	scalar := Scalar(jsonEncoding)
-	*s = scalar
-	return nil
+	return Scalar(jsonEncoding), nil
 }
