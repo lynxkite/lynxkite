@@ -161,7 +161,6 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("HasOnOrderedSphynxDisk", guid, has)
 	return &pb.HasOnOrderedSphynxDiskReply{HasOnDisk: has}, nil
 }
 
