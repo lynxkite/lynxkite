@@ -71,7 +71,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	case "SphynxMemory":
 		op, exists := operationRepository[shortOpName(opInst)]
 		if !exists {
-			return nil, fmt.Errorf("Can't compute %v", opInst)
+			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
 		}
 		inputs, err := collectInputs(s, &opInst)
 		if err != nil {
@@ -110,7 +110,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
 		if !exists {
-			return nil, fmt.Errorf("Can't compute %v", opInst)
+			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
 		}
 		err := op.execute(s.dataDir, &opInst)
 		if err != nil {
