@@ -124,6 +124,19 @@ angular.module('biggraph')
       return toResource(req);
     }
 
+    function redirectToLogin(resource) {
+      resource.$error = 'Redirecting to login page.';
+      const orig = $location.path();
+      if (orig === '/login') {
+        return;
+      }
+      $location.url('/login');
+      $location.search('originalPath', orig);
+      const absUrl = $location.absUrl();
+      const withoutProtocol = absUrl.substring($location.protocol().length);
+      $window.location.href = 'https' + withoutProtocol;
+    }
+
     // Replaces a promise with another promise that behaves like Angular's ngResource.
     // It will populate itself with the response data and set $resolved, $error, and $statusCode.
     // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
@@ -139,12 +152,7 @@ angular.module('biggraph')
           resource.$resolved = true;
           resource.$statusCode = failure.status;
           if (failure.status === 401) { // Unauthorized.
-            resource.$error = 'Redirecting to login page.';
-            if ($location.protocol() === 'https') {
-              $location.url('/login');
-            } else {
-              $window.location.href = 'https://' + $location.host() + '/login';
-            }
+            redirectToLogin(resource);
           } else {
             resource.$error = util.responseToErrorMessage(failure);
           }
