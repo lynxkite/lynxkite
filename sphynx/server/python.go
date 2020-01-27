@@ -9,23 +9,24 @@ import (
 	"os/exec"
 )
 
-func init() {
-	diskOperationRepository["PageRank"] = DiskOperation{
+func pythonOperation(module string) DiskOperation {
+	return DiskOperation{
 		execute: func(dataDir string, op *OperationInstance) error {
 			meta, err := json.Marshal(op)
 			if err != nil {
-				return fmt.Errorf("node2vec failed: %v", err)
+				return fmt.Errorf("%v failed: %v", module, err)
 			}
-			fmt.Println("running node2vec", string(meta))
-			cmd := exec.Command("python", "-m", "python.node2vec", dataDir, string(meta))
+			cmd := exec.Command("python", "-m", "python."+module, dataDir, string(meta))
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			if err := cmd.Run(); err != nil {
-				fmt.Println("node2vec failed")
-				return fmt.Errorf("node2vec failed: %v", err)
+				return fmt.Errorf("%v failed: %v", module, err)
 			}
-			fmt.Println("done node2vec")
 			return nil
 		},
 	}
+}
+
+func init() {
+	diskOperationRepository["Node2Vec"] = pythonOperation("node2vec")
 }
