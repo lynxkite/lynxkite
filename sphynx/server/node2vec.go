@@ -3,30 +3,29 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 )
 
 func init() {
-	operationRepository["Node2Vec"] = Operation{
-		execute: func(ea *EntityAccessor) error {
-			vs := ea.getVertexSet("vs")
-			es, err := ea.WriteToDisk("es")
-			if err != nil {
-				return nil
-			}
-			cmd := exec.Command(
-				"python", "python/node2vec.py",
-				fmt.Sprintf("%v", len(vs.MappingToUnordered)),
-				fmt.Sprintf("%v", ea.GetFloatParam("iterations")),
-				es)
-			cmd.Stderr = os.Stderr
-			output, err := cmd.Output()
+	diskOperationRepository["PageRank"] = DiskOperation{
+		execute: func(dataDir string, op *OperationInstance) error {
+			meta, err := json.Marshal(op)
 			if err != nil {
 				return fmt.Errorf("node2vec failed: %v", err)
 			}
-			return ea.OutputJson(output)
+			fmt.Println("running node2vec", string(meta))
+			cmd := exec.Command("python", "-m", "python.node2vec", dataDir, string(meta))
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				fmt.Println("node2vec failed")
+				return fmt.Errorf("node2vec failed: %v", err)
+			}
+			fmt.Println("done node2vec")
+			return nil
 		},
 	}
 }

@@ -101,4 +101,9 @@ type Operation struct {
 	execute func(ea *EntityAccessor) error
 }
 
+type DiskOperation struct {
+	execute func(dataDir string, op *OperationInstance) error
+}
+
 var operationRepository = map[string]Operation{}
+var diskOperationRepository = map[string]DiskOperation{}

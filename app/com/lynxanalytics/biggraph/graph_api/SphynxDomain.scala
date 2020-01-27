@@ -22,6 +22,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
       "SphynxDomain",
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
+  val supportedTypes = List(typeTag[String], typeTag[Double], typeTag[(Double, Double)])
 }
 
 class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -32,10 +33,8 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    client.compute(jsonMeta).map(_ => ())
+    client.compute(jsonMeta, "SphynxMemory").map(_ => ())
   }
-
-  val supportedTypes = List(typeTag[String], typeTag[Double], typeTag[(Double, Double)])
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
     for (e <- instance.inputs.attributes.values) {
@@ -44,7 +43,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
       }
     }
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    client.canCompute(jsonMeta)
+    client.canCompute(jsonMeta, "SphynxMemory")
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
@@ -80,11 +79,18 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
-    ???
+    val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    client.compute(jsonMeta, "OrderedSphynxDisk").map(_ => ())
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
-    false
+    for (e <- instance.inputs.attributes.values) {
+      if (!supportedTypes.contains(e.typeTag)) {
+        return false
+      }
+    }
+    val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    client.canCompute(jsonMeta, "OrderedSphynxDisk")
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = ???
@@ -95,11 +101,12 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
   }
 
   override def canRelocateFrom(source: Domain): Boolean = {
-    return false
+    return source.isInstanceOf[SphynxMemory]
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    ???
+    assert(source.isInstanceOf[SphynxMemory], s"Cannot fetch $e from $source")
+    client.writeToOrderedDisk(e)
   }
 }
 
