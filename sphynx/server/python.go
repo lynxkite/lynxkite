@@ -1,4 +1,4 @@
-// Node2Vec is a node embedding operation implemented in Python.
+// All operations implemented in Python are registered here.
 
 package main
 
