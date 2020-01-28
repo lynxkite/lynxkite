@@ -14,8 +14,9 @@ type Entity interface {
 	typeName() string // This will help deserializing a serialized entity
 }
 
-type ParquetEntity interface { // Functions to write entities to and read them from Parquet format.
-	orderedRow() interface{} // Object for ParquetReader and ParquetWriter to figure out the schema.
+type ParquetEntity interface { // Get objects for ParquetReader and ParquetWriter to figure out the schema.
+	orderedRow() interface{}
+	unorderedRow() interface{}
 }
 
 func (_ *Scalar) typeName() string {
@@ -63,6 +64,21 @@ func (v *VertexSet) readFromOrdered(pr *reader.ParquetReader, numRows int) error
 	return nil
 }
 
+type UnorderedVertexRow struct {
+	Id int64 `parquet:"name=id, type=INT64"`
+}
+
+func (_ *VertexSet) unorderedRow() interface{} {
+	return new(UnorderedVertexRow)
+}
+func (v *VertexSet) toUnorderedRows() []interface{} {
+	rows := make([]interface{}, len(v.MappingToUnordered))
+	for i, v := range v.MappingToUnordered {
+		rows[i] = UnorderedVertexRow{Id: v}
+	}
+	return rows
+}
+
 type OrderedEdgeRow struct {
 	Src     int64 `parquet:"name=src, type=INT64"`
 	Dst     int64 `parquet:"name=dst, type=INT64"`
@@ -95,9 +111,25 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 	return nil
 }
 
-type OrderedStringAttributeRow struct {
-	Value   string `parquet:"name=value, type=UTF8"`
-	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
+type UnorderedEdgeRow struct {
+	Id  int64 `parquet:"name=id, type=INT64"`
+	Src int64 `parquet:"name=src, type=INT64"`
+	Dst int64 `parquet:"name=dst, type=INT64"`
+}
+
+func (_ *EdgeBundle) unorderedRow() interface{} {
+	return new(UnorderedEdgeRow)
+}
+func (eb *EdgeBundle) toUnorderedRows(vs1 *VertexSet, vs2 *VertexSet) []interface{} {
+	rows := make([]interface{}, len(eb.EdgeMapping))
+	for sphynxId, sparkId := range eb.EdgeMapping {
+		rows[sphynxId] = UnorderedEdgeRow{
+			Id:  sparkId,
+			Src: vs1.MappingToUnordered[eb.Src[sphynxId]],
+			Dst: vs2.MappingToUnordered[eb.Dst[sphynxId]],
+		}
+	}
+	return rows
 }
 
 func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
@@ -112,6 +144,25 @@ func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
 		row.FieldByName("Value").Set(values.Index(i))
 		row.FieldByName("Defined").Set(defined.Index(i))
 		rows.Index(i).Set(row)
+	}
+	return rows.Interface().([]interface{})
+}
+
+func AttributeToUnorderedRows(attr ParquetEntity, vs *VertexSet) []interface{} {
+	a := reflect.ValueOf(attr)
+	values := a.Elem().FieldByName("Values")
+	defined := a.Elem().FieldByName("Defined")
+	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), 0, 0)
+	rowType := reflect.Indirect(reflect.ValueOf(attr.unorderedRow())).Type()
+	numValues := values.Len()
+	for i := 0; i < numValues; i++ {
+		if defined.Index(i).Bool() {
+			sparkId := vs.MappingToUnordered[i]
+			row := reflect.New(rowType).Elem()
+			row.FieldByName("Value").Set(values.Index(i))
+			row.FieldByName("Id").Set(reflect.ValueOf(sparkId))
+			rows = reflect.Append(rows, row)
+		}
 	}
 	return rows.Interface().([]interface{})
 }
@@ -146,8 +197,22 @@ func ReadAttributeFromOrdered(origAttr ParquetEntity, pr *reader.ParquetReader, 
 	return nil
 }
 
+type OrderedStringAttributeRow struct {
+	Value   string `parquet:"name=value, type=UTF8"`
+	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
+}
+
 func (_ *StringAttribute) orderedRow() interface{} {
 	return new(OrderedStringAttributeRow)
+}
+
+type UnorderedStringAttributeRow struct {
+	Id    int64  `parquet:"name=id, type=INT64"`
+	Value string `parquet:"name=value, type=UTF8"`
+}
+
+func (_ *StringAttribute) unorderedRow() interface{} {
+	return new(UnorderedStringAttributeRow)
 }
 
 type OrderedDoubleAttributeRow struct {
@@ -159,6 +224,15 @@ func (_ *DoubleAttribute) orderedRow() interface{} {
 	return new(OrderedDoubleAttributeRow)
 }
 
+type UnorderedDoubleAttributeRow struct {
+	Id    int64   `parquet:"name=id, type=INT64"`
+	Value float64 `parquet:"name=value, type=DOUBLE"`
+}
+
+func (_ *DoubleAttribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleAttributeRow)
+}
+
 type OrderedDoubleTuple2AttributeRow struct {
 	Value   DoubleTuple2AttributeValue `parquet:"name=value"`
 	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
@@ -168,25 +242,13 @@ func (_ *DoubleTuple2Attribute) orderedRow() interface{} {
 	return new(OrderedDoubleTuple2AttributeRow)
 }
 
-type Vertex struct {
-	Id int64 `parquet:"name=id, type=INT64"`
-}
-type Edge struct {
-	Id  int64 `parquet:"name=id, type=INT64"`
-	Src int64 `parquet:"name=src, type=INT64"`
-	Dst int64 `parquet:"name=dst, type=INT64"`
-}
-type SingleStringAttribute struct {
-	Id    int64  `parquet:"name=id, type=INT64"`
-	Value string `parquet:"name=value, type=UTF8"`
-}
-type SingleDoubleAttribute struct {
-	Id    int64   `parquet:"name=id, type=INT64"`
-	Value float64 `parquet:"name=value, type=DOUBLE"`
-}
-type SingleDoubleTuple2Attribute struct {
+type UnorderedDoubleTuple2AttributeRow struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleTuple2AttributeValue `parquet:"name=value"`
+}
+
+func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleTuple2AttributeRow)
 }
 
 func (s *Scalar) write(dirName string) error {
