@@ -71,7 +71,11 @@ object CustomOperationParameterMeta {
     "boolean",
     "code",
     "vertexattribute",
+    "doublevertexattribute",
+    "stringvertexattribute",
     "edgeattribute",
+    "doubleedgeattribute",
+    "stringedgeattribute",
     "segmentation",
     "scalar",
     "column")
@@ -707,7 +711,11 @@ class CustomBoxOperation(
         case "boolean" => Choice(id, id, FEOption.bools)
         case "code" => Code(id, id, "plain_text", dv)
         case "vertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
+        case "doublevertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
+        case "stringvertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
         case "edgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
+        case "doubleedgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
+        case "stringedgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
         case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
         case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
