@@ -38,8 +38,7 @@ func (_ *DoubleTuple2Attribute) typeName() string {
 }
 
 type OrderedVertexRow struct {
-	SphynxId int64 `parquet:"name=sphynxId, type=INT64"`
-	SparkId  int64 `parquet:"name=sparkId, type=INT64"`
+	SparkId int64 `parquet:"name=sparkId, type=INT64"`
 }
 
 func (_ *VertexSet) orderedRow() interface{} {
@@ -48,7 +47,7 @@ func (_ *VertexSet) orderedRow() interface{} {
 func (v *VertexSet) toOrderedRows() []interface{} {
 	rows := make([]interface{}, len(v.MappingToUnordered))
 	for i, sparkId := range v.MappingToUnordered {
-		rows[i] = OrderedVertexRow{SphynxId: int64(i), SparkId: sparkId}
+		rows[i] = OrderedVertexRow{SparkId: sparkId}
 	}
 	return rows
 }
@@ -58,17 +57,16 @@ func (v *VertexSet) readFromOrdered(pr *reader.ParquetReader, numRows int) error
 		return fmt.Errorf("Failed to read parquet file: %v", err)
 	}
 	v.MappingToUnordered = make([]int64, numRows)
-	for _, row := range rows {
-		v.MappingToUnordered[int(row.SphynxId)] = row.SparkId
+	for i, row := range rows {
+		v.MappingToUnordered[i] = row.SparkId
 	}
 	return nil
 }
 
 type OrderedEdgeRow struct {
-	SphynxId int64 `parquet:"name=sphynxId, type=INT64"`
-	Src      int64 `parquet:"name=src, type=INT64"`
-	Dst      int64 `parquet:"name=dst, type=INT64"`
-	SparkId  int64 `parquet:"name=sparkId, type=INT64"`
+	Src     int64 `parquet:"name=src, type=INT64"`
+	Dst     int64 `parquet:"name=dst, type=INT64"`
+	SparkId int64 `parquet:"name=sparkId, type=INT64"`
 }
 
 func (_ *EdgeBundle) orderedRow() interface{} {
@@ -77,7 +75,7 @@ func (_ *EdgeBundle) orderedRow() interface{} {
 func (eb *EdgeBundle) toOrderedRows() []interface{} {
 	rows := make([]interface{}, len(eb.Src))
 	for i, v := range eb.EdgeMapping {
-		rows[i] = OrderedEdgeRow{SphynxId: int64(i), Src: int64(eb.Src[i]), Dst: int64(eb.Dst[i]), SparkId: v}
+		rows[i] = OrderedEdgeRow{Src: int64(eb.Src[i]), Dst: int64(eb.Dst[i]), SparkId: v}
 	}
 	return rows
 }
@@ -89,8 +87,7 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 	eb.Src = make([]int, numRows)
 	eb.Dst = make([]int, numRows)
 	eb.EdgeMapping = make([]int64, numRows)
-	for _, row := range rows {
-		i := int(row.SphynxId)
+	for i, row := range rows {
 		eb.Src[i] = int(row.Src)
 		eb.Dst[i] = int(row.Dst)
 		eb.EdgeMapping[i] = row.SparkId
@@ -99,9 +96,8 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 }
 
 type OrderedStringAttributeRow struct {
-	SphynxId int64  `parquet:"name=sphynxId, type=INT64"`
-	Value    string `parquet:"name=value, type=UTF8"`
-	Defined  bool   `parquet:"name=defined, type=BOOLEAN"`
+	Value   string `parquet:"name=value, type=UTF8"`
+	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
 }
 
 func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
@@ -113,7 +109,6 @@ func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
 	rowType := reflect.Indirect(reflect.ValueOf(attr.orderedRow())).Type()
 	for i := 0; i < numValues; i++ {
 		row := reflect.New(rowType).Elem()
-		row.FieldByName("SphynxId").SetInt(int64(i))
 		row.FieldByName("Value").Set(values.Index(i))
 		row.FieldByName("Defined").Set(defined.Index(i))
 		rows.Index(i).Set(row)
@@ -145,9 +140,8 @@ func ReadAttributeFromOrdered(origAttr ParquetEntity, pr *reader.ParquetReader, 
 	defined := attr.Elem().FieldByName("Defined")
 	for i := 0; i < numRows; i++ {
 		row := rows.Index(i)
-		id := int(row.FieldByName("SphynxId").Int())
-		values.Index(id).Set(row.FieldByName("Value"))
-		defined.Index(id).Set(row.FieldByName("Defined"))
+		values.Index(i).Set(row.FieldByName("Value"))
+		defined.Index(i).Set(row.FieldByName("Defined"))
 	}
 	return nil
 }
@@ -157,9 +151,8 @@ func (_ *StringAttribute) orderedRow() interface{} {
 }
 
 type OrderedDoubleAttributeRow struct {
-	SphynxId int64   `parquet:"name=sphynxId, type=INT64"`
-	Value    float64 `parquet:"name=value, type=DOUBLE"`
-	Defined  bool    `parquet:"name=defined, type=BOOLEAN"`
+	Value   float64 `parquet:"name=value, type=DOUBLE"`
+	Defined bool    `parquet:"name=defined, type=BOOLEAN"`
 }
 
 func (_ *DoubleAttribute) orderedRow() interface{} {
@@ -167,9 +160,8 @@ func (_ *DoubleAttribute) orderedRow() interface{} {
 }
 
 type OrderedDoubleTuple2AttributeRow struct {
-	SphynxId int64                      `parquet:"name=sphynxId, type=INT64"`
-	Value    DoubleTuple2AttributeValue `parquet:"name=value"`
-	Defined  bool                       `parquet:"name=defined, type=BOOLEAN"`
+	Value   DoubleTuple2AttributeValue `parquet:"name=value"`
+	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
 }
 
 func (_ *DoubleTuple2Attribute) orderedRow() interface{} {
