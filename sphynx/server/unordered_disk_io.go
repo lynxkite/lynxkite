@@ -16,6 +16,17 @@ import (
 	"strings"
 )
 
+func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interface{} {
+	switch e := e.(type) {
+	case *VertexSet:
+		return e.toUnorderedRows()
+	case *EdgeBundle:
+		return e.toUnorderedRows(vs1, vs2)
+	default:
+		return AttributeToUnorderedRows(e, vs1)
+	}
+}
+
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
@@ -34,135 +45,29 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return nil, fmt.Errorf("Failed to create file: %v", err)
 	}
 	switch e := entity.(type) {
-	case *VertexSet:
-		pw, err := writer.NewParquetWriter(fw, new(Vertex), numGoRoutines)
+	case ParquetEntity:
+		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), numGoRoutines)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
-		for _, v := range e.MappingToUnordered {
-			if err := pw.Write(Vertex{Id: v}); err != nil {
-				return nil, fmt.Errorf("Failed to write parquet file: %v", err)
-			}
-		}
-		if err = pw.WriteStop(); err != nil {
-			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
-		}
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
-		}
-		return &pb.WriteToUnorderedDiskReply{}, nil
-	case *EdgeBundle:
-		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		vs2, err := s.getVertexSet(GUID(in.Vsguid2))
-		if err != nil {
-			return nil, err
-		}
-		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
-		}
-		for sphynxId, sparkId := range e.EdgeMapping {
-			err := pw.Write(Edge{
-				Id:  sparkId,
-				Src: vs1.MappingToUnordered[e.Src[sphynxId]],
-				Dst: vs2.MappingToUnordered[e.Dst[sphynxId]],
-			})
+		var vs1 *VertexSet
+		var vs2 *VertexSet
+		if in.Vsguid1 != "" {
+			vs1, err = s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
+				return nil, err
+			}
+		}
+		if in.Vsguid2 != "" {
+			vs2, err = s.getVertexSet(GUID(in.Vsguid2))
+			if err != nil {
+				return nil, err
+			}
+		}
+		rows := toUnorderedRows(e, vs1, vs2)
+		for _, row := range rows {
+			if err := pw.Write(row); err != nil {
 				return nil, fmt.Errorf("Failed to write parquet file: %v", err)
-			}
-		}
-		if err = pw.WriteStop(); err != nil {
-			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
-		}
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
-		}
-		return &pb.WriteToUnorderedDiskReply{}, nil
-	case *StringAttribute:
-		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
-		}
-		for sphynxId, def := range e.Defined {
-			if def {
-				sparkId := vs1.MappingToUnordered[sphynxId]
-				err := pw.Write(SingleStringAttribute{
-					Id:    sparkId,
-					Value: e.Values[sphynxId],
-				})
-				if err != nil {
-					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
-				}
-			}
-		}
-		if err = pw.WriteStop(); err != nil {
-			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
-		}
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
-		}
-		return &pb.WriteToUnorderedDiskReply{}, nil
-	case *DoubleAttribute:
-		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
-		}
-		for sphynxId, def := range e.Defined {
-			if def {
-				sparkId := vs1.MappingToUnordered[sphynxId]
-				err := pw.Write(SingleDoubleAttribute{
-					Id:    sparkId,
-					Value: e.Values[sphynxId],
-				})
-				if err != nil {
-					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
-				}
-			}
-		}
-		if err = pw.WriteStop(); err != nil {
-			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
-		}
-		err = ioutil.WriteFile(successFile, nil, 0775)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to write Success File: %v", err)
-		}
-		return &pb.WriteToUnorderedDiskReply{}, nil
-	case *DoubleTuple2Attribute:
-		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
-		}
-		if err != nil {
-			return nil, err
-		}
-		for sphynxId, def := range e.Defined {
-			if def {
-				sparkId := vs1.MappingToUnordered[sphynxId]
-				err := pw.Write(SingleDoubleTuple2Attribute{
-					Id:    sparkId,
-					Value: e.Values[sphynxId],
-				})
-				if err != nil {
-					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
-				}
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
@@ -208,15 +113,15 @@ func (s *Server) ReadFromUnorderedDisk(
 	var entity Entity
 	switch in.Type {
 	case "VertexSet":
-		rawVertexSet := make([]Vertex, 0)
+		rawVertexSet := make([]UnorderedVertexRow, 0)
 		numVS := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(Vertex), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, new(UnorderedVertexRow), numGoRoutines)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumVS := int(pr.GetNumRows())
-			partialRawVertexSet := make([]Vertex, partialNumVS)
+			partialRawVertexSet := make([]UnorderedVertexRow, partialNumVS)
 			numVS = numVS + partialNumVS
 			if err := pr.Read(&partialRawVertexSet); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -243,15 +148,15 @@ func (s *Server) ReadFromUnorderedDisk(
 		if err != nil {
 			return nil, err
 		}
-		rawEdgeBundle := make([]Edge, 0)
+		rawEdgeBundle := make([]UnorderedEdgeRow, 0)
 		numES := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(Edge), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), numGoRoutines)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumES := int(pr.GetNumRows())
-			partialRawEdgeBundle := make([]Edge, partialNumES)
+			partialRawEdgeBundle := make([]UnorderedEdgeRow, partialNumES)
 			numES = numES + partialNumES
 			if err := pr.Read(&partialRawEdgeBundle); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -282,15 +187,15 @@ func (s *Server) ReadFromUnorderedDisk(
 			if err != nil {
 				return nil, err
 			}
-			rawAttribute := make([]SingleStringAttribute, 0)
+			rawAttribute := make([]UnorderedStringAttributeRow, 0)
 			numVS := 0
 			for _, fr := range fileReaders {
-				pr, err := reader.NewParquetReader(fr, new(SingleStringAttribute), numGoRoutines)
+				pr, err := reader.NewParquetReader(fr, new(UnorderedStringAttributeRow), numGoRoutines)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 				}
 				partialNumVS := int(pr.GetNumRows())
-				partialRawAttribute := make([]SingleStringAttribute, partialNumVS)
+				partialRawAttribute := make([]UnorderedStringAttributeRow, partialNumVS)
 				numVS = numVS + partialNumVS
 				if err := pr.Read(&partialRawAttribute); err != nil {
 					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -315,15 +220,15 @@ func (s *Server) ReadFromUnorderedDisk(
 			if err != nil {
 				return nil, err
 			}
-			rawAttribute := make([]SingleDoubleAttribute, 0)
+			rawAttribute := make([]UnorderedDoubleAttributeRow, 0)
 			numVS := 0
 			for _, fr := range fileReaders {
-				pr, err := reader.NewParquetReader(fr, new(SingleDoubleAttribute), numGoRoutines)
+				pr, err := reader.NewParquetReader(fr, new(UnorderedDoubleAttributeRow), numGoRoutines)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 				}
 				partialNumVS := int(pr.GetNumRows())
-				partialRawAttribute := make([]SingleDoubleAttribute, partialNumVS)
+				partialRawAttribute := make([]UnorderedDoubleAttributeRow, partialNumVS)
 				numVS = numVS + partialNumVS
 				if err := pr.Read(&partialRawAttribute); err != nil {
 					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -348,15 +253,15 @@ func (s *Server) ReadFromUnorderedDisk(
 			if err != nil {
 				return nil, err
 			}
-			rawAttribute := make([]SingleDoubleTuple2Attribute, 0)
+			rawAttribute := make([]UnorderedDoubleTuple2AttributeRow, 0)
 			numVS := 0
 			for _, fr := range fileReaders {
-				pr, err := reader.NewParquetReader(fr, new(SingleDoubleTuple2Attribute), numGoRoutines)
+				pr, err := reader.NewParquetReader(fr, new(UnorderedDoubleTuple2AttributeRow), numGoRoutines)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 				}
 				partialNumVS := int(pr.GetNumRows())
-				partialRawAttribute := make([]SingleDoubleTuple2Attribute, partialNumVS)
+				partialRawAttribute := make([]UnorderedDoubleTuple2AttributeRow, partialNumVS)
 				numVS = numVS + partialNumVS
 				if err := pr.Read(&partialRawAttribute); err != nil {
 					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
