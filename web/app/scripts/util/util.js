@@ -124,6 +124,10 @@ angular.module('biggraph')
       return toResource(req);
     }
 
+    // We're encoding the path (e.g., /workspaces/ws) in a search query
+    // so that we can go back there after the login.
+    // Also, we're forcing the login to go through https, so http://try.lynxkite.com
+    // gets redirected to https://try.lynxkite.com
     function redirectToLogin(resource) {
       resource.$error = 'Redirecting to login page.';
       const orig = $location.path();
