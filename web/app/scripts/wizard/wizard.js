@@ -3,6 +3,7 @@
 
 angular.module('biggraph')
   .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location) {
+    const md = window.markdownit();
     const path = $routeParams.name.split('/');
     if (path.includes('In progress wizards')) { // These have a timestamp that we hide.
       $scope.name = path[path.length - 2];
@@ -23,6 +24,7 @@ angular.module('biggraph')
         $scope.steps = JSON.parse($scope.workspace.getBox('anchor').instance.parameters.steps);
         for (let step of $scope.steps) {
           step.title = step.title || $scope.workspace.getBox(step.box).instance.operationId;
+          step.html = md.render(step.description || '');
         }
       });
     });
