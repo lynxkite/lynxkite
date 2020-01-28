@@ -7,6 +7,7 @@ import (
 	"github.com/xitongsys/parquet-go/reader"
 	"io/ioutil"
 	"os"
+	"reflect"
 )
 
 type Entity interface {
@@ -15,8 +16,6 @@ type Entity interface {
 
 type ParquetEntity interface { // Functions to write entities to and read them from Parquet format.
 	orderedRow() interface{} // Object for ParquetReader and ParquetWriter to figure out the schema.
-	toOrderedRows() []interface{}
-	readFromOrdered(*reader.ParquetReader, int) error
 }
 
 func (_ *Scalar) typeName() string {
@@ -105,29 +104,56 @@ type OrderedStringAttributeRow struct {
 	Defined  bool   `parquet:"name=defined, type=BOOLEAN"`
 }
 
-func (_ *StringAttribute) orderedRow() interface{} {
-	return new(OrderedStringAttributeRow)
-}
-func (a *StringAttribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedStringAttributeRow{SphynxId: int64(i), Value: v, Defined: a.Defined[i]}
+func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
+	a := reflect.ValueOf(attr)
+	values := a.Elem().FieldByName("Values")
+	defined := a.Elem().FieldByName("Defined")
+	numValues := values.Len()
+	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
+	rowType := reflect.Indirect(reflect.ValueOf(attr.orderedRow())).Type()
+	for i := 0; i < numValues; i++ {
+		row := reflect.New(rowType).Elem()
+		row.FieldByName("SphynxId").SetInt(int64(i))
+		row.FieldByName("Value").Set(values.Index(i))
+		row.FieldByName("Defined").Set(defined.Index(i))
+		rows.Index(i).Set(row)
 	}
-	return rows
+	return rows.Interface().([]interface{})
 }
-func (a *StringAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedStringAttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
+
+func InitializeAttribute(attr reflect.Value, numVS int) {
+	values := attr.Elem().FieldByName("Values")
+	newValues := reflect.MakeSlice(values.Type(), numVS, numVS)
+	values.Set(newValues)
+	defined := attr.Elem().FieldByName("Defined")
+	newDefined := reflect.MakeSlice(defined.Type(), numVS, numVS)
+	defined.Set(newDefined)
+}
+
+func ReadAttributeFromOrdered(origAttr ParquetEntity, pr *reader.ParquetReader, numRows int) error {
+	attr := reflect.ValueOf(origAttr)
+	InitializeAttribute(attr, numRows)
+	rowType := reflect.Indirect(reflect.ValueOf(origAttr.orderedRow())).Type()
+	rowSliceType := reflect.SliceOf(rowType)
+	rowsPointer := reflect.New(rowSliceType)
+	rows := rowsPointer.Elem()
+	rows.Set(reflect.MakeSlice(rowSliceType, numRows, numRows))
+	if err := pr.Read(rowsPointer.Interface()); err != nil {
 		return fmt.Errorf("Failed to read parquet file: %v", err)
 	}
-	a.Values = make([]string, numRows)
-	a.Defined = make([]bool, numRows)
-	for _, row := range rows {
-		i := int(row.SphynxId)
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
+	values := attr.Elem().FieldByName("Values")
+	defined := attr.Elem().FieldByName("Defined")
+	for i := 0; i < numRows; i++ {
+		row := rows.Index(i)
+		id := int(row.FieldByName("SphynxId").Int())
+		values.Index(id).Set(row.FieldByName("Value"))
+		defined.Index(id).Set(row.FieldByName("Defined"))
 	}
 	return nil
+}
+
+func (_ *StringAttribute) orderedRow() interface{} {
+	return new(OrderedStringAttributeRow)
 }
 
 type OrderedDoubleAttributeRow struct {
@@ -139,27 +165,6 @@ type OrderedDoubleAttributeRow struct {
 func (_ *DoubleAttribute) orderedRow() interface{} {
 	return new(OrderedDoubleAttributeRow)
 }
-func (a *DoubleAttribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedDoubleAttributeRow{SphynxId: int64(i), Value: v, Defined: a.Defined[i]}
-	}
-	return rows
-}
-func (a *DoubleAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedDoubleAttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]float64, numRows)
-	a.Defined = make([]bool, numRows)
-	for _, row := range rows {
-		i := int(row.SphynxId)
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
-}
 
 type OrderedDoubleTuple2AttributeRow struct {
 	SphynxId int64                      `parquet:"name=sphynxId, type=INT64"`
@@ -169,27 +174,6 @@ type OrderedDoubleTuple2AttributeRow struct {
 
 func (_ *DoubleTuple2Attribute) orderedRow() interface{} {
 	return new(OrderedDoubleTuple2AttributeRow)
-}
-func (a *DoubleTuple2Attribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedDoubleTuple2AttributeRow{SphynxId: int64(i), Value: v, Defined: a.Defined[i]}
-	}
-	return rows
-}
-func (a *DoubleTuple2Attribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedDoubleTuple2AttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]DoubleTuple2AttributeValue, numRows)
-	a.Defined = make([]bool, numRows)
-	for _, row := range rows {
-		i := int(row.SphynxId)
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
 }
 
 type Vertex struct {

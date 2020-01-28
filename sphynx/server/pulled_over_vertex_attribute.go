@@ -9,6 +9,8 @@ import (
 func init() {
 	operationRepository["PulledOverVertexAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
+			origAttr := ea.inputs["originalAttr"].(ParquetEntity)
+			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
 			destToOrig := make(map[int]int, len(function.Src))
@@ -16,16 +18,11 @@ func init() {
 				destToOrig[function.Src[i]] = function.Dst[i]
 			}
 			numVS := len(destinationVS.MappingToUnordered)
-			origAttr := ea.inputs["originalAttr"]
-			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			attrType := reflect.Indirect(reflect.ValueOf(origAttr)).Type()
 			destAttr := reflect.New(attrType)
+			InitializeAttribute(destAttr, numVS)
 			destValues := destAttr.Elem().FieldByName("Values")
-			newValues := reflect.MakeSlice(destValues.Type(), numVS, numVS)
-			destValues.Set(newValues)
 			destDefined := destAttr.Elem().FieldByName("Defined")
-			newDefined := reflect.MakeSlice(destDefined.Type(), numVS, numVS)
-			destDefined.Set(newDefined)
 			for destId := range destinationVS.MappingToUnordered {
 				origId := destToOrig[destId]
 				value := origValues.Index(origId)
