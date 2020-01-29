@@ -1,3 +1,4 @@
+<div class="clearfix">
 <div
   ng-repeat="state in result.states track by $index"
   id="state-{{ $index }}" ng-if="interactive">
@@ -72,6 +73,7 @@
       parametric-parameters="instruments[$index].parametricParameters"
       on-blur="onBlur()"></op-editor>
   </div>
+</div>
 </div>
 
 <project-state-view
