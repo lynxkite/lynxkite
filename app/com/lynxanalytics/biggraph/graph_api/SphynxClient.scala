@@ -44,14 +44,16 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
   private val blockingStub = SphynxGrpc.newBlockingStub(channel)
   private val asyncStub = SphynxGrpc.newStub(channel)
 
-  def canCompute(operationMetadataJSON: String): Boolean = {
-    val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
+  def canCompute(operationMetadataJSON: String, domain: String): Boolean = {
+    val request = SphynxOuterClass.CanComputeRequest.newBuilder()
+      .setOperation(operationMetadataJSON).setDomain(domain).build()
     val response = blockingStub.canCompute(request)
     response.getCanCompute
   }
 
-  def compute(operationMetadataJSON: String): SafeFuture[Unit] = {
-    val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
+  def compute(operationMetadataJSON: String, domain: String): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.ComputeRequest.newBuilder()
+      .setOperation(operationMetadataJSON).setDomain(domain).build()
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.ComputeReply]
     asyncStub.compute(request, obs)
     obs.future.map(_ => ())
@@ -130,6 +132,13 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     val request = SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.newBuilder().setGuid(guid).build()
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.ReadFromOrderedSphynxDiskReply]
     asyncStub.readFromOrderedSphynxDisk(request, obs)
+    obs.future.map(_ => ())
+  }
+
+  def writeToOrderedDisk(e: MetaGraphEntity): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.WriteToOrderedDiskRequest.newBuilder().setGuid(e.gUID.toString).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.WriteToOrderedDiskReply]
+    asyncStub.writeToOrderedDisk(request, obs)
     obs.future.map(_ => ())
   }
 
