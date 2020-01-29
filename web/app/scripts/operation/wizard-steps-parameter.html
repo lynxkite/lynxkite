@@ -1,9 +1,23 @@
-<table class="table-condensed">
+<table class="table-condensed" style="width: 100%;">
   <tr><th></th><th>title</th><th>description</th><th>box</th><th>popup</th></tr>
   <tr ng-repeat="s in steps track by $index">
     <td style="text-align: right; font-size: 30px;">{{ $index + 1 }}</td>
     <td><input ng-model="s.title" class="form-control" placeholder="{{ defaultTitle(s) }}"></td>
-    <td><input ng-model="s.description" class="form-control" placeholder="optional"></td>
+    <td width="30%"><div
+      ui-ace="{
+        mode: 'markdown',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+      }"
+      class="form-control operation-attribute-entry"
+      ng-model="s.description"></div></td>
+
     <td><select ng-model="s.box" ng-options="b for b in boxes()" class="form-control"></td>
     <td><select ng-model="s.popup" ng-options="p for p in popups(s.box)" class="form-control"></td>
     <td class="btn-group" style="width: 130px;">
