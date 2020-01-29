@@ -6,6 +6,7 @@ package sphynx;
 
 message CanComputeRequest {
   string operation = 1;
+  string domain = 2;
 }
 
 message CanComputeReply {
@@ -14,6 +15,7 @@ message CanComputeReply {
 
 message ComputeRequest {
   string operation = 1;
+  string domain = 2;
 }
 
 message ComputeReply {}
@@ -31,6 +33,11 @@ message WriteToUnorderedDiskRequest {
   string vsguid1 = 2;
   string vsguid2 = 3;
 }
+
+message WriteToOrderedDiskRequest {
+  string guid = 1;
+}
+message WriteToOrderedDiskReply {}
 
 message ReadFromUnorderedDiskRequest {
   string guid = 1;
@@ -73,6 +80,7 @@ service Sphynx {
   rpc GetScalar (GetScalarRequest) returns (GetScalarReply);
   rpc WriteToUnorderedDisk (WriteToUnorderedDiskRequest) returns (WriteToUnorderedDiskReply);
   rpc ReadFromUnorderedDisk (ReadFromUnorderedDiskRequest) returns (ReadFromUnorderedDiskReply);
+  rpc WriteToOrderedDisk (WriteToOrderedDiskRequest) returns (WriteToOrderedDiskReply);
   rpc ReadFromOrderedSphynxDisk(ReadFromOrderedSphynxDiskRequest) returns (ReadFromOrderedSphynxDiskReply);
   rpc HasOnOrderedSphynxDisk(HasOnOrderedSphynxDiskRequest) returns (HasOnOrderedSphynxDiskReply);
   rpc HasInSphynxMemory(HasInSphynxMemoryRequest) returns (HasInSphynxMemoryReply);
