@@ -9,7 +9,7 @@ KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-$HOME/.kiterc}
 . $KITE_SITE_CONFIG
 
 if [ -f $SPHYNX_PID_FILE ]; then
-    kill `cat $SPHYNX_PID_FILE`
+    kill `cat $SPHYNX_PID_FILE` || true
 fi
 
 
@@ -22,7 +22,5 @@ go get -v $GO_PKG/server
 popd
 mkdir -p ../stage/sphynx/go/bin/
 cp go/bin/server ../stage/sphynx/go/bin/
-../stage/sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR &
-SPHYNX_PID=$!
-echo $SPHYNX_PID > $SPHYNX_PID_FILE
+../stage/sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR
 
