@@ -270,7 +270,7 @@ func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
 }
 
 type OrderedDoubleVectorAttributeRow struct {
-	Value   DoubleVectorAttributeValue `parquet:"name=value"`
+	Value   DoubleVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=DOUBLE"`
 	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
 }
 
