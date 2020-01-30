@@ -211,7 +211,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			}
 			partialNumRows := int(pr.GetNumRows())
 			partialRowsPointer := reflect.New(rowSliceType)
-			partialRows := rowsPointer.Elem()
+			partialRows := partialRowsPointer.Elem()
 			partialRows.Set(reflect.MakeSlice(rowSliceType, partialNumRows, partialNumRows))
 			numRows = partialNumRows + numRows
 			if err := pr.Read(partialRowsPointer.Interface()); err != nil {
