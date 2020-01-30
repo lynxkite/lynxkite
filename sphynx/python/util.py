@@ -27,12 +27,15 @@ class Op:
 
   def input(self, name):
     '''Reads the input as a Pandas DataFrame. Useful if you need all the data.'''
+    # TODO: Instead of a "defined" column use NaNs.
     return pd.read_parquet(f'{self.datadir}/{self.inputs[name]}/data.parquet')
 
   def output(self, name, values, defined=None):
     '''Writes a list or Numpy array to disk.'''
+    if isinstance(values, list):
+      values = np.array(values)
     if defined is None:
-      defined = [True] * len(values)
+      defined = ~np.isnan(values)
     result = pd.DataFrame({'value': values, 'defined': defined})
     path = self.datadir + '/' + self.outputs[name]
     os.makedirs(path, exist_ok=True)

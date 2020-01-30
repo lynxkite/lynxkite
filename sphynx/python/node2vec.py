@@ -6,7 +6,8 @@ from torch_geometric.nn import Node2Vec
 from . import util
 
 op = util.Op()
-embedding_dim = op.params['iterations']
+embedding_dim = op.params['dimensions']
+iterations = op.params['iterations']
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'node2vec in {embedding_dim} dimensions running on {device}')
 num_nodes = op.input_parquet('vs').metadata.num_rows
@@ -31,7 +32,7 @@ model, edges = model.to(device), edges.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 # Train model.
-for epoch in range(10):
+for epoch in range(iterations):
   model.train()
   total_loss = 0
   for subset in loader:
@@ -46,4 +47,4 @@ for epoch in range(10):
 model.eval()
 with torch.no_grad():
   z = model(torch.arange(num_nodes, device=device))
-op.output('pagerank', z.T[0].tolist())
+op.output('embedding', z)
