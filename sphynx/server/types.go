@@ -88,3 +88,9 @@ type DoubleTuple2Attribute struct {
 	Values  []DoubleTuple2AttributeValue
 	Defined []bool
 }
+
+type DoubleVectorAttributeValue []double
+type DoubleVectorAttribute struct {
+	Values  []DoubleVectorAttributeValue
+	Defined []bool
+}
