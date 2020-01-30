@@ -265,10 +265,6 @@ type UnorderedDoubleTuple2AttributeRow struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleTuple2AttributeValue `parquet:"name=value"`
 }
-type SingleDoubleVectorAttribute struct {
-	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleVectorAttributeValue `parquet:"name=value"`
-}
 
 func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleTuple2AttributeRow)
@@ -284,10 +280,6 @@ func (_ *DoubleVectorAttribute) orderedRow() interface{} {
 }
 
 type UnorderedDoubleVectorAttributeRow struct {
-	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleVectorAttributeValue `parquet:"name=value"`
-}
-type SingleDoubleVectorAttribute struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleVectorAttributeValue `parquet:"name=value"`
 }

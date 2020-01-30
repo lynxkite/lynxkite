@@ -89,7 +89,7 @@ type DoubleTuple2Attribute struct {
 	Defined []bool
 }
 
-type DoubleVectorAttributeValue []double
+type DoubleVectorAttributeValue []float64
 type DoubleVectorAttribute struct {
 	Values  []DoubleVectorAttributeValue
 	Defined []bool
