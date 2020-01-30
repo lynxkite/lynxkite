@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/gob"
 	"fmt"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -13,17 +12,6 @@ import (
 	"log"
 	"os"
 )
-
-func loadField(path string, data interface{}) error {
-	file, e := os.Open(path)
-	if e != nil {
-		return e
-	}
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	decoder := gob.NewDecoder(reader)
-	return decoder.Decode(data)
-}
 
 func createEntity(typeName string) (Entity, error) {
 	switch typeName {
@@ -83,7 +71,7 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 		if err != nil {
 			return fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
-		rows := e.toOrderedRows()
+		rows := toOrderedRows(e)
 		for _, row := range rows {
 			if err := pw.Write(row); err != nil {
 				return fmt.Errorf("Failed to write parquet file: %v", err)
@@ -101,6 +89,29 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 		return e.write(dirName)
 	default:
 		return fmt.Errorf("Can't write entity with GUID %v to Ordered Sphynx Disk.", guid)
+	}
+}
+
+func toOrderedRows(e ParquetEntity) []interface{} {
+	switch e := e.(type) {
+	case *VertexSet:
+		return e.toOrderedRows()
+	case *EdgeBundle:
+		return e.toOrderedRows()
+	default:
+		return AttributeToOrderedRows(e)
+	}
+}
+
+func readFromOrdered(e ParquetEntity, pr *reader.ParquetReader) error {
+	numRows := int(pr.GetNumRows())
+	switch e := e.(type) {
+	case *VertexSet:
+		return e.readFromOrdered(pr, numRows)
+	case *EdgeBundle:
+		return e.readFromOrdered(pr, numRows)
+	default:
+		return ReadAttributeFromOrdered(e, pr, numRows)
 	}
 }
 
@@ -137,8 +148,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet reader %v: %v", dirName, err)
 		}
-		numRows := int(pr.GetNumRows())
-		if err = e.readFromOrdered(pr, numRows); err != nil {
+		if err = readFromOrdered(e, pr); err != nil {
 			return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
 		}
 		pr.ReadStop()
