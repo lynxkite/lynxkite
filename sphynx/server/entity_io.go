@@ -153,7 +153,6 @@ func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
 	numValues := values.Len()
 	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
 	rowType := reflect.TypeOf(attr.orderedRow()).Elem()
-	fmt.Println("rowType", rowType)
 	valueIndex := fieldIndex(rowType, "Value")
 	definedIndex := fieldIndex(rowType, "Defined")
 	row := reflect.New(rowType).Elem()
