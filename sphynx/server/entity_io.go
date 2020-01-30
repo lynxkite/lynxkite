@@ -7,16 +7,16 @@ import (
 	"github.com/xitongsys/parquet-go/reader"
 	"io/ioutil"
 	"os"
+	"reflect"
 )
 
 type Entity interface {
 	typeName() string // This will help deserializing a serialized entity
 }
 
-type ParquetEntity interface { // Functions to write entities to and read them from Parquet format.
-	orderedRow() interface{} // Object for ParquetReader and ParquetWriter to figure out the schema.
-	toOrderedRows() []interface{}
-	readFromOrdered(*reader.ParquetReader, int) error
+type ParquetEntity interface { // Get objects for ParquetReader and ParquetWriter to figure out the schema.
+	orderedRow() interface{}
+	unorderedRow() interface{}
 }
 
 func (_ *Scalar) typeName() string {
@@ -67,6 +67,21 @@ func (v *VertexSet) readFromOrdered(pr *reader.ParquetReader, numRows int) error
 	return nil
 }
 
+type UnorderedVertexRow struct {
+	Id int64 `parquet:"name=id, type=INT64"`
+}
+
+func (_ *VertexSet) unorderedRow() interface{} {
+	return new(UnorderedVertexRow)
+}
+func (v *VertexSet) toUnorderedRows() []interface{} {
+	rows := make([]interface{}, len(v.MappingToUnordered))
+	for i, v := range v.MappingToUnordered {
+		rows[i] = UnorderedVertexRow{Id: v}
+	}
+	return rows
+}
+
 type OrderedEdgeRow struct {
 	Src     int64 `parquet:"name=src, type=INT64"`
 	Dst     int64 `parquet:"name=dst, type=INT64"`
@@ -99,6 +114,108 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 	return nil
 }
 
+type UnorderedEdgeRow struct {
+	Id  int64 `parquet:"name=id, type=INT64"`
+	Src int64 `parquet:"name=src, type=INT64"`
+	Dst int64 `parquet:"name=dst, type=INT64"`
+}
+
+func (_ *EdgeBundle) unorderedRow() interface{} {
+	return new(UnorderedEdgeRow)
+}
+func (eb *EdgeBundle) toUnorderedRows(vs1 *VertexSet, vs2 *VertexSet) []interface{} {
+	rows := make([]interface{}, len(eb.EdgeMapping))
+	for sphynxId, sparkId := range eb.EdgeMapping {
+		rows[sphynxId] = UnorderedEdgeRow{
+			Id:  sparkId,
+			Src: vs1.MappingToUnordered[eb.Src[sphynxId]],
+			Dst: vs2.MappingToUnordered[eb.Dst[sphynxId]],
+		}
+	}
+	return rows
+}
+
+func fieldIndex(t reflect.Type, name string) int {
+	f, ok := t.FieldByName(name)
+	if !ok {
+		panic(fmt.Sprintf("no %s field in %v", name, t))
+	}
+	if len(f.Index) != 1 {
+		panic(fmt.Sprintf("field %v in %v is too complex", name, t))
+	}
+	return f.Index[0]
+}
+
+func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
+	a := reflect.ValueOf(attr)
+	values := a.Elem().FieldByName("Values")
+	defined := a.Elem().FieldByName("Defined")
+	numValues := values.Len()
+	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
+	rowType := reflect.TypeOf(attr.orderedRow()).Elem()
+	fmt.Println("rowType", rowType)
+	valueIndex := fieldIndex(rowType, "Value")
+	definedIndex := fieldIndex(rowType, "Defined")
+	row := reflect.New(rowType).Elem()
+	for i := 0; i < numValues; i++ {
+		row.Field(valueIndex).Set(values.Index(i))
+		row.Field(definedIndex).Set(defined.Index(i))
+		rows.Index(i).Set(row)
+	}
+	return rows.Interface().([]interface{})
+}
+
+func AttributeToUnorderedRows(attr ParquetEntity, vs *VertexSet) []interface{} {
+	a := reflect.ValueOf(attr)
+	values := a.Elem().FieldByName("Values")
+	defined := a.Elem().FieldByName("Defined")
+	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), 0, 0)
+	rowType := reflect.TypeOf(attr.unorderedRow()).Elem()
+	valueIndex := fieldIndex(rowType, "Value")
+	idIndex := fieldIndex(rowType, "Id")
+	numValues := values.Len()
+	row := reflect.New(rowType).Elem()
+	for i := 0; i < numValues; i++ {
+		if defined.Index(i).Bool() {
+			sparkId := vs.MappingToUnordered[i]
+			row.Field(valueIndex).Set(values.Index(i))
+			row.Field(idIndex).Set(reflect.ValueOf(sparkId))
+			rows = reflect.Append(rows, row)
+		}
+	}
+	return rows.Interface().([]interface{})
+}
+
+func InitializeAttribute(attr reflect.Value, numVS int) {
+	values := attr.Elem().FieldByName("Values")
+	newValues := reflect.MakeSlice(values.Type(), numVS, numVS)
+	values.Set(newValues)
+	defined := attr.Elem().FieldByName("Defined")
+	newDefined := reflect.MakeSlice(defined.Type(), numVS, numVS)
+	defined.Set(newDefined)
+}
+
+func ReadAttributeFromOrdered(origAttr ParquetEntity, pr *reader.ParquetReader, numRows int) error {
+	attr := reflect.ValueOf(origAttr)
+	InitializeAttribute(attr, numRows)
+	rowType := reflect.Indirect(reflect.ValueOf(origAttr.orderedRow())).Type()
+	rowSliceType := reflect.SliceOf(rowType)
+	rowsPointer := reflect.New(rowSliceType)
+	rows := rowsPointer.Elem()
+	rows.Set(reflect.MakeSlice(rowSliceType, numRows, numRows))
+	if err := pr.Read(rowsPointer.Interface()); err != nil {
+		return fmt.Errorf("Failed to read parquet file: %v", err)
+	}
+	values := attr.Elem().FieldByName("Values")
+	defined := attr.Elem().FieldByName("Defined")
+	for i := 0; i < numRows; i++ {
+		row := rows.Index(i)
+		values.Index(i).Set(row.FieldByName("Value"))
+		defined.Index(i).Set(row.FieldByName("Defined"))
+	}
+	return nil
+}
+
 type OrderedStringAttributeRow struct {
 	Value   string `parquet:"name=value, type=UTF8"`
 	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
@@ -107,25 +224,14 @@ type OrderedStringAttributeRow struct {
 func (_ *StringAttribute) orderedRow() interface{} {
 	return new(OrderedStringAttributeRow)
 }
-func (a *StringAttribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedStringAttributeRow{Value: v, Defined: a.Defined[i]}
-	}
-	return rows
+
+type UnorderedStringAttributeRow struct {
+	Id    int64  `parquet:"name=id, type=INT64"`
+	Value string `parquet:"name=value, type=UTF8"`
 }
-func (a *StringAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedStringAttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]string, numRows)
-	a.Defined = make([]bool, numRows)
-	for i, row := range rows {
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
+
+func (_ *StringAttribute) unorderedRow() interface{} {
+	return new(UnorderedStringAttributeRow)
 }
 
 type OrderedDoubleAttributeRow struct {
@@ -136,25 +242,14 @@ type OrderedDoubleAttributeRow struct {
 func (_ *DoubleAttribute) orderedRow() interface{} {
 	return new(OrderedDoubleAttributeRow)
 }
-func (a *DoubleAttribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedDoubleAttributeRow{Value: v, Defined: a.Defined[i]}
-	}
-	return rows
+
+type UnorderedDoubleAttributeRow struct {
+	Id    int64   `parquet:"name=id, type=INT64"`
+	Value float64 `parquet:"name=value, type=DOUBLE"`
 }
-func (a *DoubleAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedDoubleAttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]float64, numRows)
-	a.Defined = make([]bool, numRows)
-	for i, row := range rows {
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
+
+func (_ *DoubleAttribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleAttributeRow)
 }
 
 type OrderedDoubleTuple2AttributeRow struct {
@@ -165,25 +260,18 @@ type OrderedDoubleTuple2AttributeRow struct {
 func (_ *DoubleTuple2Attribute) orderedRow() interface{} {
 	return new(OrderedDoubleTuple2AttributeRow)
 }
-func (a *DoubleTuple2Attribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedDoubleTuple2AttributeRow{Value: v, Defined: a.Defined[i]}
-	}
-	return rows
+
+type UnorderedDoubleTuple2AttributeRow struct {
+	Id    int64                      `parquet:"name=id, type=INT64"`
+	Value DoubleTuple2AttributeValue `parquet:"name=value"`
 }
-func (a *DoubleTuple2Attribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedDoubleTuple2AttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]DoubleTuple2AttributeValue, numRows)
-	a.Defined = make([]bool, numRows)
-	for i, row := range rows {
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
+type SingleDoubleVectorAttribute struct {
+	Id    int64                      `parquet:"name=id, type=INT64"`
+	Value DoubleVectorAttributeValue `parquet:"name=value"`
+}
+
+func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleTuple2AttributeRow)
 }
 
 type OrderedDoubleVectorAttributeRow struct {
@@ -194,50 +282,18 @@ type OrderedDoubleVectorAttributeRow struct {
 func (_ *DoubleVectorAttribute) orderedRow() interface{} {
 	return new(OrderedDoubleVectorAttributeRow)
 }
-func (a *DoubleVectorAttribute) toOrderedRows() []interface{} {
-	rows := make([]interface{}, len(a.Values))
-	for i, v := range a.Values {
-		rows[i] = OrderedDoubleVectorAttributeRow{Value: v, Defined: a.Defined[i]}
-	}
-	return rows
-}
-func (a *DoubleVectorAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	rows := make([]OrderedDoubleVectorAttributeRow, numRows)
-	if err := pr.Read(&rows); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
-	}
-	a.Values = make([]DoubleVectorAttributeValue, numRows)
-	a.Defined = make([]bool, numRows)
-	for i, row := range rows {
-		a.Values[i] = row.Value
-		a.Defined[i] = row.Defined
-	}
-	return nil
-}
 
-type Vertex struct {
-	Id int64 `parquet:"name=id, type=INT64"`
-}
-type Edge struct {
-	Id  int64 `parquet:"name=id, type=INT64"`
-	Src int64 `parquet:"name=src, type=INT64"`
-	Dst int64 `parquet:"name=dst, type=INT64"`
-}
-type SingleStringAttribute struct {
-	Id    int64  `parquet:"name=id, type=INT64"`
-	Value string `parquet:"name=value, type=UTF8"`
-}
-type SingleDoubleAttribute struct {
-	Id    int64   `parquet:"name=id, type=INT64"`
-	Value float64 `parquet:"name=value, type=DOUBLE"`
-}
-type SingleDoubleTuple2Attribute struct {
+type UnorderedDoubleVectorAttributeRow struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleTuple2AttributeValue `parquet:"name=value"`
+	Value DoubleVectorAttributeValue `parquet:"name=value"`
 }
 type SingleDoubleVectorAttribute struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleVectorAttributeValue `parquet:"name=value"`
+}
+
+func (_ *DoubleVectorAttribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleVectorAttributeRow)
 }
 
 func (s *Scalar) write(dirName string) error {
