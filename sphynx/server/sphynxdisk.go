@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/writer"
@@ -117,7 +119,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	typeFName := fmt.Sprintf("%v/type_name", dirName)
 	typeData, err := ioutil.ReadFile(typeFName)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read type file: %v", err)
+		return nil, fmt.Errorf("Failed to read type of %v: %v", dirName, err)
 	}
 	typeName := string(typeData)
 	e, err := createEntity(typeName)
@@ -133,20 +135,19 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 			return nil, err
 		}
 		if !onDisk {
-			return nil, fmt.Errorf("Path is not present : %v", guid)
+			return nil, fmt.Errorf("Path is not present: %v", dirName)
 		}
 		fr, err := local.NewLocalFileReader(fname)
 		defer fr.Close()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to open file: %v", err)
+			return nil, fmt.Errorf("Failed to open %v: %v", dirName, err)
 		}
 		pr, err := reader.NewParquetReader(fr, e.orderedRow(), numGoRoutines)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet reader %v: %v", dirName, err)
 		}
-		err = readFromOrdered(e, pr)
-		if err != nil {
-			return nil, err
+		if err = readFromOrdered(e, pr); err != nil {
+			return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
 		}
 		pr.ReadStop()
 	case *Scalar:
@@ -158,6 +159,19 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		return nil, fmt.Errorf("Failed to read entity with GUID %v from Ordered Sphynx Disk.", guid)
 	}
 	return e, nil
+}
+
+func (s *Server) WriteToOrderedDisk(
+	ctx context.Context, in *pb.WriteToOrderedDiskRequest) (*pb.WriteToOrderedDiskReply, error) {
+	guid := GUID(in.Guid)
+	e, exists := s.entities[guid]
+	if !exists {
+		return nil, fmt.Errorf("%v is not in memory", guid)
+	}
+	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {
+		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
+	}
+	return &pb.WriteToOrderedDiskReply{}, nil
 }
 
 func hasOnDisk(dataDir string, guid GUID) (bool, error) {

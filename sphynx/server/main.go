@@ -25,11 +25,9 @@ func OperationInstanceFromJSON(opJSON string) OperationInstance {
 	return opInst
 }
 
-func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
+func shortOpName(opInst OperationInstance) string {
 	className := opInst.Operation.Class
-	shortenedClass := className[len("com.lynxanalytics.biggraph.graph_operations."):]
-	op, exists := operationRepository[shortenedClass]
-	return op, exists
+	return className[len("com.lynxanalytics.biggraph.graph_operations."):]
 }
 
 func NewServer() Server {
@@ -45,7 +43,13 @@ func NewServer() Server {
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
-	_, exists := getExecutableOperation(opInst)
+	exists := false
+	switch in.Domain {
+	case "SphynxMemory":
+		_, exists = operationRepository[shortOpName(opInst)]
+	case "OrderedSphynxDisk":
+		_, exists = diskOperationRepository[shortOpName(opInst)]
+	}
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
@@ -63,10 +67,12 @@ func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
-	op, exists := getExecutableOperation(opInst)
-	if !exists {
-		return nil, fmt.Errorf("Can't compute %v", opInst)
-	} else {
+	switch in.Domain {
+	case "SphynxMemory":
+		op, exists := operationRepository[shortOpName(opInst)]
+		if !exists {
+			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
+		}
 		inputs, err := collectInputs(s, &opInst)
 		if err != nil {
 			return nil, err
@@ -101,8 +107,17 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		}
 		s.Unlock()
 		go saveOutputs(s.dataDir, ea.outputs)
-		return &pb.ComputeReply{}, nil
+	case "OrderedSphynxDisk":
+		op, exists := diskOperationRepository[shortOpName(opInst)]
+		if !exists {
+			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
+		}
+		err := op.execute(s.dataDir, &opInst)
+		if err != nil {
+			return nil, err
+		}
 	}
+	return &pb.ComputeReply{}, nil
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
