@@ -225,12 +225,15 @@ func (s *Server) ReadFromUnorderedDisk(
 		InitializeAttribute(attr, numVS)
 		values := attr.Elem().FieldByName("Values")
 		defined := attr.Elem().FieldByName("Defined")
+		idIndex := fieldIndex(rowType, "Id")
+		valueIndex := fieldIndex(rowType, "Value")
 		mappingToOrdered := vs.GetMappingToOrdered()
+		true := reflect.ValueOf(true)
 		for i := 0; i < numRows; i++ {
 			row := rows.Index(i)
-			orderedId := mappingToOrdered[row.FieldByName("Id").Int()]
-			values.Index(orderedId).Set(row.FieldByName("Value"))
-			defined.Index(orderedId).Set(row.FieldByName("Defined"))
+			orderedId := mappingToOrdered[row.Field(idIndex).Int()]
+			values.Index(orderedId).Set(row.Field(valueIndex))
+			defined.Index(orderedId).Set(true)
 		}
 	case *Scalar:
 		sc, err := readScalar(dirName)

@@ -132,17 +132,31 @@ func (eb *EdgeBundle) toUnorderedRows(vs1 *VertexSet, vs2 *VertexSet) []interfac
 	return rows
 }
 
+func fieldIndex(t reflect.Type, name string) int {
+	f, ok := t.FieldByName(name)
+	if !ok {
+		panic(fmt.Sprintf("no %s field in %v", name, t))
+	}
+	if len(f.Index) != 1 {
+		panic(fmt.Sprintf("field %v in %v is too complex", name, t))
+	}
+	return f.Index[0]
+}
+
 func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
 	a := reflect.ValueOf(attr)
 	values := a.Elem().FieldByName("Values")
 	defined := a.Elem().FieldByName("Defined")
 	numValues := values.Len()
 	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
-	rowType := reflect.Indirect(reflect.ValueOf(attr.orderedRow())).Type()
+	rowType := reflect.TypeOf(attr.orderedRow()).Elem()
+	fmt.Println("rowType", rowType)
+	valueIndex := fieldIndex(rowType, "Value")
+	definedIndex := fieldIndex(rowType, "Defined")
+	row := reflect.New(rowType).Elem()
 	for i := 0; i < numValues; i++ {
-		row := reflect.New(rowType).Elem()
-		row.FieldByName("Value").Set(values.Index(i))
-		row.FieldByName("Defined").Set(defined.Index(i))
+		row.Field(valueIndex).Set(values.Index(i))
+		row.Field(definedIndex).Set(defined.Index(i))
 		rows.Index(i).Set(row)
 	}
 	return rows.Interface().([]interface{})
@@ -153,14 +167,16 @@ func AttributeToUnorderedRows(attr ParquetEntity, vs *VertexSet) []interface{} {
 	values := a.Elem().FieldByName("Values")
 	defined := a.Elem().FieldByName("Defined")
 	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), 0, 0)
-	rowType := reflect.Indirect(reflect.ValueOf(attr.unorderedRow())).Type()
+	rowType := reflect.TypeOf(attr.unorderedRow()).Elem()
+	valueIndex := fieldIndex(rowType, "Value")
+	idIndex := fieldIndex(rowType, "Id")
 	numValues := values.Len()
+	row := reflect.New(rowType).Elem()
 	for i := 0; i < numValues; i++ {
 		if defined.Index(i).Bool() {
 			sparkId := vs.MappingToUnordered[i]
-			row := reflect.New(rowType).Elem()
-			row.FieldByName("Value").Set(values.Index(i))
-			row.FieldByName("Id").Set(reflect.ValueOf(sparkId))
+			row.Field(valueIndex).Set(values.Index(i))
+			row.Field(idIndex).Set(reflect.ValueOf(sparkId))
 			rows = reflect.Append(rows, row)
 		}
 	}
