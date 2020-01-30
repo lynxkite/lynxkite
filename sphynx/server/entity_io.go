@@ -37,6 +37,9 @@ func (_ *StringAttribute) typeName() string {
 func (_ *DoubleTuple2Attribute) typeName() string {
 	return "DoubleTuple2Attribute"
 }
+func (_ *DoubleVectorAttribute) typeName() string {
+	return "DoubleVectorAttribute"
+}
 
 type OrderedVertexRow struct {
 	SparkId int64 `parquet:"name=sparkId, type=INT64"`
@@ -183,6 +186,35 @@ func (a *DoubleTuple2Attribute) readFromOrdered(pr *reader.ParquetReader, numRow
 	return nil
 }
 
+type OrderedDoubleVectorAttributeRow struct {
+	Value   DoubleVectorAttributeValue `parquet:"name=value"`
+	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
+}
+
+func (_ *DoubleVectorAttribute) orderedRow() interface{} {
+	return new(OrderedDoubleVectorAttributeRow)
+}
+func (a *DoubleVectorAttribute) toOrderedRows() []interface{} {
+	rows := make([]interface{}, len(a.Values))
+	for i, v := range a.Values {
+		rows[i] = OrderedDoubleVectorAttributeRow{Value: v, Defined: a.Defined[i]}
+	}
+	return rows
+}
+func (a *DoubleVectorAttribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
+	rows := make([]OrderedDoubleVectorAttributeRow, numRows)
+	if err := pr.Read(&rows); err != nil {
+		return fmt.Errorf("Failed to read parquet file: %v", err)
+	}
+	a.Values = make([]DoubleVectorAttributeValue, numRows)
+	a.Defined = make([]bool, numRows)
+	for i, row := range rows {
+		a.Values[i] = row.Value
+		a.Defined[i] = row.Defined
+	}
+	return nil
+}
+
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
 }
@@ -202,6 +234,10 @@ type SingleDoubleAttribute struct {
 type SingleDoubleTuple2Attribute struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
 	Value DoubleTuple2AttributeValue `parquet:"name=value"`
+}
+type SingleDoubleVectorAttribute struct {
+	Id    int64                      `parquet:"name=id, type=INT64"`
+	Value DoubleVectorAttributeValue `parquet:"name=value"`
 }
 
 func (s *Scalar) write(dirName string) error {
