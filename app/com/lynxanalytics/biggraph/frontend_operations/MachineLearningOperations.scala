@@ -410,12 +410,12 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Embed vertices")(new ProjectTransformation(_) {
     params ++= List(
       Param("save_as", "The name of the embedding", defaultValue = "embedding"),
-      Param("iterations", "Iterations", defaultValue = 20),
-      Param("dimensions", "Dimensions", defaultValue = 128))
-    def enabled = FEStatus.assert(project.hasEdgeBundle, "No edges.")
+      Param("iterations", "Iterations", defaultValue = "20"),
+      Param("dimensions", "Dimensions", defaultValue = "128"))
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("save_as")
-      assert(name, "Please set the name of the embedding.")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
       val dimensions = params("dimensions").toInt
       val iterations = params("iterations").toInt
       val op = graph_operations.Node2Vec(dimensions, iterations)
@@ -428,13 +428,13 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("save_as", "The name of the embedding", defaultValue = "tsne"),
       Choice("vector", "Vector", options = project.vertexAttrList[Vector[Double]]))
     def enabled = FEStatus.assert(
-        project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
     def apply() = {
       val name = params("save_as")
-      assert(name, "Please set the name of the embedding.")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
       val op = graph_operations.TSNE()
-      project.vertexAttributes(name) =
-        op(op.vector, project.vertexAttributes(params("vector")).result.embedding
+      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
+      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
     }
   })
 }
