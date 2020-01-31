@@ -467,6 +467,7 @@ angular.module('biggraph')
           };
 
           scope.insertBoxesFromYaml = function(data) {
+            data = data.replace(/\xa0/g, ' '); // Convert back non-breaking spaces, e.g. from Gmail.
             let boxes, message;
             try {
               boxes = jsyaml.safeLoad(data);
