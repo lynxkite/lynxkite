@@ -74,6 +74,8 @@
   </div>
 </div>
 
+
+<div class="clearfix">
 <project-state-view
   state-id="lastState.stateId"
   ng-if="lastState.kind === 'project'">
@@ -106,3 +108,4 @@
 <uib-progressbar
   ng-if="lastState.stateId === undefined" value="100" class="progress-striped active">
 </uib-progressbar>
+</div>
