@@ -47,4 +47,4 @@ for epoch in range(iterations):
 model.eval()
 with torch.no_grad():
   z = model(torch.arange(num_nodes, device=device))
-op.output('embedding', z)
+op.output('embedding', z, type=util.DoubleVectorAttribute)

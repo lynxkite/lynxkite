@@ -1,10 +1,20 @@
 '''Simple access to operation parameters, input, and outputs.'''
 import json
+import numpy as np
 import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import sys
+
+DoubleAttribute = 'DoubleAttribute'
+DoubleVectorAttribute = 'DoubleVectorAttribute'
+DoubleTuple2Attribute = 'DoubleTuple2Attribute'
+PA_TYPES = {
+    DoubleAttribute: pa.float64(),
+    DoubleVectorAttribute: pa.list_(pa.float64()),
+    DoubleTuple2Attribute: pa.struct([('x', pa.float64()), ('y', pa.float64())]),
+}
 
 
 class Op:
@@ -25,28 +35,42 @@ class Op:
     '''Reads the input as a PyArrow Table. Useful if you only need some of the data.'''
     return pq.read_table(f'{self.datadir}/{self.inputs[name]}/data.parquet')
 
-  def input(self, name):
+  def input(self, name, type=None):
     '''Reads the input as a Pandas DataFrame. Useful if you need all the data.'''
-    # TODO: Instead of a "defined" column use NaNs.
-    return pd.read_parquet(f'{self.datadir}/{self.inputs[name]}/data.parquet')
+    df = pd.read_parquet(f'{self.datadir}/{self.inputs[name]}/data.parquet')
+    if list(df.columns) == ['value', 'defined']:
+      vs = df.value.values
+      vs[~df.defined] = np.nan
+      if type == 'DoubleVectorAttribute':
+        vs = np.array(list(list(v) for v in vs))
+      return vs
+    return df
 
-  def output(self, name, values, defined=None):
+  def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
-    if isinstance(values, list):
-      values = np.array(values)
+    if hasattr(values, 'numpy'):
+      values = values.numpy()
     if defined is None:
-      defined = ~np.isnan(values)
-    result = pd.DataFrame({'value': values, 'defined': defined})
+      if type == pa.float64():
+        defined = list(~np.isnan(values))
+      else:
+        defined = [v is not None for v in values]
+    if not isinstance(values, list):
+      values = list(values)
+    if type == DoubleTuple2Attribute:
+      values = [{'x': v[0], 'y': v[1]} for v in values]
+    patype = PA_TYPES[type]
+    values = pa.array(values, patype)
+    defined = pa.array(defined, pa.bool_())
     path = self.datadir + '/' + self.outputs[name]
     os.makedirs(path, exist_ok=True)
-    t = pa.Table.from_pandas(result)
     # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
-        pa.field('value', pa.float64(), nullable=False),
+        pa.field('value', patype, nullable=False),
         pa.field('defined', pa.bool_(), nullable=False)])
-    t = pa.Table.from_arrays(t.columns, schema=schema)
+    t = pa.Table.from_arrays([values, defined], schema=schema)
     pq.write_table(t, path + '/data.parquet')
     with open(path + '/type_name', 'w') as f:
-      f.write('DoubleAttribute')  # TODO: More types.
+      f.write(type)
     with open(path + '/_SUCCESS', 'w'):
       pass
