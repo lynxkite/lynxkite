@@ -14,8 +14,7 @@ object Node2Vec extends OpFromJson {
     (j \ "iterations").as[Int])
 }
 case class Node2Vec(dimensions: Int, iterations: Int)
-extends TypedMetaGraphOp[GraphInput, Output] {
-  override val isHeavy = true
+  extends TypedMetaGraphOp[GraphInput, Node2Vec.Output] {
   @transient override lazy val inputs = new GraphInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Node2Vec.Output()(instance, inputs)
   override def toJson = Json.obj("dimensions" -> dimensions, "iterations" -> iterations)
@@ -29,12 +28,11 @@ object TSNE extends OpFromJson {
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val embedding = vertexAttribute[Double, Double](inputs.vs.entity)
+    val embedding = vertexAttribute[(Double, Double)](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = TSNE()
 }
-case class TSNE() extends TypedMetaGraphOp[Input, Output] {
-  override val isHeavy = true
+case class TSNE() extends TypedMetaGraphOp[TSNE.Input, TSNE.Output] {
   @transient override lazy val inputs = new TSNE.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TSNE.Output()(instance, inputs)
   override def toJson = Json.obj()
