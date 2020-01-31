@@ -155,15 +155,20 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           s"${before} to ${after}"
       }
       val deleteStrings = deletedAttrs.keys
-      val renameSummary =
-        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}"
       val deleteSummary =
-        if (deleteStrings.isEmpty) ""
-        else if (renameStrings.isEmpty) s"Delete ${deleteStrings.mkString(", ")}"
-        else s" and delete ${deleteStrings.mkString(", ")}"
-      renameSummary + deleteSummary
+        if (deleteStrings.isEmpty) "" else s"Delete ${deleteStrings.mkString(", ")}"
+      val renameSummary =
+        if (renameStrings.isEmpty) ""
+        else if (deleteStrings.isEmpty) s"Rename ${renameStrings.mkString(", ")}"
+        else s" and rename ${renameStrings.mkString(", ")}"
+      deleteSummary + renameSummary
     }
     def apply() = {
+      deletedAttrs.foreach {
+        case (before, after) => {
+          project.deleteEdgeAttribute(before)
+        }
+      }
       renamedAttrs.foreach {
         case (before, after) => {
           project.newEdgeAttribute(
@@ -171,11 +176,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
             project.edgeAttributes(before),
             project.viewer.getEdgeAttributeNote(before))
           project.edgeAttributes(before) = null
-        }
-      }
-      deletedAttrs.foreach {
-        case (before, after) => {
-          project.deleteEdgeAttribute(before)
         }
       }
     }
@@ -235,15 +235,20 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           s"${before} to ${after}"
       }
       val deleteStrings = deletedAttrs.keys
-      val renameSummary =
-        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}"
       val deleteSummary =
-        if (deleteStrings.isEmpty) ""
-        else if (renameStrings.isEmpty) s"Delete ${deleteStrings.mkString(", ")}"
-        else s" and delete ${deleteStrings.mkString(", ")}"
-      renameSummary + deleteSummary
+        if (deleteStrings.isEmpty) "" else s"Delete ${deleteStrings.mkString(", ")}"
+      val renameSummary =
+        if (renameStrings.isEmpty) ""
+        else if (deleteStrings.isEmpty) s"Rename ${renameStrings.mkString(", ")}"
+        else s" and rename ${renameStrings.mkString(", ")}"
+      deleteSummary + renameSummary
     }
     def apply() = {
+      deletedAttrs.foreach {
+        case (before, after) => {
+          project.deleteVertexAttribute(before)
+        }
+      }
       renamedAttrs.foreach {
         case (before, after) => {
           project.newVertexAttribute(
@@ -251,11 +256,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
             project.vertexAttributes(before),
             project.viewer.getVertexAttributeNote(before))
           project.vertexAttributes(before) = null
-        }
-      }
-      deletedAttrs.foreach {
-        case (before, after) => {
-          project.deleteVertexAttribute(before)
         }
       }
     }
