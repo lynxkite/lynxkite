@@ -213,9 +213,18 @@ class ScalarIO[T](entity: Scalar[T], context: IOContext)
     log.info(s"PERF Written scalar $entity to disk")
   }
   def delete() = path.forWriting.deleteIfExists()
-  def exists = operationExists && (path / Success).exists
-  def mayHaveExisted = operationMayHaveExisted && path.mayHaveExisted
-
+  def exists = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationExists && (path / Success).exists
+    } else (path / Success).exists
+  }
+  def mayHaveExisted = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationMayHaveExisted && path.mayHaveExisted
+    } else path.mayHaveExisted
+  }
   private def path = dataRoot / ScalarsDir / entity.gUID.toString
   private def serializedScalarFileName: HadoopFileLike = path / "serialized_data"
   private def successPath: HadoopFileLike = path / Success
@@ -265,8 +274,18 @@ class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, contex
   }
 
   def delete() = path.forWriting.deleteIfExists()
-  def exists = operationExists && (path / Success).exists
-  def mayHaveExisted = operationMayHaveExisted && path.mayHaveExisted
+  def exists = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationExists && (path / Success).exists
+    } else (path / Success).exists
+  }
+  def mayHaveExisted = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationMayHaveExisted && path.mayHaveExisted
+    } else path.mayHaveExisted
+  }
 
   private def path = dataRoot / TablesDir / entity.gUID.toString
   private def successPath: HadoopFileLike = path / Success
@@ -367,9 +386,19 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
     legacyPath.forWriting.deleteIfExists() && partitionedPath.forWriting.deleteIfExists()
   }
 
-  def exists = operationExists && (existsPartitioned || existsAtLegacy)
+  def exists = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationExists && (existsPartitioned || existsAtLegacy)
+    } else existsPartitioned || existsAtLegacy
+  }
 
-  def mayHaveExisted = operationMayHaveExisted && (partitionedPath.mayHaveExisted || legacyPath.mayHaveExisted)
+  def mayHaveExisted = {
+    val op = entity.source.operation
+    if (op.isInstanceOf[SparkOperation[_, _]]) {
+      operationMayHaveExisted && (partitionedPath.mayHaveExisted || legacyPath.mayHaveExisted)
+    } else partitionedPath.mayHaveExisted || legacyPath.mayHaveExisted
+  }
 
   private val partitionedPath = context.partitionedPath(entity)
   private val metaFile = partitionedPath / io.Metadata
