@@ -280,7 +280,7 @@ func (_ *DoubleVectorAttribute) orderedRow() interface{} {
 
 type UnorderedDoubleVectorAttributeRow struct {
 	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleVectorAttributeValue `parquet:"name=value"`
+	Value DoubleVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=DOUBLE"`
 }
 
 func (_ *DoubleVectorAttribute) unorderedRow() interface{} {

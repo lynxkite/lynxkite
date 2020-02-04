@@ -12,7 +12,7 @@ DoubleVectorAttribute = 'DoubleVectorAttribute'
 DoubleTuple2Attribute = 'DoubleTuple2Attribute'
 PA_TYPES = {
     DoubleAttribute: pa.float64(),
-    DoubleVectorAttribute: pa.list_(pa.float64()),
+    DoubleVectorAttribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
     DoubleTuple2Attribute: pa.struct([('x', pa.float64()), ('y', pa.float64())]),
 }
 
