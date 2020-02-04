@@ -1,0 +1,11 @@
+### Embed with t-SNE
+
+Embeds high-dimensional data into a two dimensions using
+https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding[t-SNE].
+====
+[p-save_as]#The name of the embedding#::
+The new attribute will be created under this name.
+
+[p-vector]#Vector#::
+The high-dimensional vertex attribute that we want to embed into 2D.
+====
