@@ -5,4 +5,4 @@ from . import util
 op = util.Op()
 x = op.input('vector', type=util.DoubleVectorAttribute)
 z = TSNE().fit_transform(x)
-op.output('embedding', z, type=util.DoubleVectorAttribute)
+op.output('embedding', z, type=util.DoubleTuple2Attribute)

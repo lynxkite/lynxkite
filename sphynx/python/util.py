@@ -13,7 +13,7 @@ DoubleTuple2Attribute = 'DoubleTuple2Attribute'
 PA_TYPES = {
     DoubleAttribute: pa.float64(),
     DoubleVectorAttribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
-    DoubleTuple2Attribute: pa.struct([('x', pa.float64()), ('y', pa.float64())]),
+    DoubleTuple2Attribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
 }
 
 
@@ -57,8 +57,6 @@ class Op:
         defined = [v is not None for v in values]
     if not isinstance(values, list):
       values = list(values)
-    if type == DoubleTuple2Attribute:
-      values = [{'x': v[0], 'y': v[1]} for v in values]
     patype = PA_TYPES[type]
     values = pa.array(values, patype)
     defined = pa.array(defined, pa.bool_())
