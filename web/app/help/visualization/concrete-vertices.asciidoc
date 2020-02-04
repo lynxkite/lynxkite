@@ -13,7 +13,7 @@ that mode has less features. You cannot (yet) visualize attributes in 3D mode an
 move around vertices.
 
 Layout animation::
-(Only in 2D mode) If the second butten is enabled, layout animation will continuously do a physical simulation on the
+(Only in 2D mode) If the second button is enabled, layout animation will continuously do a physical simulation on the
 displayed graph as if edges were springs. You can move vertices around and the graph will
 reorganize itself.
 
