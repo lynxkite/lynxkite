@@ -1,0 +1,14 @@
+### Embed vertices
+
+Creates a vertex embedding using the  https://arxiv.org/abs/1607.00653[node2vec]
+algorithm.
+====
+[p-save_as]#The name of the embedding#::
+The new attribute will be created under this name.
+
+[p-iterations]#Iterations#::
+Number of training iterations.
+
+[p-dimensions]#Dimensions#::
+The size of each embedding vector.
+====
