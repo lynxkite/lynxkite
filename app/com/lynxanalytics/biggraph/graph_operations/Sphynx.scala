@@ -11,13 +11,18 @@ object Node2Vec extends OpFromJson {
   }
   def fromJson(j: JsValue) = Node2Vec(
     (j \ "dimensions").as[Int],
-    (j \ "iterations").as[Int])
+    (j \ "iterations").as[Int],
+    (j \ "walkLength").as[Int],
+    (j \ "walksPerNode").as[Int],
+    (j \ "contextSize").as[Int])
 }
-case class Node2Vec(dimensions: Int, iterations: Int)
+case class Node2Vec(dimensions: Int, iterations: Int, walkLength: Int, walksPerNode: Int, contextSize: Int)
   extends TypedMetaGraphOp[GraphInput, Node2Vec.Output] {
   @transient override lazy val inputs = new GraphInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Node2Vec.Output()(instance, inputs)
-  override def toJson = Json.obj("dimensions" -> dimensions, "iterations" -> iterations)
+  override def toJson = Json.obj(
+    "dimensions" -> dimensions, "iterations" -> iterations, "walkLength" -> walkLength,
+    "walksPerNode" -> walksPerNode, "contextSize" -> contextSize)
 }
 
 object TSNE extends OpFromJson {
@@ -30,10 +35,10 @@ object TSNE extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val embedding = vertexAttribute[(Double, Double)](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = TSNE()
+  def fromJson(j: JsValue) = TSNE((j \ "perplexity").as[Double])
 }
-case class TSNE() extends TypedMetaGraphOp[TSNE.Input, TSNE.Output] {
+case class TSNE(perplexity: Double) extends TypedMetaGraphOp[TSNE.Input, TSNE.Output] {
   @transient override lazy val inputs = new TSNE.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TSNE.Output()(instance, inputs)
-  override def toJson = Json.obj()
+  override def toJson = Json.obj("perplexity" -> perplexity)
 }

@@ -1,7 +1,8 @@
 ### Embed vertices
 
-Creates a vertex embedding using the  https://arxiv.org/abs/1607.00653[node2vec]
-algorithm.
+Creates a vertex embedding using the
+https://pytorch-geometric.readthedocs.io/en/1.4.1/modules/nn.html#torch_geometric.nn.models.Node2Vec[PyTorch Geometric implementation]
+of the https://arxiv.org/abs/1607.00653[node2vec] algorithm.
 ====
 [p-save_as]#The name of the embedding#::
 The new attribute will be created under this name.
@@ -11,4 +12,14 @@ Number of training iterations.
 
 [p-dimensions]#Dimensions#::
 The size of each embedding vector.
+
+[p-walks_per_node]#Walks per node#::
+Number of random walks collected for each vertex.
+
+[p-walk_length]#Walk length#::
+Length of the random walks collected for each vertex.
+
+[p-context_size]#Context size#::
+The random walks will be cut with a rolling window of this size.
+This allows reusing the same walk for multiple vertices.
 ====
