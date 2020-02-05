@@ -37,6 +37,9 @@ func (_ *StringAttribute) typeName() string {
 func (_ *DoubleTuple2Attribute) typeName() string {
 	return "DoubleTuple2Attribute"
 }
+func (_ *DoubleVectorAttribute) typeName() string {
+	return "DoubleVectorAttribute"
+}
 
 type OrderedVertexRow struct {
 	SparkId int64 `parquet:"name=sparkId, type=INT64"`
@@ -144,22 +147,26 @@ func fieldIndex(t reflect.Type, name string) int {
 }
 
 func AttributeToOrderedRows(attr ParquetEntity) []interface{} {
-	a := reflect.ValueOf(attr)
-	values := a.Elem().FieldByName("Values")
-	defined := a.Elem().FieldByName("Defined")
-	numValues := values.Len()
-	rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
-	rowType := reflect.TypeOf(attr.orderedRow()).Elem()
-	fmt.Println("rowType", rowType)
-	valueIndex := fieldIndex(rowType, "Value")
-	definedIndex := fieldIndex(rowType, "Defined")
-	row := reflect.New(rowType).Elem()
-	for i := 0; i < numValues; i++ {
-		row.Field(valueIndex).Set(values.Index(i))
-		row.Field(definedIndex).Set(defined.Index(i))
-		rows.Index(i).Set(row)
+	switch attr := attr.(type) {
+	case *DoubleTuple2Attribute:
+		return attr.toOrderedRows()
+	default:
+		a := reflect.ValueOf(attr)
+		values := a.Elem().FieldByName("Values")
+		defined := a.Elem().FieldByName("Defined")
+		numValues := values.Len()
+		rows := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), numValues, numValues)
+		rowType := reflect.TypeOf(attr.orderedRow()).Elem()
+		valueIndex := fieldIndex(rowType, "Value")
+		definedIndex := fieldIndex(rowType, "Defined")
+		row := reflect.New(rowType).Elem()
+		for i := 0; i < numValues; i++ {
+			row.Field(valueIndex).Set(values.Index(i))
+			row.Field(definedIndex).Set(defined.Index(i))
+			rows.Index(i).Set(row)
+		}
+		return rows.Interface().([]interface{})
 	}
-	return rows.Interface().([]interface{})
 }
 
 func AttributeToUnorderedRows(attr ParquetEntity, vs *VertexSet) []interface{} {
@@ -193,24 +200,29 @@ func InitializeAttribute(attr reflect.Value, numVS int) {
 }
 
 func ReadAttributeFromOrdered(origAttr ParquetEntity, pr *reader.ParquetReader, numRows int) error {
-	attr := reflect.ValueOf(origAttr)
-	InitializeAttribute(attr, numRows)
-	rowType := reflect.Indirect(reflect.ValueOf(origAttr.orderedRow())).Type()
-	rowSliceType := reflect.SliceOf(rowType)
-	rowsPointer := reflect.New(rowSliceType)
-	rows := rowsPointer.Elem()
-	rows.Set(reflect.MakeSlice(rowSliceType, numRows, numRows))
-	if err := pr.Read(rowsPointer.Interface()); err != nil {
-		return fmt.Errorf("Failed to read parquet file: %v", err)
+	switch origAttr := origAttr.(type) {
+	case *DoubleTuple2Attribute:
+		return origAttr.readFromOrdered(pr, numRows)
+	default:
+		attr := reflect.ValueOf(origAttr)
+		InitializeAttribute(attr, numRows)
+		rowType := reflect.Indirect(reflect.ValueOf(origAttr.orderedRow())).Type()
+		rowSliceType := reflect.SliceOf(rowType)
+		rowsPointer := reflect.New(rowSliceType)
+		rows := rowsPointer.Elem()
+		rows.Set(reflect.MakeSlice(rowSliceType, numRows, numRows))
+		if err := pr.Read(rowsPointer.Interface()); err != nil {
+			return fmt.Errorf("Failed to read parquet file: %v", err)
+		}
+		values := attr.Elem().FieldByName("Values")
+		defined := attr.Elem().FieldByName("Defined")
+		for i := 0; i < numRows; i++ {
+			row := rows.Index(i)
+			values.Index(i).Set(row.FieldByName("Value"))
+			defined.Index(i).Set(row.FieldByName("Defined"))
+		}
+		return nil
 	}
-	values := attr.Elem().FieldByName("Values")
-	defined := attr.Elem().FieldByName("Defined")
-	for i := 0; i < numRows; i++ {
-		row := rows.Index(i)
-		values.Index(i).Set(row.FieldByName("Value"))
-		defined.Index(i).Set(row.FieldByName("Defined"))
-	}
-	return nil
 }
 
 type OrderedStringAttributeRow struct {
@@ -250,12 +262,37 @@ func (_ *DoubleAttribute) unorderedRow() interface{} {
 }
 
 type OrderedDoubleTuple2AttributeRow struct {
-	Value   DoubleTuple2AttributeValue `parquet:"name=value"`
+	Value   DoubleVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=DOUBLE"`
 	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
 }
 
 func (_ *DoubleTuple2Attribute) orderedRow() interface{} {
 	return new(OrderedDoubleTuple2AttributeRow)
+}
+
+func (a *DoubleTuple2Attribute) toOrderedRows() []interface{} {
+	rows := make([]interface{}, len(a.Values))
+	for i, v := range a.Values {
+		rows[i] = OrderedDoubleTuple2AttributeRow{
+			Value:   DoubleVectorAttributeValue([]float64{v.X, v.Y}),
+			Defined: a.Defined[i]}
+	}
+	return rows
+}
+
+func (a *DoubleTuple2Attribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
+	rows := make([]OrderedDoubleTuple2AttributeRow, numRows)
+	if err := pr.Read(&rows); err != nil {
+		return fmt.Errorf("Failed to read parquet file: %v", err)
+	}
+	a.Values = make([]DoubleTuple2AttributeValue, numRows)
+	a.Defined = make([]bool, numRows)
+	for i, row := range rows {
+		v := row.Value
+		a.Values[i] = DoubleTuple2AttributeValue{X: v[0], Y: v[1]}
+		a.Defined[i] = row.Defined
+	}
+	return nil
 }
 
 type UnorderedDoubleTuple2AttributeRow struct {
@@ -265,6 +302,24 @@ type UnorderedDoubleTuple2AttributeRow struct {
 
 func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleTuple2AttributeRow)
+}
+
+type OrderedDoubleVectorAttributeRow struct {
+	Value   DoubleVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=DOUBLE"`
+	Defined bool                       `parquet:"name=defined, type=BOOLEAN"`
+}
+
+func (_ *DoubleVectorAttribute) orderedRow() interface{} {
+	return new(OrderedDoubleVectorAttributeRow)
+}
+
+type UnorderedDoubleVectorAttributeRow struct {
+	Id    int64                      `parquet:"name=id, type=INT64"`
+	Value DoubleVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=DOUBLE"`
+}
+
+func (_ *DoubleVectorAttribute) unorderedRow() interface{} {
+	return new(UnorderedDoubleVectorAttributeRow)
 }
 
 func (s *Scalar) write(dirName string) error {

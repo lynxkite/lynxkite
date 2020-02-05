@@ -406,4 +406,42 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       project.scalars(name) = model
     }
   })
+
+  register("Embed vertices")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("save_as", "The name of the embedding", defaultValue = "embedding"),
+      Param("iterations", "Iterations", defaultValue = "20"),
+      Param("dimensions", "Dimensions", defaultValue = "128"),
+      Param("walk_length", "Walk length", defaultValue = "20"),
+      Param("walks_per_node", "Walks per node", defaultValue = "10"),
+      Param("context_size", "Context size", defaultValue = "10"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
+      val dimensions = params("dimensions").toInt
+      val iterations = params("iterations").toInt
+      val walkLength = params("walk_length").toInt
+      val walksPerNode = params("walks_per_node").toInt
+      val contextSize = params("context_size").toInt
+      val op = graph_operations.Node2Vec(dimensions, iterations, walkLength, walksPerNode, contextSize)
+      project.vertexAttributes(name) = op(op.es, project.edgeBundle).result.embedding
+    }
+  })
+
+  register("Embed with t-SNE")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("save_as", "The name of the embedding", defaultValue = "tsne"),
+      Choice("vector", "Vector", options = project.vertexAttrList[Vector[Double]]),
+      Param("perplexity", "Perplexity", defaultValue = "30"))
+    def enabled = FEStatus.assert(
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
+      val op = graph_operations.TSNE(params("perplexity").toDouble)
+      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
+      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
+    }
+  })
 }
