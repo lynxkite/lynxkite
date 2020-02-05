@@ -1,0 +1,10 @@
+### Import well-known graph dataset
+
+Gives easy access to graph datasets commonly used for benchmarks.
+
+See the https://pytorch-geometric.readthedocs.io/en/1.4.1/modules/datasets.html[PyTorch Geometric documentation]
+for details about the specific datasets.
+====
+[p-name]#Name#::
+Which dataset to import.
+====
