@@ -207,8 +207,6 @@ include::compute-hyperbolic-edge-probability.asciidoc[]
 
 include::compute-inputs.asciidoc[]
 
-include::find-steiner-tree.asciidoc[]
-
 include::compute-pagerank.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]
@@ -279,6 +277,10 @@ include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
 
+include::embed-vertices-with-t-sne.asciidoc[]
+
+include::embed-vertices.asciidoc[]
+
 include::export-to-csv.asciidoc[]
 
 include::export-to-hive.asciidoc[]
@@ -328,6 +330,8 @@ include::find-infocom-communities.asciidoc[]
 include::find-maximal-cliques.asciidoc[]
 
 include::find-modular-clustering.asciidoc[]
+
+include::find-steiner-tree.asciidoc[]
 
 include::find-triangles.asciidoc[]
 
