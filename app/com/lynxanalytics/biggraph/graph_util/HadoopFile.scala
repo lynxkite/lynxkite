@@ -337,7 +337,7 @@ class HadoopFile private (
 
   def writeAllowedFrom(user: com.lynxanalytics.biggraph.serving.User): Boolean = {
     val acl = PrefixRepository.getWriteACL(prefixSymbol)
-    aclContains(acl, user)
+    user != com.lynxanalytics.biggraph.serving.User.notLoggedIn && aclContains(acl, user)
   }
 
 }
