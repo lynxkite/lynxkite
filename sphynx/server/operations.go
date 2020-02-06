@@ -58,6 +58,10 @@ func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Att
 	return ea.inputs[name].(*DoubleTuple2Attribute)
 }
 
+func (ea *EntityAccessor) getDoubleVectorAttribute(name string) *DoubleVectorAttribute {
+	return ea.inputs[name].(*DoubleVectorAttribute)
+}
+
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }
