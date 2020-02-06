@@ -36,6 +36,13 @@ func TestEntityIO(t *testing.T) {
 		Dst:         []int{1, 0, 0, 1},
 		EdgeMapping: []int64{0, 1, 2, 3},
 	}
+	data["DoubleVectorAttribute"] = &DoubleVectorAttribute{
+		Values: []DoubleVectorAttributeValue{
+			{1.1, 2.2, 3.3},
+			{2.2, 3.3, 4.4},
+			{3.3, 4.4, 5.5},
+			{4.4, 5.5, 6.6}},
+		Defined: []bool{true, true, true, true}}
 
 	for g, entity := range data {
 		// We use readable "guids" but it doesn't really matter

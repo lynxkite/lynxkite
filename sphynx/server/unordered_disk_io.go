@@ -114,9 +114,12 @@ func (s *Server) ReadFromUnorderedDisk(
 	}
 	if in.Type == "Attribute" {
 		attributeType := in.AttributeType[len("TypeTag[") : len(in.AttributeType)-1]
-		if attributeType == "(Double, Double)" {
+		switch attributeType {
+		case "(Double, Double)":
 			in.Type = "DoubleTuple2Attribute"
-		} else {
+		case "Vector[Double]":
+			in.Type = "DoubleVectorAttribute"
+		default:
 			in.Type = attributeType + in.Type
 		}
 	}
