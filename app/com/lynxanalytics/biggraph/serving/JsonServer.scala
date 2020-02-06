@@ -148,6 +148,9 @@ abstract class JsonServer extends mvc.Controller {
   }
 }
 
+// Throw this exception to immediately return a given HTTP result.
+case class ResultException(result: mvc.Result) extends Exception
+
 case class Empty()
 
 case class AuthMethod(id: String, name: String)
