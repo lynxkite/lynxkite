@@ -48,7 +48,7 @@ class Op:
 
   def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
-    if hasattr(values, 'numpy'):
+    if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.numpy()
     if defined is None:
       if type == pa.float64():
@@ -57,18 +57,40 @@ class Op:
         defined = [v is not None for v in values]
     if not isinstance(values, list):
       values = list(values)
-    patype = PA_TYPES[type]
-    values = pa.array(values, patype)
-    defined = pa.array(defined, pa.bool_())
+    self.write_columns(name, type, {
+        'value': pa.array(values, PA_TYPES[type]),
+        'defined': pa.array(defined, pa.bool_()),
+    })
+
+  def write_columns(self, name, type, columns):
     path = self.datadir + '/' + self.outputs[name]
+    print('writing', type, 'to', path)
     os.makedirs(path, exist_ok=True)
     # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
-        pa.field('value', patype, nullable=False),
-        pa.field('defined', pa.bool_(), nullable=False)])
-    t = pa.Table.from_arrays([values, defined], schema=schema)
+        pa.field(name, a.type, nullable=False) for (name, a) in columns.items()])
+    t = pa.Table.from_arrays(list(columns.values()), schema=schema)
     pq.write_table(t, path + '/data.parquet')
     with open(path + '/type_name', 'w') as f:
       f.write(type)
     with open(path + '/_SUCCESS', 'w'):
       pass
+
+  def output_vs(self, name, count):
+    '''Writes a vertex set to disk. You just specify the vertex count.'''
+    self.write_columns(name, 'VertexSet', {'sparkId': pa.array(range(count), pa.int64())})
+
+  def output_es(self, name, edge_index):
+    '''Writes an edge bundle specified as a 2xN matrix to disk.'''
+    if hasattr(edge_index, 'numpy'):
+      edge_index = edge_index.numpy()
+    src, dst = edge_index
+    self.write_columns(name, 'EdgeBundle', {
+        'src': pa.array(src, pa.int64()),
+        'dst': pa.array(dst, pa.int64()),
+        'sparkId': pa.array(range(len(src)), pa.int64()),
+    })
+    if name + '-idSet' in self.outputs:
+      self.write_columns(name + '-idSet', 'VertexSet', {
+          'sparkId': pa.array(range(len(src)), pa.int64()),
+      })
