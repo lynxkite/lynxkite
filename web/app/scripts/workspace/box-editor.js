@@ -40,7 +40,7 @@ angular.module('biggraph')
           const box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
-          // will be passed to scope.newOpSelected().
+          // will be passed to scope.updateParams().
           let currentRequest;
           scope.lastRequest = currentRequest = util
             .nocache(
@@ -51,8 +51,7 @@ angular.module('biggraph')
             .then(
               function success(boxMeta) {
                 if (scope.lastRequest === currentRequest) {
-                  scope.box = undefined; // Avoid saving current contents.
-                  scope.newOpSelected(box, boxMeta);
+                  scope.updateParams(box, boxMeta);
                 }
               },
               function error(error) {
@@ -70,42 +69,40 @@ angular.module('biggraph')
           scope.error = util.responseToErrorMessage(error);
         };
 
-        function outputStatesDiffer(box1, box2) {
-          if (box1.outputs.length !== box2.outputs.length) {
-            return true;
-          }
-          for (let i = 0; i < box1.outputs.length; ++i) {
-            if (box1.outputs[i].stateId !== box2.outputs[i].stateId) {
-              return true;
+        function threeWayMerge(before, after, local) {
+          const merged = {};
+          for (let k in after) {
+            if (before) {
+              // Keep local (possibly modified) state if there's no change from the backend.
+              merged[k] = after[k] === before[k] ? local[k] : after[k];
+            } else {
+              merged[k] = after[k];
             }
           }
-          return false;
+          return merged;
         }
 
-        // Invoked when the user selects a new operation and its metadata is
-        // successfully downloaded. Both box and boxMeta has to be defined.
-        scope.newOpSelected = function(box, boxMeta) {
-          // We avoid replacing the objects if the data has not changed.
-          // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-          // We replace objects in the following cases:
-          // - box data did not exist before (box editor initialization)
-          // - box data was changed (box parameter change)
-          // - output state of the box was changed (In this case
-          //   the visualization state editors need to be updated,
-          //   because they are using the project state from the output
-          //   of the operation.)
-          if (scope.box === undefined ||
-              !angular.equals(box.instance, scope.box.instance) ||
-              outputStatesDiffer(box, scope.box)) {
-            onBlurNow(); // Switching to a different box is also "blur".
-            scope.box = box;
+        scope.updateParams = function(box, boxMeta) {
+          scope.error = undefined;
+          const parameters = {};
+          for (let k in box.instance.parameters) {
+            if (scope.box) {
+              // Keep local (possibly modified) state if there's no change from the backend.
+              parameters[k] = (box.instance.parameters[k] === scope.box.instance.parameters[k] ?
+                scope.parameters[k] : box.instance.parameters[k]);
+            } else {
+              parameters[k] = box.instance.parameters[k];
+            }
           }
+          scope.parameters = threeWayMerge(
+            scope.box && scope.box.instance.parameters, box.instance.parameters, scope.parameters);
+          scope.parametricParameters = threeWayMerge(
+            scope.box && scope.box.instance.parametricParameters, box.instance.parametricParameters,
+            scope.parametricParameters);
+          scope.box = box;
           if (!angular.equals(boxMeta, scope.boxMeta)) {
             scope.boxMeta = boxMeta;
           }
-          scope.error = undefined;
-          scope.parameters = angular.copy(scope.box.instance.parameters);
-          scope.parametricParameters = angular.copy(scope.box.instance.parametricParameters);
         };
 
         function onBlurNow() {
