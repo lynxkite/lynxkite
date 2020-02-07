@@ -55,21 +55,25 @@ class DataManager(
   }
 
   override def computeProgress(entity: MetaGraphEntity): Double = {
-    val d = bestSource(entity)
-    synchronized { futures.get((entity.gUID, d)) } match {
-      case None =>
-        if (d.has(entity)) synchronized {
-          futures((entity.gUID, d)) = SafeFuture.successful(())
-          1.0
-        }
-        else 0.0
-      case Some(s) =>
-        if (s.hasFailed) -1.0
-        else {
-          val deps = s.dependencySet
-          if (findFailure(deps).isDefined) -1.0
-          else 1.0 / (1.0 + deps.size - deps.filter(_.isCompleted).size)
-        }
+    try {
+      val d = bestSource(entity)
+      synchronized { futures.get((entity.gUID, d)) } match {
+        case None =>
+          if (d.has(entity)) synchronized {
+            futures((entity.gUID, d)) = SafeFuture.successful(())
+            1.0
+          }
+          else 0.0
+        case Some(s) =>
+          if (s.hasFailed) -1.0
+          else {
+            val deps = s.dependencySet
+            if (findFailure(deps).isDefined) -1.0
+            else 1.0 / (1.0 + deps.size - deps.filter(_.isCompleted).size)
+          }
+      }
+    } catch {
+      case _: Throwable => 0
     }
   }
 
@@ -84,7 +88,10 @@ class DataManager(
   private def bestDomain(domains: Iterable[Domain], e: MetaGraphEntity): Domain = {
     synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
       .orElse(domains.find(_.has(e)))
-      .orElse(domains.find(_.canCompute(e.source))).get
+      .orElse(domains.find(_.canCompute(e.source))) match {
+        case None => throw new AssertionError(f"None of the domains can compute $e.")
+        case Some(d) => d
+      }
   }
 
   private def bestSource(e: MetaGraphEntity): Domain = bestDomain(domains, e)
