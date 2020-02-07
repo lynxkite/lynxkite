@@ -1147,7 +1147,7 @@ class DirectoryEntry(val path: SymbolPath)(
     localWriteAllowedFrom(user) || aclContains(readACL, user)
   }
   protected def localWriteAllowedFrom(user: User): Boolean = {
-    aclContains(writeACL, user)
+    user != User.notLoggedIn && aclContains(writeACL, user)
   }
 
   def remove(): Unit = manager.synchronized {
