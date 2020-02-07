@@ -537,12 +537,13 @@ angular.module('biggraph')
           scope.diveUp = function() {
             const boxSettings = scope.workspace.customBoxStack.pop();
             delete scope.workspace._boxCatalogMap; // Force a catalog refresh.
-            scope.workspace.loadWorkspace();
-            scope.popups = [];
-            scope.selectedBoxIds = [boxSettings.id];
-            workspaceX = boxSettings.viewSettings.x;
-            workspaceY = boxSettings.viewSettings.y;
-            workspaceZoom = boxSettings.viewSettings.zoom;
+            scope.workspace.loadWorkspace().then(() => {
+              scope.popups = [];
+              scope.selectedBoxIds = [boxSettings.id];
+              workspaceX = boxSettings.viewSettings.x;
+              workspaceY = boxSettings.viewSettings.y;
+              workspaceZoom = boxSettings.viewSettings.zoom;
+            });
           };
 
           scope.diveDown = function() {
@@ -554,12 +555,13 @@ angular.module('biggraph')
                 zoom: workspaceZoom}};
             scope.workspace.customBoxStack.push(boxSettings);
             delete scope.workspace._boxCatalogMap; // Force a catalog refresh.
-            scope.workspace.loadWorkspace();
-            scope.popups = [];
-            scope.selectedBoxIds = [];
-            workspaceX = 0;
-            workspaceY = 0;
-            workspaceZoom = 0;
+            scope.workspace.loadWorkspace().then(() => {
+              scope.popups = [];
+              scope.selectedBoxIds = [];
+              workspaceX = 0;
+              workspaceY = 0;
+              workspaceZoom = 0;
+            });
           };
 
           scope.saveSelectionAsCustomBox = function(name, done) {
