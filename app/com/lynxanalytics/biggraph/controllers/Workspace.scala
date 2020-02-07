@@ -426,6 +426,16 @@ case class BoxOutputState(
     val newState = oldState.as[json.JsObject] ++ json.Json.obj("guid" -> newGuid)
     this.copy(state = Some(newState))
   }
+
+  // A GUID that depends on the state contents.
+  lazy val gUID: java.util.UUID = {
+    kind match {
+      case BoxOutputKind.Project => projectState.gUID
+      case BoxOutputKind.Visualization => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
+      case BoxOutputKind.Error => java.util.UUID.nameUUIDFromBytes(success.disabledReason.getBytes)
+      case _ => (state.get \ "guid").as[String].asUUID
+    }
+  }
 }
 
 object WorkspaceJsonFormatters {
