@@ -361,6 +361,8 @@ include::import-snapshot.asciidoc[]
 
 include::import-union-of-table-snapshots.asciidoc[]
 
+include::import-well-known-graph-dataset.asciidoc[]
+
 include::input.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
