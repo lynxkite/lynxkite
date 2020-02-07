@@ -1,4 +1,4 @@
-'''Creates a node embedding using PyTorch Geometric.'''
+'''Makes some PyTorch-Geometric datasets available in LynxKite.'''
 import torch_geometric.datasets as ds
 from . import util
 
