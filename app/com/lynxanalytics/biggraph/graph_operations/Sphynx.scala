@@ -42,3 +42,17 @@ case class TSNE(perplexity: Double) extends TypedMetaGraphOp[TSNE.Input, TSNE.Ou
   def outputMeta(instance: MetaGraphOperationInstance) = new TSNE.Output()(instance, inputs)
   override def toJson = Json.obj("perplexity" -> perplexity)
 }
+
+object PyTorchGeometricDataset extends OpFromJson {
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val (vs, es) = graph
+    val x = vertexAttribute[Vector[Double]](vs)
+    val y = vertexAttribute[Double](vs)
+  }
+  def fromJson(j: JsValue) = PyTorchGeometricDataset((j \ "name").as[String])
+}
+case class PyTorchGeometricDataset(name: String) extends TypedMetaGraphOp[NoInput, PyTorchGeometricDataset.Output] {
+  @transient override lazy val inputs = new NoInput()
+  def outputMeta(instance: MetaGraphOperationInstance) = new PyTorchGeometricDataset.Output()(instance)
+  override def toJson = Json.obj("name" -> name)
+}

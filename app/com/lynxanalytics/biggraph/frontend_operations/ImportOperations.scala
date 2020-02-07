@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
@@ -226,4 +227,22 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Map(context.box.output("table") -> BoxOutputState.from(result))
     }
   })
+
+  register("Import well-known graph dataset", List(), List("project"))(
+    new ProjectOutputOperation(_) {
+      params += Choice("name", "Name", options = FEOption.list(
+        "Cora", "CiteSeer", "Karate Club", "PubMed"))
+      override def summary = {
+        val fn = params("filename")
+        s"Import $fn"
+      }
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val g = graph_operations.PyTorchGeometricDataset(params("name"))().result
+        project.vertexSet = g.vs
+        project.edgeBundle = g.es
+        project.newVertexAttribute("x", g.x)
+        project.newVertexAttribute("y", g.y)
+      }
+    })
 }
