@@ -10,16 +10,6 @@ import scala.reflect.runtime.universe._
 
 class ScalaScriptTest extends FunSuite with TestGraphOp {
 
-  test("Can't do infinite loop") {
-    val code =
-      """
-        Thread.sleep(3000L)
-      """
-    intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, Map(), "", 2L)
-    }
-  }
-
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"
 
