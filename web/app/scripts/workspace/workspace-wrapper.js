@@ -293,7 +293,10 @@ angular.module('biggraph')
           plug.stateId = stateId;
           plug.setHealth(item.success);
           plug.kind = item.kind;
-          this.stateId2Plug[stateId] = plug;
+          if (this.stateId2Plug[stateId] === undefined) {
+            this.stateId2Plug[stateId] = [];
+          }
+          this.stateId2Plug[stateId].push(plug);
         }
         longPoll.setStateIds(knownStateIds);
       },
@@ -314,8 +317,8 @@ angular.module('biggraph')
             const progress = progressMap[stateId];
             // failed states has 'undefined' as progress
             if (progress) {
-              const plug = this.stateId2Plug[stateId];
-              if (plug) {
+              const plugs = this.stateId2Plug[stateId] || [];
+              for (let plug of plugs) {
                 plug.updateProgress(progress);
               }
             }
