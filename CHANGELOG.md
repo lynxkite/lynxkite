@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - If you copied some boxes into a YAML file, you can now drag-and-drop this file
    to a workspace to insert those boxes.
+ - New `kiterc` configuration options to allow public access LynxKite instances.
  - Added _"Embed vertices"_, _"Embed with t-SNE"_, and _"Import well-known graph dataset"_
    operations. They require PyTorch Geometric to be installed.
 
