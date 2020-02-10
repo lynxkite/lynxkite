@@ -107,35 +107,11 @@ object ScalaScript {
   private var engine: IMain = null
 
   private val evaluatorCache = new SoftHashMap[String, Evaluator]()
-  private val runCache = new SoftHashMap[String, String]()
-  // TODO: Delete this. It's only used by the tests.
   def run(
     code: String,
-    bindings: Map[String, String] = Map(),
-    extraCode: String = "",
-    timeoutInSeconds: Long = 10L): String = {
-    import org.apache.commons.lang.StringEscapeUtils
-    val binds = bindings.map {
-      case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
-    }.mkString("\n")
-    val fullCode = s"""
-    $binds
-    $extraCode
-    val result = {
-      $code
-    }.toString
-    result
-    """
-    runCache.syncGetOrElseUpdate(fullCode, synchronized {
-      withContextClassLoader {
-        val compiledCode = compile(fullCode)
-        withTimeout(timeoutInSeconds) {
-          ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-            compiledCode.eval().toString
-          }
-        }
-      }
-    })
+    bindings: Map[String, String] = Map()): String = {
+    val e = compileAndGetEvaluator(code, bindings.keys.map(k => k -> typeTag[String]).toMap)
+    e.evaluate(bindings).toString
   }
 
   // Helper function to convert a DataFrame to a Seq of Maps
@@ -276,35 +252,35 @@ object ScalaScript {
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
     optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = synchronized {
-    evaluatorCache.syncGetOrElseUpdate(
-      code + mandatoryParamTypes.keys.mkString + optionalParamTypes.keys.mkString, synchronized {
-        // Parameters are back quoted and taken out from the Map. The input argument is one Map to
-        // make the calling of the compiled function easier (otherwise we had varying number of args).
-        val convertedParamTypes = mandatoryParamTypes ++
-          optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
-        val paramsString = convertedParamTypes.map {
-          case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
-        }.mkString("\n")
-        val callParams = convertedParamTypes.map {
-          case (k, _) => s"`$k`"
-        }.mkString(", ")
-        val func = evalFuncString(code, convertedParamTypes)
-        val fullCode = s"""
-        $func
-        def evalWrapper(params: Map[String, Any]) = {
-          $paramsString
-          eval($callParams)
+    val cacheKey = (Seq(code) ++ mandatoryParamTypes.keys ++ optionalParamTypes.keys).mkString(";")
+    evaluatorCache.syncGetOrElseUpdate(cacheKey, synchronized {
+      // Parameters are back quoted and taken out from the Map. The input argument is one Map to
+      // make the calling of the compiled function easier (otherwise we had varying number of args).
+      val convertedParamTypes = mandatoryParamTypes ++
+        optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
+      val paramsString = convertedParamTypes.map {
+        case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
+      }.mkString("\n")
+      val callParams = convertedParamTypes.map {
+        case (k, _) => s"`$k`"
+      }.mkString(", ")
+      val func = evalFuncString(code, convertedParamTypes)
+      val fullCode = s"""
+      $func
+      def evalWrapper(params: Map[String, Any]) = {
+        $paramsString
+        eval($callParams)
+      }
+      evalWrapper _
+      """
+      withContextClassLoader {
+        val compiledCode = compile(fullCode)
+        val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          compiledCode.eval()
         }
-        evalWrapper _
-        """
-        withContextClassLoader {
-          val compiledCode = compile(fullCode)
-          val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-            compiledCode.eval()
-          }
-          Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
-        }
-      })
+        Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
+      }
+    })
   }
 
   private def withContextClassLoader[T](func: => T): T = synchronized {
