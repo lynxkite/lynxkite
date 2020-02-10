@@ -22,15 +22,10 @@
   </div>
   <div class="row">
     <div class="col-sm-12 entry-list-wrapper">
-      <div class="entry-list">
+      <div class="entry-list wizard">
         <div class="entry" ng-repeat="step in steps">
           <div class="entry-header" ng-click="$parent.expanded = $index" style="padding: 5px 40px;">
-            <span class="icon" style="
-            font-size: 30px;
-            font-weight: bold;
-            margin: -7px 0px 0px -25px;
-            padding: 0;
-            ">{{ $index + 1 }}</span>
+            <span class="icon">{{ $index + 1 }}</span>
             <span class="lead">{{ step.title }}</span>
           </div>
 
