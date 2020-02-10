@@ -19,6 +19,10 @@ import scala.reflect.runtime.universe._
 import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
+// For describing project structure in parametric parameters.
+// This needs to be in this package for the sandboxed scripts to access it.
+case class SimpleGraphEntity(name: String, typeName: String)
+
 object ScalaScriptSecurityManager {
   private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
   System.setSecurityManager(restrictedSecurityManager)

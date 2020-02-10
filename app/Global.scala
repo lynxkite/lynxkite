@@ -26,9 +26,23 @@ object Global extends WithFilters(new GzipFilter(), SecurityHeadersFilter()) wit
     concurrent.Future.successful(BadRequest(escapeIfNeeded(error, request.headers)))
   }
 
+  @annotation.tailrec
+  private def getResult(throwable: Throwable): Option[Result] = {
+    throwable match {
+      case serving.ResultException(result) => Some(result)
+      case _ if throwable.getCause != null => getResult(throwable.getCause)
+      case _ => None
+    }
+  }
+
   override def onError(request: RequestHeader, throwable: Throwable) = {
-    concurrent.Future.successful(InternalServerError(
-      escapeIfNeeded(serving.Utils.formatThrowable(throwable), request.headers)))
+    concurrent.Future.successful {
+      getResult(throwable) match {
+        case Some(status) => status
+        case None => InternalServerError(
+          escapeIfNeeded(serving.Utils.formatThrowable(throwable), request.headers))
+      }
+    }
   }
 
   override def onHandlerNotFound(request: RequestHeader) = {
