@@ -92,3 +92,12 @@
 .entry-list .viewer {
   border: 3px solid #39bcf3;
 }
+.entry-list.wizard .icon {
+  font-size: 30px;
+  font-weight: bold;
+  vertical-align: middle;
+  margin: -20px 10px -10px -25px;
+  padding: 0;
+  position: relative;
+  display: inline-block;
+}
