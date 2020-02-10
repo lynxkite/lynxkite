@@ -24,6 +24,7 @@ import play.api.libs.json.JsResultException
 
 import scala.util._
 import scala.reflect.runtime.universe.typeTag
+import com.lynxanalytics.sandbox.SimpleGraphEntity
 
 class ParameterHolder(context: Operation.Context) {
   private val metas = collection.mutable.Buffer[OperationParameterMeta]()
@@ -44,7 +45,7 @@ class ParameterHolder(context: Operation.Context) {
 
   private def getNamesAndTypes(
     context: Operation.Context,
-    kind: String): List[Entity] = {
+    kind: String): List[SimpleGraphEntity] = {
     context.inputs.values.flatMap {
       case state => getNamesAndGuids(state, kind)
     }.map {
@@ -52,11 +53,10 @@ class ParameterHolder(context: Operation.Context) {
         val typeName =
           if (kind == "scalarGUIDs") context.manager.scalar(guid).typeTag.tpe.toString
           else context.manager.attribute(guid).typeTag.tpe.toString
-        Entity(attrName, typeName)
+        SimpleGraphEntity(attrName, typeName)
     }.toList
   }
 
-  case class Entity(name: String, typeName: String)
   def apply(name: String): String = {
     if (context.box.parametricParameters.contains(name)) {
       val vertexAttributes = getNamesAndTypes(context, "vertexAttributeGUIDs")
@@ -64,9 +64,9 @@ class ParameterHolder(context: Operation.Context) {
       val scalars = getNamesAndTypes(context, "scalarGUIDs")
       val expr = "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\""
       val paramTypes = Map(
-        "vertexAttributes" -> typeTag[List[Entity]],
-        "edgeAttributes" -> typeTag[List[Entity]],
-        "scalars" -> typeTag[List[Entity]]) ++
+        "vertexAttributes" -> typeTag[List[SimpleGraphEntity]],
+        "edgeAttributes" -> typeTag[List[SimpleGraphEntity]],
+        "scalars" -> typeTag[List[SimpleGraphEntity]]) ++
         context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
       val evaluator = com.lynxanalytics.sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
       evaluator.evaluate(Map(
