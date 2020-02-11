@@ -101,8 +101,13 @@ class DataManager(
   }
 
   def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
-    val d = bestDomain(domains.filter(_.canGet(scalar)), scalar)
-    ensure(scalar, d).flatMap(_ => d.get(scalar))
+    val d = bestDomain(domains, scalar)
+    if (d.canGet(scalar)) {
+      ensure(scalar, d).flatMap(_ => d.get(scalar))
+    } else {
+      val scalarDomain = domains.find(_.canGet(scalar)).get
+      ensure(scalar, scalarDomain).flatMap(_ => scalarDomain.get(scalar))
+    }
   }
 
   def get[T](scalar: Scalar[T]): T = {

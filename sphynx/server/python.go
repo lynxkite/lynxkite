@@ -30,5 +30,6 @@ func pythonOperation(module string) DiskOperation {
 func init() {
 	diskOperationRepository["Node2Vec"] = pythonOperation("node2vec")
 	diskOperationRepository["TSNE"] = pythonOperation("tsne")
+	diskOperationRepository["GCN"] = pythonOperation("gcn")
 	diskOperationRepository["PyTorchGeometricDataset"] = pythonOperation("datasets")
 }

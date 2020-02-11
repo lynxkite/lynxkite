@@ -444,4 +444,34 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       project.vertexAttributes(name) = op(op.vector, vector).result.embedding
     }
   })
+
+  register("Train and predict with GCN")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("save_as", "Save as"),
+      Param("train_acc", "Name for training accuracy"),
+      Param("val_acc", "Name for validation accuracy"),
+      Param("iterations", "Iterations", defaultValue = "20"),
+      Choice("train_mask", "Train mask", options = project.vertexAttrList[Double]),
+      Choice("val_mask", "Validation mask", options = project.vertexAttrList[Double]),
+      Choice("features", "Vector", options = project.vertexAttrList[Vector[Double]]),
+      Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]))
+    def enabled = project.hasEdgeBundle && FEStatus.assert(
+      project.vertexAttrList[Double].nonEmpty, "No vertex attributes.")
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the prediction.")
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val iterations = params("iterations").toInt
+      val op = graph_operations.GCN(iterations)
+      val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
+      val trainMask = project.vertexAttributes(params("train_mask")).runtimeSafeCast[Double]
+      val valMask = project.vertexAttributes(params("val_mask")).runtimeSafeCast[Double]
+      val result = (
+        (op(op.es, project.edgeBundle)(op.label, label)(op.features, features)(op.trainMask, trainMask)(op.valMask, valMask).result))
+      project.vertexAttributes(name) = result.prediction
+      project.newScalar(params("train_acc"), result.trainAcc)
+      project.newScalar(params("val_acc"), result.valAcc)
+    }
+  })
 }
