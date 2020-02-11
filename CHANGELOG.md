@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 3.1.0
+
  - Sphynx is now enabled by default. A couple operations run on Sphynx.
  - Wizards have been added as an experimental feature. Use the anchor box to turn a workspace
    into a wizard.
