@@ -233,7 +233,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       params += Choice("name", "Name", options = FEOption.list(
         "Cora", "CiteSeer", "Karate Club", "PubMed"))
       override def summary = {
-        val fn = params("filename")
+        val fn = params("name")
         s"Import $fn"
       }
       def enabled = FEStatus.enabled
