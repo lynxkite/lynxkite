@@ -177,9 +177,16 @@ angular.module('biggraph')
               }
             },
             function onError(error) {
-            /* eslint-disable no-console */
+              /* eslint-disable no-console */
               console.error('Failed to load workspace.', error);
-              that.error = util.responseToErrorMessage(error);
+              if (that.backendResponse) {
+                // We are already displaying a workspace. Revert local changes.
+                // A popup will be displayed for the failed edit.
+                that._init(that.backendResponse);
+              } else {
+                // Couldn't load workspace. Display an error in its place.
+                that.error = util.responseToErrorMessage(error);
+              }
             });
       },
 
