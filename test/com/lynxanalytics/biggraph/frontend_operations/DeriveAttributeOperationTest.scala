@@ -15,6 +15,14 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
   }
 
+  test("ID and Long are serialized and deserialized") {
+    val project =
+      box("Create vertices", Map("size" -> "10"))
+        .box(
+          "Derive vertex attribute", Map("output" -> "out1", "expr" -> "id.toString"))
+        .box("Derive vertex attribute", Map("output" -> "out2", "expr" -> "ordinal.toString")).project
+  }
+
   test("Derive vertex attribute - back quote") {
     val project = box("Create example graph")
       .box(
