@@ -152,7 +152,8 @@ object SerializableType {
     if (t =:= typeOf[String]) string
     else if (t =:= typeOf[Double]) double
     // ID must come before Long, because Long would match too
-    else if (t =:= typeOf[com.lynxanalytics.biggraph.graph_api.ID]) id
+    // But we have to use the stricter == comparison
+    else if (t == typeOf[com.lynxanalytics.biggraph.graph_api.ID]) id
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
     else if (TypeTagUtil.isOfKind2[Tuple2](t)) tuple2(
