@@ -330,8 +330,8 @@ startSphynx () {
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
       -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
-    cd "$stage_dir"
-    sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR &
+    cd "$stage_dir/sphynx"
+    go/bin/server -keydir=$SPHYNX_CERT_DIR &
     SPHYNX_PID=$!
     echo $SPHYNX_PID > $SPHYNX_PID_FILE
     cd -
