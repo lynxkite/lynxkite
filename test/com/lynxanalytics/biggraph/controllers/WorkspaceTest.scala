@@ -166,6 +166,20 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  test("ID and Long are serialized and deserialized") {
+    val start = Box("start", "Create vertices", Map("size" -> "10"), 0, 0, Map())
+    val deriveFromId = Box(
+      "id", "Derive vertex attribute",
+      Map("output" -> "out1", "expr" -> "id.toString"),
+      0, 0, Map("project" -> start.output("project")))
+    val deriveFromLong = Box(
+      "long", "Derive vertex attribute",
+      Map("output" -> "out2", "expr" -> "ordinal.toString"),
+      0, 0, Map("project" -> deriveFromId.output("project")))
+    val ws = Workspace.from(start, deriveFromId, deriveFromLong)
+    context(ws).allStates(deriveFromLong.output("project")).project
+  }
+
   test("2-input operation") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
