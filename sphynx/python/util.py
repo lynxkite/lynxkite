@@ -6,6 +6,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import sys
+import json
 
 DoubleAttribute = 'DoubleAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
@@ -62,17 +63,20 @@ class Op:
         'defined': pa.array(defined, pa.bool_()),
     })
 
+  def write_type(self, path, type):
+    os.makedirs(path, exist_ok=True)
+    with open(path + '/type_name', 'w') as f:
+      f.write(type)
+
   def write_columns(self, name, type, columns):
     path = self.datadir + '/' + self.outputs[name]
     print('writing', type, 'to', path)
-    os.makedirs(path, exist_ok=True)
+    self.write_type(path, type)
     # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
         pa.field(name, a.type, nullable=False) for (name, a) in columns.items()])
     t = pa.Table.from_arrays(list(columns.values()), schema=schema)
     pq.write_table(t, path + '/data.parquet')
-    with open(path + '/type_name', 'w') as f:
-      f.write(type)
     with open(path + '/_SUCCESS', 'w'):
       pass
 
@@ -94,3 +98,13 @@ class Op:
       self.write_columns(name + '-idSet', 'VertexSet', {
           'sparkId': pa.array(range(len(src)), pa.int64()),
       })
+
+  def output_scalar(self, name, value):
+    '''Writes a scalar to disk.'''
+    path = self.datadir + '/' + self.outputs[name]
+    print('writing Scalar to', path)
+    self.write_type(path, 'Scalar')
+    with open(path + '/serialized_data', 'w') as f:
+      json.dump(value, f)
+    with open(path + '/_SUCCESS', 'w'):
+      pass

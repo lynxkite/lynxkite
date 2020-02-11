@@ -56,3 +56,29 @@ case class PyTorchGeometricDataset(name: String) extends TypedMetaGraphOp[NoInpu
   def outputMeta(instance: MetaGraphOperationInstance) = new PyTorchGeometricDataset.Output()(instance)
   override def toJson = Json.obj("name" -> name)
 }
+
+object GCN extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+    val label = vertexAttribute[Double](vs)
+    val trainMask = vertexAttribute[Double](vs)
+    val valMask = vertexAttribute[Double](vs)
+    val features = vertexAttribute[Vector[Double]](vs)
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val prediction = vertexAttribute[Double](inputs.vs.entity)
+    val trainAcc = scalar[Double]
+    val valAcc = scalar[Double]
+  }
+  def fromJson(j: JsValue) = GCN(
+    (j \ "iterations").as[Int])
+}
+case class GCN(iterations: Int)
+  extends TypedMetaGraphOp[GCN.Input, GCN.Output] {
+  @transient override lazy val inputs = new GCN.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new GCN.Output()(instance, inputs)
+  override def toJson = Json.obj("iterations" -> iterations)
+}
