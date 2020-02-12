@@ -16,8 +16,6 @@ class Net(torch.nn.Module):
 
   def forward(self, data):
     x, edge_index = data.x, data.edge_index
-    print('x', x.dtype)
-    print('edge_index', edge_index.dtype)
     x = self.conv1(x, edge_index)
     x = F.relu(x)
     x = F.dropout(x, training=self.training)
@@ -29,14 +27,13 @@ op = util.Op()
 torch.manual_seed(op.params['seed'])
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'GCN running on {device}')
-num_nodes = op.input_parquet('vs').metadata.num_rows
-print('num_nodes:', num_nodes)
 es = op.input('es')
 edges = torch.tensor([es.src, es.dst])
 x = torch.from_numpy(op.input('features', type='DoubleVectorAttribute')).type(torch.float32)
 label = torch.from_numpy(op.input('label')).type(torch.long)
+num_classes = torch.unique(label).size()[0]
 data = Data(x=x, edge_index=edges, y=label).to(device)
-model = Net(in_dim=data.num_features, out_dim=2).to(device)
+model = Net(in_dim=data.num_features, out_dim=num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 train_mask = op.input('trainMask') == 1
 val_mask = op.input('valMask') == 1
