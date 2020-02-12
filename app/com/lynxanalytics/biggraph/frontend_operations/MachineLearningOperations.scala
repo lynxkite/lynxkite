@@ -448,15 +448,13 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Train and predict with GCN")(new ProjectTransformation(_) {
     params ++= List(
       Param("save_as", "Save as"),
-      Param("train_acc", "Name for training accuracy"),
-      Param("val_acc", "Name for validation accuracy"),
       Param("iterations", "Iterations", defaultValue = "20"),
       Choice("train_mask", "Train mask", options = project.vertexAttrList[Double]),
       Choice("val_mask", "Validation mask", options = project.vertexAttrList[Double]),
-      Choice("features", "Vector", options = project.vertexAttrList[Vector[Double]]),
+      Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No vertex attributes.")
+      project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
     def apply() = {
       val name = params("save_as")
       assert(name.nonEmpty, "Please set the name of the prediction.")
@@ -470,8 +468,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val result = (
         (op(op.es, project.edgeBundle)(op.label, label)(op.features, features)(op.trainMask, trainMask)(op.valMask, valMask).result))
       project.vertexAttributes(name) = result.prediction
-      project.newScalar(params("train_acc"), result.trainAcc)
-      project.newScalar(params("val_acc"), result.valAcc)
+      project.newScalar(s"${name}_train_acc", result.trainAcc)
+      project.newScalar(s"${name}_val_acc", result.valAcc)
     }
   })
 }
