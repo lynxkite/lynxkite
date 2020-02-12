@@ -64,13 +64,13 @@ class Op:
     })
 
   def write_type(self, path, type):
+    print('writing', type, 'to', path)
     os.makedirs(path, exist_ok=True)
     with open(path + '/type_name', 'w') as f:
       f.write(type)
 
   def write_columns(self, name, type, columns):
     path = self.datadir + '/' + self.outputs[name]
-    print('writing', type, 'to', path)
     self.write_type(path, type)
     # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
@@ -102,7 +102,6 @@ class Op:
   def output_scalar(self, name, value):
     '''Writes a scalar to disk.'''
     path = self.datadir + '/' + self.outputs[name]
-    print('writing Scalar to', path)
     self.write_type(path, 'Scalar')
     with open(path + '/serialized_data', 'w') as f:
       json.dump(value, f)
