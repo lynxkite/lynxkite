@@ -32,7 +32,7 @@ es = op.input('es')
 edges = torch.tensor([es.src, es.dst])
 x = torch.from_numpy(op.input('features', type='DoubleVectorAttribute')).type(torch.float32)
 label = torch.from_numpy(op.input('label')).type(torch.long)
-num_classes = torch.unique(label).size()[0]
+num_classes = torch.max(label).item() + 1
 data = Data(x=x, edge_index=edges, y=label).to(device)
 model = Net(in_dim=data.num_features, out_dim=num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
