@@ -26,6 +26,7 @@ class Net(torch.nn.Module):
 
 
 op = util.Op()
+torch.manual_seed(op.params['seed'])
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'GCN running on {device}')
 num_nodes = op.input_parquet('vs').metadata.num_rows

@@ -74,11 +74,12 @@ object GCN extends OpFromJson {
     val valAcc = scalar[Double]
   }
   def fromJson(j: JsValue) = GCN(
-    (j \ "iterations").as[Int])
+    (j \ "iterations").as[Int],
+    (j \ "seed").as[Int])
 }
-case class GCN(iterations: Int)
+case class GCN(iterations: Int, seed: Int)
   extends TypedMetaGraphOp[GCN.Input, GCN.Output] {
   @transient override lazy val inputs = new GCN.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new GCN.Output()(instance, inputs)
-  override def toJson = Json.obj("iterations" -> iterations)
+  override def toJson = Json.obj("iterations" -> iterations, "seed" -> seed)
 }

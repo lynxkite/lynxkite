@@ -452,7 +452,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("train_mask", "Train mask", options = project.vertexAttrList[Double]),
       Choice("val_mask", "Validation mask", options = project.vertexAttrList[Double]),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
-      Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]))
+      Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
+      RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
     def apply() = {
@@ -461,7 +462,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val iterations = params("iterations").toInt
-      val op = graph_operations.GCN(iterations)
+      val seed = params("seed").toInt
+      val op = graph_operations.GCN(iterations, seed)
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val trainMask = project.vertexAttributes(params("train_mask")).runtimeSafeCast[Double]
       val valMask = project.vertexAttributes(params("val_mask")).runtimeSafeCast[Double]
