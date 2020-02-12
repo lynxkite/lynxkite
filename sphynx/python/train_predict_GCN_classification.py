@@ -1,4 +1,5 @@
-'''Implements a Graph Convolutional Network using PyTorch Geometric'''
+'''Trains a Graph Convolutional Network using PyTorch Geometric
+and predicts the missing values for classification tasks.'''
 import numpy as np
 import torch
 from torch_geometric.data import Data
@@ -54,7 +55,6 @@ model.eval()
 with torch.no_grad():
   _, pred = model(data).max(dim=1)
 
-# train_mask
 train_correct = pred[train_mask].eq(data.y[train_mask]).sum().item()
 train_acc = train_correct / train_mask.sum()
 val_correct = pred[val_mask].eq(data.y[val_mask]).sum().item()
