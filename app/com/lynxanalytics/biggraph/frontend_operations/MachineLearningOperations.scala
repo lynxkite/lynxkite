@@ -497,8 +497,12 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val trainMask = project.vertexAttributes(params("train_mask")).runtimeSafeCast[Double]
       val valMask = project.vertexAttributes(params("val_mask")).runtimeSafeCast[Double]
-      val result = (
-        (op(op.es, project.edgeBundle)(op.label, label)(op.features, features)(op.trainMask, trainMask)(op.valMask, valMask).result))
+      val result =
+        op(op.es, project.edgeBundle)(
+          op.label, label)(
+            op.features, features)(
+              op.trainMask, trainMask)(
+                op.valMask, valMask).result
       project.vertexAttributes(name) = result.prediction
       project.newScalar(s"${name}_train_mse", result.trainMSE)
       project.newScalar(s"${name}_val_mse", result.valMSE)
