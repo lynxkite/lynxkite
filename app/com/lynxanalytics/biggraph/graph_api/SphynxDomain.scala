@@ -189,7 +189,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
         val rdd = a.rdd.map { case (id, v) => Row(id, v) }
         val schema = StructType(Seq(
           StructField("id", LongType, false),
-          StructField("value", ArrayType(DoubleType, true))))
+          StructField("value", ArrayType(DoubleType, false), false)))
         writeRDD(rdd, schema, e)
       case s: ScalarData[_] => {
         val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
