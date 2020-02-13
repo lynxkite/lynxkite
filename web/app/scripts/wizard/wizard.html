@@ -40,7 +40,7 @@
             box-id="step.box"></box-editor>
 
           <state-view
-            ng-if="step.popup !== 'parameters' && $parent.expanded === $index"
+            ng-if="step.popup && step.popup !== 'parameters' && $parent.expanded === $index"
             workspace="workspace"
             plug="workspace.getOutputPlug(step.box, step.popup)"
             popup-model="{ height: 500, maxHeight: 500, width: 500 }">
