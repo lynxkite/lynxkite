@@ -44,3 +44,5 @@ target/
 metastore_db/
 **/.ipynb_checkpoints/
 .Rproj.user
+
+node_modules
