@@ -180,7 +180,7 @@ object ScalaScript {
       code,
       mandatoryParamTypes ++ optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) })
     val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
-    codeReturnTypeCache.syncGetOrElseUpdate(id, ScalaType(inferType(funcCode)))
+    codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
   }
 
   private def inferType(func: String): TypeTag[_] = synchronized {
@@ -253,7 +253,7 @@ object ScalaScript {
     mandatoryParamTypes: Map[String, TypeTag[_]],
     optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = synchronized {
     val cacheKey = (Seq(code) ++ mandatoryParamTypes.keys ++ optionalParamTypes.keys).mkString(";")
-    evaluatorCache.syncGetOrElseUpdate(cacheKey, synchronized {
+    evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
       // Parameters are back quoted and taken out from the Map. The input argument is one Map to
       // make the calling of the compiled function easier (otherwise we had varying number of args).
       val convertedParamTypes = mandatoryParamTypes ++

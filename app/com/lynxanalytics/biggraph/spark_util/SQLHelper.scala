@@ -77,7 +77,7 @@ object SQLHelper {
 
   private val supportedDataTypeCache = new SoftHashMap[TypeTag[_], Option[types.DataType]]()
   private def supportedDataType[T: TypeTag]: Option[types.DataType] = {
-    supportedDataTypeCache.syncGetOrElseUpdate(typeTag[T], try {
+    supportedDataTypeCache.getOrElseUpdate(typeTag[T], try {
       Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
     } catch {
       case _: UnsupportedOperationException => None
