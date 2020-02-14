@@ -35,6 +35,11 @@ func (ea *EntityAccessor) output(name string, entity Entity) error {
 	return nil
 }
 
+func (ea *EntityAccessor) getOutput(name string) Entity {
+	guid := ea.opInst.Outputs[name]
+	return ea.outputs[guid]
+}
+
 func (ea *EntityAccessor) getVertexSet(name string) *VertexSet {
 	return ea.inputs[name].(*VertexSet)
 }
