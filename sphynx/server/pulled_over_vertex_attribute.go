@@ -25,11 +25,17 @@ func init() {
 			destValues := destAttr.Elem().FieldByName("Values")
 			destDefined := destAttr.Elem().FieldByName("Defined")
 			for destId := range destinationVS.MappingToUnordered {
-				origId := destToOrig[destId]
-				value := origValues.Index(origId)
-				defined := origDefined.Index(origId)
-				destValues.Index(destId).Set(value)
-				destDefined.Index(destId).Set(defined)
+				origId, exists := destToOrig[destId]
+				if exists {
+					value := origValues.Index(origId)
+					defined := origDefined.Index(origId)
+					if defined.Bool() != false {
+						destValues.Index(destId).Set(value)
+					}
+					destDefined.Index(destId).Set(defined)
+				} else {
+					destDefined.Index(destId).SetBool(false)
+				}
 			}
 			destAttrValue := destAttr.Interface()
 			ea.output("pulledAttr", destAttrValue.(Entity))

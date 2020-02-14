@@ -33,7 +33,7 @@ func TestPulledOverVertexAttribute(t *testing.T) {
 	if err != nil {
 		t.Errorf("PulledOverVertexAttribute failed: %v", err)
 	}
-	expected := DoubleAttribute{
+	expected := &DoubleAttribute{
 		Values:  []float64{0, 0, 13, 13},
 		Defined: []bool{false, false, true, true},
 	}
