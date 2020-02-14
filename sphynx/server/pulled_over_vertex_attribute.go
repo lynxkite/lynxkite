@@ -11,6 +11,7 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			origAttr := ea.inputs["originalAttr"].(ParquetEntity)
 			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
+			origDefined := reflect.ValueOf(origAttr).Elem().FieldByName("Defined")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
 			destToOrig := make(map[int]int, len(function.Src))
@@ -26,8 +27,9 @@ func init() {
 			for destId := range destinationVS.MappingToUnordered {
 				origId := destToOrig[destId]
 				value := origValues.Index(origId)
+				defined := origDefined.Index(origId)
 				destValues.Index(destId).Set(value)
-				destDefined.Index(destId).SetBool(true)
+				destDefined.Index(destId).Set(defined)
 			}
 			destAttrValue := destAttr.Interface()
 			ea.output("pulledAttr", destAttrValue.(Entity))
