@@ -147,9 +147,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { size: '<50' },
-          { size: '<50' },
-          { size: '>50' },
+          { size: '<25' },
+          { size: '<25' },
+          { size: '>25' },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -220,10 +220,10 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { width: '<20' },
-          { width: '<20' },
-          { width: '>20' },
-          { width: '>20' },
+          { width: '<10' },
+          { width: '<10' },
+          { width: '>10' },
+          { width: '>10' },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -429,12 +429,12 @@ module.exports = function(fw) {
           expect(found).toBe(true);
         }
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '>10' },
+          { src: 0, dst: 1, width: '<10' },
           { src: 0, dst: 4, width: '<10' },
-          { src: 1, dst: 0, width: '>10' },
+          { src: 1, dst: 0, width: '<10' },
           { src: 1, dst: 3, width: '<10' },
-          { src: 2, dst: 0, width: '>10' },
-          { src: 2, dst: 1, width: '>10' },
+          { src: 2, dst: 0, width: '<10' },
+          { src: 2, dst: 1, width: '<10' },
           { src: 2, dst: 4, width: '<10' },
           { src: 3, dst: 4, width: '<10' },
           { src: 4, dst: 3, width: '>10' },
