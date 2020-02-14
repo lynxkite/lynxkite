@@ -24,17 +24,12 @@ func init() {
 			InitializeAttribute(destAttr, numVS)
 			destValues := destAttr.Elem().FieldByName("Values")
 			destDefined := destAttr.Elem().FieldByName("Defined")
-			for destId := range destinationVS.MappingToUnordered {
-				origId, exists := destToOrig[destId]
-				if exists {
-					value := origValues.Index(origId)
-					defined := origDefined.Index(origId)
-					if defined.Bool() != false {
-						destValues.Index(destId).Set(value)
-					}
+			for destId, origId := range destToOrig {
+				value := origValues.Index(origId)
+				defined := origDefined.Index(origId)
+				if defined.Bool() != false {
+					destValues.Index(destId).Set(value)
 					destDefined.Index(destId).Set(defined)
-				} else {
-					destDefined.Index(destId).SetBool(false)
 				}
 			}
 			destAttrValue := destAttr.Interface()
