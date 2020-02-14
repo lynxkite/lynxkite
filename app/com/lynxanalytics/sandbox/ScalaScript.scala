@@ -240,10 +240,15 @@ object ScalaScript {
   }
 
   // A wrapper class to call the compiled function with the parameter Map.
-  case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
+  case class Evaluator(code: String, evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
-      ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-        evalFunc.apply(params)
+      try {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          evalFunc.apply(params)
+        }
+      } catch {
+        case t: Throwable =>
+          throw new Exception(s"Error while executing: $code", t)
       }
     }
   }
@@ -278,7 +283,7 @@ object ScalaScript {
         val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval()
         }
-        Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
+        Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
       }
     })
   }
