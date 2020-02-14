@@ -256,7 +256,7 @@ object ScalaScript {
   def compileAndGetEvaluator(
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = synchronized {
+    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
     val cacheKey = (Seq(code) ++ mandatoryParamTypes.keys ++ optionalParamTypes.keys).mkString(";")
     evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
       // Parameters are back quoted and taken out from the Map. The input argument is one Map to
