@@ -27,7 +27,7 @@ func init() {
 			for destId, origId := range destToOrig {
 				value := origValues.Index(origId)
 				defined := origDefined.Index(origId)
-				if defined.Bool() != false {
+				if defined.Bool() {
 					destValues.Index(destId).Set(value)
 					destDefined.Index(destId).Set(defined)
 				}
