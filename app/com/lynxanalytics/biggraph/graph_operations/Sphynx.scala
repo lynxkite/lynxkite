@@ -57,56 +57,71 @@ case class PyTorchGeometricDataset(name: String) extends TypedMetaGraphOp[NoInpu
   override def toJson = Json.obj("name" -> name)
 }
 
-object TrainPredictGCNClassification extends OpFromJson {
+object TrainGCNClassifier extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val es = edgeBundle(vs, vs)
     val label = vertexAttribute[Double](vs)
-    val trainMask = vertexAttribute[Double](vs)
-    val valMask = vertexAttribute[Double](vs)
     val features = vertexAttribute[Vector[Double]](vs)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val prediction = vertexAttribute[Double](inputs.vs.entity)
     val trainAcc = scalar[Double]
-    val valAcc = scalar[Double]
+    val model = scalar[SphynxModel]
   }
-  def fromJson(j: JsValue) = TrainPredictGCNClassification(
+  def fromJson(j: JsValue) = TrainGCNClassifier(
     (j \ "iterations").as[Int],
     (j \ "seed").as[Int])
 }
-case class TrainPredictGCNClassification(iterations: Int, seed: Int)
-  extends TypedMetaGraphOp[TrainPredictGCNClassification.Input, TrainPredictGCNClassification.Output] {
-  @transient override lazy val inputs = new TrainPredictGCNClassification.Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new TrainPredictGCNClassification.Output()(instance, inputs)
+case class TrainGCNClassifier(iterations: Int, seed: Int)
+  extends TypedMetaGraphOp[TrainGCNClassifier.Input, TrainGCNClassifier.Output] {
+  @transient override lazy val inputs = new TrainGCNClassifier.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNClassifier.Output()(instance, inputs)
   override def toJson = Json.obj("iterations" -> iterations, "seed" -> seed)
 }
 
-object TrainPredictGCNRegression extends OpFromJson {
+object TrainGCNRegressor extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val es = edgeBundle(vs, vs)
     val label = vertexAttribute[Double](vs)
-    val trainMask = vertexAttribute[Double](vs)
-    val valMask = vertexAttribute[Double](vs)
     val features = vertexAttribute[Vector[Double]](vs)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val prediction = vertexAttribute[Double](inputs.vs.entity)
     val trainMSE = scalar[Double]
-    val valMSE = scalar[Double]
+    val model = scalar[SphynxModel]
   }
-  def fromJson(j: JsValue) = TrainPredictGCNRegression(
+  def fromJson(j: JsValue) = TrainGCNRegressor(
     (j \ "iterations").as[Int],
     (j \ "seed").as[Int])
 }
-case class TrainPredictGCNRegression(iterations: Int, seed: Int)
-  extends TypedMetaGraphOp[TrainPredictGCNRegression.Input, TrainPredictGCNRegression.Output] {
-  @transient override lazy val inputs = new TrainPredictGCNRegression.Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new TrainPredictGCNRegression.Output()(instance, inputs)
+case class TrainGCNRegressor(iterations: Int, seed: Int)
+  extends TypedMetaGraphOp[TrainGCNRegressor.Input, TrainGCNRegressor.Output] {
+  @transient override lazy val inputs = new TrainGCNRegressor.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNRegressor.Output()(instance, inputs)
   override def toJson = Json.obj("iterations" -> iterations, "seed" -> seed)
+}
+
+object PredictWithGCN extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+    val features = vertexAttribute[Vector[Double]](vs)
+    val model = scalar[SphynxModel]
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val prediction = vertexAttribute[Double](inputs.vs.entity)
+  }
+  def fromJson(j: JsValue) = PredictWithGCN()
+}
+case class PredictWithGCN()
+  extends TypedMetaGraphOp[PredictWithGCN.Input, PredictWithGCN.Output] {
+  @transient override lazy val inputs = new PredictWithGCN.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new PredictWithGCN.Output()(instance, inputs)
+  override def toJson = Json.obj()
 }
