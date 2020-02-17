@@ -7,6 +7,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import sys
 import json
+import torch
+
 
 DoubleAttribute = 'DoubleAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
@@ -46,6 +48,11 @@ class Op:
         vs = np.array(list(list(v) for v in vs))
       return vs
     return df
+
+  def input_model(self, name):
+    '''Loads a Pytorch model.'''
+    path = f'{self.datadir}/{self.inputs[name]}/model.pt'
+    return torch.load(path)
 
   def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
@@ -107,3 +114,10 @@ class Op:
       json.dump(value, f)
     with open(path + '/_SUCCESS', 'w'):
       pass
+
+  def output_model(self, name, model, description):
+    '''Writes PyTorch model to disk.'''
+    path = self.datadir + '/' + self.outputs[name]
+    os.makedirs(path, exist_ok=True)
+    torch.save(model, path + '/model.pt')
+    self.output_scalar(name, description)
