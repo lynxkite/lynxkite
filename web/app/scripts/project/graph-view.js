@@ -1104,7 +1104,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         ratio < 1 / tolerance || ratio > tolerance ||
         !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
-      offsetter.thickness = 1000 / Math.sqrt(vertices.vs.length);
+      offsetter.thickness = 500 / Math.sqrt(vertices.vs.length);
       // Recalculate with the new zoom.
       newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
       offsetter.xOff = newPan.xOff;
