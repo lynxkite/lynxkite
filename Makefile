@@ -48,7 +48,7 @@ $(pip): python_requirements.txt
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/impact-analyzer-pipeline-test-passed: \
   $(shell $(find) standard-pipelines/impact-analyzer) $(pip)
-  standard-pipelines/impact-analysis/unit_test.sh && touch $@
+	standard-pipelines/impact-analysis/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
 	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
