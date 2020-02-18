@@ -7,39 +7,69 @@ import torch.nn.functional as F
 from . import util
 from . import models
 
-
 op = util.Op()
-torch.manual_seed(op.params['seed'])
+seed = op.params['seed']
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+torch.manual_seed(seed)
+np.random.seed(seed)
 print(f'GCN running on {device}')
+
+
+def get_feature_matrix(train_mask, batch_size, x, y_numpy, num_classes):
+  train_batch = np.random.choice(np.where(train_mask)[0], batch_size, replace=False)
+  in_train_batch = np.zeros_like(y_numpy)
+  in_train_batch[train_batch] = 1
+  label_known = np.copy(train_mask)
+  label_known[train_batch] = 0
+  tmp_label = np.nan_to_num(y_numpy, copy=True).astype(np.int)  # Not one-hot encoded input.
+  label_for_input = np.zeros((tmp_label.size, num_classes))
+  label_for_input[label_known, tmp_label[label_known]] = 1
+  label_for_input = torch.from_numpy(label_for_input).type(torch.float32)
+  label_known = torch.from_numpy(label_known).type(torch.float32).unsqueeze(1)
+  return in_train_batch == 1, torch.cat([x, label_for_input, label_known], 1)
+
+
+# Get graph, features and target label.
 es = op.input('es')
 edges = torch.tensor([es.src, es.dst])
 x = torch.from_numpy(op.input('features', type='DoubleVectorAttribute')).type(torch.float32)
 y_numpy = op.input('label')
-train_mask = ~np.isnan(y_numpy)
 label = torch.from_numpy(y_numpy).type(torch.long)
+train_mask = ~np.isnan(y_numpy)
+batch_size = min(op.params['batch_size'], train_mask.sum())
+forget = op.params['forget']
+
+# Define model.
 num_classes = torch.max(label).item() + 1
-data = Data(x=x, edge_index=edges, y=label).to(device)
-model = models.GCNConvNet(in_dim=data.num_features, out_dim=num_classes).to(device)
+in_dim = x.size()[1] + num_classes + 1 if forget else x.size()[1]
+model = models.GCNConvNet(
+    in_dim=in_dim,
+    out_dim=num_classes,
+    forget=forget,
+    num_classes=num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 # Train model.
 model.train()
 for epoch in range(op.params['iterations']):
+  if forget:
+    batch_train_mask, batch_x = get_feature_matrix(train_mask, batch_size, x, y_numpy, num_classes)
+  else:
+    batch_train_mask, batch_x = train_mask, x
+  data = Data(x=batch_x, edge_index=edges, y=label).to(device)
   optimizer.zero_grad()
   out = model(data)
-  loss = F.cross_entropy(out[train_mask], data.y[train_mask])
+  loss = F.cross_entropy(out[batch_train_mask], data.y[batch_train_mask])
   loss.backward()
   optimizer.step()
   print('epoch', epoch, 'loss', loss.item())
 
-# Generate and write output.
+# Measure performance
 model.eval()
 with torch.no_grad():
   _, pred = model(data).max(dim=1)
-
-train_correct = pred[train_mask].eq(data.y[train_mask]).sum().item()
-train_acc = train_correct / train_mask.sum()
+train_correct = pred[batch_train_mask].eq(data.y[batch_train_mask]).sum().item()
+train_acc = train_correct / batch_train_mask.sum()
 
 op.output_model('model', model, 'GCN classifier')
 op.output_scalar('trainAcc', train_acc)

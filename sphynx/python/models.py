@@ -4,11 +4,13 @@ import torch
 
 
 class GCNConvNet(torch.nn.Module):
-  def __init__(self, in_dim, out_dim):
+  def __init__(self, in_dim, out_dim, forget, num_classes):
     super(GCNConvNet, self).__init__()
     self.conv1 = GCNConv(in_dim, 16)
     self.conv2 = GCNConv(16, out_dim)
     self.is_classification = True
+    self.forget = forget
+    self.num_classes = num_classes
 
   def forward(self, data):
     x, edge_index = data.x, data.edge_index
@@ -20,12 +22,13 @@ class GCNConvNet(torch.nn.Module):
 
 
 class GCNConvNetForRegression(torch.nn.Module):
-  def __init__(self, in_dim):
+  def __init__(self, in_dim, forget):
     super(GCNConvNetForRegression, self).__init__()
     self.conv1 = GCNConv(in_dim, 16)
     self.conv2 = GCNConv(16, 16)
     self.lin = torch.nn.Linear(16, 1)
     self.is_classification = False
+    self.forget = forget
 
   def forward(self, data):
     x, edge_index = data.x, data.edge_index
