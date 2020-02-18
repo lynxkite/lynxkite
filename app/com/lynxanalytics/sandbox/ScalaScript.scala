@@ -180,7 +180,7 @@ object ScalaScript {
       code,
       mandatoryParamTypes ++ optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) })
     val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
-    codeReturnTypeCache.syncGetOrElseUpdate(id, ScalaType(inferType(funcCode)))
+    codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
   }
 
   private def inferType(func: String): TypeTag[_] = synchronized {
@@ -240,10 +240,15 @@ object ScalaScript {
   }
 
   // A wrapper class to call the compiled function with the parameter Map.
-  case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
+  case class Evaluator(code: String, evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
-      ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-        evalFunc.apply(params)
+      try {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          evalFunc.apply(params)
+        }
+      } catch {
+        case t: Throwable =>
+          throw new Exception(s"Error while executing: $code", t)
       }
     }
   }
@@ -251,9 +256,9 @@ object ScalaScript {
   def compileAndGetEvaluator(
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = synchronized {
+    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
     val cacheKey = (Seq(code) ++ mandatoryParamTypes.keys ++ optionalParamTypes.keys).mkString(";")
-    evaluatorCache.syncGetOrElseUpdate(cacheKey, synchronized {
+    evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
       // Parameters are back quoted and taken out from the Map. The input argument is one Map to
       // make the calling of the compiled function easier (otherwise we had varying number of args).
       val convertedParamTypes = mandatoryParamTypes ++
@@ -278,7 +283,7 @@ object ScalaScript {
         val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval()
         }
-        Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
+        Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
       }
     })
   }
