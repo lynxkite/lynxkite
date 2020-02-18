@@ -72,13 +72,19 @@ object TrainGCNClassifier extends OpFromJson {
   }
   def fromJson(j: JsValue) = TrainGCNClassifier(
     (j \ "iterations").as[Int],
+    (j \ "forget").as[Boolean],
+    (j \ "batch_size").as[Int],
     (j \ "seed").as[Int])
 }
-case class TrainGCNClassifier(iterations: Int, seed: Int)
+case class TrainGCNClassifier(iterations: Int, forget: Boolean, batchSize: Int, seed: Int)
   extends TypedMetaGraphOp[TrainGCNClassifier.Input, TrainGCNClassifier.Output] {
   @transient override lazy val inputs = new TrainGCNClassifier.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNClassifier.Output()(instance, inputs)
-  override def toJson = Json.obj("iterations" -> iterations, "seed" -> seed)
+  override def toJson = Json.obj(
+    "iterations" -> iterations,
+    "forget" -> forget,
+    "batch_size" -> batchSize,
+    "seed" -> seed)
 }
 
 object TrainGCNRegressor extends OpFromJson {
@@ -96,19 +102,26 @@ object TrainGCNRegressor extends OpFromJson {
   }
   def fromJson(j: JsValue) = TrainGCNRegressor(
     (j \ "iterations").as[Int],
+    (j \ "forget").as[Boolean],
+    (j \ "batch_size").as[Int],
     (j \ "seed").as[Int])
 }
-case class TrainGCNRegressor(iterations: Int, seed: Int)
+case class TrainGCNRegressor(iterations: Int, forget: Boolean, batchSize: Int, seed: Int)
   extends TypedMetaGraphOp[TrainGCNRegressor.Input, TrainGCNRegressor.Output] {
   @transient override lazy val inputs = new TrainGCNRegressor.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNRegressor.Output()(instance, inputs)
-  override def toJson = Json.obj("iterations" -> iterations, "seed" -> seed)
+  override def toJson = Json.obj(
+    "iterations" -> iterations,
+    "forget" -> forget,
+    "batch_size" -> batchSize,
+    "seed" -> seed)
 }
 
 object PredictWithGCN extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val es = edgeBundle(vs, vs)
+    val label = vertexAttribute[Double](vs)
     val features = vertexAttribute[Vector[Double]](vs)
     val model = scalar[SphynxModel]
   }

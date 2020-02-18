@@ -451,6 +451,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("iterations", "Iterations", defaultValue = "20"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
+      Choice("forget", "Use labels as inputs", options = FEOption.bools),
+      Param("batch_size", "Batch size", defaultValue = "128"),
       RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
@@ -460,11 +462,15 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val iterations = params("iterations").toInt
+      val batchSize = params("batch_size").toInt
+      val forget = params("forget").toBoolean
       val seed = params("seed").toInt
-      val op = graph_operations.TrainGCNClassifier(iterations, seed)
+      val op = graph_operations.TrainGCNClassifier(iterations, forget, batchSize, seed)
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val result = (
-        (op(op.es, project.edgeBundle)(op.label, label)(op.features, features).result))
+        (op(op.es, project.edgeBundle)(
+          op.label, label)(
+            op.features, features).result))
       project.newScalar(s"${name}_train_acc", result.trainAcc)
       project.newScalar(s"${name}", result.model)
     }
@@ -476,6 +482,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("iterations", "Iterations", defaultValue = "20"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
+      Choice("forget", "Use labels as inputs", options = FEOption.bools),
+      Param("batch_size", "Batch size", defaultValue = "128"),
       RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
@@ -485,8 +493,10 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val iterations = params("iterations").toInt
+      val batchSize = params("batch_size").toInt
+      val forget = params("forget").toBoolean
       val seed = params("seed").toInt
-      val op = graph_operations.TrainGCNRegressor(iterations, seed)
+      val op = graph_operations.TrainGCNRegressor(iterations, forget, batchSize, seed)
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val result = (
         (op(op.es, project.edgeBundle)(op.label, label)(op.features, features).result))
@@ -499,6 +509,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Param("save_as", "Save prediction as"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
+      Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Choice("model", "model", options = project.scalarList[SphynxModel]))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
@@ -507,12 +518,15 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(name.nonEmpty, "Please set the name of the prediction.")
       val modelName = params("model")
       val model = project.scalars(modelName).runtimeSafeCast[SphynxModel]
+      val labelName = params("label")
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
       val op = graph_operations.PredictWithGCN()
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val result = op(
         op.es, project.edgeBundle)(
           op.features, features)(
-            op.model, model).result
+            op.label, label)(
+              op.model, model).result
       project.vertexAttributes(name) = result.prediction
     }
   })
