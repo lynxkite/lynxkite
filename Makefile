@@ -46,6 +46,9 @@ $(pip): python_requirements.txt
 .build/standard-pipelines-test-passed: \
 	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
+.build/impact-analyzer-pipeline-test-passed: \
+  $(shell $(find) standard-pipelines/impact-analyzer) $(pip)
+	standard-pipelines/impact-analysis/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
 	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
@@ -92,6 +95,8 @@ remote_api-test: .build/remote_api-python-test-passed
 automation-test: .build/automation-python-test-passed
 .PHONY: standard-pipelines-test
 standard-pipelines-test: .build/standard-pipelines-test-passed
+.PHONY: impact-analyzer-pipeline-test
+impact-analyzer-pipeline-test: .build/impact-analyzer-pipeline-test-passed
 .PHONY: ecosystem-test
 ecosystem-test: remote_api-test automation-test standard-pipelines-test
 .PHONY: shell_ui-test
