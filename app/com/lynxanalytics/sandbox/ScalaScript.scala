@@ -257,7 +257,12 @@ object ScalaScript {
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
     optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
-    val cacheKey = (Seq(code) ++ mandatoryParamTypes.keys ++ optionalParamTypes.keys).mkString(";")
+    val cacheKey = (
+      Seq(code) ++
+      mandatoryParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" }
+      ++
+      optionalParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" })
+      .mkString(";")
     evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
       // Parameters are back quoted and taken out from the Map. The input argument is one Map to
       // make the calling of the compiled function easier (otherwise we had varying number of args).
