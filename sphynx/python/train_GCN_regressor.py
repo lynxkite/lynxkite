@@ -65,7 +65,8 @@ for epoch in range(op.params['iterations']):
   loss = F.mse_loss(out[batch_train_mask], data.y[batch_train_mask])
   loss.backward()
   optimizer.step()
-  print('epoch', epoch, 'loss', loss.item())
+  if epoch % 100 == 0:
+    print('epoch', epoch, 'loss', loss.item())
 
 # Measure performance
 model.eval()
