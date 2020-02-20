@@ -453,19 +453,27 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Choice("forget", "Use labels as inputs", options = FEOption.bools),
       Param("batch_size", "Batch size", defaultValue = "128"),
+      Param("learning_rate", "Learning rate", defaultValue = "0.01"),
+      Param("hidden_size", "Hidden size", defaultValue = "16"),
+      Param("num_conv_layers", "Number of convolution layers", defaultValue = "2"),
+      Choice("conv_op", "Convolution operator", options = FEOption.list("GCNConv", "GatedGraphConv")),
       RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
     def apply() = {
       val name = params("save_as")
       assert(name.nonEmpty, "Please set the name of the model.")
+      val op = graph_operations.TrainGCNClassifier(
+        iterations = params("iterations").toInt,
+        forget = params("forget").toBoolean,
+        batchSize = params("batch_size").toInt,
+        learningRate = params("learning_rate").toDouble,
+        numConvLayers = params("num_conv_layers").toInt,
+        hiddenSize = params("hidden_size").toInt,
+        convOp = params("conv_op"),
+        seed = params("seed").toInt)
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-      val iterations = params("iterations").toInt
-      val batchSize = params("batch_size").toInt
-      val forget = params("forget").toBoolean
-      val seed = params("seed").toInt
-      val op = graph_operations.TrainGCNClassifier(iterations, forget, batchSize, seed)
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val result = (
         (op(op.es, project.edgeBundle)(
@@ -484,19 +492,27 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Choice("forget", "Use labels as inputs", options = FEOption.bools),
       Param("batch_size", "Batch size", defaultValue = "128"),
+      Param("learning_rate", "Learning rate", defaultValue = "0.01"),
+      Param("hidden_size", "Hidden size", defaultValue = "16"),
+      Param("num_conv_layers", "Number of convolution layers", defaultValue = "2"),
+      Choice("conv_op", "Convolution operator", options = FEOption.list("GCNConv", "GatedGraphConv")),
       RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle && FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numerical vertex attributes.")
     def apply() = {
       val name = params("save_as")
       assert(name.nonEmpty, "Please set the name of the model.")
+      val op = graph_operations.TrainGCNRegressor(
+        iterations = params("iterations").toInt,
+        forget = params("forget").toBoolean,
+        batchSize = params("batch_size").toInt,
+        learningRate = params("learning_rate").toDouble,
+        hiddenSize = params("hidden_size").toInt,
+        numConvLayers = params("num_conv_layers").toInt,
+        convOp = params("conv_op"),
+        seed = params("seed").toInt)
       val labelName = params("label")
       val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-      val iterations = params("iterations").toInt
-      val batchSize = params("batch_size").toInt
-      val forget = params("forget").toBoolean
-      val seed = params("seed").toInt
-      val op = graph_operations.TrainGCNRegressor(iterations, forget, batchSize, seed)
       val features = project.vertexAttributes(params("features")).runtimeSafeCast[Vector[Double]]
       val result = (
         (op(op.es, project.edgeBundle)(op.label, label)(op.features, features).result))
