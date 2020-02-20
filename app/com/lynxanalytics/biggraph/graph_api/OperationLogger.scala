@@ -1,104 +1,37 @@
-// OperationLogger will log useful performance data about an operation, including information about
-// the inputs and the outputs.
+// OperationLogger will log how long an operation took
 
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
-import play.api.libs.json
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
 import scala.concurrent.ExecutionContextExecutorService
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+object OperationLogger {
+  private var counter = 0
+  def next() = synchronized {
+    counter = counter + 1
+    counter
+  }
+}
 
 class OperationLogger(
     instance: MetaGraphOperationInstance,
+    domainName: String,
     implicit val ec: ExecutionContextExecutorService) {
   private val marker = "OPERATION_LOGGER_MARKER"
-  case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
-  case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
-
-  private val outputInfoList = scala.collection.mutable.Queue[OutputInfo]()
-  private val inputInfoList = scala.collection.mutable.Queue[InputInfo]()
-  private var startTime = -1L
-  private var stopTime = -1L
-
-  private def elapsedMs(): Long = {
-    assert(startTime != -1, "elapsedMs() called before startTimer()")
-    assert(stopTime != -1, "elapsedMs() called before stopTimer()")
-    stopTime - startTime
-  }
-
-  def addOutput(output: EntityData): Unit = {
-    outputInfoList += (output match {
-      case rddData: EntityRDDData[_] =>
-        OutputInfo(
-          rddData.entity.name.name,
-          rddData.entity.gUID.toString,
-          rddData.rdd.partitions.size,
-          rddData.count)
-      case table: TableData =>
-        OutputInfo(
-          table.entity.name.name,
-          table.entity.gUID.toString,
-          -1,
-          None)
-      case _ => throw new AssertionError(s"Cannot add output: $output")
-    })
-  }
-
-  def startTimer(): Unit = {
-    assert(startTime == -1, "startTimer() called more than once")
-    startTime = System.currentTimeMillis()
-  }
-
-  def stopTimer(): Unit = {
-    assert(stopTime == -1, "stopTimer() called more than once")
-    stopTime = System.currentTimeMillis()
-  }
-  def addInput(name: String, input: EntityData): Unit = inputInfoList.synchronized {
-    if (instance.operation.asInstanceOf[SparkOperation[_, _]].isHeavy) input match {
-      case rddData: EntityRDDData[_] =>
-        inputInfoList +=
-          InputInfo(
-            name,
-            rddData.entity.gUID.toString,
-            rddData.rdd.partitions.size,
-            rddData.count)
-      case table: TableData =>
-        inputInfoList +=
-          InputInfo(
-            name,
-            table.entity.gUID.toString,
-            -1,
-            None)
-      case _ => // Ignore scalars
+  private val kiteVersion = KiteInstanceInfo.kiteVersion
+  private val sparkVersion = KiteInstanceInfo.sparkVersion
+  private val instanceName = KiteInstanceInfo.instanceName
+  private val startTime = System.currentTimeMillis()
+  def register(computation: => SafeFuture[Unit]): SafeFuture[Unit] = {
+    computation.andThen {
+      case _ => write()
     }
+    computation
   }
-
   def write(): Unit = {
-    val outputs = outputInfoList.toSeq
-    if (outputs.nonEmpty) {
-      try {
-        implicit val formatInput = json.Json.format[InputInfo]
-        implicit val formatOutput = json.Json.format[OutputInfo]
-
-        val instanceProperties = json.Json.obj(
-          "kiteVersion" -> KiteInstanceInfo.kiteVersion,
-          "sparkVersion" -> KiteInstanceInfo.sparkVersion,
-          "instanceName" -> KiteInstanceInfo.instanceName)
-
-        val out = json.Json.obj(
-          "instanceProperties" -> instanceProperties,
-          "name" -> instance.operation.toString,
-          "timestamp" -> com.lynxanalytics.biggraph.graph_util.Timestamp.toString,
-          "guid" -> instance.operation.gUID.toString,
-          "elapsedMs" -> elapsedMs(),
-          "inputs" -> inputInfoList.synchronized { inputInfoList.sortBy(_.name) },
-          "outputs" -> outputs.sortBy(_.name))
-        log.info(s"$marker $out")
-      } catch {
-        case t: Throwable =>
-          log.error("dump failed: " + t)
-      }
-    }
+    val elapsed = System.currentTimeMillis() - startTime
+    log.info(s"$marker ${OperationLogger.next()} $startTime $elapsed $domainName $instance")
   }
 }

@@ -4,16 +4,12 @@ package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
 import play.api.libs.json.Json
-import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
-import java.nio.file.{ Paths, Files }
-import java.io.{ SequenceInputStream, File, FileInputStream }
-import scala.collection.JavaConversions.asJavaEnumeration
+import java.io.File
 import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import scala.util.{ Try, Success, Failure }
 import java.io.{ FileWriter, BufferedWriter }
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
@@ -34,7 +30,8 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    client.compute(jsonMeta, "SphynxMemory").map(_ => ())
+    val logger = new OperationLogger(instance, "SphynxMemory", executionContext)
+    logger.register { client.compute(jsonMeta, "SphynxMemory").map(_ => ()) }
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
@@ -81,7 +78,8 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    client.compute(jsonMeta, "OrderedSphynxDisk").map(_ => ())
+    val logger = new OperationLogger(instance, "OrderedSphynxDisk", executionContext)
+    logger.register { client.compute(jsonMeta, "OrderedSphynxDisk").map(_ => ()) }
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
