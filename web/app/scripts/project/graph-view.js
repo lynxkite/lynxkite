@@ -1597,9 +1597,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.touch.mouseenter(function() {
       // Put the "fade-non-opaque" class on the whole SVG.
       svg.addClass(that.dom.closest('svg'), 'fade-non-opaque');
-      if (!that.positioned) {
-        that.setHighlight(true);
-      }
+      that.setHighlight(true);
       for (let i = 0; i < that.hoverListeners.length; ++i) {
         that.hoverListeners[i].on(that);
       }
@@ -1607,7 +1605,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.touch.mouseleave(function() {
       // Remove the "fade-non-opaque" class from the whole SVG.
       svg.removeClass(that.dom.closest('svg'), 'fade-non-opaque');
-      if (!that.held && !that.positioned) {
+      if (!that.held) {
         that.setHighlight(false);
       }
       for (let i = 0; i < that.hoverListeners.length; ++i) {
@@ -1669,11 +1667,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   // Mark this vertex as explicitly positioned (as on a map).
   Vertex.prototype.setPositioned = function() {
-    if (this.positioned) { return; }
     this.positioned = true;
-    // Positioned vertices are highlighted to increase the contrast against the map,
-    // and to distinguish them.
-    this.setHighlight(true);
   };
 
   Vertex.prototype.addMoveListener = function(ml) {
