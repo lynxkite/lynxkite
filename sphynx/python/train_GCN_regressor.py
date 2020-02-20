@@ -2,8 +2,6 @@
 import numpy as np
 import torch
 from torch_geometric.data import Data
-from torch.utils.data import DataLoader
-from torch_geometric.nn import GCNConv
 import torch.nn.functional as F
 from . import util
 from . import models
@@ -38,11 +36,21 @@ label = torch.from_numpy(y_numpy).type(torch.float32)
 train_mask = ~np.isnan(y_numpy)
 batch_size = min(op.params['batch_size'], train_mask.sum())
 forget = op.params['forget']
+lr = op.params['learning_rate']
+num_conv_layers = op.params['num_conv_layers']
+conv_op = op.params['conv_op']
+hidden_size = op.params['hidden_size']
+
 
 # Define model.
 in_dim = x.size()[1] + 2 if forget else x.size()[1]
-model = models.GCNConvNetForRegression(in_dim=in_dim, forget=forget).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+model = models.GCNConvNetForRegression(
+    in_dim=in_dim,
+    num_conv_layers=num_conv_layers,
+    conv_op=conv_op,
+    hidden_size=hidden_size,
+    forget=forget).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 # Train model.
 model.train()
