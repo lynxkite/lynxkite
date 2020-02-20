@@ -13,7 +13,7 @@ Loading export state...
     </div>
     <div>
       <p class="text-center"
-         ng-show="status.value.$resolved && !status.value.$error && downloadable"
+         ng-if="status.value.$resolved && !status.value.$error && downloadable"
          drop-tooltip="Download exported file through browser">
         <a href="{{ downloadLink() }}">
           Download <i class="glyphicon glyphicon-download"></i>

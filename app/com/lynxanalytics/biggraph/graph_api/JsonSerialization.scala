@@ -100,8 +100,9 @@ object SerializableType {
     val string = P("String").map(_ => SerializableType.string)
     val double = P("Double").map(_ => SerializableType.double)
     val long = P("Long").map(_ => SerializableType.long)
+    val id = P("ID").map(_ => SerializableType.id)
     val int = P("Int").map(_ => SerializableType.int)
-    val primitive = P(string | double | long | int)
+    val primitive = P(string | double | long | int | id)
     val vector: PS = P("Vector[" ~ stype ~ "]").map {
       inner => SerializableType.vector(inner)
     }
@@ -120,6 +121,7 @@ object SerializableType {
 
   val string = new SerializableType[String]("String")
   val double = new SerializableType[Double]("Double")
+  val id = new SerializableType[com.lynxanalytics.biggraph.graph_api.ID]("ID")
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
 
@@ -149,6 +151,9 @@ object SerializableType {
   def apply(t: Type): SerializableType[_] = {
     if (t =:= typeOf[String]) string
     else if (t =:= typeOf[Double]) double
+    // ID must come before Long, because Long would match too
+    // But we have to use the stricter == comparison
+    else if (t == typeOf[com.lynxanalytics.biggraph.graph_api.ID]) id
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
     else if (TypeTagUtil.isOfKind2[Tuple2](t)) tuple2(
