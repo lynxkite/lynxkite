@@ -12,10 +12,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
 import reflect.runtime.universe.typeTag
-import java.nio.file.Paths
 import play.api.libs.json
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
@@ -171,15 +168,13 @@ class SparkDomain(
   }
 
   private def computeNow(instance: MetaGraphOperationInstance): Unit = {
-    val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
     }
-    for ((name, data) <- inputs) logger.addInput(name.toString, data)
+    val logger = new OperationLogger(instance, "SparkDomain", executionContext)
     val sparkOp = asSparkOp(instance)
     if (sparkOp.isHeavy) {
       log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
-      logger.startTimer()
     }
     val inputDatas = DataSet(inputs)
     for (scalar <- instance.outputs.scalars.values) {
@@ -215,6 +210,7 @@ class SparkDomain(
       }
     }
     markOperationComplete(instance)
+    logger.write()
     for (scalar <- instance.outputs.scalars.values) {
       log.info(s"PERF Computed scalar $scalar")
     }
@@ -222,9 +218,7 @@ class SparkDomain(
       // A GC is helpful here to avoid filling up the disk on the executors. (#2098)
       System.gc()
       log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
-      logger.stopTimer()
     }
-    logger.write()
   }
 
   // Mark the operation as complete. Entities may not be loaded from incomplete operations.
