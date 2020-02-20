@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import MetaGraphManager.StringAsUUID
 
 case class WorkspaceReference(
     top: String, // The name of the top-level workspace.
@@ -158,15 +159,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: RunWorkspaceRequest): RunWorkspaceResponse = {
     val context = request.workspace.context(user, ops, request.parameters)
     val states = context.allStates
-    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
-      for ((_, (boxOutputState, id)) <- statesWithId) {
-        calculatedStates(id) = boxOutputState
+      for (boxOutputState <- states.values) {
+        calculatedStates(boxOutputState.gUID) = boxOutputState
       }
     }
-    val stateInfo = statesWithId.toList.map {
-      case (boxOutput, (boxOutputState, stateId)) =>
-        BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
+    val stateInfo = states.toList.map {
+      case (boxOutput, boxOutputState) =>
+        BoxOutputInfo(
+          boxOutput, boxOutputState.gUID.toString, boxOutputState.success, boxOutputState.kind)
     }
     def crop(s: String): String = {
       val maxLength = 50
@@ -180,16 +181,16 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             log.error(s"Error while generating summary for $box in $request.", t)
             box.operationId
         })).toMap
-    val progress = getProgress(user, statesWithId.values.map(_._2).toSeq)
+    val progress = getProgress(user, states.values.toSeq.map(_.gUID.toString))
     RunWorkspaceResponse(stateInfo, summaries, progress)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
-  val calculatedStates = new HashMap[String, BoxOutputState]()
+  val calculatedStates = new HashMap[java.util.UUID, BoxOutputState]()
 
   def getOutput(user: serving.User, stateId: String): BoxOutputState = {
     calculatedStates.synchronized {
-      calculatedStates.get(stateId)
+      calculatedStates.get(stateId.asUUID)
     } match {
       case None =>
         val msg = s"Unknown BoxOutputState: $stateId"
@@ -272,7 +273,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: CreateSnapshotRequest): Unit = {
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     def calculatedState() = calculatedStates.synchronized {
-      calculatedStates(request.id)
+      calculatedStates(request.id.asUUID)
     }
     createSnapshotFromState(user, request.name, calculatedState)
   }
@@ -432,9 +433,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       ctx, request.instruments, List(inputState), List[FEOperationMeta]())
     val instrumentStates = calculatedStates.synchronized {
       states.map { state =>
-        val id = Timestamp.toString
-        calculatedStates(id) = state
-        InstrumentState(id, state.kind, state.success.disabledReason)
+        calculatedStates(state.gUID) = state
+        InstrumentState(state.gUID.toString, state.kind, state.success.disabledReason)
       }
     }
     GetInstrumentedStateResponse(opMetas, instrumentStates)

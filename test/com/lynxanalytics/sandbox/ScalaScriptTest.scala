@@ -10,16 +10,6 @@ import scala.reflect.runtime.universe._
 
 class ScalaScriptTest extends FunSuite with TestGraphOp {
 
-  test("Can't do infinite loop") {
-    val code =
-      """
-        Thread.sleep(3000L)
-      """
-    intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, Map(), "", 2L)
-    }
-  }
-
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"
 
@@ -72,16 +62,18 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
     val path = testFile.getPath
     val code = s"""scala.io.Source.fromFile("${path}").mkString"""
-    intercept[AccessControlException] {
+    val e = intercept[Exception] {
       ScalaScript.run(code)
     }
+    assert(e.getCause.isInstanceOf[AccessControlException])
   }
 
   test("Can't replace the security manager") {
     val code = "System.setSecurityManager(null)"
-    intercept[AccessControlException] {
+    val e = intercept[Exception] {
       ScalaScript.run(code)
     }
+    assert(e.getCause.isInstanceOf[AccessControlException])
   }
 
   test("Can do some non-trivial, innocent computation") {
@@ -111,16 +103,18 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
              t.start()
 
       """
-    intercept[AccessControlException] {
+    val e = intercept[Exception] {
       ScalaScript.run(code)
     }
+    assert(e.getCause.isInstanceOf[AccessControlException])
   }
 
   test("Can't access biggraph classes") {
     val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
-    intercept[AccessControlException] {
+    val e = intercept[Exception] {
       ScalaScript.run(code)
     }
+    assert(e.getCause.isInstanceOf[AccessControlException])
   }
 
   test("Infer type") {

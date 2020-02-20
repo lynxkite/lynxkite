@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class DeriveAttributeOperationTest extends OperationsTestBase {
@@ -13,6 +12,14 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
+  }
+
+  test("ID and Long are serialized and deserialized") {
+    val project =
+      box("Create vertices", Map("size" -> "10"))
+        .box(
+          "Derive vertex attribute", Map("output" -> "out1", "expr" -> "id.toString"))
+        .box("Derive vertex attribute", Map("output" -> "out2", "expr" -> "ordinal.toString")).project
   }
 
   test("Derive vertex attribute - back quote") {
@@ -60,6 +67,21 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
+  }
+
+  test("Changes to the type does not undermine caching") {
+    val expr = "output * 255" // Meaningful for both Double and String
+    val start = box("Create example graph")
+      .box(
+        "Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "0.0"))
+    val doubleResult = start
+      .box("Derive vertex attribute", Map("output" -> "result1", "expr" -> expr))
+    val stringResult = start
+      .box("Convert vertex attribute to String", Map("attr" -> "output"))
+      .box("Derive vertex attribute", Map("output" -> "result2", "expr" -> expr))
+    doubleResult.project.vertexAttributes("result1").runtimeSafeCast[Double].rdd.collect()
+    stringResult.project.vertexAttributes("result2").runtimeSafeCast[String].rdd.collect()
   }
 
   test("Multi-line function") {

@@ -21,17 +21,14 @@ case class UnresolvedColumnException(message: String, trace: Throwable)
   extends Exception(message, trace)
 
 object ExecuteSQL extends OpFromJson {
-  def getLogicalPlan(
-    sqlQuery: String,
-    protoTables: Map[String, ProtoTable]): LogicalPlan = {
+  private lazy val sqlConf = new spark.sql.internal.SQLConf()
+  private lazy val parser = new SparkSqlParser(sqlConf)
+  private lazy val catalog = {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
     import spark.sql.catalyst.plans.logical._
     import spark.sql._
-    val sqlConf = new spark.sql.internal.SQLConf()
-    val parser = new SparkSqlParser(sqlConf)
-    val parsedPlan = parser.parsePlan(sqlQuery)
     val functionRegistry = FunctionRegistry.builtin
     val reg = UDFHelper.udfRegistration(functionRegistry)
     UDF.register(reg)
@@ -43,11 +40,27 @@ object ExecuteSQL extends OpFromJson {
         locationUri = new java.net.URI(locationPath),
         properties = Map.empty),
       ignoreIfExists = false)
-    for ((name, table) <- protoTables) {
-      catalog.createTempView(name, table.relation, overrideIfExists = true)
-    }
+    catalog
+  }
+
+  def getLogicalPlan(
+    sqlQuery: String,
+    protoTables: Map[String, ProtoTable]): LogicalPlan = {
+    import spark.sql.catalyst.analysis._
     val analyzer = new Analyzer(catalog, sqlConf)
-    analyzer.execute(parsedPlan)
+    val parsedPlan = parser.parsePlan(sqlQuery)
+    synchronized {
+      for ((name, table) <- protoTables) {
+        catalog.createTempView(name, table.relation, overrideIfExists = true)
+      }
+      try {
+        analyzer.execute(parsedPlan)
+      } finally {
+        for ((name, _) <- protoTables) {
+          catalog.dropTempView(name)
+        }
+      }
+    }
   }
 
   class Input(inputTables: List[String]) extends MagicInputSignature {

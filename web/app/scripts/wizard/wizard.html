@@ -1,12 +1,7 @@
-<div class="container-fluid" id="splash">
+<div class="container-fluid" id="splash" ng-if="!maximized">
 
   <div class="row">
-    <div class="col-sm-12" style="
-    text-align: center;
-    margin: 20px;
-    font-size: 6vw;
-    color: white;
-    ">
+    <div class="col-sm-12 wizard-title">
       {{ name }}
     </div>
   </div>
@@ -22,20 +17,20 @@
   </div>
   <div class="row">
     <div class="col-sm-12 entry-list-wrapper">
-      <div class="entry-list">
+      <div class="entry-list wizard">
         <div class="entry" ng-repeat="step in steps">
-          <div class="entry-header" ng-click="$parent.expanded = $index" style="padding: 5px 40px;">
-            <span class="icon" style="
-            font-size: 30px;
-            font-weight: bold;
-            margin: -7px 0px 0px -25px;
-            padding: 0;
-            ">{{ $index + 1 }}</span>
+          <div class="entry-header" ng-click="$parent.expanded = $index">
+            <span class="icon">{{ $index + 1 }}</span>
             <span class="lead">{{ step.title }}</span>
+            <button ng-show="$parent.expanded === $index"
+              drop-tooltip="Switch to maximized view"
+              class="btn wizard-maximize-button fa fa-expand"
+              ng-click="toggleMaximized()">
+            </button>
           </div>
 
           <div ng-show="$parent.expanded === $index && step.description" class="container-fluid"
-            trusted-html="step.html">
+            trusted-html="step.html" class="description">
           </div>
 
           <box-editor
@@ -45,7 +40,7 @@
             box-id="step.box"></box-editor>
 
           <state-view
-            ng-if="step.popup !== 'parameters' && $parent.expanded === $index"
+            ng-if="step.popup && step.popup !== 'parameters' && $parent.expanded === $index"
             workspace="workspace"
             plug="workspace.getOutputPlug(step.box, step.popup)"
             popup-model="{ height: 500, maxHeight: 500, width: 500 }">
@@ -53,7 +48,7 @@
 
         </div>
       </div>
-      <div class="entry-list" style="background: transparent; box-shadow: none; text-align: right;">
+      <div class="entry-list footer">
         <a href class="btn btn-warning btn-lg" style="color: black;" ng-href="/workspace/{{ workspace.name }}">
           {{ util.user.wizardOnly ? 'View workspace' : 'Fine tune in workspace' }}
           <i class="fa fa-chevron-right"></i></a>
@@ -72,4 +67,37 @@
       <p class="version">{{ util.globals.version }}</p>
     </div>
   </div>
+</div>
+
+<div class="container-fluid wizard-max" ng-if="maximized">
+  <div class="wizard-top-steps" ng-class="{ visualization: isShowingVisualization() }">
+    <a class="step" ng-if="expanded > 0" drop-tooltip="Go to previous step"
+      ng-click="moveToStep(expanded - 1)">
+      {{ steps[expanded - 1].title }} <i class="fa fa-long-arrow-left"></i></a>
+    <div class="step active">
+      {{ steps[expanded].title }}
+      <button drop-tooltip="Switch to sequential view"
+        class="btn wizard-minimize-button fa fa-compress"
+        ng-click="toggleMaximized()">
+      </button>
+    </div>
+    <a class="step" ng-if="expanded < steps.length - 1" drop-tooltip="Go to next step"
+      ng-click="moveToStep(expanded + 1);">
+      <i class="fa fa-long-arrow-right"></i> {{ steps[expanded + 1].title }}</a>
+  </div>
+
+  <div ng-show="steps[expanded].description" trusted-html="steps[expanded].html" class="description">
+  </div>
+
+  <box-editor
+    ng-if="steps[expanded].popup === 'parameters'"
+    workspace="workspace"
+    box-id="steps[expanded].box"></box-editor>
+
+  <state-view
+    ng-if="steps[expanded].popup && steps[expanded].popup !== 'parameters'"
+    workspace="workspace"
+    plug="workspace.getOutputPlug(steps[expanded].box, steps[expanded].popup)"
+    popup-model="{ height: $window.innerHeight, maxHeight: $window.innerHeight, width: 500 }">
+  </state-view>
 </div>

@@ -177,9 +177,16 @@ angular.module('biggraph')
               }
             },
             function onError(error) {
-            /* eslint-disable no-console */
+              /* eslint-disable no-console */
               console.error('Failed to load workspace.', error);
-              that.error = util.responseToErrorMessage(error);
+              if (that.backendResponse) {
+                // We are already displaying a workspace. Revert local changes.
+                // A popup will be displayed for the failed edit.
+                that._init(that.backendResponse);
+              } else {
+                // Couldn't load workspace. Display an error in its place.
+                that.error = util.responseToErrorMessage(error);
+              }
             });
       },
 
@@ -293,7 +300,10 @@ angular.module('biggraph')
           plug.stateId = stateId;
           plug.setHealth(item.success);
           plug.kind = item.kind;
-          this.stateId2Plug[stateId] = plug;
+          if (this.stateId2Plug[stateId] === undefined) {
+            this.stateId2Plug[stateId] = [];
+          }
+          this.stateId2Plug[stateId].push(plug);
         }
         longPoll.setStateIds(knownStateIds);
       },
@@ -314,8 +324,8 @@ angular.module('biggraph')
             const progress = progressMap[stateId];
             // failed states has 'undefined' as progress
             if (progress) {
-              const plug = this.stateId2Plug[stateId];
-              if (plug) {
+              const plugs = this.stateId2Plug[stateId] || [];
+              for (let plug of plugs) {
                 plug.updateProgress(progress);
               }
             }

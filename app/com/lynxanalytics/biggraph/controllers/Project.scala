@@ -59,6 +59,26 @@ case class CommonProjectState(
       notes,
       elementMetadata)
   }
+  def gUID: UUID = {
+    val buffer = new java.io.ByteArrayOutputStream
+    val objectStream = new java.io.ObjectOutputStream(buffer)
+    def write(name: String, it: Iterable[Any]) = {
+      objectStream.writeObject(name)
+      for (i <- it) {
+        objectStream.writeObject(i)
+      }
+    }
+    write("vertexSetGUID", vertexSetGUID)
+    write("vertexAttributeGUIDs", vertexAttributeGUIDs.toSeq.sorted)
+    write("edgeBundleGUID", edgeBundleGUID)
+    write("edgeAttributeGUIDs", edgeAttributeGUIDs.toSeq.sorted)
+    write("scalarGUIDs", scalarGUIDs.toSeq.sorted)
+    write("segmentations", segmentations.mapValues(_.gUID).toSeq.sorted)
+    objectStream.writeObject(notes)
+    write("elementMetadata", elementMetadata.mapValues(_.toSeq.sorted.mkString(",")).toSeq.sorted)
+    objectStream.close()
+    UUID.nameUUIDFromBytes(buffer.toByteArray)
+  }
 }
 object CommonProjectState {
   val emptyState = CommonProjectState(
@@ -97,6 +117,14 @@ case class SegmentationState(
     SegmentationState(
       state.mapGuids(change),
       belongsToGUID.map(change))
+  }
+  def gUID: UUID = {
+    val buffer = new java.io.ByteArrayOutputStream
+    val objectStream = new java.io.ObjectOutputStream(buffer)
+    objectStream.writeObject(state.gUID)
+    for (b <- belongsToGUID) objectStream.writeObject(b)
+    objectStream.close()
+    UUID.nameUUIDFromBytes(buffer.toByteArray)
   }
 }
 object SegmentationState {
