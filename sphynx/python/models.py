@@ -41,7 +41,6 @@ class GCNConvNet(torch.nn.Module):
       x = F.relu(x)
       x = self.gated_conv(x, edge_index)
       x = self.lin2(x)
-      x = F.relu(x)
     return x
 
 
