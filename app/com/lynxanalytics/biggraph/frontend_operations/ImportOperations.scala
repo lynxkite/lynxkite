@@ -43,29 +43,43 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     params ++= List(
       new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("filename", "File"),
-      Param("columns", "Columns in file"),
-      Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("quote", "Quote character", defaultValue = "\""),
-      Param("escape", "Escape character", defaultValue = "\\"),
-      Param("null_value", "Null value", defaultValue = ""),
-      Param("date_format", "Date format", defaultValue = "yyyy-MM-dd"),
-      Param("timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-      Choice("ignore_leading_white_space", "Ignore leading white space", options = FEOption.noyes),
-      Choice("ignore_trailing_white_space", "Ignore trailing white space", options = FEOption.noyes),
-      Param("comment", "Comment character", defaultValue = ""),
-      Choice("error_handling", "Error handling", List(
-        FEOption("FAILFAST", "Fail on any malformed line"),
-        FEOption("DROPMALFORMED", "Ignore malformed lines"),
-        FEOption("PERMISSIVE", "Salvage malformed lines: truncate or fill with nulls"))),
-      Choice("infer", "Infer types", options = FEOption.noyes),
-      Param("imported_columns", "Columns to import"),
-      Param("limit", "Limit"),
-      Code("sql", "SQL", language = "sql"),
+      Param(
+        "columns", "Columns in file", placeholder = "Leave empty to read header.",
+        group = "Advanced settings"),
+      Param("delimiter", "Delimiter", defaultValue = ",", group = "Advanced settings"),
+      Param("quote", "Quote character", defaultValue = "\"", group = "Advanced settings"),
+      Param("escape", "Escape character", defaultValue = "\\", group = "Advanced settings"),
+      Param("null_value", "Null value", defaultValue = "", group = "Advanced settings"),
+      Param("date_format", "Date format", defaultValue = "yyyy-MM-dd", group = "Advanced settings"),
+      Param(
+        "timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        group = "Advanced settings"),
+      Choice(
+        "ignore_leading_white_space", "Ignore leading white space", options = FEOption.noyes,
+        group = "Advanced settings"),
+      Choice(
+        "ignore_trailing_white_space", "Ignore trailing white space", options = FEOption.noyes,
+        group = "Advanced settings"),
+      Param("comment", "Comment character", defaultValue = "", group = "Advanced settings"),
+      Choice(
+        "error_handling", "Error handling", List(
+          FEOption("FAILFAST", "Fail on any malformed line"),
+          FEOption("DROPMALFORMED", "Ignore malformed lines"),
+          FEOption("PERMISSIVE", "Salvage malformed lines: truncate or fill with nulls")),
+        group = "Advanced settings"),
+      Choice("infer", "Infer types", options = FEOption.noyes, group = "Advanced settings"),
+      Param(
+        "imported_columns", "Columns to import", placeholder = "Leave empty to import all columns.",
+        group = "Advanced settings"),
+      Param("limit", "Limit", group = "Advanced settings"),
+      Code("sql", "SQL", language = "sql", group = "Advanced settings"),
       ImportedTableParam("imported_table", "Table GUID"))
 
     override def summary = {
-      val fn = simpleFileName(params("filename"))
-      s"Import $fn"
+      if (params("filename").nonEmpty) {
+        val fn = simpleFileName(params("filename"))
+        s"Import $fn"
+      } else "Import CSV"
     }
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
