@@ -12,7 +12,10 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
+import scala.util.Failure
+import scala.util.Success
 import reflect.runtime.universe.typeTag
+import java.nio.file.Paths
 import play.api.libs.json
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
@@ -171,7 +174,6 @@ class SparkDomain(
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
     }
-    val logger = new OperationLogger(instance, "SparkDomain", executionContext)
     val sparkOp = asSparkOp(instance)
     if (sparkOp.isHeavy) {
       log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
@@ -210,7 +212,6 @@ class SparkDomain(
       }
     }
     markOperationComplete(instance)
-    logger.write()
     for (scalar <- instance.outputs.scalars.values) {
       log.info(s"PERF Computed scalar $scalar")
     }

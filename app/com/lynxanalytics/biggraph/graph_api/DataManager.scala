@@ -164,7 +164,14 @@ class DataManager(
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
     } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
-      val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+      val f = ensureInputs(e, d).flatMap { _ =>
+        val logger = new OperationLogger(e.source, d.toString)
+        val result = d.compute(e.source)
+        result.andThen {
+          case _ => logger.write()
+        }
+        result
+      }
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
       }
