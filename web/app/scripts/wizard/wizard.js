@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location) {
+  .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location, $window) {
     const md = window.markdownit();
     const path = $routeParams.name.split('/');
     if (path.includes('In progress wizards')) { // These have a timestamp that we hide.
@@ -12,6 +12,8 @@ angular.module('biggraph')
     }
     $scope.util = util;
     $scope.expanded = 0;
+    $scope.maximized = false;
+    $scope.$window = $window;
     util.post('/ajax/openWizard', { name: $routeParams.name }).then(res => {
       if (res.name !== $routeParams.name) {
         $location.url('/wizard/' + res.name);
@@ -33,5 +35,25 @@ angular.module('biggraph')
       window.sessionStorage.setItem(
         'last_selector_path', `Users/${util.user.email}/In progress wizards`);
       $location.url('/');
+    };
+
+    $scope.toggleMaximized = function() {
+      $scope.maximized = !$scope.maximized;
+    };
+
+    $scope.moveToStep = function(i) {
+      $scope.expanded = i;
+    };
+
+    $scope.isShowingVisualization = function() {
+      if (!$scope.steps) {
+        return false;
+      }
+      const step = $scope.steps[$scope.expanded];
+      if (!step || !step.popup || step.popup === 'parameters') {
+        return false;
+      }
+      const p = $scope.workspace.getOutputPlug(step.box, step.popup);
+      return p.kind === 'visualization';
     };
   });
