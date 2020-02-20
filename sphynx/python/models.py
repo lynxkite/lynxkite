@@ -66,7 +66,7 @@ class GCNConvNetForRegression(torch.nn.Module):
       self.lin1 = torch.nn.Linear(in_dim, hidden_size)
       self.lin2 = torch.nn.Linear(hidden_size, 1)
     else:
-      raise Exception(f'Unknown conovlution operator: {conv_op}')
+      raise Exception(f'Unknown convolution operator: {conv_op}')
     self.lin = torch.nn.Linear(hidden_size, 1)
 
   def forward(self, data):
