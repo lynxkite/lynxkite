@@ -2,36 +2,40 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
+import com.lynxanalytics.biggraph.graph_util.{ KiteInstanceInfo, LoggedEnvironment }
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-
-import scala.concurrent.ExecutionContextExecutorService
+import com.lynxanalytics.biggraph.graph_util.Timestamp
+import sun.misc.Signal
+import sun.misc.SignalHandler
 
 object OperationLogger {
-  private var counter = 0
-  def next() = synchronized {
-    counter = counter + 1
-    counter
+  private var unique = 0L
+  private var phase = 0L
+
+  def getPhase() = synchronized {
+    s"phase${phase}"
   }
+
+  Signal.handle(new Signal("USR2"), new SignalHandler {
+    override def handle(signal: Signal): Unit = {
+      this.synchronized {
+        phase = phase + 1
+      }
+    }
+  })
 }
 
 class OperationLogger(
     instance: MetaGraphOperationInstance,
-    domainName: String,
-    implicit val ec: ExecutionContextExecutorService) {
+    domainName: String) {
   private val marker = "OPERATION_LOGGER_MARKER"
   private val kiteVersion = KiteInstanceInfo.kiteVersion
   private val sparkVersion = KiteInstanceInfo.sparkVersion
   private val instanceName = KiteInstanceInfo.instanceName
+  private val phase = OperationLogger.getPhase()
   private val startTime = System.currentTimeMillis()
-  def register(computation: => SafeFuture[Unit]): SafeFuture[Unit] = {
-    computation.andThen {
-      case _ => write()
-    }
-    computation
-  }
   def write(): Unit = {
     val elapsed = System.currentTimeMillis() - startTime
-    log.info(s"$marker ${OperationLogger.next()} $startTime $elapsed $domainName $instance")
+    log.info(s"${marker}\t${phase}\t${elapsed}\t${domainName}\t${instance}")
   }
 }

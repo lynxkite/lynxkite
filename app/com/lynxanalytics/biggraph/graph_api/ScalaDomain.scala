@@ -21,32 +21,26 @@ class ScalaDomain extends Domain {
   override def has(e: MetaGraphEntity): Boolean = synchronized {
     entityCache.contains(e.gUID)
   }
-  override def compute(instance: MetaGraphOperationInstance) = {
-    val logger = new OperationLogger(instance, "ScalaDomain", executionContext)
-    logger.register {
-      SafeFuture.async[Unit] {
-        val op = instance.operation.asInstanceOf[ScalaOperation[_, _]]
-        val outputs = collection.mutable.Map[Symbol, Any]()
-        val inputs = synchronized {
-          instance.inputs.all.mapValues(e => entityCache(e.gUID))
-        }
-        op.execute(inputs, outputs)
-        logger.write()
-        synchronized {
-          for ((symbol, data) <- outputs) {
-            for (e <- instance.outputs.edgeBundles.get(symbol)) {
-              if (e.autogenerateIdSet) {
-                outputs(e.idSet.name) = data.asInstanceOf[Map[ID, Edge]].keySet
-              }
-            }
-          }
-          for ((symbol, e) <- instance.outputs.all) {
-            entityCache(e.gUID) = outputs(symbol)
+  override def compute(instance: MetaGraphOperationInstance) = SafeFuture.async[Unit]({
+    val op = instance.operation.asInstanceOf[ScalaOperation[_, _]]
+    val outputs = collection.mutable.Map[Symbol, Any]()
+    val inputs = synchronized {
+      instance.inputs.all.mapValues(e => entityCache(e.gUID))
+    }
+    op.execute(inputs, outputs)
+    synchronized {
+      for ((symbol, data) <- outputs) {
+        for (e <- instance.outputs.edgeBundles.get(symbol)) {
+          if (e.autogenerateIdSet) {
+            outputs(e.idSet.name) = data.asInstanceOf[Map[ID, Edge]].keySet
           }
         }
       }
+      for ((symbol, e) <- instance.outputs.all) {
+        entityCache(e.gUID) = outputs(symbol)
+      }
     }
-  }
+  })
   override def cache(e: MetaGraphEntity): Unit = ()
   override def get[T](e: Scalar[T]): SafeFuture[T] = synchronized {
     SafeFuture.successful(entityCache(e.gUID).asInstanceOf[T])
