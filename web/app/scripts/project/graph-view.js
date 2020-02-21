@@ -1573,8 +1573,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.icon = vertices.getIcon(icon);
       this.icon.attr({ 'class': 'icon' });
     }
-    this.minTouchRadius = 10;
-    if (r < this.minTouchRadius) {
+    if (r < 10) {
       this.touch = svg.create('circle', { 'class': 'touch' });
     } else {
       this.touch = this.icon;
@@ -1705,7 +1704,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.label[0].setAttribute('y', sy);
     this.touch[0].setAttribute('cx', sx);
     this.touch[0].setAttribute('cy', sy);
-    this.touch[0].setAttribute('r', r);
+    this.touch[0].setAttribute('r', Math.max(r, 10));
 
     for (let i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
