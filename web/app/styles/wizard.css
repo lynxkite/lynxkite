@@ -1,0 +1,61 @@
+.wizard-title {
+  text-align: center;
+  margin: 20px;
+  font-size: 5vw;
+  color: white;
+}
+
+.wizard .entry-header {
+  padding: 5px 40px;
+}
+
+.entry-list.footer {
+  background: transparent;
+  box-shadow: none;
+  text-align: right;
+}
+
+.wizard-minimize-button,
+.wizard-maximize-button {
+  color: black;
+  background: transparent;
+}
+.wizard-maximize-button {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+}
+
+.wizard-top-steps {
+  display: flex;
+  color: #39bcf3;
+  justify-content: center;
+  align-items: flex-start;
+}
+.wizard-top-steps .step {
+  padding: 10px;
+  cursor: default;
+}
+.wizard-top-steps .step.active {
+  background: #39bcf3;
+  color: black;
+  font-weight: bold;
+  border-radius: 0 0 5px 5px;
+}
+.wizard-top-steps.visualization {
+  background: #001b31;
+}
+
+.wizard-max {
+  background: white;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.wizard-max state-view,
+.wizard-max box-editor {
+  flex: 1;
+}
+.wizard-max .description {
+  padding: 10px;
+}
