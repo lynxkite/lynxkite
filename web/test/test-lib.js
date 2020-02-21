@@ -437,6 +437,11 @@ BoxEditor.prototype = {
     return this.element.$('operation-parameters #' + param + ' .remove-parameter').click();
   },
 
+  openGroup: function(group) {
+    this.element.element(by.xpath(`//a[contains(.,"${group}")]`)).click();
+    return this;
+  },
+
   populateOperation: function(params) {
     params = params || {};
     for (const key in params) {
