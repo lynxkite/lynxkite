@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import sun.misc.Signal
 import sun.misc.SignalHandler
 
-object PerfLoggerPhase {
+object PerformanceLoggerContext {
   private var phase = 0L
 
   def getPhase() = synchronized {
@@ -26,33 +26,15 @@ object PerfLoggerPhase {
   })
 }
 
-abstract class PerformanceLogger {
-  def write(): Unit
-  protected def elapsed() = System.currentTimeMillis() - startTime
-  protected val marker: String
+class PerformanceLoggerContext(marker: String, msg: => String) {
   protected val kiteVersion = KiteInstanceInfo.kiteVersion
   protected val sparkVersion = KiteInstanceInfo.sparkVersion
   protected val instanceName = KiteInstanceInfo.instanceName
-  protected val phase = PerfLoggerPhase.getPhase()
+  protected val phase = PerformanceLoggerContext.getPhase()
   protected val startTime = System.currentTimeMillis()
-}
-
-class OperationLogger(
-    instance: MetaGraphOperationInstance,
-    domainName: String) extends PerformanceLogger {
-  protected val marker: String = "OPERATION_LOGGER_MARKER"
 
   def write(): Unit = {
-    log.info(s"${marker}\t${phase}\t${elapsed()}\t${domainName}\t${instance}")
-  }
-}
-
-class RelocationLogger(
-    guid: UUID,
-    src: Domain,
-    dst: Domain) extends PerformanceLogger {
-  protected val marker = "RELOCATION_LOGGER_MARKER"
-  def write(): Unit = {
-    log.info(s"${marker}\t${phase}\t${elapsed()}\t${guid}\t${src}->${dst}")
+    val elapsed = System.currentTimeMillis() - startTime
+    log.info(s"${marker}\t${phase}\t${elapsed}\t${msg}")
   }
 }

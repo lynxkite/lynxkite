@@ -119,12 +119,10 @@ class DataManager(
       case _ => ensure(e, directSrc)
     }
     f.flatMap { _ =>
-      val logger = new RelocationLogger(e.gUID, src, dst)
-      val result = dst.relocateFrom(e, directSrc)
-      result.andThen {
-        case _ => logger.write()
-      }
-      result
+      val logger = new PerformanceLoggerContext(
+        s"RELOCATION_LOGGER_MARKER ${System.currentTimeMillis()}",
+        s"${e.gUID}\t${src}->${dst}\t${System.currentTimeMillis()}")
+      dst.relocateFrom(e, directSrc).withLogging(logger)
     }
   }
 
@@ -172,12 +170,10 @@ class DataManager(
       SafeFuture.successful(())
     } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
       val f = ensureInputs(e, d).flatMap { _ =>
-        val logger = new OperationLogger(e.source, d.toString)
-        val result = d.compute(e.source)
-        result.andThen {
-          case _ => logger.write()
-        }
-        result
+        val logger = new PerformanceLoggerContext(
+          s"OPERATION_LOGGER_MARKER${System.currentTimeMillis()}",
+          s"${e.source}\t${d}\t${System.currentTimeMillis()}")
+        d.compute(e.source).withLogging(logger)
       }
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f

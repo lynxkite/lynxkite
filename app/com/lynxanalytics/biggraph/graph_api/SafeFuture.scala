@@ -60,6 +60,13 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
   def andThen[U](pf: PartialFunction[Try[T], U])(implicit ec: ExecutionContext) =
     new SafeFuture(future.andThen(pf), Seq(this))
 
+  def withLogging(context: PerformanceLoggerContext)(implicit ec: ExecutionContext) = {
+    andThen {
+      case _ => context.write()
+    }
+    this
+  }
+
   def awaitResult(atMost: duration.Duration) = Await.result(future, atMost)
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
 
