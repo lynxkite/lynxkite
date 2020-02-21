@@ -118,7 +118,14 @@ class DataManager(
         ensure(e, directSrc), ensure(e.idSet, dst), ensure(e.srcVertexSet, dst), ensure(e.dstVertexSet, dst)))
       case _ => ensure(e, directSrc)
     }
-    f.flatMap(_ => dst.relocateFrom(e, directSrc))
+    f.flatMap { _ =>
+      val logger = new RelocationLogger(e.gUID, src, dst)
+      val result = dst.relocateFrom(e, directSrc)
+      result.andThen {
+        case _ => logger.write()
+      }
+      result
+    }
   }
 
   private def bfs(src: Domain, dst: Domain): Domain = {
