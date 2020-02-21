@@ -10,9 +10,9 @@ The prediction will be saved as an attribute under this name.
 Vector attribute containing the features to be used as inputs for the algorithm.
 
 [p-label]#Attribute to predict#::
-The attribute we want to predict. (This is used if the algorithm was trained to use
+The attribute we want to predict. (This is used if the model was trained to use
 the target labels as additional inputs.)
 
-[p-model]<Model#::
+[p-model]#Model#::
 The model to use for the prediction.
 ====
