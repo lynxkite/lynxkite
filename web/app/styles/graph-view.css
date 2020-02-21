@@ -95,7 +95,9 @@ svg .vertex text {
 svg .edge text {
   text-anchor: middle;
   font-family: 'Arial Black', sans-serif;
-  stroke: none;
+  stroke: #001b31;
+  stroke-width: 2px;
+  paint-order: stroke;
   fill: white;
 }
 
