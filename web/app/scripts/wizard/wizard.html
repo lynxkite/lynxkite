@@ -19,28 +19,28 @@
     <div class="col-sm-12 entry-list-wrapper">
       <div class="entry-list wizard">
         <div class="entry" ng-repeat="step in steps">
-          <div class="entry-header" ng-click="$parent.expanded = $index">
+          <div class="entry-header" ng-click="moveToStep($index)">
             <span class="icon">{{ $index + 1 }}</span>
             <span class="lead">{{ step.title }}</span>
-            <button ng-show="$parent.expanded === $index"
+            <button ng-show="expanded === $index"
               drop-tooltip="Switch to maximized view"
               class="btn wizard-maximize-button fa fa-expand"
               ng-click="toggleMaximized()">
             </button>
           </div>
 
-          <div ng-show="$parent.expanded === $index && step.description" class="container-fluid"
+          <div ng-show="expanded === $index && step.description" class="container-fluid"
             trusted-html="step.html" class="description">
           </div>
 
           <box-editor
-            ng-show="$parent.expanded === $index"
+            ng-show="expanded === $index"
             ng-if="step.popup === 'parameters'"
             workspace="workspace"
             box-id="step.box"></box-editor>
 
           <state-view
-            ng-if="step.popup && step.popup !== 'parameters' && $parent.expanded === $index"
+            ng-if="step.popup && step.popup !== 'parameters' && expanded === $index"
             workspace="workspace"
             plug="workspace.getOutputPlug(step.box, step.popup)"
             popup-model="{ height: 500, maxHeight: 500, width: 500 }">
