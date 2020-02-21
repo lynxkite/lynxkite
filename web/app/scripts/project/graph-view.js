@@ -1104,7 +1104,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         ratio < 1 / tolerance || ratio > tolerance ||
         !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
-      offsetter.thickness = 500 / Math.sqrt(vertices.vs.length);
+      offsetter.thickness = Math.max(50, 500 / Math.sqrt(vertices.vs.length));
       // Recalculate with the new zoom.
       newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
       offsetter.xOff = newPan.xOff;
@@ -1588,30 +1588,48 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       {'class': 'vertex' });
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
-    this.highlightListeners = [];
     this.hoverListeners = [];
-    // Notified when this vertex becomes opaque.
-    this.opaqueListeners = [];
-    this.isOpaque = false;
-    const that = this;
-    this.touch.mouseenter(function() {
+    this.edgesOut = [];
+    this.edgesIn = [];
+    this.touch.mouseenter(() => {
       // Put the "fade-non-opaque" class on the whole SVG.
-      svg.addClass(that.dom.closest('svg'), 'fade-non-opaque');
-      if (!that.positioned) {
-        that.setHighlight(true);
+      svg.addClass(this.dom.closest('svg'), 'fade-non-opaque');
+      for (let l of this.hoverListeners) {
+        l.on(this);
       }
-      for (let i = 0; i < that.hoverListeners.length; ++i) {
-        that.hoverListeners[i].on(that);
+      this.setHighlight(true);
+      // Also highlight neighbors and the edges.
+      for (let e of this.edgesOut) {
+        svg.addClass(e.dom, 'highlight-out');
+        svg.addClass(e.dom, 'opaque');
+        e.dst.setHighlight(true);
+      }
+      for (let e of this.edgesIn) {
+        svg.addClass(e.dom, 'highlight-in');
+        svg.addClass(e.dom, 'opaque');
+        e.src.setHighlight(true);
       }
     });
-    this.touch.mouseleave(function() {
-      // Remove the "fade-non-opaque" class from the whole SVG.
-      svg.removeClass(that.dom.closest('svg'), 'fade-non-opaque');
-      if (!that.held && !that.positioned) {
-        that.setHighlight(false);
+    this.touch.mouseleave(() => {
+      if (this.held) {
+        return;
       }
-      for (let i = 0; i < that.hoverListeners.length; ++i) {
-        that.hoverListeners[i].off(that);
+      // Remove the "fade-non-opaque" class from the whole SVG.
+      svg.removeClass(this.dom.closest('svg'), 'fade-non-opaque');
+      for (let l of this.hoverListeners) {
+        l.off(this);
+      }
+      this.setHighlight(false);
+      // Also turn off highlight for neighbors and the edges.
+      for (let e of this.edgesOut) {
+        svg.removeClass(e.dom, 'highlight-out');
+        svg.removeClass(e.dom, 'opaque');
+        e.dst.setHighlight(false);
+      }
+      for (let e of this.edgesIn) {
+        svg.removeClass(e.dom, 'highlight-in');
+        svg.removeClass(e.dom, 'opaque');
+        e.src.setHighlight(false);
       }
     });
   }
@@ -1627,18 +1645,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   Vertex.prototype.setHighlight = function(on) {
     if (on) {
-      svg.addClass(this.dom, 'highlight');
+      svg.addClass(this.dom, 'opaque');
       this.setColor(this.highlight);
-      for (let i = 0; i < this.highlightListeners.length; ++i) {
-        this.highlightListeners[i].on(this);
-      }
-      this.reDraw();
     } else {
-      svg.removeClass(this.dom, 'highlight');
+      svg.removeClass(this.dom, 'opaque');
       this.setColor(this.color);
-      for (let i = 0; i < this.highlightListeners.length; ++i) {
-        this.highlightListeners[i].off(this);
-      }
     }
   };
 
@@ -1648,32 +1659,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.addHoverListener = function(hl) {
     this.hoverListeners.push(hl);
   };
-  Vertex.prototype.addHighlightListener = function(hl) {
-    this.highlightListeners.push(hl);
-  };
-
-  Vertex.prototype.addOpaqueListener = function(ol) {
-    this.opaqueListeners.push(ol);
-  };
   Vertex.prototype.setOpaque = function(on) {
-    this.isOpaque = on;
     if (on) {
       svg.addClass(this.dom, 'opaque');
     } else {
       svg.removeClass(this.dom, 'opaque');
     }
-    for (let i = 0; i < this.opaqueListeners.length; ++i) {
-      this.opaqueListeners[i]();
-    }
   };
 
   // Mark this vertex as explicitly positioned (as on a map).
   Vertex.prototype.setPositioned = function() {
-    if (this.positioned) { return; }
     this.positioned = true;
-    // Positioned vertices are highlighted to increase the contrast against the map,
-    // and to distinguish them.
-    this.setHighlight(true);
   };
 
   Vertex.prototype.addMoveListener = function(ml) {
@@ -1731,47 +1727,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
     this.reposition();
-    // To highlight the neighborhood of a hovered/highlighted vertex, the
-    // following rules are implemented below:
-    //  - On either end's hover the edge sets both of its endpoints opaque.
-    //  - On both ends becoming opaque the edge makes itself opaque.
-    //  - On either end's highlight the edge highlights itself.
-    function highlightListener(cls) {
-      return {
-        on: function() {
-          svg.addClass(that.dom, cls);
-          that.toFront();
-        },
-        off: function() {
-          svg.removeClass(that.dom, cls);
-        },
-      };
-    }
-    const hoverListener = {
-      on: function() {
-        src.setOpaque(true);
-        dst.setOpaque(true);
-      },
-      off: function() {
-        src.setOpaque(false);
-        dst.setOpaque(false);
-      },
-    };
-    src.addHighlightListener(highlightListener('highlight-out'));
-    src.addHoverListener(hoverListener);
-    if (src !== dst) {
-      dst.addHighlightListener(highlightListener('highlight-in'));
-      dst.addHoverListener(hoverListener);
-    }
-    const opaqueListener = function() {
-      if (src.isOpaque && dst.isOpaque) {
-        svg.addClass(that.dom, 'opaque');
-      } else {
-        svg.removeClass(that.dom, 'opaque');
-      }
-    };
-    src.addOpaqueListener(opaqueListener);
-    dst.addOpaqueListener(opaqueListener);
+    src.edgesOut.push(this);
+    dst.edgesIn.push(this);
   }
   Edge.prototype.setVisible = function(visible) {
     if (visible) {
