@@ -15,7 +15,7 @@ module.exports = function(fw) {
         x: 100, y: 100 });
       const boxEditor = lib.workspace.openBoxEditor('ib0');
       const importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
-      boxEditor.populateOperation({
+      boxEditor.openGroup('Advanced settings').populateOperation({
         'filename': importPath,
         'columns': 'name,age'
       });
@@ -51,7 +51,7 @@ module.exports = function(fw) {
         x: 400, y: 100 });
       const boxEditor = lib.workspace.openBoxEditor('ib1');
       const importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
-      boxEditor.populateOperation({
+      boxEditor.openGroup('Advanced settings').populateOperation({
         'filename': importPath,
         'infer': 'yes'
       });
