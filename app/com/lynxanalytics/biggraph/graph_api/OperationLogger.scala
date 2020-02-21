@@ -2,11 +2,7 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import java.util.UUID
-
-import com.lynxanalytics.biggraph.graph_util.{ KiteInstanceInfo, LoggedEnvironment }
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_util.Timestamp
 import sun.misc.Signal
 import sun.misc.SignalHandler
 
@@ -26,15 +22,12 @@ object PerformanceLoggerContext {
   })
 }
 
-class PerformanceLoggerContext(marker: String, msg: => String) {
-  protected val kiteVersion = KiteInstanceInfo.kiteVersion
-  protected val sparkVersion = KiteInstanceInfo.sparkVersion
-  protected val instanceName = KiteInstanceInfo.instanceName
+class PerformanceLoggerContext(msg: String) {
   protected val phase = PerformanceLoggerContext.getPhase()
   protected val startTime = System.currentTimeMillis()
 
   def write(): Unit = {
     val elapsed = System.currentTimeMillis() - startTime
-    log.info(s"${marker}\t${phase}\t${elapsed}\t${msg}")
+    log.info(s"${phase} elapsed: ${elapsed} ${msg}")
   }
 }
