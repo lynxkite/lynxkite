@@ -69,8 +69,8 @@
   </div>
 </div>
 
-<div class="container-fluid wizard-max" ng-if="maximized">
-  <div class="wizard-top-steps" ng-class="{ visualization: isShowingVisualization() }">
+<div class="container-fluid wizard-max" ng-if="maximized" ng-class="{ visualization: isShowingVisualization() }">
+  <div class="wizard-top-steps">
     <a class="step" ng-if="expanded > 0" drop-tooltip="Go to previous step"
       ng-click="moveToStep(expanded - 1)">
       {{ steps[expanded - 1].title }} <i class="fa fa-long-arrow-left"></i></a>

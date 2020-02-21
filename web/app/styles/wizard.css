@@ -42,7 +42,7 @@
   font-weight: bold;
   border-radius: 0 0 5px 5px;
 }
-.wizard-top-steps.visualization {
+.wizard-max.visualization {
   background: #001b31;
 }
 
@@ -51,6 +51,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 .wizard-max state-view,
 .wizard-max box-editor {
@@ -58,4 +59,7 @@
 }
 .wizard-max .description {
   padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  background: white;
 }
