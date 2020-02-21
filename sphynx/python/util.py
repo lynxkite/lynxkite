@@ -6,6 +6,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import sys
+import json
+import torch
+
 
 DoubleAttribute = 'DoubleAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
@@ -46,6 +49,11 @@ class Op:
       return vs
     return df
 
+  def input_model(self, name):
+    '''Loads a Pytorch model.'''
+    path = f'{self.datadir}/{self.inputs[name]}/model.pt'
+    return torch.load(path)
+
   def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
     if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
@@ -62,17 +70,20 @@ class Op:
         'defined': pa.array(defined, pa.bool_()),
     })
 
-  def write_columns(self, name, type, columns):
-    path = self.datadir + '/' + self.outputs[name]
+  def write_type(self, path, type):
     print('writing', type, 'to', path)
     os.makedirs(path, exist_ok=True)
+    with open(path + '/type_name', 'w') as f:
+      f.write(type)
+
+  def write_columns(self, name, type, columns):
+    path = self.datadir + '/' + self.outputs[name]
+    self.write_type(path, type)
     # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
         pa.field(name, a.type, nullable=False) for (name, a) in columns.items()])
     t = pa.Table.from_arrays(list(columns.values()), schema=schema)
     pq.write_table(t, path + '/data.parquet')
-    with open(path + '/type_name', 'w') as f:
-      f.write(type)
     with open(path + '/_SUCCESS', 'w'):
       pass
 
@@ -94,3 +105,19 @@ class Op:
       self.write_columns(name + '-idSet', 'VertexSet', {
           'sparkId': pa.array(range(len(src)), pa.int64()),
       })
+
+  def output_scalar(self, name, value):
+    '''Writes a scalar to disk.'''
+    path = self.datadir + '/' + self.outputs[name]
+    self.write_type(path, 'Scalar')
+    with open(path + '/serialized_data', 'w') as f:
+      json.dump(value, f)
+    with open(path + '/_SUCCESS', 'w'):
+      pass
+
+  def output_model(self, name, model, description):
+    '''Writes PyTorch model to disk.'''
+    path = self.datadir + '/' + self.outputs[name]
+    os.makedirs(path, exist_ok=True)
+    torch.save(model, path + '/model.pt')
+    self.output_scalar(name, description)

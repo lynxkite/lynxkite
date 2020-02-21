@@ -31,4 +31,7 @@ func init() {
 	diskOperationRepository["Node2Vec"] = pythonOperation("node2vec")
 	diskOperationRepository["TSNE"] = pythonOperation("tsne")
 	diskOperationRepository["PyTorchGeometricDataset"] = pythonOperation("datasets")
+	diskOperationRepository["TrainGCNClassifier"] = pythonOperation("train_GCN_classifier")
+	diskOperationRepository["TrainGCNRegressor"] = pythonOperation("train_GCN_regressor")
+	diskOperationRepository["PredictWithGCN"] = pythonOperation("predict_with_GCN")
 }

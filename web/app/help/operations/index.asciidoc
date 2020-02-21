@@ -395,6 +395,8 @@ include::predict-vertex-attribute.asciidoc[]
 
 include::predict-with-a-graph-neural-network.asciidoc[]
 
+include::predict-with-gcn.asciidoc[]
+
 include::predict-with-model.asciidoc[]
 
 include::project-rejoin.asciidoc[]
@@ -482,6 +484,10 @@ include::take-segmentation-links-as-base-project.asciidoc[]
 include::train-a-decision-tree-classification-model.asciidoc[]
 
 include::train-a-decision-tree-regression-model.asciidoc[]
+
+include::train-a-gcn-classifier.asciidoc[]
+
+include::train-a-gcn-regressor.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 
