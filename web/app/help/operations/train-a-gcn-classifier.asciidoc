@@ -17,11 +17,12 @@ Vector attribute containing the features to be used as inputs for the training a
 The attribute we want to predict.
 
 [p-forget]#Use labels as inputs#::
-Set true to use the labels as input. In that case, outside of the current batch the label
-behaves as an input feature.
+Set true to allow a vertex to see the labels of its neighbors and use them for
+predicting its own label.
 
 [p-batch_size]#Batch size#::
-Size of the training batches.
+In each iteration of the training, we compute the error only on a subset of the vertices.
+Batch size specifies the size of this subset.
 
 [p-learning_rate]#Learning rate#::
 Value of the learning rate.
