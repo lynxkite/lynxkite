@@ -122,6 +122,27 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         delete scope.parameters[paramId];
         scope.onBlur();
       };
+
+      const expandedGroups = {};
+      scope.visibleGroup = function(group) {
+        if (group === '') {
+          return true;
+        } else {
+          return expandedGroups[group];
+        }
+      };
+      scope.expandGroup = function(g) {
+        expandedGroups[g] = true;
+      };
+      scope.groups = function(params) {
+        const gs = [];
+        for (let p of params) {
+          if (p.group && !gs.includes(p.group)) {
+            gs.push(p.group);
+          }
+        }
+        return gs;
+      };
     }
   };
 });

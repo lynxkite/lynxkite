@@ -16,7 +16,7 @@ module.exports = function(fw) {
         x: 100, y: 100 });
       const boxEditor = lib.workspace.openBoxEditor('ib0');
       const importPath = path.resolve(__dirname, 'data/plot_data.csv');
-      boxEditor.populateOperation({
+      boxEditor.openGroup('Advanced settings').populateOperation({
         'filename': importPath,
         'columns': 'product,cnt'
       });
