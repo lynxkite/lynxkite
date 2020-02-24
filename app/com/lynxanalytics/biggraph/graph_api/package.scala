@@ -14,6 +14,8 @@ package object graph_api {
   type EdgeBundleRDD = UniqueSortedRDD[ID, Edge]
 
   type HybridBundleRDD = HybridRDD[ID, ID]
+
+  type SphynxModel = String
 }
 
 package graph_api {

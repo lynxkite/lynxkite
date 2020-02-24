@@ -99,16 +99,6 @@ svg .edge text {
   fill: white;
 }
 
-svg .vertex .label-background {
-  fill: transparent;
-  pointer-events: none;
-}
-svg .vertex.highlight .label-background {
-  fill: white;
-}
-svg .vertex.highlight text {
-  fill: black;
-}
 svg .vertex.sampled .icon {
   stroke: none;
   cursor: pointer;
