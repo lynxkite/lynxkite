@@ -10,7 +10,9 @@ object OperationParams {
   case class Param(
       id: String,
       title: String,
-      defaultValue: String = "") extends OperationParameterMeta {
+      defaultValue: String = "",
+      override val group: String = "",
+      override val placeholder: String = "") extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -22,7 +24,8 @@ object OperationParams {
       title: String,
       options: List[FEOption],
       multipleChoice: Boolean = false,
-      allowUnknownOption: Boolean = false) extends OperationParameterMeta {
+      allowUnknownOption: Boolean = false,
+      override val group: String = "") extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = if (multipleChoice) "" else options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
@@ -121,7 +124,8 @@ object OperationParams {
       title: String,
       language: String,
       defaultValue: String = "",
-      enableTableBrowser: Boolean = false) extends OperationParameterMeta {
+      enableTableBrowser: Boolean = false,
+      override val group: String = "") extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false

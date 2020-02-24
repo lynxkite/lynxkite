@@ -1,4 +1,4 @@
-<div class="form-group" ng-repeat="param in meta.parameters track by param.id">
+<div class="form-group" ng-repeat="param in meta.parameters track by param.id" ng-show="visibleGroup(param.group)">
   <label for="{{param.id}}" class="control-label"
       ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
     {{param.title}}
@@ -32,6 +32,7 @@
     <div ng-if="!isParametric(param.id)">
       <input ng-if="param.kind === 'default'"
           class="form-control operation-attribute-entry"
+          placeholder="{{ param.placeholder }}"
           ng-model="parameters[param.id]"
           ng-submit="onBlur()">
       <div
@@ -144,4 +145,9 @@
       ng-click="removeParameter(paramId)">
     </i>
   </div>
+</div>
+<div class="form-group" ng-repeat="group in groups(meta.parameters)" ng-show="!visibleGroup(group)">
+  <a href ng-click="expandGroup(group)">
+    <i class="fa fa-plus-square-o"></i> {{ group }}
+  </a>
 </div>

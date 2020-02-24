@@ -140,7 +140,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			partialRows := make([]UnorderedVertexRow, partialNumRows)
 			numRows = numRows + partialNumRows
 			if err := pr.Read(&partialRows); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				return nil, fmt.Errorf("Failed to read parquet file of VertexSet: %v", err)
 			}
 			pr.ReadStop()
 			rows = append(rows, partialRows...)
@@ -175,7 +175,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			partialRows := make([]UnorderedEdgeRow, partialNumRows)
 			numRows = numRows + partialNumRows
 			if err := pr.Read(&partialRows); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				return nil, fmt.Errorf("Failed to read parquet file of EdgeBundle: %v", err)
 			}
 			pr.ReadStop()
 			rows = append(rows, partialRows...)
@@ -218,7 +218,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			partialRows.Set(reflect.MakeSlice(rowSliceType, partialNumRows, partialNumRows))
 			numRows = partialNumRows + numRows
 			if err := pr.Read(partialRowsPointer.Interface()); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				return nil, fmt.Errorf("Failed to read parquet file of %v: %v", reflect.TypeOf(e), err)
 			}
 			pr.ReadStop()
 			rows = reflect.AppendSlice(rows, partialRows)

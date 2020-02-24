@@ -1,0 +1,43 @@
+### Train a GCN regressor
+
+Trains a Graph Convolutional Network using https://pytorch-geometric.readthedocs.io/en/latest/[Pytorch Geometric].
+Applicable for regression problems.
+
+====
+[p-save_as]#Save model as#::
+The resulting model will be saved as a Scalar using this name.
+
+[p-iterations]#Iterations#::
+Number of training iterations.
+
+[p-features]#Feature vector#::
+Vector attribute containing the features to be used as inputs for the training algorithm.
+
+[p-label]#Attribute to predict#::
+The attribute we want to predict.
+
+[p-forget]#Use labels as inputs#::
+Set true to allow a vertex to see the labels of its neighbors and use them for
+predicting its own label.
+
+[p-batch_size]#Batch size#::
+In each iteration of the training, we compute the error only on a subset of the vertices.
+Batch size specifies the size of this subset.
+
+[p-learning_rate]#Learning rate#::
+Value of the learning rate.
+
+[p-hidden_size]#Hidden size#::
+Size of the hidden layers.
+
+[p-num_conv_layers]#Number of convolution layers#::
+Number of convolution layers.
+
+[p-conv_op]#Convolution operator#::
+The type of graph convolution to use.
+https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#torch_geometric.nn.conv.GCNConv[GCNConv]
+or https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#torch_geometric.nn.conv.GatedGraphConv[GatedGraphConv].
+
+[p-seed]#Random seed#::
+Random seed for initializing network weights and choosing training batches.
+====

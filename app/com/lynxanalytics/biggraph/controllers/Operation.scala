@@ -46,7 +46,9 @@ case class FEOperationParameterMeta(
     id: String,
     title: String,
     kind: String, // Special rendering on the UI.
+    group: String, // Grouping for UI.
     defaultValue: String,
+    placeholder: String,
     options: List[FEOption],
     multipleChoice: Boolean,
     payload: Option[json.JsValue]) { // A custom JSON serialized value to transfer to the UI
@@ -92,7 +94,9 @@ abstract class OperationParameterMeta {
   val id: String
   def title: String
   val kind: String
+  val group: String = ""
   val defaultValue: String
+  val placeholder: String = ""
   val options: List[FEOption]
   val multipleChoice: Boolean
   def payload: Option[json.JsValue] = None
@@ -100,7 +104,7 @@ abstract class OperationParameterMeta {
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, defaultValue, options, multipleChoice, payload)
+    id, title, kind, group, defaultValue, placeholder, options, multipleChoice, payload)
 }
 
 // An Operation is the computation that a Box represents in a workspace.
