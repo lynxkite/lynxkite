@@ -5,7 +5,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+
   - Added graph convolutional network operations: _"Train a GCN regressor"_, _"Train a GCN classifier"_, and _"Predict with GCN"_.
+  - Added _"Compute in Python"_ box.
+  - Wizards steps can be maximized. (Especially useful for visualizations.)
+  - To reduce clutter, some boxes now hide their advanced settings by default.
 
 ### 3.1.0
 

@@ -544,4 +544,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       makeOutput(result)
     }
   })
+
+  register("Compute in Python")(new ProjectTransformation(_) {
+    params += Code("code", "Python code", language = "python")
+    def enabled = FEStatus.enabled
+    def apply() = {
+      graph_operations.DerivePython.run(params("code"), project)
+    }
+  })
+
 }

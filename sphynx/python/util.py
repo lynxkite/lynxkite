@@ -11,10 +11,12 @@ import torch
 
 
 DoubleAttribute = 'DoubleAttribute'
+StringAttribute = 'StringAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
 DoubleTuple2Attribute = 'DoubleTuple2Attribute'
 PA_TYPES = {
     DoubleAttribute: pa.float64(),
+    StringAttribute: pa.string(),
     DoubleVectorAttribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
     DoubleTuple2Attribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
 }
@@ -53,6 +55,11 @@ class Op:
     '''Loads a Pytorch model.'''
     path = f'{self.datadir}/{self.inputs[name]}/model.pt'
     return torch.load(path)
+
+  def input_scalar(self, name, value):
+    '''Reads a scalar from disk.'''
+    with open(f'{self.datadir}/{self.inputs[name]}/serialized_data') as f:
+      return json.load(f)
 
   def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
