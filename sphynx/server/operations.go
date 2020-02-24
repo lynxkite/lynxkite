@@ -71,6 +71,14 @@ func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }
 
+func (ea *EntityAccessor) GetBoolParam(name string, dflt bool) bool {
+	field, exists := ea.opInst.Operation.Data[name]
+	if exists {
+		return field.(bool)
+	}
+	return dflt
+}
+
 func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
 	err := saveToOrderedDisk(ea.inputs[name], ea.server.dataDir, ea.opInst.Inputs[name])
 	if err != nil {
