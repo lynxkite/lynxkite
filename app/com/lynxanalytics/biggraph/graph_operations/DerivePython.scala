@@ -34,11 +34,8 @@ object DerivePython extends OpFromJson {
       instance: MetaGraphOperationInstance,
       inputs: Input, fields: Seq[Field]) extends MagicOutput(instance) {
     val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
-    println(s"inputs ${instance.inputs}")
-    println(s"inputs.vss ${inputs.vss}")
     val attrs = attrFields.map(f =>
       vertexAttribute(inputs.vss(f.parent).entity, f.fullName)(f.tpe.typeTag))
-    println(s"attrs $attrs")
     val scalars = scalarFields.map(f => scalar(f.fullName)(f.tpe.typeTag))
   }
 
@@ -69,7 +66,6 @@ object DerivePython extends OpFromJson {
       refs.flatMap(r =>
         existingFields.find(f => f.parent == parent && f.name == r))
     }
-    println(s"DerivePython $code $inputFields $outputFields")
     val op = DerivePython(code, inputFields, outputFields)
     import Scripting._
     val builder = InstanceBuilder(op)
@@ -78,13 +74,10 @@ object DerivePython extends OpFromJson {
         case "vs" => project.vertexAttributes(f.name)
         case "es" => project.edgeAttributes(f.name)
       }
-      println(s"input for ${op.attrs(i)}: $attr")
-      println(s"input for ${op.vss(f.parent)}: ${attr.vertexSet}")
       builder(op.attrs(i), attr)
       builder(op.vss(f.parent), attr.vertexSet)
     }
     for ((f, i) <- op.scalarFields.zipWithIndex) {
-      println(s"input for scalar ${op.scalars(i)}: ${project.scalars(f.name)}")
       builder(op.scalars(i), project.scalars(f.name))
     }
     builder.toInstance(manager)
