@@ -171,15 +171,12 @@ class SparkDomain(
   }
 
   private def computeNow(instance: MetaGraphOperationInstance): Unit = {
-    val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
     }
-    for ((name, data) <- inputs) logger.addInput(name.toString, data)
     val sparkOp = asSparkOp(instance)
     if (sparkOp.isHeavy) {
       log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
-      logger.startTimer()
     }
     val inputDatas = DataSet(inputs)
     for (scalar <- instance.outputs.scalars.values) {
@@ -222,9 +219,7 @@ class SparkDomain(
       // A GC is helpful here to avoid filling up the disk on the executors. (#2098)
       System.gc()
       log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
-      logger.stopTimer()
     }
-    logger.write()
   }
 
   // Mark the operation as complete. Entities may not be loaded from incomplete operations.

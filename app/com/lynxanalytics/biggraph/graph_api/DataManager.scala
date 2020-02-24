@@ -123,7 +123,10 @@ class DataManager(
         ensure(e, directSrc), ensure(e.idSet, dst), ensure(e.srcVertexSet, dst), ensure(e.dstVertexSet, dst)))
       case _ => ensure(e, directSrc)
     }
-    f.flatMap(_ => dst.relocateFrom(e, directSrc))
+    f.flatMap { _ =>
+      val msg = s"RELOCATION_LOGGER_MARKER Moving ${e.gUID} from ${directSrc} to ${dst}"
+      dst.relocateFrom(e, directSrc).withLogging(msg)
+    }
   }
 
   private def bfs(src: Domain, dst: Domain): Domain = {
@@ -169,7 +172,13 @@ class DataManager(
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
     } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
-      val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+      val f = ensureInputs(e, d).flatMap { _ =>
+        e.source.inputs.all.map(_._2.gUID)
+        val inputs = e.source.inputs.all.map(_._2.gUID).mkString(",")
+        val msg =
+          s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: |$inputs| op: ${e.source.operation}"
+        d.compute(e.source).withLogging(msg)
+      }
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
       }
