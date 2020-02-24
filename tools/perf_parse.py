@@ -36,6 +36,7 @@ def op(line):
     op = 'ImportDataFrame()'
   idx = op.find('(')
   op = op[:idx]
+  op = f'{op} [{domain}]'
   TOTAL_OP[op].append(ms)
 
 
