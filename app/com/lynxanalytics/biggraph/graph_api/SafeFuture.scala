@@ -5,7 +5,6 @@
 // https://github.com/scala/scala/blob/v2.10.4/src/library/scala/concurrent/Promise.scala#L20
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.controllers.LogController
 
 import scala.concurrent._
 import scala.util._
