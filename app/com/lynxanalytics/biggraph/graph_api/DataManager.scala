@@ -124,9 +124,8 @@ class DataManager(
       case _ => ensure(e, directSrc)
     }
     f.flatMap { _ =>
-      val logger = new PerformanceLoggerContext(
-        s"RELOCATION_LOGGER_MARKER Moving ${e.gUID} from ${directSrc} to ${dst}")
-      dst.relocateFrom(e, directSrc).withLogging(logger)
+      val msg = s"RELOCATION_LOGGER_MARKER Moving ${e.gUID} from ${directSrc} to ${dst}"
+      dst.relocateFrom(e, directSrc).withLogging(msg)
     }
   }
 
@@ -175,10 +174,10 @@ class DataManager(
     } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
       val f = ensureInputs(e, d).flatMap { _ =>
         e.source.inputs.all.map(_._2.gUID)
-        val inputs = s"""|${e.source.inputs.all.map(_._2.gUID).mkString(",")}|"""
-        val logger = new PerformanceLoggerContext(
-          s"OPERATION_LOGGER_MARKER ${d} opguid: ${e.source.gUID} inputs: $inputs op: ${e.source.operation}")
-        d.compute(e.source).withLogging(logger)
+        val inputs = e.source.inputs.all.map(_._2.gUID).mkString(",")
+        val msg =
+          s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: $inputs op: ${e.source.operation}"
+        d.compute(e.source).withLogging(msg)
       }
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f

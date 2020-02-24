@@ -5,9 +5,10 @@
 // https://github.com/scala/scala/blob/v2.10.4/src/library/scala/concurrent/Promise.scala#L20
 package com.lynxanalytics.biggraph.graph_api
 
+import com.lynxanalytics.biggraph.controllers.LogController
+
 import scala.concurrent._
 import scala.util._
-
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object SafeFuture {
@@ -60,9 +61,12 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
   def andThen[U](pf: PartialFunction[Try[T], U])(implicit ec: ExecutionContext) =
     new SafeFuture(future.andThen(pf), Seq(this))
 
-  def withLogging(context: PerformanceLoggerContext)(implicit ec: ExecutionContext) = {
+  def withLogging(logMessage: String)(implicit ec: ExecutionContext) = {
+    val startTime = System.currentTimeMillis()
     andThen {
-      case _ => context.write()
+      case _ =>
+        val elapsed = System.currentTimeMillis() - startTime
+        log.info(s"elapsed: ${elapsed} ${logMessage}")
     }
     this
   }

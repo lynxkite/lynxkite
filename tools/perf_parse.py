@@ -10,24 +10,22 @@ from collections import defaultdict
 from prettytable import PrettyTable
 
 
-BY_PHASE_OP = defaultdict(lambda: defaultdict(list))
 TOTAL_OP = defaultdict(list)
-BY_PHASE_REL = defaultdict(lambda: defaultdict(list))
 TOTAL_REL = defaultdict(list)
 
 regexp_common = re.compile(
-    r'^.*(phase\d+) elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
+    r'^.*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
 regexp_rel = re.compile('Moving ([^ ]+) from ([^ ]+) to ([^ ]+)')
 regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) op: (.*)')
 
 
 def extract_common(line):
   m = regexp_common.match(line)
-  return m.group(1), int(m.group(2)), m.group(3), m.group(4)
+  return int(m.group(1)), m.group(2), m.group(3)
 
 
 def op(line):
-  phase, ms, _, rest = extract_common(line)
+  ms, _, rest = extract_common(line)
   m = regexp_op.match(rest)
   domain = m.group(1)
   opguid = m.group(2)
@@ -38,17 +36,15 @@ def op(line):
     op = 'ImportDataFrame()'
   idx = op.find('(')
   op = op[:idx]
-  BY_PHASE_OP[phase][op].append(ms)
   TOTAL_OP[op].append(ms)
 
 
 def rel(line):
-  phase, ms, _, rest = extract_common(line)
+  ms, _, rest = extract_common(line)
   m = regexp_rel.match(rest)
   guid = m.group(1)
   src = m.group(2)
   dst = m.group(3)
-  BY_PHASE_REL[phase][f'{src}->{dst}'].append(ms)
   TOTAL_REL[f'{src}->{dst}'].append(ms)
 
 
@@ -82,12 +78,3 @@ def print_table(title, name, diclist):
 print_table('ALL OPERATIONS', 'Operation', TOTAL_OP)
 print()
 print_table('ALL_RELOCATIONS', 'Relocation', TOTAL_REL)
-print()
-if len(BY_PHASE_OP) > 1:
-  for p in BY_PHASE_OP:
-    print_table(f'PHASE: {p}', 'Operation', BY_PHASE_OP[p])
-    print()
-if len(BY_PHASE_REL) > 1:
-  for p in BY_PHASE_REL:
-    print_table(f'PHASE: {p}', 'Relocation', BY_PHASE_REL[p])
-    print()
