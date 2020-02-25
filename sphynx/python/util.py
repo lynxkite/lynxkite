@@ -66,7 +66,7 @@ class Op:
     if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.numpy()
     if defined is None:
-      if type == pa.float64():
+      if type == DoubleAttribute:
         defined = list(~np.isnan(values))
       else:
         defined = [v is not None for v in values]
