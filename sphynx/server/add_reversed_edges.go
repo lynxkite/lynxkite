@@ -2,32 +2,19 @@
 
 package main
 
-import (
-	"math/rand"
-)
-
+// Creates a set id set.
+// TODO: Check if these should be random ids similar to our
+// Scala/Spark randomNumbered implementation
 func newEdgeMapping(numIds int) *[]int64 {
 	m := make([]int64, numIds)
-	rand.Seed(13445566233)
-	for i, _ := range m {
-		r := rand.Uint64()
-		r &= uint64(0xffffffff00000000)
-		r ^= uint64(i)
-		u := int64(r)
-		m[i] = u
+	for i := 0; i < numIds; i++ {
+		m[i] = int64(i)
 	}
 	return &m
 }
 
-func defined(length int) []bool {
-	d := make([]bool, length)
-	for i, _ := range d {
-		d[i] = true
-	}
-	return d
-}
-
-func doAddReversedEdges(edges *EdgeBundle, addIsNewAttr bool) (esPlus *EdgeBundle, newToOriginal *EdgeBundle, isNew *DoubleAttribute) {
+func doAddReversedEdges(edges *EdgeBundle,
+	addIsNewAttr bool) (esPlus *EdgeBundle, newToOriginal *EdgeBundle, isNew *DoubleAttribute) {
 	numOldEdges := len(edges.Dst)
 	numNewEdges := numOldEdges * 2
 	edgeIdSet := newEdgeMapping(numNewEdges)
@@ -43,9 +30,13 @@ func doAddReversedEdges(edges *EdgeBundle, addIsNewAttr bool) (esPlus *EdgeBundl
 	}
 
 	if addIsNewAttr {
+		defined := make([]bool, numNewEdges)
+		for i := range defined {
+			defined[i] = true
+		}
 		isNew = &DoubleAttribute{
 			Values:  make([]float64, numNewEdges),
-			Defined: defined(numNewEdges),
+			Defined: defined,
 		}
 	} else {
 		isNew = nil
