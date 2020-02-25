@@ -1573,8 +1573,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.icon = vertices.getIcon(icon);
       this.icon.attr({ 'class': 'icon' });
     }
-    this.minTouchRadius = 10;
-    if (r < this.minTouchRadius) {
+    if (r < 10) {
       this.touch = svg.create('circle', { 'class': 'touch' });
     } else {
       this.touch = this.icon;
@@ -1635,12 +1634,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
 
   Vertex.prototype.setColor = function(c) {
-    let lc = this.labelColor ||
-      // Use the background color or white for default label color depending on the vertex color.
-      (chroma.contrast(c, 'white') > chroma.contrast(c, '#001b31') ?
-        'white' : '#001b31');
+    let lc = this.labelColor || 'white';
     this.icon.attr({ style: `fill: ${c};` });
-    this.label.attr({ style: `fill: ${lc}; stroke: ${c};` });
+    this.label.attr({ style: `fill: ${lc}; stroke: #001b31;` });
   };
 
   Vertex.prototype.setHighlight = function(on) {
@@ -1701,7 +1697,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.label[0].setAttribute('y', sy);
     this.touch[0].setAttribute('cx', sx);
     this.touch[0].setAttribute('cy', sy);
-    this.touch[0].setAttribute('r', r);
+    this.touch[0].setAttribute('r', Math.max(r, 10));
 
     for (let i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
