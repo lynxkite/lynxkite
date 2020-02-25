@@ -7,7 +7,6 @@ angular.module('biggraph').directive('tableKind', function(util) {
       box: '=',
       params: '=',
       guid: '=',
-      fileUploads: '=',
       workspaceReference: '&',
       onBlur: '&',
     },
