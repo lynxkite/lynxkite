@@ -1,5 +1,6 @@
-{{ guid }}
-<span class="error">{{ error }}</span>
-<button ng-click="importBox()" drop-tooltip="Run import" ng-disabled="disabled">
-  <i class="glyphicon glyphicon-play"></i>
+<button ng-class="{ btn: true, 'btn-primary': stale(), 'btn-default': !stale() }"
+  ng-click="importBox()" ng-disabled="inProgress" drop-tooltip="{{ tooltip() }}">
+  <i class="fa fa-check" ng-show="!stale() && !inProgress" style="color: green;"></i>
+  <i class="fa fa-spinner fa-spin" ng-show="inProgress"></i>
+  Import <i class="fa fa-play"></i>
 </button>

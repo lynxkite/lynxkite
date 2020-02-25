@@ -13,8 +13,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
     templateUrl: 'scripts/sql/table-kind.html',
     link: function(scope) {
       scope.importBox = function() {
-        scope.disabled = true;
-        scope.error = undefined;
+        scope.inProgress = true;
         const box = angular.copy(scope.box.instance);
         box.parameters = scope.params;
         util.post('/ajax/importBox', {
@@ -22,13 +21,30 @@ angular.module('biggraph').directive('tableKind', function(util) {
           ref: scope.workspaceReference(),
         }).then(function success(response) {
           scope.guid = response.guid;
-          scope.params['last_settings'] = response.parameterSettings;
+          scope.params.last_settings = response.parameterSettings;
           scope.onBlur();
-        }, function error(error) {
-          scope.error = error;
         }).finally(function() {
-          scope.disabled = false;
+          scope.inProgress = false;
         });
+      };
+      scope.stale = function() {
+        const params = angular.copy(scope.params);
+        delete params.last_settings;
+        delete params.imported_table;
+        const fresh = scope.params.last_settings &&
+          angular.equals(params, JSON.parse(scope.params.last_settings));
+        return !fresh;
+      };
+      scope.tooltip = function() {
+        if (scope.inProgress) {
+          return '';
+        } else if (scope.stale()) {
+          return 'The parameters have changed. Please run the import.';
+        } else {
+          return `
+            The parameters have not changed since the last import.
+            You can re-run the import if the datasource has changed.`;
+        }
       };
     },
   };
