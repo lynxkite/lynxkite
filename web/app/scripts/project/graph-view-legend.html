@@ -1,0 +1,11 @@
+<div class="graph-view-legend {{side}}">
+  <div class="inside">
+    <p ng-repeat="line in data track by $index">
+      <span class="color-sample" style="background: {{ line.color }}" ng-if="line.color">
+      </span>{{ line.text }}
+    </p>
+    <div class="help-popup-positioner standout" ng-if="side === 'left'">
+      <help-popup href="graph-visualizations"></help-popup>
+    </div>
+  </div>
+</div>

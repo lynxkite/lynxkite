@@ -5,6 +5,8 @@
   <div id="svg-icons" ng-include="'icons.svg'" onload="updateGraph()"></div>
   <graph-view-sidebar map-filters="mapFilters" graph="graph" ng-hide="graphray">
   </graph-view-sidebar>
+  <graph-view-legend data="gv.legend.left" side="left"></graph-view-legend>
+  <graph-view-legend data="gv.legend.right" side="right"></graph-view-legend>
   <div style="height: 100%" ng-show="graphray">
     <div class="flat-toolbar">
       <button class="btn btn-default" ng-click="finalRender()">Render in high quality</button>
