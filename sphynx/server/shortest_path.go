@@ -6,6 +6,12 @@ import (
 	"math"
 )
 
+type EdgeInfo struct {
+	src int
+	dst int
+	d   float64
+}
+
 func doShortestPath(
 	edges *EdgeBundle,
 	edgeDistance *DoubleAttribute,
@@ -13,6 +19,7 @@ func doShortestPath(
 	maxIterations int) *DoubleAttribute {
 	numVertices := len(startingDistance.Values)
 	numEdges := len(edges.Dst)
+
 	distance := DoubleAttribute{
 		Values:  make([]float64, numVertices),
 		Defined: make([]bool, numVertices),
@@ -22,17 +29,29 @@ func doShortestPath(
 		if startingDistance.Defined[i] {
 			distance.Values[i] = startingDistance.Values[i]
 		} else {
-			distance.Values[i] = math.MaxFloat64
+			distance.Values[i] = math.Inf(1)
+		}
+	}
+
+	compressedEdges := make([]EdgeInfo, 0, numEdges)
+	for i := 0; i < numEdges; i++ {
+		if edgeDistance.Defined[i] {
+			e := EdgeInfo{
+				src: edges.Src[i],
+				dst: edges.Dst[i],
+				d:   edgeDistance.Values[i],
+			}
+			compressedEdges = append(compressedEdges, e)
 		}
 	}
 
 	for moreWork := true; moreWork && maxIterations > 0; maxIterations-- {
 		moreWork = false
-		for e := 0; e < numEdges; e++ {
-			src := edges.Src[e]
-			dst := edges.Dst[e]
+		for _, e := range compressedEdges {
+			src := e.src
+			dst := e.dst
 			srcCurrentBest := distance.Values[src]
-			maybeBetter := srcCurrentBest + edgeDistance.Values[e]
+			maybeBetter := srcCurrentBest + e.d
 			if maybeBetter < distance.Values[dst] {
 				distance.Values[dst] = maybeBetter
 				moreWork = true
@@ -40,8 +59,9 @@ func doShortestPath(
 		}
 	}
 	for i := 0; i < numVertices; i++ {
-		distance.Defined[i] = distance.Values[i] != math.MaxFloat64
+		distance.Defined[i] = distance.Values[i] != math.Inf(1)
 	}
+
 	return &distance
 }
 
