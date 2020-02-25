@@ -38,6 +38,12 @@ type EdgeBundle struct {
 	EdgeMapping []int64
 }
 
+func (es *EdgeBundle) Init(size int) {
+	es.Src = make([]int, 0, size)
+	es.Dst = make([]int, 0, size)
+	es.EdgeMapping = make([]int64, 0, size)
+}
+
 type VertexSet struct {
 	MappingToUnordered []int64
 	MappingToOrdered   map[int64]int

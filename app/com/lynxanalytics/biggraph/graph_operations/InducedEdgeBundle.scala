@@ -1,7 +1,7 @@
 // Transforms an edge bundle from one pair of vertex sets to another.
 //
 // The purpose of this is to update the edges after an operation has modified
-// the vertex set. For example after filtering the vertices the edges that
+// the vertex set. For example after filtering the vertices, the edges that
 // belonged to discarded vertices need to be discarded as well. You create an
 // InducedEdgeBundle that follows the mapping from the unfiltered vertex set
 // to the filtered one.
@@ -31,7 +31,9 @@ object InducedEdgeBundle extends OpFromJson {
       if (induceDst) edgeBundle(dst, dstImage) else null
     val edges = edgeBundle(src, dst)
   }
-  class Output(induceSrc: Boolean, induceDst: Boolean)(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+  class Output(induceSrc: Boolean, induceDst: Boolean)(
+      implicit
+      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     private val srcMappingProp =
       if (induceSrc) inputs.srcMapping.entity.properties
       else EdgeBundleProperties.identity
