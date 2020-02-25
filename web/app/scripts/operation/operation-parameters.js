@@ -12,15 +12,10 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       parametricParameters: '=',
       workspace: '=',
       onBlur: '&',
-      busy: '=?',
     },
     templateUrl: 'scripts/operation/operation-parameters.html',
     link: function(scope, element) {
       element.on('focusout', function() { scope.onBlur(); });
-      scope.fileUploads = { count: 0 };
-      scope.$watch('fileUploads.count', function(count) {
-        scope.busy = count !== 0;
-      });
 
       scope.isParametric = function(param) {
         return param in scope.parametricParameters;
