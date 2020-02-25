@@ -1,4 +1,5 @@
 '''Run user code.'''
+import numpy as np
 import pandas as pd
 import types
 from . import util
