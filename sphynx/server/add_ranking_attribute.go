@@ -15,13 +15,13 @@ func doAddRankingAttribute(sortKey ParquetEntity, length int, ascending bool) (*
 	switch sortKey := sortKey.(type) {
 	case *DoubleAttribute:
 		type s struct {
-			key     int64
+			idx     int64
 			val     float64
 			defined bool
 		}
 		w := make([]s, length)
 		for i := 0; i < length; i++ {
-			w[i].key = int64(i)
+			w[i].idx = int64(i)
 			w[i].val = sortKey.Values[i]
 			w[i].defined = sortKey.Defined[i]
 		}
@@ -35,7 +35,59 @@ func doAddRankingAttribute(sortKey ParquetEntity, length int, ascending bool) (*
 			})
 		}
 		for i := 0; i < length && w[i].defined; i++ {
-			idx := w[i].key
+			idx := w[i].idx
+			ranking.Values[idx] = int64(i)
+			ranking.Defined[idx] = true
+		}
+	case *LongAttribute:
+		type s struct {
+			idx     int64
+			val     int64
+			defined bool
+		}
+		w := make([]s, length)
+		for i := 0; i < length; i++ {
+			w[i].idx = int64(i)
+			w[i].val = sortKey.Values[i]
+			w[i].defined = sortKey.Defined[i]
+		}
+		if ascending {
+			sort.Slice(w[:], func(i, j int) bool {
+				return w[i].defined && (!w[j].defined || w[i].val < w[j].val)
+			})
+		} else {
+			sort.Slice(w[:], func(i, j int) bool {
+				return w[i].defined && (!w[j].defined || w[i].val > w[j].val)
+			})
+		}
+		for i := 0; i < length && w[i].defined; i++ {
+			idx := w[i].idx
+			ranking.Values[idx] = int64(i)
+			ranking.Defined[idx] = true
+		}
+	case *StringAttribute:
+		type s struct {
+			idx     int64
+			val     string
+			defined bool
+		}
+		w := make([]s, length)
+		for i := 0; i < length; i++ {
+			w[i].idx = int64(i)
+			w[i].val = sortKey.Values[i]
+			w[i].defined = sortKey.Defined[i]
+		}
+		if ascending {
+			sort.Slice(w[:], func(i, j int) bool {
+				return w[i].defined && (!w[j].defined || w[i].val < w[j].val)
+			})
+		} else {
+			sort.Slice(w[:], func(i, j int) bool {
+				return w[i].defined && (!w[j].defined || w[i].val > w[j].val)
+			})
+		}
+		for i := 0; i < length && w[i].defined; i++ {
+			idx := w[i].idx
 			ranking.Values[idx] = int64(i)
 			ranking.Defined[idx] = true
 		}
