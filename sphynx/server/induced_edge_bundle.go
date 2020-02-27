@@ -43,10 +43,10 @@ func init() {
 				if srcExists && dstExists {
 					induced.Src = append(induced.Src, mappedSrc)
 					induced.Dst = append(induced.Dst, mappedDst)
-					induced.EdgeMapping = append(induced.EdgeMapping, int64(numInducedEdges))
+					induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
 					embedding.Src = append(embedding.Src, numInducedEdges)
 					embedding.Dst = append(embedding.Dst, i)
-					embedding.EdgeMapping = append(embedding.EdgeMapping, int64(numInducedEdges))
+					embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
 					numInducedEdges += 1
 				}
 			}
