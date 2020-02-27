@@ -41,7 +41,6 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
-      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("filename", "File"),
       Param(
         "columns", "Columns in file", placeholder = "Leave empty to read header.",
@@ -73,7 +72,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         group = "Advanced settings"),
       Param("limit", "Limit", group = "Advanced settings"),
       Code("sql", "SQL", language = "sql", group = "Advanced settings"),
-      ImportedTableParam("imported_table", "Table GUID"))
+      ImportedTableParam("imported_table"),
+      new DummyParam("last_settings", ""))
 
     override def summary = {
       if (params("filename").nonEmpty) {
@@ -121,7 +121,6 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import JDBC")(new ImportOperation(_) {
     params ++= List(
-      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
@@ -131,7 +130,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"))
+      ImportedTableParam("imported_table"),
+      new DummyParam("last_settings", ""))
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
@@ -153,7 +153,6 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import Neo4j")(new ImportOperation(_) {
     params ++= List(
-      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       Param("node_label", "Node Label"),
       Param("relationship_type", "Relationship type"),
       NonNegInt("num_partitions", "Number of partitions", default = 0),
@@ -161,7 +160,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Code("sql", "SQL", language = "sql"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
-      ImportedTableParam("imported_table", "Table GUID"))
+      ImportedTableParam("imported_table"),
+      new DummyParam("last_settings", ""))
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       Neo4jUtil.read(
@@ -178,12 +178,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
     val format: String
     params ++= List(
-      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"))
+      ImportedTableParam("imported_table"),
+      new DummyParam("last_settings", ""))
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -204,12 +204,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
-      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       Param("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"))
+      ImportedTableParam("imported_table"),
+      new DummyParam("last_settings", ""))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
         SparkDomain.hiveConfigured,
