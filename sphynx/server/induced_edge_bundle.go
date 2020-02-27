@@ -44,8 +44,8 @@ func init() {
 					induced.Src = append(induced.Src, mappedSrc)
 					induced.Dst = append(induced.Dst, mappedDst)
 					induced.EdgeMapping = append(induced.EdgeMapping, int64(numInducedEdges))
-					embedding.Src = append(embedding.Src, i)
-					embedding.Dst = append(embedding.Dst, numInducedEdges)
+					embedding.Src = append(embedding.Src, numInducedEdges)
+					embedding.Dst = append(embedding.Dst, i)
 					embedding.EdgeMapping = append(embedding.EdgeMapping, int64(numInducedEdges))
 					numInducedEdges += 1
 				}
