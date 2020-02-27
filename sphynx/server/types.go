@@ -38,10 +38,10 @@ type EdgeBundle struct {
 	EdgeMapping []int64
 }
 
-func (es *EdgeBundle) Init(size int) {
-	es.Src = make([]int, 0, size)
-	es.Dst = make([]int, 0, size)
-	es.EdgeMapping = make([]int64, 0, size)
+func (es *EdgeBundle) Make(size int, maxSize int) {
+	es.Src = make([]int, size, maxSize)
+	es.Dst = make([]int, size, maxSize)
+	es.EdgeMapping = make([]int64, size, maxSize)
 }
 
 type VertexSet struct {

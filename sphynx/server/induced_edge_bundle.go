@@ -25,8 +25,8 @@ func init() {
 			induced := &EdgeBundle{}
 			embedding := &EdgeBundle{}
 			approxLen := len(es.Src)
-			induced.Init(approxLen)
-			embedding.Init(approxLen)
+			induced.Make(0, approxLen)
+			embedding.Make(0, approxLen)
 			numInducedEdges := 0
 			for i, src := range es.Src {
 				dst := es.Dst[i]
