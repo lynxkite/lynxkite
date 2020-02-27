@@ -45,11 +45,14 @@ func (es *EdgeBundle) Init(size int) {
 }
 
 type VertexSet struct {
+	sync.Mutex
 	MappingToUnordered []int64
 	MappingToOrdered   map[int64]int
 }
 
 func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+	vs.Lock()
+	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
 		vs.MappingToOrdered = make(map[int64]int)
 		for i, j := range vs.MappingToUnordered {

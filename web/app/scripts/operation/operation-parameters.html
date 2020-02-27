@@ -1,6 +1,6 @@
 <div class="form-group" ng-repeat="param in meta.parameters track by param.id" ng-show="visibleGroup(param.group)">
   <label for="{{param.id}}" class="control-label"
-      ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
+      ng-if="!isVisualizationParam(param) && param.kind !== 'dummy' && param.kind !== 'imported-table'">
     {{param.title}}
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
@@ -54,7 +54,6 @@
       <file-parameter ng-if="param.kind === 'file'"
           model="parameters[param.id]"
           on-blur="onBlur()"
-          file-uploads="fileUploads.count"
           class="operation-attribute-entry">
       </file-parameter>
       <model-parameter ng-if="param.kind === 'model'"
@@ -69,7 +68,6 @@
         params="parameters"
         guid="parameters[param.id]"
         on-blur="onBlur()"
-        file-uploads="fileUploads.count"
         workspace-reference="workspace.ref()"
         class="operation-attribute-entry">
       </table-kind>

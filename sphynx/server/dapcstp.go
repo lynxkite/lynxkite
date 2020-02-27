@@ -8,10 +8,10 @@ import (
 )
 
 // The function graph will convert the problem specification described in
-// LK's attribute terms to a dapcstp.Graph. The dapcstop interface expects
+// LK's attribute terms to a dapcstp.Graph. The dapcstp interface expects
 // exactly one root, so we add one node to play the role of this single root
 // and add edges from this single root to those nodes whose rootCosts attribute
-// is non-negative. The extra edges and the extra node are are allocated from
+// is non-negative. The extra edges and the extra node are allocated from
 // the end of the id space, so it is easy to go back to the original graph,
 // once dapcstp has done its thing.
 func graph(
