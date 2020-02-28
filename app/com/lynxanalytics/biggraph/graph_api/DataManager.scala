@@ -86,8 +86,7 @@ class DataManager(
   }
 
   private def bestDomain(domains: Iterable[Domain], e: MetaGraphEntity): Domain = {
-    synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
-      .orElse(domains.find(_.has(e)))
+    domains.find(_.has(e))
       .orElse(domains.find(_.canCompute(e.source))) match {
         case None => throw new AssertionError(f"None of the domains can compute $e.")
         case Some(d) => d
