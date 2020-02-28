@@ -1,32 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"reflect"
 	"testing"
-	"time"
 )
-
-func TestAddRankingAttributeSpeed(t *testing.T) {
-	n := 6000000
-	sortKey := &DoubleAttribute{
-		Values:  make([]float64, n),
-		Defined: make([]bool, n),
-	}
-	rand.Seed(42)
-	for i := 0; i < n; i++ {
-		sortKey.Values[i] = rand.Float64()
-		if rand.Float64() > 0.001 {
-			sortKey.Defined[i] = true
-		}
-	}
-	start := time.Now().UnixNano()
-	_, _ = doAddRankingAttribute(sortKey, n, true)
-	end := time.Now().UnixNano()
-	elapsed := (end - start) / 1000000
-	fmt.Println("AddRankingAttribute time: ", elapsed)
-}
 
 func TestAddRankingAttributeFloat64(t *testing.T) {
 	sortKey := &DoubleAttribute{
