@@ -3,8 +3,8 @@ package main
 func init() {
 	operationRepository["InducedEdgeBundle"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			induceSrc := ea.GetBoolParam("induceSrc", true)
-			induceDst := ea.GetBoolParam("induceDst", true)
+			induceSrc := ea.GetBoolParam("induceSrc")
+			induceDst := ea.GetBoolParam("induceDst")
 			var srcMapping map[int]int
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
