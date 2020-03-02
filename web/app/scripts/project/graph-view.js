@@ -1117,12 +1117,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   GraphView.prototype.initSlider = function(vertices) {
     const sliderAttr = vertices.side.vertexAttrs.slider;
     if (!sliderAttr) { return; }
-    const slider = { pos: 50, title: sliderAttr.title };
+    const sb = common.minmax(
+      vertices.vs.map(v => (v.data.attrs[sliderAttr.id] || {}).double));
+    const slider = {
+      pos: 50,
+      title: sliderAttr.title,
+      interpret: y => sb.min + sb.span * 0.01 * y,
+    };
     this.legend[vertices.leftOrRight].slider = slider;
     this.unregistration.push(this.scope.$watch(() => slider.pos, onSlider));
     function onSlider(pos) {
-      const sb = common.minmax(
-        vertices.vs.map(function(v) { return (v.data.attrs[sliderAttr.id] || {}).double; }));
       for (let i = 0; i < vertices.vs.length; ++i) {
         const v = vertices.vs[i];
         const x =

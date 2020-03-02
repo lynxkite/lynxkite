@@ -8,7 +8,7 @@
          ng-model="data.slider.pos"
          min="-1"
          max="101"
-         drop-tooltip="Threshold">
+         drop-tooltip="{{ format(data.slider.interpret(data.slider.pos)) }}">
     </p>
 
     <p ng-repeat="line in data track by $index">
