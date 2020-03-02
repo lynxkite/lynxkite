@@ -31,7 +31,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // (When switching from "color" to "slider", for example.)
       for (let side of ['graph.left', 'graph.right']) {
         for (let p of [
-          'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap']) {
+          'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap',
+          'sliderColorMap']) {
           util.deepWatch(scope, side + '.' + p, scope.updateGraph);
         }
       }
@@ -635,7 +636,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // UnCammelify.
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
         // We handle slider, icon and color attributes separately.
-        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon' && attrLabel !== 'Slider') {
+        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon' && attrLabel !== ' Slider') {
           vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
@@ -1124,24 +1125,29 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       title: sliderAttr.title,
       interpret: y => sb.min + sb.span * 0.01 * y,
     };
+    onSliderChange(slider.pos);
     this.legend[vertices.leftOrRight].slider = slider;
-    this.unregistration.push(this.scope.$watch(() => slider.pos, onSlider));
-    function onSlider(pos) {
-      for (let i = 0; i < vertices.vs.length; ++i) {
-        const v = vertices.vs[i];
+    this.unregistration.push(this.scope.$watch(() => slider.pos, onSliderChange));
+    function onSliderChange(pos) {
+      for (let v of vertices.vs) {
         const x =
           v.data.attrs[sliderAttr.id].defined ? v.data.attrs[sliderAttr.id].double : undefined;
         const norm = Math.floor(100 * common.normalize(x, sb) + 50); // Normalize to 0 - 100.
+        const cm = util.sliderColorMaps[vertices.side.sliderColorMap];
         if (norm < pos) {
-          v.color = 'hsl(120, 50%, 42%)';
+          v.color = cm[1];
         } else if (norm > pos) {
-          v.color = 'hsl(0, 50%, 42%)';
+          v.color = cm[0];
         } else if (norm === pos) {
-          v.color = 'hsl(60, 60%, 45%)';
+          v.color = 'white';
         } else {
-          v.color = 'hsl(60, 0%, 42%)';
+          v.color = 'gray';
         }
+        v.setVisible(v.color !== 'transparent');
         v.icon.attr({ style: 'fill: ' + v.color });
+      }
+      for (let e of vertices.edges) {
+        e.setVisible(e.src.color !== 'transparent' && e.dst.color !== 'transparent');
       }
     }
   };
@@ -1652,6 +1658,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
+  Vertex.prototype.setVisible = function(visible) {
+    if (visible) {
+      svg.removeClass(this.dom, 'invisible');
+    } else {
+      svg.addClass(this.dom, 'invisible');
+    }
+  };
+
   // Hover and highlight listeners must have an `on()` and an `off()` method.
   // "Hover" is used for the one vertex under the cursor.
   // "Highlight" is used for any vertices that we want to render more visible.
@@ -1731,9 +1745,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
   Edge.prototype.setVisible = function(visible) {
     if (visible) {
-      svg.removeClass(this.dom, 'invisible-edge');
+      svg.removeClass(this.dom, 'invisible');
     } else {
-      svg.addClass(this.dom, 'invisible-edge');
+      svg.addClass(this.dom, 'invisible');
     }
   };
   Edge.prototype.toFront = function() {
@@ -1745,8 +1759,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           vertex.screenX() <= vertex.offsetter.xMax;
     }
     const src = this.src, dst = this.dst;
-    this.setVisible(
-      src.offsetter.side === dst.offsetter.side || (isInside(src) && isInside(dst)));
+    if (src.offsetter.side !== dst.offsetter.side) {
+      this.setVisible(isInside(src) && isInside(dst));
+    }
     const avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
     const strokeWidth = avgZoom * this.w;
     const arrows =

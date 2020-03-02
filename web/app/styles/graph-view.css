@@ -55,7 +55,8 @@ svg .edge {
   stroke: #0089c4; /* Brand color. */
   transition: opacity 0.25s;
 }
-svg .edge.invisible-edge {
+svg .edge.invisible,
+svg .vertex.invisible {
  opacity: 0;
 }
 svg .edge .edge-arrow {

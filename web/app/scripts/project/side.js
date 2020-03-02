@@ -137,6 +137,7 @@ angular.module('biggraph')
       vd.vertexColorMap = this.state.vertexColorMap;
       vd.labelColorMap = this.state.labelColorMap;
       vd.edgeColorMap = this.state.edgeColorMap;
+      vd.sliderColorMap = this.state.sliderColorMap;
 
       const at = this.state.attributeTitles;
 
