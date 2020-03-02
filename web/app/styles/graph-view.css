@@ -186,6 +186,10 @@ svg .bucket.axis-label {
   float: right;
 }
 
+.graph-view-legend .slider {
+  pointer-events: auto;
+}
+
 svg .loading {
   fill: #0089c4; /* Brand color. */
 }

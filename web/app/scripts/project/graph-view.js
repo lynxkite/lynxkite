@@ -634,8 +634,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         let attrLabel = attr.charAt(0).toUpperCase() + attr.slice(1);
         // UnCammelify.
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
-        // We handle icon and color attributes separately.
-        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon') {
+        // We handle slider, icon and color attributes separately.
+        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon' && attrLabel !== 'Slider') {
           vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
@@ -1115,16 +1115,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   GraphView.prototype.initSlider = function(vertices) {
-    this.unregistration.push(this.scope.$watch(sliderPos, onSlider));
-    function sliderPos() {
-      return vertices.side.sliderPos;
-    }
-    function onSlider() {
-      const sliderAttr = vertices.side.vertexAttrs.slider;
-      if (!sliderAttr) { return; }
+    const sliderAttr = vertices.side.vertexAttrs.slider;
+    if (!sliderAttr) { return; }
+    const slider = { pos: 50, title: sliderAttr.title };
+    this.legend[vertices.leftOrRight].slider = slider;
+    this.unregistration.push(this.scope.$watch(() => slider.pos, onSlider));
+    function onSlider(pos) {
       const sb = common.minmax(
         vertices.vs.map(function(v) { return (v.data.attrs[sliderAttr.id] || {}).double; }));
-      const pos = sliderPos();
       for (let i = 0; i < vertices.vs.length; ++i) {
         const v = vertices.vs[i];
         const x =
