@@ -84,6 +84,11 @@ type DoubleAttribute struct {
 	Defined []bool
 }
 
+type LongAttribute struct {
+	Values  []int64
+	Defined []bool
+}
+
 type StringAttribute struct {
 	Values  []string
 	Defined []bool
