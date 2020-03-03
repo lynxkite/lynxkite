@@ -8,22 +8,33 @@ import fileinput
 import re
 from collections import defaultdict
 from prettytable import PrettyTable
-
+import datetime
 
 OPS = defaultdict(list)
 RELS = defaultdict(list)
 INPUTS = defaultdict(set)
 RELOCATION_TIMES = defaultdict(list)
+START = float("inf")
+END = float("-inf")
 
 regexp_common = re.compile(
-    r'^.*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
+    r'^I(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d).*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
 regexp_rel = re.compile('Moving ([^ ]+) from ([^ ]+) to ([^ ]+)')
 regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) op: (.*)')
 
 
 def extract_common(line):
   m = regexp_common.match(line)
-  return int(m.group(1)), m.group(2), m.group(3)
+  dt = datetime.datetime.strptime(m.group(1), '%Y-%m-%d %H:%M:%S,%f')
+  logtime = dt.timestamp() * 1000
+  global END
+  global START
+  if logtime > END:
+    END = logtime
+  elapsed = int(m.group(2))
+  if logtime - elapsed < START:
+    START = logtime - elapsed
+  return elapsed, m.group(3), m.group(4)
 
 
 def op(line):
@@ -97,3 +108,4 @@ print_table('ALL OPERATIONS',
             OPS)
 print()
 print_table('ALL_RELOCATIONS', ['Relocation', 'Sum (ms)', 'Count', 'Avg'], RELS)
+print(f'All this took {int((END-START)/1000)} seconds')
