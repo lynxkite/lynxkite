@@ -38,6 +38,12 @@ type EdgeBundle struct {
 	EdgeMapping []int64
 }
 
+func (es *EdgeBundle) Make(size int, maxSize int) {
+	es.Src = make([]int, size, maxSize)
+	es.Dst = make([]int, size, maxSize)
+	es.EdgeMapping = make([]int64, size, maxSize)
+}
+
 type VertexSet struct {
 	sync.Mutex
 	MappingToUnordered []int64
