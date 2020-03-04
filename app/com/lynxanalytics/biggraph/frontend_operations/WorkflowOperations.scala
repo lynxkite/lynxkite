@@ -546,10 +546,15 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute in Python")(new ProjectTransformation(_) {
-    params += Code("code", "Python code", language = "python")
+    params ++= List(
+      Code("code", "Python code", language = "python"),
+      Param("inputs", "Inputs"),
+      Param("outputs", "Outputs"))
     def enabled = FEStatus.enabled
     def apply() = {
-      graph_operations.DerivePython.run(params("code"), project)
+      def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
+      graph_operations.DerivePython.run(
+        params("code"), split(params("inputs")), split(params("outputs")), project)
     }
   })
 

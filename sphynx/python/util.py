@@ -56,7 +56,7 @@ class Op:
     path = f'{self.datadir}/{self.inputs[name]}/model.pt'
     return torch.load(path)
 
-  def input_scalar(self, name, value):
+  def input_scalar(self, name):
     '''Reads a scalar from disk.'''
     with open(f'{self.datadir}/{self.inputs[name]}/serialized_data') as f:
       return json.load(f)
