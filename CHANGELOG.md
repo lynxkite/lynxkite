@@ -5,7 +5,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+
   - Added graph convolutional network operations: _"Train a GCN regressor"_, _"Train a GCN classifier"_, and _"Predict with GCN"_.
+
+### 3.1.1
+
+ - Hotfix for a Sphynx bug. (#9053)
 
 ### 3.1.0
 
