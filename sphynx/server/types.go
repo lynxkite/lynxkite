@@ -38,12 +38,21 @@ type EdgeBundle struct {
 	EdgeMapping []int64
 }
 
+func (es *EdgeBundle) Make(size int, maxSize int) {
+	es.Src = make([]int, size, maxSize)
+	es.Dst = make([]int, size, maxSize)
+	es.EdgeMapping = make([]int64, size, maxSize)
+}
+
 type VertexSet struct {
+	sync.Mutex
 	MappingToUnordered []int64
 	MappingToOrdered   map[int64]int
 }
 
 func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+	vs.Lock()
+	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
 		vs.MappingToOrdered = make(map[int64]int)
 		for i, j := range vs.MappingToUnordered {
@@ -72,6 +81,11 @@ func (scalar *Scalar) LoadTo(dst interface{}) error {
 
 type DoubleAttribute struct {
 	Values  []float64
+	Defined []bool
+}
+
+type LongAttribute struct {
+	Values  []int64
 	Defined []bool
 }
 

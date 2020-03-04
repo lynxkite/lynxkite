@@ -56,6 +56,10 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def enabled = FEStatus.assert(
       project.edgeAttrList.nonEmpty,
       "There must be at least one edge attribute")
+    override def summary = {
+      val key = if (params("key").isEmpty) "attribute" else params("key")
+      s"Merge parallel edges by $key"
+    }
 
     def apply() = {
       applyMergeParallelEdges(project, params, byKey = true)
@@ -69,6 +73,10 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     params ++= aggregateParams(project.vertexAttributes)
     def enabled =
       FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    override def summary = {
+      val key = if (params("key").isEmpty) "attribute" else params("key")
+      s"Merge vertices by $key"
+    }
     def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
       val op = graph_operations.MergeVertices[T]()
       op(op.attr, attr).result

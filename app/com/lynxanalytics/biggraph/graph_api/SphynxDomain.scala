@@ -23,7 +23,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
-    typeTag[String], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
+    typeTag[String], typeTag[Long], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
 }
 
 class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -171,6 +171,15 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
         val schema = StructType(Seq(
           StructField("id", LongType, false),
           StructField("value", DoubleType, false)))
+        writeRDD(rdd, schema, e)
+      }
+      case a: AttributeData[_] if a.typeTag == typeTag[Long] => {
+        val rdd = a.rdd.map {
+          case (id, value) => Row(id, value)
+        }
+        val schema = StructType(Seq(
+          StructField("id", LongType, false),
+          StructField("value", LongType, false)))
         writeRDD(rdd, schema, e)
       }
       case a: AttributeData[_] if a.typeTag == typeTag[(Double, Double)] => {
