@@ -5,7 +5,8 @@ import types
 from . import util
 
 op = util.Op()
-print('derive python', op.params, op.inputs, op.outputs)
+print('Running derive python', op.params, op.inputs, op.outputs)
+# Load inputs.
 vs = {}
 es = {}
 scalars = types.SimpleNamespace()
@@ -22,8 +23,10 @@ for fullname in op.inputs.keys():
 vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
+# Execute user code.
 exec(op.params['code'])
 
+# Save outputs.
 typenames = {
     f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 typemapping = {

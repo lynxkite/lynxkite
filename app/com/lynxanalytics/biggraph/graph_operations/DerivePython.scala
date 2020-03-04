@@ -53,6 +53,17 @@ object DerivePython extends OpFromJson {
     project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
     implicit
     manager: MetaGraphManager): Unit = {
+    // Parse the output list into Fields.
+    val api = Seq("vs", "es", "scalars")
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
+    val outputFields = outputs.map {
+      case outputDeclaration(parent, name, tpe) =>
+        assert(api.contains(parent), s"Invalid output: '$parent.$name'.")
+        Field(parent, name, toSerializableType(tpe))
+      case output => throw new AssertionError(
+        s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
+    }
+    // Parse the input list into Fields.
     val existingFields = project.vertexAttributes.map {
       case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
     }.toMap ++ project.edgeAttributes.map {
@@ -60,13 +71,6 @@ object DerivePython extends OpFromJson {
     }.toMap ++ project.scalars.map {
       case (name, s) => s"scalars.$name" -> Field("scalars", name, SerializableType(s.typeTag))
     }.toMap
-    val api = Seq("vs", "es", "scalars")
-    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
-    val outputFields = outputs.map {
-      case outputDeclaration(parent, name, tpe) => Field(parent, name, toSerializableType(tpe))
-      case output => throw new AssertionError(
-        s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
-    }
     val inputFields = inputs.map { i =>
       existingFields.get(i) match {
         case Some(f) => f
@@ -75,6 +79,7 @@ object DerivePython extends OpFromJson {
             existingFields.keys.toSeq.sorted.mkString(", "))
       }
     }
+    // Run the operation.
     val op = DerivePython(code, inputFields, outputFields)
     import Scripting._
     val builder = InstanceBuilder(op)
@@ -91,6 +96,7 @@ object DerivePython extends OpFromJson {
     }
     builder.toInstance(manager)
     val res = builder.result
+    // Save the outputs into the project.
     for ((f, i) <- res.attrFields.zipWithIndex) {
       f.parent match {
         case "vs" => project.newVertexAttribute(f.name, res.attrs(i))
