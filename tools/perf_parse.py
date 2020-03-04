@@ -10,8 +10,10 @@ from collections import defaultdict
 from prettytable import PrettyTable
 
 
-TOTAL_OP = defaultdict(list)
-TOTAL_REL = defaultdict(list)
+OPS = defaultdict(list)
+RELS = defaultdict(list)
+INPUTS = defaultdict(set)
+RELOCATION_TIMES = defaultdict(list)
 
 regexp_common = re.compile(
     r'^.*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
@@ -37,7 +39,10 @@ def op(line):
   idx = op.find('(')
   op = op[:idx]
   op = f'{op} [{domain}]'
-  TOTAL_OP[op].append(ms)
+  for i in inputs:
+    if i:
+      INPUTS[op].add(i)
+  OPS[op].append(ms)
 
 
 def rel(line):
@@ -46,7 +51,8 @@ def rel(line):
   guid = m.group(1)
   src = m.group(2)
   dst = m.group(3)
-  TOTAL_REL[f'{src}->{dst}'].append(ms)
+  RELOCATION_TIMES[guid].append(ms)
+  RELS[f'{src}->{dst}'].append(ms)
 
 
 for line in fileinput.input():
@@ -57,10 +63,9 @@ for line in fileinput.input():
     rel(line)
 
 
-def print_table(title, name, diclist):
+def print_table(title, field_names, diclist):
   print(title)
   t = PrettyTable()
-  field_names = [name, 'Sum (ms)', 'Count', 'Avg']
   t.field_names = field_names
   for i in field_names:
     t.align[i] = 'l'
@@ -70,12 +75,25 @@ def print_table(title, name, diclist):
     s = sum(v)
     count = len(v)
     avg = '{0:.0f}'.format(s / count)
-    t.add_row([n, s, count, avg])
+    if title == 'ALL OPERATIONS':
+      rsum = 0
+      rnum = 0
+      for g in INPUTS[n]:
+        rt = RELOCATION_TIMES[g]
+        rsum = rsum + sum(rt)
+        if len(rt) > 0:
+          rnum = rnum + 1
+      t.add_row([n, s, count, avg, rsum, rnum, len(INPUTS[n])])
+    else:
+      t.add_row([n, s, count, avg])
   t.sortby = 'Sum (ms)'
   t.reversesort = True
   print(t)
 
 
-print_table('ALL OPERATIONS', 'Operation', TOTAL_OP)
+print_table('ALL OPERATIONS',
+            ['Operation', 'Sum (ms)', 'Count', 'Avg', 'input relocation time',
+             'relocated inputs', 'all inputs'],
+            OPS)
 print()
-print_table('ALL_RELOCATIONS', 'Relocation', TOTAL_REL)
+print_table('ALL_RELOCATIONS', ['Relocation', 'Sum (ms)', 'Count', 'Avg'], RELS)

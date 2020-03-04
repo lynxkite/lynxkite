@@ -7,8 +7,6 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
     scope: {
       // The filename is exported through "model".
       filename: '=model',
-      // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
-      fileUploadCount: '=',
       // Function to call on "blur".
       onBlur: '&',
     },
@@ -24,8 +22,6 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
         scope.$apply(function() {
           const file = input[0].files[0];
           input.val(null); // Unset the selection, so the same file can be picked again.
-          scope.fileUploadCount = scope.fileUploadCount || 0;
-          scope.fileUploadCount += 1;
           scope.uploading = true;
           scope.progress = 0;
           const xhr = new XMLHttpRequest();
@@ -39,7 +35,6 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
                 } else {
                   util.error('File upload failed.', { file: file });
                 }
-                scope.fileUploadCount -= 1;
                 scope.uploading = false;
               });
             }

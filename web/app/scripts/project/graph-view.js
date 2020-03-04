@@ -343,8 +343,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (let i = 0; i < visibleSides.length; ++i) {
       this.vertexGroups.push(this.addGroup('nodes side' + i, clippers[i]));
     }
-    this.legend = svg.create('g', {'class': 'legend'});
-    this.root.append(this.legend);
+    this.legend = { left: [], right: [] };
     const oldVertices = this.vertices || new Vertices(this);
     this.vertices = []; // Sparse, indexed by side. Everything else is indexed by visible side.
     const sideIndices = []; // Maps from visible index to side index.
@@ -576,32 +575,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   Vertices.prototype.addLegendLine = function(text, indent) {
-    indent = indent || 0;
-    const margin = 50;
-    const xMargin = margin + indent;
-    const x = this.leftOrRight === 'left' ? xMargin : this.gv.svg.width() - xMargin;
-    const anchor = this.leftOrRight === 'left' ? 'start' : 'end';
-    const i = this.legendNextLine || 0;
-    this.legendNextLine = i + 1;
-    const legendElement =
-      svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
-    legendElement.attr('text-anchor', anchor);
-    this.gv.legend.append(legendElement);
-    return legendElement;
+    const line = { text, indent };
+    this.gv.legend[this.leftOrRight].push(line);
+    return line;
   };
 
   Vertices.prototype.addColorLegend = function(colorMap, title) {
     this.addLegendLine(title);
     for (let attr in colorMap) {
-      const l = this.addLegendLine(attr || 'undefined', 20);
-      const size = 12;
-      const x = parseInt(l.attr('x'));
-      const xOffset = this.leftOrRight === 'left' ? -3 - size : 3;
-      const y = parseInt(l.attr('y'));
-      const square = svg.create('rect', {
-        x: x + xOffset, y: y - 7, width: size, height: size,
-        fill: colorMap[attr] || UNCOLORED, rx: 2 });
-      this.gv.legend.append(square);
+      this.addLegendLine(attr || 'undefined', 20).color = colorMap[attr] || UNCOLORED;
     }
   };
 
@@ -1009,6 +991,24 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       offsetter.thickness *= Math.exp(0.5 * delta);
       offsetter.reDraw();
     }
+    // Legend panels let mouse events through. But we want to scroll them when necessary.
+    // Here we check if a scroll event falls within a <graph-view-legend> element and
+    // scroll it.
+    function scrollLegend(event) {
+      let e = svgElement[0];
+      while (e) {
+        if (e.tagName === 'GRAPH-VIEW-LEGEND') {
+          const div = e.children[0];
+          const rect = div.getBoundingClientRect();
+          if (
+            rect.x <= event.pageX && event.pageX <= rect.x + rect.width &&
+            rect.y <= event.pageY && event.pageY <= rect.y + rect.height) {
+            div.scrollBy({ top: event.deltaY, behavior: 'auto' });
+          }
+        }
+        e = e.nextElementSibling;
+      }
+    }
     this.svgMouseWheelListeners.push(function(e) {
       const oe = e.originalEvent;
       const mx = oe.pageX - svgElement.offset().left;
@@ -1019,6 +1019,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       e.preventDefault();
       let deltaX = oe.deltaX;
       let deltaY = oe.deltaY;
+      scrollLegend(oe);
       if (/Firefox/.test(window.navigator.userAgent)) {
         // Every browser sets different deltas for the same amount of scrolling.
         // It is tiny on Firefox. We need to boost it.
@@ -1573,8 +1574,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.icon = vertices.getIcon(icon);
       this.icon.attr({ 'class': 'icon' });
     }
-    this.minTouchRadius = 10;
-    if (r < this.minTouchRadius) {
+    if (r < 10) {
       this.touch = svg.create('circle', { 'class': 'touch' });
     } else {
       this.touch = this.icon;
@@ -1635,12 +1635,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
 
   Vertex.prototype.setColor = function(c) {
-    let lc = this.labelColor ||
-      // Use the background color or white for default label color depending on the vertex color.
-      (chroma.contrast(c, 'white') > chroma.contrast(c, '#001b31') ?
-        'white' : '#001b31');
+    let lc = this.labelColor || 'white';
     this.icon.attr({ style: `fill: ${c};` });
-    this.label.attr({ style: `fill: ${lc}; stroke: ${c};` });
+    this.label.attr({ style: `fill: ${lc}; stroke: #001b31;` });
   };
 
   Vertex.prototype.setHighlight = function(on) {
@@ -1701,7 +1698,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.label[0].setAttribute('y', sy);
     this.touch[0].setAttribute('cx', sx);
     this.touch[0].setAttribute('cy', sy);
-    this.touch[0].setAttribute('r', r);
+    this.touch[0].setAttribute('r', Math.max(r, 10));
 
     for (let i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);

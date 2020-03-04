@@ -11,7 +11,6 @@ angular.module('biggraph')
     // with EntityProgressManager.computeProgress
     const COMPUTE_PROGRESS_ERROR = -1.0;
     const COMPUTE_PROGRESS_NOT_STARTED = 0.0;
-    const COMPUTE_PROGRESS_IN_PROGRESS = 0.5;
     const COMPUTE_PROGRESS_COMPLETED = 1.0;
 
     // A request queue with a limit on the number of parallel requests.
@@ -428,7 +427,8 @@ angular.module('biggraph')
           } else {
             constructValueForCalculationNotStarted();
           }
-        } else if (scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
+        } else if (COMPUTE_PROGRESS_NOT_STARTED < scalar.computeProgress
+          && scalar.computeProgress < COMPUTE_PROGRESS_COMPLETED) {
           if (fetchNotReady) {
             fetchScalarAndConstructValue();
           } else {

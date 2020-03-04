@@ -34,6 +34,9 @@ func (_ *DoubleAttribute) typeName() string {
 func (_ *StringAttribute) typeName() string {
 	return "StringAttribute"
 }
+func (_ *LongAttribute) typeName() string {
+	return "LongAttribute"
+}
 func (_ *DoubleTuple2Attribute) typeName() string {
 	return "DoubleTuple2Attribute"
 }
@@ -230,8 +233,17 @@ type OrderedStringAttributeRow struct {
 	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
 }
 
+type OrderedLongAttributeRow struct {
+	Value   int64 `parquet:"name=value, type=INT64"`
+	Defined bool  `parquet:"name=defined, type=BOOLEAN"`
+}
+
 func (_ *StringAttribute) orderedRow() interface{} {
 	return new(OrderedStringAttributeRow)
+}
+
+func (_ *LongAttribute) orderedRow() interface{} {
+	return new(OrderedLongAttributeRow)
 }
 
 type UnorderedStringAttributeRow struct {
@@ -239,8 +251,17 @@ type UnorderedStringAttributeRow struct {
 	Value string `parquet:"name=value, type=UTF8"`
 }
 
+type UnorderedLongAttributeRow struct {
+	Id    int64 `parquet:"name=id, type=INT64"`
+	Value int64 `parquet:"name=value, type=INT64"`
+}
+
 func (_ *StringAttribute) unorderedRow() interface{} {
 	return new(UnorderedStringAttributeRow)
+}
+
+func (_ *LongAttribute) unorderedRow() interface{} {
+	return new(UnorderedLongAttributeRow)
 }
 
 type OrderedDoubleAttributeRow struct {

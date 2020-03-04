@@ -93,7 +93,6 @@ module.exports = function(fw) {
       const DEFAULT = 'rgb(57, 188, 243)'; // Brand color.
       const LOW = 'rgb(68, 1, 84)';
       const HIGH = 'rgb(254, 232, 37)';
-      const DARK = 'rgb(0, 27, 49)';
       // No attributes visualized.
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
@@ -208,9 +207,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { opacity: '1', labelSize: '15', labelColor: DARK, image: null },
-          { opacity: '1', labelSize: '15', labelColor: DARK, image: null },
-          { opacity: '1', labelSize: '15', labelColor: DARK, image: null },
+          { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
+          { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
+          { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
