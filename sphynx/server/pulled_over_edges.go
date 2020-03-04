@@ -15,8 +15,8 @@ func doPulledOverEdges(
 		EdgeMapping: make([]int64, len(injection.Src)),
 	}
 	j := 0
-	for _, d := range destinationVS.MappingToOrdered {
-		origId, exists := origIds[d]
+	for i := 0; i < len(destinationVS.MappingToUnordered); i++ {
+		origId, exists := origIds[i]
 		if exists {
 			pulledEB.Src[j] = originalEB.Src[origId]
 			pulledEB.Dst[j] = originalEB.Dst[origId]
