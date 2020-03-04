@@ -13,6 +13,7 @@ object DerivePython extends OpFromJson {
   case class Field(parent: String, name: String, tpe: SerializableType[_]) {
     def fullName = Symbol(s"$parent.$name")
   }
+  // A custom json.Format is needed because of SerializableType[_].
   implicit val fField = new json.Format[Field] {
     def reads(j: json.JsValue): json.JsResult[Field] =
       json.JsSuccess(Field(
@@ -47,24 +48,32 @@ object DerivePython extends OpFromJson {
     }
   }
 
-  def run(code: String, project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(implicit manager: MetaGraphManager): Unit = {
+  def run(
+    code: String, inputs: Seq[String], outputs: Seq[String],
+    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+    implicit
+    manager: MetaGraphManager): Unit = {
     val existingFields = project.vertexAttributes.map {
-      case (name, attr) => Field("vs", name, SerializableType(attr.typeTag))
-    } ++ project.edgeAttributes.map {
-      case (name, attr) => Field("es", name, SerializableType(attr.typeTag))
-    } ++ project.scalars.map {
-      case (name, s) => Field("scalars", name, SerializableType(s.typeTag))
-    }
+      case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
+    }.toMap ++ project.edgeAttributes.map {
+      case (name, attr) => s"es.$name" -> Field("es", name, SerializableType(attr.typeTag))
+    }.toMap ++ project.scalars.map {
+      case (name, s) => s"scalars.$name" -> Field("scalars", name, SerializableType(s.typeTag))
+    }.toMap
     val api = Seq("vs", "es", "scalars")
-    val outputFields = api.flatMap { parent =>
-      s"$parent\\.(\\w+) *: *(\\w+)".r.findAllMatchIn(code).map { m =>
-        Field(parent, m.group(1), toSerializableType(m.group(2)))
-      }
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
+    val outputFields = outputs.map {
+      case outputDeclaration(parent, name, tpe) => Field(parent, name, toSerializableType(tpe))
+      case output => throw new AssertionError(
+        s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
     }
-    val inputFields = api.flatMap { parent =>
-      val refs = s"$parent\\.(\\w+)".r.findAllMatchIn(code).map(_.group(1))
-      refs.flatMap(r =>
-        existingFields.find(f => f.parent == parent && f.name == r))
+    val inputFields = inputs.map { i =>
+      existingFields.get(i) match {
+        case Some(f) => f
+        case None => throw new AssertionError(
+          s"No available input called '$i'. Available inputs are: " +
+            existingFields.keys.toSeq.sorted.mkString(", "))
+      }
     }
     val op = DerivePython(code, inputFields, outputFields)
     import Scripting._

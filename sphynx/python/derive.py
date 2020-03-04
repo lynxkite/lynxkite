@@ -35,8 +35,8 @@ for fullname in op.outputs.keys():
     continue
   parent, name = fullname.split('.')
   if parent == 'vs':
-    op.output(fullname, getattr(vs, name), type=typemapping[typenames[fullname]])
+    op.output(fullname, vs[name], type=typemapping[typenames[fullname]])
   elif parent == 'es':
-    op.output(fullname, getattr(es, name), type=typemapping[typenames[fullname]])
+    op.output(fullname, es[name], type=typemapping[typenames[fullname]])
   elif parent == 'scalars':
     op.output_scalar(fullname, getattr(scalars, name))
