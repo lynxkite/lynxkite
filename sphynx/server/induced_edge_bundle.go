@@ -1,3 +1,6 @@
+// Implements the InducedEdgeBundle operation
+// See the Spark implementation for details
+
 package main
 
 func init() {
