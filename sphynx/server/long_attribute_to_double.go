@@ -1,4 +1,5 @@
 // Implements the LongAttributeToDouble operation
+// See the Spark implementation for details
 
 package main
 

@@ -1,4 +1,5 @@
-// Implements the backend for the FindShortestPath
+// Implements the FindShortestPath operation
+// See the Spark implementation for details
 
 package main
 
