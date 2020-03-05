@@ -5,7 +5,16 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 # Changes
 
 ### master
+
   - Added graph convolutional network operations: _"Train a GCN regressor"_, _"Train a GCN classifier"_, and _"Predict with GCN"_.
+  - Advanced settings in some boxes are hidden behind a click.
+  - Long legends on visualizations can be scrolled.
+  - Wizards can be maximized.
+  - Small improvements, like better defaults for graph visualizations and nicer trigger button on import boxes.
+
+### 3.1.1
+
+ - Hotfix for a Sphynx bug. (#9053)
 
 ### 3.1.0
 
