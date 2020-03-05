@@ -1,3 +1,6 @@
+// Implements the OutDegree operation
+// See the Spark implementation for details
+
 package main
 
 func doOutDegree(es *EdgeBundle, src *VertexSet) *DoubleAttribute {

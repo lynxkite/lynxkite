@@ -1,3 +1,6 @@
+// Implements the PulledOverEdges operation
+// See the Spark implementation for details
+
 package main
 
 func doPulledOverEdges(
