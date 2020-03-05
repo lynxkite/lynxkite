@@ -1,4 +1,5 @@
 // Implements the ReverseEdges operation
+// See the Spark implementation for details
 
 package main
 

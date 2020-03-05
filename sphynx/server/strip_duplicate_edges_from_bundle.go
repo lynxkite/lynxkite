@@ -1,3 +1,6 @@
+// Implements the StripDuplicateEdgesFromBundle operation
+// See the Spark implementation for details
+
 package main
 
 func doStripDuplicateEdgesFromBundle(es *EdgeBundle) *EdgeBundle {
