@@ -8,20 +8,31 @@ import fileinput
 import re
 from collections import defaultdict
 from prettytable import PrettyTable
+import datetime
 
-
-TOTAL_OP = defaultdict(list)
-TOTAL_REL = defaultdict(list)
+OPS = defaultdict(list)
+RELS = defaultdict(list)
+INPUTS = defaultdict(set)
+RELOCATION_TIMES = defaultdict(list)
+START = None
+END = None
 
 regexp_common = re.compile(
-    r'^.*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
+    r'^I(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d).*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
 regexp_rel = re.compile('Moving ([^ ]+) from ([^ ]+) to ([^ ]+)')
 regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) op: (.*)')
 
 
 def extract_common(line):
   m = regexp_common.match(line)
-  return int(m.group(1)), m.group(2), m.group(3)
+  dt = datetime.datetime.strptime(m.group(1), '%Y-%m-%d %H:%M:%S,%f')
+  logtime = dt.timestamp() * 1000
+  global START, END
+  END = logtime
+  elapsed = int(m.group(2))
+  if not START or logtime - elapsed < START:
+    START = logtime - elapsed
+  return elapsed, m.group(3), m.group(4)
 
 
 def op(line):
@@ -37,7 +48,10 @@ def op(line):
   idx = op.find('(')
   op = op[:idx]
   op = f'{op} [{domain}]'
-  TOTAL_OP[op].append(ms)
+  for i in inputs:
+    if i:
+      INPUTS[op].add(i)
+  OPS[op].append(ms)
 
 
 def rel(line):
@@ -46,7 +60,8 @@ def rel(line):
   guid = m.group(1)
   src = m.group(2)
   dst = m.group(3)
-  TOTAL_REL[f'{src}->{dst}'].append(ms)
+  RELOCATION_TIMES[guid].append(ms)
+  RELS[f'{src}->{dst}'].append(ms)
 
 
 for line in fileinput.input():
@@ -57,10 +72,9 @@ for line in fileinput.input():
     rel(line)
 
 
-def print_table(title, name, diclist):
+def print_table(title, field_names, diclist):
   print(title)
   t = PrettyTable()
-  field_names = [name, 'Sum (ms)', 'Count', 'Avg']
   t.field_names = field_names
   for i in field_names:
     t.align[i] = 'l'
@@ -70,12 +84,26 @@ def print_table(title, name, diclist):
     s = sum(v)
     count = len(v)
     avg = '{0:.0f}'.format(s / count)
-    t.add_row([n, s, count, avg])
+    if title == 'ALL OPERATIONS':
+      rsum = 0
+      rnum = 0
+      for g in INPUTS[n]:
+        rt = RELOCATION_TIMES[g]
+        rsum = rsum + sum(rt)
+        if len(rt) > 0:
+          rnum = rnum + 1
+      t.add_row([n, s, count, avg, rsum, rnum, len(INPUTS[n])])
+    else:
+      t.add_row([n, s, count, avg])
   t.sortby = 'Sum (ms)'
   t.reversesort = True
   print(t)
 
 
-print_table('ALL OPERATIONS', 'Operation', TOTAL_OP)
+print_table('ALL OPERATIONS',
+            ['Operation', 'Sum (ms)', 'Count', 'Avg', 'input relocation time',
+             'relocated inputs', 'all inputs'],
+            OPS)
 print()
-print_table('ALL_RELOCATIONS', 'Relocation', TOTAL_REL)
+print_table('ALL_RELOCATIONS', ['Relocation', 'Sum (ms)', 'Count', 'Avg'], RELS)
+print(f'All this took {int((END-START)/1000)} seconds')
