@@ -10,6 +10,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   - Advanced settings in some boxes are hidden behind a click.
   - Long legends on visualizations can be scrolled.
   - Wizards can be maximized.
+  - Revamped the _"Visualize as slider"_ feature. The slider now appears on the visualization
+    instead of appearing in the configuration. The slider can affect either the color or visibility
+    of vertices.
   - Small improvements, like better defaults for graph visualizations and nicer trigger button on import boxes.
 
 ### 3.1.1
