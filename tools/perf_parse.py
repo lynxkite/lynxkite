@@ -14,8 +14,8 @@ OPS = defaultdict(list)
 RELS = defaultdict(list)
 INPUTS = defaultdict(set)
 RELOCATION_TIMES = defaultdict(list)
-START = float("inf")
-END = float("-inf")
+START = None
+END = None
 
 regexp_common = re.compile(
     r'^I(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d).*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
@@ -27,12 +27,10 @@ def extract_common(line):
   m = regexp_common.match(line)
   dt = datetime.datetime.strptime(m.group(1), '%Y-%m-%d %H:%M:%S,%f')
   logtime = dt.timestamp() * 1000
-  global END
-  global START
-  if logtime > END:
-    END = logtime
+  global START, END
+  END = logtime
   elapsed = int(m.group(2))
-  if logtime - elapsed < START:
+  if not START or logtime - elapsed < START:
     START = logtime - elapsed
   return elapsed, m.group(3), m.group(4)
 
