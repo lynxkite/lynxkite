@@ -15,11 +15,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
 
   register("Aggregate to segmentation")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = params ++= aggregateParams(parent.vertexAttributes)
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(
-          parent.vertexAttributes.nonEmpty,
-          "No vertex attributes on parent")
+    def enabled = project.assertSegmentation
     def apply() = {
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -61,9 +57,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         "prefix", "Generated name prefix", defaultValue = project.asSegmentation.segmentationName)
       params ++= aggregateParams(project.vertexAttributes)
     }
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    def enabled = project.assertSegmentation
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -105,8 +99,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       Param("prefix", "Generated name prefix", defaultValue = "neighborhood"),
       Choice("direction", "Aggregate on", options = Direction.options)) ++
       aggregateParams(project.vertexAttributes)
-    def enabled =
-      FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes") && project.hasEdgeBundle
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
@@ -150,8 +143,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       Param("prefix", "Generated name prefix", defaultValue = "edge"),
       Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
       aggregateParams(project.edgeAttributes)
-    def enabled =
-      FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -201,7 +193,6 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       params += Param("prefix", "Attribute name prefix", defaultValue = seg.segmentationName)
     def enabled =
       project.assertSegmentation &&
-        FEStatus.assert(project.vertexAttrList.size > 0, "No vertex attributes") &&
         FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
         FEStatus.assert(
           seg.belongsTo.properties.isFunction,
@@ -223,11 +214,8 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       project.assertSegmentation &&
         project.hasVertexSet &&
         FEStatus.assert(
-          parent.vertexAttributes.size > 0,
-          s"Parent $parent has no vertex attributes") &&
-          FEStatus.assert(
-            seg.belongsTo.properties.isReversedFunction,
-            "Segments are not guaranteed to contain only one vertex")
+          seg.belongsTo.properties.isReversedFunction,
+          "Segments are not guaranteed to contain only one vertex")
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((name, attr) <- parent.vertexAttributes.toMap) {

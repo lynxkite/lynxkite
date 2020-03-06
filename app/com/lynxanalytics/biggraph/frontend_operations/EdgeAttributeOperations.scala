@@ -62,7 +62,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   register("Convert edge attribute to String")(new ProjectTransformation(_) {
     params +=
       Choice("attr", "Edge attribute", options = project.edgeAttrList, multipleChoice = true)
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes.")
+    def enabled = project.hasEdgeBundle
     def apply() = {
       for (attr <- splitParam("attr")) {
         project.edgeAttributes(attr) = project.edgeAttributes(attr).asString
@@ -76,7 +76,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
         project.edgeAttrList[Long] ++
         project.edgeAttrList[Int]
     params += Choice("attr", "Edge attribute", options = eligible, multipleChoice = true)
-    def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
+    def enabled = project.hasEdgeBundle
     def apply() = {
       for (name <- splitParam("attr")) {
         val attr = project.edgeAttributes(name)
@@ -146,9 +146,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       params ++= project.edgeAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
       }
-      def enabled = FEStatus.assert(
-        (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
-        "No edge attributes.")
+      def enabled = project.hasEdgeBundle
       val attrParams: Map[String, String] = params.toMap.collect {
         case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
       }
