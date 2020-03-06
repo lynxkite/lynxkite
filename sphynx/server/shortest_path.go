@@ -7,8 +7,8 @@ import (
 )
 
 type EdgeInfo struct {
-	src int
-	dst int
+	src VertexID
+	dst VertexID
 	d   float64
 }
 

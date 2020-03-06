@@ -167,8 +167,10 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 
 func (s *Server) WriteToOrderedDisk(
 	ctx context.Context, in *pb.WriteToOrderedDiskRequest) (*pb.WriteToOrderedDiskReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
-	e, exists := s.entities[guid]
+	e, exists := s.get(guid)
 	if !exists {
 		return nil, fmt.Errorf("%v is not in memory", guid)
 	}
