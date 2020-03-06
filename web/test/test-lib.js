@@ -144,10 +144,6 @@ Entity.prototype = {
     this.popoff();
   },
 
-  slider: function() {
-    return this.popup().$('#slider');
-  },
-
   clickMenu: function(id) {
     this.popup().$('#' + id).click();
     this.popoff();
@@ -860,6 +856,7 @@ TableBrowser.prototype = {
 };
 
 function VisualizationState(popup) {
+  this.popup = popup;
   this.svg = popup.$('svg.graph-view');
 }
 
