@@ -5,11 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 )
 
+type EntityStruct struct {
+	entity    Entity
+	timestamp int64
+}
 type Server struct {
-	sync.Mutex
-	entities         map[GUID]Entity
+	cleanerMutex     sync.RWMutex
+	entityMutex      sync.Mutex
+	entities         map[GUID]EntityStruct
 	dataDir          string
 	unorderedDataDir string
 }
@@ -26,37 +32,80 @@ type OperationInstance struct {
 }
 
 func (server *Server) get(guid GUID) (Entity, bool) {
-	server.Lock()
-	defer server.Unlock()
-	entity, exists := server.entities[guid]
-	return entity, exists
+	ts := time.Now().Unix()
+	server.entityMutex.Lock()
+	defer server.entityMutex.Unlock()
+	e, exists := server.entities[guid]
+	if exists {
+		if e.entity != nil {
+			server.entities[guid] = EntityStruct{
+				entity:    e.entity,
+				timestamp: ts,
+			}
+			return e.entity, true
+		} else {
+			fmt.Printf("Guid %v is asked about %v seconds after it was evicted\n", guid, ts-e.timestamp)
+			return nil, false
+		}
+	} else {
+		return nil, false
+	}
 }
 
+func (server *Server) set(guid GUID, entity Entity) error {
+	ts := time.Now().Unix()
+	server.entityMutex.Lock()
+	defer server.entityMutex.Unlock()
+	e, exists := server.entities[guid]
+	if exists {
+		if e.entity != nil {
+			// Maybe panic?
+			return fmt.Errorf("Caching %v but it was already cached", guid)
+		}
+		fmt.Printf("Guid %v is set again %v seconds after it was evicted\n", guid, ts-e.timestamp)
+	}
+	server.entities[guid] = EntityStruct{
+		entity:    entity,
+		timestamp: ts,
+	}
+	return nil
+}
+
+type VertexID int
+
 type EdgeBundle struct {
-	Src         []int
-	Dst         []int
+	Src         []VertexID
+	Dst         []VertexID
 	EdgeMapping []int64
 }
 
+func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
+	return &EdgeBundle{
+		Src:         make([]VertexID, size, maxSize),
+		Dst:         make([]VertexID, size, maxSize),
+		EdgeMapping: make([]int64, size, maxSize),
+	}
+}
+
 func (es *EdgeBundle) Make(size int, maxSize int) {
-	es.Src = make([]int, size, maxSize)
-	es.Dst = make([]int, size, maxSize)
+	es.Src = make([]VertexID, size, maxSize)
+	es.Dst = make([]VertexID, size, maxSize)
 	es.EdgeMapping = make([]int64, size, maxSize)
 }
 
 type VertexSet struct {
 	sync.Mutex
 	MappingToUnordered []int64
-	MappingToOrdered   map[int64]int
+	MappingToOrdered   map[int64]VertexID
 }
 
-func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+func (vs *VertexSet) GetMappingToOrdered() map[int64]VertexID {
 	vs.Lock()
 	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]int)
+		vs.MappingToOrdered = make(map[int64]VertexID)
 		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = i
+			vs.MappingToOrdered[j] = VertexID(i)
 		}
 	}
 	return vs.MappingToOrdered

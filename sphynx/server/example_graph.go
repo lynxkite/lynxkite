@@ -8,8 +8,8 @@ func init() {
 			vertexSet := VertexSet{MappingToUnordered: []int64{0, 1, 2, 3}}
 			ea.output("vertices", &vertexSet)
 			eb := &EdgeBundle{
-				Src:         []int{0, 1, 2, 2},
-				Dst:         []int{1, 0, 0, 1},
+				Src:         []VertexID{0, 1, 2, 2},
+				Dst:         []VertexID{1, 0, 0, 1},
 				EdgeMapping: []int64{0, 1, 2, 3},
 			}
 			ea.output("edges", eb)

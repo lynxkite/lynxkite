@@ -4,23 +4,15 @@ package main
 
 func doReverseEdges(esAB *EdgeBundle) (esBA *EdgeBundle, injection *EdgeBundle) {
 	numEdges := len(esAB.Dst)
-	esBA = &EdgeBundle{
-		Src:         make([]int, numEdges),
-		Dst:         make([]int, numEdges),
-		EdgeMapping: make([]int64, numEdges),
-	}
-	injection = &EdgeBundle{
-		Src:         make([]int, numEdges),
-		Dst:         make([]int, numEdges),
-		EdgeMapping: make([]int64, numEdges),
-	}
+	esBA = NewEdgeBundle(numEdges, numEdges)
+	injection = NewEdgeBundle(numEdges, numEdges)
 	for i := 0; i < numEdges; i++ {
 		esBA.EdgeMapping[i] = esAB.EdgeMapping[i]
 		esBA.Dst[i] = esAB.Src[i]
 		esBA.Src[i] = esAB.Dst[i]
 		injection.EdgeMapping[i] = esBA.EdgeMapping[i]
-		injection.Src[i] = i
-		injection.Dst[i] = i
+		injection.Src[i] = VertexID(i)
+		injection.Dst[i] = VertexID(i)
 	}
 	return
 }

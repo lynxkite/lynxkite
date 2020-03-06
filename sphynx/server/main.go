@@ -36,7 +36,7 @@ func NewServer() Server {
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
 	return Server{
-		entities:         make(map[GUID]Entity),
+		entities:         make(map[GUID]EntityStruct),
 		dataDir:          dataDir,
 		unorderedDataDir: unorderedDataDir}
 }
@@ -66,6 +66,8 @@ func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	opInst := OperationInstanceFromJSON(in.Operation)
 	switch in.Domain {
 	case "SphynxMemory":
@@ -101,11 +103,9 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				}
 			}
 		}
-		s.Lock()
 		for guid, entity := range ea.outputs {
-			s.entities[guid] = entity
+			s.set(guid, entity)
 		}
-		s.Unlock()
 		go saveOutputs(s.dataDir, ea.outputs)
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
@@ -121,6 +121,8 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
 	entity, exists := s.get(guid)
@@ -137,6 +139,8 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 }
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
 	_, exists := s.get(guid)
 	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
@@ -156,6 +160,8 @@ func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
 }
 
 func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrderedSphynxDiskRequest) (*pb.HasOnOrderedSphynxDiskReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	guid := in.GetGuid()
 	has, err := hasOnDisk(s.dataDir, GUID(guid))
 	if err != nil {
@@ -165,14 +171,14 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 }
 
 func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.GetGuid())
 	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {
 		return nil, err
 	}
-	s.Lock()
-	s.entities[guid] = entity
-	s.Unlock()
+	s.set(guid, entity)
 	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
 }
 
@@ -197,6 +203,7 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
+	go EntityCleaner(&sphynxServer)
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

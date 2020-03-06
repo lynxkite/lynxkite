@@ -29,6 +29,8 @@ func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
 	entity, exists := s.get(guid)
@@ -92,6 +94,8 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
+	s.cleanerMutex.RLock()
+	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	log.Printf("Reindexing entity with guid %v to use Sphynx IDs.", in.Guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
@@ -146,10 +150,10 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		mappingToUnordered := make([]int64, numRows)
-		mappingToOrdered := make(map[int64]int)
+		mappingToOrdered := make(map[int64]VertexID)
 		for i, v := range rows {
 			mappingToUnordered[i] = v.Id
-			mappingToOrdered[v.Id] = i
+			mappingToOrdered[v.Id] = VertexID(i)
 		}
 		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
@@ -181,8 +185,8 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		edgeMapping := make([]int64, numRows)
-		src := make([]int, numRows)
-		dst := make([]int, numRows)
+		src := make([]VertexID, numRows)
+		dst := make([]VertexID, numRows)
 		mappingToOrdered1 := vs1.GetMappingToOrdered()
 		mappingToOrdered2 := vs2.GetMappingToOrdered()
 		for i, row := range rows {
@@ -235,8 +239,8 @@ func (s *Server) ReadFromUnorderedDisk(
 		for i := 0; i < numRows; i++ {
 			row := rows.Index(i)
 			orderedId := mappingToOrdered[row.Field(idIndex).Int()]
-			values.Index(orderedId).Set(row.Field(valueIndex))
-			defined.Index(orderedId).Set(true)
+			values.Index(int(orderedId)).Set(row.Field(valueIndex))
+			defined.Index(int(orderedId)).Set(true)
 		}
 	case *Scalar:
 		sc, err := readScalar(dirName)
@@ -247,8 +251,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
-	s.Lock()
-	s.entities[GUID(in.Guid)] = entity
-	s.Unlock()
+	s.set(GUID(in.Guid), entity)
 	return &pb.ReadFromUnorderedDiskReply{}, nil
 }
