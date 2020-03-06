@@ -547,9 +547,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   register("Compute in Python")(new ProjectTransformation(_) {
     params ++= List(
-      Code("code", "Python code", language = "python"),
       Param("inputs", "Inputs"),
-      Param("outputs", "Outputs"))
+      Param("outputs", "Outputs"),
+      Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
     def apply() = {
       def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
