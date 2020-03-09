@@ -91,7 +91,6 @@ object DerivePython extends OpFromJson {
         case "es" => project.edgeAttributes(f.name)
       }
       builder(op.attrs(i), attr)
-      builder(op.vss(f.parent), attr.vertexSet)
     }
     for ((f, i) <- op.scalarFields.zipWithIndex) {
       builder(op.scalars(i), project.scalars(f.name))
