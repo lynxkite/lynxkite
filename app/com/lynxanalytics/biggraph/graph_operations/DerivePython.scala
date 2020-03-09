@@ -80,7 +80,7 @@ object DerivePython extends OpFromJson {
       }
     }
     // Run the operation.
-    val op = DerivePython(code, inputFields, outputFields)
+    val op = DerivePython(code, inputFields.toList, outputFields.toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
@@ -119,8 +119,8 @@ object DerivePython extends OpFromJson {
 import DerivePython._
 case class DerivePython private[graph_operations] (
     code: String,
-    inputFields: Seq[Field],
-    outputFields: Seq[Field])
+    inputFields: List[Field],
+    outputFields: List[Field])
   extends TypedMetaGraphOp[Input, Output] {
   override def toJson = Json.obj(
     "code" -> code,
