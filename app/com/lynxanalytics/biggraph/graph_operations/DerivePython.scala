@@ -58,7 +58,9 @@ object DerivePython extends OpFromJson {
     val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
     val outputFields = outputs.map {
       case outputDeclaration(parent, name, tpe) =>
-        assert(api.contains(parent), s"Invalid output: '$parent.$name'.")
+        assert(
+          api.contains(parent),
+          s"Invalid output: '$parent.$name'. Valid groups are: " + api.mkString(", "))
         Field(parent, name, toSerializableType(tpe))
       case output => throw new AssertionError(
         s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
