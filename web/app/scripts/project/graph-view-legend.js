@@ -1,7 +1,7 @@
 // One legend panel for graph visualizations.
 'use strict';
 
-angular.module('biggraph').directive('graphViewLegend', function () {
+angular.module('biggraph').directive('graphViewLegend', function() {
   return {
     restrict: 'E',
     scope: {
@@ -9,5 +9,8 @@ angular.module('biggraph').directive('graphViewLegend', function () {
       side: '@', // left or right
     },
     templateUrl: 'scripts/project/graph-view-legend.html',
+    link: function(scope) {
+      scope.format = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format;
+    },
   };
 });

@@ -1,5 +1,16 @@
 <div class="graph-view-legend {{side}}">
   <div class="inside">
+    <p ng-if="data.slider">
+      Slider for {{ data.slider.title }}:
+      <input
+         class="slider"
+         type="range"
+         ng-model="data.slider.pos"
+         min="-1"
+         max="101"
+         drop-tooltip="{{ format(data.slider.interpret(data.slider.pos)) }}">
+    </p>
+
     <p ng-repeat="line in data track by $index">
       <span class="color-sample" style="background: {{ line.color }}" ng-if="line.color">
       </span>{{ line.text }}
