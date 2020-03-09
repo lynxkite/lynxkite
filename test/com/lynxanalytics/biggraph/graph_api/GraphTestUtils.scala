@@ -131,22 +131,27 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 
   def cleanDataManager: DataManager = {
-    val dataDir = cleanDataManagerDir()
-    val host = "localhost"
-    val port = LoggedEnvironment.envOrNone("SPHYNX_PORT").get
-    val certDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR").get
-    val unorderedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR").get
+    val withSphynx = LoggedEnvironment.envOrNone("WITH_SPHYNX").get.toBoolean
+    if (withSphynx) {
+      val dataDir = cleanDataManagerDir()
+      val host = "localhost"
+      val port = LoggedEnvironment.envOrNone("SPHYNX_PORT").get
+      val certDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR").get
+      val unorderedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR").get
 
-    val dm = new DataManager(Seq(
-      new OrderedSphynxDisk(host, port.toInt, certDir),
-      new SphynxMemory(host, port.toInt, certDir),
-      new UnorderedSphynxLocalDisk(host, port.toInt, certDir, unorderedDataDir),
-      new ScalaDomain,
-      new UnorderedSphynxSparkDisk(host, port.toInt, certDir, dataDir / "sphynx"),
-      new SparkDomain(sparkSession, dataDir)))
-    dm.domains.filter(_.isInstanceOf[SphynxDomain]).map(_.asInstanceOf[SphynxDomain].clear).foreach(
-      _.awaitReady(concurrent.duration.Duration.Inf))
-    dm
+      val dm = new DataManager(Seq(
+        new OrderedSphynxDisk(host, port.toInt, certDir),
+        new SphynxMemory(host, port.toInt, certDir),
+        new UnorderedSphynxLocalDisk(host, port.toInt, certDir, unorderedDataDir),
+        new ScalaDomain,
+        new UnorderedSphynxSparkDisk(host, port.toInt, certDir, dataDir / "sphynx"),
+        new SparkDomain(sparkSession, dataDir)))
+      dm.domains.filter(_.isInstanceOf[SphynxDomain]).map(_.asInstanceOf[SphynxDomain].clear).foreach(
+        _.awaitReady(concurrent.duration.Duration.Inf))
+      dm
+    } else {
+      new DataManager(Seq(new ScalaDomain, cleanSparkDomain))
+    }
   }
 }
 
