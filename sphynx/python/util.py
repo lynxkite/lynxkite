@@ -67,7 +67,7 @@ class Op:
       values = values.numpy()
     if defined is None:
       if type == DoubleAttribute:
-        defined = list(~np.isnan(values))
+        defined = [not np.isnan(v) for v in values)
       else:
         defined = [v is not None for v in values]
     if not isinstance(values, list):
