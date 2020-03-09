@@ -179,6 +179,10 @@ class SerializableType[T] private[graph_api] (
     val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
   def getTypename = typename
+  override def equals(o: Any) = o match {
+    case t: SerializableType[_] => this.typeTag.tpe =:= t.typeTag.tpe
+    case _ => false
+  }
 }
 class VectorSerializableType[T: TypeTag] private[graph_api] (
     typename: String) extends SerializableType[Vector[T]](typename)(
