@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.InducedEdgeBundle
@@ -546,12 +547,20 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute in Python")(new ProjectTransformation(_) {
+    val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
+      case "yes" => true
+      case "no" => false
+      case "" => false
+      case unexpected => throw new AssertionError(
+        s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
+    }
     params ++= List(
       Param("inputs", "Inputs"),
       Param("outputs", "Outputs"),
       Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
     def apply() = {
+      assert(allowed, "Python code execution is disabled on this server for security reasons.")
       def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
       graph_operations.DerivePython.run(
         params("code"), split(params("inputs")), split(params("outputs")), project)
