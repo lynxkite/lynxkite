@@ -142,4 +142,11 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     obs.future.map(_ => ())
   }
 
+  def clear(domain: String): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.ClearRequest.newBuilder().setDomain(domain).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ClearReply]
+    asyncStub.clear(request, obs)
+    obs.future.map(_ => ())
+  }
+
 }
