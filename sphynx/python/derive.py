@@ -20,6 +20,10 @@ for fullname in op.inputs.keys():
     es[name] = op.input(fullname)
   elif parent == 'scalars':
     setattr(scalars, name, op.input_scalar(fullname))
+if 'edges-for-es' in op.inputs:
+  edges = op.input('edges-for-es')
+  es['src'] = edges.src
+  es['dst'] = edges.dst
 vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 

@@ -25,18 +25,31 @@ object DerivePython extends OpFromJson {
   }
 
   class Input(fields: Seq[Field]) extends MagicInputSignature {
-    val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
-    val vss = attrFields.map(f => f.parent -> vertexSet(Symbol(f.parent))).toMap
+    val (scalarFields, propertyFields) = fields.partition(_.parent == "scalars")
+    val (edgeFields, attrFields) = propertyFields.partition(
+      f => f.parent == "es" && (f.name == "src" || f.name == "dst"))
+    val edgeParents = edgeFields.map(_.parent).toSet
+    val vss = propertyFields.map(f => f.parent -> vertexSet(Symbol(f.parent))).toMap
     val attrs = attrFields.map(f =>
       runtimeTypedVertexAttribute(vss(f.parent), f.fullName, f.tpe.typeTag))
+    val srcs = edgeParents.map(p => p -> vertexSet(Symbol("src-for-" + p))).toMap
+    val dsts = edgeParents.map(p => p -> vertexSet(Symbol("dst-for-" + p))).toMap
+    val ebs = edgeParents.map(p =>
+      p -> edgeBundle(srcs(p), dsts(p), idSet = vss(p), name = Symbol("edges-for-" + p))).toMap
     val scalars = scalarFields.map(f => runtimeTypedScalar(f.fullName, f.tpe.typeTag))
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input, fields: Seq[Field]) extends MagicOutput(instance) {
     val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
-    val attrs = attrFields.map(f =>
-      vertexAttribute(inputs.vss(f.parent).entity, f.fullName)(f.tpe.typeTag))
+    val attrs = attrFields.map { f =>
+      inputs.vss.get(f.parent) match {
+        case Some(vs) => vertexAttribute(vs.entity, f.fullName)(f.tpe.typeTag)
+        case None => throw new AssertionError(
+          s"Cannot produce output for '${f.parent}' when we only have inputs for "
+            + inputs.vss.keys.toSeq.sorted.mkString(", "))
+      }
+    }
     val scalars = scalarFields.map(f => scalar(f.fullName)(f.tpe.typeTag))
   }
 
@@ -72,7 +85,11 @@ object DerivePython extends OpFromJson {
       case (name, attr) => s"es.$name" -> Field("es", name, SerializableType(attr.typeTag))
     }.toMap ++ project.scalars.map {
       case (name, s) => s"scalars.$name" -> Field("scalars", name, SerializableType(s.typeTag))
-    }.toMap
+    }.toMap + {
+      "es.src" -> Field("es", "src", SerializableType.long)
+    } + {
+      "es.dst" -> Field("es", "dst", SerializableType.long)
+    }
     val inputFields = inputs.map { i =>
       existingFields.get(i) match {
         case Some(f) => f
@@ -91,6 +108,9 @@ object DerivePython extends OpFromJson {
         case "es" => project.edgeAttributes(f.name)
       }
       builder(op.attrs(i), attr)
+    }
+    for (f <- op.edgeParents) {
+      builder(op.ebs(f), project.edgeBundle)
     }
     for ((f, i) <- op.scalarFields.zipWithIndex) {
       builder(op.scalars(i), project.scalars(f.name))
