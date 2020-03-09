@@ -8,14 +8,15 @@ import (
 	"time"
 )
 
-type EntityStruct struct {
-	entity    Entity
-	timestamp int64
+type CacheEntry struct {
+	entity       Entity
+	timestamp    int64
+	numEvictions int
 }
 type Server struct {
 	cleanerMutex     sync.RWMutex
 	entityMutex      sync.Mutex
-	entities         map[GUID]EntityStruct
+	entities         map[GUID]CacheEntry
 	dataDir          string
 	unorderedDataDir string
 }
@@ -31,29 +32,57 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
-func (server *Server) get(guid GUID) (Entity, bool) {
-	ts := time.Now().Unix()
+const (
+	EntityIsInCache           = iota
+	EntityWasEvictedFromCache = iota
+	EntityIsNotInCache        = iota
+)
+
+func (server *Server) getAnEntityWeKnowWeHave(guid GUID) (Entity, error) {
+	entity, status := server.getEntityFromCache(guid)
+	switch status {
+	case EntityIsNotInCache:
+		return nil, fmt.Errorf("Guid %v not in the cache", guid)
+	case EntityWasEvictedFromCache:
+		err := server.readFromUnorderedDiskAndPutInCache(guid)
+		if err != nil {
+			return nil, err
+		}
+		entity, status = server.getEntityFromCache(guid)
+		if status != EntityIsInCache {
+			return nil, fmt.Errorf("Guid %v not found in cache, but we reloaded it after eviction")
+		}
+	default: //EntityIsInCache: do nothing
+	}
+	return entity, nil
+}
+
+func (server *Server) getEntityFromCache(guid GUID) (Entity, int) {
+	ts := ourTimestamp()
 	server.entityMutex.Lock()
 	defer server.entityMutex.Unlock()
 	e, exists := server.entities[guid]
 	if exists {
 		if e.entity != nil {
-			server.entities[guid] = EntityStruct{
+			server.entities[guid] = CacheEntry{
 				entity:    e.entity,
 				timestamp: ts,
 			}
-			return e.entity, true
+			return e.entity, EntityIsInCache
 		} else {
-			fmt.Printf("Guid %v is asked about %v seconds after it was evicted\n", guid, ts-e.timestamp)
-			return nil, false
+			return nil, EntityWasEvictedFromCache
 		}
 	} else {
-		return nil, false
+		return nil, EntityIsNotInCache
 	}
 }
 
-func (server *Server) set(guid GUID, entity Entity) error {
-	ts := time.Now().Unix()
+func ourTimestamp() int64 {
+	return time.Now().UnixNano() / 1000000
+}
+
+func (server *Server) putEntityInCache(guid GUID, entity Entity) error {
+	ts := ourTimestamp()
 	server.entityMutex.Lock()
 	defer server.entityMutex.Unlock()
 	e, exists := server.entities[guid]
@@ -62,16 +91,16 @@ func (server *Server) set(guid GUID, entity Entity) error {
 			// Maybe panic?
 			return fmt.Errorf("Caching %v but it was already cached", guid)
 		}
-		fmt.Printf("Guid %v is set again %v seconds after it was evicted\n", guid, ts-e.timestamp)
+		fmt.Printf("Guid %v is set again %v ms after it was evicted\n", guid, ts-e.timestamp)
 	}
-	server.entities[guid] = EntityStruct{
+	server.entities[guid] = CacheEntry{
 		entity:    entity,
 		timestamp: ts,
 	}
 	return nil
 }
 
-type VertexID int
+type VertexID uint32
 
 type EdgeBundle struct {
 	Src         []VertexID

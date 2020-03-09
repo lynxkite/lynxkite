@@ -33,9 +33,12 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-	entity, exists := s.get(guid)
-	if !exists {
-		return nil, fmt.Errorf("guid %v not found", guid)
+	entity, err := s.getAnEntityWeKnowWeHave(guid)
+	if err != nil {
+		return nil, err
+	}
+	if err := saveToOrderedDisk(entity, s.dataDir, guid); err != nil {
+		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
 	}
 	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
@@ -90,6 +93,9 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	default:
 		return nil, fmt.Errorf("Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
 	}
+}
+
+func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 }
 
 func (s *Server) ReadFromUnorderedDisk(
@@ -251,6 +257,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
-	s.set(GUID(in.Guid), entity)
+	s.putEntityInCache(GUID(in.Guid), entity)
 	return &pb.ReadFromUnorderedDiskReply{}, nil
 }

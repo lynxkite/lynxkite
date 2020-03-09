@@ -37,7 +37,14 @@ func createEntity(typeName string) (Entity, error) {
 }
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
-	log.Printf("saveToOrderedDisk guid %v", guid)
+	alreadySaved, err := hasOnDisk(dataDir, guid)
+	if err != nil {
+		return err
+	}
+	log.Printf("saveToOrderedDisk guid %v, already saved: %v\n", guid, alreadySaved)
+	if alreadySaved {
+		return nil
+	}
 	typeName := e.typeName()
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
@@ -170,10 +177,24 @@ func (s *Server) WriteToOrderedDisk(
 	s.cleanerMutex.RLock()
 	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
-	e, exists := s.get(guid)
-	if !exists {
-		return nil, fmt.Errorf("%v is not in memory", guid)
+
+	e, status := s.getEntityFromCache(guid)
+	switch status {
+	case EntityIsNotInCache:
+		return nil, fmt.Errorf("WriteToOrderedDisk: %v not found among entities", guid)
+	case EntityWasEvictedFromCache:
+		// It's fine: the evictor should have already written this, but we'll check
+		exists, err := hasOnDisk(s.dataDir, guid)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, fmt.Errorf("WriteToOrderedDisk: %v seems to be evicted, but not found on disk", guid)
+		}
+		return &pb.WriteToOrderedDiskReply{}, nil
+	default: //EntityIsInCache, do nothing
 	}
+
 	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {
 		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
 	}
