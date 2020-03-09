@@ -43,8 +43,11 @@ fi
 
 mkdir -p logs
 rm -f logs/test-*
-sbt test < /dev/null
-
+if $WITH_SPHYNX; then
+  sbt "test-only -- -l SparkOnly"
+else
+  sbt "test-only -- -l SphynxOnly"
+fi
 # We'll check if the logfile contains 'future failed' lines; these
 # indicate errors that the test framework cannot catch. In case such
 # lines occur, we rename the file logs/test-xxxxxx to logs/failed-xxxxxx
