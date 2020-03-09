@@ -4,7 +4,6 @@ import numpy as np
 import os
 import pandas as pd
 import pyarrow as pa
-import pyarrow.parquet as pq
 import sys
 import json
 import torch
@@ -41,14 +40,11 @@ class Op:
     return pq.read_table(f'{self.datadir}/{self.inputs[name]}/data.parquet')
 
   def input(self, name, type=None):
-    '''Reads the input as a Pandas DataFrame. Useful if you need all the data.'''
-    df = pd.read_parquet(f'{self.datadir}/{self.inputs[name]}/data.parquet')
-    if list(df.columns) == ['value', 'defined']:
-      vs = df.value.values
-      vs[~df.defined] = np.nan
-      if type == 'DoubleVectorAttribute':
-        vs = np.array(list(list(v) for v in vs))
-      return vs
+    '''Reads the input as a Pandas DataFrame/Series. Useful if you need all the data.'''
+    mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
+    df = pa.ipc.open_file(mmap).read_all().to_pandas()
+    if len(df.columns) == 1:
+      return df[df.columns[0]]
     return df
 
   def input_model(self, name):
@@ -90,7 +86,12 @@ class Op:
     schema = pa.schema([
         pa.field(name, a.type, nullable=False) for (name, a) in columns.items()])
     t = pa.Table.from_arrays(list(columns.values()), schema=schema)
-    pq.write_table(t, path + '/data.parquet')
+    with pa.output_stream(path + '/data.arrow') as sink:
+      writer = pa.RecordBatchFileWriter(sink, t.schema)
+      batches = t.to_batches()
+      assert len(batches) == 1
+      writer.write_batch(batches[0])
+      writer.close()
     with open(path + '/_SUCCESS', 'w'):
       pass
 
