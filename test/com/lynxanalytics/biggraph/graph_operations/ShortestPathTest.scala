@@ -65,6 +65,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         1 -> Seq(2),
         2 -> Seq(3),
         3 -> Seq(4),
+        4 -> Seq(),
         5 -> Seq(6),
         6 -> Seq(4))).result
     val startingDistance = AddVertexAttribute.run(graph.vs, Map(0 -> 0.0))
