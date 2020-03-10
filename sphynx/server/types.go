@@ -14,7 +14,7 @@ type Server struct {
 	unorderedDataDir string
 }
 type GUID string
-type VERTEX_ID int
+type VERTEX_ID uint32
 type OperationDescription struct {
 	Class string
 	Data  map[string]interface{}
