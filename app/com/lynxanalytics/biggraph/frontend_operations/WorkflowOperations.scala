@@ -562,7 +562,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     def apply() = {
       assert(allowed, "Python code execution is disabled on this server for security reasons.")
       def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
-      graph_operations.DerivePython.run(
+      PythonUtilities.run(
         params("code"), split(params("inputs")), split(params("outputs")), project)
     }
   })
