@@ -8,20 +8,30 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			induceSrc := ea.GetBoolParam("induceSrc")
 			induceDst := ea.GetBoolParam("induceDst")
-			var srcMapping map[int]int
+			var srcMapping [][]int
+			var srcExists []bool
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
-				srcMapping = make(map[int]int, len(srcMappingEB.Src))
+				numVS := len(ea.getVertexSet("src").MappingToUnordered)
+				srcExists = make([]bool, numVS)
+				srcMapping = make([][]int, numVS)
 				for i := range srcMappingEB.Src {
-					srcMapping[srcMappingEB.Src[i]] = srcMappingEB.Dst[i]
+					orig := srcMappingEB.Src[i]
+					srcMapping[orig] = append(srcMapping[orig], srcMappingEB.Dst[i])
+					srcExists[orig] = true
 				}
 			}
-			var dstMapping map[int]int
+			var dstMapping [][]int
+			var dstExists []bool
 			if induceDst {
 				dstMappingEB := ea.getEdgeBundle("dstMapping")
-				dstMapping = make(map[int]int, len(dstMappingEB.Src))
+				numVS := len(ea.getVertexSet("dst").MappingToUnordered)
+				dstExists = make([]bool, numVS)
+				dstMapping = make([][]int, numVS)
 				for i := range dstMappingEB.Src {
-					dstMapping[dstMappingEB.Src[i]] = dstMappingEB.Dst[i]
+					orig := dstMappingEB.Src[i]
+					dstMapping[orig] = append(dstMapping[orig], dstMappingEB.Dst[i])
+					dstExists[orig] = true
 				}
 			}
 			es := ea.getEdgeBundle("edges")
@@ -31,26 +41,46 @@ func init() {
 			induced.Make(0, approxLen)
 			embedding.Make(0, approxLen)
 			numInducedEdges := 0
+			newIndicesNeeded := false
 			for i, src := range es.Src {
 				dst := es.Dst[i]
-				mappedSrc := src
-				mappedDst := dst
-				srcExists := true
-				dstExists := true
+				mappedSrcs := []int{src}
+				mappedDsts := []int{dst}
+				thisSrcExists := true
+				thisDstExists := true
 				if induceSrc {
-					mappedSrc, srcExists = srcMapping[src]
+					thisSrcExists = srcExists[src]
+					if thisSrcExists {
+						mappedSrcs = srcMapping[src]
+					}
 				}
 				if induceDst {
-					mappedDst, dstExists = dstMapping[dst]
+					thisDstExists = dstExists[dst]
+					if thisDstExists {
+						mappedDsts = dstMapping[dst]
+					}
 				}
-				if srcExists && dstExists {
-					induced.Src = append(induced.Src, mappedSrc)
-					induced.Dst = append(induced.Dst, mappedDst)
-					induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
-					embedding.Src = append(embedding.Src, numInducedEdges)
-					embedding.Dst = append(embedding.Dst, i)
-					embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
-					numInducedEdges += 1
+				if thisSrcExists && thisDstExists {
+					for j, mappedSrc := range mappedSrcs {
+						for k, mappedDst := range mappedDsts {
+							if j != 0 || k != 0 {
+								newIndicesNeeded = true
+							}
+							induced.Src = append(induced.Src, mappedSrc)
+							induced.Dst = append(induced.Dst, mappedDst)
+							induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
+							embedding.Src = append(embedding.Src, numInducedEdges)
+							embedding.Dst = append(embedding.Dst, i)
+							embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
+							numInducedEdges += 1
+						}
+					}
+				}
+			}
+			if newIndicesNeeded {
+				for i := range induced.EdgeMapping {
+					induced.EdgeMapping[i] = int64(i)
+					embedding.EdgeMapping[i] = int64(i)
 				}
 			}
 			ea.output("induced", induced)
