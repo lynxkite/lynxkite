@@ -71,18 +71,13 @@ func (e *LongAttribute) estimatedMemUsage() int {
 }
 
 func evictGuid(server *Server, guid GUID) int {
-	allocBefore := memAllocked()
 	e := server.entities[guid]
 	server.entities[guid] = CacheEntry{
 		entity:       nil,
-		timestamp:    e.timestamp, // Preserve the original timestamp
+		timestamp:    ourTimestamp(),
 		numEvictions: e.numEvictions + 1,
 	}
-	start := time.Now().UnixNano()
-	runtime.GC()
-	end := time.Now().UnixNano()
-	fmt.Printf("GC for %s took %d ms\n", guid, (end-start)/1000000)
-	return allocBefore - memAllocked()
+	return e.entity.estimatedMemUsage()
 }
 
 func evictMappingToOrdered(server *Server) {
@@ -113,24 +108,10 @@ func evictMappingToOrdered(server *Server) {
 }
 
 type EntityEvictionItem struct {
-	guid      GUID
-	timestamp int64
-	memUsage  int
-}
-
-func onDisk(server *Server, guid GUID) bool {
-	present, err := hasOnDisk(server.dataDir, guid)
-	if present {
-		return true
-	}
-	if err != nil {
-		fmt.Printf("Ordered disk check: error while checking for %v: %v\n", guid, err)
-	}
-	present, err = hasOnDisk(server.unorderedDataDir, guid)
-	if err != nil {
-		fmt.Printf("Unordered disk check: error while checking for %v: %v\n", guid, err)
-	}
-	return present
+	guid       GUID
+	timestamp  int64
+	memUsage   int
+	numEvicted int
 }
 
 func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
@@ -140,32 +121,31 @@ func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
 		if e.entity == nil {
 			continue
 		}
-		onDisk := onDisk(server, guid)
-		if !onDisk {
+		onDisk, err := hasOnDisk(server.dataDir, guid)
+		if !onDisk || err != nil {
+			if err != nil {
+				fmt.Printf("Ordered disk check: error while checking for %v: %v\n", guid, err)
+			}
 			continue
 		}
 		items = append(items, EntityEvictionItem{
-			guid:      guid,
-			timestamp: e.timestamp,
-			memUsage:  e.entity.estimatedMemUsage(),
+			guid:       guid,
+			timestamp:  e.timestamp,
+			memUsage:   e.entity.estimatedMemUsage(),
+			numEvicted: e.numEvictions,
 		})
 	}
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].timestamp < items[j].timestamp
 	})
-	half := len(items) / 2
-	sort.Slice(items[0:half], func(i, j int) bool {
-		return items[i].memUsage > items[j].memUsage
-	})
-	tail := items[half:]
-	sort.Slice(tail, func(i, j int) bool {
-		return tail[i].memUsage > tail[j].memUsage
-	})
-
-	fmt.Println("Sort")
-	for i := 0; i < len(items); i++ {
-		fmt.Println(items[i])
-	}
+	//oldTimers := (4 * len(items)) / 5
+	//sort.Slice(items[0:oldTimers], func(i, j int) bool {
+	//	return items[i].memUsage > items[j].memUsage
+	//})
+	//tail := items[oldTimers:]
+	//sort.Slice(tail, func(i, j int) bool {
+	//	return tail[i].memUsage > tail[j].memUsage
+	//})
 
 	memEvicted := 0
 	itemsEvicted := 0
@@ -174,6 +154,9 @@ func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
 		guid := items[i].guid
 		memEvicted += evictGuid(server, guid)
 		itemsEvicted++
+	}
+	if itemsEvicted > 0 {
+		runtime.GC()
 	}
 	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
 		itemsEvicted, len(items), memEvicted, ourTimestamp()-start)
@@ -229,8 +212,8 @@ func getNumericEnv(key string, dflt int) int {
 
 func EntityCleaner(server *Server) {
 	checkPeriodMs := getNumericEnv("SPHYNX_CACHE_EVICTION_PERIOD_MS", 1000*30)
-	evictThresholdMb := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 4*1024) * 1024 * 1024
-	evictTargetMb := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 3*1024) * 1024 * 1024
+	evictThreshold := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 8*1024) * 1024 * 1024
+	evictTarget := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 6*1024) * 1024 * 1024
 	ticker := time.NewTicker(time.Duration(checkPeriodMs) * time.Millisecond)
 	for _ = range ticker.C {
 		var m runtime.MemStats
@@ -238,9 +221,9 @@ func EntityCleaner(server *Server) {
 		printMemStats("Checking: ", m)
 		server.cleanerMutex.Lock()
 		evictMappingToOrdered(server)
-		if true || int(m.Alloc) > evictThresholdMb {
+		if true || int(m.Alloc) > evictThreshold {
 			printMemStats("Before eviction:", m)
-			evictUntilEnoughEvicted(server, int(m.Alloc)-evictTargetMb)
+			evictUntilEnoughEvicted(server, int(m.Alloc)-evictTarget)
 			runtime.ReadMemStats(&m)
 			printMemStats("After eviction:", m)
 		}

@@ -179,15 +179,6 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 	return &pb.HasOnOrderedSphynxDiskReply{HasOnDisk: has}, nil
 }
 
-func (s *Server) readFromOrderedDiskAndPutInCache(guid GUID) error {
-	entity, err := loadFromOrderedDisk(s.dataDir, guid)
-	if err != nil {
-		return err
-	}
-	s.putEntityInCache(guid, entity)
-	return nil
-}
-
 func (s *Server) readFromUnorderedDiskAndPutInCache(guid GUID) error {
 	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {

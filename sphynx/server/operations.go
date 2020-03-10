@@ -18,6 +18,7 @@ func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity
 	inputs := make(map[string]Entity, len(opInst.Inputs))
 	for name, guid := range opInst.Inputs {
 		entity, error := server.getAnEntityWeKnowWeHave(guid)
+		go saveToOrderedDisk(entity, server.dataDir, guid)
 		if error != nil {
 			return nil, error
 		}
