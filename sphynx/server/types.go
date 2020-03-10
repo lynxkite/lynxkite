@@ -26,41 +26,31 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
-type VertexID uint32
-
 type EdgeBundle struct {
-	Src         []VertexID
-	Dst         []VertexID
+	Src         []int
+	Dst         []int
 	EdgeMapping []int64
 }
 
-func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
-	return &EdgeBundle{
-		Src:         make([]VertexID, size, maxSize),
-		Dst:         make([]VertexID, size, maxSize),
-		EdgeMapping: make([]int64, size, maxSize),
-	}
-}
-
 func (es *EdgeBundle) Make(size int, maxSize int) {
-	es.Src = make([]VertexID, size, maxSize)
-	es.Dst = make([]VertexID, size, maxSize)
+	es.Src = make([]int, size, maxSize)
+	es.Dst = make([]int, size, maxSize)
 	es.EdgeMapping = make([]int64, size, maxSize)
 }
 
 type VertexSet struct {
 	sync.Mutex
 	MappingToUnordered []int64
-	MappingToOrdered   map[int64]VertexID
+	MappingToOrdered   map[int64]int
 }
 
-func (vs *VertexSet) GetMappingToOrdered() map[int64]VertexID {
+func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
 	vs.Lock()
 	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]VertexID)
+		vs.MappingToOrdered = make(map[int64]int)
 		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = VertexID(i)
+			vs.MappingToOrdered[j] = int(i)
 		}
 	}
 	return vs.MappingToOrdered

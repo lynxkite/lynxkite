@@ -1,31 +1,33 @@
 // Implements the AddReversedEdges operation
+// See the Spark implementation for details
 
 package main
 
 // Creates a set id set.
 // TODO: Check if these should be random ids similar to our
 // Scala/Spark randomNumbered implementation
-func newEdgeMapping(numIds int) []int64 {
+func newEdgeMapping(numIds int) *[]int64 {
 	m := make([]int64, numIds)
 	for i := 0; i < numIds; i++ {
 		m[i] = int64(i)
 	}
-	return m
+	return &m
 }
 
 func doAddReversedEdges(edges *EdgeBundle,
 	addIsNewAttr bool) (esPlus *EdgeBundle, newToOriginal *EdgeBundle, isNew *DoubleAttribute) {
 	numOldEdges := len(edges.Dst)
 	numNewEdges := numOldEdges * 2
+	edgeIdSet := newEdgeMapping(numNewEdges)
 	esPlus = &EdgeBundle{
-		Src:         make([]VertexID, numNewEdges),
-		Dst:         make([]VertexID, numNewEdges),
-		EdgeMapping: newEdgeMapping(numNewEdges),
+		Src:         make([]int, numNewEdges),
+		Dst:         make([]int, numNewEdges),
+		EdgeMapping: *edgeIdSet,
 	}
 	newToOriginal = &EdgeBundle{
-		Src:         make([]VertexID, numNewEdges),
-		Dst:         make([]VertexID, numNewEdges),
-		EdgeMapping: newEdgeMapping(numNewEdges),
+		Src:         make([]int, numNewEdges),
+		Dst:         make([]int, numNewEdges),
+		EdgeMapping: *edgeIdSet,
 	}
 
 	if addIsNewAttr {
@@ -40,9 +42,8 @@ func doAddReversedEdges(edges *EdgeBundle,
 	} else {
 		isNew = nil
 	}
-	j := VertexID(0)
-	n := VertexID(numOldEdges)
-	for i := VertexID(0); i < n; i++ {
+	for i := 0; i < numOldEdges; i++ {
+		j := 2 * i
 		esPlus.Src[j] = edges.Src[i]
 		esPlus.Dst[j] = edges.Dst[i]
 		esPlus.Src[j+1] = edges.Dst[i]
@@ -55,7 +56,6 @@ func doAddReversedEdges(edges *EdgeBundle,
 			isNew.Values[j] = 0.0
 			isNew.Values[j+1] = 1.0
 		}
-		j += 2
 	}
 	return
 }

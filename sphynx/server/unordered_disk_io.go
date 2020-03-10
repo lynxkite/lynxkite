@@ -153,10 +153,10 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		mappingToUnordered := make([]int64, numRows)
-		mappingToOrdered := make(map[int64]VertexID)
+		mappingToOrdered := make(map[int64]int)
 		for i, v := range rows {
 			mappingToUnordered[i] = v.Id
-			mappingToOrdered[v.Id] = VertexID(i)
+			mappingToOrdered[v.Id] = i
 		}
 		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
@@ -188,8 +188,8 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		edgeMapping := make([]int64, numRows)
-		src := make([]VertexID, numRows)
-		dst := make([]VertexID, numRows)
+		src := make([]int, numRows)
+		dst := make([]int, numRows)
 		mappingToOrdered1 := vs1.GetMappingToOrdered()
 		mappingToOrdered2 := vs2.GetMappingToOrdered()
 		for i, row := range rows {
