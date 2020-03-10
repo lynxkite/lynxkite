@@ -95,9 +95,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	}
 }
 
-func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
-}
-
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
 	s.cleanerMutex.RLock()

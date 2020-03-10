@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 )
 
 func createEntity(typeName string) (Entity, error) {
@@ -36,15 +37,35 @@ func createEntity(typeName string) (Entity, error) {
 	}
 }
 
-func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
+type OrderedDiskCache struct {
+	mutex   sync.Mutex
+	writing map[GUID]bool
+}
+
+var orderedDiskWritingMutex = sync.Mutex{}
+var orderedDiskWritingCache = make(map[GUID]bool)
+
+func saveToOrderedDisk(e Entity, dataDir string, guid GUID) (err error) {
 	alreadySaved, err := hasOnDisk(dataDir, guid)
 	if err != nil {
 		return err
 	}
-	log.Printf("saveToOrderedDisk guid %v, already saved: %v\n", guid, alreadySaved)
 	if alreadySaved {
 		return nil
 	}
+	orderedDiskWritingMutex.Lock()
+	if orderedDiskWritingCache[guid] {
+		orderedDiskWritingMutex.Unlock()
+		return nil
+	}
+	orderedDiskWritingCache[guid] = true
+	orderedDiskWritingMutex.Unlock()
+	start := ourTimestamp()
+	defer func() {
+		log.Printf("saveToOrderedDisk: %v (%v - mem: %v) in %v ms\n",
+			guid, e.typeName(), e.estimatedMemUsage(), ourTimestamp()-start)
+	}()
+
 	typeName := e.typeName()
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
@@ -125,7 +146,6 @@ func readFromOrdered(e ParquetEntity, pr *reader.ParquetReader) error {
 }
 
 func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
-	log.Printf("loadFromOrderedDisk: %v", guid)
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	typeFName := fmt.Sprintf("%v/type_name", dirName)
 	typeData, err := ioutil.ReadFile(typeFName)
@@ -137,6 +157,11 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	if err != nil {
 		return nil, err
 	}
+	start := ourTimestamp()
+	defer func() {
+		log.Printf("loadedFromOrderedDisk: %v (%v - mem: %v) in %v ms\n",
+			guid, e.typeName(), e.estimatedMemUsage(), ourTimestamp()-start)
+	}()
 	switch e := e.(type) {
 	case ParquetEntity:
 		const numGoRoutines int64 = 4
