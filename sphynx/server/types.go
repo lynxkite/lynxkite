@@ -5,14 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"time"
 )
 
-type CacheEntry struct {
-	entity       Entity
-	timestamp    int64
-	numEvictions int
-}
 type Server struct {
 	cleanerMutex     sync.RWMutex
 	entityMutex      sync.Mutex
@@ -30,74 +24,6 @@ type OperationInstance struct {
 	Inputs    map[string]GUID
 	Outputs   map[string]GUID
 	Operation OperationDescription
-}
-
-const (
-	EntityIsInCache           = iota
-	EntityWasEvictedFromCache = iota
-	EntityIsNotInCache        = iota
-)
-
-func (server *Server) getAnEntityWeKnowWeHave(guid GUID) (Entity, error) {
-	entity, status := server.getEntityFromCache(guid)
-	switch status {
-	case EntityIsNotInCache:
-		return nil, fmt.Errorf("Guid %v not in the cache", guid)
-	case EntityWasEvictedFromCache:
-		err := server.readFromUnorderedDiskAndPutInCache(guid)
-		if err != nil {
-			return nil, err
-		}
-		entity, status = server.getEntityFromCache(guid)
-		if status != EntityIsInCache {
-			return nil, fmt.Errorf("Guid %v not found in cache, but we reloaded it after eviction")
-		}
-	default: //EntityIsInCache: do nothing
-	}
-	return entity, nil
-}
-
-func (server *Server) getEntityFromCache(guid GUID) (Entity, int) {
-	ts := ourTimestamp()
-	server.entityMutex.Lock()
-	defer server.entityMutex.Unlock()
-	e, exists := server.entities[guid]
-	if exists {
-		if e.entity != nil {
-			server.entities[guid] = CacheEntry{
-				entity:    e.entity,
-				timestamp: ts,
-			}
-			return e.entity, EntityIsInCache
-		} else {
-			return nil, EntityWasEvictedFromCache
-		}
-	} else {
-		return nil, EntityIsNotInCache
-	}
-}
-
-func ourTimestamp() int64 {
-	return time.Now().UnixNano() / 1000000
-}
-
-func (server *Server) putEntityInCache(guid GUID, entity Entity) error {
-	ts := ourTimestamp()
-	server.entityMutex.Lock()
-	defer server.entityMutex.Unlock()
-	e, exists := server.entities[guid]
-	if exists {
-		if e.entity != nil {
-			// Maybe panic?
-			return fmt.Errorf("Caching %v but it was already cached", guid)
-		}
-		fmt.Printf("Guid %v is set again %v ms after it was evicted\n", guid, ts-e.timestamp)
-	}
-	server.entities[guid] = CacheEntry{
-		entity:    entity,
-		timestamp: ts,
-	}
-	return nil
 }
 
 type VertexID uint32

@@ -53,15 +53,6 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
-func saveOutputs(dataDir string, outputs map[GUID]Entity) {
-	for guid, entity := range outputs {
-		err := saveToOrderedDisk(entity, dataDir, guid)
-		if err != nil {
-			log.Printf("Error while saving %v (guid: %v): %v", entity, guid, err)
-		}
-	}
-}
-
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	s.cleanerMutex.RLock()
 	defer s.cleanerMutex.RUnlock()
@@ -103,7 +94,6 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		for guid, entity := range ea.outputs {
 			s.putEntityInCache(guid, entity)
 		}
-		go saveOutputs(s.dataDir, ea.outputs)
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
 		if !exists {
@@ -122,7 +112,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
-	entity, err := s.getAnEntityWeKnowWeHave(guid)
+	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +146,7 @@ func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemory
 }
 
 func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
-	entity, err := s.getAnEntityWeKnowWeHave(guid)
+	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +210,7 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
-	go EntityCleaner(&sphynxServer)
+	go EntityEvictor(&sphynxServer)
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

@@ -33,7 +33,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-	entity, err := s.getAnEntityWeKnowWeHave(guid)
+	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
 	if err != nil {
 		return nil, err
 	}
