@@ -242,8 +242,8 @@ func (s *Server) ReadFromUnorderedDisk(
 		for i := 0; i < numRows; i++ {
 			row := rows.Index(i)
 			orderedId := mappingToOrdered[row.Field(idIndex).Int()]
-			values.Index(int(orderedId)).Set(row.Field(valueIndex))
-			defined.Index(int(orderedId)).Set(true)
+			values.Index(orderedId).Set(row.Field(valueIndex))
+			defined.Index(orderedId).Set(true)
 		}
 	case *Scalar:
 		sc, err := readScalar(dirName)

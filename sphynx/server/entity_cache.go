@@ -22,11 +22,12 @@
 // it takes), the entity can be discarded.
 //
 // I experimented with discarding the least recently used entries, but it did not work well,
-// because I ended up discarding most entries anyway, because the really significant metric
-// it the size of the entity. There is no point throwing away a 20 bytes scalar ever.
+// because I ended up discarding most entries anyway. In our case, the really (only) significant metric
+// it the size of the entity. There is no point throwing away a 20 byte-long scalar ever.
 // Discarded entities are not removed from the cache, because they still provide valuable
 // debug information, that can also be used in the selection process. (E.g., are we constantly
-// throwing out this entity?)
+// throwing out this entity?) It my tests (with the Andris wizard) it often happened that we
+// discarded something that was last used 3 minutes before, only to reload it the next minute.
 //
 
 package main
@@ -225,17 +226,20 @@ type EntityEvictionItem struct {
 	memUsage  int
 }
 
-// The main eviction function: it chooses the eligible (not already evicted, already on disk)
-// entities, sorts them into a list, and keeps evicting entities from the list until
-// enough memory seem to have been freed. runtime.GC() is an expensive operation (can
+// The main eviction function: it chooses the entities eligible for eviction.
+// They are sorted into a list. Once the list is ready, the entities from this
+// candidate list are discarded one by one until
+// enough memory has been freed. runtime.GC() is an expensive operation (can
 // take almost 1 second). We cannot gc and then check how much we freed after each
 // eviction. Instead, we rely on our size estimates and call runtime.GC() in the end.
+// (Maybe we could even get away with not calling runtime.GC() at all)
 //
 // The order of the entities is some ad-hoc heuristics. We choose the oldest 80% of
 // the entities and sort them according to their estimated size.
 // The remaining 20% is also sorted according to size.
-// We go through first the first group and then, if necessary, the second, and discard
-// the entitites.
+// Then we evict candidates from the first group. If necessary, we continue
+// with the second group. This way, the most recently accessed 20% is safe, but
+// the main factor is still the entity size.
 
 func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
 	start := ourTimestamp()
