@@ -172,10 +172,13 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment
-  with scalatest.Suite with scalatest.BeforeAndAfter {
+  with scalatest.Suite with scalatest.BeforeAndAfter with scalatest.BeforeAndAfterAll {
   PrefixRepository.dropResolutions()
   after {
     dataManager.waitAllFutures()
+  }
+  override protected def afterAll {
+    dataManager.domains.filter(_.isInstanceOf[SphynxDomain]).foreach(_.asInstanceOf[SphynxDomain].shutDownChannel)
   }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
