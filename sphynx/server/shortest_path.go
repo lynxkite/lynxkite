@@ -1,4 +1,5 @@
-// Implements the backend for the FindShortestPath
+// Implements the FindShortestPath operation
+// See the Spark implementation for details
 
 package main
 
@@ -7,8 +8,8 @@ import (
 )
 
 type EdgeInfo struct {
-	src VertexID
-	dst VertexID
+	src int
+	dst int
 	d   float64
 }
 
