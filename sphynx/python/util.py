@@ -57,20 +57,17 @@ class Op:
     with open(f'{self.datadir}/{self.inputs[name]}/serialized_data') as f:
       return json.load(f)
 
-  def output(self, name, values, *, type, defined=None):
+  def output(self, name, values, *, type):
     '''Writes a list or Numpy array to disk.'''
     if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.numpy()
-    if defined is None:
-      if type == DoubleAttribute:
-        defined = [not np.isnan(v) for v in values]
-      else:
-        defined = [v is not None for v in values]
+    if hasattr(values, 'replace'):
+      # Pandas uses nan for missing values, but PyArrow uses None.
+      values = values.replace({np.nan: None})
     if not isinstance(values, list):
       values = list(values)
     self.write_columns(name, type, {
         'value': pa.array(values, PA_TYPES[type]),
-        'defined': pa.array(defined, pa.bool_()),
     })
 
   def write_type(self, path, type):
