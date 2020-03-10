@@ -25,6 +25,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
   val supportedTypes = List(
     typeTag[String], typeTag[Long], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
   def clear(): SafeFuture[Unit]
+  def shutDownChannel
 }
 
 class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -74,6 +75,8 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
   def clear(): SafeFuture[Unit] = client.clear("SphynxMemory")
 
+  def shutDownChannel = client.shutDownChannel
+
 }
 
 class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -115,6 +118,7 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
 
   def clear(): SafeFuture[Unit] = client.clear("OrderedSphynxDisk")
 
+  def shutDownChannel = client.shutDownChannel
 }
 
 abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
@@ -283,6 +287,8 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
     }
   }
   def clear(): SafeFuture[Unit] = client.clear("UnorderedSphynxDisk")
+
+  def shutDownChannel = client.shutDownChannel
 }
 
 class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dataDir: HadoopFile)
@@ -326,4 +332,7 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
     }
   }
   def clear() = SafeFuture.async(dataDir.delete)
+
+  def shutDownChannel = client.shutDownChannel
+
 }
