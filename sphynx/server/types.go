@@ -47,12 +47,6 @@ func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
 	}
 }
 
-func (es *EdgeBundle) Make(size int, maxSize int) {
-	es.Src = make([]VERTEX_ID, size, maxSize)
-	es.Dst = make([]VERTEX_ID, size, maxSize)
-	es.EdgeMapping = make([]int64, size, maxSize)
-}
-
 type VertexSet struct {
 	sync.Mutex
 	MappingToUnordered []int64
