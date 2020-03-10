@@ -57,7 +57,7 @@ class TypeTagToFormatTest extends FunSuite {
         Some(UICenterRequest(1, List(), None)),
         Some(false),
         Some(42),
-        None, None, None)
+        None, None, None, None)
     testTag(uiStatus)
   }
 

@@ -1,4 +1,5 @@
 // Implements the AddReversedEdges operation
+// See the Spark implementation for details
 
 package main
 
@@ -63,7 +64,7 @@ func init() {
 	operationRepository["AddReversedEdges"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			es := ea.getEdgeBundle("es")
-			addIsNewAttr := ea.GetBoolParam("addIsNewAttr", false)
+			addIsNewAttr := ea.GetBoolParamWithDefault("addIsNewAttr", false)
 			esPlus, newToOriginal, isNew := doAddReversedEdges(es, addIsNewAttr)
 			ea.output("esPlus", esPlus)
 			ea.output("newToOriginal", newToOriginal)
