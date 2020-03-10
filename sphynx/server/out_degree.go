@@ -13,7 +13,7 @@ func doOutDegree(es *EdgeBundle, src *VertexSet) *DoubleAttribute {
 		outDegree.Defined[i] = true
 	}
 
-	degree := make(map[int]int, len(src.MappingToUnordered))
+	degree := make(map[SphynxId]SphynxId, len(src.MappingToUnordered))
 	for i := 0; i < len(es.Src); i++ {
 		degree[es.Src[i]]++
 	}

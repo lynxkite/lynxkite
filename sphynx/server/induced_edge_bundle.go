@@ -8,26 +8,26 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			induceSrc := ea.GetBoolParam("induceSrc")
 			induceDst := ea.GetBoolParam("induceDst")
-			var srcMapping [][]int
+			var srcMapping [][]SphynxId
 			var srcExists []bool
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
 				numVS := len(ea.getVertexSet("src").MappingToUnordered)
 				srcExists = make([]bool, numVS)
-				srcMapping = make([][]int, numVS)
+				srcMapping = make([][]SphynxId, numVS)
 				for i := range srcMappingEB.Src {
 					orig := srcMappingEB.Src[i]
 					srcMapping[orig] = append(srcMapping[orig], srcMappingEB.Dst[i])
 					srcExists[orig] = true
 				}
 			}
-			var dstMapping [][]int
+			var dstMapping [][]SphynxId
 			var dstExists []bool
 			if induceDst {
 				dstMappingEB := ea.getEdgeBundle("dstMapping")
 				numVS := len(ea.getVertexSet("dst").MappingToUnordered)
 				dstExists = make([]bool, numVS)
-				dstMapping = make([][]int, numVS)
+				dstMapping = make([][]SphynxId, numVS)
 				for i := range dstMappingEB.Src {
 					orig := dstMappingEB.Src[i]
 					dstMapping[orig] = append(dstMapping[orig], dstMappingEB.Dst[i])
@@ -35,17 +35,18 @@ func init() {
 				}
 			}
 			es := ea.getEdgeBundle("edges")
-			induced := &EdgeBundle{}
-			embedding := &EdgeBundle{}
 			approxLen := len(es.Src)
-			induced.Make(0, approxLen)
-			embedding.Make(0, approxLen)
-			numInducedEdges := 0
-			newIndicesNeeded := false
+			induced := NewEdgeBundle(0, approxLen)
+			embedding := NewEdgeBundle(0, approxLen)
+			numInducedEdges := SphynxId(0)
+			// We try to keep the IDs of the edges, so the embedding edge bundle is IdPreserving
+			// if it's expected to be. If the srcMapping or the dstMapping is not a function, then
+			// this won't work, we need new IDs.
+			newIDsNeeded := false
 			for i, src := range es.Src {
 				dst := es.Dst[i]
-				mappedSrcs := []int{src}
-				mappedDsts := []int{dst}
+				mappedSrcs := []SphynxId{src}
+				mappedDsts := []SphynxId{dst}
 				thisSrcExists := true
 				thisDstExists := true
 				if induceSrc {
@@ -64,20 +65,20 @@ func init() {
 					for j, mappedSrc := range mappedSrcs {
 						for k, mappedDst := range mappedDsts {
 							if j != 0 || k != 0 {
-								newIndicesNeeded = true
+								newIDsNeeded = true
 							}
 							induced.Src = append(induced.Src, mappedSrc)
 							induced.Dst = append(induced.Dst, mappedDst)
 							induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
 							embedding.Src = append(embedding.Src, numInducedEdges)
-							embedding.Dst = append(embedding.Dst, i)
+							embedding.Dst = append(embedding.Dst, SphynxId(i))
 							embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
 							numInducedEdges += 1
 						}
 					}
 				}
 			}
-			if newIndicesNeeded {
+			if newIDsNeeded {
 				for i := range induced.EdgeMapping {
 					induced.EdgeMapping[i] = int64(i)
 					embedding.EdgeMapping[i] = int64(i)
