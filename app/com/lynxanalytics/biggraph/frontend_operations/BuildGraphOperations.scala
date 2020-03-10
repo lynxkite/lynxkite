@@ -243,7 +243,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         FEStatus.assert(
           project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
           FEStatus.assert(
-            edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
+            edges.vertexAttrList.nonEmpty, "No column on the edges to use as id.")
       def apply() = {
         val src = params("src")
         val dst = params("dst")

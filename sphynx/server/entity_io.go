@@ -107,12 +107,12 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 	if err := pr.Read(&rows); err != nil {
 		return fmt.Errorf("Failed to read parquet file: %v", err)
 	}
-	eb.Src = make([]int, numRows)
-	eb.Dst = make([]int, numRows)
+	eb.Src = make([]SphynxId, numRows)
+	eb.Dst = make([]SphynxId, numRows)
 	eb.EdgeMapping = make([]int64, numRows)
 	for i, row := range rows {
-		eb.Src[i] = int(row.Src)
-		eb.Dst[i] = int(row.Dst)
+		eb.Src[i] = SphynxId(row.Src)
+		eb.Dst[i] = SphynxId(row.Dst)
 		eb.EdgeMapping[i] = row.SparkId
 	}
 	return nil
