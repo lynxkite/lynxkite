@@ -1,13 +1,5 @@
 package main
 
-//#include <stdio.h>
-//#include <fcntl.h>
-//#include <stdlib.h>
-//void mywrite(char* name, char* ptr, int len) {
-// int fd = open (name, O_RDWR | O_CREAT | O_TRUNC, 0666);
-// write (fd, ptr, len);
-// close (fd);
-//}
 import "C"
 import (
 	"bufio"
@@ -20,8 +12,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"sync"
-	"unsafe"
 )
 
 func createEntity(typeName string) (Entity, error) {
@@ -47,32 +37,6 @@ func createEntity(typeName string) (Entity, error) {
 	}
 }
 
-type OrderedDiskCache struct {
-	mutex   sync.Mutex
-	writing map[GUID]bool
-}
-
-var orderedDiskWritingMutex = sync.Mutex{}
-var orderedDiskWritingCache = make(map[GUID]bool)
-
-func saveVertexSet(e Entity, guid GUID) {
-	switch e := e.(type) {
-	default:
-		return
-	case *VertexSet:
-		start := ourTimestamp()
-		defer func() {
-			log.Printf("saveVertexSet: %v (%v - mem: %v)  %v ms\n",
-				guid, e.typeName(), e.estimatedMemUsage(), timestampDiff(ourTimestamp(), start))
-		}()
-		fileName := fmt.Sprintf("/tmp/%v", guid)
-		cs := C.CString(fileName)
-		var p *C.char = (*C.char)(unsafe.Pointer(&(e.MappingToUnordered[0])))
-		C.mywrite(cs, p, C.int(len(e.MappingToUnordered)*8))
-		C.free(unsafe.Pointer(cs))
-	}
-}
-
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	alreadySaved, err := hasOnDisk(dataDir, guid)
 	if err != nil {
@@ -81,13 +45,6 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	if alreadySaved {
 		return nil
 	}
-	orderedDiskWritingMutex.Lock()
-	if orderedDiskWritingCache[guid] {
-		orderedDiskWritingMutex.Unlock()
-		return nil
-	}
-	orderedDiskWritingCache[guid] = true
-	orderedDiskWritingMutex.Unlock()
 	start := ourTimestamp()
 	defer func() {
 		log.Printf("saveToOrderedDisk: %v (%v - mem: %v) in %v ms\n",
