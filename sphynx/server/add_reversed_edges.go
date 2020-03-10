@@ -19,16 +19,9 @@ func doAddReversedEdges(edges *EdgeBundle,
 	numOldEdges := len(edges.Dst)
 	numNewEdges := numOldEdges * 2
 	edgeIdSet := newEdgeMapping(numNewEdges)
-	esPlus = &EdgeBundle{
-		Src:         make([]int, numNewEdges),
-		Dst:         make([]int, numNewEdges),
-		EdgeMapping: *edgeIdSet,
-	}
-	newToOriginal = &EdgeBundle{
-		Src:         make([]int, numNewEdges),
-		Dst:         make([]int, numNewEdges),
-		EdgeMapping: *edgeIdSet,
-	}
+	esPlus = NewEdgeBundle(numNewEdges, numNewEdges)
+	newToOriginal = NewEdgeBundle(numNewEdges, numNewEdges)
+	copy(newToOriginal.EdgeMapping, *edgeIdSet)
 
 	if addIsNewAttr {
 		defined := make([]bool, numNewEdges)
@@ -42,8 +35,9 @@ func doAddReversedEdges(edges *EdgeBundle,
 	} else {
 		isNew = nil
 	}
-	for i := 0; i < numOldEdges; i++ {
-		j := 2 * i
+	j := VERTEX_ID(0)
+	n := VERTEX_ID(numOldEdges)
+	for i := VERTEX_ID(0); i < n; i++ {
 		esPlus.Src[j] = edges.Src[i]
 		esPlus.Dst[j] = edges.Dst[i]
 		esPlus.Src[j+1] = edges.Dst[i]
@@ -56,6 +50,7 @@ func doAddReversedEdges(edges *EdgeBundle,
 			isNew.Values[j] = 0.0
 			isNew.Values[j+1] = 1.0
 		}
+		j += 2
 	}
 	return
 }

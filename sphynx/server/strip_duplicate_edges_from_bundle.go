@@ -5,8 +5,8 @@ package main
 
 func doStripDuplicateEdgesFromBundle(es *EdgeBundle) *EdgeBundle {
 	type EdgeKey struct {
-		src int
-		dst int
+		src VERTEX_ID
+		dst VERTEX_ID
 	}
 
 	uniqueEdges := make(map[EdgeKey]int64, len(es.Src))
@@ -17,11 +17,7 @@ func doStripDuplicateEdgesFromBundle(es *EdgeBundle) *EdgeBundle {
 		}
 		uniqueEdges[k] = es.EdgeMapping[i]
 	}
-	uniqueBundle := &EdgeBundle{
-		Src:         make([]int, len(uniqueEdges)),
-		Dst:         make([]int, len(uniqueEdges)),
-		EdgeMapping: make([]int64, len(uniqueEdges)),
-	}
+	uniqueBundle := NewEdgeBundle(len(uniqueEdges), len(uniqueEdges))
 	i := 0
 	for key, id := range uniqueEdges {
 		uniqueBundle.Src[i] = key.src
