@@ -8,14 +8,14 @@ func doPulledOverEdges(
 	originalEB *EdgeBundle,
 	injection *EdgeBundle) *EdgeBundle {
 
-	origIds := make(map[VERTEX_ID]VERTEX_ID, len(injection.Dst))
+	origIds := make(map[SphynxId]SphynxId, len(injection.Dst))
 	for i := 0; i < len(injection.Src); i++ {
 		origIds[injection.Src[i]] = injection.Dst[i]
 	}
 	pulledEB := NewEdgeBundle(len(injection.Src), len(injection.Src))
 	j := 0
-	n := VERTEX_ID(len(destinationVS.MappingToUnordered))
-	for i := VERTEX_ID(0); i < n; i++ {
+	n := SphynxId(len(destinationVS.MappingToUnordered))
+	for i := SphynxId(0); i < n; i++ {
 		origId, exists := origIds[i]
 		if exists {
 			pulledEB.Src[j] = originalEB.Src[origId]

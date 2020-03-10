@@ -15,7 +15,7 @@ func init() {
 			origDefined := reflect.ValueOf(origAttr).Elem().FieldByName("Defined")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
-			destToOrig := make(map[VERTEX_ID]VERTEX_ID, len(function.Src))
+			destToOrig := make(map[SphynxId]SphynxId, len(function.Src))
 			for i := range function.Src {
 				destToOrig[function.Src[i]] = function.Dst[i]
 			}

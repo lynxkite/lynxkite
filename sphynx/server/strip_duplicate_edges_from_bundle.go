@@ -5,8 +5,8 @@ package main
 
 func doStripDuplicateEdgesFromBundle(es *EdgeBundle) *EdgeBundle {
 	type EdgeKey struct {
-		src VERTEX_ID
-		dst VERTEX_ID
+		src SphynxId
+		dst SphynxId
 	}
 
 	uniqueEdges := make(map[EdgeKey]int64, len(es.Src))
