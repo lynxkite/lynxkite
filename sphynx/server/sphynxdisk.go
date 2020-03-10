@@ -129,16 +129,17 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 			return nil, fmt.Errorf("Failed to open %v: %v", dirName, err)
 		}
 		defer r.Close()
-		if r.NumRecords() != 1 {
+		if r.NumRecords() == 1 {
+			rec, err := r.Record(0)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read %v: %v", dirName, err)
+			}
+			defer rec.Release()
+			if err = e.readFromOrdered(rec); err != nil {
+				return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
+			}
+		} else if r.NumRecords() > 1 {
 			return nil, fmt.Errorf("%v has %v records, expected 1.", dirName, r.NumRecords())
-		}
-		rec, err := r.Record(0)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to read %v: %v", dirName, err)
-		}
-		defer rec.Release()
-		if err = e.readFromOrdered(rec); err != nil {
-			return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
 		}
 	case *Scalar:
 		*e, err = readScalar(dirName)

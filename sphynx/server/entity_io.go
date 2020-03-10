@@ -255,7 +255,7 @@ func (a *LongAttribute) toOrderedRows() array.Record {
 	b.AppendValues(a.Values, a.Defined)
 	values := b.NewInt64Array()
 	defer values.Release()
-	return array.NewRecord(doubleAttributeSchema, []array.Interface{values}, -1)
+	return array.NewRecord(longAttributeSchema, []array.Interface{values}, -1)
 }
 
 var stringAttributeSchema = arrow.NewSchema([]arrow.Field{
