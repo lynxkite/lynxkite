@@ -154,7 +154,7 @@ func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 }
 
 func (e *EdgeBundle) estimatedMemUsage() int {
-	sizeOfVertexID := int(unsafe.Sizeof(int(0)))
+	sizeOfVertexID := int(unsafe.Sizeof(SphynxId(0)))
 	i := len(e.EdgeMapping) * 8
 	i += len(e.Src) * sizeOfVertexID
 	i += len(e.Dst) * sizeOfVertexID
