@@ -85,9 +85,10 @@ class Op:
     t = pa.Table.from_arrays(list(columns.values()), schema=schema)
     with pa.output_stream(path + '/data.arrow') as sink:
       writer = pa.RecordBatchFileWriter(sink, t.schema)
-      batches = t.to_batches()
-      assert len(batches) == 1
-      writer.write_batch(batches[0])
+      batches = t.to_batches(max_chunksize=len(t))
+      if batches:
+        assert len(batches) == 1
+        writer.write_batch(batches[0])
       writer.close()
     with open(path + '/_SUCCESS', 'w'):
       pass
