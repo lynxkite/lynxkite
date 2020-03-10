@@ -2,27 +2,32 @@
 
 Executes custom Python code to define new attributes or scalars.
 
-The following example computes two new vertex attributes (`x` and `y`),
-a new edge attribute (`z`) and a new scalar (`hello`).
+The following example computes two new vertex attributes (`with_title` and `age_squared`),
+two new edge attributes (`score` and `names`), and two new scalars (`hello` and `average_age`).
 (You can try it on the <<Create example graph, example graph>> which
 has the attributes used in this code.)
 
 [source,python]
 ----
-vs['x'] = 'The Honorable ' + vs.name
-vs['y'] = vs.age ** 2
-es['z'] = es.weight + es.comment.str.len()
+vs['with_title'] = 'The Honorable ' + vs.name
+vs['age_squared'] = vs.age ** 2
+es['score'] = es.weight + es.comment.str.len()
+es['names'] = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
 scalars.hello = scalars.greeting.lower()
+scalars.average_age = vs.age.mean()
 ----
 
-`vs` and `es` are both
+`scalars` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
+that makes it easy to get and set scalars.
+
+`vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
 https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html[Pandas DataFrames].
 You can write natural Python code and use the usual APIs and packages to
-compute the new attributes. Assign them as new columns to these
-DataFrames to save them.
+compute new attributes. Pandas and Numpy are already imported as `pd` and `np`.
+`es` can have `src` and `dst` columns which are the indexes of the source and destination
+vertex for each edge. These can be used to index into `vs` as in the example.
 
-`scalars` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
-to make it easy to get and set scalars.
+Assign the new columns to these same DataFrames to output new vertex or edge attributes.
 
 When you write this Python code, the input data may not be available yet.
 And you may want to keep building on the output of the box without having
@@ -35,6 +40,11 @@ The currently supported types for outputs are:
 
 - `float` to create a `Double`-typed attribute or scalar.
 - `str` to create a `String`-typed attribute or scalar.
+
+In the previous example we would set:
+
+- Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, scalars.greeting`
+- Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, scalars.hello: str, scalars.average_age: float`
 
 ====
 [p-code]#Code#::
