@@ -130,7 +130,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
   })
 
   register("Replace edges with triadic closure")(new ProjectTransformation(_) {
-    def enabled = project.hasVertexSet && project.hasEdgeBundle
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val op = graph_operations.ConcatenateBundlesMulti()
       val result = op(op.edgesAB, project.edgeBundle)(

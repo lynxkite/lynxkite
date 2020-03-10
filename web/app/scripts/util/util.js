@@ -470,6 +470,13 @@ angular.module('biggraph')
       'LynxKite Colors', 'Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Rainbow', 'Set1',
       'Set2', 'Set3'];
 
+    util.sliderColorMaps = {
+      'Blue to orange': ['#39bcf3', '#f80'],
+      'Orange to blue': ['#f80', '#39bcf3'],
+      'Visible to invisible': ['#39bcf3', 'transparent'],
+      'Invisible to visible': ['transparent', '#39bcf3'],
+    };
+
     util.baseName = function(p) {
       const lastSlash = p.lastIndexOf('/');
       return p.slice(lastSlash + 1);

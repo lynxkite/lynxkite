@@ -27,9 +27,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
       } else {
         List()
       }
-    def enabled = project.assertSegmentation &&
-      project.hasEdgeBundle &&
-      FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
+    def enabled = project.assertSegmentation && project.hasEdgeBundle
     def apply() = {
       val seg = project.asSegmentation
       val reverseBelongsTo = seg.belongsTo.reverse
@@ -73,9 +71,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
         List()
       }
 
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def enabled = project.assertSegmentation
     def apply() = {
       val op = graph_operations.EdgesFromSegmentation()
       val result = op(op.belongsTo, seg.belongsTo).result
@@ -99,9 +95,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
         List()
       }
 
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(parent.edgeBundle == null, "Parent graph has edges already.")
+    def enabled = project.assertSegmentation
     def apply() = {
       val op = graph_operations.SampleEdgesFromSegmentation(
         params("probability").toDouble,

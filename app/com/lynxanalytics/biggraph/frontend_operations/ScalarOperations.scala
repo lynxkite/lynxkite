@@ -21,8 +21,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   register("Aggregate edge attribute globally")(new ProjectTransformation(_) {
     params += Param("prefix", "Generated name prefix")
     params ++= aggregateParams(project.edgeAttributes, needsGlobal = true)
-    def enabled =
-      FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -61,8 +60,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   register("Aggregate vertex attribute globally")(new ProjectTransformation(_) {
     params += Param("prefix", "Generated name prefix")
     params ++= aggregateParams(project.vertexAttributes, needsGlobal = true)
-    def enabled =
-      FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    def enabled = project.hasVertexSet
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       for ((attr, choice) <- parseAggregateParams(params)) {

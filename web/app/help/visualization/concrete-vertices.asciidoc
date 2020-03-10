@@ -108,11 +108,14 @@ latitude-longitude coordinate and the vertices will be put on a world map based 
 <<Convert vertex attributes to position>> operation.)
 
 Slider::
-Colors veritices based on this attribute. After selecting this visualization, a slider appears,
-which ranges from the minimum to the maximum value of the attribute. Using the slider changes the
-colors of the vertices: vertices below the slider value are green, vertices at the slider value
-are yellow, and vertices above the slider value are red. This is only available for `Double`
-attributes.
+Available for `Double` attributes. Adds an interactive slider to the visualization.
+As you move the slider from the minimum to the maximum value of the attribute,
+the vertices change their color. Vertices below the selected value get the first color,
+vertices above the selected value get the second color.
++
+You can choose the color scheme to use. If you choose a color scheme where vertices can become
+transparent, the edges of the transparent vertices will also disappear. This is a great option
+for visualizing the evolution of a graph over time.
 
 #### Edge visualizations
 
