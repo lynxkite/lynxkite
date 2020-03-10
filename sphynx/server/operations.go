@@ -59,6 +59,10 @@ func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
 	return ea.inputs[name].(*StringAttribute)
 }
 
+func (ea *EntityAccessor) getLongAttribute(name string) *LongAttribute {
+	return ea.inputs[name].(*LongAttribute)
+}
+
 func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
 	return ea.inputs[name].(*DoubleTuple2Attribute)
 }
@@ -71,7 +75,11 @@ func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }
 
-func (ea *EntityAccessor) GetBoolParam(name string, dflt bool) bool {
+func (ea *EntityAccessor) GetBoolParam(name string) bool {
+	return ea.opInst.Operation.Data[name].(bool)
+}
+
+func (ea *EntityAccessor) GetBoolParamWithDefault(name string, dflt bool) bool {
 	field, exists := ea.opInst.Operation.Data[name]
 	if exists {
 		return field.(bool)

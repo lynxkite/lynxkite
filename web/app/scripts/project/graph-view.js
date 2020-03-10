@@ -31,7 +31,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // (When switching from "color" to "slider", for example.)
       for (let side of ['graph.left', 'graph.right']) {
         for (let p of [
-          'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap']) {
+          'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap',
+          'sliderColorMap']) {
           util.deepWatch(scope, side + '.' + p, scope.updateGraph);
         }
       }
@@ -343,8 +344,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     for (let i = 0; i < visibleSides.length; ++i) {
       this.vertexGroups.push(this.addGroup('nodes side' + i, clippers[i]));
     }
-    this.legend = svg.create('g', {'class': 'legend'});
-    this.root.append(this.legend);
+    this.legend = { left: [], right: [] };
     const oldVertices = this.vertices || new Vertices(this);
     this.vertices = []; // Sparse, indexed by side. Everything else is indexed by visible side.
     const sideIndices = []; // Maps from visible index to side index.
@@ -576,32 +576,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   Vertices.prototype.addLegendLine = function(text, indent) {
-    indent = indent || 0;
-    const margin = 50;
-    const xMargin = margin + indent;
-    const x = this.leftOrRight === 'left' ? xMargin : this.gv.svg.width() - xMargin;
-    const anchor = this.leftOrRight === 'left' ? 'start' : 'end';
-    const i = this.legendNextLine || 0;
-    this.legendNextLine = i + 1;
-    const legendElement =
-      svg.create('text', { 'class': 'legend', x: x, y: i * 22 + margin }).text(text);
-    legendElement.attr('text-anchor', anchor);
-    this.gv.legend.append(legendElement);
-    return legendElement;
+    const line = { text, indent };
+    this.gv.legend[this.leftOrRight].push(line);
+    return line;
   };
 
   Vertices.prototype.addColorLegend = function(colorMap, title) {
     this.addLegendLine(title);
     for (let attr in colorMap) {
-      const l = this.addLegendLine(attr || 'undefined', 20);
-      const size = 12;
-      const x = parseInt(l.attr('x'));
-      const xOffset = this.leftOrRight === 'left' ? -3 - size : 3;
-      const y = parseInt(l.attr('y'));
-      const square = svg.create('rect', {
-        x: x + xOffset, y: y - 7, width: size, height: size,
-        fill: colorMap[attr] || UNCOLORED, rx: 2 });
-      this.gv.legend.append(square);
+      this.addLegendLine(attr || 'undefined', 20).color = colorMap[attr] || UNCOLORED;
     }
   };
 
@@ -652,8 +635,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         let attrLabel = attr.charAt(0).toUpperCase() + attr.slice(1);
         // UnCammelify.
         attrLabel = attrLabel.replace(/([A-Z])/g, ' $1');
-        // We handle icon and color attributes separately.
-        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon') {
+        // We handle slider, icon and color attributes separately.
+        if (attrLabel.indexOf('Color') === -1 && attrLabel !== ' Icon' && attrLabel !== ' Slider') {
           vertices.addLegendLine(attrLabel + ': ' + side.vertexAttrs[attr].title);
         }
       }
@@ -1009,6 +992,24 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       offsetter.thickness *= Math.exp(0.5 * delta);
       offsetter.reDraw();
     }
+    // Legend panels let mouse events through. But we want to scroll them when necessary.
+    // Here we check if a scroll event falls within a <graph-view-legend> element and
+    // scroll it.
+    function scrollLegend(event) {
+      let e = svgElement[0];
+      while (e) {
+        if (e.tagName === 'GRAPH-VIEW-LEGEND') {
+          const div = e.children[0];
+          const rect = div.getBoundingClientRect();
+          if (
+            rect.x <= event.pageX && event.pageX <= rect.x + rect.width &&
+            rect.y <= event.pageY && event.pageY <= rect.y + rect.height) {
+            div.scrollBy({ top: event.deltaY, behavior: 'auto' });
+          }
+        }
+        e = e.nextElementSibling;
+      }
+    }
     this.svgMouseWheelListeners.push(function(e) {
       const oe = e.originalEvent;
       const mx = oe.pageX - svgElement.offset().left;
@@ -1019,6 +1020,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       e.preventDefault();
       let deltaX = oe.deltaX;
       let deltaY = oe.deltaY;
+      scrollLegend(oe);
       if (/Firefox/.test(window.navigator.userAgent)) {
         // Every browser sets different deltas for the same amount of scrolling.
         // It is tiny on Firefox. We need to boost it.
@@ -1114,31 +1116,38 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   GraphView.prototype.initSlider = function(vertices) {
-    this.unregistration.push(this.scope.$watch(sliderPos, onSlider));
-    function sliderPos() {
-      return vertices.side.sliderPos;
-    }
-    function onSlider() {
-      const sliderAttr = vertices.side.vertexAttrs.slider;
-      if (!sliderAttr) { return; }
-      const sb = common.minmax(
-        vertices.vs.map(function(v) { return (v.data.attrs[sliderAttr.id] || {}).double; }));
-      const pos = sliderPos();
-      for (let i = 0; i < vertices.vs.length; ++i) {
-        const v = vertices.vs[i];
+    const sliderAttr = vertices.side.vertexAttrs.slider;
+    if (!sliderAttr) { return; }
+    const sb = common.minmax(
+      vertices.vs.map(v => (v.data.attrs[sliderAttr.id] || {}).double));
+    const slider = {
+      pos: 50,
+      title: sliderAttr.title,
+      interpret: y => sb.min + sb.span * 0.01 * y,
+    };
+    onSliderChange(slider.pos);
+    this.legend[vertices.leftOrRight].slider = slider;
+    this.unregistration.push(this.scope.$watch(() => slider.pos, onSliderChange));
+    function onSliderChange(pos) {
+      for (let v of vertices.vs) {
         const x =
           v.data.attrs[sliderAttr.id].defined ? v.data.attrs[sliderAttr.id].double : undefined;
         const norm = Math.floor(100 * common.normalize(x, sb) + 50); // Normalize to 0 - 100.
+        const cm = util.sliderColorMaps[vertices.side.sliderColorMap];
         if (norm < pos) {
-          v.color = 'hsl(120, 50%, 42%)';
+          v.color = cm[1];
         } else if (norm > pos) {
-          v.color = 'hsl(0, 50%, 42%)';
+          v.color = cm[0];
         } else if (norm === pos) {
-          v.color = 'hsl(60, 60%, 45%)';
+          v.color = 'white';
         } else {
-          v.color = 'hsl(60, 0%, 42%)';
+          v.color = 'gray';
         }
+        v.setVisible(v.color !== 'transparent');
         v.icon.attr({ style: 'fill: ' + v.color });
+      }
+      for (let e of vertices.edges) {
+        e.setVisible(e.src.color !== 'transparent' && e.dst.color !== 'transparent');
       }
     }
   };
@@ -1649,6 +1658,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
+  Vertex.prototype.setVisible = function(visible) {
+    if (visible) {
+      svg.removeClass(this.dom, 'invisible');
+    } else {
+      svg.addClass(this.dom, 'invisible');
+    }
+  };
+
   // Hover and highlight listeners must have an `on()` and an `off()` method.
   // "Hover" is used for the one vertex under the cursor.
   // "Highlight" is used for any vertices that we want to render more visible.
@@ -1728,9 +1745,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
   Edge.prototype.setVisible = function(visible) {
     if (visible) {
-      svg.removeClass(this.dom, 'invisible-edge');
+      svg.removeClass(this.dom, 'invisible');
     } else {
-      svg.addClass(this.dom, 'invisible-edge');
+      svg.addClass(this.dom, 'invisible');
     }
   };
   Edge.prototype.toFront = function() {
@@ -1742,8 +1759,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           vertex.screenX() <= vertex.offsetter.xMax;
     }
     const src = this.src, dst = this.dst;
-    this.setVisible(
-      src.offsetter.side === dst.offsetter.side || (isInside(src) && isInside(dst)));
+    if (src.offsetter.side !== dst.offsetter.side) {
+      this.setVisible(isInside(src) && isInside(dst));
+    }
     const avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
     const strokeWidth = avgZoom * this.w;
     const arrows =

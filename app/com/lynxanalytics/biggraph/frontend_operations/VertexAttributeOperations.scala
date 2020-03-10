@@ -91,7 +91,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.vertexAttrList[Long] ++
         project.vertexAttrList[Int]
     params += Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true)
-    def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
+    def enabled = project.hasVertexSet
     def apply() = {
       for (name <- splitParam("attr")) {
         val attr = project.vertexAttributes(name)
@@ -104,7 +104,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     "Convert vertex attribute to String")(new ProjectTransformation(_) {
       params +=
         Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true)
-      def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
+      def enabled = project.hasVertexSet
       def apply() = {
         for (attr <- splitParam("attr")) {
           project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
@@ -179,9 +179,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       params ++= project.vertexAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
       }
-      def enabled = FEStatus.assert(
-        (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
-        "No vertex attributes.")
+      def enabled = project.hasVertexSet
       val attrParams: Map[String, String] = params.toMap.collect {
         case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
       }
