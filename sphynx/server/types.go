@@ -8,7 +8,6 @@ import (
 )
 
 type Server struct {
-	cleanerMutex     sync.RWMutex
 	entityMutex      sync.Mutex
 	entities         map[GUID]CacheEntry
 	dataDir          string

@@ -29,8 +29,6 @@ func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
 	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
@@ -97,8 +95,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	const numGoRoutines int64 = 4
 	log.Printf("Reindexing entity with guid %v to use Sphynx IDs.", in.Guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
