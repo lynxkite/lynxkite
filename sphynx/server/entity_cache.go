@@ -26,7 +26,7 @@
 // it the size of the entity. There is no point throwing away a 20 byte-long scalar ever.
 // Discarded entities are not removed from the cache, because they still provide valuable
 // debug information, that can also be used in the selection process. (E.g., are we constantly
-// throwing out this entity?) It my tests (with the Andris wizard) it often happened that we
+// throwing out this entity?) In my tests (with the Andris wizard) it often happened that we
 // discarded something that was last used 3 minutes before, only to reload it the next minute.
 //
 
@@ -102,6 +102,10 @@ func (server *Server) putEntityInCache(guid GUID, entity Entity) error {
 // collects inputs to an operation). We reload that entity here transparently.
 // Can remove this quite painlessly as soon as the DataManager learns how to
 // handle such errors.
+// We can make this saving/reloading process very fast, since we don't have
+// to be incompatible with any external library. We can, in fact, write
+// out a VertexSet in 100 milliseconds instead of 20 seconds, see
+// https://app.asana.com/0/350682777273584/1165755673928201
 func (server *Server) getAnEntityWeAreSupposedToHave(guid GUID) (Entity, error) {
 	entity, status := server.getEntityFromCache(guid)
 	switch status {
@@ -154,7 +158,7 @@ func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 }
 
 func (e *EdgeBundle) estimatedMemUsage() int {
-	sizeOfVertexID := int(unsafe.Sizeof(VertexID(0)))
+	sizeOfVertexID := int(unsafe.Sizeof(int(0)))
 	i := len(e.EdgeMapping) * 8
 	i += len(e.Src) * sizeOfVertexID
 	i += len(e.Dst) * sizeOfVertexID
