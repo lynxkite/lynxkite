@@ -304,7 +304,7 @@ func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
 func EntityEvictor(server *Server) {
 	checkPeriodMs := getNumericEnv("SPHYNX_CACHE_EVICTION_PERIOD_MS", 1000*30)
 	evictThreshold := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 14*1024) * 1024 * 1024
-	evictTarget := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 14*1024) * 1024 * 1024
+	evictTarget := getNumericEnv("SPHYNX_EVICTION_TARGET_MB", 14*1024) * 1024 * 1024
 	ticker := time.NewTicker(time.Duration(checkPeriodMs) * time.Millisecond)
 	for _ = range ticker.C {
 		var memStats runtime.MemStats
