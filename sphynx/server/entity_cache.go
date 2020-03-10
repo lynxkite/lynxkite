@@ -5,15 +5,11 @@
 // The main task for this code is to control the entity eviction process: we
 // select and discard entities when the memory pressure is big.
 //
-// Entity eviction cannot run in parallel with any Sphynx Operations. The Server
-// struct maintains a RWLock that can only be held by (any number of) operations
-// or the only entity eviction process. So, the handlers for any incoming rpc calls
-// should start by:
-//
-//   s.cleanerMutex.RLock()
-//   defer s.cleanerMutex.RUnlock()
-//
-// Since entity eviction stops the world, it cannot take very long. In particular: it
+// Entity eviction can run in parallel with Sphynx operations, but it holds
+// the server.entityMutex for as long as it is running, so operations can neither
+// access their inputs nor store their outputs in this time. Already running operations
+// are not affected.
+// So, entity eviction cannot take very long. In particular: it
 // cannot save any entities to disk, because that can block everything for as long as
 // 30 seconds. The solution to this is that we only consider entities to be eligible
 // to eviction if they have already been saved to the unordered disk. The set of
@@ -314,7 +310,7 @@ func EntityEvictor(server *Server) {
 		var memStats runtime.MemStats
 		runtime.ReadMemStats(&memStats)
 		printMemStats("Checking: ", memStats)
-		server.cleanerMutex.Lock()
+		server.entityMutex.Lock()
 		evictMappingToOrdered(server)
 		if int(memStats.Alloc) > evictThreshold {
 			printMemStats("Before eviction:", memStats)
@@ -322,7 +318,7 @@ func EntityEvictor(server *Server) {
 			runtime.ReadMemStats(&memStats)
 			printMemStats("After eviction:", memStats)
 		}
-		server.cleanerMutex.Unlock()
+		server.entityMutex.Unlock()
 	}
 }
 

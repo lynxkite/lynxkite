@@ -54,8 +54,6 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	opInst := OperationInstanceFromJSON(in.Operation)
 	switch in.Domain {
 	case "SphynxMemory":
@@ -108,8 +106,6 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
 	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
@@ -127,8 +123,6 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 }
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.Guid)
 	_, status := s.getEntityFromCache(guid)
 	var err error = nil
@@ -159,8 +153,6 @@ func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
 }
 
 func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrderedSphynxDiskRequest) (*pb.HasOnOrderedSphynxDiskReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	guid := in.GetGuid()
 	has, err := hasOnDisk(s.dataDir, GUID(guid))
 	if err != nil {
@@ -179,8 +171,6 @@ func (s *Server) readFromUnorderedDiskAndPutInCache(guid GUID) error {
 }
 
 func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
-	s.cleanerMutex.RLock()
-	defer s.cleanerMutex.RUnlock()
 	guid := GUID(in.GetGuid())
 	err := s.readFromUnorderedDiskAndPutInCache(guid)
 	if err != nil {
