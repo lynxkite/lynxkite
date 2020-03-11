@@ -8,44 +8,6 @@ import (
 	"sync"
 )
 
-func doSimpleVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, firstEmbedding *EdgeBundle) {
-	bigStupidMap := make(map[int64]int)
-	for i := 0; i < len(vertexSets); i++ {
-		vs := vertexSets[i]
-		for _, id := range vs.MappingToUnordered {
-			bigStupidMap[id]++
-		}
-	}
-	allHaveIt := make([]int64, 0, len(vertexSets[0].MappingToUnordered))
-	for id, occurrences := range bigStupidMap {
-		if occurrences == len(vertexSets) {
-			allHaveIt = append(allHaveIt, id)
-		}
-	}
-	intersection = &VertexSet{
-		Mutex:              sync.Mutex{},
-		MappingToUnordered: make([]int64, len(allHaveIt)),
-		MappingToOrdered:   make(map[int64]int, len(allHaveIt)),
-	}
-	copy(intersection.MappingToUnordered, allHaveIt)
-	for idx, id := range allHaveIt {
-		intersection.MappingToOrdered[id] = idx
-	}
-	firstEmbedding = &EdgeBundle{
-		Src:         make([]int, len(allHaveIt)),
-		Dst:         make([]int, len(allHaveIt)),
-		EdgeMapping: make([]int64, len(allHaveIt)),
-	}
-	vs0 := vertexSets[0]
-	vs0.GetMappingToOrdered()
-	for idx, id := range allHaveIt {
-		firstEmbedding.Src[idx] = idx
-		firstEmbedding.Dst[idx] = vs0.MappingToOrdered[id]
-		firstEmbedding.EdgeMapping[idx] = id
-	}
-	return
-}
-
 type MergeVertexEntry struct {
 	id  int64
 	cnt int
@@ -105,21 +67,17 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 	intersection = &VertexSet{
 		Mutex:              sync.Mutex{},
 		MappingToUnordered: make([]int64, len(allHaveIt)),
-		MappingToOrdered:   make(map[int64]int, len(allHaveIt)),
+		MappingToOrdered:   make(map[int64]SphynxId, len(allHaveIt)),
 	}
 	copy(intersection.MappingToUnordered, allHaveIt)
 	for idx, id := range allHaveIt {
-		intersection.MappingToOrdered[id] = idx
+		intersection.MappingToOrdered[id] = SphynxId(idx)
 	}
-	firstEmbedding = &EdgeBundle{
-		Src:         make([]int, len(allHaveIt)),
-		Dst:         make([]int, len(allHaveIt)),
-		EdgeMapping: make([]int64, len(allHaveIt)),
-	}
+	firstEmbedding = NewEdgeBundle(len(allHaveIt), len(allHaveIt))
 	vs0 := vertexSets[0]
 	vs0.GetMappingToOrdered()
 	for idx, id := range allHaveIt {
-		firstEmbedding.Src[idx] = idx
+		firstEmbedding.Src[idx] = SphynxId(idx)
 		firstEmbedding.Dst[idx] = vs0.MappingToOrdered[id]
 		firstEmbedding.EdgeMapping[idx] = id
 	}
@@ -140,7 +98,7 @@ func init() {
 				vertexSets[i] = ea.getVertexSet(vsName)
 				fmt.Printf("Got vertex set %s, len: %d\n", vsName, len(vertexSets[i].MappingToUnordered))
 			}
-			intersection, firstEmbedding := doSimpleVertexSetIntersection(vertexSets)
+			intersection, firstEmbedding := doVertexSetIntersection(vertexSets)
 			ea.output("intersection", intersection)
 			ea.output("firstEmbedding", firstEmbedding)
 			return nil
