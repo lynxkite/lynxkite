@@ -156,7 +156,7 @@ func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromO
 	guid := GUID(in.GetGuid())
 	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {
-		return &pb.ReadFromOrderedSphynxDiskReply{}, err
+		return nil, err
 	}
 	s.entityCache.Set(guid, entity)
 	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
