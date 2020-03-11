@@ -36,7 +36,7 @@ func NewServer() Server {
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
 	return Server{
-		entities:         make(map[GUID]CacheEntry),
+		entityCache:      NewEntityCache(),
 		dataDir:          dataDir,
 		unorderedDataDir: unorderedDataDir}
 }
@@ -90,7 +90,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 			}
 		}
 		for guid, entity := range ea.outputs {
-			s.putEntityInCache(guid, entity)
+			s.entityCache.Set(guid, entity)
 		}
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
@@ -108,9 +108,10 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
-	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
-	if err != nil {
-		return nil, err
+	entity, exists := s.entityCache.Get(guid)
+	if !exists {
+		// DataManager, do something
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 
 	switch scalar := entity.(type) {
@@ -124,25 +125,15 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
 	guid := GUID(in.Guid)
-	_, status := s.getEntityFromCache(guid)
-	var err error = nil
-	var exists = false
-	switch status {
-	case EntityIsNotInCache:
-		exists, err = false, nil
-	case EntityWasEvictedFromCache:
-		err = s.readFromUnorderedDiskAndPutInCache(guid)
-		exists = err == nil
-	default: // EntityIsInCache
-		exists, err = true, nil
-	}
-	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, err
+	_, exists := s.entityCache.Get(guid)
+	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
 }
 
 func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
-	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
-	if err != nil {
-		return nil, err
+	entity, exists := s.entityCache.Get(guid)
+	if !exists {
+		// DataManager, do something
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 	switch vs := entity.(type) {
 	case *VertexSet:
@@ -161,21 +152,13 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 	return &pb.HasOnOrderedSphynxDiskReply{HasOnDisk: has}, nil
 }
 
-func (s *Server) readFromUnorderedDiskAndPutInCache(guid GUID) error {
-	entity, err := loadFromOrderedDisk(s.dataDir, guid)
-	if err != nil {
-		return err
-	}
-	s.putEntityInCache(guid, entity)
-	return nil
-}
-
 func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
 	guid := GUID(in.GetGuid())
-	err := s.readFromUnorderedDiskAndPutInCache(guid)
+	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {
-		return nil, err
+		return &pb.ReadFromOrderedSphynxDiskReply{}, err
 	}
+	s.entityCache.Set(guid, entity)
 	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
 }
 
@@ -200,7 +183,6 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
-	go EntityEvictor(&sphynxServer)
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

@@ -31,9 +31,10 @@ func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-	entity, err := s.getAnEntityWeAreSupposedToHave(guid)
-	if err != nil {
-		return nil, err
+	entity, exists := s.entityCache.Get(guid)
+	if !exists {
+		// DataManager, do something
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 	if err := saveToOrderedDisk(entity, s.dataDir, guid); err != nil {
 		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
@@ -186,8 +187,8 @@ func (s *Server) ReadFromUnorderedDisk(
 		edgeMapping := make([]int64, numRows)
 		src := make([]SphynxId, numRows)
 		dst := make([]SphynxId, numRows)
-		mappingToOrdered1 := vs1.GetMappingToOrdered()
-		mappingToOrdered2 := vs2.GetMappingToOrdered()
+		mappingToOrdered1 := *vs1.GetMappingToOrdered()
+		mappingToOrdered2 := *vs2.GetMappingToOrdered()
 		for i, row := range rows {
 			edgeMapping[i] = row.Id
 			src[i] = mappingToOrdered1[row.Src]
@@ -233,7 +234,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		defined := attr.Elem().FieldByName("Defined")
 		idIndex := fieldIndex(rowType, "Id")
 		valueIndex := fieldIndex(rowType, "Value")
-		mappingToOrdered := vs.GetMappingToOrdered()
+		mappingToOrdered := *vs.GetMappingToOrdered()
 		true := reflect.ValueOf(true)
 		for i := 0; i < numRows; i++ {
 			row := rows.Index(i)
@@ -250,6 +251,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
-	s.putEntityInCache(GUID(in.Guid), entity)
+	s.entityCache.Set(GUID(in.Guid), entity)
 	return &pb.ReadFromUnorderedDiskReply{}, nil
 }

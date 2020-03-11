@@ -185,21 +185,10 @@ func (s *Server) WriteToOrderedDisk(
 	ctx context.Context, in *pb.WriteToOrderedDiskRequest) (*pb.WriteToOrderedDiskReply, error) {
 	guid := GUID(in.Guid)
 
-	e, status := s.getEntityFromCache(guid)
-	switch status {
-	case EntityIsNotInCache:
-		return nil, fmt.Errorf("WriteToOrderedDisk: %v not found among entities", guid)
-	case EntityWasEvictedFromCache:
-		// It's fine: the evictor should have already written this, but we'll check
-		exists, err := hasOnDisk(s.dataDir, guid)
-		if err != nil {
-			return nil, err
-		}
-		if !exists {
-			return nil, fmt.Errorf("WriteToOrderedDisk: %v seems to be evicted, but not found on disk", guid)
-		}
-		return &pb.WriteToOrderedDiskReply{}, nil
-	default: //EntityIsInCache, do nothing
+	e, exists := s.entityCache.Get(guid)
+	if !exists {
+		// DataManager, do something
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 
 	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {
