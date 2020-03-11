@@ -447,7 +447,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train a GCN classifier")(new ProjectTransformation(_) {
     params ++= List(
-      Param("save_as", "Save model as"),
+      Param("save_as", "Save model as", defaultValue = "model"),
       Param("iterations", "Iterations", defaultValue = "20"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
@@ -486,7 +486,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train a GCN regressor")(new ProjectTransformation(_) {
     params ++= List(
-      Param("save_as", "Save model as"),
+      Param("save_as", "Save model as", defaultValue = "model"),
       Param("iterations", "Iterations", defaultValue = "20"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
@@ -523,7 +523,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Predict with GCN")(new ProjectTransformation(_) {
     params ++= List(
-      Param("save_as", "Save prediction as"),
+      Param("save_as", "Save prediction as", defaultValue = "prediction"),
       Choice("features", "Feature vector", options = project.vertexAttrList[Vector[Double]]),
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Choice("model", "model", options = project.scalarList[SphynxModel]))

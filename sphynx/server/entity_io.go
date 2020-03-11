@@ -93,19 +93,19 @@ var edgeBundleSchema = arrow.NewSchema(
 	}, nil)
 
 func (eb *EdgeBundle) toOrderedRows() array.Record {
-	b1 := array.NewInt64Builder(arrowAllocator)
+	b1 := array.NewUint32Builder(arrowAllocator)
 	defer b1.Release()
 	for _, i := range eb.Src {
-		b1.Append(int64(i))
+		b1.Append(uint32(i))
 	}
-	src := b1.NewInt64Array()
+	src := b1.NewUint32Array()
 	defer src.Release()
-	b2 := array.NewInt64Builder(arrowAllocator)
+	b2 := array.NewUint32Builder(arrowAllocator)
 	defer b2.Release()
 	for _, i := range eb.Dst {
-		b2.Append(int64(i))
+		b2.Append(uint32(i))
 	}
-	dst := b2.NewInt64Array()
+	dst := b2.NewUint32Array()
 	defer dst.Release()
 	b3 := array.NewInt64Builder(arrowAllocator)
 	defer b3.Release()
@@ -115,16 +115,16 @@ func (eb *EdgeBundle) toOrderedRows() array.Record {
 	return array.NewRecord(edgeBundleSchema, []array.Interface{src, dst, ids}, -1)
 }
 func (eb *EdgeBundle) readFromOrdered(rec array.Record) error {
-	src := rec.Column(0).(*array.Int64).Int64Values()
-	dst := rec.Column(1).(*array.Int64).Int64Values()
+	src := rec.Column(0).(*array.Uint32).Uint32Values()
+	dst := rec.Column(1).(*array.Uint32).Uint32Values()
 	ids := rec.Column(2).(*array.Int64).Int64Values()
 	// Make a copy because counting references is harder.
-	eb.Src = make([]int, len(src))
-	eb.Dst = make([]int, len(dst))
+	eb.Src = make([]SphynxId, len(src))
+	eb.Dst = make([]SphynxId, len(dst))
 	eb.EdgeMapping = make([]int64, len(ids))
 	for i, id := range ids {
-		eb.Src[i] = int(src[i])
-		eb.Dst[i] = int(dst[i])
+		eb.Src[i] = SphynxId(src[i])
+		eb.Dst[i] = SphynxId(dst[i])
 		eb.EdgeMapping[i] = id
 	}
 	return nil

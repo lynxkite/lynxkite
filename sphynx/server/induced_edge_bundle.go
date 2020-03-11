@@ -8,29 +8,27 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			induceSrc := ea.GetBoolParam("induceSrc")
 			induceDst := ea.GetBoolParam("induceDst")
-			var srcMapping map[int]int
+			var srcMapping map[SphynxId]SphynxId
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
-				srcMapping = make(map[int]int, len(srcMappingEB.Src))
+				srcMapping = make(map[SphynxId]SphynxId, len(srcMappingEB.Src))
 				for i := range srcMappingEB.Src {
 					srcMapping[srcMappingEB.Src[i]] = srcMappingEB.Dst[i]
 				}
 			}
-			var dstMapping map[int]int
+			var dstMapping map[SphynxId]SphynxId
 			if induceDst {
 				dstMappingEB := ea.getEdgeBundle("dstMapping")
-				dstMapping = make(map[int]int, len(dstMappingEB.Src))
+				dstMapping = make(map[SphynxId]SphynxId, len(dstMappingEB.Src))
 				for i := range dstMappingEB.Src {
 					dstMapping[dstMappingEB.Src[i]] = dstMappingEB.Dst[i]
 				}
 			}
 			es := ea.getEdgeBundle("edges")
-			induced := &EdgeBundle{}
-			embedding := &EdgeBundle{}
 			approxLen := len(es.Src)
-			induced.Make(0, approxLen)
-			embedding.Make(0, approxLen)
-			numInducedEdges := 0
+			induced := NewEdgeBundle(0, approxLen)
+			embedding := NewEdgeBundle(0, approxLen)
+			numInducedEdges := SphynxId(0)
 			for i, src := range es.Src {
 				dst := es.Dst[i]
 				mappedSrc := src
@@ -48,7 +46,7 @@ func init() {
 					induced.Dst = append(induced.Dst, mappedDst)
 					induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
 					embedding.Src = append(embedding.Src, numInducedEdges)
-					embedding.Dst = append(embedding.Dst, i)
+					embedding.Dst = append(embedding.Dst, SphynxId(i))
 					embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
 					numInducedEdges += 1
 				}

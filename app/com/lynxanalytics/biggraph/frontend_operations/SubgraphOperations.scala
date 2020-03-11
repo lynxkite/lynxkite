@@ -20,7 +20,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       NonNegInt("radius", "Radius", default = 3),
       Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
       RandomSeed("seed", "Seed", context.box))
-    def enabled = project.hasVertexSet && project.hasEdgeBundle
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val ratio = params("ratio")
       // Creating random attr for filtering the original center vertices of the "snowballs".
@@ -62,7 +62,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
       Param("edgeAttrName", "Save edge indices as", defaultValue = "first_traversed"),
       RandomSeed("seed", "Seed", context.box))
-    def enabled = project.hasVertexSet && project.hasEdgeBundle
+    def enabled = project.hasEdgeBundle
 
     def apply() = {
       val output = {
@@ -114,9 +114,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     params ++= project.edgeAttrList.map {
       attr => Param(s"filterea_${attr.id}", attr.id)
     }
-    def enabled =
-      FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes") ||
-        FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    def enabled = project.hasVertexSet
     val vaFilter = "filterva_(.*)".r
     val eaFilter = "filterea_(.*)".r
 
