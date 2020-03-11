@@ -176,6 +176,22 @@ func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromO
 	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
 }
 
+func (s *Server) Clear(ctx context.Context, in *pb.ClearRequest) (*pb.ClearReply, error) {
+	s.Lock()
+	defer s.Unlock()
+	switch in.Domain {
+	case "SphynxMemory":
+		s.entities = make(map[GUID]Entity)
+	case "OrderedSphynxDisk":
+		os.RemoveAll(s.dataDir)
+		os.MkdirAll(s.dataDir, 0775)
+	case "UnorderedSphynxDisk":
+		os.RemoveAll(s.unorderedDataDir)
+		os.MkdirAll(s.unorderedDataDir, 0775)
+	}
+	return &pb.ClearReply{}, nil
+}
+
 func main() {
 	port := os.Getenv("SPHYNX_PORT")
 	keydir := flag.String(

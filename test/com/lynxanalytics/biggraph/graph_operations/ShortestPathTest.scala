@@ -27,9 +27,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
       val op = ShortestPath(3)
       op(op.vs, vs)(op.es, es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
     }
-    val tooFarAway = distance.rdd.filter { case (_, distance) => distance > 1003.0 }.count()
     val farAway = distance.rdd.filter { case (_, distance) => distance > 1002.0 }.count()
-    assert(tooFarAway == 0, s"${tooFarAway} nodes are further than max iterations")
     assert(farAway > 0, s"${farAway} nodes are found at distance 3")
   }
 
@@ -65,6 +63,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
         1 -> Seq(2),
         2 -> Seq(3),
         3 -> Seq(4),
+        4 -> Seq(),
         5 -> Seq(6),
         6 -> Seq(4))).result
     val startingDistance = AddVertexAttribute.run(graph.vs, Map(0 -> 0.0))
