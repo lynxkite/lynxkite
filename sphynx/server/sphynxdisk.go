@@ -118,6 +118,7 @@ func readFromOrdered(e ParquetEntity, pr *reader.ParquetReader) error {
 }
 
 func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
+	log.Printf("loadFromOrderedDisk: %v", guid)
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	typeFName := fmt.Sprintf("%v/type_name", dirName)
 	typeData, err := ioutil.ReadFile(typeFName)

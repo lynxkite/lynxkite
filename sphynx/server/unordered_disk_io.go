@@ -187,8 +187,8 @@ func (s *Server) ReadFromUnorderedDisk(
 		edgeMapping := make([]int64, numRows)
 		src := make([]SphynxId, numRows)
 		dst := make([]SphynxId, numRows)
-		mappingToOrdered1 := *vs1.GetMappingToOrdered()
-		mappingToOrdered2 := *vs2.GetMappingToOrdered()
+		mappingToOrdered1 := vs1.GetMappingToOrdered()
+		mappingToOrdered2 := vs2.GetMappingToOrdered()
 		for i, row := range rows {
 			edgeMapping[i] = row.Id
 			src[i] = mappingToOrdered1[row.Src]
@@ -234,7 +234,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		defined := attr.Elem().FieldByName("Defined")
 		idIndex := fieldIndex(rowType, "Id")
 		valueIndex := fieldIndex(rowType, "Value")
-		mappingToOrdered := *vs.GetMappingToOrdered()
+		mappingToOrdered := vs.GetMappingToOrdered()
 		true := reflect.ValueOf(true)
 		for i := 0; i < numRows; i++ {
 			row := rows.Index(i)
