@@ -178,6 +178,9 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGrap
     dataManager.waitAllFutures()
   }
   override protected def afterAll {
+    // We create new Sphynx domains for each test class. Each domain has its own channel
+    // to the Sphynx server and after the tests finished, we ask the domains to shutdown
+    // their channel. (Otherwise we get warnings about orphaned channels.)
     dataManager.domains.filter(_.isInstanceOf[SphynxDomain]).foreach(_.asInstanceOf[SphynxDomain].shutDownChannel)
   }
   implicit val metaGraphManager = cleanMetaManager
