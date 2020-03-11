@@ -35,9 +35,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	if !exists {
 		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
-	if err := saveToOrderedDisk(entity, s.dataDir, guid); err != nil {
-		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
-	}
 	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
