@@ -49,7 +49,7 @@ func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
 	vs.Lock()
 	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]SphynxId)
+		vs.MappingToOrdered = make(map[int64]SphynxId, len(vs.MappingToUnordered))
 		for i, j := range vs.MappingToUnordered {
 			vs.MappingToOrdered[j] = SphynxId(i)
 		}
