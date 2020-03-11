@@ -46,6 +46,11 @@ func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	}
 	return nil, false
 }
+func (entityCache *EntityCache) Clear() {
+	entityCache.Lock()
+	defer entityCache.Unlock()
+	*entityCache = NewEntityCache()
+}
 
 // Set puts the entity in the cache.
 // It also drops old items if the total memory usage of cached items
