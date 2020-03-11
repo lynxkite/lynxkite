@@ -37,19 +37,7 @@ func createEntity(typeName string) (Entity, error) {
 }
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
-	alreadySaved, err := hasOnDisk(dataDir, guid)
-	if err != nil {
-		return err
-	}
-	if alreadySaved {
-		return nil
-	}
-	start := ourTimestamp()
-	defer func() {
-		log.Printf("saveToOrderedDisk: %v (%v - mem: %v) in %v ms\n",
-			guid, e.typeName(), e.estimatedMemUsage(), timestampDiff(ourTimestamp(), start))
-	}()
-
+	log.Printf("saveToOrderedDisk guid %v", guid)
 	typeName := e.typeName()
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
