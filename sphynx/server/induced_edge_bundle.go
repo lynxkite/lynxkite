@@ -9,29 +9,23 @@ func init() {
 			induceSrc := ea.GetBoolParam("induceSrc")
 			induceDst := ea.GetBoolParam("induceDst")
 			var srcMapping [][]SphynxId
-			var srcExists []bool
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
 				numVS := len(ea.getVertexSet("src").MappingToUnordered)
-				srcExists = make([]bool, numVS)
 				srcMapping = make([][]SphynxId, numVS)
 				for i := range srcMappingEB.Src {
 					orig := srcMappingEB.Src[i]
 					srcMapping[orig] = append(srcMapping[orig], srcMappingEB.Dst[i])
-					srcExists[orig] = true
 				}
 			}
 			var dstMapping [][]SphynxId
-			var dstExists []bool
 			if induceDst {
 				dstMappingEB := ea.getEdgeBundle("dstMapping")
 				numVS := len(ea.getVertexSet("dst").MappingToUnordered)
-				dstExists = make([]bool, numVS)
 				dstMapping = make([][]SphynxId, numVS)
 				for i := range dstMappingEB.Src {
 					orig := dstMappingEB.Src[i]
 					dstMapping[orig] = append(dstMapping[orig], dstMappingEB.Dst[i])
-					dstExists[orig] = true
 				}
 			}
 			es := ea.getEdgeBundle("edges")
@@ -50,16 +44,12 @@ func init() {
 				thisSrcExists := true
 				thisDstExists := true
 				if induceSrc {
-					thisSrcExists = srcExists[src]
-					if thisSrcExists {
-						mappedSrcs = srcMapping[src]
-					}
+					mappedSrcs = srcMapping[src]
+					thisSrcExists = len(mappedSrcs) > 0
 				}
 				if induceDst {
-					thisDstExists = dstExists[dst]
-					if thisDstExists {
-						mappedDsts = dstMapping[dst]
-					}
+					mappedDsts = dstMapping[dst]
+					thisDstExists = len(mappedDsts) > 0
 				}
 				if thisSrcExists && thisDstExists {
 					for j, mappedSrc := range mappedSrcs {
