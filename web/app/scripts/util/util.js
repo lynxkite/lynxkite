@@ -11,7 +11,6 @@ angular.module('biggraph')
     // with EntityProgressManager.computeProgress
     const COMPUTE_PROGRESS_ERROR = -1.0;
     const COMPUTE_PROGRESS_NOT_STARTED = 0.0;
-    const COMPUTE_PROGRESS_IN_PROGRESS = 0.5;
     const COMPUTE_PROGRESS_COMPLETED = 1.0;
 
     // A request queue with a limit on the number of parallel requests.
@@ -428,7 +427,8 @@ angular.module('biggraph')
           } else {
             constructValueForCalculationNotStarted();
           }
-        } else if (scalar.computeProgress === COMPUTE_PROGRESS_IN_PROGRESS) {
+        } else if (COMPUTE_PROGRESS_NOT_STARTED < scalar.computeProgress
+          && scalar.computeProgress < COMPUTE_PROGRESS_COMPLETED) {
           if (fetchNotReady) {
             fetchScalarAndConstructValue();
           } else {
@@ -469,6 +469,13 @@ angular.module('biggraph')
     util.qualitativeColorMaps = [
       'LynxKite Colors', 'Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Rainbow', 'Set1',
       'Set2', 'Set3'];
+
+    util.sliderColorMaps = {
+      'Blue to orange': ['#39bcf3', '#f80'],
+      'Orange to blue': ['#f80', '#39bcf3'],
+      'Visible to invisible': ['#39bcf3', 'transparent'],
+      'Invisible to visible': ['transparent', '#39bcf3'],
+    };
 
     util.baseName = function(p) {
       const lastSlash = p.lastIndexOf('/');

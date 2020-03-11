@@ -56,7 +56,7 @@ class DataManager(
 
   override def computeProgress(entity: MetaGraphEntity): Double = {
     try {
-      val d = bestSource(entity)
+      val d = whoHas(entity).getOrElse(whoCanCompute(entity))
       synchronized { futures.get((entity.gUID, d)) } match {
         case None =>
           if (d.has(entity)) synchronized {
@@ -85,23 +85,24 @@ class DataManager(
     }
   }
 
-  private def bestDomain(domains: Iterable[Domain], e: MetaGraphEntity): Domain = {
-    synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
-      .orElse(domains.find(_.has(e)))
-      .orElse(domains.find(_.canCompute(e.source))) match {
-        case None => throw new AssertionError(f"None of the domains can compute $e.")
-        case Some(d) => d
-      }
+  private def whoHas(e: MetaGraphEntity): Option[Domain] = {
+    domains.find(_.has(e))
   }
 
-  private def bestSource(e: MetaGraphEntity): Domain = bestDomain(domains, e)
+  private def whoCanCompute(e: MetaGraphEntity): Domain = {
+    domains.find(_.canCompute(e.source)) match {
+      case None => throw new AssertionError(f"None of the domains can compute $e.")
+      case Some(d) => d
+    }
+  }
 
-  def compute(entity: MetaGraphEntity): SafeFuture[Unit] = synchronized {
-    ensure(entity, bestSource(entity))
+  def compute(e: MetaGraphEntity): SafeFuture[Unit] = synchronized {
+    val d = whoHas(e).getOrElse(whoCanCompute(e))
+    ensure(e, d)
   }
 
   def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
-    val d = bestDomain(domains, scalar)
+    val d = whoHas(scalar).getOrElse(whoCanCompute(scalar))
     if (d.canGet(scalar)) {
       ensure(scalar, d).flatMap(_ => d.get(scalar))
     } else {
@@ -168,7 +169,7 @@ class DataManager(
   }
 
   private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
-    val source = bestSource(e)
+    val source = whoHas(e).getOrElse(whoCanCompute(e))
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
     } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
@@ -198,9 +199,9 @@ class DataManager(
     SafeFuture.sequence(fs).map(_ => ())
   }
 
-  def cache(entity: MetaGraphEntity): Unit = {
-    val d = bestSource(entity)
-    ensure(entity, d).map(_ => d.cache(entity))
+  def cache(e: MetaGraphEntity): Unit = {
+    val d = whoHas(e).getOrElse(whoCanCompute(e))
+    ensure(e, d).map(_ => d.cache(e))
   }
 
   def waitAllFutures(): Unit = {

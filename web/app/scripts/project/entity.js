@@ -170,7 +170,10 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
 
       scope.colors = function(cm) {
-        if (util.qualitativeColorMaps.includes(cm)) {
+        if (scope.isFilter('slider')) {
+          const cs = util.sliderColorMaps[cm];
+          return [cs[0] + ' 45%', 'white 45%, white 55%', cs[1] + ' 55%'];
+        } else if (util.qualitativeColorMaps.includes(cm)) {
           const cs = chroma.brewer[cm];
           // Set up gradient to have sharp boundaries.
           return cs.map((c, i) =>
@@ -184,7 +187,9 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
       // We only offer the sequential and divergent color maps for numerical attributes.
       scope.availableColorMaps = function() {
-        if (scope.entity.typeName === 'Double') {
+        if (scope.isFilter('slider')) {
+          return ['Blue to orange', 'Orange to blue', 'Visible to invisible', 'Invisible to visible'];
+        } else if (scope.entity.typeName === 'Double') {
           const cms = Object.keys(chroma.brewer).filter(k =>
             k[0] === k[0].toUpperCase() && !util.qualitativeColorMaps.includes(k));
           // Also offer reversed versions.
@@ -205,6 +210,9 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         if (scope.kind === 'vertex-attribute' && scope.isFilter('label color')) {
           return 'labelColorMap';
         }
+        if (scope.isFilter('slider')) {
+          return 'sliderColorMap';
+        }
       };
       scope.isSelectedColorMap = function(cm) {
         let state = scope.side.state[scope.colorMapKind()];
@@ -212,7 +220,11 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         // before color maps were added. We use the old colors. (LynxKite Classic / Rainbow)
         // Otherwise we use the preferred color map (Viridis / LynxKite Colors) as the default
         // if the current selection is for the wrong type.
-        if (scope.entity.typeName === 'Double') {
+        if (scope.isFilter('slider')) {
+          if (!scope.availableColorMaps().includes(state)) {
+            state = 'Blue to orange';
+          }
+        } else if (scope.entity.typeName === 'Double') {
           if (state === undefined) {
             state = 'LynxKite Classic';
           } else if (util.qualitativeColorMaps.includes(state)) {

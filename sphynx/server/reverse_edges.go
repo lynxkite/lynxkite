@@ -1,20 +1,14 @@
 // Implements the ReverseEdges operation
+// See the Spark implementation for details
 
 package main
 
 func doReverseEdges(esAB *EdgeBundle) (esBA *EdgeBundle, injection *EdgeBundle) {
 	numEdges := len(esAB.Dst)
-	esBA = &EdgeBundle{
-		Src:         make([]int, numEdges),
-		Dst:         make([]int, numEdges),
-		EdgeMapping: make([]int64, numEdges),
-	}
-	injection = &EdgeBundle{
-		Src:         make([]int, numEdges),
-		Dst:         make([]int, numEdges),
-		EdgeMapping: make([]int64, numEdges),
-	}
-	for i := 0; i < numEdges; i++ {
+	esBA = NewEdgeBundle(numEdges, numEdges)
+	injection = NewEdgeBundle(numEdges, numEdges)
+	n := SphynxId(numEdges)
+	for i := SphynxId(0); i < n; i++ {
 		esBA.EdgeMapping[i] = esAB.EdgeMapping[i]
 		esBA.Dst[i] = esAB.Src[i]
 		esBA.Src[i] = esAB.Dst[i]
