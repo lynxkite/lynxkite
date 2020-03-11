@@ -49,6 +49,8 @@ message ReadFromUnorderedDiskRequest {
 
 message ReadFromUnorderedDiskReply {}
 
+message WriteToUnorderedDiskReply {}
+
 message HasInSphynxMemoryRequest {
   string guid = 1;
 }
@@ -71,8 +73,11 @@ message ReadFromOrderedSphynxDiskRequest {
 
 message ReadFromOrderedSphynxDiskReply {}
 
+message ClearRequest {
+  string domain = 1;
+}
 
-message WriteToUnorderedDiskReply {}
+message ClearReply {}
 
 service Sphynx {
   rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
@@ -84,4 +89,5 @@ service Sphynx {
   rpc ReadFromOrderedSphynxDisk(ReadFromOrderedSphynxDiskRequest) returns (ReadFromOrderedSphynxDiskReply);
   rpc HasOnOrderedSphynxDisk(HasOnOrderedSphynxDiskRequest) returns (HasOnOrderedSphynxDiskReply);
   rpc HasInSphynxMemory(HasInSphynxMemoryRequest) returns (HasInSphynxMemoryReply);
+  rpc Clear(ClearRequest) returns (ClearReply);
 }

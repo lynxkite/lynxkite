@@ -11,10 +11,12 @@ import torch
 
 
 DoubleAttribute = 'DoubleAttribute'
+StringAttribute = 'StringAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
 DoubleTuple2Attribute = 'DoubleTuple2Attribute'
 PA_TYPES = {
     DoubleAttribute: pa.float64(),
+    StringAttribute: pa.string(),
     DoubleVectorAttribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
     DoubleTuple2Attribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
 }
@@ -54,13 +56,18 @@ class Op:
     path = f'{self.datadir}/{self.inputs[name]}/model.pt'
     return torch.load(path)
 
+  def input_scalar(self, name):
+    '''Reads a scalar from disk.'''
+    with open(f'{self.datadir}/{self.inputs[name]}/serialized_data') as f:
+      return json.load(f)
+
   def output(self, name, values, *, type, defined=None):
     '''Writes a list or Numpy array to disk.'''
     if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.numpy()
     if defined is None:
-      if type == pa.float64():
-        defined = list(~np.isnan(values))
+      if type == DoubleAttribute:
+        defined = [not np.isnan(v) for v in values]
       else:
         defined = [v is not None for v in values]
     if not isinstance(values, list):
