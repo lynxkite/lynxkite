@@ -8,8 +8,7 @@ import (
 )
 
 type Server struct {
-	entityMutex      sync.Mutex
-	entities         map[GUID]CacheEntry
+	entityCache      EntityCache
 	dataDir          string
 	unorderedDataDir string
 }
@@ -46,16 +45,12 @@ type VertexSet struct {
 	MappingToOrdered   map[int64]SphynxId
 }
 
-func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
-	vs.Lock()
-	defer vs.Unlock()
-	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]SphynxId)
-		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = SphynxId(i)
-		}
+func (vs *VertexSet) GetMappingToOrdered() *map[int64]SphynxId {
+	mappingToOrdered := make(map[int64]SphynxId)
+	for i, j := range vs.MappingToUnordered {
+		mappingToOrdered[j] = SphynxId(i)
 	}
-	return vs.MappingToOrdered
+	return &mappingToOrdered
 }
 
 // A scalar is stored as its JSON encoding. If you need the real value, unmarshal it for yourself.

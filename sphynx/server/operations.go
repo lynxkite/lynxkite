@@ -17,9 +17,10 @@ type EntityAccessor struct {
 func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity, error) {
 	inputs := make(map[string]Entity, len(opInst.Inputs))
 	for name, guid := range opInst.Inputs {
-		entity, error := server.getAnEntityWeAreSupposedToHave(guid)
-		if error != nil {
-			return nil, error
+		entity, exists := server.entityCache.Get(guid)
+		if !exists {
+			// DataManager, do something
+			return nil, fmt.Errorf("Guid %v is missing", guid)
 		}
 		inputs[name] = entity
 	}

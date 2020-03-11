@@ -1,124 +1,113 @@
 // This file contains code controlling the entity cache.
-// All access to the entity cache should go through functions defined here,
-// namely: getEntityFromCache, putEntityInCache, and getAnEntityWeAreSupposedToHave
-//
-// The main task for this code is to control the entity eviction process: we
-// select and discard entities when the memory pressure is big.
-//
-// Entity eviction can run in parallel with Sphynx operations, but it holds
-// the server.entityMutex for as long as it is running, so operations can neither
-// access their inputs nor store their outputs in this time. Already running operations
-// are not affected.
-// So, entity eviction cannot take very long. In particular: it
-// cannot save any entities to disk, because that can block everything for as long as
-// 30 seconds. The solution to this is that we only consider entities to be eligible
-// to eviction if they have already been saved to the unordered disk. The set of
-// such entities is growing steadily, because putEntityInCache will fire a goroutine
-// to write out the entity in the background. Once that job is finished (however long
-// it takes), the entity can be discarded.
-//
-// I experimented with discarding the least recently used entries, but it did not work well,
-// because I ended up discarding most entries anyway. In our case, the really (only) significant metric
-// it the size of the entity. There is no point throwing away a 20 byte-long scalar ever.
-// Discarded entities are not removed from the cache, because they still provide valuable
-// debug information, that can also be used in the selection process. (E.g., are we constantly
-// throwing out this entity?) In my tests (with the Andris wizard) it often happened that we
-// discarded something that was last used 3 minutes before, only to reload it the next minute.
-//
 
 package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"runtime"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 	"unsafe"
 )
 
-type CacheEntry struct {
+type EntityCache struct {
+	sync.Mutex
+	cache         map[GUID]cacheEntry
+	totalMemUsage int
+}
+
+func NewEntityCache() EntityCache {
+	return EntityCache{
+		Mutex:         sync.Mutex{},
+		cache:         make(map[GUID]cacheEntry),
+		totalMemUsage: 0,
+	}
+}
+
+type cacheEntry struct {
 	entity    Entity
-	timestamp int64 // The last time this entity was accessed with the getEntity.., putEntity.. api calls
-	evicted   int64 // The time when this entity was (last) evicted
+	timestamp int64 // The last time this entity was accessed
+	memUsage  int
 }
 
-const (
-	EntityIsInCache           = iota
-	EntityWasEvictedFromCache = iota
-	EntityIsNotInCache        = iota
-)
+var cachedEntitiesMaxMem = getNumericEnv("SPHYNX_CACHED_ENTITIES_MAX_MEM_MB", 1*1024) * 1024 * 1024
 
-func (server *Server) getEntityFromCache(guid GUID) (Entity, int) {
+func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	ts := ourTimestamp()
-	server.entityMutex.Lock()
-	defer server.entityMutex.Unlock()
-	e, exists := server.entities[guid]
+	entityCache.Lock()
+	defer entityCache.Unlock()
+	entry, exists := entityCache.cache[guid]
 	if exists {
-		if e.entity != nil {
-			server.entities[guid] = CacheEntry{
-				entity:    e.entity,
-				timestamp: ts,
-			}
-			return e.entity, EntityIsInCache
-		} else {
-			return nil, EntityWasEvictedFromCache
-		}
-	} else {
-		return nil, EntityIsNotInCache
+		fresh := entry
+		fresh.timestamp = ts
+		entityCache.cache[guid] = fresh
+		return entry.entity, true
 	}
+	return nil, false
 }
 
-func (server *Server) putEntityInCache(guid GUID, entity Entity) error {
-	ts := ourTimestamp()
-	server.entityMutex.Lock()
-	defer server.entityMutex.Unlock()
-	e, exists := server.entities[guid]
-	if exists {
-		if e.entity != nil {
-			// Maybe panic?
-			return fmt.Errorf("Caching %v but it was already cached", guid)
+// Set puts the entity in the cache.
+// It also drops old items if the total memory usage of cached items
+// exceeds cachedEntitiesMaxMem
+func (entityCache *EntityCache) Set(guid GUID, entity Entity) {
+	memUsage := entity.estimatedMemUsage()
+	entityCache.Lock()
+	defer entityCache.Unlock()
+	_, exists := entityCache.cache[guid]
+	if !exists {
+		entityCache.cache[guid] = cacheEntry{
+			entity:    entity,
+			timestamp: ourTimestamp(),
+			memUsage:  memUsage,
 		}
-		fmt.Printf("Guid %v is set again, last access: %v ms ago, evicted: %v ms ago\n",
-			guid, timestampDiff(ts, e.timestamp), timestampDiff(ts, e.evicted))
+		entityCache.totalMemUsage += memUsage
+		if entityCache.totalMemUsage > cachedEntitiesMaxMem {
+			memEvicted := entityCache.evictUntilEnoughEvicted(entityCache.totalMemUsage - cachedEntitiesMaxMem)
+			entityCache.totalMemUsage -= memEvicted
+		}
 	}
-	server.entities[guid] = CacheEntry{
-		entity:    entity,
-		timestamp: ts,
-	}
-	go saveToOrderedDisk(entity, server.dataDir, guid)
-	return nil
+	// It is legitimate that the entity is already in the cache. E.g., the DataManager re-runs
+	// an operation to re-create a missing output, but the rest of the outputs were not evicted.
+	// But we do not want to update the timestamp for those.
 }
 
-// The caller of this function knows that the entity is in the cache. (e.g., it
-// collects inputs to an operation). We reload that entity here transparently.
-// Can remove this quite painlessly as soon as the DataManager learns how to
-// handle such errors.
-// We can make this saving/reloading process very fast, since we don't have
-// to be incompatible with any external library. We can, in fact, write
-// out a VertexSet in 100 milliseconds instead of 20 seconds, see
-// https://app.asana.com/0/350682777273584/1165755673928201
-func (server *Server) getAnEntityWeAreSupposedToHave(guid GUID) (Entity, error) {
-	entity, status := server.getEntityFromCache(guid)
-	switch status {
-	case EntityIsNotInCache:
-		return nil, fmt.Errorf("Guid %v not in the cache", guid)
-	case EntityWasEvictedFromCache:
-		err := server.readFromUnorderedDiskAndPutInCache(guid)
-		if err != nil {
-			return nil, err
-		}
-		entity, status = server.getEntityFromCache(guid)
-		if status != EntityIsInCache {
-			return nil, fmt.Errorf("Guid %v not found in cache, even though it was reloaded after eviction")
-		}
-	default: //EntityIsInCache: do nothing
+type entityEvictionItem struct {
+	guid      GUID
+	timestamp int64
+	memUsage  int
+}
+
+func (entityCache *EntityCache) evictUntilEnoughEvicted(howMuchMemoryToRecycle int) int {
+	start := ourTimestamp()
+	evictionCandidates := make([]entityEvictionItem, 0, len(entityCache.cache))
+	for guid, e := range entityCache.cache {
+		evictionCandidates = append(evictionCandidates, entityEvictionItem{
+			guid:      guid,
+			timestamp: e.timestamp,
+			memUsage:  e.entity.estimatedMemUsage(),
+		})
 	}
-	return entity, nil
+	// Our timestamp is of nanosecond precision: this helps here to put outputs
+	// before inputs.
+	sort.Slice(evictionCandidates, func(i, j int) bool {
+		return evictionCandidates[i].timestamp < evictionCandidates[j].timestamp
+	})
+
+	memEvicted := 0
+	itemsEvicted := 0
+
+	for i := 0; i < len(evictionCandidates) && memEvicted < howMuchMemoryToRecycle; i++ {
+		guid := evictionCandidates[i].guid
+		fmt.Printf("Evicting: %v\n", evictionCandidates[i])
+		delete(entityCache.cache, guid)
+		memEvicted += evictionCandidates[i].memUsage
+		itemsEvicted++
+	}
+	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
+		itemsEvicted, len(evictionCandidates), memEvicted, timestampDiff(ourTimestamp(), start))
+	return memEvicted
 }
 
 func ourTimestamp() int64 {
@@ -182,159 +171,6 @@ func (e *LongAttribute) estimatedMemUsage() int {
 	return i
 }
 
-// Drops an entity from the cache
-func evictGuid(server *Server, guid GUID) int {
-	e := server.entities[guid]
-	server.entities[guid] = CacheEntry{
-		entity:    nil,
-		timestamp: e.timestamp,
-		evicted:   ourTimestamp(),
-	}
-	return e.entity.estimatedMemUsage()
-}
-
-// A low-hanging fruit: discard the MappingToUnordered maps
-// from VertexSets that have it, but keep the vertex sets themselves.
-func evictMappingToOrdered(server *Server) {
-	for guid, e := range server.entities {
-		if e.entity == nil {
-			continue
-		}
-		switch vs := e.entity.(type) {
-		case *VertexSet:
-			if vs.MappingToOrdered != nil {
-				newVS := &VertexSet{
-					Mutex:              sync.Mutex{},
-					MappingToUnordered: vs.MappingToUnordered,
-					MappingToOrdered:   nil,
-				}
-				server.entities[guid] = CacheEntry{
-					entity:    newVS,
-					timestamp: e.timestamp,
-					evicted:   e.evicted,
-				}
-			}
-		default:
-			// Do nothing
-		}
-	}
-}
-
-type EntityEvictionItem struct {
-	guid      GUID
-	timestamp int64
-	memUsage  int
-}
-
-// The main eviction function: it chooses the entities eligible for eviction.
-// They are sorted into a list. Once the list is ready, the entities from this
-// candidate list are discarded one by one until
-// enough memory has been freed. runtime.GC() is an expensive operation (can
-// take almost 1 second). We cannot gc and then check how much we freed after each
-// eviction. Instead, we rely on our size estimates and call runtime.GC() in the end.
-// (Maybe we could even get away with not calling runtime.GC() at all)
-//
-// The order of the entities is some ad-hoc heuristics. We choose the oldest 80% of
-// the entities and sort them according to their estimated size.
-// The remaining 20% is also sorted according to size.
-// Then we evict candidates from the first group. If necessary, we continue
-// with the second group. This way, the most recently accessed 20% is safe, but
-// the main factor is still the entity size.
-
-func evictUntilEnoughEvicted(server *Server, howMuchMemoryToRecycle int) int {
-	start := ourTimestamp()
-	evictionCandidates := make([]EntityEvictionItem, 0, len(server.entities))
-	for guid, e := range server.entities {
-		if e.entity == nil {
-			continue
-		}
-		onDisk, err := hasOnDisk(server.dataDir, guid)
-		if !onDisk || err != nil {
-			if err != nil {
-				fmt.Printf("Ordered disk check: error while checking for %v: %v\n", guid, err)
-			}
-			continue
-		}
-		evictionCandidates = append(evictionCandidates, EntityEvictionItem{
-			guid:      guid,
-			timestamp: e.timestamp,
-			memUsage:  e.entity.estimatedMemUsage(),
-		})
-	}
-	// Our timestamp is of nanosecond precision: this helps here to put outputs
-	// before inputs.
-	sort.Slice(evictionCandidates, func(i, j int) bool {
-		return evictionCandidates[i].timestamp < evictionCandidates[j].timestamp
-	})
-	oldTimersLimit := (4 * len(evictionCandidates)) / 5
-	sort.Slice(evictionCandidates[0:oldTimersLimit], func(i, j int) bool {
-		return evictionCandidates[i].memUsage > evictionCandidates[j].memUsage
-	})
-	newOnes := evictionCandidates[oldTimersLimit:]
-	sort.Slice(newOnes, func(i, j int) bool {
-		return newOnes[i].memUsage > newOnes[j].memUsage
-	})
-
-	memEvicted := 0
-	itemsEvicted := 0
-
-	for i := 0; i < len(evictionCandidates) && memEvicted < howMuchMemoryToRecycle; i++ {
-		guid := evictionCandidates[i].guid
-		memEvicted += evictGuid(server, guid)
-		itemsEvicted++
-	}
-	if itemsEvicted > 0 {
-		runtime.GC()
-	}
-	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
-		itemsEvicted, len(evictionCandidates), memEvicted, timestampDiff(ourTimestamp(), start))
-	return itemsEvicted
-}
-
-// This is the main eviction loop.
-//
-// The go runtime cannot be forced to keep a limit on the memory allocated from the system.
-// Furthermore, it is also very reluctant to return any memory allocated from the OS.
-// Two important metrics are of relevance here:
-//  memStats.Alloc and memStats.HeapIdle
-// The first is how much heap memory is currently used (mostly by entities), and
-// the second is how much free memory the runtime has in reserve. HeapIdle is almost
-// never returned to the system.
-// We have to look at Alloc to check if the entity eviction should take place.
-func EntityEvictor(server *Server) {
-	checkPeriodMs := getNumericEnv("SPHYNX_CACHE_EVICTION_PERIOD_MS", 1000*30)
-	evictThreshold := getNumericEnv("SPHYNX_EVICTION_THRESHOLD_MB", 14*1024) * 1024 * 1024
-	evictTarget := getNumericEnv("SPHYNX_EVICTION_TARGET_MB", 14*1024) * 1024 * 1024
-	ticker := time.NewTicker(time.Duration(checkPeriodMs) * time.Millisecond)
-	for _ = range ticker.C {
-		var memStats runtime.MemStats
-		runtime.ReadMemStats(&memStats)
-		printMemStats("Checking: ", memStats)
-		server.entityMutex.Lock()
-		evictMappingToOrdered(server)
-		if int(memStats.Alloc) > evictThreshold {
-			printMemStats("Before eviction:", memStats)
-			evictUntilEnoughEvicted(server, int(memStats.Alloc)-evictTarget)
-			runtime.ReadMemStats(&memStats)
-			printMemStats("After eviction:", memStats)
-		}
-		server.entityMutex.Unlock()
-	}
-}
-
-func printMemStats(msg string, ms runtime.MemStats) {
-	rss, err := getRss()
-	if err != nil {
-		fmt.Printf("Can't access used mem: %v\n", err)
-		rss = 0
-	}
-	fmt.Printf("%s Alloc: %.1fg  rss: %.1fg heapIdle: %.1fg\n",
-		msg,
-		float64(ms.Alloc)/(1024*1024*1204),
-		float64(rss)/(1024*1024*1024),
-		float64(ms.HeapIdle)/(1024*1024*1024))
-}
-
 func getNumericEnv(key string, dflt int) int {
 	s, exists := os.LookupEnv(key)
 	if exists {
@@ -343,29 +179,4 @@ func getNumericEnv(key string, dflt int) int {
 	} else {
 		return dflt
 	}
-}
-
-// Rss is the memory occupied by our process as seen by Linux
-func getRss() (int, error) {
-	pid := os.Getpid()
-	fileName := fmt.Sprintf("/proc/%v/status", pid)
-	buf, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return 0, fmt.Errorf("Can't open %v", fileName)
-	} else {
-		file := string(buf)
-		lines := strings.Split(file, "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "VmRSS:") {
-				var rss int
-				r := strings.NewReader(line)
-				_, err := fmt.Fscanf(r, "VmRSS: %d", &rss)
-				if err != nil {
-					return 0, fmt.Errorf("Bad VmRSS line format: %v", line)
-				}
-				return rss * 1024, nil
-			}
-		}
-	}
-	return 0, fmt.Errorf("Can't find VmRSS field in %v")
 }
