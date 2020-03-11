@@ -34,6 +34,9 @@ func (_ *DoubleAttribute) typeName() string {
 func (_ *StringAttribute) typeName() string {
 	return "StringAttribute"
 }
+func (_ *LongAttribute) typeName() string {
+	return "LongAttribute"
+}
 func (_ *DoubleTuple2Attribute) typeName() string {
 	return "DoubleTuple2Attribute"
 }
@@ -103,12 +106,12 @@ func (eb *EdgeBundle) readFromOrdered(pr *reader.ParquetReader, numRows int) err
 	if err := pr.Read(&rows); err != nil {
 		return fmt.Errorf("Failed to read parquet file: %v", err)
 	}
-	eb.Src = make([]int, numRows)
-	eb.Dst = make([]int, numRows)
+	eb.Src = make([]SphynxId, numRows)
+	eb.Dst = make([]SphynxId, numRows)
 	eb.EdgeMapping = make([]int64, numRows)
 	for i, row := range rows {
-		eb.Src[i] = int(row.Src)
-		eb.Dst[i] = int(row.Dst)
+		eb.Src[i] = SphynxId(row.Src)
+		eb.Dst[i] = SphynxId(row.Dst)
 		eb.EdgeMapping[i] = row.SparkId
 	}
 	return nil
@@ -230,8 +233,17 @@ type OrderedStringAttributeRow struct {
 	Defined bool   `parquet:"name=defined, type=BOOLEAN"`
 }
 
+type OrderedLongAttributeRow struct {
+	Value   int64 `parquet:"name=value, type=INT64"`
+	Defined bool  `parquet:"name=defined, type=BOOLEAN"`
+}
+
 func (_ *StringAttribute) orderedRow() interface{} {
 	return new(OrderedStringAttributeRow)
+}
+
+func (_ *LongAttribute) orderedRow() interface{} {
+	return new(OrderedLongAttributeRow)
 }
 
 type UnorderedStringAttributeRow struct {
@@ -239,8 +251,17 @@ type UnorderedStringAttributeRow struct {
 	Value string `parquet:"name=value, type=UTF8"`
 }
 
+type UnorderedLongAttributeRow struct {
+	Id    int64 `parquet:"name=id, type=INT64"`
+	Value int64 `parquet:"name=value, type=INT64"`
+}
+
 func (_ *StringAttribute) unorderedRow() interface{} {
 	return new(UnorderedStringAttributeRow)
+}
+
+func (_ *LongAttribute) unorderedRow() interface{} {
+	return new(UnorderedLongAttributeRow)
 }
 
 type OrderedDoubleAttributeRow struct {

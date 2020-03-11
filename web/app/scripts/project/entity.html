@@ -115,17 +115,9 @@
          id="color-map-{{ cm }}"> {{ cm }}
       <span
         style="width: 100px; height: 10px; border: 1px solid black; display: inline-block;"
-        ng-style="{ background: 'linear-gradient(to right, {{ colors(cm).join(',') }})' }">
+        ng-style="{ background: 'linear-gradient(to right, ' + colors(cm).join(',') + ')' }">
       </span>
     </div>
   </div>
-
-  <input ng-show="side.state.attributeTitles.slider === title()"
-         id="slider"
-         type="range"
-         ng-model="side.state.sliderPos"
-         min="-1"
-         max="101"
-         drop-tooltip="Threshold">
 
 </div>

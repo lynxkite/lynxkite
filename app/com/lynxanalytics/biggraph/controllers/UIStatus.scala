@@ -48,7 +48,8 @@ case class UIStatus(
     sliderPos: Option[Double],
     vertexColorMap: Option[String],
     labelColorMap: Option[String],
-    edgeColorMap: Option[String])
+    edgeColorMap: Option[String],
+    sliderColorMap: Option[String])
 object UIStatus {
   val default = UIStatus(
     projectPath = None,
@@ -67,7 +68,8 @@ object UIStatus {
     sliderPos = None,
     vertexColorMap = Some("Viridis"),
     labelColorMap = Some("Viridis"),
-    edgeColorMap = Some("Viridis"))
+    edgeColorMap = Some("Viridis"),
+    sliderColorMap = Some("Blue to orange"))
 }
 
 case class TwoSidedUIStatus(

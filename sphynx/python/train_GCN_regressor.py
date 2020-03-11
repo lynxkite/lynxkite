@@ -74,5 +74,5 @@ with torch.no_grad():
   pred = model(data)
 train_mse = F.mse_loss(pred[batch_train_mask], data.y[batch_train_mask]).item()
 
-op.output_model('model', model, 'GCN classifier')
+op.output_model('model', model, 'GCN regressor')
 op.output_scalar('trainMSE', train_mse)

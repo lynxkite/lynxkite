@@ -12,6 +12,8 @@ import spark_util.BigGraphSparkContext
 import scala.util.Random
 
 object Benchmark extends Tag("Benchmark")
+object SphynxOnly extends Tag("SphynxOnly")
+object SparkOnly extends Tag("SparkOnly")
 
 object TestUtils {
   def RDDToSortedString(rdd: spark.rdd.RDD[_]): String = {

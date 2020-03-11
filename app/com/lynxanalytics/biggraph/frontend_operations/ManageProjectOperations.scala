@@ -82,7 +82,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Discard edge attributes")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.edgeAttrList, multipleChoice = true)
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    def enabled = FEStatus.enabled
     override def summary = {
       val names = params("name").replace(",", ", ")
       s"Discard edge attributes: $names"
@@ -96,7 +96,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Discard scalars")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.scalarList, multipleChoice = true)
-    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
+    def enabled = FEStatus.enabled
     override def summary = {
       val names = params("name").replace(",", ", ")
       s"Discard scalars: $names"
@@ -110,7 +110,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Discard segmentation")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.segmentationList)
-    def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
+    def enabled = FEStatus.enabled
     override def summary = {
       val name = params("name")
       s"Discard segmentation: $name"
@@ -122,7 +122,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Discard vertex attributes")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.vertexAttrList, multipleChoice = true)
-    def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    def enabled = FEStatus.enabled
     override def summary = {
       val names = params("name").replace(",", ", ")
       s"Discard vertex attributes: $names"
@@ -139,7 +139,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= project.edgeAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
     }
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    def enabled = project.hasEdgeBundle
     val attrParams = params.toMap.collect {
       case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
     }
@@ -219,7 +219,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= project.vertexAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
     }
-    def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    def enabled = project.hasVertexSet
     val attrParams = params.toMap.collect {
       case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
     }
@@ -266,9 +266,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= project.edgeAttrList.map {
       attr => Param(s"icon_for_${attr.id}", attr.id)
     }
-    def enabled = FEStatus.assert(
-      (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
-      "No edge attributes.")
+    def enabled = project.hasEdgeBundle
     val attrParams: Map[String, String] = params.toMap.collect {
       case (name, value) if name.startsWith("icon_for_") => {
         (name.stripPrefix("icon_for_"), value)
@@ -333,9 +331,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= project.vertexAttrList.map {
       attr => Param(s"icon_for_${attr.id}", attr.id)
     }
-    def enabled = FEStatus.assert(
-      (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
-      "No vertex attributes.")
+    def enabled = project.hasVertexSet
     val attrParams: Map[String, String] = params.toMap.collect {
       case (name, value) if name.startsWith("icon_for_") => {
         (name.stripPrefix("icon_for_"), value)

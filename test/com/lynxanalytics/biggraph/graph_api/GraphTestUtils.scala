@@ -5,6 +5,7 @@ import org.scalatest
 import scala.util.Random
 import scala.reflect.runtime.universe.TypeTag
 import scala.language.implicitConversions
+import org.apache.commons.io.FileUtils
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
@@ -14,6 +15,7 @@ import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile, Tim
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -127,7 +129,30 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     val dataDir = cleanDataManagerDir()
     new SparkDomain(sparkSession, dataDir)
   }
-  def cleanDataManager: DataManager = new DataManager(Seq(new ScalaDomain, cleanSparkDomain))
+
+  def cleanDataManager: DataManager = {
+    val withSphynx = LoggedEnvironment.envOrNone("WITH_SPHYNX").get.toBoolean
+    if (withSphynx) {
+      val dataDir = cleanDataManagerDir()
+      val host = "localhost"
+      val port = LoggedEnvironment.envOrNone("SPHYNX_PORT").get
+      val certDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR").get
+      val unorderedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR").get
+
+      val dm = new DataManager(Seq(
+        new OrderedSphynxDisk(host, port.toInt, certDir),
+        new SphynxMemory(host, port.toInt, certDir),
+        new UnorderedSphynxLocalDisk(host, port.toInt, certDir, unorderedDataDir),
+        new ScalaDomain,
+        new UnorderedSphynxSparkDisk(host, port.toInt, certDir, dataDir / "sphynx"),
+        new SparkDomain(sparkSession, dataDir)))
+      dm.domains.filter(_.isInstanceOf[SphynxDomain]).map(_.asInstanceOf[SphynxDomain].clear).foreach(
+        _.awaitReady(concurrent.duration.Duration.Inf))
+      dm
+    } else {
+      new DataManager(Seq(new ScalaDomain, cleanSparkDomain))
+    }
+  }
 }
 
 // A TestDataManager that has an ephemeral path, too.
@@ -147,14 +172,20 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment
-  with scalatest.Suite with scalatest.BeforeAndAfter {
+  with scalatest.Suite with scalatest.BeforeAndAfter with scalatest.BeforeAndAfterAll {
   PrefixRepository.dropResolutions()
   after {
     dataManager.waitAllFutures()
   }
+  override protected def afterAll {
+    // We create new Sphynx domains for each test class. Each domain has its own channel
+    // to the Sphynx server and after the tests finished, we ask the domains to shutdown
+    // their channel. (Otherwise we get warnings about orphaned channels.)
+    dataManager.domains.filter(_.isInstanceOf[SphynxDomain]).foreach(_.asInstanceOf[SphynxDomain].shutDownChannel)
+  }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
-  implicit val sparkDomain = dataManager.domains(1).asInstanceOf[SparkDomain]
+  implicit val sparkDomain = dataManager.domains.find(_.isInstanceOf[SparkDomain]).get.asInstanceOf[SparkDomain]
   PrefixRepository.registerPrefix(standardDataPrefix, sparkDomain.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
@@ -163,7 +194,7 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManagerEphemeral
-  implicit val sparkDomain = dataManager.domains(1).asInstanceOf[SparkDomain]
+  implicit val sparkDomain = dataManager.domains.find(_.isInstanceOf[SparkDomain]).get.asInstanceOf[SparkDomain]
   PrefixRepository.registerPrefix(standardDataPrefix, sparkDomain.writablePath.symbolicName)
   registerStandardPrefixes()
 }

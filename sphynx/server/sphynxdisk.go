@@ -29,6 +29,8 @@ func createEntity(typeName string) (Entity, error) {
 		return &DoubleTuple2Attribute{}, nil
 	case "DoubleVectorAttribute":
 		return &DoubleVectorAttribute{}, nil
+	case "LongAttribute":
+		return &LongAttribute{}, nil
 	default:
 		return nil, fmt.Errorf("Unknown entity to load: %v", typeName)
 	}

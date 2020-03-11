@@ -30,7 +30,7 @@ $(pip): python_requirements.txt
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-prep-done
-	./tools/install_spark.sh && ./.test_backend.sh && touch $@
+	./tools/install_spark.sh && ./.test_backend.sh -s && ./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
