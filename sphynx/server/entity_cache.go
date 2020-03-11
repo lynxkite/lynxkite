@@ -51,11 +51,8 @@ func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 func (entityCache *EntityCache) Clear() {
 	entityCache.Lock()
 	defer entityCache.Unlock()
-	guids := make([]GUID, len(entityCache.cache))
+	// Apparently, this is safe: https://golang.org/doc/effective_go.html#for
 	for guid := range entityCache.cache {
-		guids = append(guids, guid)
-	}
-	for _, guid := range guids {
 		delete(entityCache.cache, guid)
 	}
 	entityCache.totalMemUsage = 0
