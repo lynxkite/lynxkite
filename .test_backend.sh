@@ -26,7 +26,9 @@ if $WITH_SPHYNX; then
   -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
   -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
   -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=localhost"
-  sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR &
+  cd sphynx
+  go/bin/server -keydir=$SPHYNX_CERT_DIR &
+  cd -
   $(dirname $0)/tools/wait_for_port.sh $SPHYNX_PORT
   echo "Sphynx running on port $SPHYNX_PORT"
   echo $! > $SPHYNX_PID_FILE
