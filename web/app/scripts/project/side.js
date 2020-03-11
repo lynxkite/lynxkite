@@ -137,6 +137,7 @@ angular.module('biggraph')
       vd.vertexColorMap = this.state.vertexColorMap;
       vd.labelColorMap = this.state.labelColorMap;
       vd.edgeColorMap = this.state.edgeColorMap;
+      vd.sliderColorMap = this.state.sliderColorMap;
 
       const at = this.state.attributeTitles;
 
@@ -197,7 +198,6 @@ angular.module('biggraph')
       vd.setCenters = function(ids) { that.state.centers = ids; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
-      vd.sliderPos = this.state.sliderPos;
 
       vd.hasParent = function() {
         return that.getParentSide() !== undefined;
@@ -354,7 +354,6 @@ angular.module('biggraph')
         // Apply mutual exclusions and do initialization.
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
-          this.state.sliderPos = 50;
         } else if (setting === 'color') {
           this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;
