@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_api
 import _root_.io.grpc.netty.NettyChannelBuilder
 import _root_.io.grpc.netty.GrpcSslContexts
 import _root_.io.grpc.StatusRuntimeException
-import _root_.io.grpc.ManagedChannelBuilder
 import _root_.io.grpc.stub.StreamObserver
 import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
@@ -13,6 +12,7 @@ import scala.concurrent.{ Promise, Future }
 import scala.util.{ Success, Failure }
 import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext
+import java.util.concurrent.TimeUnit
 
 class SingleResponseStreamObserver[T] extends StreamObserver[T] {
   private val promise = Promise[T]()
@@ -140,6 +140,18 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.WriteToOrderedDiskReply]
     asyncStub.writeToOrderedDisk(request, obs)
     obs.future.map(_ => ())
+  }
+
+  def clear(domain: String): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.ClearRequest.newBuilder().setDomain(domain).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ClearReply]
+    asyncStub.clear(request, obs)
+    obs.future.map(_ => ())
+  }
+
+  def shutDownChannel = {
+    val isShutdown = channel.shutdown.awaitTermination(30, TimeUnit.SECONDS)
+    if (!isShutdown) channel.shutdownNow
   }
 
 }

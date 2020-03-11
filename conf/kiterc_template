@@ -259,3 +259,7 @@ export SPHYNX_PID_FILE=$HOME/sphynx.pid
 export ORDERED_SPHYNX_DATA_DIR=$HOME/ordered_sphynx_data
 # Specify the directory where Sphynx stores graph data using vertex ids from the Spark world.
 export UNORDERED_SPHYNX_DATA_DIR=$HOME/unordered_sphynx_data
+
+# Unrestricted Python in LynxKite is a very powerful tool. Since Python execution has full access
+# to the network and file-system, it must be explicitly enabled by the administrator.
+# export KITE_ALLOW_PYTHON=yes

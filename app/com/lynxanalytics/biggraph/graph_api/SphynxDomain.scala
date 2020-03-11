@@ -23,7 +23,9 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
-    typeTag[String], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
+    typeTag[String], typeTag[Long], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
+  def clear(): SafeFuture[Unit]
+  def shutDownChannel
 }
 
 class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -71,6 +73,10 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
     }
   }
 
+  def clear(): SafeFuture[Unit] = client.clear("SphynxMemory")
+
+  def shutDownChannel = client.shutDownChannel
+
 }
 
 class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
@@ -109,6 +115,10 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
     assert(source.isInstanceOf[SphynxMemory], s"Cannot fetch $e from $source")
     client.writeToOrderedDisk(e)
   }
+
+  def clear(): SafeFuture[Unit] = client.clear("OrderedSphynxDisk")
+
+  def shutDownChannel = client.shutDownChannel
 }
 
 abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
@@ -171,6 +181,15 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
         val schema = StructType(Seq(
           StructField("id", LongType, false),
           StructField("value", DoubleType, false)))
+        writeRDD(rdd, schema, e)
+      }
+      case a: AttributeData[_] if a.typeTag == typeTag[Long] => {
+        val rdd = a.rdd.map {
+          case (id, value) => Row(id, value)
+        }
+        val schema = StructType(Seq(
+          StructField("id", LongType, false),
+          StructField("value", LongType, false)))
         writeRDD(rdd, schema, e)
       }
       case a: AttributeData[_] if a.typeTag == typeTag[(Double, Double)] => {
@@ -267,6 +286,9 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
       case _ => throw new AssertionError(s"Cannot fetch $e from $source")
     }
   }
+  def clear(): SafeFuture[Unit] = client.clear("UnorderedSphynxDisk")
+
+  def shutDownChannel = client.shutDownChannel
 }
 
 class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dataDir: HadoopFile)
@@ -309,4 +331,8 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
       case source: SparkDomain => relocateFromSpark(e, source)
     }
   }
+  def clear() = SafeFuture.async(dataDir.delete)
+
+  def shutDownChannel = client.shutDownChannel
+
 }

@@ -1,4 +1,5 @@
 // Implements the AddReversedEdges operation
+// See the Spark implementation for details
 
 package main
 
@@ -19,13 +20,13 @@ func doAddReversedEdges(edges *EdgeBundle,
 	numNewEdges := numOldEdges * 2
 	edgeIdSet := newEdgeMapping(numNewEdges)
 	esPlus = &EdgeBundle{
-		Src:         make([]int, numNewEdges),
-		Dst:         make([]int, numNewEdges),
+		Src:         make([]SphynxId, numNewEdges),
+		Dst:         make([]SphynxId, numNewEdges),
 		EdgeMapping: *edgeIdSet,
 	}
 	newToOriginal = &EdgeBundle{
-		Src:         make([]int, numNewEdges),
-		Dst:         make([]int, numNewEdges),
+		Src:         make([]SphynxId, numNewEdges),
+		Dst:         make([]SphynxId, numNewEdges),
 		EdgeMapping: *edgeIdSet,
 	}
 
@@ -41,8 +42,9 @@ func doAddReversedEdges(edges *EdgeBundle,
 	} else {
 		isNew = nil
 	}
-	for i := 0; i < numOldEdges; i++ {
-		j := 2 * i
+	j := SphynxId(0)
+	n := SphynxId(numOldEdges)
+	for i := SphynxId(0); i < n; i++ {
 		esPlus.Src[j] = edges.Src[i]
 		esPlus.Dst[j] = edges.Dst[i]
 		esPlus.Src[j+1] = edges.Dst[i]
@@ -55,6 +57,7 @@ func doAddReversedEdges(edges *EdgeBundle,
 			isNew.Values[j] = 0.0
 			isNew.Values[j+1] = 1.0
 		}
+		j += 2
 	}
 	return
 }
@@ -63,7 +66,7 @@ func init() {
 	operationRepository["AddReversedEdges"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			es := ea.getEdgeBundle("es")
-			addIsNewAttr := ea.GetBoolParam("addIsNewAttr", false)
+			addIsNewAttr := ea.GetBoolParamWithDefault("addIsNewAttr", false)
 			esPlus, newToOriginal, isNew := doAddReversedEdges(es, addIsNewAttr)
 			ea.output("esPlus", esPlus)
 			ea.output("newToOriginal", newToOriginal)

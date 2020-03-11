@@ -285,70 +285,69 @@ module.exports = function(fw) {
       lib.addConcurMatcher();
       name.visualizeAs('label');
       age.visualizeAs('slider');
-      const RED = 'rgb(161, 54, 54)';
-      const YELLOW = 'rgb(184, 184, 46)';
-      const GREEN = 'rgb(54, 161, 54)';
+      const BLUE = 'rgb(57, 188, 243)';
+      const ORANGE = 'rgb(255, 136, 0)';
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: GREEN },
-          { label: 'Eve', color: GREEN },
-          { label: 'Bob', color: RED },
+          { label: 'Adam', color: ORANGE },
+          { label: 'Eve', color: ORANGE },
+          { label: 'Bob', color: BLUE },
         ]);
       });
-      const slider = age.slider();
+      const slider = visualization.popup.$('.slider');
       const K = protractor.Key;
 
       slider.sendKeys(K.HOME);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: RED },
-          { label: 'Eve', color: RED },
-          { label: 'Bob', color: RED },
+          { label: 'Adam', color: BLUE },
+          { label: 'Eve', color: BLUE },
+          { label: 'Bob', color: BLUE },
         ]);
       });
 
       slider.sendKeys(K.RIGHT);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: RED },
-          { label: 'Eve', color: YELLOW },
-          { label: 'Bob', color: RED },
+          { label: 'Adam', color: BLUE },
+          { label: 'Eve', color: 'white' },
+          { label: 'Bob', color: BLUE },
         ]);
       });
 
       slider.sendKeys(K.RIGHT);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: RED },
-          { label: 'Eve', color: GREEN },
-          { label: 'Bob', color: RED },
+          { label: 'Adam', color: BLUE },
+          { label: 'Eve', color: ORANGE },
+          { label: 'Bob', color: BLUE },
         ]);
       });
 
       slider.sendKeys(K.END);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: GREEN },
-          { label: 'Eve', color: GREEN },
-          { label: 'Bob', color: GREEN },
+          { label: 'Adam', color: ORANGE },
+          { label: 'Eve', color: ORANGE },
+          { label: 'Bob', color: ORANGE },
         ]);
       });
 
       slider.sendKeys(K.LEFT);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: GREEN },
-          { label: 'Eve', color: GREEN },
-          { label: 'Bob', color: YELLOW },
+          { label: 'Adam', color: ORANGE },
+          { label: 'Eve', color: ORANGE },
+          { label: 'Bob', color: 'white' },
         ]);
       });
 
       slider.sendKeys(K.LEFT);
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
-          { label: 'Adam', color: GREEN },
-          { label: 'Eve', color: GREEN },
-          { label: 'Bob', color: RED },
+          { label: 'Adam', color: ORANGE },
+          { label: 'Eve', color: ORANGE },
+          { label: 'Bob', color: BLUE },
         ]);
       });
     },

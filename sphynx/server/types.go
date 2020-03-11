@@ -14,6 +14,7 @@ type Server struct {
 	unorderedDataDir string
 }
 type GUID string
+type SphynxId uint32
 type OperationDescription struct {
 	Class string
 	Data  map[string]interface{}
@@ -33,24 +34,32 @@ func (server *Server) get(guid GUID) (Entity, bool) {
 }
 
 type EdgeBundle struct {
-	Src         []int
-	Dst         []int
+	Src         []SphynxId
+	Dst         []SphynxId
 	EdgeMapping []int64
+}
+
+func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
+	return &EdgeBundle{
+		Src:         make([]SphynxId, size, maxSize),
+		Dst:         make([]SphynxId, size, maxSize),
+		EdgeMapping: make([]int64, size, maxSize),
+	}
 }
 
 type VertexSet struct {
 	sync.Mutex
 	MappingToUnordered []int64
-	MappingToOrdered   map[int64]int
+	MappingToOrdered   map[int64]SphynxId
 }
 
-func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
 	vs.Lock()
 	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]int)
+		vs.MappingToOrdered = make(map[int64]SphynxId)
 		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = i
+			vs.MappingToOrdered[j] = SphynxId(i)
 		}
 	}
 	return vs.MappingToOrdered
@@ -75,6 +84,11 @@ func (scalar *Scalar) LoadTo(dst interface{}) error {
 
 type DoubleAttribute struct {
 	Values  []float64
+	Defined []bool
+}
+
+type LongAttribute struct {
+	Values  []int64
 	Defined []bool
 }
 

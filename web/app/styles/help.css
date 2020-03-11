@@ -59,6 +59,7 @@ code {
   position: relative;
   width: 0;
   height: 0;
+  pointer-events: auto;
 }
 .help-popup-positioner help-popup {
   position: absolute;

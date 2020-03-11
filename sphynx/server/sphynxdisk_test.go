@@ -24,6 +24,10 @@ func TestEntityIO(t *testing.T) {
 		Values:  []float64{20.3, 18.2, 50.3, 2.0},
 		Defined: []bool{true, true, true, true},
 	}
+	data["LongAttribute"] = &LongAttribute{
+		Values:  []int64{20, 18, 50, 2},
+		Defined: []bool{true, true, true, true},
+	}
 	data["DoubleTuple2Attribute"] = &DoubleTuple2Attribute{
 		Values: []DoubleTuple2AttributeValue{
 			{40.71448, -74.00598},
