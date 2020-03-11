@@ -171,11 +171,9 @@ func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromO
 }
 
 func (s *Server) Clear(ctx context.Context, in *pb.ClearRequest) (*pb.ClearReply, error) {
-	s.Lock()
-	defer s.Unlock()
 	switch in.Domain {
 	case "SphynxMemory":
-		s.entities = make(map[GUID]Entity)
+		s.entityCache.Clear()
 	case "OrderedSphynxDisk":
 		os.RemoveAll(s.dataDir)
 		os.MkdirAll(s.dataDir, 0775)
