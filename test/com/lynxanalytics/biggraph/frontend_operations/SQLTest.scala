@@ -263,13 +263,20 @@ class SQLTest extends OperationsTestBase {
         "aggregate_weight" -> "set"))
       .box("SQL1", Map("sql" -> "select edge_weight_set from vertices", "persist" -> "no"))
       .table
-    val data = table.df.collect.toSeq.map(row => toSeq(row).asInstanceOf[Seq[Double]].sorted)
+    val data = table.df.collect.toSeq.map(row => {
+      val asSeq = row.toSeq(0).asInstanceOf[Seq[Double]]
+      if (asSeq == null) {
+        null
+      } else {
+        asSeq.sorted
+      }
+    })
     assert(table.schema.map(_.name) == Seq("edge_weight_set"))
     assert(data == Seq(
-      Seq(Seq(1.0, 2.0, 3.0)),
-      Seq(Seq(1.0, 2.0, 4.0)),
-      Seq(Seq(3.0, 4.0)),
-      Seq(null)))
+      Seq(1.0, 2.0, 3.0),
+      Seq(1.0, 2.0, 4.0),
+      Seq(3.0, 4.0),
+      null))
   }
 
   test("Thread safe sql even for the same SQL context") {
