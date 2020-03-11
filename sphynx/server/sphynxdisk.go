@@ -129,11 +129,6 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	if err != nil {
 		return nil, err
 	}
-	start := ourTimestamp()
-	defer func() {
-		log.Printf("loadedFromOrderedDisk: %v (%v - mem: %v) in %v ms\n",
-			guid, e.typeName(), e.estimatedMemUsage(), timestampDiff(ourTimestamp(), start))
-	}()
 	switch e := e.(type) {
 	case ParquetEntity:
 		const numGoRoutines int64 = 4
