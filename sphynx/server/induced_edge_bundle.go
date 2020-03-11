@@ -8,20 +8,24 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			induceSrc := ea.GetBoolParam("induceSrc")
 			induceDst := ea.GetBoolParam("induceDst")
-			var srcMapping map[SphynxId]SphynxId
+			var srcMapping [][]SphynxId
 			if induceSrc {
 				srcMappingEB := ea.getEdgeBundle("srcMapping")
-				srcMapping = make(map[SphynxId]SphynxId, len(srcMappingEB.Src))
+				numVS := len(ea.getVertexSet("src").MappingToUnordered)
+				srcMapping = make([][]SphynxId, numVS)
 				for i := range srcMappingEB.Src {
-					srcMapping[srcMappingEB.Src[i]] = srcMappingEB.Dst[i]
+					orig := srcMappingEB.Src[i]
+					srcMapping[orig] = append(srcMapping[orig], srcMappingEB.Dst[i])
 				}
 			}
-			var dstMapping map[SphynxId]SphynxId
+			var dstMapping [][]SphynxId
 			if induceDst {
 				dstMappingEB := ea.getEdgeBundle("dstMapping")
-				dstMapping = make(map[SphynxId]SphynxId, len(dstMappingEB.Src))
+				numVS := len(ea.getVertexSet("dst").MappingToUnordered)
+				dstMapping = make([][]SphynxId, numVS)
 				for i := range dstMappingEB.Src {
-					dstMapping[dstMappingEB.Src[i]] = dstMappingEB.Dst[i]
+					orig := dstMappingEB.Src[i]
+					dstMapping[orig] = append(dstMapping[orig], dstMappingEB.Dst[i])
 				}
 			}
 			es := ea.getEdgeBundle("edges")
@@ -29,26 +33,45 @@ func init() {
 			induced := NewEdgeBundle(0, approxLen)
 			embedding := NewEdgeBundle(0, approxLen)
 			numInducedEdges := SphynxId(0)
+			// We try to keep the IDs of the edges, so the embedding edge bundle is IdPreserving
+			// if it's expected to be. If the srcMapping or the dstMapping is not a function, then
+			// this won't work, we need new IDs.
+			newIDsNeeded := false
 			for i, src := range es.Src {
 				dst := es.Dst[i]
-				mappedSrc := src
-				mappedDst := dst
-				srcExists := true
-				dstExists := true
+				mappedSrcs := []SphynxId{src}
+				mappedDsts := []SphynxId{dst}
+				thisSrcExists := true
+				thisDstExists := true
 				if induceSrc {
-					mappedSrc, srcExists = srcMapping[src]
+					mappedSrcs = srcMapping[src]
+					thisSrcExists = len(mappedSrcs) > 0
 				}
 				if induceDst {
-					mappedDst, dstExists = dstMapping[dst]
+					mappedDsts = dstMapping[dst]
+					thisDstExists = len(mappedDsts) > 0
 				}
-				if srcExists && dstExists {
-					induced.Src = append(induced.Src, mappedSrc)
-					induced.Dst = append(induced.Dst, mappedDst)
-					induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
-					embedding.Src = append(embedding.Src, numInducedEdges)
-					embedding.Dst = append(embedding.Dst, SphynxId(i))
-					embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
-					numInducedEdges += 1
+				if thisSrcExists && thisDstExists {
+					for j, mappedSrc := range mappedSrcs {
+						for k, mappedDst := range mappedDsts {
+							if j != 0 || k != 0 {
+								newIDsNeeded = true
+							}
+							induced.Src = append(induced.Src, mappedSrc)
+							induced.Dst = append(induced.Dst, mappedDst)
+							induced.EdgeMapping = append(induced.EdgeMapping, es.EdgeMapping[i])
+							embedding.Src = append(embedding.Src, numInducedEdges)
+							embedding.Dst = append(embedding.Dst, SphynxId(i))
+							embedding.EdgeMapping = append(embedding.EdgeMapping, es.EdgeMapping[i])
+							numInducedEdges += 1
+						}
+					}
+				}
+			}
+			if newIDsNeeded {
+				for i := range induced.EdgeMapping {
+					induced.EdgeMapping[i] = int64(i)
+					embedding.EdgeMapping[i] = int64(i)
 				}
 			}
 			ea.output("induced", induced)
