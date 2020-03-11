@@ -171,7 +171,6 @@ func (s *Server) WriteToOrderedDisk(
 
 	e, exists := s.entityCache.Get(guid)
 	if !exists {
-		// DataManager, do something
 		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 

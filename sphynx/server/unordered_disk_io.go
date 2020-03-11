@@ -33,7 +33,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	guid := GUID(in.Guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		// DataManager, do something
 		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 	if err := saveToOrderedDisk(entity, s.dataDir, guid); err != nil {
