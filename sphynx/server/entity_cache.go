@@ -46,10 +46,19 @@ func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	}
 	return nil, false
 }
+
+// Clear the entity cache.
 func (entityCache *EntityCache) Clear() {
 	entityCache.Lock()
 	defer entityCache.Unlock()
-	*entityCache = NewEntityCache()
+	guids := make([]GUID, len(entityCache.cache))
+	for guid := range entityCache.cache {
+		guids = append(guids, guid)
+	}
+	for _, guid := range guids {
+		delete(entityCache.cache, guid)
+	}
+	entityCache.totalMemUsage = 0
 }
 
 // Set puts the entity in the cache.
