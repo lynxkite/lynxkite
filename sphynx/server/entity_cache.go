@@ -40,9 +40,8 @@ func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	defer entityCache.Unlock()
 	entry, exists := entityCache.cache[guid]
 	if exists {
-		fresh := entry
-		fresh.timestamp = ts
-		entityCache.cache[guid] = fresh
+		entry.timestamp = ts
+		entityCache.cache[guid] = entry
 		return entry.entity, true
 	}
 	return nil, false
@@ -63,10 +62,7 @@ func (entityCache *EntityCache) Set(guid GUID, entity Entity) {
 			memUsage:  memUsage,
 		}
 		entityCache.totalMemUsage += memUsage
-		if entityCache.totalMemUsage > cachedEntitiesMaxMem {
-			memEvicted := entityCache.evictUntilEnoughEvicted(entityCache.totalMemUsage - cachedEntitiesMaxMem)
-			entityCache.totalMemUsage -= memEvicted
-		}
+		entityCache.maybeGarbageCollect()
 	}
 	// It is legitimate that the entity is already in the cache. E.g., the DataManager re-runs
 	// an operation to re-create a missing output, but the rest of the outputs were not evicted.
@@ -79,7 +75,11 @@ type entityEvictionItem struct {
 	memUsage  int
 }
 
-func (entityCache *EntityCache) evictUntilEnoughEvicted(howMuchMemoryToRecycle int) int {
+func (entityCache *EntityCache) maybeGarbageCollect() {
+	howMuchMemoryToRecycle := entityCache.totalMemUsage - cachedEntitiesMaxMem
+	if howMuchMemoryToRecycle <= 0 {
+		return
+	}
 	start := ourTimestamp()
 	evictionCandidates := make([]entityEvictionItem, 0, len(entityCache.cache))
 	for guid, e := range entityCache.cache {
@@ -106,17 +106,21 @@ func (entityCache *EntityCache) evictUntilEnoughEvicted(howMuchMemoryToRecycle i
 		itemsEvicted++
 	}
 	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
-		itemsEvicted, len(evictionCandidates), memEvicted, timestampDiff(ourTimestamp(), start))
-	return memEvicted
+		itemsEvicted, len(evictionCandidates), memEvicted, (ourTimestamp()-start)/1000000)
+	entityCache.totalMemUsage -= memEvicted
 }
 
 func ourTimestamp() int64 {
 	// This must be precise
 	return time.Now().UnixNano()
 }
-func timestampDiff(ts1 int64, ts2 int64) int64 {
-	return (ts1 - ts2) / 1000000
+
+func ptrSize() int {
+	var somePtr = [1]*uint8{}
+	return int(unsafe.Sizeof(somePtr[0]))
 }
+
+var sliceCost = 3 * ptrSize()
 
 // Some of these are estimations
 // But most are exact
@@ -125,26 +129,31 @@ func (e *Scalar) estimatedMemUsage() int {
 }
 
 func (e *VertexSet) estimatedMemUsage() int {
-	i := len(e.MappingToUnordered) * 8
+	i := len(e.MappingToUnordered) * int(unsafe.Sizeof(int64(0)))
 	return i
 }
 
 func (e *DoubleTuple2Attribute) estimatedMemUsage() int {
 	i := len(e.Defined)
-	i += len(e.Values) * (8 + 8 + 8 + 16)
+	i += len(e.Values) * (2 * int(unsafe.Sizeof(float64(0))))
 	return i
 }
 
 func (e *DoubleVectorAttribute) estimatedMemUsage() int {
-	// This is only an estimation
+	if len(e.Defined) == 0 {
+		return 0
+	}
+	// We're assuming here that all the slice elements have the same size
+	// In any case, we're using the first value
+	oneElementSize := sliceCost + len(e.Values[0])*int(unsafe.Sizeof(float64(0)))
 	i := len(e.Defined)
-	i += len(e.Values) * (2*8 + 3*8)
+	i += len(e.Values) * oneElementSize
 	return i
 }
 
 func (e *EdgeBundle) estimatedMemUsage() int {
 	sizeOfVertexID := int(unsafe.Sizeof(SphynxId(0)))
-	i := len(e.EdgeMapping) * 8
+	i := len(e.EdgeMapping) * int(unsafe.Sizeof(int64(0)))
 	i += len(e.Src) * sizeOfVertexID
 	i += len(e.Dst) * sizeOfVertexID
 	return i
@@ -152,7 +161,7 @@ func (e *EdgeBundle) estimatedMemUsage() int {
 
 func (e *DoubleAttribute) estimatedMemUsage() int {
 	i := len(e.Defined)
-	i += len(e.Values) * 8
+	i += len(e.Values) * int(unsafe.Sizeof(float64(0)))
 	return i
 }
 
@@ -161,20 +170,24 @@ func (e *StringAttribute) estimatedMemUsage() int {
 	// This is an estimation (lower bound)
 	// We charge 24 bytes for strings: each has an 8 byte pointer, an 8 byte length
 	// and the data itself, which is at least 8 bytes.
-	i += len(e.Values) * 24
+	i += len(e.Values) * (2*ptrSize() + 8)
 	return i
 }
 
 func (e *LongAttribute) estimatedMemUsage() int {
 	i := len(e.Defined)
-	i += len(e.Values) * 8
+	i += len(e.Values) * int(unsafe.Sizeof(int64(0)))
 	return i
 }
 
 func getNumericEnv(key string, dflt int) int {
 	s, exists := os.LookupEnv(key)
 	if exists {
-		v, _ := strconv.ParseInt(s, 10, 64)
+		v, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			pmsg := fmt.Sprintf("Cannot parse environment variable (%v) as int: %v", key, s)
+			panic(pmsg)
+		}
 		return int(v)
 	} else {
 		return dflt
