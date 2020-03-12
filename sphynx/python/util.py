@@ -31,21 +31,27 @@ class Op:
     self.inputs = op['Inputs']
     self.outputs = op['Outputs']
 
-  def input_parquet(self, name):
-    '''Returns the input as a PyArrow ParquetFile. Useful if you only need the metadata.'''
-    return pq.ParquetFile(f'{self.datadir}/{self.inputs[name]}/data.parquet')
-
-  def input_table(self, name):
-    '''Reads the input as a PyArrow Table. Useful if you only need some of the data.'''
-    return pq.read_table(f'{self.datadir}/{self.inputs[name]}/data.parquet')
-
-  def input(self, name, type=None):
-    '''Reads the input as a Pandas DataFrame/Series. Useful if you need all the data.'''
+  def input_arrow(self, name):
+    '''Reads the input as a PyArrow Array or Table.'''
     mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
     table = pa.ipc.open_file(mmap).read_all()
     if table.num_columns == 1:
       return table.column(0)
-    return table.to_pandas()
+    else:
+      return table
+
+  def input_vector(self, name):
+    '''Reads a DoubleVectorAttribute into a Numpy array.'''
+    return np.array(self.input_arrow(name).to_pylist())
+
+  def input(self, name):
+    '''Reads the input as a Numpy Array or Pandas DataFrame.'''
+    # Makes a copy if the data has nulls or is not a primitive type.
+    df = self.input_arrow(name).to_pandas()
+    if isinstance(df, pd.Series):
+      return df.values
+    else:
+      return df
 
   def input_model(self, name):
     '''Loads a Pytorch model.'''
@@ -56,6 +62,11 @@ class Op:
     '''Reads a scalar from disk.'''
     with open(f'{self.datadir}/{self.inputs[name]}/serialized_data') as f:
       return json.load(f)
+
+  def input_torch_edges(self, name):
+    '''Returns an edge bundle input as a PyTorch tensor.'''
+    es = self.input(name)
+    return torch.tensor([es.src.astype('int64'), es.dst.astype('int64')])
 
   def output(self, name, values, *, type):
     '''Writes a list or Numpy array to disk.'''

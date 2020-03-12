@@ -8,7 +8,7 @@ from . import util
 op = util.Op()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'node2vec running on {device}')
-num_nodes = op.input_parquet('vs').metadata.num_rows
+num_nodes = op.input_arrow('vs').length()
 print('num_nodes:', num_nodes)
 es = op.input('es')
 
@@ -18,8 +18,8 @@ index, counts = np.unique(es.src, return_counts=True)
 degree = np.zeros(num_nodes)
 degree[index] = counts
 deadends = (degree == 0).nonzero()[0]
-srcs = np.concatenate((es.src, deadends))
-dsts = np.concatenate((es.dst, deadends))
+srcs = np.concatenate((es.src, deadends)).astype('int64')
+dsts = np.concatenate((es.dst, deadends)).astype('int64')
 
 # Configure Node2Vec.
 edges = torch.tensor([srcs, dsts])
