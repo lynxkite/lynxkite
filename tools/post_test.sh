@@ -1,9 +1,9 @@
-#!/bin/bash +xue
+#!/bin/bash -xue
 # Tests the maximal length of the post message that LynxKite can handle.
 #
 # Usage: ./post_test.sh <length>
 #
-# where <length> is roughy the number of bytes we want to send in the post message.
+# where <length> is roughly the number of bytes we want to send in the post message.
 #
 # E.g., ./post_test 1000000
 #
