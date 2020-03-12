@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/xitongsys/parquet-go/reader"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -194,6 +193,7 @@ func fieldIndex(t reflect.Type, name string) int {
 
 func (a *StringAttribute) readFromOrdered(rec array.Record) error {
 	col := rec.Column(0).(*array.String)
+	defer col.Release()
 	a.Values = make([]string, col.Len())
 	a.Defined = make([]bool, col.Len())
 	for i := 0; i < col.Len(); i++ {
@@ -213,6 +213,7 @@ func (a *StringAttribute) toOrderedRows() array.Record {
 
 func (a *DoubleAttribute) readFromOrdered(rec array.Record) error {
 	col := rec.Column(0).(*array.Float64)
+	defer col.Release()
 	a.Values = make([]float64, col.Len())
 	a.Defined = make([]bool, col.Len())
 	for i, v := range col.Float64Values() {
@@ -231,16 +232,48 @@ func (a *DoubleAttribute) toOrderedRows() array.Record {
 }
 
 func (a *DoubleVectorAttribute) readFromOrdered(rec array.Record) error {
-	// TODO
+	col := rec.Column(0).(*array.List)
+	defer col.Release()
+	a.Values = make([]DoubleVectorAttributeValue, col.Len())
+	a.Defined = make([]bool, col.Len())
+	offsets := col.Offsets()
+	values := col.ListValues().(*array.Float64)
+	defer values.Release()
+	for i := 0; i < col.Len(); i++ {
+		a.Defined[i] = col.IsValid(i)
+		if a.Defined[i] {
+			start := int(offsets[i])
+			end := int(offsets[i+1])
+			list := make([]float64, end-start)
+			for j := 0; j < end-start; j++ {
+				list[j] = values.Value(start + j)
+			}
+			a.Values[i] = DoubleVectorAttributeValue(list)
+		}
+	}
 	return nil
 }
 func (a *DoubleVectorAttribute) toOrderedRows() array.Record {
-	// TODO
-	return array.NewRecord(doubleVectorAttributeSchema, []array.Interface{}, -1)
+	b := array.NewListBuilder(arrowAllocator, arrow.PrimitiveTypes.Float64)
+	defer b.Release()
+	vb := b.ValueBuilder().(*array.Float64Builder)
+	defer vb.Release()
+	for i, v := range a.Values {
+		b.Append(a.Defined[i])
+		if a.Defined[i] {
+			for _, x := range v {
+				vb.Append(x)
+			}
+		}
+	}
+	values := b.NewListArray()
+	defer values.Release()
+	return array.NewRecord(doubleVectorAttributeSchema, []array.Interface{values}, -1)
 }
 
 func (a *LongAttribute) readFromOrdered(rec array.Record) error {
 	col := rec.Column(0).(*array.Int64)
+	defer col.Release()
 	a.Values = make([]int64, col.Len())
 	a.Defined = make([]bool, col.Len())
 	for i, v := range col.Int64Values() {
@@ -295,14 +328,39 @@ func (_ *DoubleAttribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleAttributeRow)
 }
 
-func (a *DoubleTuple2Attribute) toOrderedRows() array.Record {
-	// TODO
-	return array.NewRecord(doubleVectorAttributeSchema, []array.Interface{}, -1)
-}
-
-func (a *DoubleTuple2Attribute) readFromOrdered(pr *reader.ParquetReader, numRows int) error {
-	// TODO
+func (a *DoubleTuple2Attribute) readFromOrdered(rec array.Record) error {
+	col := rec.Column(0).(*array.List)
+	defer col.Release()
+	a.Values = make([]DoubleTuple2AttributeValue, col.Len())
+	a.Defined = make([]bool, col.Len())
+	offsets := col.Offsets()
+	values := col.ListValues().(*array.Float64)
+	defer values.Release()
+	for i := 0; i < col.Len(); i++ {
+		a.Defined[i] = col.IsValid(i)
+		if a.Defined[i] {
+			start := int(offsets[i])
+			a.Values[i].X = values.Value(start)
+			a.Values[i].Y = values.Value(start + 1)
+		}
+	}
 	return nil
+}
+func (a *DoubleTuple2Attribute) toOrderedRows() array.Record {
+	b := array.NewListBuilder(arrowAllocator, arrow.PrimitiveTypes.Float64)
+	defer b.Release()
+	vb := b.ValueBuilder().(*array.Float64Builder)
+	defer vb.Release()
+	for i, v := range a.Values {
+		b.Append(a.Defined[i])
+		if a.Defined[i] {
+			vb.Append(v.X)
+			vb.Append(v.Y)
+		}
+	}
+	values := b.NewListArray()
+	defer values.Release()
+	return array.NewRecord(doubleVectorAttributeSchema, []array.Interface{values}, -1)
 }
 
 type UnorderedDoubleTuple2AttributeRow struct {
