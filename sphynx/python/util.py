@@ -42,10 +42,10 @@ class Op:
   def input(self, name, type=None):
     '''Reads the input as a Pandas DataFrame/Series. Useful if you need all the data.'''
     mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
-    df = pa.ipc.open_file(mmap).read_all().to_pandas()
-    if len(df.columns) == 1:
-      return df[df.columns[0]]
-    return df
+    table = pa.ipc.open_file(mmap).read_all()
+    if table.num_columns == 1:
+      return table.column(0)
+    return table.to_pandas()
 
   def input_model(self, name):
     '''Loads a Pytorch model.'''
@@ -79,9 +79,8 @@ class Op:
   def write_columns(self, name, type, columns):
     path = self.datadir + '/' + self.outputs[name]
     self.write_type(path, type)
-    # We must set nullable=False or Go cannot read it.
     schema = pa.schema([
-        pa.field(name, a.type, nullable=False) for (name, a) in columns.items()])
+        pa.field(name, a.type) for (name, a) in columns.items()])
     t = pa.Table.from_arrays(list(columns.values()), schema=schema)
     with pa.output_stream(path + '/data.arrow') as sink:
       writer = pa.RecordBatchFileWriter(sink, t.schema)
