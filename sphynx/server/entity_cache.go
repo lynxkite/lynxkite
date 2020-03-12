@@ -51,10 +51,7 @@ func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 func (entityCache *EntityCache) Clear() {
 	entityCache.Lock()
 	defer entityCache.Unlock()
-	// Apparently, this is safe: https://golang.org/doc/effective_go.html#for
-	for guid := range entityCache.cache {
-		delete(entityCache.cache, guid)
-	}
+	entityCache.cache = make(map[GUID]cacheEntry)
 	entityCache.totalMemUsage = 0
 }
 
@@ -100,8 +97,8 @@ func (entityCache *EntityCache) maybeGarbageCollect() {
 			memUsage:  e.entity.estimatedMemUsage(),
 		})
 	}
-	// Our timestamp is of nanosecond precision: this helps here to put outputs
-	// before inputs.
+	// Our timestamp is of nanosecond precision: this helps here to put inputs
+	// before outputs.
 	sort.Slice(evictionCandidates, func(i, j int) bool {
 		return evictionCandidates[i].timestamp < evictionCandidates[j].timestamp
 	})
@@ -131,22 +128,33 @@ func ptrSize() int {
 	return int(unsafe.Sizeof(somePtr[0]))
 }
 
+func boolSize() int {
+	someBool := false
+	return int(unsafe.Sizeof(someBool))
+}
+
+// The number of occupied bytes (sizeof) for our basic types
 var sliceCost = 3 * ptrSize()
+var int64Cost = int(unsafe.Sizeof(int64(0)))
+var float64Cost = int(unsafe.Sizeof(float64(0)))
+var sphinxIdCost = int(unsafe.Sizeof(SphynxId(0)))
+var boolCost = boolSize()
 
 // Some of these are estimations
-// But most are exact
+// But most are exact.
+
 func (e *Scalar) estimatedMemUsage() int {
 	return len(*e)
 }
 
 func (e *VertexSet) estimatedMemUsage() int {
-	i := len(e.MappingToUnordered) * int(unsafe.Sizeof(int64(0)))
+	i := len(e.MappingToUnordered) * int64Cost
 	return i
 }
 
 func (e *DoubleTuple2Attribute) estimatedMemUsage() int {
-	i := len(e.Defined)
-	i += len(e.Values) * (2 * int(unsafe.Sizeof(float64(0))))
+	i := len(e.Defined) * boolCost
+	i += len(e.Values) * 2 * float64Cost
 	return i
 }
 
@@ -156,38 +164,37 @@ func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 	}
 	// We're assuming here that all the slice elements have the same size
 	// In any case, we're using the first value
-	oneElementSize := sliceCost + len(e.Values[0])*int(unsafe.Sizeof(float64(0)))
-	i := len(e.Defined)
+	oneElementSize := sliceCost + len(e.Values[0])*float64Cost
+	i := len(e.Defined) * boolCost
 	i += len(e.Values) * oneElementSize
 	return i
 }
 
 func (e *EdgeBundle) estimatedMemUsage() int {
-	sizeOfVertexID := int(unsafe.Sizeof(SphynxId(0)))
-	i := len(e.EdgeMapping) * int(unsafe.Sizeof(int64(0)))
-	i += len(e.Src) * sizeOfVertexID
-	i += len(e.Dst) * sizeOfVertexID
+	i := len(e.EdgeMapping) * int64Cost
+	i += len(e.Src) * sphinxIdCost
+	i += len(e.Dst) * sphinxIdCost
 	return i
 }
 
 func (e *DoubleAttribute) estimatedMemUsage() int {
-	i := len(e.Defined)
-	i += len(e.Values) * int(unsafe.Sizeof(float64(0)))
+	i := len(e.Defined) * boolCost
+	i += len(e.Values) * float64Cost
 	return i
 }
 
 func (e *StringAttribute) estimatedMemUsage() int {
-	i := len(e.Defined)
-	// This is an estimation (lower bound)
-	// We charge 24 bytes for strings: each has an 8 byte pointer, an 8 byte length
-	// and the data itself, which is at least 8 bytes.
+	i := len(e.Defined) * boolCost
+	// This is an estimation (lower bound?)
+	// We charge 2 pointers plus the string length,
+	// which we assume is at least 8 bytes.
 	i += len(e.Values) * (2*ptrSize() + 8)
 	return i
 }
 
 func (e *LongAttribute) estimatedMemUsage() int {
-	i := len(e.Defined)
-	i += len(e.Values) * int(unsafe.Sizeof(int64(0)))
+	i := len(e.Defined) * boolCost
+	i += len(e.Values) * int64Cost
 	return i
 }
 
