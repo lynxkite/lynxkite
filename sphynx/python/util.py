@@ -102,8 +102,8 @@ class Op:
       edge_index = edge_index.numpy()
     src, dst = edge_index
     self.write_columns(name, 'EdgeBundle', {
-        'src': pa.array(src, pa.int64()),
-        'dst': pa.array(dst, pa.int64()),
+        'src': pa.array(src, pa.uint32()),
+        'dst': pa.array(dst, pa.uint32()),
         'sparkId': pa.array(range(len(src)), pa.int64()),
     })
     if name + '-idSet' in self.outputs:

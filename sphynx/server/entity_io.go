@@ -87,8 +87,8 @@ func (v *VertexSet) toUnorderedRows() []interface{} {
 
 var edgeBundleSchema = arrow.NewSchema(
 	[]arrow.Field{
-		arrow.Field{Name: "src", Type: arrow.PrimitiveTypes.Int64, Nullable: false},
-		arrow.Field{Name: "dst", Type: arrow.PrimitiveTypes.Int64, Nullable: false},
+		arrow.Field{Name: "src", Type: arrow.PrimitiveTypes.Uint32, Nullable: false},
+		arrow.Field{Name: "dst", Type: arrow.PrimitiveTypes.Uint32, Nullable: false},
 		arrow.Field{Name: "sparkId", Type: arrow.PrimitiveTypes.Int64, Nullable: false},
 	}, nil)
 
