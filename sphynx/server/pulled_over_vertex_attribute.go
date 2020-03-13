@@ -10,7 +10,7 @@ import (
 func init() {
 	operationRepository["PulledOverVertexAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			origAttr := ea.inputs["originalAttr"].(ParquetEntity)
+			origAttr := ea.inputs["originalAttr"].(TabularEntity)
 			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			origDefined := reflect.ValueOf(origAttr).Elem().FieldByName("Defined")
 			destinationVS := ea.getVertexSet("destinationVS")
