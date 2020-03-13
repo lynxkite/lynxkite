@@ -231,7 +231,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
             new File(successFile).createNewFile()
         }
       }
-      case e => ???
+      case e => throw new AssertionError(s"Relocation not implemented for $e")
     }
   }
 }

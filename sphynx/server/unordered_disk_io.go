@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interface{} {
+func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interface{} {
 	switch e := e.(type) {
 	case *VertexSet:
 		return e.toUnorderedRows()
@@ -46,7 +46,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return nil, fmt.Errorf("Failed to create file: %v", err)
 	}
 	switch e := entity.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), numGoRoutines)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
@@ -195,7 +195,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			Dst:         dst,
 			EdgeMapping: edgeMapping,
 		}
-	case ParquetEntity:
+	case TabularEntity:
 		vs, err := s.getVertexSet(GUID(in.Vsguid1))
 		if err != nil {
 			return nil, err
