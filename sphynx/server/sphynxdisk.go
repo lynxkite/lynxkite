@@ -129,6 +129,8 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 			return nil, fmt.Errorf("Failed to open %v: %v", dirName, err)
 		}
 		defer r.Close()
+		// Arrow files can have multiple records. We user zero records for empty
+		// entities or one record. We never use more than one record.
 		if r.NumRecords() == 1 {
 			rec, err := r.Record(0)
 			if err != nil {

@@ -66,6 +66,7 @@ class Op:
   def input_torch_edges(self, name):
     '''Returns an edge bundle input as a PyTorch tensor.'''
     es = self.input(name)
+    # PyTorch does not support uint32 tensors, so we have to convert the indexes.
     return torch.tensor([es.src.astype('int64'), es.dst.astype('int64')])
 
   def output(self, name, values, *, type):
