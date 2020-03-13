@@ -18,6 +18,7 @@ type Entity interface {
 // TabularEntity objects are saved as tables to SphynxOrderedDisk and SphynxUnorderedDisk.
 type TabularEntity interface {
 	toOrderedRows() array.Record
+	// readFromOrdered is only called on freshly constructed objects to load them from disk.
 	readFromOrdered(rec array.Record) error
 	unorderedRow() interface{}
 }

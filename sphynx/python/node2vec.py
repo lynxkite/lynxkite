@@ -18,6 +18,7 @@ index, counts = np.unique(es.src, return_counts=True)
 degree = np.zeros(num_nodes)
 degree[index] = counts
 deadends = (degree == 0).nonzero()[0]
+# Also convert from uint32 to int64 for PyTorch.
 srcs = np.concatenate((es.src, deadends)).astype('int64')
 dsts = np.concatenate((es.dst, deadends)).astype('int64')
 
