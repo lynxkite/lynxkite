@@ -53,7 +53,7 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	}
 	tfw.Flush()
 	switch e := e.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		onDisk, err := hasOnDisk(dataDir, guid)
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		return nil, err
 	}
 	switch e := e.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		const numGoRoutines int64 = 4
 		fname := fmt.Sprintf("%v/data.arrow", dirName)
 		onDisk, err := hasOnDisk(dataDir, guid)

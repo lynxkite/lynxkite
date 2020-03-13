@@ -15,7 +15,8 @@ type Entity interface {
 	typeName() string // This will help deserializing a serialized entity
 }
 
-type ParquetEntity interface { // Get objects for ParquetReader and ParquetWriter to figure out the schema.
+// TabularEntity objects are saved as tables to SphynxOrderedDisk and SphynxUnorderedDisk.
+type TabularEntity interface {
 	toOrderedRows() array.Record
 	readFromOrdered(rec array.Record) error
 	unorderedRow() interface{}
@@ -150,7 +151,7 @@ func (eb *EdgeBundle) toUnorderedRows(vs1 *VertexSet, vs2 *VertexSet) []interfac
 	return rows
 }
 
-func AttributeToUnorderedRows(attr ParquetEntity, vs *VertexSet) []interface{} {
+func AttributeToUnorderedRows(attr TabularEntity, vs *VertexSet) []interface{} {
 	a := reflect.ValueOf(attr)
 	values := a.Elem().FieldByName("Values")
 	defined := a.Elem().FieldByName("Defined")
