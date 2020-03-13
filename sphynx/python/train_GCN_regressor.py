@@ -28,9 +28,8 @@ def get_feature_matrix(train_mask, batch_size, x, y_numpy):
 
 
 # Get graph, features and target label.
-es = op.input('es')
-edges = torch.tensor([es.src, es.dst])
-x = torch.from_numpy(op.input('features', type='DoubleVectorAttribute')).type(torch.float32)
+edges = op.input_torch_edges('es')
+x = torch.from_numpy(op.input_vector('features')).type(torch.float32)
 y_numpy = op.input('label')
 label = torch.from_numpy(y_numpy).type(torch.float32)
 train_mask = ~np.isnan(y_numpy)
