@@ -368,3 +368,12 @@ to the network and file-system, it must be explicitly enabled by the administrat
 ```
 # export KITE_ALLOW_PYTHON=yes
 ```
+
+The Sphynx server is a very memory hungry process, because it keeps large pieces of data
+in memory. This can potentially lead to an out-of-memory situation, where the kernel shuts
+Sphynx down. In order to prevent this, the setting below provides a threshold: if the estimated
+size of in-memory data exceeds the value provided, Sphynx will keep discarding unused data until the memory
+consumption level falls below the threshold.
+```
+export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=2000
+```

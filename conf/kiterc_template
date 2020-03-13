@@ -263,3 +263,10 @@ export UNORDERED_SPHYNX_DATA_DIR=$HOME/unordered_sphynx_data
 # Unrestricted Python in LynxKite is a very powerful tool. Since Python execution has full access
 # to the network and file-system, it must be explicitly enabled by the administrator.
 # export KITE_ALLOW_PYTHON=yes
+
+# The Sphynx server is a very memory hungry process, because it keeps large pieces of data
+# in memory. This can potentially lead to an out-of-memory situation, where the kernel shuts
+# Sphynx down. In order to prevent this, the setting below provides a threshold: if the estimated
+# size of in-memory data exceeds the value provided, Sphynx will keep discarding unused data until the memory
+# consumption level falls below the threshold.
+export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=2000
