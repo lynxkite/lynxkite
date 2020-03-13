@@ -6,7 +6,6 @@ import pandas as pd
 import pyarrow as pa
 import sys
 import json
-import torch
 
 
 DoubleAttribute = 'DoubleAttribute'
@@ -56,6 +55,7 @@ class Op:
   def input_model(self, name):
     '''Loads a Pytorch model.'''
     path = f'{self.datadir}/{self.inputs[name]}/model.pt'
+    import torch
     return torch.load(path)
 
   def input_scalar(self, name):
@@ -65,6 +65,7 @@ class Op:
 
   def input_torch_edges(self, name):
     '''Returns an edge bundle input as a PyTorch tensor.'''
+    import torch
     es = self.input(name)
     # PyTorch does not support uint32 tensors, so we have to convert the indexes.
     return torch.tensor([es.src.astype('int64'), es.dst.astype('int64')])
@@ -134,6 +135,7 @@ class Op:
 
   def output_model(self, name, model, description):
     '''Writes PyTorch model to disk.'''
+    import torch
     path = self.datadir + '/' + self.outputs[name]
     os.makedirs(path, exist_ok=True)
     torch.save(model, path + '/model.pt')
