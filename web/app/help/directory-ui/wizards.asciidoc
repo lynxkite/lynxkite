@@ -1,0 +1,33 @@
+[[wizards-in-directory]]
+## Wizards
+
+Wizards are dedicated tools that distill complex analysis workflows into a series of
+simple steps. See <<Authoring wizards>> to learn how they are created.
+
+Wizards appear in the workspace browser with the 
++++<span class="icon glyphicon glyphicon-gift"></span>+++ icon.
+
+If you click a wizard, a copy will be created in your user directory.
+This copy is marked as _in-progress_ and its icon changes to
++++<span class="icon glyphicon glyphicon-bookmark"></span>+++.
+When you click an in-progress wizard, it opens normally and you can
+continue where you left off.
+
+If you want to edit the workspace behind the wizard, open the dropdown menu
+in the workspace browser
+(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+and choose the _Open workspace_ option.
+
+You can also access the workspace of an in-progress wizard by opening the wizard and
+clicking the _View workspace_ / _Fine tune in workspace_ button
+
+image::images/wizard-screenshot.png[Wizard screenshot]
+
+After opening a wizard you can fill out the parameters for each step.
+Click on a heading to move to that step. You can move back or forward as much as you like.
+Your changes are captured in your _"In progress wizards"_ directory.
+
+Steps with visualizations or large parameter lists benefit from a full-screen view.
+Click the +++<span class="icon fa fa-expand"></span>+++ icon on the current step to switch
+to maximized view. Click the +++<span class="icon fa fa-compress"></span>+++ icon to
+return to the sequential view.
