@@ -146,11 +146,13 @@ object VertexView {
     val filtersFromInputs: Seq[FilteredAttribute[_]] = if (filtered.gUID == vertexSet.gUID) {
       Seq()
     } else {
-      val intersectionInstance = filtered.source
-      intersectionInstance.inputs.vertexSets.values.map { vs =>
-        val filterInstance = vs.source
-        filterInstance.outputs.scalars('filteredAttribute).value.asInstanceOf[FilteredAttribute[_]]
-      }.toSeq
+      val filters = filtered.source.operation match {
+        case _: VertexAttributeFilter[_] => Seq(filtered.source)
+        case _: VertexSetIntersection => filtered.source.inputs.vertexSets.values.map(_.source).toSeq
+      }
+      filters.map { f =>
+        f.outputs.scalars('filteredAttribute).value.asInstanceOf[FilteredAttribute[_]]
+      }
     }
     val filters = if (indexerInstance.operation.isInstanceOf[SampledView]) {
       // For sampled view we need to explicitly add an id filter here. Without this if
