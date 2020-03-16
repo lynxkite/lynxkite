@@ -4,10 +4,10 @@ cd `dirname $0`
 
 WITH_SPHYNX='false'
 INTERACTIVE='false'
-while getopts 'sp' flag; do
+while getopts 'si' flag; do
   case "${flag}" in
     s) WITH_SPHYNX='true' ;;
-    p) INTERACTIVE='true' ;;
+    i) INTERACTIVE='true' ;;
   esac
 done
 export WITH_SPHYNX=$WITH_SPHYNX
