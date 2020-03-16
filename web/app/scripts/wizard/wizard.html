@@ -17,7 +17,11 @@
   </div>
   <div class="row">
     <div class="col-sm-12 entry-list-wrapper">
-      <div class="entry-list wizard">
+      <div class="text-center" ng-hide="workspace.loaded">
+        <img src="images/progress.svg">
+      </div>
+
+      <div class="entry-list wizard" ng-show="workspace.loaded">
         <div class="entry" ng-repeat="step in steps">
           <div class="entry-header" ng-click="moveToStep($index)">
             <span class="icon">{{ $index + 1 }}</span>
