@@ -113,6 +113,8 @@ object GraphTestUtils {
     }
     dm.get(res.sc)
   }
+  // For the sake of uniform syntax we also do it for scalars.
+  def get[T](e: Scalar[T])(implicit dm: DataManager): T = dm.get(e)
 }
 
 trait TestMetaGraphManager extends TestTempDir {
