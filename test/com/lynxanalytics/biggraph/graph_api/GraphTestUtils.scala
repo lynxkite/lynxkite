@@ -131,7 +131,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 
   def cleanDataManager: DataManager = {
-    val withSphynx = LoggedEnvironment.envOrNone("WITH_SPHYNX").get.toBoolean
+    val withSphynx = LoggedEnvironment.envOrElse("WITH_SPHYNX", "false").toBoolean
     if (withSphynx) {
       val dataDir = cleanDataManagerDir()
       val host = "localhost"
