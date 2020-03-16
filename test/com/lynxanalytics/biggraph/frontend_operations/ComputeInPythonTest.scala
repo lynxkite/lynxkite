@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.SphynxOnly
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class DerivePythonTest extends OperationsTestBase {
+class ComputeInPythonTest extends OperationsTestBase {
   test("example graph", SphynxOnly) {
     val p = box("Create example graph")
       .box("Compute in Python", Map(
