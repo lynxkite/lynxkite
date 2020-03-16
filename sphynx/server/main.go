@@ -46,7 +46,14 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	exists := false
 	switch in.Domain {
 	case "SphynxMemory":
-		_, exists = operationRepository[shortOpName(opInst)]
+		op, ok := operationRepository[shortOpName(opInst)]
+		if ok {
+			if op.canCompute == nil {
+				exists = true
+			} else {
+				exists = op.canCompute(opInst.Operation)
+			}
+		}
 	case "OrderedSphynxDisk":
 		_, exists = diskOperationRepository[shortOpName(opInst)]
 	}
