@@ -23,7 +23,7 @@ clicking the _View workspace_ / _Fine tune in workspace_ button
 
 image::images/wizard-screenshot.png[Wizard screenshot]
 
-After opening a wizard you can fill out the parameters for each step.
+After opening a wizard, you can fill out the parameters for each step.
 Click on a heading to move to that step. You can move back or forward as much as you like.
 Your changes are captured in your _"In progress wizards"_ directory.
 

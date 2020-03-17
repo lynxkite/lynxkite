@@ -2,7 +2,7 @@
 
 You can build complex analysis workflows in LynxKite workspaces. You can encapsulate such
 workflows in <<custom-boxes>> so that other LynxKite users can reuse them.
-Another way to share your work is in the form of wizards.
+Another way to share your work is in the form of _wizards_.
 
 To turn a workspace into a wizard, open the parameters of the <<anchor, Anchor box>>
 and set the **Wizard** parameter to _yes_. Now your workspace is a wizard. But it doesn't
@@ -17,7 +17,8 @@ In this table you can specify:
 
 - The **title** of the step. This appears on the wizard view in a large font.
 - The **description** of the step. This is a multi-line field where you can add more
-  text to the step using Markdown syntax.
+  text to the step using https://commonmark.org/help/[Markdown syntax]. This
+  makes it possible to use formatted text with images and links.
 - The **box** from which you want to use the parameter or output state.
 - The **popup** column lets you choose _"parameters"_ (to use the parameter popup) or
   one of the output states of the box.
@@ -31,7 +32,7 @@ Once the workspace is configured as a wizard, each popup will have a
 +++<span class="icon glyphicon glyphicon-gift"></span>+++ icon in the header bar.
 Click this icon to add or remove the popup as a step.
 
-Using <<custom-boxes, custom boxes>> as steps in a wizard make it possible to create
+Using <<custom-boxes, custom boxes>> as steps in a wizard makes it possible to create
 interfaces specially crafted for a specific use case.
 
 ### Using wizards
