@@ -121,8 +121,7 @@ for line in fileinput.input():
   elif 'RELOCATION_LOGGER_MARKER' in line:
     rel(line)
 
-
-# Add a source and a sink none    
+# Add a source and a sink none
 VERTICES = set()
 SOURCES = set()
 TARGETS = set()
