@@ -41,6 +41,7 @@
             ng-show="expanded === $index"
             ng-if="step.popup === 'parameters'"
             workspace="workspace"
+            wizard="true"
             box-id="step.box"></box-editor>
 
           <state-view
@@ -96,6 +97,7 @@
   <box-editor
     ng-if="steps[expanded].popup === 'parameters'"
     workspace="workspace"
+    wizard="true"
     box-id="steps[expanded].box"></box-editor>
 
   <state-view

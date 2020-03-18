@@ -9,6 +9,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
         workspace: '=',
+        wizard: '=',
         boxId: '=',
       },
       link: function(scope) {
