@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interface{} {
+func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interface{} {
 	switch e := e.(type) {
 	case *VertexSet:
 		return e.toUnorderedRows()
@@ -31,9 +31,9 @@ func toUnorderedRows(e ParquetEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-	entity, exists := s.get(guid)
+	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("guid %v not found", guid)
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
 	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
@@ -46,7 +46,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return nil, fmt.Errorf("Failed to create file: %v", err)
 	}
 	switch e := entity.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), numGoRoutines)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
@@ -195,7 +195,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			Dst:         dst,
 			EdgeMapping: edgeMapping,
 		}
-	case ParquetEntity:
+	case TabularEntity:
 		vs, err := s.getVertexSet(GUID(in.Vsguid1))
 		if err != nil {
 			return nil, err
@@ -247,8 +247,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
-	s.Lock()
-	s.entities[GUID(in.Guid)] = entity
-	s.Unlock()
+	s.entityCache.Set(GUID(in.Guid), entity)
 	return &pb.ReadFromUnorderedDiskReply{}, nil
 }
