@@ -9,8 +9,8 @@ import (
 )
 
 type MergeVertexEntry struct {
-	id  int64
-	cnt int
+	id    int64
+	count int
 }
 type MergeVertexEntrySlice []MergeVertexEntry
 
@@ -38,7 +38,8 @@ func (a Int64Slice) Swap(i, j int) {
 
 func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, firstEmbedding *EdgeBundle) {
 	mergeVertices := make(MergeVertexEntrySlice, len(vertexSets[0].MappingToUnordered))
-	for idx, id := range vertexSets[0].MappingToUnordered {
+	vs0 := vertexSets[0]
+	for idx, id := range vs0.MappingToUnordered {
 		mergeVertices[idx].id = id
 	}
 	sort.Sort(mergeVertices)
@@ -48,7 +49,7 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 		sort.Sort(Int64Slice(w))
 		for j, k := 0, 0; j < len(mergeVertices) && k < len(w); {
 			if mergeVertices[j].id == w[k] {
-				mergeVertices[j].cnt++
+				mergeVertices[j].count++
 				j++
 				k++
 			} else if mergeVertices[j].id < w[k] {
@@ -60,34 +61,29 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 	}
 	allHaveIt := make([]int64, 0, len(vertexSets[0].MappingToUnordered))
 	for _, entry := range mergeVertices {
-		if entry.cnt == len(vertexSets)-1 {
+		if entry.count == len(vertexSets)-1 {
 			allHaveIt = append(allHaveIt, entry.id)
 		}
 	}
 	intersection = &VertexSet{
 		Mutex:              sync.Mutex{},
-		MappingToUnordered: make([]int64, len(allHaveIt)),
-		MappingToOrdered:   make(map[int64]SphynxId, len(allHaveIt)),
+		MappingToUnordered: allHaveIt,
 	}
-	copy(intersection.MappingToUnordered, allHaveIt)
-	for idx, id := range allHaveIt {
-		intersection.MappingToOrdered[id] = SphynxId(idx)
-	}
+
 	firstEmbedding = NewEdgeBundle(len(allHaveIt), len(allHaveIt))
-	vs0 := vertexSets[0]
-	vs0.GetMappingToOrdered()
+	mapping := vs0.GetMappingToOrdered()
 	for idx, id := range allHaveIt {
 		firstEmbedding.Src[idx] = SphynxId(idx)
-		firstEmbedding.Dst[idx] = vs0.MappingToOrdered[id]
+		firstEmbedding.Dst[idx] = mapping[id]
 		firstEmbedding.EdgeMapping[idx] = id
 	}
+	vs0.MappingToOrdered = nil // There's no need to keep it around
 	return
 }
 
 func init() {
 	operationRepository["VertexSetIntersection"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			fmt.Println("VertexSetIntersection called!")
 			numVertexSets := int(ea.GetFloatParam("numVertexSets"))
 			if numVertexSets < 1 {
 				return fmt.Errorf("Cannot take intersection of %d vertexSets", numVertexSets)
