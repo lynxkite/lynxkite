@@ -1,7 +1,41 @@
 #!/usr/bin/env python3
 '''
-Parses a LynxKite log file (from stdin) and dumps a performance measurement summary based
-on the loglines that contain either the word OPERATION_LOGGER_MARKER or RELOCATION_LOGGER_MARKER
+Parses a LynxKite logfile and dumps the critical path from the first executed backend operation
+to the last created guid. Example output:
+
+0 c6475919-831a-34ee-93fc-0a3631ac8ba4[OrderedSphynxDisk] -> DerivePython_start_0
+5016 DerivePython_start_0 -> DerivePython_end_0  DerivePython(matches = vs[vs.name.str.lower() ==...
+0 DerivePython_end_0 -> 99250d74-4e81-3f36-a02b-2a850bfcabce[OrderedSphynxDisk]
+36 99250d74-4e81-3f36-a02b-2a850bfcabce[OrderedSphynxDisk] -> 99250d74-4e81-3f36-a02b-2a850bfcabce[SphynxMemory]
+0 99250d74-4e81-3f36-a02b-2a850bfcabce[SphynxMemory] -> ShortestPath_start_1
+761 ShortestPath_start_1 -> ShortestPath_end_1  ShortestPath(10.0)
+0 ShortestPath_end_1 -> 100b63fe-e164-3a1f-ae74-f81777d68a14[SphynxMemory]
+91 100b63fe-e164-3a1f-ae74-f81777d68a14[SphynxMemory] -> 100b63fe-e164-3a1f-ae74-f81777d68a14[OrderedSphynxDisk]
+0 100b63fe-e164-3a1f-ae74-f81777d68a14[OrderedSphynxDisk] -> DerivePython_start_2
+...
+0 b773db8a-85bb-3fca-933f-db691f84b4fd[SparkDomain] -> CollectAttribute_start_0
+69 CollectAttribute_start_0 -> CollectAttribute_end_0  CollectAttribute(...))
+0 CollectAttribute_end_0 -> ce8b35fb-409b-3b33-8f56-10f44112a869[SparkDomain]
+16850 TOTAL
+
+Explanation:
+1. Guid c6475919-831a-34ee-93fc-0a3631ac8ba4[OrderedSphynxDisk] is input to DerivePython
+   (no time is charged here).
+2. DerivePython runs in 5016 ms.
+3. In 36 ms, the resulting guid (99250d74-4e81-3f36-a02b-2a850bfcabce) is relocated to SphynxMemory
+4. Free of charge, 99250d74-4e81-3f36-a02b-2a850bfcabce is input by ShortestPath
+5. ShortestPath finished in 761 ms
+6. Its output 100b63fe-e164-3a1f-ae74-f81777d68a14 goes to SphynxMemory, 0 ms.
+7. In 91 ms, 100b63fe-e164-3a1f-ae74-f81777d68a14 goes to OrderedSphynxDisk
+8. And DerivePython can start working
+...
+In the end, we see some SparkDomain operations for visualization.
+The last line is the total time taken. Probably there is some overhead, because because it is
+always noticeably less than the total length of the computation. (E.g., in the example above,
+the actual time was 22 seconds, but this path was only 17 seconds long.)
+
+
+TODO: Dump the whole graph for LK to import.
 '''
 
 import fileinput
@@ -45,8 +79,6 @@ def op(line):
   inputs = inputs[1:len(inputs) - 1].split(',')
   outputs = m.group(4)
   outputs = outputs[1:len(outputs) - 1].split(',')
-#  print ('LINE:', line)
-#  print ('OUTPUTS:', outputs)
   op = m.group(5)
 
   if 'com.lynxanalytics.biggraph.graph_operations.ImportDataFrame' in op:
@@ -61,11 +93,9 @@ def op(line):
   add_edge(op_start, op_end, ms)
   for i in inputs:
     if i:
-      #      print (f'OPI: [{i}] LINE: {line}')
       add_edge(guid_in_domain(i, domain), op_start, 0)
   for o in outputs:
     if o:
-      #      print (f'OPO: [{o}] LINE: {line}')
       add_edge(op_end, guid_in_domain(o, domain), 0)
 
 
@@ -73,7 +103,6 @@ def rel(line):
   ms, _, rest = extract_common(line)
   m = regexp_rel.match(rest)
   guid = m.group(1)
-#  print (f'REL: [{guid}] LINE: {line}')
   src = m.group(2)
   dst = m.group(3)
   g1 = guid_in_domain(guid, src)
@@ -89,6 +118,7 @@ for line in fileinput.input():
     rel(line)
 
 
+# Add a source and a sink none    
 VERTICES = set()
 SOURCES = set()
 TARGETS = set()
@@ -100,21 +130,26 @@ for v in GRAPH:
     VERTICES.add(vv)
     TARGETS.add(vv)
 
-
 for v in VERTICES - TARGETS:
   add_edge('START', v, 0)
 
 for v in VERTICES - SOURCES:
   add_edge(v, 'END', 0)
 
+
+# Primitive longest path:
+# Use compute shortest path on graph, with the
+# edge weights negated. This would not work with Dykstra, but
+# does work with Bellman-Ford.
+
 DISTANCE = {}
 PRED = {}
 for v in VERTICES:
-  DISTANCE[v] = 10000000000000000
+  DISTANCE[v] = float('inf')
   PRED[v] = None
 
 DISTANCE['START'] = 0
-DISTANCE['END'] = 10000000000000000
+DISTANCE['END'] = float('inf')
 TIMES = {}
 EDGES = []
 for v in GRAPH:
@@ -125,8 +160,6 @@ for v in GRAPH:
     TIMES[f'{v}->{vv}'] = w
     EDGES.append(e)
 
-# for e in EDGES:
-#  print (e)
 
 for _ in range(len(VERTICES)):
   for e in EDGES:
@@ -138,11 +171,10 @@ for _ in range(len(VERTICES)):
       PRED[dst] = src
 
 
-PRED['START'] = 'START'
 v = 'END'
 total_time = 0
 shpath = []
-while PRED[v] != 'START' and PRED[PRED[v]] != 'START':
+while PRED[PRED[v]] != 'START':
   src = PRED[PRED[v]]
   dst = PRED[v]
   estr = f'{src}->{dst}'
@@ -155,4 +187,4 @@ while PRED[v] != 'START' and PRED[PRED[v]] != 'START':
 
 for e in shpath[::-1]:
   print(e)
-print(total_time)
+print(total_time, 'TOTAL')
