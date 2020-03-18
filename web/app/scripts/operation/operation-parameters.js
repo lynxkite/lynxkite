@@ -11,6 +11,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       parameters: '=',
       parametricParameters: '=',
       workspace: '=',
+      wizard: '=',
       onBlur: '&',
     },
     templateUrl: 'scripts/operation/operation-parameters.html',

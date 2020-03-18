@@ -34,7 +34,7 @@ case class FakePull() extends SparkOperation[FakePull.Input, FakePull.Output] {
     output(
       o.pull,
       rc.sparkContext
-        .parallelize(Seq((0L, Edge(0, 1)), (1L, Edge(1, 2)), (2L, Edge(2, 0)), (3L, Edge(3, 3))))
+        .parallelize(Seq((0L, Edge(1, 1)), (1L, Edge(2, 2)), (2L, Edge(3, 2))))
         .sortUnique(inputs.vs.rdd.partitioner.get))
   }
 }
@@ -59,11 +59,13 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
     val fop = FakePull()
     val fopRes = fop(fop.vs, g.vertices).result
 
-    val pop = PulledOverVertexAttribute[String]()
-    val pulledAttr = pop(pop.function, fopRes.pull)(pop.originalAttr, g.name).result.pulledAttr
+    val namePop = PulledOverVertexAttribute[String]()
+    val incomePop = PulledOverVertexAttribute[Double]()
+    val pulledName = get(namePop(namePop.function, fopRes.pull)(namePop.originalAttr, g.name).result.pulledAttr)
+    val pulledIncome = get(incomePop(incomePop.function, fopRes.pull)(incomePop.originalAttr, g.income).result.pulledAttr)
 
-    assert(pulledAttr.rdd.collect.toMap ==
-      Map(0l -> "Eve", 1 -> "Bob", 2 -> "Adam", 3 -> "Isolated Joe"))
+    assert(pulledName == Map(1 -> "Eve", 2 -> "Bob", 3 -> "Bob"))
+    assert(pulledIncome == Map(2 -> 2000.0, 3 -> 2000.0))
   }
 
   test("fails if bundle is not a partial function") {

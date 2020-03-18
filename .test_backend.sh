@@ -3,9 +3,11 @@
 cd `dirname $0`
 
 WITH_SPHYNX='false'
-while getopts 's' flag; do
+INTERACTIVE='false'
+while getopts 'si' flag; do
   case "${flag}" in
     s) WITH_SPHYNX='true' ;;
+    i) INTERACTIVE='true' ;;
   esac
 done
 export WITH_SPHYNX=$WITH_SPHYNX
@@ -18,6 +20,7 @@ if $WITH_SPHYNX; then
   export SPHYNX_CERT_DIR=$TMP/sphynx_cert
   export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
   export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
+  export KITE_ALLOW_PYTHON=yes
   if [ -f $SPHYNX_PID_FILE ]; then
     kill `cat $SPHYNX_PID_FILE` || true
   fi
@@ -26,7 +29,9 @@ if $WITH_SPHYNX; then
   -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
   -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
   -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=localhost"
-  sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR &
+  cd sphynx
+  go/bin/server -keydir=$SPHYNX_CERT_DIR &
+  cd -
   $(dirname $0)/tools/wait_for_port.sh $SPHYNX_PORT
   echo "Sphynx running on port $SPHYNX_PORT"
   echo $! > $SPHYNX_PID_FILE
@@ -43,10 +48,14 @@ fi
 
 mkdir -p logs
 rm -f logs/test-*
-if $WITH_SPHYNX; then
-  sbt "test-only -- -l SparkOnly"
+if $INTERACTIVE; then
+  sbt
 else
-  sbt "test-only -- -l SphynxOnly"
+  if $WITH_SPHYNX; then
+    sbt "test-only -- -l SparkOnly"
+  else
+    sbt "test-only -- -l SphynxOnly"
+  fi
 fi
 # We'll check if the logfile contains 'future failed' lines; these
 # indicate errors that the test framework cannot catch. In case such
