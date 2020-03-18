@@ -118,7 +118,7 @@
       drop-tooltip-position="top center"
       ng-class="{ active: isParametric(param.id) }"
       ng-click="toggleParametric(param.id)"
-      ng-if="param.kind !== 'dummy'">
+      ng-if="!wizard && param.kind !== 'dummy'">
     </i>
   </div>
 </div>
