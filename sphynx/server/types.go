@@ -8,8 +8,7 @@ import (
 )
 
 type Server struct {
-	sync.Mutex
-	entities         map[GUID]Entity
+	entityCache      EntityCache
 	dataDir          string
 	unorderedDataDir string
 }
@@ -24,13 +23,6 @@ type OperationInstance struct {
 	Inputs    map[string]GUID
 	Outputs   map[string]GUID
 	Operation OperationDescription
-}
-
-func (server *Server) get(guid GUID) (Entity, bool) {
-	server.Lock()
-	defer server.Unlock()
-	entity, exists := server.entities[guid]
-	return entity, exists
 }
 
 type EdgeBundle struct {
@@ -57,7 +49,7 @@ func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
 	vs.Lock()
 	defer vs.Unlock()
 	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]SphynxId)
+		vs.MappingToOrdered = make(map[int64]SphynxId, len(vs.MappingToUnordered))
 		for i, j := range vs.MappingToUnordered {
 			vs.MappingToOrdered[j] = SphynxId(i)
 		}

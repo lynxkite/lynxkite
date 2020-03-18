@@ -113,6 +113,8 @@ object GraphTestUtils {
     }
     dm.get(res.sc)
   }
+  // For the sake of uniform syntax we also do it for scalars.
+  def get[T](e: Scalar[T])(implicit dm: DataManager): T = dm.get(e)
 }
 
 trait TestMetaGraphManager extends TestTempDir {
@@ -131,7 +133,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 
   def cleanDataManager: DataManager = {
-    val withSphynx = LoggedEnvironment.envOrNone("WITH_SPHYNX").get.toBoolean
+    val withSphynx = LoggedEnvironment.envOrElse("WITH_SPHYNX", "false").toBoolean
     if (withSphynx) {
       val dataDir = cleanDataManagerDir()
       val host = "localhost"

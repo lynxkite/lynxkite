@@ -13,6 +13,8 @@ include::state-popups.asciidoc[]
 
 include::custom-boxes.asciidoc[]
 
+include::wizards.asciidoc[]
+
 include::scala-guide.asciidoc[]
 
 include::spark-ui.asciidoc[]

@@ -47,8 +47,9 @@ object FEFilters {
         f.attribute.vertexSet == vertexSet,
         s"Filter $f does not match vertex set $vertexSet")
     }
-    if (filters.isEmpty) return vertexSet
-    intersectionEmbedding(filters.map(applyFilter(_))).srcVertexSet
+    if (filters.isEmpty) vertexSet
+    else if (filters.size == 1) applyFilter(filters.head)
+    else intersectionEmbedding(filters.map(applyFilter(_))).srcVertexSet
   }
 
   def localFilter(
@@ -84,13 +85,23 @@ object FEFilters {
     for (v <- filters) {
       assert(v.attribute.vertexSet == base, s"Filter mismatch: ${v.attribute} and $base")
     }
-    intersectionEmbedding(base +: filters.map(applyFilter(_)), heavy)
+    if (filters.size == 1) filterEmbedding(filters.head)
+    else intersectionEmbedding(base +: filters.map(applyFilter(_)), heavy)
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
     implicit
     metaManager: MetaGraphManager): VertexSet = {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
+  }
+
+  private def filterEmbedding[T](
+    fa: FilteredAttribute[T])(
+    implicit
+    metaManager: MetaGraphManager): EdgeBundle = {
+    import Scripting._
+    val op = VertexAttributeFilter(fa.filter)
+    return op(op.attr, fa.attribute).result.identity
   }
 
   private def applyFilter[T](
