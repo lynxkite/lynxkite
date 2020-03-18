@@ -43,7 +43,15 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     implicit val id = inputDatas
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag
-    val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd)
+    val filteredRdd =
+      if (inputs.attr.rdd.partitioner eq inputs.filtered.rdd.partitioner) {
+        inputs.filtered.rdd
+      } else {
+        val part = inputs.attr.rdd.partitioner
+        assert(part.isDefined, s"${inputs.attr.rdd} is not defined!")
+        inputs.filtered.rdd.sortedRepartition(part.get)
+      }
+    val filteredAttr = inputs.attr.rdd.sortedJoin(filteredRdd)
       .mapValues { case (value, _) => value }
     val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
     output(
