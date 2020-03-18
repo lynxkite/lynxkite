@@ -11,15 +11,17 @@ import datetime
 
 GRAPH = defaultdict(list)
 OPS = defaultdict(int)
+FULLOP = {}
 
 
 def add_edge(v1, v2, cost):
   w = (v2, cost)
   GRAPH[v1].append(w)
 
+
 def guid_in_domain(guid, domain):
   return f'{guid}[{domain}]'
-  
+
 
 regexp_common = re.compile(
     r'^I(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d).*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
@@ -46,7 +48,7 @@ def op(line):
 #  print ('LINE:', line)
 #  print ('OUTPUTS:', outputs)
   op = m.group(5)
-    
+
   if 'com.lynxanalytics.biggraph.graph_operations.ImportDataFrame' in op:
     op = 'ImportDataFrame()'
   idx = op.find('(')
@@ -54,17 +56,18 @@ def op(line):
   opid = OPS[op]
   OPS[op] = opid + 1
   op_start = f'{op}_start_{opid}'
+  FULLOP[op_start] = m.group(5)
   op_end = f'{op}_end_{opid}'
   add_edge(op_start, op_end, ms)
   for i in inputs:
     if i:
-#      print (f'OPI: [{i}] LINE: {line}')
+      #      print (f'OPI: [{i}] LINE: {line}')
       add_edge(guid_in_domain(i, domain), op_start, 0)
   for o in outputs:
     if o:
-#      print (f'OPO: [{o}] LINE: {line}')
+      #      print (f'OPO: [{o}] LINE: {line}')
       add_edge(op_end, guid_in_domain(o, domain), 0)
-  
+
 
 def rel(line):
   ms, _, rest = extract_common(line)
@@ -77,6 +80,7 @@ def rel(line):
   g2 = guid_in_domain(guid, dst)
   add_edge(g1, g2, ms)
 
+
 for line in fileinput.input():
   line = line.rstrip()
   if 'OPERATION_LOGGER_MARKER' in line:
@@ -85,9 +89,9 @@ for line in fileinput.input():
     rel(line)
 
 
-VERTICES=set()
-SOURCES=set()
-TARGETS=set()
+VERTICES = set()
+SOURCES = set()
+TARGETS = set()
 for v in GRAPH:
   VERTICES.add(v)
   for l in GRAPH[v]:
@@ -96,10 +100,10 @@ for v in GRAPH:
     VERTICES.add(vv)
     TARGETS.add(vv)
 
-    
+
 for v in VERTICES - TARGETS:
   add_edge('START', v, 0)
-  
+
 for v in VERTICES - SOURCES:
   add_edge(v, 'END', 0)
 
@@ -111,17 +115,18 @@ for v in VERTICES:
 
 DISTANCE['START'] = 0
 DISTANCE['END'] = 10000000000000000
-
-EDGES=[]
+TIMES = {}
+EDGES = []
 for v in GRAPH:
   for l in GRAPH[v]:
     vv = l[0]
     w = l[1]
-    e = (v,vv,-w)
+    e = (v, vv, -w)
+    TIMES[f'{v}->{vv}'] = w
     EDGES.append(e)
 
-for e in EDGES:
-  print (e)
+# for e in EDGES:
+#  print (e)
 
 for _ in range(len(VERTICES)):
   for e in EDGES:
@@ -133,12 +138,21 @@ for _ in range(len(VERTICES)):
       PRED[dst] = src
 
 
+PRED['START'] = 'START'
 v = 'END'
-while PRED[v] != 'START':
-  print (PRED[v])
+total_time = 0
+shpath = []
+while PRED[v] != 'START' and PRED[PRED[v]] != 'START':
+  src = PRED[PRED[v]]
+  dst = PRED[v]
+  estr = f'{src}->{dst}'
+  full = ''
+  if src in FULLOP:
+    full = FULLOP[src]
+  total_time += TIMES[estr]
+  shpath.append(f'{TIMES[estr]} {src} -> {dst}  {full}')
   v = PRED[v]
 
-  
-
-
-
+for e in shpath[::-1]:
+  print(e)
+print(total_time)
