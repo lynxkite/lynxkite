@@ -133,6 +133,7 @@ case class EntryList(
     path: String,
     readACL: String,
     writeACL: String,
+    canWrite: Boolean,
     directories: List[String],
     objects: List[FEEntryListElement])
 case class CreateDirectoryRequest(name: String, privacy: String)
@@ -198,6 +199,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       request.path,
       dir.readACL,
       dir.writeACL,
+      dir.writeAllowedFrom(user),
       visibleDirs.map(_.path.toString).toList,
       visibleObjectFrames.map(_.toListElementFE).toList)
   }
@@ -211,6 +213,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       request.basePath,
       dir.readACL,
       dir.writeACL,
+      dir.writeAllowedFrom(user),
       dirs.map(_.path.toString).toList,
       objects.map(_.toListElementFE).toList)
   }
