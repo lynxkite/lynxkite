@@ -368,3 +368,9 @@ to the network and file-system, it must be explicitly enabled by the administrat
 ```
 # export KITE_ALLOW_PYTHON=yes
 ```
+
+Sphynx can keep entities in memory for high-performance computation. This setting
+configures how much memory to allocate for this purpose.
+```
+export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=2000
+```
