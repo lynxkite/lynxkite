@@ -59,7 +59,7 @@ func (a LongAttributeSorterSlice) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func doAddRankingAttribute(sortKey ParquetEntity, length int, ascending bool) (*LongAttribute, error) {
+func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*LongAttribute, error) {
 	ranking := &LongAttribute{
 		Values:  make([]int64, length),
 		Defined: make([]bool, length),
@@ -155,7 +155,7 @@ func doAddRankingAttribute(sortKey ParquetEntity, length int, ascending bool) (*
 func init() {
 	operationRepository["AddRankingAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			sortKey := ea.inputs["sortKey"].(ParquetEntity)
+			sortKey := ea.inputs["sortKey"].(TabularEntity)
 			vertices := ea.getVertexSet("vertices")
 			ascending := ea.GetBoolParam("ascending")
 			ordinal, err := doAddRankingAttribute(sortKey, len(vertices.MappingToUnordered), ascending)
