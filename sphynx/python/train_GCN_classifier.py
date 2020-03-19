@@ -61,7 +61,7 @@ for epoch in range(op.params['iterations']):
     batch_train_mask, batch_x = get_feature_matrix(train_mask, batch_size, x, y_numpy, num_classes)
   else:
     batch_train_mask, batch_x = train_mask, x
-  data = Data(x=batch_x, edge_index=edges, y=label).to(device)
+  data = Data(x=batch_x, edge_index=es, y=label).to(device)
   optimizer.zero_grad()
   out = model(data)
   loss = F.cross_entropy(out[batch_train_mask], data.y[batch_train_mask])
