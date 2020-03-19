@@ -30,6 +30,10 @@ angular
         templateUrl: 'scripts/splash/splash.html',
         controller: 'SplashCtrl',
       })
+      .when('/dir:directoryName*', {
+        templateUrl: 'scripts/splash/splash.html',
+        controller: 'SplashCtrl',
+      })
       .when('/workspace/:workspaceName*', {
         templateUrl: 'scripts/workspace/workspace-entry-point.html',
         controller: 'WorkspaceEntryPointCtrl',
