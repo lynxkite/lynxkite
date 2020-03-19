@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/apache/arrow/go/arrow/ipc"
+	"github.com/apache/arrow/go/arrow/memory"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
-	"github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/reader"
-	"github.com/xitongsys/parquet-go/writer"
 	"io/ioutil"
 	"log"
 	"os"
 )
+
+var arrowAllocator = memory.NewGoAllocator()
 
 func createEntity(typeName string) (Entity, error) {
 	switch typeName {
@@ -52,7 +53,7 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	}
 	tfw.Flush()
 	switch e := e.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		onDisk, err := hasOnDisk(dataDir, guid)
 		if err != nil {
 			return err
@@ -61,26 +62,26 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 			log.Printf("guid %v is already on disk", guid)
 			return nil
 		}
-		const numGoRoutines int64 = 4
-		fname := fmt.Sprintf("%v/data.parquet", dirName)
+		fname := fmt.Sprintf("%v/data.arrow", dirName)
 		successFile := fmt.Sprintf("%v/_SUCCESS", dirName)
-		fw, err := local.NewLocalFileWriter(fname)
-		defer fw.Close()
+		f, err := os.Create(fname)
 		if err != nil {
 			return fmt.Errorf("Failed to create file: %v", err)
 		}
-		pw, err := writer.NewParquetWriter(fw, e.orderedRow(), numGoRoutines)
+		rec := e.toOrderedRows()
+		w, err := ipc.NewFileWriter(
+			f, ipc.WithSchema(rec.Schema()), ipc.WithAllocator(arrowAllocator))
 		if err != nil {
-			return fmt.Errorf("Failed to create parquet writer: %v", err)
+			return fmt.Errorf("Failed to create Arrow writer: %v", err)
 		}
-		rows := toOrderedRows(e)
-		for _, row := range rows {
-			if err := pw.Write(row); err != nil {
-				return fmt.Errorf("Failed to write parquet file: %v", err)
-			}
+		if err = w.Write(rec); err != nil {
+			return fmt.Errorf("Failed to write Arrow file: %v", err)
 		}
-		if err = pw.WriteStop(); err != nil {
-			return fmt.Errorf("Parquet WriteStop error: %v", err)
+		if err = w.Close(); err != nil {
+			return fmt.Errorf("Failed to write Arrow file: %v", err)
+		}
+		if err = f.Close(); err != nil {
+			return fmt.Errorf("Failed to write Arrow file: %v", err)
 		}
 		err = ioutil.WriteFile(successFile, nil, 0775)
 		if err != nil {
@@ -91,29 +92,6 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 		return e.write(dirName)
 	default:
 		return fmt.Errorf("Can't write entity with GUID %v to Ordered Sphynx Disk.", guid)
-	}
-}
-
-func toOrderedRows(e ParquetEntity) []interface{} {
-	switch e := e.(type) {
-	case *VertexSet:
-		return e.toOrderedRows()
-	case *EdgeBundle:
-		return e.toOrderedRows()
-	default:
-		return AttributeToOrderedRows(e)
-	}
-}
-
-func readFromOrdered(e ParquetEntity, pr *reader.ParquetReader) error {
-	numRows := int(pr.GetNumRows())
-	switch e := e.(type) {
-	case *VertexSet:
-		return e.readFromOrdered(pr, numRows)
-	case *EdgeBundle:
-		return e.readFromOrdered(pr, numRows)
-	default:
-		return ReadAttributeFromOrdered(e, pr, numRows)
 	}
 }
 
@@ -131,9 +109,9 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		return nil, err
 	}
 	switch e := e.(type) {
-	case ParquetEntity:
+	case TabularEntity:
 		const numGoRoutines int64 = 4
-		fname := fmt.Sprintf("%v/data.parquet", dirName)
+		fname := fmt.Sprintf("%v/data.arrow", dirName)
 		onDisk, err := hasOnDisk(dataDir, guid)
 		if err != nil {
 			return nil, err
@@ -141,19 +119,30 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		if !onDisk {
 			return nil, fmt.Errorf("Path is not present: %v", dirName)
 		}
-		fr, err := local.NewLocalFileReader(fname)
-		defer fr.Close()
+		f, err := os.Open(fname)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		r, err := ipc.NewFileReader(f, ipc.WithAllocator(arrowAllocator))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to open %v: %v", dirName, err)
 		}
-		pr, err := reader.NewParquetReader(fr, e.orderedRow(), numGoRoutines)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create parquet reader %v: %v", dirName, err)
+		defer r.Close()
+		// Arrow files can have multiple records. We user zero records for empty
+		// entities or one record. We never use more than one record.
+		if r.NumRecords() == 1 {
+			rec, err := r.Record(0)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read %v: %v", dirName, err)
+			}
+			defer rec.Release()
+			if err = e.readFromOrdered(rec); err != nil {
+				return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
+			}
+		} else if r.NumRecords() > 1 {
+			return nil, fmt.Errorf("%v has %v records, expected 1.", dirName, r.NumRecords())
 		}
-		if err = readFromOrdered(e, pr); err != nil {
-			return nil, fmt.Errorf("Could not read %v: %v", dirName, err)
-		}
-		pr.ReadStop()
 	case *Scalar:
 		*e, err = readScalar(dirName)
 		if err != nil {
@@ -168,10 +157,12 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 func (s *Server) WriteToOrderedDisk(
 	ctx context.Context, in *pb.WriteToOrderedDiskRequest) (*pb.WriteToOrderedDiskReply, error) {
 	guid := GUID(in.Guid)
-	e, exists := s.entities[guid]
+
+	e, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("%v is not in memory", guid)
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
+
 	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {
 		return nil, fmt.Errorf("failed to write %v to ordered disk: %v", guid, err)
 	}
