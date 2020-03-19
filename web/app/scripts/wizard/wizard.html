@@ -100,10 +100,13 @@
     wizard="true"
     box-id="steps[expanded].box"></box-editor>
 
+  <!-- We want this to be recreated in the DOM when the step changes.
+       The views are independent, best not add accidental transitions. -->
   <state-view
-    ng-if="steps[expanded].popup && steps[expanded].popup !== 'parameters'"
+    ng-repeat="step in steps"
+    ng-if="$index === expanded && step.popup && step.popup !== 'parameters'"
     workspace="workspace"
-    plug="workspace.getOutputPlug(steps[expanded].box, steps[expanded].popup)"
+    plug="workspace.getOutputPlug(step.box, step.popup)"
     popup-model="{ height: $window.innerHeight, maxHeight: $window.innerHeight, width: 500 }">
   </state-view>
 </div>
