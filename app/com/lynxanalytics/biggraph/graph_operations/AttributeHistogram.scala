@@ -47,9 +47,14 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
       if (inputs.attr.rdd.partitioner eq inputs.filtered.rdd.partitioner) {
         inputs.filtered.rdd
       } else {
-        val part = inputs.attr.rdd.partitioner
-        assert(part.isDefined, s"${inputs.attr.rdd} is not defined!")
-        inputs.filtered.rdd.sortedRepartition(part.get)
+        // sortedJoin assumes that the partitioners match. When Sphynx is involved, this is mostly
+        // not the case, so we just repartition with the same partitioner to satisfy sortedJoin.
+        // TODO: Write all this in Sphynx
+        val sphynxUsed = LoggedEnvironment.envOrNone("SPHYNX_PORT").isDefined
+        assert(
+          sphynxUsed,
+          s"Partitioner mismatch without Sphynx! ${inputs.attr.rdd.partitioner} and ${inputs.filtered.rdd.partitioner}")
+        inputs.filtered.rdd.sortedRepartition(inputs.attr.rdd.partitioner.get)
       }
     val filteredAttr = inputs.attr.rdd.sortedJoin(filteredRdd)
       .mapValues { case (value, _) => value }
