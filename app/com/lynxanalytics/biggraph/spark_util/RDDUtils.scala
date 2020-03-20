@@ -218,10 +218,10 @@ object RDDUtils {
     data: SortedRDD[ID, T],
     totalVertexCount: Long,
     requiredPositiveSamples: Int,
-    rc: RuntimeContext)(implicit classTag: ClassTag[T]): Map[T, Double] = {
+    rc: RuntimeContext): Map[T, Double] = {
 
     import Implicits._
-    val withWeights = data.safeSortedJoin(weightsRDD)
+    val withWeights = data.sortedJoin(weightsRDD.sortedRepartition(data.partitioner.get))
     val withWeightsAndCounts = unfilteredCounts(fullRDD, withWeights)
     val sampleWithWeightsAndCounts =
       withWeightsAndCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
