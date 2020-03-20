@@ -22,6 +22,7 @@ object AttributeHistogram extends OpFromJson {
       TypedJson.read[Bucketer[_]](j \ "bucketer"),
       sampleSizeParameter.fromJson(j))
 }
+
 import AttributeHistogram._
 /**
  * @param sampleSize specifies the number of data points to use for the histogram.
@@ -43,20 +44,8 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     implicit val id = inputDatas
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag
-    val filteredRdd =
-      if (inputs.attr.rdd.partitioner eq inputs.filtered.rdd.partitioner) {
-        inputs.filtered.rdd
-      } else {
-        // sortedJoin assumes that the partitioners match. When Sphynx is involved, this is mostly
-        // not the case, so we just repartition with the same partitioner to satisfy sortedJoin.
-        // TODO: Write all this in Sphynx
-        val sphynxUsed = LoggedEnvironment.envOrNone("SPHYNX_PORT").isDefined
-        assert(
-          sphynxUsed,
-          s"Partitioner mismatch without Sphynx! ${inputs.attr.rdd.partitioner} and ${inputs.filtered.rdd.partitioner}")
-        inputs.filtered.rdd.sortedRepartition(inputs.attr.rdd.partitioner.get)
-      }
-    val filteredAttr = inputs.attr.rdd.sortedJoin(filteredRdd)
+
+    val filteredAttr = inputs.attr.rdd.safeSortedJoin(inputs.filtered.rdd)
       .mapValues { case (value, _) => value }
     val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
     output(
