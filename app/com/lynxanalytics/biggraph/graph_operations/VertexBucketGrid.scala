@@ -61,14 +61,13 @@ case class VertexBucketGrid[S, T](
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
-    implicit val ctx = inputs.xAttribute.data.classTag
-    implicit val cty = inputs.yAttribute.data.classTag
     val filtered = inputs.filtered.rdd
     var indexingSeq = Seq[BucketedAttribute[_]]()
     val xBuckets = if (xBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val xAttr = inputs.xAttribute.rdd
+      implicit val ctx = inputs.xAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
       filtered.safeSortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
     }
@@ -76,6 +75,7 @@ case class VertexBucketGrid[S, T](
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
+      implicit val cty = inputs.yAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
       filtered.safeSortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
     }
