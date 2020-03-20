@@ -45,13 +45,13 @@ case class Indexer[T](bucketer: Bucketer[T])
     val filtered = inputs.filtered.rdd
     val bucketAttribute = inputs.bucketAttribute.rdd
     val buckets =
-      filtered.safeSortedJoin(bucketAttribute).flatMapOptionalValues {
+      filtered.sortedJoin(bucketAttribute.sortedRepartition(filtered.partitioner.get)).flatMapOptionalValues {
         case (_, value) => bucketer.whichBucket(value)
       }
     val baseIndices = inputs.baseIndices.rdd
     output(
       o.indices,
-      baseIndices.safeSortedJoin(buckets)
+      baseIndices.sortedJoin(buckets.sortedRepartition(baseIndices.partitioner.get))
         .mapValues { case (baseIndex, bucket) => bucketer.numBuckets * baseIndex + bucket })
   }
 }

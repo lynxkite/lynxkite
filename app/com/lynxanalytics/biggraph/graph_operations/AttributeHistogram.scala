@@ -22,7 +22,6 @@ object AttributeHistogram extends OpFromJson {
       TypedJson.read[Bucketer[_]](j \ "bucketer"),
       sampleSizeParameter.fromJson(j))
 }
-
 import AttributeHistogram._
 /**
  * @param sampleSize specifies the number of data points to use for the histogram.
@@ -44,8 +43,7 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     implicit val id = inputDatas
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag
-
-    val filteredAttr = inputs.attr.rdd.safeSortedJoin(inputs.filtered.rdd)
+    val filteredAttr = inputs.attr.rdd.sortedJoin(inputs.filtered.rdd.sortedRepartition(inputs.attr.rdd.partitioner.get))
       .mapValues { case (value, _) => value }
     val bucketedAttr = filteredAttr.flatMapValues(bucketer.whichBucket(_))
     output(

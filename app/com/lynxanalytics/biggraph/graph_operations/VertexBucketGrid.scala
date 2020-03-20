@@ -6,8 +6,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util._
 
-import scala.reflect.ClassTag
-
 object VertexBucketGrid extends OpFromJson {
   private val sampleSizeParameter = NewParameter("sampleSize", 50000)
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
@@ -62,6 +60,7 @@ case class VertexBucketGrid[S, T](
     implicit val id = inputDatas
     implicit val instance = output.instance
     val filtered = inputs.filtered.rdd
+    val filteredPartitioner = filtered.partitioner.get
     var indexingSeq = Seq[BucketedAttribute[_]]()
     val xBuckets = if (xBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
@@ -69,7 +68,8 @@ case class VertexBucketGrid[S, T](
       val xAttr = inputs.xAttribute.rdd
       implicit val ctx = inputs.xAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.safeSortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
+      filtered.sortedJoin(xAttr.sortedRepartition(filteredPartitioner))
+        .flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
     }
     val yBuckets = if (yBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
@@ -77,11 +77,12 @@ case class VertexBucketGrid[S, T](
       val yAttr = inputs.yAttribute.rdd
       implicit val cty = inputs.yAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.safeSortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
+      filtered.sortedJoin(yAttr.sortedRepartition(filteredPartitioner))
+        .flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
     }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
-    val xyBuckets = xBuckets.safeSortedJoin(yBuckets)
+    val xyBuckets = xBuckets.sortedJoin(yBuckets)
     val vertices = inputs.vertices.rdd
     val originalCount = inputs.originalCount.value
     output(
