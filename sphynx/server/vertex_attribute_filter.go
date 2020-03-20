@@ -8,13 +8,13 @@ import (
 )
 
 type filterType struct {
-	typeName string
-	opCode   string
+	typeName string // E.g., "Double"
+	opCode   string // E.g, "EQ"
 }
 
 type filterJobDescription struct {
 	fType     filterType
-	baseValue string
+	baseValue string // E.g., "16.0", or "Adam"
 }
 
 // Parser for the format "bound" uses
@@ -161,7 +161,6 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 		base, _ := strconv.ParseFloat(job.baseValue, 64)
 		filterer := supportedFilters[job.fType].(doubleFilterFn)(base)
 		for i := 0; i < len(a.Values); i++ {
-			//			fmt.Printf("%v %v\n", a.Values[i], filterer(a.Values[i]))
 			if a.Defined[i] && filterer(a.Values[i]) {
 				fvs.MappingToUnordered = append(fvs.MappingToUnordered, vs.MappingToUnordered[i])
 				identity.Src = append(identity.Src, SphynxId(len(identity.Src)))
@@ -172,7 +171,6 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 	case *StringAttribute:
 		filterer := supportedFilters[job.fType].(stringFilterFn)(job.baseValue)
 		for i := 0; i < len(a.Values); i++ {
-			//			fmt.Printf("%v %v\n", a.Values[i], filterer(a.Values[i]))
 			if a.Defined[i] && filterer(a.Values[i]) {
 				fvs.MappingToUnordered = append(fvs.MappingToUnordered, vs.MappingToUnordered[i])
 				identity.Src = append(identity.Src, SphynxId(len(identity.Src)))
@@ -205,17 +203,35 @@ func extractFilterJob(params map[string]interface{}) (filterJobDescription, bool
 	return job, true
 }
 
+// The VertexAttributeFilter API requires us to produce this (as a Scalar)
+func getFilteredAttribute(guid GUID, filter map[string]interface{}) map[string]interface{} {
+	data := map[string]interface{}{
+		"filter":        filter,
+		"attributeGUID": guid,
+	}
+	filteredAttribute := map[string]interface{}{
+		"class": "com.lynxanalytics.biggraph.graph_operations.FilteredAttribute",
+		"data":  data,
+	}
+	return filteredAttribute
+}
+
 func init() {
 	operationRepository["VertexAttributeFilter"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			job, _ := extractFilterJob(ea.opInst.Operation.Data)
-			fmt.Println("JOB:", job)
 			attr := ea.inputs["attr"].(TabularEntity)
 			vs := ea.getVertexSet("vs")
 			fvs, identity := doVertexAttributeFilter(job, vs, attr)
-
+			guid := ea.opInst.Inputs["attr"]
+			filter := ea.opInst.Operation.Data["filter"].(map[string]interface{})
+			filteredAttribute, err := ScalarFrom(getFilteredAttribute(guid, filter))
+			if err != nil {
+				return err
+			}
 			ea.output("fvs", fvs)
 			ea.output("identity", identity)
+			ea.output("filteredAttribute", &filteredAttribute)
 			return nil
 		},
 		canCompute: func(operationDescription OperationDescription) bool {

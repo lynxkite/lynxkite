@@ -15,16 +15,17 @@
 
 package com.lynxanalytics.biggraph.spark_util
 
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.HashPartitioner
 import org.apache.spark.Partition
 import org.apache.spark.Partitioner
 import org.apache.spark.TaskContext
 import org.apache.spark.rdd._
+
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering
 import scala.reflect.ClassTag
-
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 private object SortedRDDUtil {
@@ -32,6 +33,23 @@ private object SortedRDDUtil {
     assert(
       first.partitioner.get eq second.partitioner.get,
       s"Partitioner mismatch between $first and $second")
+  }
+
+  def ensureMatchingRDDs[K, V, W](
+    first: SortedRDD[K, V],
+    second: SortedRDD[K, W])(implicit
+    ck: ClassTag[K],
+    cv: ClassTag[V],
+    cw: ClassTag[W]) = {
+    if (first.partitioner.get eq second.partitioner.get) {
+      (first, second)
+    } else {
+      val sphynxUsed = LoggedEnvironment.envOrNone("SPHYNX_PORT").isDefined
+      if (!sphynxUsed) {
+        throw new AssertionError(s"Sphynx not used and partitioner mismatch between $first and $second")
+      }
+      (first, second.sortedRepartition(first.partitioner.get))
+    }
   }
 
   // Keys in bi2 must be unique.
@@ -258,6 +276,17 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
       other,
       { (first, second) =>
         SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
+          SortedRDDUtil.merge(it1.buffered, it2.buffered).iterator
+        }
+      }).asGeneral
+
+  def safeSortedJoin[W](
+    other: UniqueSortedRDD[K, W])(implicit ck: ClassTag[K], cv: ClassTag[V], cw: ClassTag[W]): SortedRDD[K, (V, W)] =
+    biDeriveWithRecipe[W, (V, W)](
+      other,
+      { (f, s) =>
+        val (first, second) = SortedRDDUtil.ensureMatchingRDDs(f, s)
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.merge(it1.buffered, it2.buffered).iterator
         }
