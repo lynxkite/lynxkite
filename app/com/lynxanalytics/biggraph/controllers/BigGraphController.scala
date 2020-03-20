@@ -254,6 +254,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   def discardAll(user: serving.User, request: serving.Empty): Unit = metaManager.synchronized {
     assert(user.isAdmin, "Only admins can delete all objects and directories")
     DirectoryEntry.rootDirectory.remove()
+    DirectoryEntry.rootDirectory.asNewDirectory()
   }
 
   def forkEntry(user: serving.User, request: ForkEntryRequest): Unit = metaManager.synchronized {
