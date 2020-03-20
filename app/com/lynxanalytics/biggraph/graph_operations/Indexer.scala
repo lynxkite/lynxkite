@@ -41,16 +41,17 @@ case class Indexer[T](bucketer: Bucketer[T])
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val bc = inputs.bucketAttribute.data.classTag
     val filtered = inputs.filtered.rdd
     val bucketAttribute = inputs.bucketAttribute.rdd
     val buckets =
-      filtered.sortedJoin(bucketAttribute).flatMapOptionalValues {
+      filtered.safeSortedJoin(bucketAttribute).flatMapOptionalValues {
         case (_, value) => bucketer.whichBucket(value)
       }
     val baseIndices = inputs.baseIndices.rdd
     output(
       o.indices,
-      baseIndices.sortedJoin(buckets)
+      baseIndices.safeSortedJoin(buckets)
         .mapValues { case (baseIndex, bucket) => bucketer.numBuckets * baseIndex + bucket })
   }
 }

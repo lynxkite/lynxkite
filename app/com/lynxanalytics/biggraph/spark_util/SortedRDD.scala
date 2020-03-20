@@ -458,6 +458,16 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
     }).trustedUnique
   }
 
+  override def safeSortedJoin[W](other: UniqueSortedRDD[K, W])(implicit ck: ClassTag[K], cv: ClassTag[V], cw: ClassTag[W]): UniqueSortedRDD[K, (V, W)] = {
+    biDeriveWithRecipe[W, (V, W)](
+      other, { (f, s) =>
+      val (first, second) = SortedRDDUtil.ensureMatchingRDDs(f, s)
+      first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
+        SortedRDDUtil.mergeUnique(it1.buffered, it2.buffered).iterator
+      }
+    }).trustedUnique
+  }
+
   // Returns an RDD with the union of the keyset of this and other. For each key it returns two
   // Options with the value for the key in this and in the other RDD.
   def fullOuterJoin[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (Option[V], Option[W])] =

@@ -6,6 +6,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.spark_util._
 
+import scala.reflect.ClassTag
+
 object VertexBucketGrid extends OpFromJson {
   private val sampleSizeParameter = NewParameter("sampleSize", 50000)
   class Input[S, T](xBucketed: Boolean, yBucketed: Boolean) extends MagicInputSignature {
@@ -59,6 +61,8 @@ case class VertexBucketGrid[S, T](
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
+    implicit val ctx = inputs.xAttribute.data.classTag
+    implicit val cty = inputs.yAttribute.data.classTag
     val filtered = inputs.filtered.rdd
     var indexingSeq = Seq[BucketedAttribute[_]]()
     val xBuckets = if (xBucketer.isEmpty) {
@@ -66,18 +70,18 @@ case class VertexBucketGrid[S, T](
     } else {
       val xAttr = inputs.xAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.sortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
+      filtered.safeSortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
     }
     val yBuckets = if (yBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.sortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
+      filtered.safeSortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
     }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
-    val xyBuckets = xBuckets.sortedJoin(yBuckets)
+    val xyBuckets = xBuckets.safeSortedJoin(yBuckets)
     val vertices = inputs.vertices.rdd
     val originalCount = inputs.originalCount.value
     output(
