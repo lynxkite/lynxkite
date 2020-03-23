@@ -92,7 +92,7 @@ angular.module('biggraph')
 
     Side.prototype.updateFromBackendJson = function(backendState) {
       if (!backendState) {
-        return;
+        backendState = defaultSideState();
       }
       backendState = angular.copy(backendState);
       backendState.projectName = this.state.projectName;

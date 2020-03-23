@@ -21,7 +21,7 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
   val numOfNodes = 11
   val numOfEdges = 16
 
-  test("one long walk") {
+  test("one long walk", com.lynxanalytics.biggraph.SparkOnly) {
     val (vs, es) = run(RandomWalkSample(1, 1, 0.01, 0), g)
     assert(vs.count(_._2 < 3.0) == 3)
     assert(visited(vs) == numOfNodes)

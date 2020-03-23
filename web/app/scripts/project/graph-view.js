@@ -413,7 +413,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           this.svg.after(r);
           continue;
         }
-        if (this.vertices[sideIndices[idx]].mode === 'sampled' && e.edges.length >= 5) {
+        if (this.vertices[sideIndices[idx]].mode === 'sampled') {
           this.vertices[sideIndices[idx]].addLegendLine(e.edges.length + ' edges');
         }
       }
@@ -756,9 +756,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertexGroup.append(v.dom);
     }
 
-    if (data.vertices.length >= 5) {
-      vertices.addLegendLine(data.vertices.length + ' vertices');
-    }
+    vertices.addLegendLine(data.vertices.length + ' vertices');
     return vertices;
   };
 

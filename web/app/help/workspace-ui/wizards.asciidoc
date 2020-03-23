@@ -1,0 +1,51 @@
+## Authoring wizards
+
+You can build complex analysis workflows in LynxKite workspaces. You can encapsulate such
+workflows in <<custom-boxes>> so that other LynxKite users can reuse them.
+Another way to share your work is in the form of _wizards_.
+
+To turn a workspace into a wizard, open the parameters of the <<anchor, Anchor box>>
+and set the **Wizard** parameter to _yes_. Now your workspace is a wizard. But it doesn't
+have any steps yet.
+
+Each step in a wizard corresponds to a parameter or state popup from the workspace.
+There are two ways to add steps to the wizard. The anchor box has a table of steps:
+
+image::images/wizard-steps.png[Screenshot of wizard steps]
+
+In this table you can specify:
+
+- The **title** of the step. This appears on the wizard view in a large font.
+- The **description** of the step. This is a multi-line field where you can add more
+  text to the step using https://commonmark.org/help/[Markdown syntax]. This
+  makes it possible to use formatted text with images and links.
+- The **box** from which you want to use the parameter or output state.
+- The **popup** column lets you choose _"parameters"_ (to use the parameter popup) or
+  one of the output states of the box.
+- The order of the steps using the buttons on the right. Press 
+  +++<span class="icon glyphicon glyphicon-chevron-up"></span>+++ or
+  +++<span class="icon glyphicon glyphicon-chevron-down"></span>+++ to move the step up or down, or
+  +++<span class="icon glyphicon glyphicon-remove"></span>+++ to delete the step.
+
+You can also quickly add steps to a wizard from a parameter or state popup.
+Once the workspace is configured as a wizard, each popup will have a
++++<span class="icon glyphicon glyphicon-gift"></span>+++ icon in the header bar.
+Click this icon to add or remove the popup as a step.
+
+Using <<custom-boxes, custom boxes>> as steps in a wizard makes it possible to create
+interfaces specially crafted for a specific use case.
+
+### Using wizards
+
+Once a workspace has been configured as a wizard, clicking it in the workspace browser
+takes you to the wizard view.
+
+image::images/wizard-screenshot.png[Wizard view screenshot]
+
+If the **In progress** setting is disabled in the Anchor box, opening the wizard creates a copy
+of it. This way multiple users can work off of the same wizard without interfering with each
+other. The copies will be created with the **In progress** setting enabled. Opening these
+copies then will not create further copies.
+
+See our section on <<wizards-in-directory, Wizards in the workspace browser>> for more
+about how wizards look from outside of the workspace.

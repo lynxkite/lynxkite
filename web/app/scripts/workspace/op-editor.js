@@ -12,6 +12,7 @@ angular.module('biggraph')
         parameters: '=',
         parametricParameters: '=',
         workspace: '=',
+        wizard: '=',
         halfSize: '=?',
         onBlur: '&?',
       },

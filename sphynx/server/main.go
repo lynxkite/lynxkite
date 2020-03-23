@@ -36,7 +36,7 @@ func NewServer() Server {
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
 	return Server{
-		entities:         make(map[GUID]Entity),
+		entityCache:      NewEntityCache(),
 		dataDir:          dataDir,
 		unorderedDataDir: unorderedDataDir}
 }
@@ -53,9 +53,6 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
-// Temporary solution: Relocating to OrderedSphynxDisk is done here,
-// we simply save any output.
-// TODO: Saving should not be done automatically here
 func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 	for guid, entity := range outputs {
 		err := saveToOrderedDisk(entity, dataDir, guid)
@@ -101,11 +98,9 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				}
 			}
 		}
-		s.Lock()
 		for guid, entity := range ea.outputs {
-			s.entities[guid] = entity
+			s.entityCache.Set(guid, entity)
 		}
-		s.Unlock()
 		go saveOutputs(s.dataDir, ea.outputs)
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
@@ -123,10 +118,11 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
-	entity, exists := s.get(guid)
+	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("guid %v is not found", guid)
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
+
 	switch scalar := entity.(type) {
 	case *Scalar:
 		return &pb.GetScalarReply{Scalar: string([]byte(*scalar))}, nil
@@ -138,16 +134,16 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
 	guid := GUID(in.Guid)
-	_, exists := s.get(guid)
+	_, exists := s.entityCache.Get(guid)
 	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
 }
 
 func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
-	e, ok := s.get(guid)
-	if !ok {
-		return nil, fmt.Errorf("Guid %v not found among entities", guid)
+	entity, exists := s.entityCache.Get(guid)
+	if !exists {
+		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
-	switch vs := e.(type) {
+	switch vs := entity.(type) {
 	case *VertexSet:
 		return vs, nil
 	default:
@@ -170,10 +166,22 @@ func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromO
 	if err != nil {
 		return nil, err
 	}
-	s.Lock()
-	s.entities[guid] = entity
-	s.Unlock()
+	s.entityCache.Set(guid, entity)
 	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
+}
+
+func (s *Server) Clear(ctx context.Context, in *pb.ClearRequest) (*pb.ClearReply, error) {
+	switch in.Domain {
+	case "SphynxMemory":
+		s.entityCache.Clear()
+	case "OrderedSphynxDisk":
+		os.RemoveAll(s.dataDir)
+		os.MkdirAll(s.dataDir, 0775)
+	case "UnorderedSphynxDisk":
+		os.RemoveAll(s.unorderedDataDir)
+		os.MkdirAll(s.unorderedDataDir, 0775)
+	}
+	return &pb.ClearReply{}, nil
 }
 
 func main() {

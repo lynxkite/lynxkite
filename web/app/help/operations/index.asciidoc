@@ -205,6 +205,8 @@ include::compute-embeddedness.asciidoc[]
 
 include::compute-hyperbolic-edge-probability.asciidoc[]
 
+include::compute-in-python.asciidoc[]
+
 include::compute-inputs.asciidoc[]
 
 include::compute-pagerank.asciidoc[]
