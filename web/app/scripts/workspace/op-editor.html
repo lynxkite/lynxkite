@@ -1,5 +1,5 @@
 <a href
-   ng-show="boxMeta.htmlId || boxMeta.description"
+   ng-show="!wizard && (boxMeta.htmlId || boxMeta.description)"
    id="help-toggle"
    ng-click="showHelp = !showHelp">
   <i class="glyphicon glyphicon-question-sign"></i>
@@ -23,6 +23,7 @@
         parameters="parameters"
         parametric-parameters="parametricParameters"
         workspace="workspace"
+        wizard="wizard"
         on-blur="onBlur()">
     </operation-parameters>
     <input type="submit" ng-show="false"><!-- For ng-submit. -->

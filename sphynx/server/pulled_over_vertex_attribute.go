@@ -10,12 +10,12 @@ import (
 func init() {
 	operationRepository["PulledOverVertexAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			origAttr := ea.inputs["originalAttr"].(ParquetEntity)
+			origAttr := ea.inputs["originalAttr"].(TabularEntity)
 			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			origDefined := reflect.ValueOf(origAttr).Elem().FieldByName("Defined")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
-			destToOrig := make(map[int]int, len(function.Src))
+			destToOrig := make(map[SphynxId]SphynxId, len(function.Src))
 			for i := range function.Src {
 				destToOrig[function.Src[i]] = function.Dst[i]
 			}
@@ -26,11 +26,11 @@ func init() {
 			destValues := destAttr.Elem().FieldByName("Values")
 			destDefined := destAttr.Elem().FieldByName("Defined")
 			for destId, origId := range destToOrig {
-				value := origValues.Index(origId)
-				defined := origDefined.Index(origId)
+				value := origValues.Index(int(origId))
+				defined := origDefined.Index(int(origId))
 				if defined.Bool() {
-					destValues.Index(destId).Set(value)
-					destDefined.Index(destId).Set(defined)
+					destValues.Index(int(destId)).Set(value)
+					destDefined.Index(int(destId)).Set(defined)
 				}
 			}
 			destAttrValue := destAttr.Interface()

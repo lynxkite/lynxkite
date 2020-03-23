@@ -69,8 +69,7 @@ function getOrbitalControls(done) {
     const url =
       'https://raw.githubusercontent.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js';
     http.get(url, response => {
-      response.pipe(file);
-      done();
+      response.pipe(file).on('finish', () => done());
     });
   }
 }

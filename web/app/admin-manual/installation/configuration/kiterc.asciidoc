@@ -362,3 +362,15 @@ Specify the directory where Sphynx stores graph data using vertex ids from the S
 ```
 export UNORDERED_SPHYNX_DATA_DIR=$HOME/unordered_sphynx_data
 ```
+
+Unrestricted Python in LynxKite is a very powerful tool. Since Python execution has full access
+to the network and file-system, it must be explicitly enabled by the administrator.
+```
+# export KITE_ALLOW_PYTHON=yes
+```
+
+Sphynx can keep entities in memory for high-performance computation. This setting
+configures how much memory to allocate for this purpose.
+```
+export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=2000
+```

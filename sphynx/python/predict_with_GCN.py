@@ -14,9 +14,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'GCN prediction running on {device}')
 
 # Get input.
-es = op.input('es')
-edges = torch.tensor([es.src, es.dst])
-x = torch.from_numpy(op.input('features', type='DoubleVectorAttribute')).type(torch.float32)
+edges = op.input_torch_edges('es')
+x = torch.from_numpy(op.input_vector('features')).type(torch.float32)
 model = op.input_model('model')
 if model.forget:
   y_numpy = op.input('label')

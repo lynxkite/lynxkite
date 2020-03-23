@@ -17,9 +17,9 @@ type EntityAccessor struct {
 func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity, error) {
 	inputs := make(map[string]Entity, len(opInst.Inputs))
 	for name, guid := range opInst.Inputs {
-		entity, exists := server.get(guid)
+		entity, exists := server.entityCache.Get(guid)
 		if !exists {
-			return nil, fmt.Errorf("Guid %v corresponding to name: '%v' was not found in cache", guid, name)
+			return nil, fmt.Errorf("Guid %v is missing", guid)
 		}
 		inputs[name] = entity
 	}

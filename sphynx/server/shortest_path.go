@@ -8,8 +8,8 @@ import (
 )
 
 type EdgeInfo struct {
-	src int
-	dst int
+	src SphynxId
+	dst SphynxId
 	d   float64
 }
 
