@@ -238,6 +238,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
+  private val edgeVisualizationOptions = List("edge label", "edge color", "width")
+
   def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Option[Progress]] = {
     val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
     states.map {
@@ -255,7 +257,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case BoxOutputKind.Visualization =>
-              stateId -> Some(List(1.0))
+              val viewer = state.visualization.project.viewer
+              val left = state.visualization.uiStatus.left.attributeTitles
+              val right = state.visualization.uiStatus.right.attributeTitles
+              val progress = (left ++ right).map {
+                case (visuType, attrName) =>
+                  if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
+                  else viewer.vertexAttributes(attrName)
+              }.map(x => entityProgressManager.computeProgress(x))
+              stateId -> Some(progress)
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
