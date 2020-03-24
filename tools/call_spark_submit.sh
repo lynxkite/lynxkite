@@ -317,6 +317,13 @@ stopSphynx () {
   stopByPIDFile "$SPHYNX_PID_FILE" "Sphynx"
 }
 
+startSphynxForever () {
+  until go/bin/server -keydir=$SPHYNX_CERT_DIR
+  do
+    >&2 echo "Sphynx crashed with exit code $?. Restarting..."
+  done
+}
+
 startSphynx () {
   if ! [ -z ${SPHYNX_HOST} ] && ! [ -z ${SPHYNX_PORT} ] && ! [ -z ${SPHYNX_CERT_DIR} ]; then
     if [ -f "${SPHYNX_PID_FILE}" ]; then
@@ -331,7 +338,7 @@ startSphynx () {
       -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
     cd "$stage_dir/sphynx"
-    go/bin/server -keydir=$SPHYNX_CERT_DIR &
+    startSphynxForever &
     SPHYNX_PID=$!
     echo $SPHYNX_PID > $SPHYNX_PID_FILE
     cd -
