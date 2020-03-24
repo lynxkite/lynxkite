@@ -51,7 +51,7 @@ case class Indexer[T](bucketer: Bucketer[T])
     val baseIndices = inputs.baseIndices.rdd
     output(
       o.indices,
-      baseIndices.sortedJoin(buckets.sortedRepartition(baseIndices.partitioner.get))
+      baseIndices.sortedJoin(buckets)
         .mapValues { case (baseIndex, bucket) => bucketer.numBuckets * baseIndex + bucket })
   }
 }

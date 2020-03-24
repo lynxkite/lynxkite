@@ -219,7 +219,10 @@ func getFilteredAttribute(guid GUID, filter map[string]interface{}) map[string]i
 func init() {
 	operationRepository["VertexAttributeFilter"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			job, _ := extractFilterJob(ea.opInst.Operation.Data)
+			job, ok := extractFilterJob(ea.opInst.Operation.Data)
+			if !ok {
+				panic(fmt.Sprintf("Cannot handle job: %v", ea.opInst.Operation.Data))
+			}
 			attr := ea.inputs["attr"].(TabularEntity)
 			vs := ea.getVertexSet("vs")
 			fvs, identity := doVertexAttributeFilter(job, vs, attr)

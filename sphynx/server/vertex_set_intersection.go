@@ -77,7 +77,6 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 		firstEmbedding.Dst[idx] = mapping[id]
 		firstEmbedding.EdgeMapping[idx] = id
 	}
-	vs0.MappingToOrdered = nil // There's no need to keep it around
 	return
 }
 
@@ -92,7 +91,6 @@ func init() {
 			for i := 0; i < numVertexSets; i++ {
 				vsName := fmt.Sprintf("vs%d", i)
 				vertexSets[i] = ea.getVertexSet(vsName)
-				fmt.Printf("Got vertex set %s, len: %d\n", vsName, len(vertexSets[i].MappingToUnordered))
 			}
 			intersection, firstEmbedding := doVertexSetIntersection(vertexSets)
 			ea.output("intersection", intersection)
