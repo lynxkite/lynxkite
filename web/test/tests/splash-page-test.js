@@ -16,7 +16,7 @@ module.exports = function(fw) {
         window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
         window.localStorage.setItem('entry-selector tutorial done', 'true');
         `);
-      browser.get('/#/');
+      browser.get('/#/dir/');
       if (fs.existsSync(lib.protractorDownloads)) {
         fs.readdirSync(lib.protractorDownloads).map(function(file) {
           fs.unlinkSync(lib.protractorDownloads + '/' + file);

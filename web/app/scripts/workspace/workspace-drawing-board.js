@@ -766,7 +766,8 @@ angular.module('biggraph')
           };
 
           scope.closeWorkspace = function() {
-            $location.url('/');
+            const dir = scope.workspace.name.split('/').slice(0, -1).join('/');
+            $location.url('/dir/' + dir);
           };
 
           scope.$on('create box under mouse', createBoxUnderMouse);
