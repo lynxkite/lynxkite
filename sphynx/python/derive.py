@@ -6,7 +6,7 @@ import types
 from . import util
 
 op = util.Op()
-if os.environ.get('SPHYNX_CHROOT') == 'yes':
+if os.environ.get('SPHYNX_CHROOT_PYTHON') == 'yes':
   op.run_in_chroot()
 
 # Load inputs.
