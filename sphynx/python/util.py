@@ -157,30 +157,33 @@ class Op:
     mounts = []
 
     def mount(src, dst):
+      for m in mounts:
+        if dst.startswith(m):  # Already mounted parent.
+          return
       subprocess.run(['mkdir', '-p', dst], check=True)
       subprocess.run(['mount', '-o', 'bind', src, dst], check=True)
       subprocess.run(['mount', '--bind', '-o', 'remount,ro', src, dst], check=True)
       mounts.append(dst)
     # Prepare chroot environment.
-    jail = tempfile.TemporaryDirectory()
-    for pdir in sys.path:
+    jail = tempfile.mkdtemp()
+    for pdir in sorted(sys.path):
       if os.path.isdir(pdir) and pdir.startswith('/'):
-        mount(pdir, jail.name + pdir)
+        mount(pdir, jail + pdir)
     for e in self.inputs.values():
-      mount(f'{self.datadir}/{e}', f'{jail.name}/data/{e}')
+      mount(f'{self.datadir}/{e}', f'{jail}/data/{e}')
     # Fork and jail the child.
     pid = os.fork()
     if pid == 0:  # Child. Continue the work in a chroot.
-      os.chroot(jail.name)
+      os.chroot(jail)
       os.chdir('/')
       self.datadir = '/data'
     else:  # Parent. Wait for child and finish the work.
       _, error = os.waitpid(pid, 0)
       if error:
         sys.exit(error)
-      for e in self.outputs.values():
-        os.rename(f'{jail.name}/data/{e}', f'{self.datadir}/{e}')
       for m in mounts:
-        subprocess.run(['umount', m], check=True)
-      jail.cleanup()
+        subprocess.run(['umount', '-f', m], check=True)
+      for e in self.outputs.values():
+        os.rename(f'{jail}/data/{e}', f'{self.datadir}/{e}')
+      subprocess.run(['rm', '-rf', jail], check=True)
       sys.exit(0)
