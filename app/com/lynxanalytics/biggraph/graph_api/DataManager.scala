@@ -176,8 +176,9 @@ class DataManager(
       val f = ensureInputs(e, d).flatMap { _ =>
         e.source.inputs.all.map(_._2.gUID)
         val inputs = e.source.inputs.all.map(_._2.gUID).mkString(",")
+        val outputs = e.source.outputs.all.map(_._2.gUID).mkString(",")
         val msg =
-          s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: |$inputs| op: ${e.source.operation}"
+          s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: |$inputs| outputs: |$outputs| op: ${e.source.operation}"
         d.compute(e.source).withLogging(msg)
       }
       for (o <- e.source.outputs.all.values) {
