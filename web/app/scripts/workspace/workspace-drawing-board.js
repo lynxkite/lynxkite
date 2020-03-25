@@ -41,6 +41,7 @@ angular.module('biggraph')
                   scope.workspaceName,
                   scope.boxCatalog);
                 scope.workspace.loadWorkspace();
+                util.scopeTitle(scope, scope.getLastPart(scope.workspaceName));
               }
             });
           scope.$watch(
