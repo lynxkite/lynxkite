@@ -10,6 +10,7 @@ angular.module('biggraph')
     } else {
       $scope.name = path[path.length - 1];
     }
+    util.scopeTitle($scope, $scope.name);
     $scope.util = util;
     $scope.expanded = 0;
     $scope.maximized = false;
