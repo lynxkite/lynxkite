@@ -102,7 +102,6 @@ func doDapcstp(
 	if err != nil {
 		return SolutionWrapper{}, err
 	}
-	panic("PANIC!!!!")
 	solution := dapcstp.PrimalHeuristic(&graph)
 	// Behind the graph and the solution, there is actually
 	// a greater graph than our original input, because

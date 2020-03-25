@@ -314,6 +314,9 @@ uploadLogs () {
 }
 
 stopSphynx () {
+  PID=$(cat "${SPHYNX_PID_FILE}")
+  # Kill child processes.
+  pkill -9 -P $PID
   stopByPIDFile "$SPHYNX_PID_FILE" "Sphynx"
 }
 
@@ -321,15 +324,12 @@ startSphynxForever () {
   until go/bin/server -keydir=$SPHYNX_CERT_DIR
   do
     >&2 echo "Sphynx crashed with exit code $?. Restarting..."
+    sleep 10
   done
 }
 
 startSphynx () {
   if ! [ -z ${SPHYNX_HOST} ] && ! [ -z ${SPHYNX_PORT} ] && ! [ -z ${SPHYNX_CERT_DIR} ]; then
-    if [ -f "${SPHYNX_PID_FILE}" ]; then
-        >&2 echo "Sphynx is already running (or delete ${SPHYNX_PID_FILE})"
-        exit 1
-    fi
     if [ ! -f "${SPHYNX_CERT_DIR}/cert.pem" ]; then
       mkdir -p ${SPHYNX_CERT_DIR}
       openssl req -x509 -sha256 -newkey rsa:4096 \
@@ -348,7 +348,6 @@ startSphynx () {
 case $mode in
   interactive)
     startSphynx
-    trap stopSphynx ERR EXIT
     "${command[@]}"
   ;;
   start)
