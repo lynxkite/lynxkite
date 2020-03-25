@@ -165,7 +165,7 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 				fvs.MappingToUnordered = append(fvs.MappingToUnordered, vs.MappingToUnordered[i])
 				identity.Src = append(identity.Src, SphynxId(len(identity.Src)))
 				identity.Dst = append(identity.Dst, SphynxId(i))
-				identity.EdgeMapping = append(identity.EdgeMapping, int64(i))
+				identity.EdgeMapping = append(identity.EdgeMapping, vs.MappingToUnordered[i])
 			}
 		}
 	case *StringAttribute:
@@ -175,7 +175,7 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 				fvs.MappingToUnordered = append(fvs.MappingToUnordered, vs.MappingToUnordered[i])
 				identity.Src = append(identity.Src, SphynxId(len(identity.Src)))
 				identity.Dst = append(identity.Dst, SphynxId(i))
-				identity.EdgeMapping = append(identity.EdgeMapping, int64(i))
+				identity.EdgeMapping = append(identity.EdgeMapping, vs.MappingToUnordered[i])
 			}
 		}
 	default:
