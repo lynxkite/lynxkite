@@ -28,7 +28,16 @@ vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
 # Execute user code.
-exec(op.params['code'])
+code = compile(op.params['code'], 'user code', 'exec')
+try:
+  exec(code)
+except BaseException:
+  # Hide this file from the traceback.
+  import traceback
+  import sys
+  a, b, c = sys.exc_info()
+  traceback.print_exception(a, b, c.tb_next)
+  sys.exit(1)
 
 # Save outputs.
 typenames = {
