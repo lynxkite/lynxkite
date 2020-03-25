@@ -5,7 +5,6 @@ import types
 from . import util
 
 op = util.Op()
-print('Running derive python', op.params, op.inputs, op.outputs)
 # Load inputs.
 vs = {}
 es = {}
@@ -28,8 +27,8 @@ vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
 # Execute user code.
-code = compile(op.params['code'], 'user code', 'exec')
 try:
+  code = compile(op.params['code'], 'user code', 'exec')
   exec(code)
 except BaseException:
   # Hide this file from the traceback.
