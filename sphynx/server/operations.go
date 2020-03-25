@@ -123,7 +123,8 @@ func (ea *EntityAccessor) OutputJson(raw []byte) error {
 }
 
 type Operation struct {
-	execute func(ea *EntityAccessor) error
+	execute    func(ea *EntityAccessor) error
+	canCompute func(operationDescription OperationDescription) bool
 }
 
 type DiskOperation struct {
