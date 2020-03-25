@@ -35,7 +35,7 @@ Explanation:
 9. And DerivePython can start working
 ...
 In the end, we see some SparkDomain operations for visualization.
-The last line is the total time taken. Probably there is some overhead, because because it is
+The last line is the total time taken. Probably there is some overhead, because the sum is
 always noticeably less than the total length of the computation. (E.g., in the example above,
 the actual time was 22 seconds, but this path was only 17 seconds long.)
 
@@ -48,7 +48,13 @@ from collections import defaultdict
 import datetime
 
 GRAPH = defaultdict(list)
+
+# A counter for operation types, so that we can use e.g.,
+# DerivePython_start_0, DerivePython_end_0, ... DerivePython_start_<n>, DerivePython_end_<n>
 OPS = defaultdict(int)
+
+# More detailed (almost full) description of the operation, e.g.,
+# DerivePython(matches = vs[vs.name.str.lower() == 'Gandalf'
 FULLOP = {}
 
 
@@ -69,7 +75,6 @@ regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) outputs: ([^ ]+)
 
 def extract_common(line):
   m = regexp_common.match(line)
-  dt = datetime.datetime.strptime(m.group(1), '%Y-%m-%d %H:%M:%S,%f')
   elapsed = int(m.group(2))
   return elapsed, m.group(3), m.group(4)
 
@@ -127,8 +132,8 @@ SOURCES = set()
 TARGETS = set()
 for v in GRAPH:
   VERTICES.add(v)
+  SOURCES.add(v)
   for l in GRAPH[v]:
-    SOURCES.add(v)
     vv = l[0]
     VERTICES.add(vv)
     TARGETS.add(vv)
@@ -141,7 +146,7 @@ for v in VERTICES - SOURCES:
 
 # A simple critical path implementation.
 # Use compute shortest path on graph, with the
-# edge weights negated. This would not work with Dykstra, but
+# edge weights negated. This would not work with Dikstra, but
 # does work with Bellman-Ford, since this graph is a DAG.
 
 DISTANCE = {}
