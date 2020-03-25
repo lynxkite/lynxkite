@@ -15,7 +15,8 @@ angular.module('biggraph').directive('entrySelector',
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
         const defaultPath =
-          (util.user.email && util.user.email !== '(not logged in)') ?
+          (util.user.email &&
+            util.user.email !== '(not logged in)' && util.user.email !== '(single-user)') ?
             'Users/' + util.user.email : '';
         scope.path = $routeParams.directoryName ? $routeParams.directoryName.slice(1) : defaultPath;
         scope.$watch('path', p => $location.url('/dir/' + p));
