@@ -1,11 +1,14 @@
 '''Run user code.'''
 import numpy as np
 import pandas as pd
+import os
 import types
 from . import util
 
 op = util.Op()
-print('Running derive python', op.params, op.inputs, op.outputs)
+if os.environ.get('SPHYNX_CHROOT') == 'yes':
+  op.run_in_chroot()
+
 # Load inputs.
 vs = {}
 es = {}

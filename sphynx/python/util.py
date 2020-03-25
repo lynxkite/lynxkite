@@ -140,3 +140,47 @@ class Op:
     os.makedirs(path, exist_ok=True)
     torch.save(model, path + '/model.pt')
     self.output_scalar(name, description)
+
+  def run_in_chroot(self):
+    '''Runs this operation in a chroot environment.
+
+    Python dependencies and inputs are mounted read-only.
+    Outputs are moved back to the real data directory after the script terminates.
+
+    We must be running as root for this to work. If in Docker, the container must be started with
+    --cap-add=SYS_ADMIN and --security-opt apparmor:unconfined (depending on kernel version).
+    If you start the container with --privileged that also covers these settings.
+    '''
+    import tempfile
+    import subprocess
+    import sys
+    mounts = []
+
+    def mount(src, dst):
+      subprocess.run(['mkdir', '-p', dst], check=True)
+      subprocess.run(['mount', '-o', 'bind', src, dst], check=True)
+      subprocess.run(['mount', '--bind', '-o', 'remount,ro', src, dst], check=True)
+      mounts.append(dst)
+    # Prepare chroot environment.
+    jail = tempfile.TemporaryDirectory()
+    for pdir in sys.path:
+      if os.path.isdir(pdir) and pdir.startswith('/'):
+        mount(pdir, jail.name + pdir)
+    for e in self.inputs.values():
+      mount(f'{self.datadir}/{e}', f'{jail.name}/data/{e}')
+    # Fork and jail the child.
+    pid = os.fork()
+    if pid == 0:  # Child. Continue the work in a chroot.
+      os.chroot(jail.name)
+      os.chdir('/')
+      self.datadir = '/data'
+    else:  # Parent. Wait for child and finish the work.
+      _, error = os.waitpid(pid, 0)
+      if error:
+        sys.exit(error)
+      for e in self.outputs.values():
+        os.rename(f'{jail.name}/data/{e}', f'{self.datadir}/{e}')
+      for m in mounts:
+        subprocess.run(['umount', m], check=True)
+      jail.cleanup()
+      sys.exit(0)
