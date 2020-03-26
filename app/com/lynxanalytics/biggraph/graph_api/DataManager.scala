@@ -168,6 +168,8 @@ class DataManager(
     futures((e.gUID, d))
   }
 
+  private val orderedSphynxDisk = domains.find(_.isInstanceOf[OrderedSphynxDisk])
+
   private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
     val source = whoHas(e).getOrElse(whoCanCompute(e))
     if (d.has(e)) { // We have it. Great.
@@ -182,6 +184,11 @@ class DataManager(
       }
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
+      }
+      if (d.isInstanceOf[SphynxMemory]) {
+        for (o <- e.source.outputs.all.values) {
+          futures((o.gUID, orderedSphynxDisk.get)) = ensureThenRelocate(o, d, orderedSphynxDisk.get)
+        }
       }
       f
     } else { // Someone else has it or will compute it. Then we relocate.
