@@ -185,6 +185,8 @@ class DataManager(
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
       }
+      // After Sphynx computes something, we save it to ordered Sphynx disk. This makes it
+      // possible to drop entities from Sphynx memory and load them from disk later.
       if (d.isInstanceOf[SphynxMemory]) {
         for (o <- e.source.outputs.all.values) {
           futures((o.gUID, orderedSphynxDisk.get)) = ensureThenRelocate(o, d, orderedSphynxDisk.get)
