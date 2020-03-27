@@ -115,6 +115,3 @@ local-bd-test: .build/backend-done
 	python/big_data_tests/run_test.sh
 .PHONY: sphynx
 sphynx: .build/sphynx-prep-done
-.PHONY: sphynx-test
-sphynx-test: .build/sphynx-prep-done
-	sphynx/run_test.sh
