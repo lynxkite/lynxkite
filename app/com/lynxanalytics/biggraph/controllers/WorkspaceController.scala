@@ -238,7 +238,31 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  private val edgeVisualizationOptions = List("edge label", "edge color", "width")
+  private val edgeVisualizationOptions = Set("edge label", "edge color", "width")
+  private def visuProgressForSide(vs: VisualizationState, side: UIStatus): List[Double] = {
+    val proj = side.projectPath
+    if (proj.isEmpty) {
+      List()
+    } else {
+      val p = proj.get
+      val viewer =
+        if (p.isEmpty) vs.project.viewer
+        else {
+          assert(p.startsWith("."), s"Bad segmentation name: $p")
+          vs.project.viewer.segmentationMap(p.drop(1))
+        }
+      val eb = if (viewer.edgeBundle == null) List()
+      else List(entityProgressManager.computeProgress(viewer.edgeBundle))
+      val basicsProgress = eb ++ List(entityProgressManager.computeProgress(viewer.vertexSet))
+      side.attributeTitles.map {
+        case (visuType, attrName) =>
+          if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
+          else viewer.vertexAttributes(attrName)
+      }.map(x => entityProgressManager.computeProgress(x))
+        .toList ++
+        basicsProgress
+    }
+  }
 
   def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Option[Progress]] = {
     val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
@@ -257,14 +281,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case BoxOutputKind.Visualization =>
-              val viewer = state.visualization.project.viewer
-              val left = state.visualization.uiStatus.left.attributeTitles
-              val right = state.visualization.uiStatus.right.attributeTitles
-              val progress = (left ++ right).map {
-                case (visuType, attrName) =>
-                  if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
-                  else viewer.vertexAttributes(attrName)
-              }.map(x => entityProgressManager.computeProgress(x))
+              val progress =
+                visuProgressForSide(state.visualization, state.visualization.uiStatus.left) ++
+                  visuProgressForSide(state.visualization, state.visualization.uiStatus.right)
               stateId -> Some(progress)
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
