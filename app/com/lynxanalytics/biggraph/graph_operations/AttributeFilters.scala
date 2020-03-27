@@ -25,6 +25,7 @@ case class VertexAttributeFilter[T](filter: Filter[T])
   extends SparkOperation[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
   import VertexAttributeFilter._
 
+  override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
