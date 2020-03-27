@@ -221,7 +221,7 @@ object RDDUtils {
     rc: RuntimeContext): Map[T, Double] = {
 
     import Implicits._
-    val withWeights = data.sortedJoin(weightsRDD.sortedRepartition(data.partitioner.get))
+    val withWeights = data.sortedJoin(weightsRDD.copartition(data))
     val withWeightsAndCounts = unfilteredCounts(fullRDD, withWeights)
     val sampleWithWeightsAndCounts =
       withWeightsAndCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
