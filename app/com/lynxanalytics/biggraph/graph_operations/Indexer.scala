@@ -45,7 +45,7 @@ case class Indexer[T](bucketer: Bucketer[T])
     val filtered = inputs.filtered.rdd
     val bucketAttribute = inputs.bucketAttribute.rdd
     val buckets =
-      filtered.sortedJoin(bucketAttribute.sortedRepartition(filtered.partitioner.get)).flatMapOptionalValues {
+      filtered.sortedJoin(bucketAttribute.copartition(filtered)).flatMapOptionalValues {
         case (_, value) => bucketer.whichBucket(value)
       }
     val baseIndices = inputs.baseIndices.rdd
