@@ -5,8 +5,6 @@ import com.lynxanalytics.biggraph.graph_api._
 
 object VertexSetIntersection extends OpFromJson {
   class Input(numVertexSets: Int) extends MagicInputSignature {
-    // We do expect all the rdds to have the same number of partitions.
-    // We'll use sortedJoin in the execute.
     val vss = Range(0, numVertexSets).map {
       i => vertexSet(Symbol("vs" + i))
     }.toList
@@ -46,7 +44,7 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
     implicit val id = inputDatas
 
     val intersection = inputs.vss.map(_.rdd)
-      .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2).mapValues(_ => ()))
+      .reduce((rdd1, rdd2) => rdd1.sortedJoin(rdd2.copartition(rdd1)).mapValues(_ => ()))
     output(o.intersection, intersection)
     output(o.firstEmbedding, intersection.mapValuesWithKeys { case (id, _) => Edge(id, id) })
   }
