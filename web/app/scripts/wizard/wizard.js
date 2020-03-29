@@ -2,7 +2,8 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location, $window) {
+  .controller('WizardCtrl', function (
+    $scope, $routeParams, util, WorkspaceWrapper, $location, $window, $timeout) {
     const md = window.markdownit();
     const path = $routeParams.name.split('/');
     if (path.includes('In progress wizards')) { // These have a timestamp that we hide.
@@ -41,7 +42,11 @@ angular.module('biggraph')
     };
 
     $scope.moveToStep = function(i) {
-      $scope.expanded = i;
+      // Timeout to wait for delayed blur events to trigger workspace changes.
+      // Then wait for the new state IDs.
+      $timeout(() => $scope.workspace.loading.then(() => {
+        $scope.expanded = i;
+      }));
     };
 
     $scope.isShowingVisualization = function() {
