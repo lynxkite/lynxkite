@@ -161,7 +161,7 @@ angular.module('biggraph')
         const request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
         this._lastLoadRequest = request;
         this._requestInvalidated = false;
-        return request
+        const promise = request
           .then(function ensureBoxCatalog(response) {
             if (!that._boxCatalogMap) { // Need to load catalog before processing the response.
               return that._updateBoxCatalog().then(function() { return response; });
@@ -188,12 +188,13 @@ angular.module('biggraph')
                 that.error = util.responseToErrorMessage(error);
               }
             });
+        this.loading = promise;
+        return promise;
       },
 
       saveWorkspace: function() {
-        const that = this;
-        return that.loadWorkspace(
-          util.post('/ajax/setAndGetWorkspace', { reference: that.ref(), workspace: that.state }));
+        return this.loadWorkspace(
+          util.post('/ajax/setAndGetWorkspace', { reference: this.ref(), workspace: this.state }));
       },
 
       getUniqueId: function(operationId) {
