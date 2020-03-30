@@ -14,7 +14,7 @@ angular.module('biggraph').directive('entrySelector',
         }
         scope.folderDescriptions = {};
         util.globals.then(g => {
-          scope.folderDescriptions = (JSON.parse(g.frontendConfig) || {}).folderDescriptions || {};
+          scope.folderDescriptions = JSON.parse(g.frontendConfig || '{}').folderDescriptions || {};
         });
         scope.opened = {};
         scope.newWorkspace = {};
