@@ -264,6 +264,11 @@ export UNORDERED_SPHYNX_DATA_DIR=$HOME/unordered_sphynx_data
 # to the network and file-system, it must be explicitly enabled by the administrator.
 # export KITE_ALLOW_PYTHON=yes
 
+# A simple chroot-based sandbox for executing users' Python code can improve security in a multi-user
+# environment. To be able to mount directories as read-only, this requires running LynxKite as root.
+# If it's running in a Docker container, that container must be started with the --privileged flag.
+# export SPHYNX_CHROOT_PYTHON=yes
+
 # Sphynx can keep entities in memory for high-performance computation. This setting
 # configures how much memory to allocate for this purpose.
 export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=2000

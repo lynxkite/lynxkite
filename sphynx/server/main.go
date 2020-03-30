@@ -46,20 +46,18 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	exists := false
 	switch in.Domain {
 	case "SphynxMemory":
-		_, exists = operationRepository[shortOpName(opInst)]
+		op, ok := operationRepository[shortOpName(opInst)]
+		if ok {
+			if op.canCompute == nil {
+				exists = true
+			} else {
+				exists = op.canCompute(opInst.Operation)
+			}
+		}
 	case "OrderedSphynxDisk":
 		_, exists = diskOperationRepository[shortOpName(opInst)]
 	}
 	return &pb.CanComputeReply{CanCompute: exists}, nil
-}
-
-func saveOutputs(dataDir string, outputs map[GUID]Entity) {
-	for guid, entity := range outputs {
-		err := saveToOrderedDisk(entity, dataDir, guid)
-		if err != nil {
-			log.Printf("Error while saving %v (guid: %v): %v", entity, guid, err)
-		}
-	}
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
@@ -101,7 +99,6 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		for guid, entity := range ea.outputs {
 			s.entityCache.Set(guid, entity)
 		}
-		go saveOutputs(s.dataDir, ea.outputs)
 	case "OrderedSphynxDisk":
 		op, exists := diskOperationRepository[shortOpName(opInst)]
 		if !exists {

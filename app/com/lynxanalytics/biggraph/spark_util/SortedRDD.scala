@@ -250,6 +250,12 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
     }
   }
 
+  def copartition[W](rdd: SortedRDD[K, W])(
+    implicit
+    ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+    this.sortedRepartition(rdd.partitioner.get)
+  }
+
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
   def sortedJoin[W](
@@ -417,6 +423,12 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
     } else {
       this.sortUnique(partitioner)
     }
+  }
+
+  override def copartition[W](rdd: SortedRDD[K, W])(
+    implicit
+    ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+    this.sortedRepartition(rdd.partitioner.get)
   }
 
   override def sortedJoin[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (V, W)] = {
