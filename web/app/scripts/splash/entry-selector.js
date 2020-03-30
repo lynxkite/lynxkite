@@ -7,10 +7,15 @@ angular.module('biggraph').directive('entrySelector',
       restrict: 'E',
       templateUrl: 'scripts/splash/entry-selector.html',
       link: function(scope, element) {
+        const md = window.markdownit();
         scope.util = util;
         function defaultSettings() {
           return { privacy: 'public-read' };
         }
+        scope.folderDescriptions = {};
+        util.globals.then(g => {
+          scope.folderDescriptions = (JSON.parse(g.frontendConfig) || {}).folderDescriptions || {};
+        });
         scope.opened = {};
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
@@ -95,9 +100,24 @@ angular.module('biggraph').directive('entrySelector',
           scope.opened = {};
           if (before !== after) {
             scope.reload();
+            setFolderDescription();
           }
         }
+
+        function setFolderDescription() {
+          let best = 0;
+          scope.description = '';
+          for (let k of Object.keys(scope.folderDescriptions)) {
+            const r = RegExp('^' + k + '$');
+            if (k.length >= best && scope.path.match(r)) {
+              best = k.length;
+              scope.description = md.render(scope.folderDescriptions[k]);
+            }
+          }
+        }
+
         scope.$watch('path', basicWatch);
+        scope.$watch('folderDescriptions', setFolderDescription);
         scope.$watch('searchQuery', basicWatch);
         scope.reload();
         scope.$on('saved snapshot', scope.reload);

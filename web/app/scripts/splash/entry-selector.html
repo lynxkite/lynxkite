@@ -1,4 +1,5 @@
 <div class="entry-list">
+  <div class="folder-description" ng-show="description" trusted-html="description"></div>
   <div class="entry entry-header" id="new-workspace" ng-click="newWorkspace.expanded = true"
     ng-hide="util.user.wizardOnly || !data.canWrite">
     <span class="icon glyphicon glyphicon-plus"></span>

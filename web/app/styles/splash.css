@@ -48,3 +48,8 @@
 .wizard-nav-links .col-sm-12 > * {
   padding: 0 10px;
 }
+
+.folder-description {
+  color: #004165;
+  padding: 10px;
+}
