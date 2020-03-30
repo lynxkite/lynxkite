@@ -243,10 +243,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     side.projectPath match {
       case None => List()
       case Some(p) =>
-        val segs = p.split("\\.").filter(_.nonEmpty)
-        val viewer = segs.foldLeft(state.project.viewer.asInstanceOf[ProjectViewer]) {
-          (v, p) => v.segmentationMap(p)
-        }
+        val segs = p.split("\\.", -1).filter(_.nonEmpty)
+        val viewer = state.project.viewer.offspringViewer(segs)
         val eb = if (viewer.edgeBundle == null) None
         else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
         val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
