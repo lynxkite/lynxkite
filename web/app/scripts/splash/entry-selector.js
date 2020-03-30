@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll, $location) {
+  function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/splash/entry-selector.html',
@@ -14,8 +14,12 @@ angular.module('biggraph').directive('entrySelector',
         scope.opened = {};
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
-        scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
-          window.localStorage.getItem('last_selector_path') || '';
+        const defaultPath =
+          (util.user.email &&
+            util.user.email !== '(not logged in)' && util.user.email !== '(single-user)') ?
+            'Users/' + util.user.email : '';
+        scope.path = $routeParams.directoryName ? $routeParams.directoryName.slice(1) : defaultPath;
+        scope.$watch('path', p => $location.url('/dir/' + p));
         const hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'c', description: 'Create new workspace',
@@ -77,8 +81,6 @@ angular.module('biggraph').directive('entrySelector',
               delete scope.nextData;
             }
           });
-          window.sessionStorage.setItem('last_selector_path', scope.path);
-          window.localStorage.setItem('last_selector_path', scope.path);
         };
 
         // Wizard-only users still have access to custom boxes and such because they

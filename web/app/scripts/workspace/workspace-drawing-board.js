@@ -41,6 +41,7 @@ angular.module('biggraph')
                   scope.workspaceName,
                   scope.boxCatalog);
                 scope.workspace.loadWorkspace();
+                util.scopeTitle(scope, scope.getLastPart(scope.workspaceName));
               }
             });
           scope.$watch(
@@ -766,7 +767,8 @@ angular.module('biggraph')
           };
 
           scope.closeWorkspace = function() {
-            $location.url('/');
+            const dir = scope.workspace.name.split('/').slice(0, -1).join('/');
+            $location.url('/dir/' + dir);
           };
 
           scope.$on('create box under mouse', createBoxUnderMouse);
@@ -913,7 +915,7 @@ angular.module('biggraph')
 
                   <p>Or you can click on an output circle to see the output state.
 
-                  <p>Boxes output and expect as input various states. A "project" state
+                  <p>The inputs and outputs of boxes can be various states. A "project" state
                   is a rich collection of graphs and their attributes. A "table" state
                   is a traditional SQL table. There are a few other states, such as visualizations.
                   `,

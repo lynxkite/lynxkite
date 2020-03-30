@@ -87,14 +87,6 @@ func (ea *EntityAccessor) GetBoolParamWithDefault(name string, dflt bool) bool {
 	return dflt
 }
 
-func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
-	err := saveToOrderedDisk(ea.inputs[name], ea.server.dataDir, ea.opInst.Inputs[name])
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%v/%v/", ea.server.dataDir, ea.opInst.Inputs[name]), nil
-}
-
 // TODO: Replace this with writing Parquet from Python.
 func (ea *EntityAccessor) OutputJson(raw []byte) error {
 	type JsonEntity struct {
@@ -123,7 +115,8 @@ func (ea *EntityAccessor) OutputJson(raw []byte) error {
 }
 
 type Operation struct {
-	execute func(ea *EntityAccessor) error
+	execute    func(ea *EntityAccessor) error
+	canCompute func(operationDescription OperationDescription) bool
 }
 
 type DiskOperation struct {

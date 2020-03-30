@@ -1,6 +1,6 @@
 <div class="entry-list">
   <div class="entry entry-header" id="new-workspace" ng-click="newWorkspace.expanded = true"
-    ng-hide="util.user.wizardOnly">
+    ng-hide="util.user.wizardOnly || !data.canWrite">
     <span class="icon glyphicon glyphicon-plus"></span>
     <span class="lead" ng-hide="newWorkspace.expanded">New workspace</span>
     <form ng-show="newWorkspace.expanded" class="form-inline" role="form">
@@ -12,7 +12,8 @@
     </form>
   </div>
 
-  <div class="entry entry-header" id="new-directory" ng-click="newDirectory.expanded = true">
+  <div class="entry entry-header" id="new-directory" ng-click="newDirectory.expanded = true"
+    ng-show="data.canWrite">
     <span class="icon glyphicon glyphicon-plus"></span>
     <span class="lead" ng-hide="newDirectory.expanded">New folder</span>
     <form ng-show="newDirectory.expanded" class="form-inline" role="form">
@@ -59,7 +60,7 @@
     <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()"
       id="pop-directory-icon" ng-show="path" drop-tooltip="Go to parent folder"></span>
     <span class="clicky glyphicon glyphicon-cog"
-      ng-show="util.globals.hasAuth"
+      ng-show="util.globals.hasAuth && data.canWrite">
       ng-click="scope.showSettings = !scope.showSettings"
       id="directory-settings-icon"></span>
   </div>

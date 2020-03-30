@@ -3,8 +3,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 )
@@ -17,10 +19,15 @@ func pythonOperation(module string) DiskOperation {
 				return fmt.Errorf("%v failed: %v", module, err)
 			}
 			cmd := exec.Command("python", "-m", "python."+module, dataDir, string(meta))
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+			var output bytes.Buffer
+			cmd.Stdout = io.MultiWriter(os.Stdout, &output)
+			cmd.Stderr = io.MultiWriter(os.Stderr, &output)
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("%v failed: %v", module, err)
+				if output.Len() > 0 {
+					return fmt.Errorf("\n%v", output.String())
+				} else {
+					return fmt.Errorf("%v failed: %v", module, err)
+				}
 			}
 			return nil
 		},

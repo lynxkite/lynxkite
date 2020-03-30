@@ -60,20 +60,25 @@ case class VertexBucketGrid[S, T](
     implicit val id = inputDatas
     implicit val instance = output.instance
     val filtered = inputs.filtered.rdd
+    val filteredPartitioner = filtered.partitioner.get
     var indexingSeq = Seq[BucketedAttribute[_]]()
     val xBuckets = if (xBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val xAttr = inputs.xAttribute.rdd
+      implicit val ctx = inputs.xAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.sortedJoin(xAttr).flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
+      filtered.sortedJoin(xAttr.sortedRepartition(filteredPartitioner))
+        .flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
     }
     val yBuckets = if (yBucketer.isEmpty) {
       filtered.mapValues(_ => 0)
     } else {
       val yAttr = inputs.yAttribute.rdd
+      implicit val cty = inputs.yAttribute.data.classTag
       indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.sortedJoin(yAttr).flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
+      filtered.sortedJoin(yAttr.sortedRepartition(filteredPartitioner))
+        .flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
     }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)

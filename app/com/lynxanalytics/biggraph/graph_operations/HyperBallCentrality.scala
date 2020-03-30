@@ -143,7 +143,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       measureFunction = measureFunction,
       partitioner = partitioner,
       edges = edges)
-    result.sortedRepartition(vs.partitioner.get)
+    result.copartition(vs)
   }
 
   // Recursive helper function for the above getMeasures function.

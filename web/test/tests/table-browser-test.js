@@ -38,7 +38,6 @@ module.exports = function(fw) {
       tableBrowser.toggleNode([0]);
       tableBrowser.expectNode([0, 0], 'inner', '`dir.v01/inner`');
       lib.splash.popDirectory();
-      tableBrowser.toggle();
     },
     function() {
     });

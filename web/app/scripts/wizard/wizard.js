@@ -10,6 +10,7 @@ angular.module('biggraph')
     } else {
       $scope.name = path[path.length - 1];
     }
+    util.scopeTitle($scope, $scope.name);
     $scope.util = util;
     $scope.expanded = 0;
     $scope.maximized = false;
@@ -32,9 +33,7 @@ angular.module('biggraph')
     });
 
     $scope.goToWizardsInProgress = function() {
-      window.sessionStorage.setItem(
-        'last_selector_path', `Users/${util.user.email}/In progress wizards`);
-      $location.url('/');
+      $location.url(`/dir/Users/${util.user.email}/In progress wizards`);
     };
 
     $scope.toggleMaximized = function() {
