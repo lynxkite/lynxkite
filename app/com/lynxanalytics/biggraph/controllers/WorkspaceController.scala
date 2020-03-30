@@ -239,28 +239,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private val edgeVisualizationOptions = Set("edge label", "edge color", "width")
-  private def visuProgressForSide(vs: VisualizationState, side: UIStatus): List[Double] = {
-    val proj = side.projectPath
-    if (proj.isEmpty) {
-      List()
-    } else {
-      val p = proj.get
-      val viewer =
-        if (p.isEmpty) vs.project.viewer
-        else {
-          assert(p.startsWith("."), s"Bad segmentation name: $p")
-          vs.project.viewer.segmentationMap(p.drop(1))
+  private def visuProgressForSide(state: VisualizationState, side: UIStatus): List[Double] = {
+    side.projectPath match {
+      case None => List()
+      case Some(p) =>
+        val segs = p.split("\\.").filter(_.nonEmpty)
+        val viewer = segs.foldLeft(state.project.viewer.asInstanceOf[ProjectViewer]) {
+          (v, p) => v.segmentationMap(p)
         }
-      val eb = if (viewer.edgeBundle == null) List()
-      else List(entityProgressManager.computeProgress(viewer.edgeBundle))
-      val basicsProgress = eb ++ List(entityProgressManager.computeProgress(viewer.vertexSet))
-      side.attributeTitles.map {
-        case (visuType, attrName) =>
-          if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
-          else viewer.vertexAttributes(attrName)
-      }.map(x => entityProgressManager.computeProgress(x))
-        .toList ++
-        basicsProgress
+        val eb = if (viewer.edgeBundle == null) None
+        else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
+        val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
+        side.attributeTitles.map {
+          case (visuType, attrName) =>
+            if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
+            else viewer.vertexAttributes(attrName)
+        }.map(x => entityProgressManager.computeProgress(x))
+          .toList ++
+          eb ++ vs
     }
   }
 
