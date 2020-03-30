@@ -559,9 +559,14 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Param("outputs", "Outputs"),
       Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
+    private def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
+    override def summary = {
+      val outputs = split(params("outputs")).map(_.replaceFirst(":.*", "")).mkString(", ")
+      if (outputs.isEmpty) "Compute in Python"
+      else s"Compute $outputs in Python"
+    }
     def apply() = {
       assert(allowed, "Python code execution is disabled on this server for security reasons.")
-      def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
       PythonUtilities.run(
         params("code"), split(params("inputs")), split(params("outputs")), project)
     }
