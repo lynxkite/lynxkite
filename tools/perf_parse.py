@@ -42,7 +42,7 @@ def op(line):
   opguid = m.group(2)
   inputs = m.group(3)
   inputs = inputs[1:len(inputs) - 1].split(',')
-  op = m.group(4)	  outputs = m.group(4)
+  outputs = m.group(4)
   outputs = outputs[1:len(outputs) - 1].split(',')
   op = m.group(5)
   if 'com.lynxanalytics.biggraph.graph_operations.ImportDataFrame' in op:
