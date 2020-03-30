@@ -284,6 +284,11 @@ angular.module('biggraph')
             return new PopupModel(id, title, content, pos.x, pos.y, pos.width, pos.height, scope);
           }
 
+          function afterUpdates(fn) {
+            // Timeout to let the delayed blur events go first. Then wait for the request.
+            $timeout(() => scope.workspace.loading.then(fn));
+          }
+
           scope.onMouseUpOnBox = function(box, event) {
             if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
               return;
@@ -292,15 +297,17 @@ angular.module('biggraph')
             if (!leftButton || event.ctrlKey || event.shiftKey) {
               return;
             }
-            const model = getPopup(
-              event,
-              box.instance.id,
-              box.instance.operationId,
-              {
-                type: 'box',
-                boxId: box.instance.id,
-              });
-            model.toggle();
+            afterUpdates(() => {
+              const model = getPopup(
+                event,
+                box.instance.id,
+                box.instance.operationId,
+                {
+                  type: 'box',
+                  boxId: box.instance.id,
+                });
+              model.toggle();
+            });
           };
 
           scope.closePopup = function(id) {
@@ -324,16 +331,18 @@ angular.module('biggraph')
             }
             event.stopPropagation();
             if (plug.direction === 'outputs') {
-              const model = getPopup(
-                event,
-                plug.boxId + '_' + plug.id,
-                plug.boxInstance.operationId + ' ➡ ' + plug.id,
-                {
-                  type: 'plug',
-                  boxId: plug.boxId,
-                  plugId: plug.id,
-                });
-              model.toggle();
+              afterUpdates(() => {
+                const model = getPopup(
+                  event,
+                  plug.boxId + '_' + plug.id,
+                  plug.boxInstance.operationId + ' ➡ ' + plug.id,
+                  {
+                    type: 'plug',
+                    boxId: plug.boxId,
+                    plugId: plug.id,
+                  });
+                model.toggle();
+              });
             }
           };
 
