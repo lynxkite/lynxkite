@@ -14,6 +14,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   - Revamped the _"Visualize as slider"_ feature. The slider now appears on the visualization
     instead of appearing in the configuration. The slider can affect either the color or visibility
     of vertices.
+  - The currently viewed folder is now stored in the URL. So you can send a link to a specific folder.
+    The default folder after logging in is your user folder.
   - Small improvements, like better defaults for graph visualizations and nicer trigger button on import boxes.
 
 ### 3.1.1

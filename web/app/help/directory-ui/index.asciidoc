@@ -10,6 +10,8 @@ include::directories.asciidoc[]
 
 include::workspaces.asciidoc[]
 
+include::wizards.asciidoc[]
+
 include::snapshots.asciidoc[]
 
 include::global-sql-box.asciidoc[]

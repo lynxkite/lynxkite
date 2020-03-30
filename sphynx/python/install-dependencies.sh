@@ -11,4 +11,4 @@ sed -i 's/extra_compile_args = .*/extra_compile_args = ["-D_GLIBCXX_USE_CXX11_AB
 sed -i 's/extra_compile_args = ..cxx.: ../extra_compile_args = {"cxx": ["-D_GLIBCXX_USE_CXX11_ABI=1"]/' pytorch_scatter/setup.py
 sed -i 's/extra_compile_args = ..cxx.: ../extra_compile_args = {"cxx": ["-D_GLIBCXX_USE_CXX11_ABI=1"]/' pytorch_sparse/setup.py
 pip install -e ./pytorch_cluster ./pytorch_scatter ./pytorch_sparse
-pip install torch-geometric==1.4.1
+pip install torch-geometric==1.4.2

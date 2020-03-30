@@ -1,11 +1,14 @@
 '''Run user code.'''
 import numpy as np
 import pandas as pd
+import os
 import types
 from . import util
 
 op = util.Op()
-print('Running derive python', op.params, op.inputs, op.outputs)
+if os.environ.get('SPHYNX_CHROOT_PYTHON') == 'yes':
+  op.run_in_chroot()
+
 # Load inputs.
 vs = {}
 es = {}
@@ -28,7 +31,16 @@ vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
 # Execute user code.
-exec(op.params['code'])
+try:
+  code = compile(op.params['code'], 'user code', 'exec')
+  exec(code)
+except BaseException:
+  # Hide this file from the traceback.
+  import traceback
+  import sys
+  a, b, c = sys.exc_info()
+  traceback.print_exception(a, b, c.tb_next)
+  sys.exit(1)
 
 # Save outputs.
 typenames = {
@@ -41,9 +53,17 @@ for fullname in op.outputs.keys():
   if '.' not in fullname:
     continue
   parent, name = fullname.split('.')
-  if parent == 'vs':
-    op.output(fullname, vs[name], type=typemapping[typenames[fullname]])
-  elif parent == 'es':
-    op.output(fullname, es[name], type=typemapping[typenames[fullname]])
-  elif parent == 'scalars':
-    op.output_scalar(fullname, getattr(scalars, name))
+  try:
+    if parent == 'vs':
+      assert name in vs.columns, f'vs does not have a column named "{name}"'
+      op.output(fullname, vs[name], type=typemapping[typenames[fullname]])
+    elif parent == 'es':
+      assert name in es.columns, f'es does not have a column named "{name}"'
+      op.output(fullname, es[name], type=typemapping[typenames[fullname]])
+    elif parent == 'scalars':
+      assert hasattr(scalars, name), f'scalars.{name} is not defined'
+      op.output_scalar(fullname, getattr(scalars, name))
+  except BaseException:
+    import sys
+    print(f'\nCould not output {fullname}:\n', file=sys.stderr)
+    raise
