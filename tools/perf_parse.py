@@ -20,7 +20,7 @@ END = None
 regexp_common = re.compile(
     r'^I(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d).*elapsed: (\d+) (OPERATION_LOGGER_MARKER|RELOCATION_LOGGER_MARKER) (.*)')
 regexp_rel = re.compile('Moving ([^ ]+) from ([^ ]+) to ([^ ]+)')
-regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) op: (.*)')
+regexp_op = re.compile('([^ ]+) opguid: ([^ ]+) inputs: ([^ ]+) outputs: ([^ ]+) op: (.*)')
 
 
 def extract_common(line):
@@ -41,8 +41,10 @@ def op(line):
   domain = m.group(1)
   opguid = m.group(2)
   inputs = m.group(3)
-  inputs = inputs[1:len(inputs) - 2].split(',')
-  op = m.group(4)
+  inputs = inputs[1:len(inputs) - 1].split(',')
+  op = m.group(4)	  outputs = m.group(4)
+  outputs = outputs[1:len(outputs) - 1].split(',')
+  op = m.group(5)
   if 'com.lynxanalytics.biggraph.graph_operations.ImportDataFrame' in op:
     op = 'ImportDataFrame()'
   idx = op.find('(')
