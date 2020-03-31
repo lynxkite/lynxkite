@@ -12,6 +12,7 @@ angular.module('biggraph')
         plug: '=',
         popupModel: '=',
         interactive: '@?',
+        wizard: '=?',
       },
       link: function(scope) {
         scope.util = util;
