@@ -10,5 +10,9 @@ git clone --depth 1 --branch 0.4.4 https://github.com/rusty1s/pytorch_sparse.git
 sed -i 's/extra_compile_args = .*/extra_compile_args = ["-D_GLIBCXX_USE_CXX11_ABI=1"]/' pytorch_cluster/setup.py
 sed -i 's/extra_compile_args = ..cxx.: ../extra_compile_args = {"cxx": ["-D_GLIBCXX_USE_CXX11_ABI=1"]/' pytorch_scatter/setup.py
 sed -i 's/extra_compile_args = ..cxx.: ../extra_compile_args = {"cxx": ["-D_GLIBCXX_USE_CXX11_ABI=1"]/' pytorch_sparse/setup.py
-pip install -e ./pytorch_cluster ./pytorch_scatter ./pytorch_sparse
-pip install torch-geometric==1.4.2
+pip install --no-cache-dir ./pytorch_cluster ./pytorch_scatter ./pytorch_sparse
+pip install --no-cache-dir torch-geometric==1.4.2
+rm -r ./pytorch_cluster
+rm -r ./pytorch_sparse
+rm -r ./pytorch_scatter
+conda clean -a
