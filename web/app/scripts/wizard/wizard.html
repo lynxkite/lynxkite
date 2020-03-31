@@ -47,6 +47,7 @@
           <state-view
             ng-if="step.popup && step.popup !== 'parameters' && expanded === $index"
             workspace="workspace"
+            wizard="true"
             plug="workspace.getOutputPlug(step.box, step.popup)"
             popup-model="{ height: 500, maxHeight: 500, width: 500 }">
           </state-view>
@@ -106,6 +107,7 @@
     ng-repeat="step in steps"
     ng-if="$index === expanded && step.popup && step.popup !== 'parameters'"
     workspace="workspace"
+    wizard="true"
     plug="workspace.getOutputPlug(step.box, step.popup)"
     popup-model="{ height: $window.innerHeight, maxHeight: $window.innerHeight, width: 500 }">
   </state-view>

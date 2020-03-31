@@ -9,6 +9,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/table-state-view.html',
       scope: {
         stateId: '=',
+        wizard: '=?',
       },
       link: function(scope) {
         scope.sampleRows = 10;
