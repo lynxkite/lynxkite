@@ -6,7 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-  - Added graph convolutional network operations: _"Train a GCN regressor"_, _"Train a GCN classifier"_, and _"Predict with GCN"_.
+  - Implemented a lot of common operations on Sphynx speeding up many workspaces significantly.
+  - Added graph convolutional network operations: _"Train a GCN regressor"_,
+    _"Train a GCN classifier"_, and _"Predict with GCN"_.
   - Added _"Compute in Python"_ box.
   - Advanced settings in some boxes are hidden behind a click.
   - Long legends on visualizations can be scrolled.
@@ -16,12 +18,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
     of vertices.
   - The currently viewed folder is now stored in the URL. So you can send a link to a specific folder.
     The default folder after logging in is your user folder.
-  - Small improvements, like better defaults for graph visualizations and nicer trigger button on import boxes.
+  - Small improvements, like better defaults for graph visualizations and nicer trigger button on
+    import boxes.
 
 ### 3.1.1
 
  - Hotfix for a Sphynx bug. (#9053)
->>>>>>> origin/master
 
 ### 3.1.0
 
