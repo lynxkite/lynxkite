@@ -12,19 +12,37 @@ angular.module('biggraph').directive('entrySelector',
         function defaultSettings() {
           return { privacy: 'public-read' };
         }
-        scope.folderDescriptions = {};
-        util.globals.then(g => {
-          scope.folderDescriptions = JSON.parse(g.frontendConfig || '{}').folderDescriptions || {};
-        });
         scope.opened = {};
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
-        const defaultPath =
-          (util.user.email &&
-            util.user.email !== '(not logged in)' && util.user.email !== '(single-user)') ?
-            'Users/' + util.user.email : '';
-        scope.path = $routeParams.directoryName ? $routeParams.directoryName.slice(1) : defaultPath;
-        scope.$watch('path', p => $location.url('/dir/' + p));
+        scope.path = $routeParams.directoryName ? $routeParams.directoryName.slice(1) : undefined;
+        scope.$watch('path', p => {
+          // We don't need a reload for directory navigation, but we track the path in the URL.
+          const url = '/dir/' + p;
+          if (url !== $location.url()) {
+            util.skipReload();
+            $location.url(url);
+          }
+        });
+        let folderDescriptions = {};
+        util.frontendConfig.then(cfg => {
+          folderDescriptions = cfg.folderDescriptions || {};
+          if (scope.path === undefined) {
+            // If the path isn't in the URL, we use the defaultFolder setting or the user directory.
+            if (cfg.defaultFolder !== undefined) {
+              scope.path = cfg.defaultFolder;
+            } else {
+              util.user.then(user => {
+                const email = user.email;
+                if (email && email !== '(not logged in)' && email !== '(single-user)') {
+                  scope.path = 'Users/' + user.email;
+                } else {
+                  scope.path = '';
+                }
+              });
+            }
+          }
+        });
         const hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'c', description: 'Create new workspace',
@@ -84,6 +102,7 @@ angular.module('biggraph').directive('entrySelector',
               }
               scope.data = res;
               delete scope.nextData;
+              setFolderDescription();
             }
           });
         };
@@ -96,28 +115,26 @@ angular.module('biggraph').directive('entrySelector',
           data.objects = data.objects.filter(o => o.objectType.startsWith('wizard'));
         }
 
-        function basicWatch(before, after) {
+        function basicWatch(after, before) {
           scope.opened = {};
           if (before !== after) {
             scope.reload();
-            setFolderDescription();
           }
         }
 
         function setFolderDescription() {
           let best = 0;
           scope.description = '';
-          for (let k of Object.keys(scope.folderDescriptions)) {
+          for (let k of Object.keys(folderDescriptions)) {
             const r = RegExp('^' + k + '$');
             if (k.length >= best && scope.path.match(r)) {
               best = k.length;
-              scope.description = md.render(scope.folderDescriptions[k]);
+              scope.description = md.render(folderDescriptions[k]);
             }
           }
         }
 
         scope.$watch('path', basicWatch);
-        scope.$watch('folderDescriptions', setFolderDescription);
         scope.$watch('searchQuery', basicWatch);
         scope.reload();
         scope.$on('saved snapshot', scope.reload);

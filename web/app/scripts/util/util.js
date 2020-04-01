@@ -5,7 +5,7 @@ angular.module('biggraph')
   .service('environment', function() {
     this.protractor = false; // If we want to handle tests specially somewhere.
   })
-  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q) {
+  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q, $route) {
     const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // DataManager computation status codes. Keep these in sync
     // with EntityProgressManager.computeProgress
@@ -460,6 +460,7 @@ angular.module('biggraph')
     };
 
     util.globals = util.get('/ajax/getGlobalSettings');
+    util.frontendConfig = util.globals.then(g => JSON.parse(g.frontendConfig || '{}'));
 
     util.reloadUser = function() {
       util.user = util.nocache('/ajax/getUserData');
@@ -484,6 +485,17 @@ angular.module('biggraph')
     util.dirName = function(p) {
       const lastSlash = p.lastIndexOf('/');
       return p.slice(0, lastSlash + 1);
+    };
+
+    // Call before $location change to avoid a controller reload.
+    // Source: https://github.com/angular/angular.js/issues/1699
+    util.skipReload = function() {
+      console.log('skipReload');
+      const lastRoute = $route.current;
+      const un = $rootScope.$on('$locationChangeSuccess', () => {
+        $route.current = lastRoute;
+        un();
+      });
     };
 
     return util;
