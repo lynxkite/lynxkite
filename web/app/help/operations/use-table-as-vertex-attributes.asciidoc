@@ -15,7 +15,7 @@ allows duplications of cities among vertices (but not in the lookup table).
 include::{g}[tag=table-import]
 
 [p-id_attr]#Vertex attribute#::
-The vertex attribute which is used to join with the table's ID column.
+The String vertex attribute which is used to join with the table's ID column.
 
 [p-id_column]#ID column#::
 The ID column name in the table. This should be a String column that uses the values
