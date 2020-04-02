@@ -20,7 +20,7 @@ case class GetWorkspaceResponse(
     workspace: Workspace,
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Option[Progress]],
+    progress: Map[String, Progress],
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
@@ -43,7 +43,7 @@ case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, Str
 case class RunWorkspaceResponse(
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Option[Progress]])
+    progress: Map[String, Progress])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
 case class OpenWizardRequest(name: String) // We want to open this.
 case class OpenWizardResponse(name: String) // Open this instead.
@@ -244,56 +244,53 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case None => List()
       case Some(p) =>
         val segs = p.split("\\.", -1).filter(_.nonEmpty)
-        util.Try(state.project.viewer.offspringViewer(segs)) match {
-          case util.Success(viewer) =>
-            val eb = if (viewer.edgeBundle == null) None
-            else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
-            val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
-            side.attributeTitles.map {
-              case (visuType, attrName) =>
-                if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
-                else viewer.vertexAttributes(attrName)
-            }.map(x => entityProgressManager.computeProgress(x))
-              .toList ++
-              eb ++ vs
-          // The segmentation does not exist.
-          case util.Failure(_) => List(-1)
-        }
+        val viewer = state.project.viewer.offspringViewer(segs)
+        val eb = if (viewer.edgeBundle == null) None
+        else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
+        val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
+        side.attributeTitles.map {
+          case (visuType, attrName) =>
+            if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
+            else viewer.vertexAttributes(attrName)
+        }.map(x => entityProgressManager.computeProgress(x))
+          .toList ++
+          eb ++ vs
     }
   }
 
-  def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Option[Progress]] = {
+  def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Progress] = {
     val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
+    //val x: Map[String, List[Double]] =
     states.map {
-      case (stateId, state) =>
-        if (state.success.enabled) {
-          state.kind match {
-            case BoxOutputKind.Project => stateId -> Some(state.project.viewer.getProgress)
-            case BoxOutputKind.Table =>
-              val progress = entityProgressManager.computeProgress(state.table)
-              stateId -> Some(List(progress))
-            case BoxOutputKind.Plot =>
-              val progress = entityProgressManager.computeProgress(state.plot)
-              stateId -> Some(List(progress))
-            case BoxOutputKind.ExportResult =>
-              val progress = entityProgressManager.computeProgress(state.exportResult)
-              stateId -> Some(List(progress))
-            case BoxOutputKind.Visualization =>
-              val progress =
-                visuProgressForSide(state.visualization, state.visualization.uiStatus.left) ++
-                  visuProgressForSide(state.visualization, state.visualization.uiStatus.right)
-              stateId -> Some(progress)
-            case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
-          }
-        } else {
-          stateId -> None
+      case (stateId, state) => try {
+        state.success.check()
+        state.kind match {
+          case BoxOutputKind.Project => stateId -> state.project.viewer.getProgress
+          case BoxOutputKind.Table =>
+            val progress = entityProgressManager.computeProgress(state.table)
+            stateId -> List(progress)
+          case BoxOutputKind.Plot =>
+            val progress = entityProgressManager.computeProgress(state.plot)
+            stateId -> List(progress)
+          case BoxOutputKind.ExportResult =>
+            val progress = entityProgressManager.computeProgress(state.exportResult)
+            stateId -> List(progress)
+          case BoxOutputKind.Visualization =>
+            stateId ->
+              (visuProgressForSide(state.visualization, state.visualization.uiStatus.left) ++
+                visuProgressForSide(state.visualization, state.visualization.uiStatus.right))
+          case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
         }
-    }.mapValues(option => option.map(
-      progressList => Progress(
-        computed = progressList.count(_ == 1.0),
-        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-        notYetStarted = progressList.count(_ == 0.0),
-        failed = progressList.count(_ < 0.0)))).view.force
+      } catch {
+        case t: Throwable =>
+          log.error(s"Error computing progress for $stateId", t)
+          stateId -> List(-1.0)
+      }
+    }.mapValues(progressList => Progress(
+      computed = progressList.count(_ == 1.0),
+      inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+      notYetStarted = progressList.count(_ == 0.0),
+      failed = progressList.count(_ < 0.0))).view.force
   }
 
   def createSnapshot(
