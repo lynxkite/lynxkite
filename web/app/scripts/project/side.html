@@ -7,7 +7,17 @@
 
   <div class="panel panel-danger" ng-if="side.project.$error">
     <div class="panel-heading project-name">
-      {{side.state.projectName}}
+      {{side.state.projectPath}}
+
+      <div class="btn-group pull-right" ng-show="side.activeSides().length > 1">
+        <label class="btn btn-default"
+               ng-click="side.close()"
+               id="close-project"
+               drop-tooltip="Close&nbsp;project">
+          <i class="glyphicon glyphicon-remove"></i>
+        </label>
+      </div>
+
       <div class="clearfix"></div>
     </div>
     <div class="panel-body">
@@ -110,11 +120,6 @@
         edges
       </span>
     </span>
-
-    <!-- Project settings. -->
-    <div class="acl-settings" ng-if="side.showSettings">
-      <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
-    </div>
 
     <!-- Extra controls for visualizations. -->
     <div class="token-section-label"
