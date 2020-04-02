@@ -14,7 +14,7 @@ case class LongPollRequest(
 
 case class LongPollResponse(
     sparkStatus: SparkStatusResponse,
-    progress: Map[String, Option[Progress]])
+    progress: Map[String, Progress])
 
 case class SparkStatusResponse(
     timestamp: Long, // This is the status at the given time.
