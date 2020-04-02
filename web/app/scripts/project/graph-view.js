@@ -1000,9 +1000,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           const div = e.children[0];
           const rect = div.getBoundingClientRect();
           if (
+            // The mouse is on the legend.
             rect.x <= event.pageX && event.pageX <= rect.x + rect.width &&
-            rect.y <= event.pageY && event.pageY <= rect.y + rect.height) {
+            rect.y <= event.pageY && event.pageY <= rect.y + rect.height &&
+            // We haven't hit the top or bottom.
+            (div.scrollTop !== 0 || event.deltaY > 0) &&
+            (div.scrollTop + rect.height !== div.scrollHeight || event.deltaY < 0)) {
             div.scrollBy({ top: event.deltaY, behavior: 'auto' });
+            return true; // Stop zooming.
           }
         }
         e = e.nextElementSibling;
@@ -1018,7 +1023,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       e.preventDefault();
       let deltaX = oe.deltaX;
       let deltaY = oe.deltaY;
-      scrollLegend(oe);
+      if (scrollLegend(oe)) {
+        return;
+      }
       if (/Firefox/.test(window.navigator.userAgent)) {
         // Every browser sets different deltas for the same amount of scrolling.
         // It is tiny on Firefox. We need to boost it.
