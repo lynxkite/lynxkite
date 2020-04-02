@@ -260,7 +260,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Progress] = {
     val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
-    //val x: Map[String, List[Double]] =
     states.map {
       case (stateId, state) => try {
         state.success.check()
