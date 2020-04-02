@@ -244,17 +244,21 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case None => List()
       case Some(p) =>
         val segs = p.split("\\.", -1).filter(_.nonEmpty)
-        val viewer = state.project.viewer.offspringViewer(segs)
-        val eb = if (viewer.edgeBundle == null) None
-        else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
-        val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
-        side.attributeTitles.map {
-          case (visuType, attrName) =>
-            if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
-            else viewer.vertexAttributes(attrName)
-        }.map(x => entityProgressManager.computeProgress(x))
-          .toList ++
-          eb ++ vs
+        util.Try(state.project.viewer.offspringViewer(segs)) match {
+          case util.Success(viewer) =>
+            val eb = if (viewer.edgeBundle == null) None
+            else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
+            val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
+            side.attributeTitles.map {
+              case (visuType, attrName) =>
+                if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
+                else viewer.vertexAttributes(attrName)
+            }.map(x => entityProgressManager.computeProgress(x))
+              .toList ++
+              eb ++ vs
+          // The segmentation does not exist.
+          case util.Failure(_) => List(-1)
+        }
     }
   }
 
