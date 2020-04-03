@@ -118,14 +118,16 @@ angular.module('biggraph').directive('entrySelector',
           data.objects = data.objects.filter(o => o.objectType.startsWith('wizard'));
         }
 
+        let reloadCalled = false;
         function basicWatch(after, before) {
           scope.opened = {};
           if (scope.path === undefined) {
+            // Put off reload() calls until path is eventually initialized.
             return;
           }
           const realChange = before !== after;
-          const firstCall = scope.nextData === undefined;
-          if (realChange || firstCall) {
+          if (realChange || !reloadCalled) {
+            reloadCalled = true;
             scope.reload();
           }
         }
