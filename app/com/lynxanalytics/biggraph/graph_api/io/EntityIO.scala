@@ -387,10 +387,11 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
   }
 
   def exists = {
+    val vsExists = correspondingVertexSet.map(new VertexSetIO(_, context).exists).getOrElse(true)
     val op = entity.source.operation
     if (op.isInstanceOf[SparkOperation[_, _]]) {
-      operationExists && (existsPartitioned || existsAtLegacy)
-    } else existsPartitioned || existsAtLegacy
+      vsExists && operationExists && (existsPartitioned || existsAtLegacy)
+    } else vsExists && (existsPartitioned || existsAtLegacy)
   }
 
   def mayHaveExisted = {
