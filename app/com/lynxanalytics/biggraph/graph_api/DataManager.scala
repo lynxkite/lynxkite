@@ -183,6 +183,10 @@ class DataManager(
           s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: |$inputs| outputs: |$outputs| op: ${e.source.operation}"
         d.compute(e.source).withLogging(msg)
       }
+      if (f.hasFailed) {
+        f.get // Cause the exception to be raised here.
+      }
+
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
       }
