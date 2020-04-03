@@ -17,6 +17,9 @@ angular.module('biggraph').directive('entrySelector',
         scope.newDirectory = defaultSettings();
         scope.path = $routeParams.directoryName ? $routeParams.directoryName.slice(1) : undefined;
         scope.$watch('path', p => {
+          if (p === undefined) {
+            return;
+          }
           // We don't need a reload for directory navigation, but we track the path in the URL.
           const url = '/dir/' + p;
           if (url !== $location.url()) {
@@ -117,7 +120,12 @@ angular.module('biggraph').directive('entrySelector',
 
         function basicWatch(after, before) {
           scope.opened = {};
-          if (before !== after) {
+          if (scope.path === undefined) {
+            return;
+          }
+          const realChange = before !== after;
+          const firstCall = scope.nextData === undefined;
+          if (realChange || firstCall) {
             scope.reload();
           }
         }
@@ -136,7 +144,6 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.$watch('path', basicWatch);
         scope.$watch('searchQuery', basicWatch);
-        scope.reload();
         scope.$on('saved snapshot', scope.reload);
 
         scope.$watch('data.$resolved', function(resolved) {
