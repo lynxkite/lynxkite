@@ -802,6 +802,10 @@ angular.module('biggraph')
           };
 
           function showTutorial() {
+            if (!util.user.$resolved) { // Wait for user data before deciding to show it.
+              util.user.then(showTutorial);
+              return;
+            }
             if (util.user.wizardOnly || localStorage.getItem('workspace-drawing-board tutorial done')) {
               return;
             }
