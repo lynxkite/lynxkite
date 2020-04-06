@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 3.2.0
+
   - Implemented a lot of common operations on Sphynx speeding up many workspaces significantly.
   - Added graph convolutional network operations: _"Train a GCN regressor"_,
     _"Train a GCN classifier"_, and _"Predict with GCN"_.
