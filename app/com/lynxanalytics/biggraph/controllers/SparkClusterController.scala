@@ -81,6 +81,10 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   private def fullId(stage: org.apache.spark.scheduler.StageInfo): String =
     s"${stage.stageId}.${stage.attemptNumber}"
 
+  def onDataManagerComputeCompleted() = synchronized {
+    send()
+  }
+
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val id = fullId(stageCompleted.stageInfo)
@@ -390,6 +394,7 @@ class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceCont
   val sc = environment.sparkContext
   val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
+  environment.dataManager.setListener(listener)
   LoggedEnvironment.envOrNone(
     "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS").foreach { timeoutSecs =>
       val watchdog = new InternalWatchdogThread(
