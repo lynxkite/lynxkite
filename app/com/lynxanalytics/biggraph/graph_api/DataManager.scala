@@ -170,6 +170,11 @@ class DataManager(
 
   private val orderedSphynxDisk = domains.find(_.isInstanceOf[OrderedSphynxDisk])
 
+  var kiteListener: com.lynxanalytics.biggraph.controllers.KiteListener = null
+  def setListener(listener: com.lynxanalytics.biggraph.controllers.KiteListener) = synchronized {
+    kiteListener = listener
+  }
+
   private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
     val source = whoHas(e).getOrElse(whoCanCompute(e))
     if (d.has(e)) { // We have it. Great.
@@ -181,7 +186,11 @@ class DataManager(
         val outputs = e.source.outputs.all.map(_._2.gUID).mkString(",")
         val msg =
           s"OPERATION_LOGGER_MARKER $d opguid: ${e.source.gUID} inputs: |$inputs| outputs: |$outputs| op: ${e.source.operation}"
-        d.compute(e.source).withLogging(msg)
+        val f = d.compute(e.source).withLogging(msg)
+        if (kiteListener != null) {
+          f.future.onComplete(_ => kiteListener.onDataManagerComputeCompleted())
+        }
+        f
       }
       if (f.hasFailed) {
         f.get // Cause the exception to be raised here.
