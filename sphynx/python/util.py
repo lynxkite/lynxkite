@@ -152,6 +152,7 @@ class Op:
     If you start the container with --privileged that also covers these settings.
     '''
     import tempfile
+    import shutil
     import subprocess
     import sys
     mounts = []
@@ -184,6 +185,6 @@ class Op:
       for m in mounts:
         subprocess.run(['umount', '-f', m], check=True)
       for e in self.outputs.values():
-        os.rename(f'{jail}/data/{e}', f'{self.datadir}/{e}')
+        shutil.move(f'{jail}/data/{e}', f'{self.datadir}/{e}')
       subprocess.run(['rm', '-rf', jail], check=True)
       sys.exit(0)
