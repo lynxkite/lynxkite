@@ -239,22 +239,18 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private val edgeVisualizationOptions = Set("edge label", "edge color", "width")
-  private def visuProgressForSide(state: VisualizationState, side: UIStatus): List[Double] = {
+  private def visualizedEntitiesForSide(
+    state: VisualizationState, side: UIStatus): List[MetaGraphEntity] = {
     side.projectPath match {
       case None => List()
       case Some(p) =>
         val segs = p.split("\\.", -1).filter(_.nonEmpty)
         val viewer = state.project.viewer.offspringViewer(segs)
-        val eb = if (viewer.edgeBundle == null) None
-        else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
-        val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
         side.attributeTitles.map {
           case (visuType, attrName) =>
             if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
             else viewer.vertexAttributes(attrName)
-        }.map(x => entityProgressManager.computeProgress(x))
-          .toList ++
-          eb ++ vs
+        }.toList ++ Option(viewer.edgeBundle) :+ viewer.vertexSet
     }
   }
 
@@ -263,23 +259,17 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     states.map {
       case (stateId, state) => try {
         state.success.check()
-        state.kind match {
-          case BoxOutputKind.Project => stateId -> state.project.viewer.getProgress
-          case BoxOutputKind.Table =>
-            val progress = entityProgressManager.computeProgress(state.table)
-            stateId -> List(progress)
-          case BoxOutputKind.Plot =>
-            val progress = entityProgressManager.computeProgress(state.plot)
-            stateId -> List(progress)
-          case BoxOutputKind.ExportResult =>
-            val progress = entityProgressManager.computeProgress(state.exportResult)
-            stateId -> List(progress)
+        val entities: List[MetaGraphEntity] = state.kind match {
+          case BoxOutputKind.Project => state.project.viewer.allEntities
+          case BoxOutputKind.Table => List(state.table)
+          case BoxOutputKind.Plot => List(state.plot)
+          case BoxOutputKind.ExportResult => List(state.exportResult)
           case BoxOutputKind.Visualization =>
-            stateId ->
-              (visuProgressForSide(state.visualization, state.visualization.uiStatus.left) ++
-                visuProgressForSide(state.visualization, state.visualization.uiStatus.right))
+            visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
+              visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
           case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
         }
+        stateId -> entities.map(e => entityProgressManager.computeProgress(e))
       } catch {
         case t: Throwable =>
           log.error(s"Error computing progress for $stateId", t)
