@@ -20,12 +20,11 @@ case class GetWorkspaceResponse(
     workspace: Workspace,
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Progress],
+    progress: Map[String, List[Double]],
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
-case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
@@ -43,7 +42,7 @@ case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, Str
 case class RunWorkspaceResponse(
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Progress])
+    progress: Map[String, List[Double]])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
 case class OpenWizardRequest(name: String) // We want to open this.
 case class OpenWizardResponse(name: String) // Open this instead.
@@ -254,7 +253,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getProgress(user: serving.User, stateIdsOrdered: Seq[String]): Map[String, Progress] = {
+  def getProgress(user: serving.User, stateIdsOrdered: Seq[String]): Map[String, List[Double]] = {
     val states = stateIdsOrdered.map(stateId => stateId -> getOutput(user, stateId))
     val seen = collection.mutable.Set[java.util.UUID]()
     states.map {
@@ -279,11 +278,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
           log.error(s"Error computing progress for $stateId", t)
           stateId -> List(-1.0)
       }
-    }.mapValues(progressList => Progress(
-      computed = progressList.count(_ == 1.0),
-      inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-      notYetStarted = progressList.count(_ == 0.0),
-      failed = progressList.count(_ < 0.0))).view.force
+    }.toMap
   }
 
   def createSnapshot(

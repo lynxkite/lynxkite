@@ -320,15 +320,27 @@ angular.module('biggraph')
       },
 
       updateProgress: function(progressMap) {
+        let currentInProgress = 0;
         for (let stateId in progressMap) {
-          if (progressMap.hasOwnProperty(stateId)) {
-            const progress = progressMap[stateId];
-            // failed states has 'undefined' as progress
-            if (progress) {
-              const plugs = this.stateId2Plug[stateId] || [];
-              for (let plug of plugs) {
-                plug.updateProgress(progress);
-              }
+          const progress = progressMap[stateId];
+          for (let p of progress) {
+            if (p < 1 && p > currentInProgress) {
+              currentInProgress = p; // Find the things that should blink.
+            }
+          }
+        }
+        for (let stateId in progressMap) {
+          const progress = progressMap[stateId];
+          const plugs = this.stateId2Plug[stateId] || [];
+          for (let plug of plugs) {
+            if (currentInProgress && progress.filter(p => p === currentInProgress).length) {
+              plug.updateProgress('in-progress');
+            } else if (progress.filter(p => p < 0).length) {
+              plug.updateProgress('error');
+            } else if (progress.filter(p => p === 0).length) {
+              plug.updateProgress('not-complete');
+            } else {
+              plug.updateProgress('complete');
             }
           }
         }

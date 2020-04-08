@@ -28,15 +28,7 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     cy: function() { return this.ry + this.box.instance.y; },
 
     updateProgress: function(progress) {
-      if (progress.inProgress) {
-        this.progress = 'in-progress';
-      } else if (progress.failed) {
-        this.progress = 'error';
-      } else if (progress.notYetStarted) {
-        this.progress = 'not-complete';
-      } else {
-        this.progress = 'complete';
-      }
+      this.progress = progress;
     },
 
     setHealth: function(success) {
