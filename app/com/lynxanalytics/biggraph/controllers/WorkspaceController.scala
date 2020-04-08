@@ -158,9 +158,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def runWorkspace(
     user: serving.User, request: RunWorkspaceRequest): RunWorkspaceResponse = {
     val context = request.workspace.context(user, ops, request.parameters)
-    val states = context.allStates
+    val states = context.allStatesOrdered
     calculatedStates.synchronized {
-      for (boxOutputState <- states.values) {
+      for ((_, boxOutputState) <- states) {
         calculatedStates(boxOutputState.gUID) = boxOutputState
       }
     }
@@ -175,13 +175,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
     val summaries = request.workspace.boxes.map(
       box => box.id -> crop(
-        try { context.getOperationForStates(box, states).summary }
+        try { context.getOperationForStates(box, context.allStates).summary }
         catch {
           case t: Throwable =>
             log.error(s"Error while generating summary for $box in $request.", t)
             box.operationId
         })).toMap
-    val progress = getProgress(user, states.values.toSeq.map(_.gUID.toString))
+    val progress = getProgress(user, states.map(_._2.gUID.toString))
     RunWorkspaceResponse(stateInfo, summaries, progress)
   }
 
@@ -254,8 +254,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Progress] = {
-    val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
+  def getProgress(user: serving.User, stateIdsOrdered: Seq[String]): Map[String, Progress] = {
+    val states = stateIdsOrdered.map(stateId => stateId -> getOutput(user, stateId))
     states.map {
       case (stateId, state) => try {
         state.success.check()
