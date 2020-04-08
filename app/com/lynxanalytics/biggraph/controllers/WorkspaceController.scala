@@ -348,18 +348,22 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def undoWorkspace(
-    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = metaManager.synchronized {
-    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
-    f.assertWriteAllowedFrom(user)
-    f.undo()
+    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+    metaManager.synchronized {
+      val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
+      f.assertWriteAllowedFrom(user)
+      f.undo()
+    }
     getWorkspace(user, request)
   }
 
   def redoWorkspace(
-    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = metaManager.synchronized {
-    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
-    f.assertWriteAllowedFrom(user)
-    f.redo()
+    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+    metaManager.synchronized {
+      val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
+      f.assertWriteAllowedFrom(user)
+      f.redo()
+    }
     getWorkspace(user, request)
   }
 
