@@ -125,19 +125,23 @@ case class WorkspaceExecutionContext(
     ops: OperationRepository,
     workspaceParameters: Map[String, String]) {
 
-  def allStates: Map[BoxOutput, BoxOutputState] = {
+  // States in topological order.
+  lazy val allStates: Map[BoxOutput, BoxOutputState] = allStatesOrdered.toMap
+  lazy val allStatesOrdered: Seq[(BoxOutput, BoxOutputState)] = {
     val dependencies = ws.discoverDependencies
-    val statesWithoutCircularDependency = dependencies.topologicalOrder
-      .foldLeft(Map[BoxOutput, BoxOutputState]()) {
-        (states, box) =>
-          util.Try(outputStatesOfBox(box, states)).getOrElse(Map()) ++ states
+    // We only need the ordered Seq, but we also track states in a Map internally for lookups.
+    val (_, statesWithoutCircularDependency) = dependencies.topologicalOrder
+      .foldLeft((Map[BoxOutput, BoxOutputState](), Seq[(BoxOutput, BoxOutputState)]())) {
+        case ((map, seq), box) =>
+          val outputs = util.Try(outputStatesOfBox(box, map)).getOrElse(Map())
+          (map ++ outputs, seq ++ outputs.toSeq)
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationId)
       meta.outputs.map { o =>
         box.output(o) -> BoxOutputState.error("Can not compute state due to circular dependencies.")
       }
-    }.toMap
+    }
     statesWithoutCircularDependency ++ statesWithCircularDependency
   }
 
