@@ -838,7 +838,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
                 },
               });
             }
-            if (!vertex.data.center || (side.centers.length !== 1)) {
+            if (!vertex.data.center || (centers.length !== 1)) {
               actions.push({
                 title: 'Set as only center',
                 callback: function() {
