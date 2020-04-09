@@ -1,7 +1,38 @@
+#wizard {
+  min-height: 100vh;
+  background: #002a4c;
+  padding: 0;
+}
+#wizard:before {
+  content: '';
+  position: absolute;
+  height: calc(500px + 5vw);
+  width: 100%;
+  background: linear-gradient(177deg, #39bcf3, #39bcf3 calc(50% - 1px), #002a4c 50%, #002a4c);
+}
+.wizard-title-bar {
+  display: flex;
+  position: relative;
+  align-items: center;
+}
+.wizard-title-bar img:before {
+  background: white;
+  border-radius: 100%;
+  position: absolute;
+  width: 120px;
+  height: 120px;
+}
+.wizard-title-bar img {
+  margin: 10px;
+}
 .wizard-title {
-  text-align: center;
+  flex: 1;
   margin: 20px;
-  font-size: 5vw;
+  font-size: min(4vw, 70px);
+  color: white;
+}
+
+.wizard-nav-links a {
   color: white;
 }
 
