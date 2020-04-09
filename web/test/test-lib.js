@@ -422,15 +422,15 @@ BoxEditor.prototype = {
 
   operationParameter: function(param) {
     return this.element.$(
-      'operation-parameters #' + param + ' .operation-attribute-entry');
+      'operation-parameters #param-' + param + ' .operation-attribute-entry');
   },
 
   parametricSwitch: function(param) {
-    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+    return this.element.$('operation-parameters #param-' + param + ' .parametric-switch');
   },
 
   removeParameter: function(param) {
-    return this.element.$('operation-parameters #' + param + ' .remove-parameter').click();
+    return this.element.$('operation-parameters #param-' + param + ' .remove-parameter').click();
   },
 
   openGroup: function(group) {
