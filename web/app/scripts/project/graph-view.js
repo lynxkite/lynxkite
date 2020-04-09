@@ -917,6 +917,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         vertex.moveTo(x, y);
         vertex.forceOX = x;
         vertex.forceOY = y;
+        vertex.frozen = 1;
         vertices.animate();
       });
     });
