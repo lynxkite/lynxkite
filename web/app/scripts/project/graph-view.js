@@ -908,7 +908,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         }
       });
       angular.element(window).on('mousemove touchmove', function(ev) {
-        if (vertex.positioned) { return; }
         translateTouchToMouseEvent(ev);
         const ex = modelX(ev.pageX);
         const ey = modelY(ev.pageY);
@@ -1298,13 +1297,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         const pos = v.data.attrs[positionAttr];
         v.x = pos.x;
         v.y = -pos.y; // Flip Y axis to look more mathematical.
-        v.setPositioned();
+        v.frozen += 2; // Will be unfrozen once after initialization.
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
         const pos = v.data.attrs[geoAttr];
         v.x = map.lon2x(pos.y);
         v.y = map.lat2y(pos.x);
-        v.setPositioned();
+        v.frozen += 2; // Will be unfrozen once after initialization.
       }
       v.forceOX = v.x;
       v.forceOY = v.y;
@@ -1585,7 +1584,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     this.labelColor = labelColor;
     this.frozen = 0; // Number of reasons why this vertex should not be animated.
-    this.positioned = false; // Is this vertex explicitly positioned?
     if (image) {
       this.icon = svg.create('image', { width: 1, height: 1 });
       this.icon[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', image);
@@ -1691,11 +1689,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     } else {
       svg.removeClass(this.dom, 'opaque');
     }
-  };
-
-  // Mark this vertex as explicitly positioned (as on a map).
-  Vertex.prototype.setPositioned = function() {
-    this.positioned = true;
   };
 
   Vertex.prototype.addMoveListener = function(ml) {
