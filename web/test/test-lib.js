@@ -162,10 +162,6 @@ Workspace.prototype = {
     // TODO: check that workspace is error-free
   },
 
-  expectCurrentWorkspaceDirectoryIs: function(name) {
-    expect(this.main.element(by.id('workspace-directory')).getText()).toBe(name);
-  },
-
   close: function() {
     this.main.element(by.id('close-workspace')).click();
   },

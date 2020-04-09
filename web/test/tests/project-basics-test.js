@@ -26,7 +26,6 @@ module.exports = function(fw) {
     },
     function() {
       // We are now in a workspace with the new name.
-      lib.workspace.expectCurrentWorkspaceDirectoryIs('pear/');
       lib.workspace.expectCurrentWorkspaceIs('apple');
       // We also kept the contents of the project.
       expect(lib.workspace.boxExists('eg0')).toEqual(true);
