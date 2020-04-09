@@ -13,6 +13,10 @@
   background: transparent;
   box-shadow: none;
   text-align: right;
+  color: white;
+}
+.entry-list.footer a {
+  color: #ff8800 !important;
 }
 
 .wizard-minimize-button,
