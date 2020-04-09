@@ -342,7 +342,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setAndGetWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
+    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = {
     setWorkspace(user, request)
     getWorkspace(user, request.reference)
   }
