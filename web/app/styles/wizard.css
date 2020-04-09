@@ -32,8 +32,14 @@
   color: white;
 }
 
-.wizard-nav-links a {
+.wizard-nav a {
   color: white;
+  font-size: min(4vw, 70px);
+  margin: 10px;
+}
+.wizard-nav {
+  display: flex;
+  flex-direction: column;
 }
 
 .wizard .entry-header {
