@@ -414,7 +414,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           continue;
         }
         if (this.vertices[sideIndices[idx]].mode === 'sampled') {
-          this.vertices[sideIndices[idx]].addLegendLine(e.edges.length + ' edges');
+          if (e.edges.length === 1) {
+            this.vertices[sideIndices[idx]].addLegendLine('1 edge');
+          } else {
+            this.vertices[sideIndices[idx]].addLegendLine(e.edges.length + ' edges');
+          }
         }
       }
       const src = this.vertices[sideIndices[e.srcIdx]];
@@ -756,7 +760,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertexGroup.append(v.dom);
     }
 
-    vertices.addLegendLine(data.vertices.length + ' vertices');
+    if (data.vertices.length === 1) {
+      vertices.addLegendLine('1 vertex');
+    } else {
+      vertices.addLegendLine(data.vertices.length + ' vertices');
+    }
     return vertices;
   };
 
