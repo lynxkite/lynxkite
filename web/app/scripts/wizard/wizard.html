@@ -5,17 +5,14 @@
     <div class="wizard-title">
       {{ name }}
     </div>
-  </div>
-
-  <div class="row wizard-nav-links">
-    <div class="col-sm-12 text-center">
-      <a href="#/">
-        <i class="glyphicon glyphicon-arrow-left"></i> Home </a>
-      |
-      <a href ng-click="goToWizardsInProgress()"> Wizards in progress
+    <div class="wizard-nav">
+      <a href="#/" drop-tooltip="Home">
+        <i class="glyphicon glyphicon-arrow-left"></i></a>
+      <a href ng-click="goToWizardsInProgress()" drop-tooltip="Wizards in progress">
         <i class="glyphicon glyphicon-bookmark"></i></a>
     </div>
   </div>
+
   <div class="row">
     <div class="col-sm-12 entry-list-wrapper">
       <div class="text-center" ng-hide="workspace.loaded">
