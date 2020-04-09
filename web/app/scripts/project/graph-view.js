@@ -898,7 +898,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             }
 
             vertex.activateMenu({
-              header: 'Vertex ' + id,
               type: 'vertex',
               id: id,
               actions: actions,
