@@ -24,7 +24,7 @@
           <i class="glyphicon glyphicon-comment"></i> tutorial
         </a>
       </li>
-      <li ng-if="util.globals.hasAuth && !util.user.email.includes('@')">
+      <li ng-if="util.user.auth === 'password'">
         <a href="#/change-password">
           <i class="glyphicon glyphicon-tag"></i> change password
         </a>
