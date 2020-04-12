@@ -346,8 +346,8 @@ object FrontendJson {
   implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rDeleteUserRequest = json.Json.reads[DeleteUserRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
-  implicit val wFEUser = json.Json.writes[FEUser]
-  implicit val wFEUserList = json.Json.writes[FEUserList]
+  implicit val wUser = json.Json.writes[User]
+  implicit val wUserList = json.Json.writes[UserList]
 
   implicit val wAuthMethod = json.Json.writes[AuthMethod]
   import UIStatusSerialization.fUIStatus
