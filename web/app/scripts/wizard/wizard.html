@@ -2,14 +2,17 @@
 
   <div class="wizard-title-bar">
     <img src="/images/lynxkite-logo-white.svg">
-    <div class="wizard-title">
-      {{ name }}
-    </div>
-    <div class="wizard-nav">
-      <a href="#/" drop-tooltip="Home">
-        <i class="glyphicon glyphicon-arrow-left"></i></a>
-      <a href ng-click="goToWizardsInProgress()" drop-tooltip="Wizards in progress">
-        <i class="glyphicon glyphicon-bookmark"></i></a>
+    <div style="display: flex; flex-direction: column;">
+      <div class="wizard-nav">
+        <a href="#/">
+          <i class="glyphicon glyphicon-arrow-left"></i> Home</a>
+        |
+        <a href ng-click="goToWizardsInProgress()">
+          <i class="glyphicon glyphicon-bookmark"></i> Wizards in progress</a>
+      </div>
+      <div class="wizard-title">
+        {{ name }}
+      </div>
     </div>
   </div>
 

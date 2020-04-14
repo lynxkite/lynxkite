@@ -28,18 +28,18 @@
 .wizard-title {
   flex: 1;
   margin: 20px;
+  margin-top: 0;
   font-size: min(4vw, 70px);
   color: white;
 }
 
 .wizard-nav a {
   color: white;
-  font-size: min(4vw, 70px);
   margin: 10px;
 }
 .wizard-nav {
-  display: flex;
-  flex-direction: column;
+  color: white;
+  padding: 20px 10px 0 10px;
 }
 
 .wizard .entry-header {
