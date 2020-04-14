@@ -30,6 +30,7 @@
   margin: 20px;
   margin-top: 0;
   font-size: min(4vw, 70px);
+  line-height: 1.25em;
   color: white;
 }
 
@@ -39,7 +40,8 @@
 }
 .wizard-nav {
   color: white;
-  padding: 20px 10px 0 10px;
+  padding: 10px;
+  margin-top: 10px;
 }
 
 .wizard .entry-header {
