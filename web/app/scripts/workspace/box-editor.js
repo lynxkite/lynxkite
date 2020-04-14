@@ -85,16 +85,6 @@ angular.module('biggraph')
 
         scope.updateParams = function(box, boxMeta) {
           scope.error = undefined;
-          const parameters = {};
-          for (let k in box.instance.parameters) {
-            if (scope.box) {
-              // Keep local (possibly modified) state if there's no change from the backend.
-              parameters[k] = (box.instance.parameters[k] === scope.box.instance.parameters[k] ?
-                scope.parameters[k] : box.instance.parameters[k]);
-            } else {
-              parameters[k] = box.instance.parameters[k];
-            }
-          }
           scope.parameters = threeWayMerge(
             scope.box && scope.box.instance.parameters, box.instance.parameters, scope.parameters);
           scope.parametricParameters = threeWayMerge(
