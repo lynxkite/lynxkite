@@ -447,12 +447,12 @@ BoxEditor.prototype = {
   },
 
   expectParameter: function(paramName, expectedValue) {
-    const param = this.element.$('div#' + paramName + ' input');
+    const param = this.element.$('div#param-' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   expectSelectParameter: function(paramName, expectedValue) {
-    const param = this.element.$('div#' + paramName + ' select');
+    const param = this.element.$('div#param-' + paramName + ' select');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
