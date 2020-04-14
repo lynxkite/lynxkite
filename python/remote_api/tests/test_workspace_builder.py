@@ -204,10 +204,10 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_compute_state(self):
     def num_computed(state):
-      return state.get_progress().computed
+      return sum(1 for p in state.get_progress() if p == 1)
 
     def num_not_yet_started(state):
-      return state.get_progress().notYetStarted
+      return sum(1 for p in state.get_progress() if p == 0)
 
     lk = lynx.kite.LynxKite()
 
