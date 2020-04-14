@@ -482,7 +482,7 @@ State.prototype = {
     state.$(`#instrument-with-${name}`).click();
     params = params || {};
     for (const key in params) {
-      const param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
+      const param = state.$(`operation-parameters #param-${key} .operation-attribute-entry`);
       testLib.setParameter(param, params[key]);
     }
     $('#workspace-name').click(); // Make sure the parameters are not focused.
