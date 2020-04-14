@@ -452,18 +452,17 @@ module.exports = function(fw) {
     },
     function() {});
 
-/*
-  fw.statePreservingTest(
-    'test-example project with example graph',
+  fw.transitionTest(
+    'test-example workspace with visualization open',
     'visualization context menu',
     function() {
       lib.addConcurMatcher();
-      lib.left.toggleSampledVisualization();
       name.visualizeAs('label');
-      lib.visualization.elementByLabel('Eve').click();
-      lib.visualization.clickMenu('add-to-centers');
-      lib.left.setSampleRadius(0);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.elementByLabel('Eve').click();
+      visualization.clickMenu('add-to-centers');
+      visualization.popup.$('.apply-visualization-changes').click();
+      editor.left.setSampleRadius(0);
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam' },
           { label: 'Eve' },
@@ -474,60 +473,13 @@ module.exports = function(fw) {
         ]);
       });
 
-      lib.visualization.elementByLabel('Adam').click();
-      lib.visualization.clickMenu('remove-from-centers');
-      lib.visualization.graphData().then(function(graph) {
+      visualization.elementByLabel('Adam').click();
+      visualization.clickMenu('remove-from-centers');
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Eve' },
         ]);
         expect(graph.edges).toEqual([]);
       });
-
-      lib.navigateToProject('test-example'); // Restore state.
-    });
-
-  const saveVisualizationOpen = lib.left.side.$('#setting-save-visualization');
-  const saveVisualizationEntry = $('#save-visualization-name');
-  const centersToken = lib.left.side.$('#setting-centers');
-  const pickButton = $('#pick-and-next-button');
-  const centerCount = $('#pick-center-count');
-
-  fw.transitionTest(
-    'test-example project with example graph',
-    'visualization save/restore',
-    function() {
-      lib.addConcurMatcher();
-      lib.left.toggleSampledVisualization();
-      // Set centers count to a non-default value.
-      centersToken.click();
-      centerCount.clear();
-      centerCount.sendKeys('2');
-      pickButton.click();
-      // Visualize names as labels.
-      name.visualizeAs('label');
-      // Save the visualization with the name 'my visualization'
-      saveVisualizationOpen.click();
-      saveVisualizationEntry.sendKeys('my visualization');
-      saveVisualizationEntry.submit();
-      // Close and reopen the project.
-      lib.left.close();
-      lib.splash.openProject('test-example');
-      // Try loading the visualization and check if centers count is correctly updated.
-      lib.left.toggleSampledVisualization();
-      centersToken.click();
-      expect(centerCount.getAttribute('value')).toBe('1');
-      lib.left.scalar('my-visualization').clickMenu('load-visualization');
-      centersToken.click();
-      expect(centerCount.getAttribute('value')).toBe('2');
-      // Check if the visualization is really loaded and not just the parameters.
-      lib.visualization.graphData().then(function(graph) {
-              expect(graph.vertices).toConcur([
-                { label: 'Adam' },
-                { label: 'Eve' },
-                { label: 'Bob'},
-              ]);
-            });
-    },
-    function() {});
-*/
+    }, function() {});
 };
