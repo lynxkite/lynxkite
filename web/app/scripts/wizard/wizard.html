@@ -54,10 +54,11 @@
 
         </div>
       </div>
-      <div class="entry-list footer">
-        <a href class="btn btn-warning btn-lg" style="color: black;" ng-href="/workspace/{{ workspace.name }}">
-          {{ util.user.wizardOnly ? 'View workspace' : 'Fine tune in workspace' }}
-          <i class="fa fa-chevron-right"></i></a>
+      <div class="entry-list footer" ng-show="workspace.loaded">
+        LynxKite wizards are built as workspaces.
+        <a href style="color: black;" ng-href="/workspace/{{ workspace.name }}">
+          Open the workspace</a> to see how this wizard is built<span ng-hide="util.user.wizardOnly">
+          and to create your own version of it</span>.
       </div>
     </div>
   </div>
