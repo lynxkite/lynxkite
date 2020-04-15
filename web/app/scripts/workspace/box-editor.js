@@ -70,14 +70,22 @@ angular.module('biggraph')
           scope.error = util.responseToErrorMessage(error);
         };
 
-        function threeWayMerge(before, after, local) {
+        function threeWayMerge(meta, before, after, local) {
+          const defaults = {};
+          for (let p of meta) {
+            defaults[p.id] = p.defaultValue;
+          }
           const merged = {};
-          for (let k in after) {
+          const keys = Object.keys(after || {}).concat(Object.keys(local || {}));
+          for (let k of keys) {
             if (before) {
               // Keep local (possibly modified) state if there's no change from the backend.
               merged[k] = after[k] === before[k] ? local[k] : after[k];
             } else {
               merged[k] = after[k];
+            }
+            if (merged[k] === undefined || merged[k] === defaults[k]) {
+              delete merged[k];
             }
           }
           return merged;
@@ -85,21 +93,13 @@ angular.module('biggraph')
 
         scope.updateParams = function(box, boxMeta) {
           scope.error = undefined;
-          const parameters = {};
-          for (let k in box.instance.parameters) {
-            if (scope.box) {
-              // Keep local (possibly modified) state if there's no change from the backend.
-              parameters[k] = (box.instance.parameters[k] === scope.box.instance.parameters[k] ?
-                scope.parameters[k] : box.instance.parameters[k]);
-            } else {
-              parameters[k] = box.instance.parameters[k];
-            }
-          }
           scope.parameters = threeWayMerge(
-            scope.box && scope.box.instance.parameters, box.instance.parameters, scope.parameters);
+            boxMeta.parameters, scope.oldParameters, box.instance.parameters, scope.parameters);
+          scope.oldParameters = angular.merge({}, scope.parameters);
           scope.parametricParameters = threeWayMerge(
-            scope.box && scope.box.instance.parametricParameters, box.instance.parametricParameters,
+            boxMeta.parameters, scope.oldParametricParameters, box.instance.parametricParameters,
             scope.parametricParameters);
+          scope.oldParametricParameters = angular.merge({}, scope.parametricParameters);
           scope.box = box;
           if (!angular.equals(boxMeta, scope.boxMeta)) {
             scope.boxMeta = boxMeta;
