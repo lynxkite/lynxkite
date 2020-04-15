@@ -47,7 +47,7 @@ case class IndexPairCounter() extends SparkOperation[Input, Output] {
       RDDUtils.estimateValueWeights(
         inputs.original.rdd,
         inputs.weights.rdd,
-        xIndices.sortedJoin(yIndices),
+        xIndices.sortedJoin(yIndices).copartition(inputs.original.rdd),
         inputs.originalCount.value,
         50000,
         rc))
