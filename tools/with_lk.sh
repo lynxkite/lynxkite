@@ -68,6 +68,7 @@ trap kill_backend EXIT ERR
 $(dirname $0)/wait_for_port.sh $SPHYNX_PORT
 echo "Sphynx running on port $SPHYNX_PORT"
 $(dirname $0)/wait_for_port.sh $HTTP_PORT
+$(dirname $0)/wait_for_port.sh $HTTPS_PORT
 echo "Kite running on port $HTTP_PORT (http) and port $HTTPS_PORT (https)"
 
 # Execute command.

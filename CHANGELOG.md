@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - More accurate progress indicators for box outputs.
+
 ### 3.2.0
 
   - Implemented a lot of common operations on Sphynx speeding up many workspaces significantly.

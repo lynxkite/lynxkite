@@ -165,30 +165,6 @@ sealed trait ProjectViewer {
     }
   }
 
-  def getProgress()(implicit entityProgressManager: EntityProgressManager): List[Double] = {
-    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
-      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
-        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
-        state.scalarGUIDs.values.map(manager.scalar) ++
-        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
-        state.edgeAttributeGUIDs.values.map(manager.attribute)
-
-      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
-      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
-    }
-
-    def segmentationStateProgress(state: SegmentationState): List[Double] = {
-      val segmentationProgress = commonProjectStateProgress(state.state)
-      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
-        val belongsTo = manager.edgeBundle(belongsToGUID)
-        entityProgressManager.computeProgress(belongsTo)
-      }).toList
-      belongsToProgress ++ segmentationProgress
-    }
-
-    commonProjectStateProgress(state)
-  }
-
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }

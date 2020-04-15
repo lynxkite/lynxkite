@@ -292,7 +292,6 @@ object FrontendJson {
 
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
-  implicit val fProgress = json.Json.format[Progress]
   implicit val rWorkspaceReference = json.Json.reads[WorkspaceReference]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rRunWorkspaceRequest = json.Json.reads[RunWorkspaceRequest]
