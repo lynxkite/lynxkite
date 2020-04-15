@@ -16,9 +16,8 @@ trait EntityProgressManager {
   // 1 means it is computed.
   // Anything in between indicates that the computation is in progress.
   // -1.0 indicates that an error has occurred during computation.
-  // These constants need to be kept in sync with the ones in:
-  // /web/app/script/util.js
-  def computeProgress(entity: MetaGraphEntity): Double
+  // Computation happening for entities in the "ignore" set is ignored.
+  def computeProgress(entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
@@ -54,24 +53,25 @@ class DataManager(
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = {
-    try {
-      val d = whoHas(entity).getOrElse(whoCanCompute(entity))
-      synchronized { futures.get((entity.gUID, d)) } match {
+  override def computeProgress(
+    entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double = {
+    def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = {
+      val d = whoHas(e).getOrElse(whoCanCompute(e))
+      synchronized { futures.get((e.gUID, d)) } match {
         case None =>
-          if (d.has(entity)) synchronized {
-            futures((entity.gUID, d)) = SafeFuture.successful(())
-            1.0
-          }
-          else 0.0
+          if (d.has(entity)) Set(SafeFuture.successful(()))
+          else Set()
         case Some(s) =>
-          if (s.hasFailed) -1.0
-          else {
-            val deps = s.dependencySet
-            if (findFailure(deps).isDefined) -1.0
-            else 1.0 / (1.0 + deps.size - deps.filter(_.isCompleted).size)
-          }
+          if (s.hasFailed) Set(s)
+          else s.dependencySet
       }
+    }
+    try {
+      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_))
+      val deps = getDeps(entity) -- ignoredFutures
+      if (findFailure(deps).isDefined) -1.0
+      else if (deps.size == 0) 0.0
+      else deps.filter(_.isCompleted).size.toDouble / deps.size
     } catch {
       case _: Throwable => 0
     }
