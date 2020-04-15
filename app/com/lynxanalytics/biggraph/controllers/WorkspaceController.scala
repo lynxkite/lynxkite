@@ -255,7 +255,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getProgress(user: serving.User, stateIdsOrdered: Seq[String]): Map[String, List[Double]] = {
     val states = stateIdsOrdered.map(stateId => stateId -> getOutput(user, stateId))
-    val seen = collection.mutable.Set[java.util.UUID]()
+    val seen = collection.mutable.Set[MetaGraphEntity]()
     states.map {
       case (stateId, state) => try {
         state.success.check()
@@ -269,9 +269,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
           case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
         }
-        val progress: List[Double] = entities.filter(e => !seen.contains(e.gUID)).map(
-          e => entityProgressManager.computeProgress(e))
-        seen ++= entities.map(_.gUID)
+        val progress: List[Double] = entities.filterNot(seen.contains(_)).map(
+          e => entityProgressManager.computeProgress(e, seen.toSet))
+        seen ++= entities
         stateId -> progress
       } catch {
         case t: Throwable =>
