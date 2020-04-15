@@ -1481,7 +1481,7 @@ testLib = {
   },
 
   loadImportedTable: function() {
-    const loadButton = $('#imported_table button');
+    const loadButton = $('#param-imported_table button');
     loadButton.click();
   },
 
