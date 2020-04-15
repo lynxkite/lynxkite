@@ -20,12 +20,11 @@ case class GetWorkspaceResponse(
     workspace: Workspace,
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Progress],
+    progress: Map[String, List[Double]],
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
-case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
@@ -43,7 +42,7 @@ case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, Str
 case class RunWorkspaceResponse(
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
-    progress: Map[String, Progress])
+    progress: Map[String, List[Double]])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
 case class OpenWizardRequest(name: String) // We want to open this.
 case class OpenWizardResponse(name: String) // Open this instead.
@@ -158,9 +157,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def runWorkspace(
     user: serving.User, request: RunWorkspaceRequest): RunWorkspaceResponse = {
     val context = request.workspace.context(user, ops, request.parameters)
-    val states = context.allStates
+    val states = context.allStatesOrdered
     calculatedStates.synchronized {
-      for (boxOutputState <- states.values) {
+      for ((_, boxOutputState) <- states) {
         calculatedStates(boxOutputState.gUID) = boxOutputState
       }
     }
@@ -175,13 +174,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
     val summaries = request.workspace.boxes.map(
       box => box.id -> crop(
-        try { context.getOperationForStates(box, states).summary }
+        try { context.getOperationForStates(box, context.allStates).summary }
         catch {
           case t: Throwable =>
             log.error(s"Error while generating summary for $box in $request.", t)
             box.operationId
         })).toMap
-    val progress = getProgress(user, states.values.toSeq.map(_.gUID.toString))
+    val progress = getProgress(user, states.map(_._2.gUID.toString))
     RunWorkspaceResponse(stateInfo, summaries, progress)
   }
 
@@ -239,57 +238,47 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private val edgeVisualizationOptions = Set("edge label", "edge color", "width")
-  private def visuProgressForSide(state: VisualizationState, side: UIStatus): List[Double] = {
+  private def visualizedEntitiesForSide(
+    state: VisualizationState, side: UIStatus): List[MetaGraphEntity] = {
     side.projectPath match {
       case None => List()
       case Some(p) =>
         val segs = p.split("\\.", -1).filter(_.nonEmpty)
         val viewer = state.project.viewer.offspringViewer(segs)
-        val eb = if (viewer.edgeBundle == null) None
-        else Some(entityProgressManager.computeProgress(viewer.edgeBundle))
-        val vs = Some(entityProgressManager.computeProgress(viewer.vertexSet))
         side.attributeTitles.map {
           case (visuType, attrName) =>
             if (edgeVisualizationOptions.contains(visuType)) viewer.edgeAttributes(attrName)
             else viewer.vertexAttributes(attrName)
-        }.map(x => entityProgressManager.computeProgress(x))
-          .toList ++
-          eb ++ vs
+        }.toList ++ Option(viewer.edgeBundle) :+ viewer.vertexSet
     }
   }
 
-  def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Progress] = {
-    val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
+  def getProgress(user: serving.User, stateIdsOrdered: Seq[String]): Map[String, List[Double]] = {
+    val states = stateIdsOrdered.map(stateId => stateId -> getOutput(user, stateId))
+    val seen = collection.mutable.Set[MetaGraphEntity]()
     states.map {
       case (stateId, state) => try {
         state.success.check()
-        state.kind match {
-          case BoxOutputKind.Project => stateId -> state.project.viewer.getProgress
-          case BoxOutputKind.Table =>
-            val progress = entityProgressManager.computeProgress(state.table)
-            stateId -> List(progress)
-          case BoxOutputKind.Plot =>
-            val progress = entityProgressManager.computeProgress(state.plot)
-            stateId -> List(progress)
-          case BoxOutputKind.ExportResult =>
-            val progress = entityProgressManager.computeProgress(state.exportResult)
-            stateId -> List(progress)
+        val entities: List[MetaGraphEntity] = state.kind match {
+          case BoxOutputKind.Project => state.project.viewer.allEntities
+          case BoxOutputKind.Table => List(state.table)
+          case BoxOutputKind.Plot => List(state.plot)
+          case BoxOutputKind.ExportResult => List(state.exportResult)
           case BoxOutputKind.Visualization =>
-            stateId ->
-              (visuProgressForSide(state.visualization, state.visualization.uiStatus.left) ++
-                visuProgressForSide(state.visualization, state.visualization.uiStatus.right))
+            visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
+              visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
           case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
         }
+        val progress: List[Double] = entities.filterNot(seen.contains(_)).map(
+          e => entityProgressManager.computeProgress(e, seen.toSet))
+        seen ++= entities
+        stateId -> progress
       } catch {
         case t: Throwable =>
           log.error(s"Error computing progress for $stateId", t)
           stateId -> List(-1.0)
       }
-    }.mapValues(progressList => Progress(
-      computed = progressList.count(_ == 1.0),
-      inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-      notYetStarted = progressList.count(_ == 0.0),
-      failed = progressList.count(_ < 0.0))).view.force
+    }.toMap
   }
 
   def createSnapshot(

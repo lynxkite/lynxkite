@@ -321,14 +321,17 @@ angular.module('biggraph')
 
       updateProgress: function(progressMap) {
         for (let stateId in progressMap) {
-          if (progressMap.hasOwnProperty(stateId)) {
-            const progress = progressMap[stateId];
-            // failed states has 'undefined' as progress
-            if (progress) {
-              const plugs = this.stateId2Plug[stateId] || [];
-              for (let plug of plugs) {
-                plug.updateProgress(progress);
-              }
+          const progress = progressMap[stateId];
+          const plugs = this.stateId2Plug[stateId] || [];
+          for (let plug of plugs) {
+            if (progress.filter(p => 0 < p && p < 1).length) {
+              plug.updateProgress('in-progress');
+            } else if (progress.filter(p => p < 0).length) {
+              plug.updateProgress('error');
+            } else if (progress.filter(p => p === 0).length) {
+              plug.updateProgress('not-complete');
+            } else {
+              plug.updateProgress('complete');
             }
           }
         }
