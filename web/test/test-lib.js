@@ -418,15 +418,15 @@ BoxEditor.prototype = {
 
   operationParameter: function(param) {
     return this.element.$(
-      'operation-parameters #' + param + ' .operation-attribute-entry');
+      'operation-parameters #param-' + param + ' .operation-attribute-entry');
   },
 
   parametricSwitch: function(param) {
-    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+    return this.element.$('operation-parameters #param-' + param + ' .parametric-switch');
   },
 
   removeParameter: function(param) {
-    return this.element.$('operation-parameters #' + param + ' .remove-parameter').click();
+    return this.element.$('operation-parameters #param-' + param + ' .remove-parameter').click();
   },
 
   openGroup: function(group) {
@@ -443,12 +443,12 @@ BoxEditor.prototype = {
   },
 
   expectParameter: function(paramName, expectedValue) {
-    const param = this.element.$('div#' + paramName + ' input');
+    const param = this.element.$('div#param-' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   expectSelectParameter: function(paramName, expectedValue) {
-    const param = this.element.$('div#' + paramName + ' select');
+    const param = this.element.$('div#param-' + paramName + ' select');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
@@ -478,7 +478,7 @@ State.prototype = {
     state.$(`#instrument-with-${name}`).click();
     params = params || {};
     for (const key in params) {
-      const param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
+      const param = state.$(`operation-parameters #param-${key} .operation-attribute-entry`);
       testLib.setParameter(param, params[key]);
     }
     $('#workspace-name').click(); // Make sure the parameters are not focused.
@@ -1477,7 +1477,7 @@ testLib = {
   },
 
   loadImportedTable: function() {
-    const loadButton = $('#imported_table button');
+    const loadButton = $('#param-imported_table button');
     loadButton.click();
   },
 

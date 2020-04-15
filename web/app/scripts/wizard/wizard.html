@@ -1,20 +1,21 @@
-<div class="container-fluid" id="splash" ng-if="!maximized">
+<div class="container-fluid" id="wizard" ng-if="!maximized">
 
-  <div class="row">
-    <div class="col-sm-12 wizard-title">
-      {{ name }}
+  <div class="wizard-title-bar">
+    <img src="/images/lynxkite-logo-white.svg">
+    <div style="display: flex; flex-direction: column;">
+      <div class="wizard-nav">
+        <a href="#/">
+          <i class="glyphicon glyphicon-arrow-left"></i> Home</a>
+        |
+        <a href ng-click="goToWizardsInProgress()">
+          <i class="glyphicon glyphicon-bookmark"></i> Wizards in progress</a>
+      </div>
+      <div class="wizard-title">
+        {{ name }}
+      </div>
     </div>
   </div>
 
-  <div class="row wizard-nav-links">
-    <div class="col-sm-12 text-center">
-      <a href="#/">
-        <i class="glyphicon glyphicon-arrow-left"></i> Home </a>
-      |
-      <a href ng-click="goToWizardsInProgress()"> Wizards in progress
-        <i class="glyphicon glyphicon-bookmark"></i></a>
-    </div>
-  </div>
   <div class="row">
     <div class="col-sm-12 entry-list-wrapper">
       <div class="text-center" ng-hide="workspace.loaded">

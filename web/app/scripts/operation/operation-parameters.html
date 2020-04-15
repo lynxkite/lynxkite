@@ -12,7 +12,7 @@
   <div ng-class="{
         'operation-parameter-input': true,
       }"
-      id="{{param.id}}">
+      id="param-{{param.id}}">
     <div
       ui-ace="{
         mode: 'plain_text',
@@ -130,7 +130,7 @@
   <label for="{{ paramId }}" class="control-label unexpected-parameter">
     {{ paramId }}
   </label>
-  <div class="operation-parameter-input" id="{{ paramId }}">
+  <div class="operation-parameter-input" id="param-{{ paramId }}">
     <div>
       <input
           class="form-control operation-attribute-entry unexpected-parameter"
