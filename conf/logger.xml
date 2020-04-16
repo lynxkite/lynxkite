@@ -6,6 +6,18 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>
+          return
+          level == ERROR &amp;&amp;
+          throwableProxy != null &amp;&amp;
+          throwableProxy.getMessage().startsWith("assertion failed: Unknown BoxOutputState:");
+        </expression>
+      </evaluator>
+      <OnMismatch>NEUTRAL</OnMismatch>
+      <OnMatch>DENY</OnMatch>
+    </filter>
      <rollingPolicy class="com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy">
        <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd_HHmmss}.log</fileNamePattern>
        <maxHistory>5184000</maxHistory> <!-- 5184000 = 60 days, given in seconds -->
@@ -28,6 +40,18 @@
          <!-- This error is spammed in Apache Spark 1.6.0.
               See https://issues.apache.org/jira/browse/SPARK-11293. -->
          <expression>return message.contains("Managed memory leak detected");</expression>
+       </evaluator>
+       <OnMismatch>NEUTRAL</OnMismatch>
+       <OnMatch>DENY</OnMatch>
+     </filter>
+     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+       <evaluator>
+         <expression>
+           return
+             level == ERROR &amp;&amp;
+             throwableProxy != null &amp;&amp;
+             throwableProxy.getMessage().startsWith("assertion failed: Unknown BoxOutputState:");
+         </expression>
        </evaluator>
        <OnMismatch>NEUTRAL</OnMismatch>
        <OnMatch>DENY</OnMatch>
