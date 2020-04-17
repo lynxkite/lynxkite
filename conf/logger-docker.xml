@@ -4,18 +4,6 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-       <evaluator>
-         <expression>
-           return
-           level == ERROR &amp;&amp;
-           throwableProxy != null &amp;&amp;
-           throwableProxy.getMessage().startsWith("assertion failed: Unknown BoxOutputState:");
-         </expression>
-       </evaluator>
-       <OnMismatch>NEUTRAL</OnMismatch>
-       <OnMatch>DENY</OnMatch>
-     </filter>
      <target>System.err</target>
      <encoder>
          <!-- We should replace all occurrences of SECRET(...) in both message and exception.

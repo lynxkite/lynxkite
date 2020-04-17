@@ -275,7 +275,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         stateId -> progress
       } catch {
         case t: Throwable =>
-          log.error(s"Error computing progress for $stateId", t)
+          if (!t.getMessage.startsWith("assertion failed: Unknown BoxOutputState:")) {
+            log.error(s"Error computing progress for $stateId", t)
+          }
           stateId -> List(-1.0)
       }
     }.toMap
