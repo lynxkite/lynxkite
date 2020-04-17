@@ -45,12 +45,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param(
         "columns", "Columns in file", placeholder = "Leave empty to read header.",
         group = "Advanced settings"),
-      Param("delimiter", "Delimiter", defaultValue = ",", group = "Advanced settings"),
-      Param("quote", "Quote character", defaultValue = "\"", group = "Advanced settings"),
-      Param("escape", "Escape character", defaultValue = "\\", group = "Advanced settings"),
-      Param("null_value", "Null value", defaultValue = "", group = "Advanced settings"),
-      Param("date_format", "Date format", defaultValue = "yyyy-MM-dd", group = "Advanced settings"),
-      Param(
+      Code("delimiter", "Delimiter", defaultValue = ",", group = "Advanced settings"),
+      Code("quote", "Quote character", defaultValue = "\"", group = "Advanced settings"),
+      Code("escape", "Escape character", defaultValue = "\\", group = "Advanced settings"),
+      Code("null_value", "Null value", defaultValue = "", group = "Advanced settings"),
+      Code("date_format", "Date format", defaultValue = "yyyy-MM-dd", group = "Advanced settings"),
+      Code(
         "timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
         group = "Advanced settings"),
       Choice(
@@ -59,7 +59,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice(
         "ignore_trailing_white_space", "Ignore trailing white space", options = FEOption.noyes,
         group = "Advanced settings"),
-      Param("comment", "Comment character", defaultValue = "", group = "Advanced settings"),
+      Code("comment", "Comment character", defaultValue = "", group = "Advanced settings"),
       Choice(
         "error_handling", "Error handling", List(
           FEOption("FAILFAST", "Fail on any malformed line"),
