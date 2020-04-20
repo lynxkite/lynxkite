@@ -20,6 +20,7 @@ angular.module('biggraph')
         scope.instruments = []; // Displayed state. Updated on backend response.
         scope.root = { snapshotNameOpen: false }; // Dealing with ng-if scopes.
         scope.$watch('plug.stateId', update);
+        scope.$on('bring popup to front', () => scope.popupModel.bringToFront({ buttons: 1 }));
         let lastJson;
 
         function update() {

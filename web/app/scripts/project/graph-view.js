@@ -789,6 +789,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     vertex.dom.on('mousedown touchstart', function(evStart) {
       evStart.stopPropagation();
+      scope.$emit('bring popup to front');
       translateTouchToMouseEvent(evStart);
       vertex.hold();
       vertex.xDragStart = modelX(evStart.pageX);
