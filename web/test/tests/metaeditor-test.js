@@ -23,7 +23,8 @@ module.exports = function(fw) {
       operation().sendKeys(lib.selectAllKey + 'Import CSV');
       toggle();
       expect(box.operationId()).toBe('Import CSV');
-      box.expectParameter('delimiter', ',');
+      box.openGroup('Advanced settings');
+      box.expectCodeParameter('delimiter', ',');
 
       // Restore.
       toggle();
