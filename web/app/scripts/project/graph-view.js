@@ -272,7 +272,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   const graphToSVGRatio = 0.8; // Leave some margin.
-  const UNCOLORED = '#39bcf3'; // Brand color.
+  const UNCOLORED = '#0000ff'; // Blue. Its color is totally unlike any color in any of our palettes.
 
   GraphView.prototype.addGroup = function(className, clipper) {
     let group;
