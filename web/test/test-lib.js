@@ -452,6 +452,11 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
+  expectCodeParameter: function(paramName, expectedValue) {
+    const param = this.element.$('div#param-' + paramName);
+    expect(testLib.getACEText(param)).toBe(expectedValue);
+  },
+
   getTableBrowser: function() {
     return new TableBrowser(this.popup);
   },
