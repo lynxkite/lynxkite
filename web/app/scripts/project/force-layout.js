@@ -26,7 +26,7 @@ const FORCE_LAYOUT = (function() {
     let maxDist = 0; // Max. distance from center along one coordinate.
     const edgeCount = (vertices.edges || []).length;
     if (vertices.vs.length <= 1) {
-      if (vertices.vs.length === 1 && !vertices.vs[0].positioned) {
+      if (vertices.vs.length === 1 && !vertices.vs[0].frozen) {
         vertices.vs[0].x = 0;
         vertices.vs[0].y = 0;
       }
@@ -98,7 +98,7 @@ const FORCE_LAYOUT = (function() {
     let totalChange = 0;
     for (i = 0; i < vertices.vs.length; ++i) {
       v = vertices.vs[i];
-      if (v.held || v.frozen || v.positioned) {
+      if (v.held || v.frozen) {
         // Cancel movement.
         v.x = v.forceOX;
         v.y = v.forceOY;
