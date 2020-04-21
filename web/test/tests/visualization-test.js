@@ -90,7 +90,7 @@ module.exports = function(fw) {
         { src: 2, dst: 1 },
       ];
       let savedPositions;
-      const DEFAULT = 'rgb(0, 0, 255)';
+      const DEFAULT = 'rgb(57, 188, 243)'; // Brand color.
       const LOW = 'rgb(68, 1, 84)';
       const HIGH = 'rgb(254, 232, 37)';
       // No attributes visualized.
