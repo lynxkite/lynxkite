@@ -272,7 +272,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   const graphToSVGRatio = 0.8; // Leave some margin.
-  const UNCOLORED = '#0000ff'; // Blue. Its color is totally unlike any color in any of our palettes.
+  const UNCOLORED = '#39bcf3'; // Brand color.
 
   GraphView.prototype.addGroup = function(className, clipper) {
     let group;
@@ -613,7 +613,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
-        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'), mapName);
+        const values = mapByAttr(siblings, colorKey, 'string');
+        values.push('undefined');
+        resultMap = stringColorMap(values, mapName);
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
         /* eslint-disable no-console */
@@ -690,6 +692,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertices.initIcons(side.vertexAttrs.icon.title, iconStrings);
     }
 
+    const notDefined = colorMap['undefined'] || UNCOLORED;
+
     for (let i = 0; i < data.vertices.length; ++i) {
       const vertex = data.vertices[i];
 
@@ -710,7 +714,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         labelSize = l > 0 ? l / labelSizeMax : 0;
       }
 
-      let color = UNCOLORED;
+      let color = notDefined;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
         // in case of doubles the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
