@@ -927,21 +927,17 @@ VisualizationState.prototype = {
         // Collect edges.
         const result = [];
         const edges = svg.querySelectorAll('g.edge');
-        function arcStart(d) {
-          return d.match(/M (.*? .*?) /)[1];
-        }
         for (i = 0; i < edges.length; ++i) {
           const e = edges[i];
-          const first = e.querySelector('path.first');
-          const second = e.querySelector('path.second');
-          const srcPos = arcStart(first.getAttribute('d'));
-          const dstPos = arcStart(second.getAttribute('d'));
+          const arc = e.querySelector('path.edge-arc');
+          const [, srcPos, dstPos] = arc.getAttribute('d').match(/^M (.*? .*?) .* (.*? .*?)$/);
+          const label = e.querySelector('text');
           result.push({
             src: byPosition[srcPos],
             dst: byPosition[dstPos],
-            label: e.querySelector('text').innerHTML,
-            color: first.style.stroke,
-            width: first.getAttribute('stroke-width'),
+            label: label ? label.innerHTML : '',
+            color: arc.style.stroke,
+            width: arc.getAttribute('stroke-width'),
           });
         }
         result.sort(function(a, b) {
