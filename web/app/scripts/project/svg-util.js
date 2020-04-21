@@ -63,19 +63,16 @@ const SVG_UTIL = {
 
   arrows: function(ax, ay, bx, by, zoom, width) {
     const a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
-    const arcPfx = ' A ' + a.r + ' ' + a.r + ' 0 0 ';
-    const arcSfx = a.x + ' ' + a.y + ' ';
     const d = SVG_UTIL.direction(ax, ay, bx, by);
     d.x *= width;
     d.y *= width;
     const left = (a.x + d.y - d.x) + ' ' + (a.y - d.x - d.y);
     const right = (a.x - d.y - d.x) + ' ' + (a.y + d.x - d.y);
     const tip = (a.x + d.x) + ' ' + (a.y + d.y);
-    return [
-      'M ' + ax + ' ' + ay + arcPfx + '0 ' + arcSfx,
-      'M ' + tip + ' L ' + left + ' L ' + right + ' z',
-      'M ' + bx + ' ' + by + arcPfx + '1 ' + arcSfx
-    ];
+    return {
+      arc: `M ${ax} ${ay} A ${a.r} ${a.r} 0 0 0 ${bx} ${by}`,
+      arrow: `M ${tip} L ${left} L ${right} z`,
+    };
   },
 
   group: function(l, attrs) {
