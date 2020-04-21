@@ -1736,8 +1736,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const fontSize = 15;
     this.label = label ? svg.create('text', { 'font-size': fontSize + 'px' }).text(label) : undefined;
     if (style === 'undirected') {
-      this.line = svg.create('path', { 'class': 'edge-arc' });
-      this.dom = svg.group([this.line, this.label], {'class': 'edge'});
+      this.arc = svg.create('path', { 'class': 'edge-arc' });
+      this.dom = svg.group([this.arc, this.label], {'class': 'edge'});
     } else {
       this.arc = svg.create('path', { 'class': 'edge-arc' });
       this.arrow = svg.create('path', { 'class': 'edge-arrow' });
@@ -1776,8 +1776,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
     const strokeWidth = avgZoom * this.w;
     let labelPos;
-    if (this.style === 'undirected') {
-      this.line.attr({
+    if (this.style === 'undirected' && src !== dst) {
+      this.arc.attr({
         d: `M ${src.screenX()} ${src.screenY()} L ${dst.screenX()} ${dst.screenY()}`,
         'stroke-width': strokeWidth });
       labelPos = { x: (src.screenX() + dst.screenX()) / 2, y: (src.screenY() + dst.screenY()) / 2 };
@@ -1785,7 +1785,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       const paths =
         svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom, strokeWidth);
       this.arc.attr({ d: paths.arc, 'stroke-width': strokeWidth });
-      this.arrow.attr({ d: paths.arrow });
+      if (this.style === 'directed') {
+        this.arrow.attr({ d: paths.arrow });
+      }
       const arcParams = svg.arcParams(
         src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
       labelPos = { x: arcParams.x, y: arcParams.y };
