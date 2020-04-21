@@ -37,6 +37,7 @@ case class UIStatus(
     relativeEdgeDensity: Option[Boolean],
     axisOptions: UIAxisOptions,
     sampleRadius: Int,
+    edgeStyle: Option[String],
     attributeTitles: Map[String, String],
     animate: UIAnimation,
     // For explicit center ids entered by the user, this will be set.
@@ -61,6 +62,7 @@ object UIStatus {
     relativeEdgeDensity = Some(false),
     axisOptions = UIAxisOptions(vertex = Map(), edge = Map()),
     sampleRadius = 1,
+    edgeStyle = None,
     attributeTitles = Map(), animate = UIAnimation(false, "expand", 0),
     centers = Some(Seq("auto")),
     lastCentersRequest = None,

@@ -198,6 +198,7 @@ angular.module('biggraph')
       vd.setCenters = function(ids) { that.state.centers = ids; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
+      vd.edgeStyle = this.state.edgeStyle;
 
       vd.hasParent = function() {
         return that.getParentSide() !== undefined;
