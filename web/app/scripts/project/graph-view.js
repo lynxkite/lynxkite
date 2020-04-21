@@ -1502,6 +1502,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     let colorKey;
     let colorMap;
     let labelKey;
+    let edgeStyle = 'directed'; // For belongs-to edges.
     function attrKey(aggrAttr) {
       if (aggrAttr) {
         return aggrAttr.id + ':' + aggrAttr.aggregator;
@@ -1514,6 +1515,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       colorMap = srcs.setupColorMap(
         edges, side.edgeAttrs.edgeColor, 'Edge Color', side.edgeColorMap, colorKey);
       labelKey = attrKey(side.edgeAttrs.edgeLabel);
+      edgeStyle = side.edgeStyle || 'directed';
     }
 
     const edgeObjects = [];
@@ -1543,7 +1545,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           colorMap[edge.attrs[colorKey].double] : colorMap[edge.attrs[colorKey].string];
       }
       const label = labelKey ? edge.attrs[labelKey].string : undefined;
-      const e = new Edge(a, b, edgeScale * width, side.edgeStyle || 'directed', color, label);
+      const e = new Edge(a, b, edgeScale * width, edgeStyle, color, label);
       edgeObjects.push(e);
       edgeGroup.append(e.dom);
     }
