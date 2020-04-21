@@ -69,8 +69,14 @@ const SVG_UTIL = {
     const left = (a.x + d.y - d.x) + ' ' + (a.y - d.x - d.y);
     const right = (a.x - d.y - d.x) + ' ' + (a.y + d.x - d.y);
     const tip = (a.x + d.x) + ' ' + (a.y + d.y);
+    function arc(x, y) {
+      return `A ${a.r} ${a.r} 0 0 0 ${x} ${y}`;
+    }
+    const isLoop = ax === bx && ay === by;
     return {
-      arc: `M ${ax} ${ay} A ${a.r} ${a.r} 0 0 0 ${bx} ${by}`,
+      arc: isLoop
+        ? `M ${ax} ${ay} ${arc(a.x, a.y)} ${arc(bx, by)}`
+        : `M ${ax} ${ay} ${arc(bx, by)}`,
       arrow: `M ${tip} L ${left} L ${right} z`,
     };
   },
