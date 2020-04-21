@@ -32,7 +32,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       for (let side of ['graph.left', 'graph.right']) {
         for (let p of [
           'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap',
-          'sliderColorMap']) {
+          'sliderColorMap', 'edgeStyle']) {
           util.deepWatch(scope, side + '.' + p, scope.updateGraph);
         }
       }
