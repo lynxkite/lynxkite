@@ -40,6 +40,10 @@ Radius::
 You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
 vertices and their immediate neighbors. 2 also contains neighbors of neighbors. And so on.
 
+Edge style::
+Edges can either be displayed as _directed_ (the default) or _undirected_. The directed mode shows
+edges as curved arrows. In the undirected mode they are displayed as straight lines.
+
 ### Pick button
 This button is used to select a new set of centers. The vertices
 placed there will be ones that satisfy all the currently set restrictions (see
