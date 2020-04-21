@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - More accurate progress indicators for box outputs.
+ - Visualizations can now render edges as undirected straight lines.
 
 ### 3.2.0
 
