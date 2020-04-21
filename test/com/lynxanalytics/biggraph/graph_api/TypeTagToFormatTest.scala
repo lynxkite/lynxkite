@@ -51,6 +51,7 @@ class TypeTagToFormatTest extends FunSuite {
         Some(false),
         UIAxisOptions(Map(), Map()),
         1,
+        None,
         Map(),
         UIAnimation(false, "neutral", 0),
         None,

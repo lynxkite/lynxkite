@@ -1736,10 +1736,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const fontSize = 15;
     this.label = label ? svg.create('text', { 'font-size': fontSize + 'px' }).text(label) : undefined;
     if (style === 'undirected') {
-      this.line = svg.create('path', { 'class': 'first' });
+      this.line = svg.create('path', { 'class': 'edge-arc' });
       this.dom = svg.group([this.line, this.label], {'class': 'edge'});
     } else {
-      this.arc = svg.create('path');
+      this.arc = svg.create('path', { 'class': 'edge-arc' });
       this.arrow = svg.create('path', { 'class': 'edge-arrow' });
       if (color) {
         this.arc.attr({ style: 'stroke: ' + color });
