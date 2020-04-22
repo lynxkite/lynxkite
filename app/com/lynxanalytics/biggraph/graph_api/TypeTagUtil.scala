@@ -3,21 +3,26 @@ package com.lynxanalytics.biggraph.graph_api
 
 import scala.reflect.runtime.universe._
 import scala.language.higherKinds
+import scala.annotation.meta.field
+
+class SubTypeCreator(tt: TypeTag[_], i: Int)
+  extends reflect.api.TypeCreator {
+  def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
+    assert(
+      m eq tt.mirror,
+      s"TypeTag[$tt] defined in ${tt.mirror} cannot be migrated to mirror $m.")
+    val args = tt.tpe.asInstanceOf[TypeRefApi].args
+    args(i).asInstanceOf[U#Type]
+  }
+  def typeTag = TypeTag(tt.mirror, this)
+}
 
 object TypeTagUtil {
   // Returns TypeTags for the type parameters of T.
   // For example typeArgs(typeTag[Map[Int, Double]]) returns Seq(typeTag[Int], typeTag[Double]).
   def typeArgs(tt: TypeTag[_]): Seq[TypeTag[_]] = {
     val args = tt.tpe.asInstanceOf[TypeRefApi].args
-    val mirror = tt.mirror
-    args.map { arg =>
-      TypeTag(mirror, new reflect.api.TypeCreator {
-        def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
-          assert(m eq mirror, s"TypeTag[$arg] defined in $mirror cannot be migrated to mirror $m.")
-          arg.asInstanceOf[U#Type]
-        }
-      })
-    }
+    args.indices.map(i => new SubTypeCreator(tt, i).typeTag)
   }
 
   def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
