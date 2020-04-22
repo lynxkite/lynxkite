@@ -614,7 +614,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
         const values = mapByAttr(siblings, colorKey, 'string');
-        values.push('undefined');
+        if (values.length < siblings.length) {
+          values.push('undefined');
+        }
         resultMap = stringColorMap(values, mapName);
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
@@ -692,7 +694,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertices.initIcons(side.vertexAttrs.icon.title, iconStrings);
     }
 
-    const notDefined = colorMap['undefined'] || UNCOLORED;
+    const notDefined = (colorMap && 'undefined' in colorMap) ? colorMap['undefined'] : UNCOLORED;
 
     for (let i = 0; i < data.vertices.length; ++i) {
       const vertex = data.vertices[i];
