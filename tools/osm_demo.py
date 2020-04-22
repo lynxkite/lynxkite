@@ -51,81 +51,53 @@ def get_args():
   return parser.parse_args()
 
 
-ARGS = get_args()
-
-# The nodes is our final graph.
-VERTICES = set()
-
-# The geo-coordinates of all the nodes in the input
-POS = {}
-
-# The nodes that are access points
-AP = set()
-
-# The nodes that are rewards; and the associated reward.
-REV = {}
-
-EDGES = {}
-
-TOTAL_COSTS = 0.0
-
-random.seed(ARGS.seed)
-
-
-def dist(src_id, dst_id):
-  dx = POS[src_id][0] - POS[dst_id][0]
-  dy = POS[src_id][1] - POS[dst_id][1]
+def dist(positions, src_id, dst_id):
+  dx = positions[src_id][0] - positions[dst_id][0]
+  dy = positions[src_id][1] - positions[dst_id][1]
   return math.hypot(dx, dy)
 
 
-def random_cost(src_id, dst_id):
-  return random.uniform(ARGS.random_cost_low, ARGS.random_cost_high) * dist(src_id, dst_id)
+def random_cost(positions, random_cost_low, random_cost_high, src_id, dst_id):
+  return random.uniform(random_cost_low, random_cost_high) * dist(positions, src_id, dst_id)
 
 
 def toid(s):
-  'Return string-like ids'
+  '''Return string-like ids'''
   return 'id_' + s
 
 
-def parse_xml_and_add_costs():
-  xml = untangle.parse(ARGS.input)
+def get_positions(xml):
+  positions = {}
   for n in xml.osm.node:
     id = toid(n['id'])
     pos = (float(n['lat']), float(n['lon']))
-    POS[id] = pos
+    positions[id] = pos
+  return positions
 
-  edges = set()
+
+def get_graph(xml):
+  graph = defaultdict(set)
+
   for w in xml.osm.way:
     if hasattr(w, 'tag') and 'highway' in [m['k'] for m in w.tag]:
       nodes = w.nd
       for i in range(len(nodes) - 1):
         src = toid(nodes[i]['ref'])
         dst = toid(nodes[i + 1]['ref'])
-        edge = (src, dst)
-        edges.add(edge)
-        VERTICES.add(src)
-        VERTICES.add(dst)
-
-  for e in edges:
-    c = random_cost(e[0], e[1])
-    global TOTAL_COSTS
-    TOTAL_COSTS += c
-    EDGES[(e[0], e[1])] = c
-    EDGES[(e[1], e[0])] = c
+        graph[src].add(dst)
+        graph[dst].add(src)
+  return graph
 
 
-def only_keep_greatest_connected_component():
-  graph = defaultdict(list)
-  for e in EDGES:
-    graph[e[0]].append(e[1])
-
+def get_greatest_component(bigger_graph):
+  graph = bigger_graph.copy()
   greatest_component = set()
-  while len(graph) > 0:
+  while graph:
     d = deque()
     some_vertex = next(iter(graph))
     d.append(some_vertex)
     reachable = set()
-    while len(d) > 0:
+    while d:
       src = d.popleft()
       reachable.add(src)
       for dst in graph[src]:
@@ -133,42 +105,74 @@ def only_keep_greatest_connected_component():
           d.append(dst)
     for r in reachable:
       del graph[r]
-    if (len(reachable) > len(greatest_component)):
+    if len(reachable) > len(greatest_component):
       greatest_component = reachable
 
-  global VERTICES
-  VERTICES = greatest_component
+  subgraph = defaultdict(set)
+  for src in greatest_component:
+    for dst in bigger_graph[src]:
+      if dst in greatest_component:
+        subgraph[src].add(dst)
+
+  return subgraph
 
 
-def setup_ap_and_rev():
-  ids = list(VERTICES).copy()
+def get_vertices(graph):
+  vertices = set()
+  for src in graph.keys():
+    vertices.add(src)
+    for dst in graph[src]:
+      vertices.add(dst)
+  return vertices
+
+
+def get_access_and_reward_nodes(args, vertices):
+  ids = list(vertices)
+  access_nodes = set()
+  reward_nodes = set()
   random.shuffle(ids)
-  for i in range(ARGS.num_access_points):
-    AP.add(ids[i])
-  for i in range(ARGS.num_rewards):
-    REV[ids[ARGS.num_access_points + i]] = ARGS.total_rewards / ARGS.num_rewards
+  for i in range(args.num_access_points):
+    access_nodes.add(ids[i])
+  for i in range(args.num_rewards):
+    reward_nodes.add(ids[args.num_access_points + i])
+  return (access_nodes, reward_nodes)
 
 
-parse_xml_and_add_costs()
-only_keep_greatest_connected_component()
-setup_ap_and_rev()
+def main():
+  args = get_args()
+  random.seed(args.seed)
+  xml = untangle.parse(args.input)
+  positions = get_positions(xml)
+  full_graph = get_graph(xml)
+  graph = get_greatest_component(full_graph)
+  vertices = get_vertices(graph)
+  access_nodes, reward_nodes = get_access_and_reward_nodes(args, vertices)
+
+  with open(args.vertex_csv, 'w') as f:
+    f.write('id,lat,lon,revenue,ap\n')
+    for id in vertices:
+      lat = positions[id][0]
+      lon = positions[id][1]
+      rev = str(args.total_rewards / args.num_rewards) if id in reward_nodes else '0.0'
+      ap = '0.0' if id in access_nodes else ''
+      f.write(f'{id},{lat},{lon},{rev},{ap}\n')
+
+  with open(args.edge_csv, 'w') as f:
+    costs_assigned = {}
+    total_cost = 0.0
+    f.write('src,dst,cost\n')
+    for src in graph.keys():
+      if (src in vertices):
+        for dst in graph[src]:
+          assert (dst in vertices)
+          if (src, dst) not in costs_assigned:
+            cost = random_cost(positions, args.random_cost_low, args.random_cost_high, src, dst)
+            total_cost += cost
+            costs_assigned[(src, dst)] = cost
+            costs_assigned[(dst, src)] = cost
+          f.write(f'{src},{dst},{costs_assigned[(src,dst)]:.14f}\n')
+
+  print(f'Total costs on edges: {total_cost}')
 
 
-with open(ARGS.vertex_csv, 'w') as f:
-  f.write('id,lat,lon,revenue,ap\n')
-  for id in VERTICES:
-    lat = POS[id][0]
-    lon = POS[id][1]
-    rev = str(REV[id]) if id in REV else '0.0'
-    ap = '0.0' if id in AP else ''
-    f.write(f'{id},{lat},{lon},{rev},{ap}\n')
-
-with open(ARGS.edge_csv, 'w') as f:
-  f.write('src,dst,cost\n')
-  for v in EDGES:
-    if (v[0] in VERTICES):
-      assert (v[1] in VERTICES)
-      f.write(f'{v[0]},{v[1]},{EDGES[v]:.14f}\n')
-
-
-print(f'Total costs on edges: {TOTAL_COSTS}')
+main()
