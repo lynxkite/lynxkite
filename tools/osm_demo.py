@@ -3,10 +3,12 @@
 Given an open street map xml input, this tool will generate two csv files that can be used to demonstrate
 the Steiner tree computation of LynxKite. Example usage:
 
-  ./osm_demo.py --input bp.osm  --total_rewards 0.05 --num_rewards 5 --num_access_points 5 --seed 23443551
+  ./osm_demo.py --input budapestp.osm  --total_rewards 0.05 --num_rewards 5 --num_access_points 5 --seed 23443551
 
 An example workspace that uses the output is here:
 https://pizzabox.lynxanalytics.com/#/workspace/Users/gabor.olah@lynxanalytics.com/steinerdemo
+The total cost is printed at the end, so you can set --total_rewards appropriately and re-run the script if
+you see fit.
 
 '''
 import random
@@ -51,11 +53,20 @@ def get_args():
 
 ARGS = get_args()
 
+# The nodes is our final graph.
 VERTICES = set()
+
+# The geo-coordinates of all the nodes in the input
 POS = {}
+
+# The nodes that are access points
 AP = set()
+
+# The nodes that are rewards; and the associated reward.
 REV = {}
+
 EDGES = {}
+
 TOTAL_COSTS = 0.0
 
 random.seed(ARGS.seed)
