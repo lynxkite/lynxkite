@@ -96,7 +96,9 @@ object DeriveScala extends OpFromJson {
     checkInputTypes(paramTypes, exprString)
 
     val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
-    val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs, persist)(tt)
+    val op = DeriveScala(
+      exprString, attrTypes.map { case (k, v) => k -> SerializableType(v) },
+      scalarTypes.map { case (k, v) => k -> SerializableType(v) }, onlyOnDefinedAttrs, persist)(tt)
 
     import Scripting._
     op(op.vs, vertexSet.getOrElse(attributes.head._2.vertexSet))(
@@ -115,12 +117,12 @@ object DeriveScala extends OpFromJson {
   }
 
   import play.api.libs.json.Json
-  def paramsToJson(paramTypes: Seq[(String, TypeTag[_])]) = {
-    paramTypes.map { case (n, t) => Json.obj("name" -> n, "type" -> SerializableType(t).toJson) }
+  def paramsToJson(paramTypes: Seq[(String, SerializableType[_])]) = {
+    paramTypes.map { case (n, t) => Json.obj("name" -> n, "type" -> t.toJson) }
   }
 
   def jsonToParams(j: JsValue) = {
-    j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type").typeTag }
+    j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type") }
   }
 
   def checkInputTypes(paramTypes: Map[String, TypeTag[_]], expr: String): Unit = {
@@ -139,8 +141,8 @@ object DeriveScala extends OpFromJson {
 import DeriveScala._
 case class DeriveScala[T: TypeTag] private[graph_operations] (
     expr: String, // The Scala expression to evaluate.
-    attrParams: Seq[(String, TypeTag[_])], // Input attributes to substitute.
-    scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
+    attrParams: Seq[(String, SerializableType[_])], // Input attributes to substitute.
+    scalarParams: Seq[(String, SerializableType[_])] = Seq(), // Input scalars to substitute.
     onlyOnDefinedAttrs: Boolean = true,
     persist: Boolean = true)
   extends SparkOperation[Input, Output[T]] {
@@ -158,9 +160,7 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     persistParameter.toJson(persist)
 
   override val isHeavy = persist
-  @transient override lazy val inputs = new Input(
-    attrParams.map { case (k, v) => k -> SerializableType(v) },
-    scalarParams.map { case (k, v) => k -> SerializableType(v) })
+  @transient override lazy val inputs = new Input(attrParams, scalarParams)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output[T]()(instance, inputs, tt)
 
@@ -195,11 +195,17 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
 
     val scalarValues = inputs.scalars.map { _.value }.toArray
     val allNames = (attrParams.map(_._1) ++ scalarParams.map(_._1)).toSeq
-    val (mandatoryParamTypes, optionalParamTypes) = if (onlyOnDefinedAttrs) {
-      (scalarParams.toMap[String, TypeTag[_]] ++ attrParams.toMap[String, TypeTag[_]], Map[String, TypeTag[_]]())
+    val (mandatoryParamSTypes, optionalParamSTypes) = if (onlyOnDefinedAttrs) {
+      (scalarParams.toMap[String, SerializableType[_]]
+        ++ attrParams.toMap[String, SerializableType[_]],
+        Map[String, SerializableType[_]]())
     } else {
-      (scalarParams.toMap[String, TypeTag[_]], attrParams.toMap[String, TypeTag[_]])
+      (
+        scalarParams.toMap[String, SerializableType[_]],
+        attrParams.toMap[String, SerializableType[_]])
     }
+    val mandatoryParamTypes = mandatoryParamSTypes.mapValues(_.typeTag).view.force
+    val optionalParamTypes = optionalParamSTypes.mapValues(_.typeTag).view.force
 
     val t = ScalaScript.compileAndGetType(expr, mandatoryParamTypes, optionalParamTypes)
     assert(

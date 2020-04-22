@@ -35,7 +35,8 @@ object DeriveScalaScalar extends OpFromJson {
     DeriveScala.checkInputTypes(paramTypes.toMap[String, TypeTag[_]], exprString)
 
     val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
-    val op = DeriveScalaScalar(exprString, paramTypes)(tt)
+    val op = DeriveScalaScalar(
+      exprString, paramTypes.map { case (k, v) => k -> SerializableType(v) })(tt)
 
     import Scripting._
     op(op.scalars, namedScalars.map(_._2)).result.sc.runtimeSafeCast[T]
@@ -51,7 +52,7 @@ object DeriveScalaScalar extends OpFromJson {
 import DeriveScalaScalar._
 case class DeriveScalaScalar[T: TypeTag](
     expr: String,
-    scalarParams: Seq[(String, TypeTag[_])])
+    scalarParams: Seq[(String, SerializableType[_])])
   extends SparkOperation[Input, Output[T]] {
 
   def tt = typeTag[T]
@@ -63,7 +64,7 @@ case class DeriveScalaScalar[T: TypeTag](
     "scalarNames" -> DeriveScala.paramsToJson(scalarParams))
 
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(scalarParams.map { case (k, v) => k -> SerializableType(v) })
+  @transient override lazy val inputs = new Input(scalarParams)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(tt, instance)
 
@@ -74,7 +75,7 @@ case class DeriveScalaScalar[T: TypeTag](
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val scalarValues = inputs.scalars.map(_.value)
-    val paramTypes = scalarParams.toMap[String, TypeTag[_]]
+    val paramTypes = scalarParams.toMap.mapValues(_.typeTag).view.force
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes)
     assert(
