@@ -269,8 +269,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
           case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
         }
-        val progress: List[Double] = entities.filterNot(seen.contains(_)).map(
-          e => entityProgressManager.computeProgress(e, seen.toSet))
+        val progress: List[Double] = entityProgressManager.computeProgress(
+          entities.filterNot(seen.contains(_)), seen.toSet).toList
         seen ++= entities
         stateId -> progress
       } catch {
