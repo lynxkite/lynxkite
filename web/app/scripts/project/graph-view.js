@@ -1747,11 +1747,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     } else {
       this.arc = svg.create('path', { 'class': 'edge-arc' });
       this.arrow = svg.create('path', { 'class': 'edge-arrow' });
-      if (color) {
-        this.arc.attr({ style: 'stroke: ' + color });
-        this.arrow.attr({ style: 'fill: ' + color });
-      }
       this.dom = svg.group([this.arrow, this.arc, this.label], {'class': 'edge'});
+    }
+    if (color) {
+      this.arc.attr({ style: 'stroke: ' + color });
+      this.arrow && this.arrow.attr({ style: 'fill: ' + color });
     }
     const that = this;
     src.addMoveListener(function() { that.reposition(); });
