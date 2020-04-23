@@ -60,7 +60,7 @@ class DataManager(
       val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(domains.head)
       synchronized { futures.get((e.gUID, d)) } match {
         case None =>
-          if (d.has(entity)) Set(SafeFuture.successful(()))
+          if (d.has(e)) Set(SafeFuture.successful(()))
           else Set()
         case Some(s) =>
           if (s.hasFailed) Set(s)
