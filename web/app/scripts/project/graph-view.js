@@ -694,8 +694,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       vertices.initIcons(side.vertexAttrs.icon.title, iconStrings);
     }
 
-    const notDefined = (colorMap && 'undefined' in colorMap) ? colorMap['undefined'] : UNCOLORED;
-
     for (let i = 0; i < data.vertices.length; ++i) {
       const vertex = data.vertices[i];
 
@@ -716,7 +714,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         labelSize = l > 0 ? l / labelSizeMax : 0;
       }
 
-      let color = notDefined;
+      let color = colorMap ? colorMap.undefined : UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
         // in case of doubles the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
