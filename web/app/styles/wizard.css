@@ -18,14 +18,9 @@
   position: relative;
   align-items: center;
 }
-.wizard-title-bar img:before {
-  background: white;
-  border-radius: 100%;
-  position: absolute;
-  width: 120px;
-  height: 120px;
-}
 .wizard-title-bar img {
+  width: 150px;
+  height: 150px;
   margin: 10px;
 }
 .wizard-title {
