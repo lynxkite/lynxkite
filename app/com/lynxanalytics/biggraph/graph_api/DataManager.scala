@@ -17,7 +17,8 @@ trait EntityProgressManager {
   // Anything in between indicates that the computation is in progress.
   // -1.0 indicates that an error has occurred during computation.
   // Computation happening for entities in the "ignore" set is ignored.
-  def computeProgress(entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double
+  def computeProgress(entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double]
+  def computeProgress(entity: MetaGraphEntity): Double = computeProgress(Seq(entity)).head
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
@@ -54,7 +55,7 @@ class DataManager(
   }
 
   override def computeProgress(
-    entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double = {
+    entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
     def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = {
       val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(domains.head)
       synchronized { futures.get((e.gUID, d)) } match {
@@ -68,12 +69,14 @@ class DataManager(
     }
     try {
       val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_))
-      val deps = getDeps(entity) -- ignoredFutures
-      if (findFailure(deps).isDefined) -1.0
-      else if (deps.size == 0) 0.0
-      else deps.filter(_.isCompleted).size.toDouble / deps.size
+      entities.map { entity =>
+        val deps = getDeps(entity) -- ignoredFutures
+        if (findFailure(deps).isDefined) -1.0
+        else if (deps.size == 0) 0.0
+        else deps.filter(_.isCompleted).size.toDouble / deps.size
+      }
     } catch {
-      case _: Throwable => 0
+      case _: Throwable => Seq()
     }
   }
 
