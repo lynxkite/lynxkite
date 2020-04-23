@@ -613,7 +613,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
-        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'), mapName);
+        const values = mapByAttr(siblings, colorKey, 'string');
+        if (values.length < siblings.length) {
+          values.push('undefined');
+        }
+        resultMap = stringColorMap(values, mapName);
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
         /* eslint-disable no-console */
@@ -710,7 +714,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         labelSize = l > 0 ? l / labelSizeMax : 0;
       }
 
-      let color = UNCOLORED;
+      let color = colorMap ? colorMap.undefined : UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
         // in case of doubles the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
