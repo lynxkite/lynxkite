@@ -3,6 +3,9 @@
   background: #002a4c;
   padding: 0;
 }
+#wizard .row {
+  margin: 0;
+}
 #wizard:before {
   content: '';
   position: absolute;
