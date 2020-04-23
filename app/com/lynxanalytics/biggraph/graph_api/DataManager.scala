@@ -56,7 +56,7 @@ class DataManager(
   override def computeProgress(
     entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double = {
     def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = {
-      val d = whoHas(e).getOrElse(whoCanCompute(e))
+      val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(domains.head)
       synchronized { futures.get((e.gUID, d)) } match {
         case None =>
           if (d.has(entity)) Set(SafeFuture.successful(()))
