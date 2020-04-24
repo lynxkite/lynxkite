@@ -72,8 +72,10 @@ angular.module('biggraph')
 
         function threeWayMerge(meta, before, after, local) {
           const defaults = {};
+          const exists = {};
           for (let p of meta) {
             defaults[p.id] = p.defaultValue;
+            exists[p.id] = true;
           }
           const merged = {};
           const keys = Object.keys(after || {}).concat(Object.keys(local || {}));
@@ -84,7 +86,7 @@ angular.module('biggraph')
             } else {
               merged[k] = after[k];
             }
-            if (merged[k] === undefined || merged[k] === defaults[k]) {
+            if (merged[k] === undefined || merged[k] === defaults[k] || !exists[k]) {
               delete merged[k];
             }
           }
