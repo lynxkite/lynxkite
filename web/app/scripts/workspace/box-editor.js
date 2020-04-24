@@ -80,13 +80,16 @@ angular.module('biggraph')
           const merged = {};
           const keys = Object.keys(after || {}).concat(Object.keys(local || {}));
           for (let k of keys) {
+            if (!exists[k] && after[k] === undefined) {
+              delete local[k];
+            }
             if (before) {
               // Keep local (possibly modified) state if there's no change from the backend.
               merged[k] = after[k] === before[k] ? local[k] : after[k];
             } else {
               merged[k] = after[k];
             }
-            if (merged[k] === undefined || merged[k] === defaults[k] || !exists[k]) {
+            if (merged[k] === undefined || merged[k] === defaults[k]) {
               delete merged[k];
             }
           }
