@@ -41,6 +41,20 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
     }
   };
 
+  PopupModel.prototype.clipX = function() {
+    const leftClippedX = Math.max(this.x, 50 - this.width);
+    const clippedX = Math.min(leftClippedX, $window.innerWidth - 50);
+    this.x = clippedX;
+    return this.x;
+  };
+
+  PopupModel.prototype.clipY = function() {
+    const upperClippedY = Math.max(this.y, 0);
+    const clippedY = Math.min(upperClippedY, $window.innerHeight - 50);
+    this.y = clippedY;
+    return this.y;
+  };
+
   PopupModel.prototype.onMouseDown = function(event) {
     const leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
@@ -57,12 +71,8 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
     if (leftButton || environment.protractor) {
       // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
       if (this.owner.movedPopup === this) {
-        const leftClippedMovedX = Math.max(this.moveOffsetX + event.pageX, 50 - this.width);
-        const clippedMovedX = Math.min(leftClippedMovedX, $window.innerWidth - 50);
-        this.x = clippedMovedX;
-        const upperClippedMovedY = Math.max(this.moveOffsetY + event.pageY, 0);
-        const clippedMovedY = Math.min(upperClippedMovedY, $window.innerHeight - 50);
-        this.y = clippedMovedY;
+        this.x = this.moveOffsetX + event.pageX;
+        this.y = this.moveOffsetY + event.pageY;
       }
     }
   };
