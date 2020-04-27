@@ -2,7 +2,7 @@
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 
-angular.module('biggraph').factory('PopupModel', function(environment) {
+angular.module('biggraph').factory('PopupModel', ['$window', function($window, environment) {
   // Creates a new popup model data structure.
   // id: Unique key.
   // content: Description of content to render.
@@ -57,8 +57,12 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     if (leftButton || environment.protractor) {
       // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
       if (this.owner.movedPopup === this) {
-        this.x = this.moveOffsetX + event.pageX;
-        this.y = this.moveOffsetY + event.pageY;
+        const leftClippedMovedX = Math.max(this.moveOffsetX + event.pageX, 50 - this.width);
+        const clippedMovedX = Math.min(leftClippedMovedX, $window.innerWidth - 50);
+        this.x = clippedMovedX;
+        const upperClippedMovedY = Math.max(this.moveOffsetY + event.pageY, 0);
+        const clippedMovedY = Math.min(upperClippedMovedY, $window.innerHeight - 50);
+        this.y = clippedMovedY;
       }
     }
   };
@@ -198,4 +202,4 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   return PopupModel;
-});
+}]);
