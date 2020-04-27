@@ -3,8 +3,8 @@
     ng-mousedown="popupModel.bringToFront($event); $event.stopPropagation();"
     id="{{ popupModel.id | id }}"
     ng-style="{
-        'left': popupModel.x + 'px',
-        'top': popupModel.y + 'px',
+        'left': popupModel.clipX() + 'px',
+        'top': popupModel.clipY() + 'px',
     }">
   <div
       class="popup-head"
