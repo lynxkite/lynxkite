@@ -2,7 +2,7 @@
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 
-angular.module('biggraph').factory('PopupModel', function(environment) {
+angular.module('biggraph').factory('PopupModel', function($window, environment) {
   // Creates a new popup model data structure.
   // id: Unique key.
   // content: Description of content to render.
@@ -39,6 +39,20 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       // max-height limits the initial automatic sizing. We unset it so manual sizing is unlimited.
       this.maxHeight = undefined;
     }
+  };
+
+  PopupModel.prototype.clipX = function() {
+    const leftClippedX = Math.max(this.x, 50 - this.width);
+    const clippedX = Math.min(leftClippedX, $window.innerWidth - 50);
+    this.x = clippedX;
+    return this.x;
+  };
+
+  PopupModel.prototype.clipY = function() {
+    const upperClippedY = Math.max(this.y, 0);
+    const clippedY = Math.min(upperClippedY, $window.innerHeight - 50);
+    this.y = clippedY;
+    return this.y;
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
