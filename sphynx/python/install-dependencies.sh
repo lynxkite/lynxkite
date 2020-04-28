@@ -1,5 +1,6 @@
 #!/bin/bash -xue
 # Install PyTorch Geometric.
+conda update -n base conda
 conda install -y pyarrow
 conda install -y pytorch torchvision cpuonly -c pytorch
 pip install --no-cache-dir torch-scatter==2.0.4+cpu -f https://pytorch-geometric.com/whl/torch-1.4.0.html
