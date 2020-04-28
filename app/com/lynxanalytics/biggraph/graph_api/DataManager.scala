@@ -54,29 +54,37 @@ class DataManager(
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
+  // This unique future is used to indicate that we have asked a domain
+  // about an entity and they don't have it.
+  private val DOES_NOT_HAVE = SafeFuture.successful(())
+
   override def computeProgress(
     entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
-    def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = {
-      val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(domains.head)
-      synchronized { futures.get((e.gUID, d)) } match {
+    def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = synchronized {
+      val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(
+        whoHas(e).getOrElse(whoCanCompute(e)))
+      futures.get((e.gUID, d)) match {
         case None =>
-          if (d.has(e)) Set(SafeFuture.successful(()))
-          else Set()
+          val f = if (d.has(e)) SafeFuture.successful(()) else DOES_NOT_HAVE
+          futures((e.gUID, d)) = f // Set the future, so next time we take the fast path.
+          Set(f)
         case Some(s) =>
           if (s.hasFailed) Set(s)
           else s.dependencySet
       }
     }
     try {
-      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_))
+      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_)) + DOES_NOT_HAVE
       entities.map { entity =>
         val deps = getDeps(entity) -- ignoredFutures
+        val done: Double = deps.filter(f => f.isCompleted).size
+        println(s"$done / ${deps.size} - ${ignoredFutures.size} $entity")
         if (findFailure(deps).isDefined) -1.0
         else if (deps.size == 0) 0.0
-        else deps.filter(_.isCompleted).size.toDouble / deps.size
+        else deps.filter(f => f.isCompleted).size.toDouble / deps.size
       }
     } catch {
-      case _: Throwable => Seq()
+      case _: Throwable => Seq(0)
     }
   }
 
