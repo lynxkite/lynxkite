@@ -71,6 +71,13 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       this.xOffset = this.instance.x - event.logicalX;
       this.yOffset = this.instance.y - event.logicalY;
     },
+    inProgress: function() {
+      for (let p of this.outputs) {
+        if (p.progress === 'in-progress') {
+          return true;
+        }
+      }
+    },
   };
 
   return BoxWrapper;
