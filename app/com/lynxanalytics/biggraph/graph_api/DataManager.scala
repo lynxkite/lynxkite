@@ -60,28 +60,33 @@ class DataManager(
 
   override def computeProgress(
     entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
-    def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = synchronized {
-      val d = domains.find(d => futures.contains((e.gUID, d))).getOrElse(
-        whoHas(e).getOrElse(whoCanCompute(e)))
-      futures.get((e.gUID, d)) match {
-        case None =>
-          val f = if (d.has(e)) SafeFuture.successful(()) else DOES_NOT_HAVE
-          futures((e.gUID, d)) = f // Set the future, so next time we take the fast path.
-          Set(f)
-        case Some(s) =>
-          if (s.hasFailed) Set(s)
-          else s.dependencySet
+    // Returns all the futures that are responsible for producing the entity.
+    def getFutures(e: MetaGraphEntity): Set[SafeFuture[_]] = synchronized {
+      val sets = domains.map { d =>
+        val set: Set[SafeFuture[_]] = futures.get((e.gUID, d)) match {
+          case None =>
+            val f = if (d.has(e)) SafeFuture.successful(()) else DOES_NOT_HAVE
+            futures((e.gUID, d)) = f // Set the future, so next time we take the fast path.
+            Set(f)
+          case Some(s) =>
+            if (s.hasFailed) Set(s)
+            else s.dependencySet
+        }
+        set // Type inference fails otherwise.
       }
+      sets.reduce(_.union(_))
     }
     try {
-      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_)) + DOES_NOT_HAVE
+      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getFutures(_)) + DOES_NOT_HAVE
       entities.map { entity =>
-        val deps = getDeps(entity) -- ignoredFutures
-        val done: Double = deps.filter(f => f.isCompleted).size
-        println(s"$done / ${deps.size} - ${ignoredFutures.size} $entity")
+        val deps = getFutures(entity) -- ignoredFutures
+        val done = deps.filter(f => f.isCompleted)
+        val computing = deps.filter(f => f.isComputing)
         if (findFailure(deps).isDefined) -1.0
         else if (deps.size == 0) 0.0
-        else deps.filter(f => f.isCompleted).size.toDouble / deps.size
+        // Report as incomplete when nothing is running.
+        else if (computing.size == 0) 0.0
+        else (done.size + 0.5 * computing.size) / deps.size
       }
     } catch {
       case _: Throwable => Seq(0)
