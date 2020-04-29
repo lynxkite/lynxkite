@@ -1,5 +1,8 @@
 #!/bin/bash -xue
 # Install PyTorch Geometric.
+
+# Conda update had to be added because otherwise Conda would downgrade Node.js
+# to version 6 and cause failures later on.
 conda update -n base conda
 conda install -y pyarrow
 conda install -y pytorch torchvision cpuonly -c pytorch
