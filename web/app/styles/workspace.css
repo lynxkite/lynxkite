@@ -86,6 +86,13 @@ box-editor table-browser {
 g.box image {
   pointer-events: none;
 }
+g.box image.in-progress {
+  animation-name: box-in-progress-indication;
+  animation-direction: alternate;
+  animation-duration: 0.5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in;
+}
 g.box #click-target {
   stroke: transparent;
   fill: transparent;
@@ -163,6 +170,15 @@ circle.plug-progress-missing {
   }
   100% {
     r: 8;
+  }
+}
+
+@keyframes box-in-progress-indication {
+  0% {
+    transform: scale(1, 1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.1, 0.9) translate(-5px, 10px);
   }
 }
 
