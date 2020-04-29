@@ -59,15 +59,15 @@ abstract class JsonServer extends mvc.Controller {
     handler: (User, I) => R): R = {
     val t0 = System.currentTimeMillis
     if (logRequest) {
-      log.info(s"$user POST ${request.path} ${request.body}")
+      log.info(s"${request.remoteAddress} $user POST ${request.path} ${request.body}")
     } else {
-      log.info(s"$user POST ${request.path} (request body logging supressed)")
+      log.info(s"${request.remoteAddress} $user POST ${request.path} (request body logging supressed)")
     }
     val i = request.body.as[I]
     val result = util.Try(handler(user, i))
     val dt = System.currentTimeMillis - t0
     val status = if (result.isSuccess) "success" else "failure"
-    log.info(s"$dt ms to respond with $status to $user POST ${request.path}")
+    log.info(s"$dt ms to respond with $status to ${request.remoteAddress} $user POST ${request.path}")
     result.get
   }
 
@@ -96,7 +96,7 @@ abstract class JsonServer extends mvc.Controller {
     val qs = request.rawQueryString
     assert(qs.startsWith("q="), "Missing query parameter: q")
     val s = java.net.URLDecoder.decode(qs.drop(2), "utf8")
-    log.info(s"$user GET ${request.path} $s")
+    log.info(s"${request.remoteAddress} $user GET ${request.path} $s")
     json.Json.parse(s).as[T]
   }
 
@@ -107,7 +107,7 @@ abstract class JsonServer extends mvc.Controller {
     val result = util.Try(handler(user, parseJson(user, request)))
     val dt = System.currentTimeMillis - t0
     val status = if (result.isSuccess) "success" else "failure"
-    log.info(s"$dt ms to respond with $status to $user GET ${request.path}")
+    log.info(s"$dt ms to respond with $status to ${request.remoteAddress} $user GET ${request.path}")
     result.get
   }
 
@@ -125,7 +125,7 @@ abstract class JsonServer extends mvc.Controller {
   // An non-authenticated, no input GET request that returns JSON.
   def jsonPublicGet[O: json.Writes](handler: => O) = {
     action(parse.anyContent, withAuth = false) { (user, request) =>
-      log.info(s"GET ${request.path}")
+      log.info(s"${request.remoteAddress} GET ${request.path}")
       Ok(json.Json.toJson(handler))
     }
   }
@@ -142,7 +142,7 @@ abstract class JsonServer extends mvc.Controller {
   }
 
   def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
-    log.info(s"GET ${request.path}")
+    log.info(s"${request.remoteAddress} GET ${request.path}")
     checkHealthy()
     Ok("Server healthy")
   }
