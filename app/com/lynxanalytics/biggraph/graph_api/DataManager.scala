@@ -17,7 +17,8 @@ trait EntityProgressManager {
   // Anything in between indicates that the computation is in progress.
   // -1.0 indicates that an error has occurred during computation.
   // Computation happening for entities in the "ignore" set is ignored.
-  def computeProgress(entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double
+  def computeProgress(entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double]
+  def computeProgress(entity: MetaGraphEntity): Double = computeProgress(Seq(entity)).head
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
@@ -53,27 +54,43 @@ class DataManager(
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
+  // This unique future is used to indicate that we have asked a domain
+  // about an entity and they don't have it.
+  private val DOES_NOT_HAVE = SafeFuture.successful(())
+
   override def computeProgress(
-    entity: MetaGraphEntity, ignore: Set[MetaGraphEntity] = Set()): Double = {
-    def getDeps(e: MetaGraphEntity): Set[SafeFuture[_]] = {
-      val d = whoHas(e).getOrElse(whoCanCompute(e))
-      synchronized { futures.get((e.gUID, d)) } match {
-        case None =>
-          if (d.has(entity)) Set(SafeFuture.successful(()))
-          else Set()
-        case Some(s) =>
-          if (s.hasFailed) Set(s)
-          else s.dependencySet
+    entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
+    // Returns all the futures that are responsible for producing the entity.
+    def getFutures(e: MetaGraphEntity): Set[SafeFuture[_]] = synchronized {
+      val sets = domains.map { d =>
+        val set: Set[SafeFuture[_]] = futures.get((e.gUID, d)) match {
+          case None =>
+            val f = if (d.has(e)) SafeFuture.successful(()) else DOES_NOT_HAVE
+            futures((e.gUID, d)) = f // Set the future, so next time we take the fast path.
+            Set(f)
+          case Some(s) =>
+            if (s.hasFailed) Set(s)
+            else s.dependencySet
+        }
+        set // Type inference fails otherwise.
       }
+      sets.reduce(_.union(_))
     }
     try {
-      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getDeps(_))
-      val deps = getDeps(entity) -- ignoredFutures
-      if (findFailure(deps).isDefined) -1.0
-      else if (deps.size == 0) 0.0
-      else deps.filter(_.isCompleted).size.toDouble / deps.size
+      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getFutures(_)) + DOES_NOT_HAVE
+      entities.map { entity =>
+        val deps = getFutures(entity) -- ignoredFutures
+        val done = deps.filter(f => f.isCompleted)
+        val computing = deps.filter(f => !f.isCompleted && !f.isWaiting)
+        if (findFailure(deps).isDefined) -1.0
+        else if (deps.size == 0) 0.0
+        else if (done.size == deps.size) 1.0
+        // Report as incomplete when nothing is running.
+        else if (computing.size == 0) 0.0
+        else (done.size + 0.5 * computing.size) / deps.size
+      }
     } catch {
-      case _: Throwable => 0
+      case _: Throwable => Seq(0)
     }
   }
 

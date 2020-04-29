@@ -94,6 +94,8 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
     }
   }
 
+  def isWaiting = !dependencies.forall(_.isCompleted)
+
   // Returns the set of futures leading up to and including this future.
   lazy val dependencySet: Set[SafeFuture[_]] = {
     val visited = collection.mutable.Set[SafeFuture[_]](this)
