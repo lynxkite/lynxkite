@@ -81,7 +81,7 @@ class DataManager(
       entities.map { entity =>
         val deps = getFutures(entity) -- ignoredFutures
         val done = deps.filter(f => f.isCompleted)
-        val computing = deps.filter(f => f.isComputing)
+        val computing = deps.filter(f => !f.isCompleted && !f.isWaiting)
         if (findFailure(deps).isDefined) -1.0
         else if (deps.size == 0) 0.0
         else if (done.size == deps.size) 1.0
