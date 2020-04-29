@@ -84,6 +84,7 @@ class DataManager(
         val computing = deps.filter(f => f.isComputing)
         if (findFailure(deps).isDefined) -1.0
         else if (deps.size == 0) 0.0
+        else if (done.size == deps.size) 1.0
         // Report as incomplete when nothing is running.
         else if (computing.size == 0) 0.0
         else (done.size + 0.5 * computing.size) / deps.size
