@@ -85,6 +85,8 @@ box-editor table-browser {
  * receive clicks instead of the icon itself. */
 g.box image {
   pointer-events: none;
+  transform: scale(1, 1) translate(0, 0);
+  transition: 0.2s transform;
 }
 g.box #click-target {
   stroke: transparent;
@@ -101,6 +103,12 @@ g.box.selected .pedestal {
   fill: #39bcf3; /* Brand color. */
   fill-opacity: 0.1;
   mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
+}
+g.box:hover {
+  cursor: pointer;
+}
+g.box:hover image {
+  transform: scale(0.95, 1.05) translate(2.5px, -5px);
 }
 
 g.box .summary {
@@ -133,6 +141,10 @@ g.box:hover .plug text.lonely {
 }
 .plug circle.pulled-plug-hover {
   stroke-width: 5;
+}
+#outputs .plug:hover circle {
+  stroke-width: 3;
+  cursor: pointer;
 }
 
 rect.selection-box {
