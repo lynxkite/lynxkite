@@ -3,7 +3,7 @@
 
 # Conda update had to be added because otherwise Conda would downgrade Node.js
 # to version 6 and cause failures later on.
-conda update -n base conda
+conda update -n base conda pip
 conda install -y pyarrow
 conda install -y pytorch torchvision cpuonly -c pytorch
 pip install --no-cache-dir torch-scatter==2.0.4+cpu -f https://pytorch-geometric.com/whl/torch-1.4.0.html

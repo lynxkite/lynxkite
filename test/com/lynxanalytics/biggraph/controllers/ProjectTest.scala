@@ -49,6 +49,12 @@ class ProjectTest extends FunSuite with TestGraphOp {
     p.readACL = "xandrew@*"
     assertWriters(p)("darabos@lynx")("xandrew@lynx", "forevian@andersen")
     assertReaders(p)("darabos@lynx", "xandrew@lynx")("forevian@andersen")
+
+    p.writeACL = " xandrew@*, *arab* "
+    assertWriters(p)("darabos@lynx", "xandrew@lynx")("forevian@andersen", "(not logged in)")
+
+    p.writeACL = "(not logged in)"
+    assertWriters(p)("(not logged in)")("darabos@lynx", "xandrew@lynx", "forevian@andersen")
   }
 
   test("Access control with folders - write implies read") {
