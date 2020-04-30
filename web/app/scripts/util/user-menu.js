@@ -14,7 +14,7 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
 
       scope.sendFeedback = function() {
         util.reportError({
-          message: 'Click "report" to send an email about this page.',
+          message: 'Click "send feedback" to send an email.',
           details: scope.info });
       };
 
