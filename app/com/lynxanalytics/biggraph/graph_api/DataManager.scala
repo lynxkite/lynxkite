@@ -77,17 +77,19 @@ class DataManager(
       sets.reduce(_.union(_))
     }
     try {
-      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getFutures(_)) + DOES_NOT_HAVE
+      val ignoredFutures: Set[SafeFuture[_]] = ignore.flatMap(getFutures(_))
       entities.map { entity =>
-        val deps = getFutures(entity) -- ignoredFutures
+        val deps = getFutures(entity) - DOES_NOT_HAVE
         val done = deps.filter(f => f.isCompleted)
-        val computing = deps.filter(f => !f.isCompleted && !f.isWaiting)
+        val local = deps -- ignoredFutures
+        val localDone = local.filter(f => f.isCompleted)
+        val localComputing = local.filter(f => !f.isCompleted && !f.isWaiting)
         if (findFailure(deps).isDefined) -1.0
         else if (deps.size == 0) 0.0
         else if (done.size == deps.size) 1.0
         // Report as incomplete when nothing is running.
-        else if (computing.size == 0) 0.0
-        else (done.size + 0.5 * computing.size) / deps.size
+        else if (localComputing.size == 0) 0.0
+        else (localDone.size + 0.5 * localComputing.size) / deps.size
       }
     } catch {
       case _: Throwable => Seq(0)
