@@ -107,7 +107,7 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
   "Twitter Repository" at "https://maven.twttr.com",
-  "Geospatial Foundation Repository" at "https://download.osgeo.org/webdav/geotools/",
+  "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
   "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven")
 
 // Runs "stage", then creates the "stage/version" file.
