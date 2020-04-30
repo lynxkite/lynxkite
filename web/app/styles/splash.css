@@ -14,6 +14,12 @@
   max-width: 50%;
 }
 
+.licenseinfo {
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
 .big-brand #tagline {
   color: #39bcf3; /* Brand color. */
   font-size: 14px;
