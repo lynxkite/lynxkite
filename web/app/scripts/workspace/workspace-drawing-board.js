@@ -946,7 +946,7 @@ angular.module('biggraph')
                   <p>If you want to learn more, be sure to follow the
                   <i class="glyphicon glyphicon-question-sign"></i> signs, skim the
                   <a href="/#/help" target="_blank">LynxKite User Guide</a>, or look up
-                  some of our tutorials.
+                  some of our <a href="https://lynxkite.com/docs/latest">tutorials</a>.
                   `,
                   animation: false,
                 },
