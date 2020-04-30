@@ -11,20 +11,20 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 3.2.0
 
-  - Implemented a lot of common operations on Sphynx speeding up many workspaces significantly.
-  - Added graph convolutional network operations: _"Train a GCN regressor"_,
-    _"Train a GCN classifier"_, and _"Predict with GCN"_.
-  - Added _"Compute in Python"_ box.
-  - Advanced settings in some boxes are hidden behind a click.
-  - Long legends on visualizations can be scrolled.
-  - Wizards can be maximized.
-  - Revamped the _"Visualize as slider"_ feature. The slider now appears on the visualization
-    instead of appearing in the configuration. The slider can affect either the color or the visibility
-    of vertices.
-  - The currently viewed folder is now stored in the URL, so you can send a link to a specific folder.
-    The default folder after logging in is your user folder.
-  - Small improvements, like better defaults for graph visualizations and nicer trigger button on
-    import boxes.
+ - Implemented a lot of common operations on Sphynx speeding up many workspaces significantly.
+ - Added graph convolutional network operations: _"Train a GCN regressor"_,
+   _"Train a GCN classifier"_, and _"Predict with GCN"_.
+ - Added _"Compute in Python"_ box.
+ - Advanced settings in some boxes are hidden behind a click.
+ - Long legends on visualizations can be scrolled.
+ - Wizards can be maximized.
+ - Revamped the _"Visualize as slider"_ feature. The slider now appears on the visualization
+   instead of appearing in the configuration. The slider can affect either the color or the visibility
+   of vertices.
+ - The currently viewed folder is now stored in the URL, so you can send a link to a specific folder.
+   The default folder after logging in is your user folder.
+ - Small improvements, like better defaults for graph visualizations and nicer trigger button on
+   import boxes.
 
 ### 3.1.1
 
