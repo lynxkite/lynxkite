@@ -161,13 +161,9 @@ function testsFrom(testsDir) {
   }
   return fw;
 }
-const authFw = testsFrom('auth-tests');
-const authlessFw = testsFrom('tests');
+const fw = testsFrom('tests');
 // Set 'solo' modes.
-// Authentication tests are unaffected by authless 'solo' labels, because
-// all the authless tests depend on the login performed by the auth tests.
-authFw.setSolo(authFw.isSolo());
-authlessFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
+fw.setSolo(fw.isSolo());
 
 const startDate = (new Date()).toString();
 const screenshots = [];
@@ -208,13 +204,8 @@ jasmine.Spec.prototype.addExpectationResult = function() {
 
 console.log('Starting tests at: ' + startDate);
 
-// After the authentication tests you are logged in, so you don't need to log
-// out and in every time you reach the empty splash state.
-if (process.env.HTTPS_PORT) {
-  authFw.runAll();
-}
-authlessFw.runAll();
-authlessFw.cleanup();
+fw.runAll();
+fw.cleanup();
 
 describe('The test framework ', function() {
   it('now prints all screenshots', function() {

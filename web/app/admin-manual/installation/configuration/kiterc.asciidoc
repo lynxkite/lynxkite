@@ -233,41 +233,6 @@ http://tomcat.apache.org/tomcat-6.0-doc/ssl-howto.html[Apache Tomcat] for creati
 ```
 ===========================================================
 
-The following settings configure Google OAuth for LynxKite.
-```
-# export KITE_GOOGLE_CLIENT_SECRET='???'
-# export KITE_GOOGLE_CLIENT_ID='???.apps.googleusercontent.com'
-# export KITE_GOOGLE_HOSTED_DOMAIN='example.com'
-# export KITE_GOOGLE_REQUIRED_SUFFIX='@example.com'
-# export KITE_GOOGLE_WIZARD_ONLY='yes'
-# export KITE_GOOGLE_PUBLIC_ACCESS='yes'
-```
-
-[[ldap-authentication]]
-Use the following configurations to set up LDAP authentication.
-
-===========================================================
-The URL of the LDAP server, e.g. `ldap://localhost:389`.
-```
-# export LDAP_URL=
-```
-
-The authentication method, e.g. `simple` or `DIGEST-MD5` as explained in
-http://docs.oracle.com/javase/jndi/tutorial/ldap/security/index.html[the Java LDAP documentation]
-and http://docs.oracle.com/javase/jndi/tutorial/ldap/security/sasl.html[SASL documentation].
-```
-# export LDAP_AUTHENTICATION=simple
-```
-
-The template for the principal. It must contain the word `<USERNAME>` to be substituted with the
-username given at login, for example `uid=<USERNAME>,ou=People,dc=example,dc=com` or
-`cn=<USERNAME>,ou=People,dc=example,dc=com`. This is required so the user does not have to specify
-the full distinguished name on the web UI.
-```
-# export LDAP_PRINCIPAL_TEMPLATE=
-```
-===========================================================
-
 On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
 variables. The principal acts like a user name and the keytab file acts like a password.
 ```
@@ -332,15 +297,6 @@ The ecosystem docker image comes with JupyterLab, which can be used to run
 LK Python API code. The default port of JupyterLab is 8888, but it can be changed.
 ```
 # export KITE_JUPYTER_PORT=9999
-```
-
-JupyterLab is set up to use password authentication. The default password is
-`LynxKite&JupyterLab`. Only the hashed version of the password is stored in
-the configuration. To create a new password and get the hashed version
-of it, use the following line in a Python notebook:
-`from notebook.auth import passwd;passwd()`.
-```
-# export KITE_JUPYTER_PASSWORD=sha1:ac034db1021b:e3766f479a80d520fed96fb3e64df82428f5f435
 ```
 
 Specify where Sphynx (the single-node server) is running and where the certificate can be found.

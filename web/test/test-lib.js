@@ -1271,33 +1271,9 @@ testLib = {
           }
         });
     }
-    this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
-  },
-
-  authenticateAndPost: function(username, password, method, func) {
-    function sendRequest() {
-      const defer = protractor.promise.defer();
-      if (!process.env.HTTPS_PORT) {
-        return func(defer);
-      }
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-      const req = request.defaults({ jar: true });
-      req.post(
-        browser.baseUrl + 'passwordLogin',
-        { json: {
-          'username': username,
-          'password': password,
-          'method': method
-        }}, (error, message) => {
-          if (error || message.statusCode >= 400) {
-            defer.reject(new Error(error)); // TODO: include message?
-          } else {
-            func(defer);
-          }
-        });
-      return defer.promise;
-    }
-    return browser.controlFlow().execute(sendRequest);
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    const defer = protractor.promise.defer();
+    return discard(defer);
   },
 
   helpPopup: function(helpId) {

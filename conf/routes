@@ -49,13 +49,6 @@ POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.Production
 
 POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 
-GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
-POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
-POST /ajax/changeUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUser
-POST /ajax/deleteUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteUser
-POST /ajax/createUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
-GET  /ajax/getUserData         com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUserData
-
 GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
 POST /ajax/moveToCleanerTrash    com.lynxanalytics.biggraph.serving.ProductionJsonServer.moveToCleanerTrash
 POST /ajax/emptyCleanerTrash     com.lynxanalytics.biggraph.serving.ProductionJsonServer.emptyCleanerTrash
@@ -68,12 +61,6 @@ GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
 GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
 POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forceLogRotate
-
-POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
-POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
-POST /signedUsernameLogin com.lynxanalytics.biggraph.serving.ProductionJsonServer.signedUsernameLogin
-GET  /signedUsernameLogin com.lynxanalytics.biggraph.serving.ProductionJsonServer.signedUsernameLogin
-POST /logout           com.lynxanalytics.biggraph.serving.ProductionJsonServer.logout
 
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
 

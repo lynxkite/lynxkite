@@ -6,14 +6,6 @@
       <i class="glyphicon glyphicon-menu-hamburger"></i>
     </button>
     <ul class="dropdown-menu pull-right">
-      <li class="login-info" ng-show="util.user.auth !== 'none'" id="login-info">
-        Logged in as {{ util.user.email }}
-      </li>
-      <li ng-show="util.globals.hasAuth && util.user.auth === 'none'" id="login-info">
-        <a href="#/login">
-          <i class="glyphicon glyphicon-user"></i> log in
-        </a>
-      </li>
       <li>
         <a href="#/">
           <i class="glyphicon glyphicon-home"></i> home
@@ -27,16 +19,6 @@
       <li>
         <a href ng-click="tutorial()">
           <i class="glyphicon glyphicon-comment"></i> tutorial
-        </a>
-      </li>
-      <li ng-if="util.user.auth === 'password'">
-        <a href="#/change-password">
-          <i class="glyphicon glyphicon-tag"></i> change password
-        </a>
-      </li>
-      <li ng-if="util.user.isAdmin">
-        <a href="#/users">
-          <i class="glyphicon glyphicon-user"></i> manage users
         </a>
       </li>
       <li ng-if="util.user.isAdmin">
@@ -67,11 +49,6 @@
       <li>
         <a href ng-click="sendFeedback()">
           <i class="glyphicon glyphicon-edit"></i> send feedback
-        </a>
-      </li>
-      <li>
-        <a href ng-if="util.globals.hasAuth" ng-click="logout()">
-          <i class="glyphicon glyphicon-log-out"></i> log out
         </a>
       </li>
     </ul>

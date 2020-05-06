@@ -27,10 +27,6 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util,
 
       scope.discard = function() {
         let trashDir = 'Trash';
-        if (util.globals.hasAuth) {
-          // Per-user trash.
-          trashDir = util.user.home + '/Trash';
-        }
         if (scope.object.name.indexOf(trashDir) === 0) {
           // Already in Trash. Discard permanently.
           util.post('/ajax/discardEntry', { name: scope.object.name }).then(scope.reload);
