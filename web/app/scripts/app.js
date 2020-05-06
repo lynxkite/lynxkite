@@ -46,18 +46,6 @@ angular
         templateUrl: 'scripts/demo-mode.html',
         controller: 'DemoModeCtrl',
       })
-      .when('/login', {
-        templateUrl: 'scripts/login.html',
-        controller: 'LoginCtrl',
-      })
-      .when('/change-password', {
-        templateUrl: 'scripts/change-password.html',
-        controller: 'ChangePasswordCtrl',
-      })
-      .when('/users', {
-        templateUrl: 'scripts/users.html',
-        controller: 'UsersCtrl',
-      })
       .when('/cleaner', {
         templateUrl: 'scripts/cleaner.html',
         controller: 'CleanerCtrl',

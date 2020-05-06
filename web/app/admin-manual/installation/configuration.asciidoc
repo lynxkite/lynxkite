@@ -37,23 +37,6 @@ For example: `kite_2.6.2/bin/biggraph start`. Use the
 will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the
 program.
 
-### User authentication
-
-In the default configuration user authentication is turned off. To enable user authentication,
-you have to enable HTTPS (see next section). To securely set up user authentication:
-
-- Make sure LynxKite is not accessible externally.
-- Start LynxKite without authentication. Go to http://<lynxkite_url>/#/users and add at
-  least one new administrator user. (Administrator users can create more users.)
-- Enable HTTPS in the `.kiterc` file.
-- Restart LynxKite with authentication. Confirm that user credentials are now required for login.
-- You can now make LynxKite externally accessible.
-
-In addition to this, LynxKite can be authenticated using a remote LDAP service. LDAP authenticated
-users will always be non-administrators. Regular LynxKite and LDAP user authentication can coexist.
-The details of setting up LDAP authentication are specified in the
-<<ldap-authentication,LDAP authentication section>> of the `.kiterc` chapter.
-
 ### Access control setup
 
 After the users are created, HDFS/Linux directory level access control can be enabled
