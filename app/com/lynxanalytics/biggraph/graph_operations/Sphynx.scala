@@ -170,3 +170,28 @@ case class PredictWithGCN()
   def outputMeta(instance: MetaGraphOperationInstance) = new PredictWithGCN.Output()(instance, inputs)
   override def toJson = Json.obj()
 }
+
+object ConvertVertexAttributesToVector extends OpFromJson {
+  class Input(numElements: Int) extends MagicInputSignature {
+    val vs = vertexSet
+    val elements = (0 until numElements).map {
+      i => vertexAttribute[Double](vs, Symbol(s"element-$i"))
+    }
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val vectorAttr = vertexAttribute[Vector[Double]](inputs.vs.entity)
+  }
+
+  def fromJson(j: JsValue) = ConvertVertexAttributesToVector(
+    (j \ "numElements").as[Int])
+}
+
+import ConvertVertexAttributesToVector._
+case class ConvertVertexAttributesToVector(
+    numElements: Int) extends TypedMetaGraphOp[Input, Output] {
+  @transient override lazy val inputs = new Input(numElements)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+  override def toJson = Json.obj("numElements" -> numElements)
+}

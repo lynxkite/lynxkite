@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_operations._
 
 class ConversionsTest extends FunSuite with TestGraphOp {
   test("vertex attribute to string") {
@@ -40,7 +41,6 @@ class ConversionsTest extends FunSuite with TestGraphOp {
       == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
     assert(doubleFromInt.rdd.collect.toMap
       == Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
-
   }
 
   test("Double formatting") {
