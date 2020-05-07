@@ -311,4 +311,30 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         }
       }
     })
+
+  register("Convert vertex attributes to Vector")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("output", "Save as"),
+      Choice("elements", "Elements", options = project.vertexAttrList[Double], multipleChoice = true))
+    def enabled =
+      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+    override def summary = {
+      val elementNames = splitParam("elements").sorted
+      s"Create ${elementNames.to[Vector]}"
+    }
+    def apply() = {
+      assert(params("output").nonEmpty, "Please set the name of the new attribute.")
+      assert(params("elements").nonEmpty, "Please select at least one element.")
+      val elementNames = splitParam("elements").sorted
+      val elements = elementNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val output = params("output")
+      val vectorAttr = {
+        val op = graph_operations.ConvertVertexAttributesToVector(elementNames.size)
+        op(op.elements, elements).result.vectorAttr
+      }
+      project.newVertexAttribute(output, vectorAttr)
+    }
+  })
 }
