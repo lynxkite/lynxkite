@@ -216,7 +216,7 @@ Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 
 By default if you turn on HTTPS, only logged-in users will be able to access the LynxKite UI.
 If you want users to be able to have read-only access without logging in, set
-`KITE_ACCESS_WITHOUT_LOGIN` to `yes`. Whether these users are restricted to seeing wizards
+`KITE_ACCESS_WITHOUT_LOGIN` to `yes`. Whether these users are restricted to using wizards
 is controlled by the second setting.
 ```
 # export KITE_ACCESS_WITHOUT_LOGIN=yes

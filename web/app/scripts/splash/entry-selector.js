@@ -115,7 +115,6 @@ angular.module('biggraph').directive('entrySelector',
         // LynxKite. But we hide these on the UI to create a more focused view.
         function filterWizardOnly(data) {
           data.directories = data.directories.filter(d => d !== 'built-ins' && d !== 'custom_boxes');
-          data.objects = data.objects.filter(o => o.objectType.startsWith('wizard'));
         }
 
         let reloadCalled = false;
