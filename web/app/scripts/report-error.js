@@ -1,32 +1,22 @@
 // The modal dialog for error reporting.
 'use strict';
 
-angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibModalInstance, alert) {
-  $scope.message = alert.message || '';
-  $scope.details = alert.details ? JSON.stringify(alert.details, null, '  ') : undefined;
-  $scope.sendDetails = false;
-  const support = 'x+170265586669389@mail.asana.com'; // "Support requests" project in Asana.
-  const getBody = function() {
-    const time = alert.time || (new Date().toString());
-    let body = $scope.message;
-    if ($scope.details && $scope.sendDetails) {
-      body += '\n\nExtra info:';
-      body += '\n\n' + $scope.details;
-    }
-    body += '\n\nHappened at ' + window.location.href + ' on ' + time + '. Please advise.';
-    // Limit body length to 800 characters to avoid hitting mailto limitations.
-    body = body.slice(0, 800);
-    return body;
+angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibModalInstance, alert, util) {
+  /* global jsyaml */
+  const debug = {
+    message: alert.message,
+    details: alert.details,
+    url: window.location.href,
+    version: util.globals.version,
   };
-
-  $scope.mailto = function() {
-    const body = getBody();
-    return 'mailto:' + support +
-    '?subject=' + encodeURIComponent('⚠ ' + $scope.message.substr(0, 60)) +
-    '&body=' + encodeURIComponent(body);
-  };
+  $scope.debug = alert.details ? jsyaml.safeDump(debug, { sortKeys: true }) : undefined;
+  $scope.title = alert.title || 'Reporting errors';
 
   $scope.close = function() {
     $uibModalInstance.dismiss('close');
   };
+
+  /* global ClipboardJS */
+  const clippy = new ClipboardJS('#copy-debug-to-clipboard');
+  $scope.$on('$destroy', () => clippy.destroy());
 });

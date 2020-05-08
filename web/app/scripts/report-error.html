@@ -1,15 +1,17 @@
 <div class="modal-header">
-  <h3 class="modal-title">Send feedback</h3>
+  <button type="button" class="close" id="close-modal-button" ng-click="close()">&times;</button>
+  <h4 class="modal-title">{{ title }}</h4>
 </div>
 <div class="modal-body">
-  <pre class="pre-scrollable" style="word-wrap: normal;">{{ message }}</pre>
-  <div ng-show="details">
-    <input type="checkbox" ng-model="sendDetails" ng-change="updateBody"> Attach details
-    </input>
-    <pre class="pre-scrollable" style="word-wrap: normal;" ng-show="sendDetails">{{ details }}</pre>
+  <div>Send an email to the LynxKite team at
+    <a target="_blank" href="mailto:lynxkite@lynxanalytics.com">lynxkite@lynxanalytics.com</a> or
+    <a target="_blank" href="https://github.com/lynxkite/lynxkite/issues/new">file a GitHub issue</a>.
   </div>
-</div>
-<div class="modal-footer">
-  <button class="btn btn-secondary" id="close-modal-button" ng-click="close()">Close</button>
-  <a class="btn btn-primary" target="_blank" href="{{ mailto() }}" ng-click="close()">Send feedback</a>
+
+  <div ng-show="debug" style="margin-top: 20px;">
+    Including this debug context may be helpful:
+    <a href class="pull-right" id="copy-debug-to-clipboard" ng-attr-data-clipboard-text="{{ debug }}">
+      <i class="fa fa-clone"></i> Copy to clipboard</a>
+    <pre class="pre-scrollable" style="word-wrap: normal;">{{ debug }}</pre>
+  </div>
 </div>

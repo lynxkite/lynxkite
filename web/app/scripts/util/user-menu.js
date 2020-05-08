@@ -5,7 +5,6 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
   return {
     restrict: 'E',
     scope: {
-      info: '=', // Debug data to post with "send feedback".
       direction: '@', // Class selector for the dropup menu: "dropup" or "dropdown".
     },
     templateUrl: 'scripts/util/user-menu.html',
@@ -13,9 +12,7 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
       scope.util = util;
 
       scope.sendFeedback = function() {
-        util.reportError({
-          message: 'Click "send feedback" to send an email.',
-          details: scope.info });
+        util.reportError({ title: 'Questions or comments?' });
       };
 
       scope.restartApplication = function() {
