@@ -341,7 +341,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val vectorAttr = {
         val op = graph_operations.ConvertVertexAttributesToVector(
           doubleElements.size, vectorElements.size)
-        op(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
+        op(op.vs, project.vertexSet)(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
       }
       project.newVertexAttribute(output, vectorAttr)
     }
