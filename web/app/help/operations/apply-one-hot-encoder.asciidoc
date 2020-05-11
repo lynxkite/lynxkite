@@ -1,0 +1,13 @@
+### Apply one-hot encoder
+
+Encodes a categorical String attribute into a one-hot Double Vector.
+
+====
+*Parameters*
+
+[p-output]#Save as#::
+The new attribute will be created under this name.
+
+[p-catAttr]#Categorical attribute#::
+The attribute you would like to turn into a one-hot Vector.
+====
