@@ -192,12 +192,32 @@ object ConvertVertexAttributesToVector extends OpFromJson {
     (j \ "numVectorElements").as[Int])
 }
 
-import ConvertVertexAttributesToVector._
 case class ConvertVertexAttributesToVector(
-    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[Input, Output] {
-  @transient override lazy val inputs = new Input(numDoubleElements, numVectorElements)
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[ConvertVertexAttributesToVector.Input, ConvertVertexAttributesToVector.Output] {
+  @transient override lazy val inputs = new ConvertVertexAttributesToVector.Input(numDoubleElements, numVectorElements)
+  def outputMeta(instance: MetaGraphOperationInstance) = new ConvertVertexAttributesToVector.Output()(instance, inputs)
   override def toJson = Json.obj(
     "numDoubleElements" -> numDoubleElements,
     "numVectorElements" -> numVectorElements)
+}
+
+object ApplyOneHotEncoder extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val catAttr = vertexAttribute[String](vs)
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val oneHotVector = vertexAttribute[Vector[Double]](inputs.vs.entity)
+  }
+
+  def fromJson(j: JsValue) = ApplyOneHotEncoder()
+}
+
+import ApplyOneHotEncoder._
+case class ApplyOneHotEncoder() extends TypedMetaGraphOp[ApplyOneHotEncoder.Input, ApplyOneHotEncoder.Output] {
+  @transient override lazy val inputs = new ApplyOneHotEncoder.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new ApplyOneHotEncoder.Output()(instance, inputs)
+  override def toJson = Json.obj()
 }

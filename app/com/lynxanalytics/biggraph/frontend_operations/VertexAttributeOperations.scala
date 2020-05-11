@@ -346,4 +346,23 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       project.newVertexAttribute(output, vectorAttr)
     }
   })
+
+  register("Apply one-hot encoder")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("output", "Save as"),
+      Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]))
+    def enabled = FEStatus.assert(
+      project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
+    def apply(): Unit = {
+      val output = params("output")
+      if (output.isEmpty) return
+      val catAttrName = params("catAttr")
+      val catAttr = project.vertexAttributes(catAttrName).runtimeSafeCast[String]
+      val oneHotVector = {
+        val op = graph_operations.ApplyOneHotEncoder()
+        op(op.catAttr, catAttr).result.oneHotVector
+      }
+      project.newVertexAttribute(output, oneHotVector)
+    }
+  })
 }
