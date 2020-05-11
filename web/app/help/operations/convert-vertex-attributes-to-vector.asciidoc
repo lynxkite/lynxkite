@@ -1,6 +1,6 @@
 ### Convert vertex attributes to Vector
 
-Bundles the chosen Double attributes into one Vector attribute.
+Bundles the chosen Double and Double Vector attributes into one Vector attribute.
 
 ====
 *Parameters*
