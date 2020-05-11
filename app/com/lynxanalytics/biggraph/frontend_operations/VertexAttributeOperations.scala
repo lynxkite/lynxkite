@@ -315,24 +315,33 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Convert vertex attributes to Vector")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("elements", "Elements", options = project.vertexAttrList[Double], multipleChoice = true))
-    def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+      Choice("elements", "Elements", options =
+        project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]], multipleChoice = true))
     override def summary = {
-      val elementNames = splitParam("elements").sorted
-      s"Create ${elementNames.to[Vector]}"
+      val elementNames = splitParam("elements")
+      s"Create Vector from ${elementNames}"
     }
-    def apply() = {
-      assert(params("output").nonEmpty, "Please set the name of the new attribute.")
-      assert(params("elements").nonEmpty, "Please select at least one element.")
-      val elementNames = splitParam("elements").sorted
-      val elements = elementNames.map {
-        name => project.vertexAttributes(name).runtimeSafeCast[Double]
-      }
+    def enabled = FEStatus.enabled
+    def apply(): Unit = {
       val output = params("output")
+      val elementNames = splitParam("elements")
+      if (output.isEmpty) return
+      var doubleElements: Seq[Attribute[Double]] = Seq()
+      var vectorElements: Seq[Attribute[Vector[Double]]] = Seq()
+      for (name <- elementNames) {
+        val attr = project.vertexAttributes(name)
+        val tt = attr.typeTag
+        tt match {
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Double] =>
+            doubleElements = doubleElements :+ attr.runtimeSafeCast[Double]
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Double]] =>
+            vectorElements = vectorElements :+ attr.runtimeSafeCast[Vector[Double]]
+        }
+      }
       val vectorAttr = {
-        val op = graph_operations.ConvertVertexAttributesToVector(elementNames.size)
-        op(op.elements, elements).result.vectorAttr
+        val op = graph_operations.ConvertVertexAttributesToVector(
+          doubleElements.size, vectorElements.size)
+        op(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
       }
       project.newVertexAttribute(output, vectorAttr)
     }
