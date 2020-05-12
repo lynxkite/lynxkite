@@ -171,7 +171,7 @@ case class PredictWithGCN()
   override def toJson = Json.obj()
 }
 
-object ConvertVertexAttributesToVector extends OpFromJson {
+object BundleVertexAttributesIntoVector extends OpFromJson {
   class Input(numDoubleElements: Int, numVectorElements: Int) extends MagicInputSignature {
     val vs = vertexSet
     val doubleElements = (0 until numDoubleElements).map {
@@ -187,21 +187,21 @@ object ConvertVertexAttributesToVector extends OpFromJson {
     val vectorAttr = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 
-  def fromJson(j: JsValue) = ConvertVertexAttributesToVector(
+  def fromJson(j: JsValue) = BundleVertexAttributesIntoVector(
     (j \ "numDoubleElements").as[Int],
     (j \ "numVectorElements").as[Int])
 }
 
-case class ConvertVertexAttributesToVector(
-    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[ConvertVertexAttributesToVector.Input, ConvertVertexAttributesToVector.Output] {
-  @transient override lazy val inputs = new ConvertVertexAttributesToVector.Input(numDoubleElements, numVectorElements)
-  def outputMeta(instance: MetaGraphOperationInstance) = new ConvertVertexAttributesToVector.Output()(instance, inputs)
+case class BundleVertexAttributesIntoVector(
+    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[BundleVertexAttributesIntoVector.Input, BundleVertexAttributesIntoVector.Output] {
+  @transient override lazy val inputs = new BundleVertexAttributesIntoVector.Input(numDoubleElements, numVectorElements)
+  def outputMeta(instance: MetaGraphOperationInstance) = new BundleVertexAttributesIntoVector.Output()(instance, inputs)
   override def toJson = Json.obj(
     "numDoubleElements" -> numDoubleElements,
     "numVectorElements" -> numVectorElements)
 }
 
-object ApplyOneHotEncoder extends OpFromJson {
+object OneHotEncoder extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val catAttr = vertexAttribute[String](vs)
@@ -212,12 +212,11 @@ object ApplyOneHotEncoder extends OpFromJson {
     val oneHotVector = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 
-  def fromJson(j: JsValue) = ApplyOneHotEncoder()
+  def fromJson(j: JsValue) = OneHotEncoder()
 }
 
-import ApplyOneHotEncoder._
-case class ApplyOneHotEncoder() extends TypedMetaGraphOp[ApplyOneHotEncoder.Input, ApplyOneHotEncoder.Output] {
-  @transient override lazy val inputs = new ApplyOneHotEncoder.Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new ApplyOneHotEncoder.Output()(instance, inputs)
+case class OneHotEncoder() extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
+  @transient override lazy val inputs = new OneHotEncoder.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new OneHotEncoder.Output()(instance, inputs)
   override def toJson = Json.obj()
 }

@@ -181,6 +181,8 @@ include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
 
+include::bundle-vertex-attributes-into-a-vector.asciidoc[]
+
 include::check-cliques.asciidoc[]
 
 include::classify-with-model.asciidoc[]
@@ -224,8 +226,6 @@ include::convert-vertex-attribute-to-double.asciidoc[]
 include::convert-vertex-attribute-to-string.asciidoc[]
 
 include::convert-vertex-attributes-to-position.asciidoc[]
-
-include::convert-vertex-attributes-to-vector.asciidoc[]
 
 include::copy-edge-attribute.asciidoc[]
 
