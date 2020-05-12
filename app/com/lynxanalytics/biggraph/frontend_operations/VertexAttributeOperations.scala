@@ -312,7 +312,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       }
     })
 
-  register("Convert vertex attributes to Vector")(new ProjectTransformation(_) {
+  register("Bundle vertex attributes into a Vector")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
       Choice("elements", "Elements", options =
@@ -339,7 +339,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         }
       }
       val vectorAttr = {
-        val op = graph_operations.ConvertVertexAttributesToVector(
+        val op = graph_operations.BundleVertexAttributesIntoVector(
           doubleElements.size, vectorElements.size)
         op(op.vs, project.vertexSet)(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
       }
@@ -359,7 +359,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val catAttrName = params("catAttr")
       val catAttr = project.vertexAttributes(catAttrName).runtimeSafeCast[String]
       val oneHotVector = {
-        val op = graph_operations.ApplyOneHotEncoder()
+        val op = graph_operations.OneHotEncoder()
         op(op.catAttr, catAttr).result.oneHotVector
       }
       project.newVertexAttribute(output, oneHotVector)

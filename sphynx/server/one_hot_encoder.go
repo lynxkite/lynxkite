@@ -1,7 +1,7 @@
 package main
 
 func init() {
-	operationRepository["ApplyOneHotEncoder"] = Operation{
+	operationRepository["OneHotEncoder"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			catAttr := ea.getStringAttribute("catAttr")
 			defined := catAttr.Defined
@@ -16,9 +16,6 @@ func init() {
 			}
 			size := len(defined)
 			values := make([]DoubleVectorAttributeValue, size)
-			for i := 0; i < size; i++ {
-				values[i] = make(DoubleVectorAttributeValue, counter)
-			}
 			for i, value := range catAttr.Values {
 				oneHot := make([]float64, counter)
 				if defined[i] {
