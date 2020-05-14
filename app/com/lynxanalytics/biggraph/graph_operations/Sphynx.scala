@@ -212,11 +212,13 @@ object OneHotEncoder extends OpFromJson {
     val oneHotVector = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 
-  def fromJson(j: JsValue) = OneHotEncoder()
+  def fromJson(j: JsValue) = OneHotEncoder(
+    (j \ "categories").as[String])
 }
 
-case class OneHotEncoder() extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
+case class OneHotEncoder(categories: String) extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
   @transient override lazy val inputs = new OneHotEncoder.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new OneHotEncoder.Output()(instance, inputs)
-  override def toJson = Json.obj()
+  override def toJson = Json.obj(
+    "categories" -> categories)
 }

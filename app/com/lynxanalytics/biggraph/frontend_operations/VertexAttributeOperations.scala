@@ -319,7 +319,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]], multipleChoice = true))
     override def summary = {
       val elementNames = splitParam("elements")
-      s"Create Vector from ${elementNames}"
+      s"Create Vector from ${elementNames.mkString(", ")}"
     }
     def enabled = FEStatus.enabled
     def apply(): Unit = {
@@ -347,19 +347,25 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Apply one-hot encoder")(new ProjectTransformation(_) {
+  register("One-hot encode attributes")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]))
+      Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]),
+      Param("categories", "Categories"))
     def enabled = FEStatus.assert(
       project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
+    override def summary = {
+      val catAttr = params("catAttr").toString
+      s"One-hot encode $catAttr"
+    }
     def apply(): Unit = {
       val output = params("output")
       if (output.isEmpty) return
       val catAttrName = params("catAttr")
       val catAttr = project.vertexAttributes(catAttrName).runtimeSafeCast[String]
+      val categories = params("categories").toString
       val oneHotVector = {
-        val op = graph_operations.OneHotEncoder()
+        val op = graph_operations.OneHotEncoder(categories)
         op(op.catAttr, catAttr).result.oneHotVector
       }
       project.newVertexAttribute(output, oneHotVector)

@@ -175,8 +175,6 @@ include::aggregate-vertex-attribute-globally.asciidoc[]
 
 include::anchor.asciidoc[]
 
-include::apply-one-hot-encoder.asciidoc[]
-
 include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
@@ -390,6 +388,8 @@ include::merge-two-edge-attributes.asciidoc[]
 include::merge-two-vertex-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
+
+include::one-hot-encode-attribute.asciidoc[]
 
 include::output.asciidoc[]
 
