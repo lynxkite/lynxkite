@@ -10,8 +10,9 @@ import com.lynxanalytics.biggraph.graph_operations._
 class OneHotEncoderTest extends FunSuite with TestGraphOp {
   test("one-hot encode attribute", com.lynxanalytics.biggraph.SphynxOnly) {
     val graph = ExampleGraph()().result
+    val categories = Seq("Female", "Male", "Non-binary")
     val oneHot = {
-      val op = OneHotEncoder("Female,Male,Non-binary")
+      val op = OneHotEncoder(categories)
       op(op.catAttr, graph.gender).result.oneHotVector
     }
     assert(oneHot.rdd.collect.toMap
