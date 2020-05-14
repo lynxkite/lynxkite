@@ -1,15 +1,11 @@
 package main
 
-import (
-	"strings"
-)
-
 func init() {
 	operationRepository["OneHotEncoder"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			catAttr := ea.getStringAttribute("catAttr")
 			defined := catAttr.Defined
-			categories := strings.Split(ea.GetStringParam("categories"), ",")
+			categories := ea.GetStringVectorParam("categories")
 			ids := make(map[string]int)
 			for i, cat := range categories {
 				ids[cat] = i
@@ -19,11 +15,11 @@ func init() {
 			for i, value := range catAttr.Values {
 				if defined[i] {
 					id, exists := ids[value]
+					oneHot := make([]float64, len(categories))
 					if exists {
-						oneHot := make([]float64, len(categories))
 						oneHot[id] = 1
-						values[i] = oneHot
 					}
+					values[i] = oneHot
 				}
 			}
 			oneHotVector := &DoubleVectorAttribute{

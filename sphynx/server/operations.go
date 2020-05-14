@@ -79,8 +79,13 @@ func (ea *EntityAccessor) GetBoolParam(name string) bool {
 	return ea.opInst.Operation.Data[name].(bool)
 }
 
-func (ea *EntityAccessor) GetStringParam(name string) string {
-	return ea.opInst.Operation.Data[name].(string)
+func (ea *EntityAccessor) GetStringVectorParam(name string) []string {
+	interfaceSlice := ea.opInst.Operation.Data[name].([]interface{})
+	stringSlice := make([]string, len(interfaceSlice))
+	for i, elem := range interfaceSlice {
+		stringSlice[i] = elem.(string)
+	}
+	return stringSlice
 }
 
 func (ea *EntityAccessor) GetBoolParamWithDefault(name string, dflt bool) bool {
