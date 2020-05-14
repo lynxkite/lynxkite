@@ -1,4 +1,4 @@
-### One-hot encode attributes
+### One-hot encode attribute
 
 Encodes a categorical `String` attribute into a https://en.wikipedia.org/wiki/One-hot[one-hot]
 `Vector[Double]`. For example, if you apply it to the `name` attribute of the example graph
@@ -9,7 +9,7 @@ with categories `Adam,Eve,Isolated Joe,Sue`, you end up with
 
 | Adam | Vector(1,0,0,0)
 | Eve | Vector(0,1,0,0)
-| Bob | __undefined__
+| Bob | Vector(0,0,0,0)
 | Isolated Joe | Vector(0,0,1,0)
 |===
 

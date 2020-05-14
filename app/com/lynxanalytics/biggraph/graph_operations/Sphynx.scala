@@ -213,10 +213,10 @@ object OneHotEncoder extends OpFromJson {
   }
 
   def fromJson(j: JsValue) = OneHotEncoder(
-    (j \ "categories").as[String])
+    (j \ "categories").as[Seq[String]])
 }
 
-case class OneHotEncoder(categories: String) extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
+case class OneHotEncoder(categories: Seq[String]) extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
   @transient override lazy val inputs = new OneHotEncoder.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new OneHotEncoder.Output()(instance, inputs)
   override def toJson = Json.obj(

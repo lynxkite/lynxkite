@@ -347,7 +347,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("One-hot encode attributes")(new ProjectTransformation(_) {
+  register("One-hot encode attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
       Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]),
@@ -363,7 +363,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       if (output.isEmpty) return
       val catAttrName = params("catAttr")
       val catAttr = project.vertexAttributes(catAttrName).runtimeSafeCast[String]
-      val categories = params("categories").toString
+      val categories = splitParam("categories").toSeq
       val oneHotVector = {
         val op = graph_operations.OneHotEncoder(categories)
         op(op.catAttr, catAttr).result.oneHotVector
