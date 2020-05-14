@@ -79,6 +79,10 @@ func (ea *EntityAccessor) GetBoolParam(name string) bool {
 	return ea.opInst.Operation.Data[name].(bool)
 }
 
+func (ea *EntityAccessor) GetStringParam(name string) string {
+	return ea.opInst.Operation.Data[name].(string)
+}
+
 func (ea *EntityAccessor) GetBoolParamWithDefault(name string, dflt bool) bool {
 	field, exists := ea.opInst.Operation.Data[name]
 	if exists {
