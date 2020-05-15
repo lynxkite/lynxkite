@@ -311,4 +311,64 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         }
       }
     })
+
+  register("Bundle vertex attributes into a Vector")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("output", "Save as"),
+      Choice("elements", "Elements", options =
+        project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]], multipleChoice = true))
+    override def summary = {
+      val elementNames = splitParam("elements")
+      s"Create Vector from ${elementNames.mkString(", ")}"
+    }
+    def enabled = FEStatus.enabled
+    def apply(): Unit = {
+      val output = params("output")
+      val elementNames = splitParam("elements")
+      if (output.isEmpty) return
+      var doubleElements: Seq[Attribute[Double]] = Seq()
+      var vectorElements: Seq[Attribute[Vector[Double]]] = Seq()
+      for (name <- elementNames) {
+        val attr = project.vertexAttributes(name)
+        val tt = attr.typeTag
+        tt match {
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Double] =>
+            doubleElements = doubleElements :+ attr.runtimeSafeCast[Double]
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Double]] =>
+            vectorElements = vectorElements :+ attr.runtimeSafeCast[Vector[Double]]
+        }
+      }
+      val vectorAttr = {
+        val op = graph_operations.BundleVertexAttributesIntoVector(
+          doubleElements.size, vectorElements.size)
+        op(op.vs, project.vertexSet)(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
+      }
+      project.newVertexAttribute(output, vectorAttr)
+    }
+  })
+
+  register("One-hot encode attribute")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("output", "Save as"),
+      Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]),
+      Param("categories", "Categories"))
+    def enabled = FEStatus.assert(
+      project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
+    override def summary = {
+      val catAttr = params("catAttr").toString
+      s"One-hot encode $catAttr"
+    }
+    def apply(): Unit = {
+      val output = params("output")
+      if (output.isEmpty) return
+      val catAttrName = params("catAttr")
+      val catAttr = project.vertexAttributes(catAttrName).runtimeSafeCast[String]
+      val categories = splitParam("categories").toSeq
+      val oneHotVector = {
+        val op = graph_operations.OneHotEncoder(categories)
+        op(op.catAttr, catAttr).result.oneHotVector
+      }
+      project.newVertexAttribute(output, oneHotVector)
+    }
+  })
 }
