@@ -40,11 +40,42 @@ The currently supported types for outputs are:
 
 - `float` to create a `Double`-typed attribute or scalar.
 - `str` to create a `String`-typed attribute or scalar.
+- `np.array[float]` to create a `Vector[Double]`-typed attribute or scalar.
 
 In the previous example we would set:
 
 - Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, scalars.greeting`
 - Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, scalars.hello: str, scalars.average_age: float`
+
+#### Working with vectors
+
+Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
+
+To output a vector-typed attribute use `v.tolist()`:
+
+[source,python]
+----
+# Put the age and its double into a vector.
+v = np.array([[1, 2]]) * vs.age[:, None]
+vs['v'] = v.tolist()
+----
+
+On the <<Create example graph, example graph>> this would output:
+
+----
+               v
+0   [20.3, 40.6]
+1   [18.2, 36.4]
+2  [50.3, 100.6]
+3     [2.0, 4.0]
+----
+
+To use this attribute in another Python box use `np.stack(v)`:
+
+[source,python]
+----
+vs['total_v'] = np.stack(vs.v).sum(axis=1)
+----
 
 ====
 [p-code]#Code#::
