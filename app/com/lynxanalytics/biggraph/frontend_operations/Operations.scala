@@ -417,7 +417,7 @@ object PythonUtilities {
     pythonType match {
       case "str" => SerializableType.string
       case "float" => SerializableType.double
-      case "np.array[float]" => SerializableType.vector(SerializableType.double)
+      case "np.ndarray" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }
