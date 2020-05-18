@@ -40,7 +40,7 @@ The currently supported types for outputs are:
 
 - `float` to create a `Double`-typed attribute or scalar.
 - `str` to create a `String`-typed attribute or scalar.
-- `np.array[float]` to create a `Vector[Double]`-typed attribute or scalar.
+- `np.ndarray` to create a `Vector[Double]`-typed attribute or scalar.
 
 In the previous example we would set:
 
