@@ -493,14 +493,12 @@ object PythonUtilities {
 
   def inferInputs(code: String): Seq[String] = {
     val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
-    println(s"outputs: $outputs")
     val mentions = api.flatMap { parent =>
       val a = s"$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
       val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
         .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}").toSeq
       a ++ b
     }.toSet
-    println(s"mentions: $mentions")
     (mentions -- outputs).toSeq.sorted
   }
   def inferOutputs(code: String): Seq[String] = {
