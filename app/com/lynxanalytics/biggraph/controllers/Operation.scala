@@ -461,7 +461,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
 
   protected def splitParam(param: String): Seq[String] = {
     val p = params(param)
-    if (p.isEmpty) Seq()
+    if (p.trim.isEmpty) Seq()
     else p.split(",", -1).map(_.trim)
   }
 }

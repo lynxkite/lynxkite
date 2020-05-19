@@ -547,26 +547,18 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute in Python")(new ProjectTransformation(_) {
-    val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
-      case "yes" => true
-      case "no" => false
-      case "" => false
-      case unexpected => throw new AssertionError(
-        s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
-    }
     params ++= List(
       Param("inputs", "Inputs", defaultValue = "<infer from code>"),
       Param("outputs", "Outputs", defaultValue = "<infer from code>"),
       Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
-    private def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
     private def pythonInputs = {
       if (params("inputs") == "<infer from code>") PythonUtilities.inferInputs(params("code"))
-      else split(params("inputs"))
+      else splitParam("inputs")
     }
     private def pythonOutputs = {
       if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
-      else split(params("outputs"))
+      else splitParam("outputs")
     }
     override def summary = {
       val outputs = pythonOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
@@ -574,8 +566,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       else s"Compute $outputs in Python"
     }
     def apply() = {
-      assert(allowed, "Python code execution is disabled on this server for security reasons.")
-      PythonUtilities.run(params("code"), pythonInputs, pythonOutputs, project)
+      PythonUtilities.assertAllowed()
+      PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
     }
   })
 

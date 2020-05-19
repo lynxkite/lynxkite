@@ -262,4 +262,19 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         }
       }
     })
+
+  registerProjectCreatingOp("Create graph in Python")(new ProjectOutputOperation(_) {
+    params ++= List(
+      Param("outputs", "Outputs", defaultValue = "<infer from code>"),
+      Code("code", "Python code", language = "python"))
+    def enabled = FEStatus.enabled
+    private def pythonOutputs = {
+      if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
+      else splitParam("outputs")
+    }
+    def apply() = {
+      PythonUtilities.assertAllowed()
+      PythonUtilities.create(params("code"), pythonOutputs, project)
+    }
+  })
 }
