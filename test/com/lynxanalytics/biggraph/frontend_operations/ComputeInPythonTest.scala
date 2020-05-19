@@ -34,4 +34,25 @@ scalars.average_age = vs.age.mean()
     assert(get(p.scalars("hello").runtimeSafeCast[String]) == "hello world! 😀 ")
     assert(get(p.scalars("average_age").runtimeSafeCast[Double]).round == 23)
   }
+
+  test("vectors", SphynxOnly) {
+    val p = box("Create example graph")
+      .box("Compute in Python", Map(
+        "inputs" -> "vs.age",
+        "outputs" -> "vs.v: np.ndarray",
+        "code" -> """
+v = np.array([[1, 2]]) * vs.age[:, None]
+vs['v'] = v.tolist()
+          """))
+      .box("Compute in Python", Map(
+        "inputs" -> "vs.v",
+        "outputs" -> "vs.s: float",
+        "code" -> """
+vs['s'] = np.stack(vs.v).sum(axis=1).round()
+          """))
+      .project
+    assert(
+      get(p.vertexAttributes("s").runtimeSafeCast[Double]) ==
+        Map(0 -> 61.0, 1 -> 55.0, 2 -> 151.0, 3 -> 6.0))
+  }
 }
