@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(
@@ -411,7 +412,19 @@ object ScalaUtilities {
 
 object PythonUtilities {
   import com.lynxanalytics.biggraph.graph_operations.DerivePython
+  import com.lynxanalytics.biggraph.graph_operations.CreateGraphInPython
   import DerivePython._
+
+  val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
+    case "yes" => true
+    case "no" => false
+    case "" => false
+    case unexpected => throw new AssertionError(
+      s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
+  }
+  def assertAllowed() = {
+    assert(allowed, "Python code execution is disabled on this server for security reasons.")
+  }
 
   private def toSerializableType(pythonType: String) = {
     pythonType match {
@@ -424,14 +437,10 @@ object PythonUtilities {
 
   val api = Seq("vs", "es", "scalars")
 
-  def run(
-    code: String, inputs: Seq[String], outputs: Seq[String],
-    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Unit = {
-    // Parse the output list into Fields.
-    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-z\[\]\.]+)".r
-    val outputFields = outputs.map {
+  // Parses the output list into Fields.
+  def outputFields(outputs: Seq[String]): Seq[Field] = {
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-zA-Z0-9.]+)".r
+    outputs.map {
       case outputDeclaration(parent, name, tpe) =>
         assert(
           api.contains(parent),
@@ -440,6 +449,13 @@ object PythonUtilities {
       case output => throw new AssertionError(
         s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
     }
+  }
+
+  def derive(
+    code: String, inputs: Seq[String], outputs: Seq[String],
+    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+    implicit
+    manager: MetaGraphManager): Unit = {
     // Parse the input list into Fields.
     val existingFields = project.vertexAttributes.map {
       case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
@@ -461,7 +477,7 @@ object PythonUtilities {
       }
     }
     // Run the operation.
-    val op = DerivePython(code, inputFields.toList, outputFields.toList)
+    val op = DerivePython(code, inputFields.toList, outputFields(outputs).toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
@@ -479,6 +495,29 @@ object PythonUtilities {
     }
     builder.toInstance(manager)
     val res = builder.result
+    // Save the outputs into the project.
+    for ((f, i) <- res.attrFields.zipWithIndex) {
+      f.parent match {
+        case "vs" => project.newVertexAttribute(f.name, res.attrs(i))
+        case "es" => project.newEdgeAttribute(f.name, res.attrs(i))
+      }
+    }
+    for ((f, i) <- res.scalarFields.zipWithIndex) {
+      project.newScalar(f.name, res.scalars(i))
+    }
+  }
+
+  def create(
+    code: String, outputs: Seq[String],
+    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+    implicit
+    manager: MetaGraphManager): Unit = {
+    // Run the operation.
+    val res = CreateGraphInPython(code, outputFields(outputs).toList)().result
+    project.vertexSet = res.vertices
+    if (res.hasEdges) {
+      project.edgeBundle = res.edges
+    }
     // Save the outputs into the project.
     for ((f, i) <- res.attrFields.zipWithIndex) {
       f.parent match {
