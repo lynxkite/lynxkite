@@ -14,13 +14,8 @@ object CreateGraphInPython extends OpFromJson {
       fields: Seq[DerivePython.Field]) extends MagicOutput(instance) {
     val vertices = vertexSet
     private val names = fields.map(f => f.parent + "." + f.name)
-    val hasEdges = names.contains("es.src") && names.contains("es.dst")
-    assert(
-      hasEdges || fields.find(_.parent == "es").isEmpty,
-      "To define edges you must output 'es.src' and 'es.dst'.")
-    val edges = if (hasEdges) edgeBundle(vertices, vertices) else null
-    private val parents: Map[String, VertexSet] =
-      if (hasEdges) Map("vs" -> vertices.entity, "es" -> edges.idSet) else Map("vs" -> vertices)
+    val edges = edgeBundle(vertices, vertices)
+    private val parents = Map[String, VertexSet]("vs" -> vertices.entity, "es" -> edges.idSet)
     val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
     val attrs = attrFields.map { f =>
       vertexAttribute(parents(f.parent), f.fullName)(f.tpe.typeTag)

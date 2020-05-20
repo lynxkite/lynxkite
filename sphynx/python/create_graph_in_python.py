@@ -29,9 +29,10 @@ except BaseException:
 # Save outputs.
 op.output_vs('vertices', len(vs))
 field_names = {f['parent'] + '.' + f['name'] for f in op.params['outputFields']}
-if 'es.src' in field_names and 'es.dst' in field_names:
-  assert 'src' in es.columns and 'dst' in es.columns, 'es must have columns named src and dst'
+if 'src' in es.columns and 'dst' in es.columns:
   op.output_es('edges', np.stack([es.src, es.dst]))
+else:
+  op.output_es('edges', ([], []))
 typenames = {
     f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 typemapping = {
