@@ -170,6 +170,18 @@ func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 	return i
 }
 
+func (e *SparkIDVectorAttribute) estimatedMemUsage() int {
+	if len(e.Defined) == 0 {
+		return 0
+	}
+	// We're assuming here that all the slice elements have the same size
+	// In any case, we're using the first value
+	oneElementSize := sliceCost + len(e.Values[0])*int64Cost
+	i := len(e.Defined) * boolCost
+	i += len(e.Values) * oneElementSize
+	return i
+}
+
 func (e *EdgeBundle) estimatedMemUsage() int {
 	i := len(e.EdgeMapping) * int64Cost
 	i += len(e.Src) * sphinxIdCost
