@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - _"Create Graph in Python"_ box added.
  - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
  - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
 

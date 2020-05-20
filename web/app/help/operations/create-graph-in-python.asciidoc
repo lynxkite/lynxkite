@@ -1,6 +1,8 @@
 ### Create graph in Python
 
 Executes custom Python code to define a graph.
+Ideal for creating complex graphs programmatically and for loading
+datasets in non-standard formats.
 
 The following example creates a small graph with some attributes.
 
