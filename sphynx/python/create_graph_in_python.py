@@ -27,12 +27,16 @@ except BaseException:
   sys.exit(1)
 
 # Save outputs.
-op.output_vs('vertices', len(vs))
 field_names = {f['parent'] + '.' + f['name'] for f in op.params['outputFields']}
 if 'src' in es.columns and 'dst' in es.columns:
   op.output_es('edges', np.stack([es.src, es.dst]))
+elif len(es.columns) != 0:
+  import sys
+  print("To output edges you have to set es['src'] and es['dst'].", file=sys.stderr)
+  sys.exit(1)
 else:
   op.output_es('edges', ([], []))
+op.output_vs('vertices', len(vs))
 typenames = {
     f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 typemapping = {
