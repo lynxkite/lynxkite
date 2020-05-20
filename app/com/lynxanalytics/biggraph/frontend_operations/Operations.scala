@@ -515,9 +515,7 @@ object PythonUtilities {
     // Run the operation.
     val res = CreateGraphInPython(code, outputFields(outputs).toList)().result
     project.vertexSet = res.vertices
-    if (res.hasEdges) {
-      project.edgeBundle = res.edges
-    }
+    project.edgeBundle = res.edges
     // Save the outputs into the project.
     for ((f, i) <- res.attrFields.zipWithIndex) {
       f.parent match {
