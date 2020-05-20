@@ -63,7 +63,7 @@ scalars.band_name: str = 'The Amazing Alphabet'
 cover all possibilities. Please list the outputs explicitly if the inference
 fails.)
 
-#### Working with vectors
+**Working with vectors**
 
 Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
 
