@@ -26,6 +26,19 @@ except BaseException:
   traceback.print_exception(a, b, c.tb_next)
   sys.exit(1)
 
+
+def assert_no_extra(columns, name):
+  outputs = set(f['name'] for f in op.params['outputFields'] if f['parent'] == name)
+  extra = set(columns) - outputs
+  if extra:
+    import sys
+    print('Undeclared output found: ' + ', '.join(name + '.' + e for e in extra), file=sys.stderr)
+    sys.exit(1)
+
+
+assert_no_extra(vs.columns, 'vs')
+assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
+assert_no_extra(scalars.__dict__.keys(), 'scalars')
 # Save outputs.
 field_names = {f['parent'] + '.' + f['name'] for f in op.params['outputFields']}
 if 'src' in es.columns and 'dst' in es.columns:
