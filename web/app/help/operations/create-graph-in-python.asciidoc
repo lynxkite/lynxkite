@@ -1,0 +1,85 @@
+### Create graph in Python
+
+Executes custom Python code to define a graph.
+
+The following example creates a small graph with some attributes.
+
+[source,python]
+----
+vs = pd.DataFrame({
+  'name': ['Alice', 'Bob', 'Cecil', 'Drew'],
+})
+es = pd.DataFrame({
+  'src': [0, 0, 1],
+  'dst': [1, 2, 3],
+  'weight': [1, 2, 3],
+})
+scalars.band_name = 'The Amazing Alphabet'
+----
+
+`scalars` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
+which makes it easy to set scalars.
+
+`vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
+https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html[Pandas DataFrames].
+You can write natural Python code and use the usual APIs and packages to
+construct them. Pandas and Numpy are already imported as `pd` and `np`.
+`es` must have `src` and `dst` columns which are the indexes of the source and destination
+vertex for each edge. These can be used to index into `vs` as in the example.
+
+Like all operations in LynxKite, this code is executed only when the results are
+needed. But we need to know the type of the attributes even before that,
+so that we can continue building the workspace.
+To make this possible, you have to specify the type of the outputs
+through the _Inputs_ and _Outputs_ parameters.
+
+The currently supported types for outputs are:
+
+- `float` to create a `Double`-typed attribute or scalar.
+- `str` to create a `String`-typed attribute or scalar.
+- `np.ndarray` to create a `Vector[Double]`-typed attribute or scalar.
+
+In the previous example we would set:
+
+- Outputs: `vs.name: str, es.weight: float, scalars.hello: str`
+
+Alternatively, you can let LynxKite infer the outputs from the code.
+In this case you still need to specify the type of the outputs, but you can do so in the code
+using a type annotation.
+
+This code is equivalent to the first one, but declares the attribute types in the code,
+and uses the empty DataFrames that `vs` and `es` are initialized with:
+
+[source,python]
+----
+vs['name']: str = ['Alice', 'Bob', 'Cecil', 'Drew']
+es['src'] = [0, 0, 1]
+es['dst'] = [1, 2, 3]
+es['weight']: float = [1, 2, 3]
+scalars.band_name: str = 'The Amazing Alphabet'
+----
+
+(This inference is based on simple regular expression parsing of the code and does not
+cover all possibilities. Please list the outputs explicitly if the inference
+fails.)
+
+#### Working with vectors
+
+Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
+
+To output a vector-typed attribute use `v.tolist()`:
+
+[source,python]
+----
+vs['vector']: np.ndarray = np.eye(4, 4).tolist()
+----
+
+====
+[p-code]#Code#::
+The Python code you want to run. See the operation description for details.
+
+[p-outputs]#Outputs#::
+A comma-separated list of attributes and scalars that your code generates.
+These must be annotated with the type of the attribute or scalar.
+For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, scalars.my_new_scalar: str`.
+====
