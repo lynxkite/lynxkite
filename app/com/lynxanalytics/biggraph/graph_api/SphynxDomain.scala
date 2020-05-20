@@ -23,7 +23,8 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
-    typeTag[String], typeTag[Long], typeTag[Double], typeTag[(Double, Double)], typeTag[Vector[Double]])
+    typeTag[String], typeTag[Long], typeTag[Double], typeTag[(Double, Double)],
+    typeTag[Vector[Double]], typeTag[Array[ID]])
   def clear(): SafeFuture[Unit]
   def shutDownChannel
 }
@@ -41,7 +42,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
     for (e <- instance.inputs.attributes.values) {
-      if (!supportedTypes.contains(e.typeTag)) {
+      if (!supportedTypes.exists(_.tpe =:= e.typeTag.tpe)) {
         return false
       }
     }
@@ -209,6 +210,14 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
         val schema = StructType(Seq(
           StructField("id", LongType, false),
           StructField("value", ArrayType(DoubleType, false), false)))
+        writeRDD(rdd, schema, e)
+      case a: AttributeData[_] if a.typeTag.tpe =:= typeTag[Array[ID]].tpe =>
+        println(a.typeTag)
+        println(a.typeTag.tpe)
+        val rdd = a.rdd.map { case (id, v) => Row(id, v) }
+        val schema = StructType(Seq(
+          StructField("id", LongType, false),
+          StructField("value", ArrayType(LongType, false), false)))
         writeRDD(rdd, schema, e)
       case s: ScalarData[_] => {
         val format = TypeTagToFormat.typeTagToFormat(s.typeTag)

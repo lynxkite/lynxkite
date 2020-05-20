@@ -71,6 +71,10 @@ func (ea *EntityAccessor) getDoubleVectorAttribute(name string) *DoubleVectorAtt
 	return ea.inputs[name].(*DoubleVectorAttribute)
 }
 
+func (ea *EntityAccessor) getSparkIDVectorAttribute(name string) *SparkIDVectorAttribute {
+	return ea.inputs[name].(*SparkIDVectorAttribute)
+}
+
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }
