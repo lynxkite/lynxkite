@@ -56,6 +56,10 @@ using a type annotation. For example:
 vs['age_squared']: float = vs.age ** 2
 ----
 
+(This inference is based on simple regular expression parsing of the code and does not
+cover all possibilities. Please list the inputs and outputs explicitly if the inference
+fails.)
+
 #### Working with vectors
 
 Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
