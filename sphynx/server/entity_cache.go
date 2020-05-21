@@ -170,7 +170,7 @@ func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 	return i
 }
 
-func (e *SparkIDVectorAttribute) estimatedMemUsage() int {
+func (e *LongVectorAttribute) estimatedMemUsage() int {
 	if len(e.Defined) == 0 {
 		return 0
 	}

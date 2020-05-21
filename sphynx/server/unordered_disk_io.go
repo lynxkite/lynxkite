@@ -120,7 +120,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		case "Vector[Double]":
 			in.Type = "DoubleVectorAttribute"
 		case "Array[com.lynxanalytics.biggraph.graph_api.ID]":
-			in.Type = "SparkIDVectorAttribute"
+			in.Type = "LongVectorAttribute"
 		default:
 			in.Type = attributeType + in.Type
 		}
