@@ -417,6 +417,7 @@ object PythonUtilities {
     pythonType match {
       case "str" => SerializableType.string
       case "float" => SerializableType.double
+      case "np.ndarray" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }
@@ -428,7 +429,7 @@ object PythonUtilities {
     manager: MetaGraphManager): Unit = {
     // Parse the output list into Fields.
     val api = Seq("vs", "es", "scalars")
-    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-z\[\]\.]+)".r
     val outputFields = outputs.map {
       case outputDeclaration(parent, name, tpe) =>
         assert(
