@@ -48,8 +48,8 @@ func (_ *DoubleTuple2Attribute) typeName() string {
 func (_ *DoubleVectorAttribute) typeName() string {
 	return "DoubleVectorAttribute"
 }
-func (_ *SparkIDVectorAttribute) typeName() string {
-	return "SparkIDVectorAttribute"
+func (_ *LongVectorAttribute) typeName() string {
+	return "LongVectorAttribute"
 }
 
 var vertexSetSchema = arrow.NewSchema(
@@ -297,10 +297,10 @@ func (a *LongAttribute) toOrderedRows() array.Record {
 	return array.NewRecord(longAttributeSchema, []array.Interface{values}, -1)
 }
 
-func (a *SparkIDVectorAttribute) readFromOrdered(rec array.Record) error {
+func (a *LongVectorAttribute) readFromOrdered(rec array.Record) error {
 	col := rec.Column(0).(*array.List)
 	defer col.Release()
-	a.Values = make([]SparkIDVectorAttributeValue, col.Len())
+	a.Values = make([]LongVectorAttributeValue, col.Len())
 	a.Defined = make([]bool, col.Len())
 	offsets := col.Offsets()
 	values := col.ListValues().(*array.Int64)
@@ -314,12 +314,12 @@ func (a *SparkIDVectorAttribute) readFromOrdered(rec array.Record) error {
 			for j := 0; j < end-start; j++ {
 				list[j] = values.Value(start + j)
 			}
-			a.Values[i] = SparkIDVectorAttributeValue(list)
+			a.Values[i] = LongVectorAttributeValue(list)
 		}
 	}
 	return nil
 }
-func (a *SparkIDVectorAttribute) toOrderedRows() array.Record {
+func (a *LongVectorAttribute) toOrderedRows() array.Record {
 	b := array.NewListBuilder(arrowAllocator, arrow.PrimitiveTypes.Int64)
 	defer b.Release()
 	vb := b.ValueBuilder().(*array.Int64Builder)
@@ -334,7 +334,7 @@ func (a *SparkIDVectorAttribute) toOrderedRows() array.Record {
 	}
 	values := b.NewListArray()
 	defer values.Release()
-	return array.NewRecord(sparkIDVectorAttributeSchema, []array.Interface{values}, -1)
+	return array.NewRecord(LongVectorAttributeSchema, []array.Interface{values}, -1)
 }
 
 var stringAttributeSchema = arrow.NewSchema([]arrow.Field{
@@ -346,7 +346,7 @@ var doubleVectorAttributeSchema = arrow.NewSchema([]arrow.Field{
 		Nullable: true}}, nil)
 var longAttributeSchema = arrow.NewSchema([]arrow.Field{
 	arrow.Field{Name: "values", Type: arrow.PrimitiveTypes.Int64, Nullable: true}}, nil)
-var sparkIDVectorAttributeSchema = arrow.NewSchema([]arrow.Field{
+var LongVectorAttributeSchema = arrow.NewSchema([]arrow.Field{
 	arrow.Field{Name: "values", Type: arrow.ListOf(arrow.PrimitiveTypes.Int64),
 		Nullable: true}}, nil)
 
@@ -430,13 +430,13 @@ func (_ *DoubleVectorAttribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleVectorAttributeRow)
 }
 
-type UnorderedSparkIDVectorAttributeRow struct {
-	Id    int64                       `parquet:"name=id, type=INT64"`
-	Value SparkIDVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=INT64"`
+type UnorderedLongVectorAttributeRow struct {
+	Id    int64                    `parquet:"name=id, type=INT64"`
+	Value LongVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=INT64"`
 }
 
-func (_ *SparkIDVectorAttribute) unorderedRow() interface{} {
-	return new(UnorderedSparkIDVectorAttributeRow)
+func (_ *LongVectorAttribute) unorderedRow() interface{} {
+	return new(UnorderedLongVectorAttributeRow)
 }
 
 func (s *Scalar) write(dirName string) error {

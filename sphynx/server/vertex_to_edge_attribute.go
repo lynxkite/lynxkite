@@ -11,7 +11,7 @@ func init() {
 			origAttr := ea.inputs["original"].(TabularEntity)
 			origValues := reflect.ValueOf(origAttr).Elem().FieldByName("Values")
 			origDefined := reflect.ValueOf(origAttr).Elem().FieldByName("Defined")
-			mapping := ea.getSparkIDVectorAttribute("mapping")
+			mapping := ea.getLongVectorAttribute("mapping")
 			target := ea.getEdgeBundle("target")
 			numEdges := len(target.EdgeMapping)
 			attrType := reflect.Indirect(reflect.ValueOf(origAttr)).Type()

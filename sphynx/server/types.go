@@ -104,8 +104,8 @@ type DoubleVectorAttribute struct {
 	Defined []bool
 }
 
-type SparkIDVectorAttributeValue []int64
-type SparkIDVectorAttribute struct {
-	Values  []SparkIDVectorAttributeValue
+type LongVectorAttributeValue []int64
+type LongVectorAttribute struct {
+	Values  []LongVectorAttributeValue
 	Defined []bool
 }
