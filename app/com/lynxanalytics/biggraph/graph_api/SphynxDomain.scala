@@ -212,8 +212,6 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
           StructField("value", ArrayType(DoubleType, false), false)))
         writeRDD(rdd, schema, e)
       case a: AttributeData[_] if a.typeTag.tpe =:= typeTag[Array[ID]].tpe =>
-        println(a.typeTag)
-        println(a.typeTag.tpe)
         val rdd = a.rdd.map { case (id, v) => Row(id, v) }
         val schema = StructType(Seq(
           StructField("id", LongType, false),
