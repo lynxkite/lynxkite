@@ -48,6 +48,7 @@ typenames = {
 typemapping = {
     'String': util.StringAttribute,
     'Double': util.DoubleAttribute,
+    'Vector[Double]': util.DoubleVectorAttribute,
 }
 for fullname in op.outputs.keys():
   if '.' not in fullname:
