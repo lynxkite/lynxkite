@@ -335,7 +335,7 @@ startSphynx () {
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
-      -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
+      -subj "/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
     cd "$stage_dir/sphynx"
     startSphynxForever &

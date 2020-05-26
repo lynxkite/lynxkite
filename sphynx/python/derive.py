@@ -42,12 +42,27 @@ except BaseException:
   traceback.print_exception(a, b, c.tb_next)
   sys.exit(1)
 
+
+def assert_no_extra(columns, name):
+  inputs = set(f['name'] for f in op.params['inputFields'] if f['parent'] == name)
+  outputs = set(f['name'] for f in op.params['outputFields'] if f['parent'] == name)
+  extra = set(columns) - inputs - outputs
+  if extra:
+    import sys
+    print('Undeclared output found: ' + ', '.join(name + '.' + e for e in extra), file=sys.stderr)
+    sys.exit(1)
+
+
+assert_no_extra(vs.columns, 'vs')
+assert_no_extra(es.columns, 'es')
+assert_no_extra(scalars.__dict__.keys(), 'scalars')
 # Save outputs.
 typenames = {
     f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 typemapping = {
     'String': util.StringAttribute,
     'Double': util.DoubleAttribute,
+    'Vector[Double]': util.DoubleVectorAttribute,
 }
 for fullname in op.outputs.keys():
   if '.' not in fullname:

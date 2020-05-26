@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
+ - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
+
 ### 3.2.1
 
  - More accurate progress indicators for box outputs.
