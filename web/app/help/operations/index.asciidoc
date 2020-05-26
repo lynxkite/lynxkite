@@ -399,8 +399,6 @@ include::predict-edges-with-hyperbolic-positions.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
 
-include::predict-with-a-graph-neural-network.asciidoc[]
-
 include::predict-with-gcn.asciidoc[]
 
 include::predict-with-model.asciidoc[]
