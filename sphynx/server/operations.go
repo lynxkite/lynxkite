@@ -71,6 +71,10 @@ func (ea *EntityAccessor) getDoubleVectorAttribute(name string) *DoubleVectorAtt
 	return ea.inputs[name].(*DoubleVectorAttribute)
 }
 
+func (ea *EntityAccessor) getLongVectorAttribute(name string) *LongVectorAttribute {
+	return ea.inputs[name].(*LongVectorAttribute)
+}
+
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }

@@ -48,6 +48,9 @@ func (_ *DoubleTuple2Attribute) typeName() string {
 func (_ *DoubleVectorAttribute) typeName() string {
 	return "DoubleVectorAttribute"
 }
+func (_ *LongVectorAttribute) typeName() string {
+	return "LongVectorAttribute"
+}
 
 var vertexSetSchema = arrow.NewSchema(
 	[]arrow.Field{
@@ -294,6 +297,46 @@ func (a *LongAttribute) toOrderedRows() array.Record {
 	return array.NewRecord(longAttributeSchema, []array.Interface{values}, -1)
 }
 
+func (a *LongVectorAttribute) readFromOrdered(rec array.Record) error {
+	col := rec.Column(0).(*array.List)
+	defer col.Release()
+	a.Values = make([]LongVectorAttributeValue, col.Len())
+	a.Defined = make([]bool, col.Len())
+	offsets := col.Offsets()
+	values := col.ListValues().(*array.Int64)
+	defer values.Release()
+	for i := 0; i < col.Len(); i++ {
+		a.Defined[i] = col.IsValid(i)
+		if a.Defined[i] {
+			start := int(offsets[i])
+			end := int(offsets[i+1])
+			list := make([]int64, end-start)
+			for j := 0; j < end-start; j++ {
+				list[j] = values.Value(start + j)
+			}
+			a.Values[i] = LongVectorAttributeValue(list)
+		}
+	}
+	return nil
+}
+func (a *LongVectorAttribute) toOrderedRows() array.Record {
+	b := array.NewListBuilder(arrowAllocator, arrow.PrimitiveTypes.Int64)
+	defer b.Release()
+	vb := b.ValueBuilder().(*array.Int64Builder)
+	defer vb.Release()
+	for i, v := range a.Values {
+		b.Append(a.Defined[i])
+		if a.Defined[i] {
+			for _, x := range v {
+				vb.Append(x)
+			}
+		}
+	}
+	values := b.NewListArray()
+	defer values.Release()
+	return array.NewRecord(LongVectorAttributeSchema, []array.Interface{values}, -1)
+}
+
 var stringAttributeSchema = arrow.NewSchema([]arrow.Field{
 	arrow.Field{Name: "values", Type: arrow.BinaryTypes.String, Nullable: true}}, nil)
 var doubleAttributeSchema = arrow.NewSchema([]arrow.Field{
@@ -303,6 +346,9 @@ var doubleVectorAttributeSchema = arrow.NewSchema([]arrow.Field{
 		Nullable: true}}, nil)
 var longAttributeSchema = arrow.NewSchema([]arrow.Field{
 	arrow.Field{Name: "values", Type: arrow.PrimitiveTypes.Int64, Nullable: true}}, nil)
+var LongVectorAttributeSchema = arrow.NewSchema([]arrow.Field{
+	arrow.Field{Name: "values", Type: arrow.ListOf(arrow.PrimitiveTypes.Int64),
+		Nullable: true}}, nil)
 
 type UnorderedStringAttributeRow struct {
 	Id    int64  `parquet:"name=id, type=INT64"`
@@ -382,6 +428,15 @@ type UnorderedDoubleVectorAttributeRow struct {
 
 func (_ *DoubleVectorAttribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleVectorAttributeRow)
+}
+
+type UnorderedLongVectorAttributeRow struct {
+	Id    int64                    `parquet:"name=id, type=INT64"`
+	Value LongVectorAttributeValue `parquet:"name=value, type=LIST, valuetype=INT64"`
+}
+
+func (_ *LongVectorAttribute) unorderedRow() interface{} {
+	return new(UnorderedLongVectorAttributeRow)
 }
 
 func (s *Scalar) write(dirName string) error {
