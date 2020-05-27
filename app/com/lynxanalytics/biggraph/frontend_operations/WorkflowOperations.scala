@@ -38,7 +38,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def summary = s"Output ${params("name")}"
     })
 
-  register("Project rejoin", List("target", "source"), List(projectOutput))(
+  register("Graph rejoin", List("target", "source"), List(projectOutput))(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
@@ -301,7 +301,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
     })
 
-  register("Project union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
+  register("Graph union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
     params += Param("id_attr", "ID attribute name", defaultValue = "new_id")
@@ -405,7 +405,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Take segmentation as base project")(new ProjectTransformation(_) with SegOp {
+  register("Take segmentation as base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled
     def apply() = {
@@ -433,7 +433,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Take segmentation links as base project")(new ProjectTransformation(_) with SegOp {
+  register("Take segmentation links as base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled
     def apply() = {

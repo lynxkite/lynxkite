@@ -55,7 +55,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import belongs to as edges
     {
       val project = eg
-        .box("Take segmentation links as base project", Map(
+        .box("Take segmentation links as base graph", Map(
           "apply_to_project" -> ".cc"))
         .box("Use table as graph", Map(
           "src" -> "base_name",

@@ -10,7 +10,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "output" -> "scalar_val",
         "expr" -> "42.0"))
     val project = box("Create example graph")
-      .box("Copy scalar from other project", Map(
+      .box("Copy scalar from other graph", Map(
         "scalar" -> "scalar_val",
         "save_as" -> "my_scalar"), Seq(other))
       .project
@@ -34,7 +34,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "output" -> "scalar_val",
         "expr" -> "\"myvalue\""))
     val project = box("Create example graph")
-      .box("Copy scalar from other project", Map(
+      .box("Copy scalar from other graph", Map(
         "apply_to_scalar" -> ".seg",
         "scalar" -> "scalar_val",
         "save_as" -> "my_scalar_2"), Seq(other))
@@ -70,7 +70,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "output" -> "deep_scalar",
         "expr" -> "\"deep value\""))
     val project = box("Create example graph")
-      .box("Copy scalar from other project", Map(
+      .box("Copy scalar from other graph", Map(
         "apply_to_scalar" -> s".seg.seg2",
         "scalar" -> "deep_scalar",
         "save_as" -> "my_scalar_3"), Seq(other))

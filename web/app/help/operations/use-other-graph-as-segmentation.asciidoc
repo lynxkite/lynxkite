@@ -1,10 +1,10 @@
-### Use other project as segmentation
+### Use other graph as segmentation
 
-Copies another project into a new segmentation for this one. There will be no
+Copies another graph into a new segmentation for this one. There will be no
 connections between the segments and the base vertices. You can import/create those via
 other operations. (See <<Use table as segmentation links>> and
 <<Define segmentation links from matching attributes>>.)
 
-It is possible to import the project itself as segmentation. But even in this
+It is possible to import the graph itself as segmentation. But even in this
 special case, there will be no connections between the segments and the base vertices.
 Another operation, <<Use base graph as segmentation>> can be used if edges are desired.
