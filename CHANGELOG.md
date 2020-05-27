@@ -6,6 +6,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Removed _"Predict with a graph neural network"_ operation.
+ - Made it easier to use graph convolutional boxes: added _"Bundle vertex attributes into a Vector"_
+   and _"One-hot encode attribute"_ boxes.
+ - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
+ - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
+
 ### 3.2.1
 
  - More accurate progress indicators for box outputs.

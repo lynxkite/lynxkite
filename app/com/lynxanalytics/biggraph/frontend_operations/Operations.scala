@@ -417,9 +417,12 @@ object PythonUtilities {
     pythonType match {
       case "str" => SerializableType.string
       case "float" => SerializableType.double
+      case "np.ndarray" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }
+
+  val api = Seq("vs", "es", "scalars")
 
   def run(
     code: String, inputs: Seq[String], outputs: Seq[String],
@@ -427,8 +430,7 @@ object PythonUtilities {
     implicit
     manager: MetaGraphManager): Unit = {
     // Parse the output list into Fields.
-    val api = Seq("vs", "es", "scalars")
-    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-z\[\]\.]+)".r
     val outputFields = outputs.map {
       case outputDeclaration(parent, name, tpe) =>
         assert(
@@ -487,5 +489,25 @@ object PythonUtilities {
     for ((f, i) <- res.scalarFields.zipWithIndex) {
       project.newScalar(f.name, res.scalars(i))
     }
+  }
+
+  def inferInputs(code: String): Seq[String] = {
+    val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
+    val mentions = api.flatMap { parent =>
+      val a = s"$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
+        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}").toSeq
+      a ++ b
+    }.toSet
+    (mentions -- outputs).toSeq.sorted
+  }
+  def inferOutputs(code: String): Seq[String] = {
+    api.flatMap { parent =>
+      val a = s"""$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
+        .findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
+        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}")
+      a ++ b
+    }.sorted
   }
 }
