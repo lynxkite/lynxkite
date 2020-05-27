@@ -17,6 +17,7 @@ autopep8
 awscli
 boto3
 selenium
+pandas
 prettytable==0.7.2
 pillow
 pyarrow
