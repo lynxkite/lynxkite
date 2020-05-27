@@ -55,7 +55,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sg0',
-        name: 'Use base project as segmentation',
+        name: 'Use base graph as segmentation',
         x: 100, y: 200,
         after: 'eg0',
         params: { name: 'seg' },

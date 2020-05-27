@@ -17,7 +17,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Copy edges to base project")(new ProjectTransformation(_) with SegOp {
+  register("Copy edges to base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     override def visibleScalars =
       if (project.isSegmentation && project.edgeBundle != null) {
