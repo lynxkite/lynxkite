@@ -45,7 +45,7 @@ Example: <<Find connected components>>.
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Use segmentation
 
 These operations modify <<segmentations>>.
-Example: <<Copy edges to base project>>.
+Example: <<Copy edges to base graph>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-asterisk"></i></div></div></div>+++ Structure
 
@@ -226,6 +226,8 @@ include::convert-vertex-attribute-to-string.asciidoc[]
 include::convert-vertex-attributes-to-position.asciidoc[]
 
 include::copy-edge-attribute.asciidoc[]
+
+include::copy-edges-to-base-graph.asciidoc[]
 
 include::copy-edges-to-base-project.asciidoc[]
 
@@ -503,7 +505,7 @@ include::train-linear-regression-model.asciidoc[]
 
 include::transform.asciidoc[]
 
-include::use-base-project-as-segmentation.asciidoc[]
+include::use-base-graph-as-segmentation.asciidoc[]
 
 include::use-metagraph-as-graph.asciidoc[]
 

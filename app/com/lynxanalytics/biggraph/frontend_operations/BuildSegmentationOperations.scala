@@ -273,7 +273,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use base project as segmentation")(new ProjectTransformation(_) {
+  register("Use base graph as segmentation")(new ProjectTransformation(_) {
     params += Param("name", "Segmentation name", defaultValue = "self_as_segmentation")
     def enabled = project.hasVertexSet
 

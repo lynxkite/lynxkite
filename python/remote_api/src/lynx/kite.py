@@ -1447,7 +1447,7 @@ class SingleOutputCustomBox(CustomBox, State):
 def _python_name(name: str) -> str:
   '''Transforms a space separated string into a camelCase format.
 
-  The operation "Use base project as segmentation" will be called as
+  The operation "Use base graph as segmentation" will be called as
   ``useBaseProjectAsSegmentation``. Dashes are ommitted.
   '''
   name = ''.join([c if c.isalnum() or c == ' ' else '' for c in name])
