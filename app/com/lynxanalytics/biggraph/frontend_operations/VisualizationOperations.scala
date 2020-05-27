@@ -24,10 +24,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   register(
     "Graph visualization",
     category.icon,
-    List("project"),
+    List("graph"),
     List("visualization"))(new SimpleOperation(_) {
 
-      protected lazy val project = context.inputs("project").project
+      protected lazy val project = context.inputs("graph").project
 
       override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
         params.validate()

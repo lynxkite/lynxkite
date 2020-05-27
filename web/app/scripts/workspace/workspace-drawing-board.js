@@ -928,7 +928,7 @@ angular.module('biggraph')
 
                   <p>Or you can click on an output circle to see the output state.
 
-                  <p>The inputs and outputs of boxes can be various states. A "project" state
+                  <p>The inputs and outputs of boxes can be various states. A "graph" state
                   is a rich collection of graphs and their attributes. A "table" state
                   is a traditional SQL table. There are a few other states, such as visualizations.
                   `,

@@ -82,8 +82,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   implicit lazy val manager = env.metaGraphManager
 
-  protected val projectInput = "project" // The default input name, just to avoid typos.
-  protected val projectOutput = "project"
+  protected val projectInput = "graph" // The default input name, just to avoid typos.
+  protected val projectOutput = "graph"
 
   def registerProjectCreatingOp(id: String)(factory: Context => ProjectOutputOperation): Unit = {
     registerOp(id, defaultIcon, category, List(), List(projectOutput), factory)

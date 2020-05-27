@@ -196,7 +196,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register(
     "Use table as edge attributes", List(projectInput, "attributes"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val attributes = tableLikeInput("attributes").asProject
       params ++= List(
         Choice("id_attr", "Edge attribute",

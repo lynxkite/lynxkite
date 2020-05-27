@@ -469,8 +469,8 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
 // A ProjectOutputOperation is an operation that has 1 project-typed output.
 abstract class ProjectOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
-    context.meta.outputs == List("project"),
-    s"A ProjectOperation must output a project. $context")
+    context.meta.outputs == List("graph"),
+    s"A ProjectOperation must output a graph. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(CommonProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
@@ -489,9 +489,9 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
 abstract class ProjectTransformation(
     context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
-    context.meta.inputs == List("project"),
-    s"A ProjectTransformation must input a single project. $context")
-  override lazy val project = projectInput("project")
+    context.meta.inputs == List("graph"),
+    s"A ProjectTransformation must input a single graph. $context")
+  override lazy val project = projectInput("graph")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     val before = project.rootEditor.viewer
