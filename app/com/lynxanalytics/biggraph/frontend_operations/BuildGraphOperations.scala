@@ -233,7 +233,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   register(
     "Use table as edges", List(projectInput, "table"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val edges = tableLikeInput("table").asProject
       params ++= List(
         Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),

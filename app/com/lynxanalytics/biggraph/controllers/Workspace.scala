@@ -351,7 +351,7 @@ object BoxOutputState {
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
         "uiStatus" -> v.uiStatus,
-        "project" -> json.Json.toJson(v.project.rootState))))
+        "graph" -> json.Json.toJson(v.project.rootState))))
   }
 }
 
@@ -405,7 +405,7 @@ case class BoxOutputState(
     import CommonProjectState._
     success.check()
     assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
-    val projectState = (state.get \ "project").as[CommonProjectState]
+    val projectState = (state.get \ "graph").as[CommonProjectState]
     VisualizationState(
       (state.get \ "uiStatus").as[TwoSidedUIStatus],
       new RootProjectEditor(projectState))

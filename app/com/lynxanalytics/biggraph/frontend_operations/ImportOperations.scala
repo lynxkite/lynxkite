@@ -242,7 +242,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import well-known graph dataset", List(), List("project"))(
+  register("Import well-known graph dataset", List(), List("graph"))(
     new ProjectOutputOperation(_) {
       params += Choice("name", "Name", options = FEOption.list(
         "Cora", "CiteSeer", "Karate Club", "PubMed"))
