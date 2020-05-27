@@ -103,7 +103,7 @@ data with the operation <<Classify with model>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue"><i class="fa fa-cogs"></i></div></div></div>+++ Workflow
 
-Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Project union>>.
+Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Graph union>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage project
 
@@ -229,11 +229,9 @@ include::copy-edge-attribute.asciidoc[]
 
 include::copy-edges-to-base-graph.asciidoc[]
 
-include::copy-edges-to-base-project.asciidoc[]
-
 include::copy-edges-to-segmentation.asciidoc[]
 
-include::copy-scalar-from-other-project.asciidoc[]
+include::copy-scalar-from-other-graph.asciidoc[]
 
 include::copy-scalar.asciidoc[]
 
@@ -343,6 +341,10 @@ include::find-triangles.asciidoc[]
 
 include::fingerprint-based-on-attributes.asciidoc[]
 
+include::graph-rejoin.asciidoc[]
+
+include::graph-union.asciidoc[]
+
 include::graph-visualization.asciidoc[]
 
 include::grow-segmentation.asciidoc[]
@@ -371,7 +373,7 @@ include::import-well-known-graph-dataset.asciidoc[]
 
 include::input.asciidoc[]
 
-include::link-project-and-segmentation-by-fingerprint.asciidoc[]
+include::link-graph-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
 
@@ -406,10 +408,6 @@ include::predict-with-a-graph-neural-network.asciidoc[]
 include::predict-with-gcn.asciidoc[]
 
 include::predict-with-model.asciidoc[]
-
-include::project-rejoin.asciidoc[]
-
-include::project-union.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
@@ -485,9 +483,9 @@ include::sql9.asciidoc[]
 
 include::take-edges-as-vertices.asciidoc[]
 
-include::take-segmentation-as-base-project.asciidoc[]
+include::take-segmentation-as-base-graph.asciidoc[]
 
-include::take-segmentation-links-as-base-project.asciidoc[]
+include::take-segmentation-links-as-base-graph.asciidoc[]
 
 include::train-a-decision-tree-classification-model.asciidoc[]
 
@@ -509,7 +507,7 @@ include::use-base-graph-as-segmentation.asciidoc[]
 
 include::use-metagraph-as-graph.asciidoc[]
 
-include::use-other-project-as-segmentation.asciidoc[]
+include::use-other-graph-as-segmentation.asciidoc[]
 
 include::use-table-as-edge-attributes.asciidoc[]
 

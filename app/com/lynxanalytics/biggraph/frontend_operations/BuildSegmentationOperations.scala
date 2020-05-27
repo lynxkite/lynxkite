@@ -290,7 +290,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use other project as segmentation", List("project", "segmentation"))(
+  register("Use other graph as segmentation", List("project", "segmentation"))(
     new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
       lazy val them = projectInput("segmentation")

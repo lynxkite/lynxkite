@@ -1,11 +1,11 @@
-### Link project and segmentation by fingerprint
+### Link graph and segmentation by fingerprint
 
-Finds the best matching between a project and a segmentation.
+Finds the best matching between a base graph and a segmentation.
 It considers a base vertex A and a segment B a good "match"
 if the neighborhood of A (including A) is very connected to the neighborhood of B (including B)
-according to the current connections between project and segmentation.
+according to the current connections between the graph and the segmentation.
 
-The result of this operation is a new edge set between the project and the
+The result of this operation is a new edge set between the base graph and the
 segmentation, that is a one-to-one matching.
 
 ====
@@ -18,9 +18,9 @@ calculation.
 
 *Example use case*
 
-Project M is an MSISDN graph based on call data. Project F is a Facebook
+Graph M is an MSISDN graph based on call data. Graph F is a Facebook
 graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
-relationship. Connect the two projects with <<Use other project as segmentation>> and
+relationship. Connect the two graphs with <<Use other graph as segmentation>> and
 <<Use table as segmentation links>>, then use the
 fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
 

@@ -103,7 +103,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("long errors") {
     val input1 = Box("input1", "Input", Map(), 0, 20, Map())
-    val copy1 = Box("copy1", "Copy scalar from other project", Map(), 0, 50, Map(
+    val copy1 = Box("copy1", "Copy scalar from other graph", Map(), 0, 50, Map(
       "project" -> input1.output("input"), "scalar" -> input1.output("input")))
     val copy2 = copy1.copy(id = "copy2", inputs = Map(
       "project" -> copy1.output("project"), "scalar" -> copy1.output("project")))
