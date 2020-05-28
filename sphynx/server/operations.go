@@ -71,12 +71,25 @@ func (ea *EntityAccessor) getDoubleVectorAttribute(name string) *DoubleVectorAtt
 	return ea.inputs[name].(*DoubleVectorAttribute)
 }
 
+func (ea *EntityAccessor) getLongVectorAttribute(name string) *LongVectorAttribute {
+	return ea.inputs[name].(*LongVectorAttribute)
+}
+
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 	return ea.opInst.Operation.Data[name].(float64)
 }
 
 func (ea *EntityAccessor) GetBoolParam(name string) bool {
 	return ea.opInst.Operation.Data[name].(bool)
+}
+
+func (ea *EntityAccessor) GetStringVectorParam(name string) []string {
+	interfaceSlice := ea.opInst.Operation.Data[name].([]interface{})
+	stringSlice := make([]string, len(interfaceSlice))
+	for i, elem := range interfaceSlice {
+		stringSlice[i] = elem.(string)
+	}
+	return stringSlice
 }
 
 func (ea *EntityAccessor) GetBoolParamWithDefault(name string, dflt bool) bool {

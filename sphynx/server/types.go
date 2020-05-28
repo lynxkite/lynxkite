@@ -103,3 +103,9 @@ type DoubleVectorAttribute struct {
 	Values  []DoubleVectorAttributeValue
 	Defined []bool
 }
+
+type LongVectorAttributeValue []int64
+type LongVectorAttribute struct {
+	Values  []LongVectorAttributeValue
+	Defined []bool
+}
