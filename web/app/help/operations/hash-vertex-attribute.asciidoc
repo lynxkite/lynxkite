@@ -6,7 +6,7 @@ the same new value and different original values get (almost certainly) replaced
 values.
 
 Treat the salt like a password for the data. Choose a long string that the recipient of the data has
-no chance of guessing. (Do not use the name of a person or project.)
+no chance of guessing. (Do not use the name of a person or graph.)
 
 The salt must begin with the prefix `SECRET(` and end with `)`, for example
 `SECRET(qCXoC7l0VYiN8Qp)`. This is important, because LynxKite will replace such strings with

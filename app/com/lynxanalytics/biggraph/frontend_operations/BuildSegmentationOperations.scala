@@ -73,7 +73,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     def addSegmentationParameters = params ++= List(
       Choice(
         "base_id_attr",
-        s"Identifying vertex attribute in base project",
+        s"Identifying vertex attribute in base graph",
         options = FEOption.list(parent.vertexAttributeNames[String].toList)),
       Choice(
         "seg_id_attr",
@@ -375,7 +375,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       if (project.isSegmentation) params ++= List(
         Choice(
           "base_id_attr",
-          s"Identifying vertex attribute in base project",
+          s"Identifying vertex attribute in base graph",
           options = FEOption.unset +: parent.vertexAttrList),
         Choice(
           "base_id_column",

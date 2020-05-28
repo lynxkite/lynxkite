@@ -19,8 +19,8 @@ What if you wanted to compute PageRank for the communities in the graph?
 
 If you want to apply a box to a segmentation, first add the box as normal. Then in the box
 parameters popup adjust the special _Apply to_ parameter to pick the segmentation. This special
-parameter is added for all project-typed inputs, making it possible to work with segmentations
-(and the segmentations of those segmentations, etc.) inside projects.
+parameter is added for all graph-typed inputs, making it possible to work with segmentations
+(and the segmentations of those segmentations, etc.).
 
 ### Parametric parameters
 

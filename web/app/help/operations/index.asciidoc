@@ -105,9 +105,9 @@ data with the operation <<Classify with model>>.
 
 Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Graph union>>.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage project
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage graph
 
-Utility features to manage and personalize projects by manipulating (discarding, copying, renaming, etc.) attributes, scalars and segmentations. Example:
+Utility features to manage and personalize graphs by manipulating (discarding, copying, renaming, etc.) attributes, scalars and segmentations. Example:
 <<Rename edge attributes>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category purple"><i class="fa fa-eye"></i></div></div></div>+++ Visualization operations

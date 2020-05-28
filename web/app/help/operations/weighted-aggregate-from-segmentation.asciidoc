@@ -1,6 +1,6 @@
 ### Weighted aggregate from segmentation
 
-Aggregates vertex attributes across all the segments that a vertex in the base project belongs to.
+Aggregates vertex attributes across all the segments that a vertex in the base graph belongs to.
 For example, it can calculate an average over the cliques a person belongs to, weighted by
 the size of the cliques.
 

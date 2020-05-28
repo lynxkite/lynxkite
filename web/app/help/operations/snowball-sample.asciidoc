@@ -11,7 +11,7 @@ This operation also creates a new attribute which shows how far the sample verti
 closest start point. (One vertex can be in more than one neighborhood.)
 This attribute can be used to decide whether a sample vertex is near to a start point or not.
 
-For example, you can create a random sample of the project's graph to test your model on smaller data set.
+For example, you can create a random sample of the graph to test your model on smaller data set.
 
 ====
 [p-ratio]#Start point ratio#::
