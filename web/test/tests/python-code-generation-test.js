@@ -61,7 +61,7 @@ order by ordinal''')`;
       lib.pythonPopup();
     },
     function() {
-      let expectedCode = `ce = lk.createRandomEdges(input_project_for_ce, degree='4')
+      let expectedCode = `ce = lk.createRandomEdges(input_graph_for_ce, degree='4')
 cpr = lk.computePageRank(ce)
 cd = lk.computeDegree(ce)`;
       lib.expectPythonCode(expectedCode);
