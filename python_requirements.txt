@@ -17,9 +17,10 @@ autopep8
 awscli
 boto3
 selenium
+pyarrow==0.13.0
+pandas
 prettytable==0.7.2
 pillow
-pyarrow
 croniter
 oauth2client
 google-api-python-client

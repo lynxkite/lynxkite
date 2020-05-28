@@ -1016,8 +1016,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             rect.x <= event.pageX && event.pageX <= rect.x + rect.width &&
             rect.y <= event.pageY && event.pageY <= rect.y + rect.height &&
             // We haven't hit the top or bottom.
-            (div.scrollTop !== 0 || event.deltaY > 0) &&
-            (div.scrollTop + rect.height !== div.scrollHeight || event.deltaY < 0)) {
+            (div.scrollTop > 0 || event.deltaY > 0) &&
+            (div.scrollTop + rect.height < div.scrollHeight || event.deltaY < 0)) {
             div.scrollBy({ top: event.deltaY, behavior: 'auto' });
             return true; // Stop zooming.
           }
