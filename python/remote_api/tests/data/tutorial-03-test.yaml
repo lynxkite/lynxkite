@@ -18,7 +18,7 @@
 - id: Use-table-as-edges_1
   operationId: Use table as edges
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     attr: airportID
     src: src_airportID
     dst: dst_airportID
@@ -35,7 +35,7 @@
 - id: Convert-vertex-attributes-to-position_1
   operationId: Convert vertex attributes to position
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     output: position
     x: lat
     y: longitude
@@ -157,7 +157,7 @@
 - id: Convert-vertex-attributes-to-position_3
   operationId: Convert vertex attributes to position
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     output: position
     x: lat
     y: longitude
@@ -276,7 +276,7 @@
 - id: Aggregate-to-segmentation_1
   operationId: Aggregate to segmentation
   parameters:
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     aggregate_daylightSavingsTime: 'most_common,set'
     aggregate_tz: 'average,set'
     aggregate_tz_name: most_common
@@ -313,7 +313,7 @@
       } else {
         "Europe/West-Africa"
       }
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     output: segment_name
   x: 1740.947032451802
   y: 735.7820985821559
@@ -338,7 +338,7 @@
 - id: Aggregate-from-segmentation_1
   operationId: Aggregate from segmentation
   parameters:
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     aggregate_segment_name: most_common
   x: 1892.1878455412382
   y: 873.2615738907056

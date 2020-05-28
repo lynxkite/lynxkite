@@ -161,13 +161,13 @@ def segment_by_interval(random_attributes):
 
 @bdtest()
 def weighted_aggregate_from_segmentation(segment_by_interval):
-  return LK.weightedAggregateFromSegmentation(segment_by_interval, apply_to_project='.seg_interval',
+  return LK.weightedAggregateFromSegmentation(segment_by_interval, apply_to_graph='.seg_interval',
                                               weight='size', prefix='', aggregate_top='weighted_sum')
 
 
 @bdtest()
 def weighted_aggregate_to_segmentation(segment_by_interval):
-  return LK.weightedAggregateToSegmentation(segment_by_interval, apply_to_project='.seg_interval',
+  return LK.weightedAggregateToSegmentation(segment_by_interval, apply_to_graph='.seg_interval',
                                             weight='rnd_std_uniform', aggregate_rnd_std_normal='weighted_sum')
 
 
@@ -214,13 +214,13 @@ def find_maximal_cliques(filter_high_degree_vertices):
 @bdtest()
 def create_edges_from_cooccurrence(find_maximal_cliques):
   edgeless = LK.discardEdges(find_maximal_cliques)
-  return LK.createEdgesFromCooccurrence(edgeless, apply_to_project='.maximal_cliques')
+  return LK.createEdgesFromCooccurrence(edgeless, apply_to_graph='.maximal_cliques')
 
 
 @bdtest()
 def create_edges_from_cooccurrence(find_maximal_cliques):
   edgeless = LK.discardEdges(find_maximal_cliques)
-  return LK.createEdgesFromCooccurrence(edgeless, apply_to_project='.maximal_cliques')
+  return LK.createEdgesFromCooccurrence(edgeless, apply_to_graph='.maximal_cliques')
 
 
 @bdtest()
@@ -234,9 +234,9 @@ def self_segmentation(random_attributes):
 def define_segmentation_link_from_matching_attributes(self_segmentation):
   s = self_segmentation
   s = LK.deriveVertexAttribute(s, output='src', expr='Math.floor(ordinal/3.0).toString')
-  s = LK.deriveVertexAttribute(s, apply_to_project='.segmentation',
+  s = LK.deriveVertexAttribute(s, apply_to_graph='.segmentation',
                                output='dst', expr='Math.floor(ordinal/5.0).toString')
-  s = LK.defineSegmentationLinksFromMatchingAttributes(s, apply_to_project='.segmentation',
+  s = LK.defineSegmentationLinksFromMatchingAttributes(s, apply_to_graph='.segmentation',
                                                        base_id_attr='src', seg_id_attr='dst')
 
   return s.sql('select * from `segmentation.belongs_to`')

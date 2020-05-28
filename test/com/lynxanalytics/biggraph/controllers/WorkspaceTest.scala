@@ -158,11 +158,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val op = getOpMeta("test-workspace", "pr")
       assert(
         op.parameters.map(_.id) ==
-          Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
+          Seq("apply_to_graph", "name", "weights", "iterations", "damping", "direction"))
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
       assert(
-        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", ".cc"))
+        op.parameters.find(_.id == "apply_to_graph").get.options.map(_.id) == Seq("", ".cc"))
     }
   }
 
@@ -489,19 +489,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
-  test("broken parameters: parametric apply_to_project with error") {
+  test("broken parameters: parametric apply_to_graph with error") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val pr = Box(
         "pr", "Compute PageRank", pagerankParams, 0, 100, Map("graph" -> eg.output("graph")),
-        Map("apply_to_project" -> "$x"))
+        Map("apply_to_graph" -> "$x"))
       val ws = Workspace.from(eg, pr)
       val project = context(ws).allStates(pr.output("graph"))
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "pr")
-      // $x is undefined, so the value of "apply_to_project" is unavailable. It would be used for
+      // $x is undefined, so the value of "apply_to_graph" is unavailable. It would be used for
       // defining the later parameters, so those parameters are missing.
-      assert(op.parameters.map(_.id) == Seq("apply_to_project"))
+      assert(op.parameters.map(_.id) == Seq("apply_to_graph"))
       // The error is reported by marking the operation as disabled.
       // Also the output carries an error.
       assert(op.status.disabledReason.contains("not found: value x"))
@@ -525,7 +525,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       // $x is undefined, so the value of "iterations" is unavailable. No parameters depend on it,
       // so the parameter list is not affected. Everything is editable.
       assert(op.parameters.map(_.id) ==
-        Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
+        Seq("apply_to_graph", "name", "weights", "iterations", "damping", "direction"))
       // The output carries an error.
       assert(project.isError)
     }

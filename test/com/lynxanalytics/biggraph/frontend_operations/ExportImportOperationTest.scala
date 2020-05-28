@@ -12,7 +12,7 @@ class ExportImportOperationTest extends OperationsTestBase {
         "name" -> "cc",
         "directions" -> "ignore directions"))
       .box("Convert vertex attribute to String", Map(
-        "apply_to_project" -> ".cc",
+        "apply_to_graph" -> ".cc",
         "attr" -> "id"))
 
     // Import vertices as vertices
@@ -56,7 +56,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     {
       val project = eg
         .box("Take segmentation links as base graph", Map(
-          "apply_to_project" -> ".cc"))
+          "apply_to_graph" -> ".cc"))
         .box("Use table as graph", Map(
           "src" -> "base_name",
           "dst" -> "segment_id"))

@@ -139,7 +139,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Link graph and segmentation by fingerprint")(new ProjectTransformation(_) with SegOp {
+    "Link base graph and segmentation by fingerprint")(new ProjectTransformation(_) with SegOp {
       def addSegmentationParameters = params ++= List(
         NonNegInt("mo", "Minimum overlap", default = 1),
         Ratio("ms", "Minimum similarity", defaultValue = "0.0"),

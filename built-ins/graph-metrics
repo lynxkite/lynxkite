@@ -20,7 +20,7 @@ boxes:
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: outgoing edges
     name: odegree
   parametricParameters: {}
@@ -52,7 +52,7 @@ boxes:
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: incoming edges
     name: idegree
   parametricParameters: {}
@@ -65,7 +65,7 @@ boxes:
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: all edges
     name: adegree
   parametricParameters: {}
@@ -78,7 +78,7 @@ boxes:
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: symmetric edges
     name: sdegree
   parametricParameters: {}
@@ -91,7 +91,7 @@ boxes:
       id: input
   operationId: Find connected components
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     directions: ignore directions
     name: connected_components
   parametricParameters: {}

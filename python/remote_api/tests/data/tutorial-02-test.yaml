@@ -76,7 +76,7 @@
 - id: Use-table-as-edges_1
   operationId: Use table as edges
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     attr: id
     src: src_id
     dst: dst_id
@@ -278,4 +278,3 @@
   y: 338.3836907031721
   inputs: {}
   parametricParameters: {}
-

@@ -289,7 +289,7 @@ case class BoxMetadata(
     htmlId: Option[String] = None)
 
 object BoxOutputKind {
-  val Project = "project"
+  val Project = "graph"
   val Table = "table"
   val ExportResult = "exportResult"
   val Plot = "plot"

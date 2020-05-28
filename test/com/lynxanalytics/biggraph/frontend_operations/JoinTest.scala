@@ -52,13 +52,13 @@ class JoinTest extends OperationsTestBase {
       .box(
         "Create random edges",
         Map(
-          "apply_to_project" -> ".bucketing",
+          "apply_to_graph" -> ".bucketing",
           "degree" -> "10",
           "seed" -> "31415"))
       .box(
         "Add constant edge attribute",
         Map(
-          "apply_to_project" -> ".bucketing",
+          "apply_to_graph" -> ".bucketing",
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
@@ -185,24 +185,24 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "seg", "attr" -> "ordinal", "interval_size" -> "1", "overlap" -> "no"))
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_project" -> ".seg"))
+        Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_graph" -> ".seg"))
       .box(
         "Connect vertices on attribute",
-        Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_project" -> ".seg"))
+        Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_graph" -> ".seg"))
     val target =
       root.box(
         "Add random edge attribute",
         Map(
           "name" -> "random",
-          "apply_to_project" -> ".seg",
+          "apply_to_graph" -> ".seg",
           "dist" -> "Standard Uniform",
           "seed" -> "32421341"))
         .box(
           "Filter by attributes",
           Map(
             "filterea_random" -> ">0.5",
-            "apply_to_project" -> ".seg"))
-    val source = root.box("Take segmentation as base graph", Map("apply_to_project" -> ".seg"))
+            "apply_to_graph" -> ".seg"))
+    val source = root.box("Take segmentation as base graph", Map("apply_to_graph" -> ".seg"))
       .box(
         "Add random edge attribute",
         Map(
@@ -321,12 +321,12 @@ class JoinTest extends OperationsTestBase {
       .box(
         "Aggregate to segmentation",
         Map(
-          "apply_to_project" -> ".bucketing",
+          "apply_to_graph" -> ".bucketing",
           "aggregate_name" -> "first"))
       .box(
         "Rename vertex attributes",
         Map(
-          "apply_to_project" -> ".bucketing",
+          "apply_to_graph" -> ".bucketing",
           "change_name_first" -> "name"))
     val join = box(
       "Graph rejoin",
@@ -337,7 +337,7 @@ class JoinTest extends OperationsTestBase {
       join.box(
         "Aggregate from segmentation",
         Map(
-          "apply_to_project" -> ".bucketing",
+          "apply_to_graph" -> ".bucketing",
           "aggregate_name" -> "first"))
         .box(
           "SQL1",

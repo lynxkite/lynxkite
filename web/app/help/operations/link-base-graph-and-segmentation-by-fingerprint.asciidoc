@@ -1,4 +1,4 @@
-### Link graph and segmentation by fingerprint
+### Link base graph and segmentation by fingerprint
 
 Finds the best matching between a base graph and a segmentation.
 It considers a base vertex A and a segment B a good "match"
