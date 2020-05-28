@@ -339,7 +339,7 @@ object Implicits {
           val rnd = new scala.util.Random(pid)
           var uniqueId = pid.toLong - numPartitions
           it.map { value =>
-            val randomId = rnd.nextInt.toLong
+            val randomId = rnd.nextInt.toLong & 0x7fffffff
             uniqueId += numPartitions
             // The ID computed here is guaranteed unique as long as uniqueId fits in one unsigned
             // int. Otherwise it's still unique with large probability.

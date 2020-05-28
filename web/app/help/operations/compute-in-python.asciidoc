@@ -47,7 +47,20 @@ In the previous example we would set:
 - Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, scalars.greeting`
 - Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, scalars.hello: str, scalars.average_age: float`
 
-#### Working with vectors
+Alternatively, you can let LynxKite infer the inputs and outputs from the code.
+In this case you still need to specify the type of the outputs, but you can do so in the code
+using a type annotation. For example:
+
+[source,python]
+----
+vs['age_squared']: float = vs.age ** 2
+----
+
+(This inference is based on simple regular expression parsing of the code and does not
+cover all possibilities. Please list the inputs and outputs explicitly if the inference
+fails.)
+
+**Working with vectors**
 
 Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
 
