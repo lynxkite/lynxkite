@@ -373,7 +373,7 @@ include::import-well-known-graph-dataset.asciidoc[]
 
 include::input.asciidoc[]
 
-include::link-graph-and-segmentation-by-fingerprint.asciidoc[]
+include::link-base-graph-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
 

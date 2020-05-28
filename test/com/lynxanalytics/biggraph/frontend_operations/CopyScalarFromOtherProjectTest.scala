@@ -30,7 +30,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "name" -> "seg",
         "overlap" -> "no"))
       .box("Derive scalar", Map(
-        "apply_to_project" -> ".seg",
+        "apply_to_graph" -> ".seg",
         "output" -> "scalar_val",
         "expr" -> "\"myvalue\""))
     val project = box("Create example graph")
@@ -55,18 +55,18 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "name" -> "seg",
         "overlap" -> "no"))
       .box("Add random vertex attribute", Map(
-        "apply_to_project" -> ".seg",
+        "apply_to_graph" -> ".seg",
         "dist" -> "Standard Normal",
         "name" -> "rnd2",
         "seed" -> "1474343267"))
       .box("Segment by Double attribute", Map(
-        "apply_to_project" -> ".seg",
+        "apply_to_graph" -> ".seg",
         "attr" -> "rnd2",
         "interval_size" -> "0.1",
         "name" -> "seg2",
         "overlap" -> "no"))
       .box("Derive scalar", Map(
-        "apply_to_project" -> ".seg.seg2",
+        "apply_to_graph" -> ".seg.seg2",
         "output" -> "deep_scalar",
         "expr" -> "\"deep value\""))
     val project = box("Create example graph")

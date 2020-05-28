@@ -9,7 +9,7 @@ class GrowSegmentationTest extends OperationsTestBase {
       .box("Use base graph as segmentation", Map("name" -> "seg"))
       .box(
         "Grow segmentation",
-        Map("direction" -> "in-neighbors", "apply_to_project" -> ".seg"))
+        Map("direction" -> "in-neighbors", "apply_to_graph" -> ".seg"))
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
@@ -21,7 +21,7 @@ class GrowSegmentationTest extends OperationsTestBase {
       .box("Use base graph as segmentation", Map("name" -> "seg"))
       .box(
         "Grow segmentation",
-        Map("direction" -> "out-neighbors", "apply_to_project" -> ".seg"))
+        Map("direction" -> "out-neighbors", "apply_to_graph" -> ".seg"))
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
@@ -33,7 +33,7 @@ class GrowSegmentationTest extends OperationsTestBase {
       .box("Use base graph as segmentation", Map("name" -> "seg"))
       .box(
         "Grow segmentation",
-        Map("direction" -> "all neighbors", "apply_to_project" -> ".seg"))
+        Map("direction" -> "all neighbors", "apply_to_graph" -> ".seg"))
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
@@ -45,7 +45,7 @@ class GrowSegmentationTest extends OperationsTestBase {
       .box("Use base graph as segmentation", Map("name" -> "seg"))
       .box(
         "Grow segmentation",
-        Map("direction" -> "symmetric neighbors", "apply_to_project" -> ".seg"))
+        Map("direction" -> "symmetric neighbors", "apply_to_graph" -> ".seg"))
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSeq == Seq(
