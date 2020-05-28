@@ -12,6 +12,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    and _"One-hot encode attribute"_ boxes.
  - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
  - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
+ - Renamed "project" to "graph".
 
 ### 3.2.1
 
