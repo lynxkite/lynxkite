@@ -29,7 +29,7 @@ module.exports = function(fw) {
     'segmentation copied to sub-segmentation',
     function() {
       let params = {
-        apply_to_project: '.bucketing',
+        apply_to_graph: '.bucketing',
         name: 'copy'
       };
       lib.workspace.addBox({
