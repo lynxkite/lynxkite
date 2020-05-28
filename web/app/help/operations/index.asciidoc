@@ -251,6 +251,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
+include::create-graph-in-python.asciidoc[]
+
 include::create-random-edges.asciidoc[]
 
 include::create-scale-free-random-edges.asciidoc[]
@@ -402,8 +404,6 @@ include::predict-attribute-by-viral-modeling.asciidoc[]
 include::predict-edges-with-hyperbolic-positions.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
-
-include::predict-with-a-graph-neural-network.asciidoc[]
 
 include::predict-with-gcn.asciidoc[]
 

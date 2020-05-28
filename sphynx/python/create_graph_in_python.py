@@ -1,4 +1,4 @@
-'''Run user code.'''
+'''Run user code to create a new graph.'''
 import numpy as np
 import pandas as pd
 import os
@@ -10,25 +10,9 @@ if os.environ.get('SPHYNX_CHROOT_PYTHON') == 'yes':
   op.run_in_chroot()
 
 # Load inputs.
-vs = {}
-es = {}
 scalars = types.SimpleNamespace()
-for fullname in op.inputs.keys():
-  if '.' not in fullname:
-    continue
-  parent, name = fullname.split('.')
-  if parent == 'vs':
-    vs[name] = op.input(fullname)
-  elif parent == 'es':
-    es[name] = op.input(fullname)
-  elif parent == 'scalars':
-    setattr(scalars, name, op.input_scalar(fullname))
-if 'edges-for-es' in op.inputs:
-  edges = op.input('edges-for-es')
-  es['src'] = edges.src
-  es['dst'] = edges.dst
-vs = pd.DataFrame(vs)
-es = pd.DataFrame(es)
+vs = pd.DataFrame()
+es = pd.DataFrame()
 
 # Execute user code.
 try:
@@ -44,9 +28,8 @@ except BaseException:
 
 
 def assert_no_extra(columns, name):
-  inputs = set(f['name'] for f in op.params['inputFields'] if f['parent'] == name)
   outputs = set(f['name'] for f in op.params['outputFields'] if f['parent'] == name)
-  extra = set(columns) - inputs - outputs
+  extra = set(columns) - outputs
   if extra:
     import sys
     print('Undeclared output found: ' + ', '.join(name + '.' + e for e in extra), file=sys.stderr)
@@ -54,9 +37,19 @@ def assert_no_extra(columns, name):
 
 
 assert_no_extra(vs.columns, 'vs')
-assert_no_extra(es.columns, 'es')
+assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
 assert_no_extra(scalars.__dict__.keys(), 'scalars')
 # Save outputs.
+field_names = {f['parent'] + '.' + f['name'] for f in op.params['outputFields']}
+if 'src' in es.columns and 'dst' in es.columns:
+  op.output_es('edges', np.stack([es.src, es.dst]))
+elif len(es.columns) != 0:
+  import sys
+  print("To output edges you have to set es['src'] and es['dst'].", file=sys.stderr)
+  sys.exit(1)
+else:
+  op.output_es('edges', ([], []))
+op.output_vs('vertices', len(vs))
 typenames = {
     f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 typemapping = {
