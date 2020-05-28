@@ -3,7 +3,7 @@
 const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  const state = lib.workspace.getStateView('eg0', 'project');
+  const state = lib.workspace.getStateView('eg0', 'graph');
   const name = state.left.vertexAttribute('name');
   const income = state.left.vertexAttribute('income');
   const weight = state.left.edgeAttribute('weight');
@@ -119,7 +119,7 @@ module.exports = function(fw) {
     'example graph with filters applied',
     'hard filters are applied to string vertex histogram',
     function() {
-      const filteredState = lib.workspace.getStateView('filter0', 'project');
+      const filteredState = lib.workspace.getStateView('filter0', 'graph');
       const filteredName = filteredState.left.vertexAttribute('name');
       expect(filteredName.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
@@ -131,7 +131,7 @@ module.exports = function(fw) {
     'example graph with filters applied',
     'hard filters are applied to double edge histogram',
     function() {
-      const filteredState = lib.workspace.getStateView('filter0', 'project');
+      const filteredState = lib.workspace.getStateView('filter0', 'graph');
       const filteredWeight = filteredState.left.edgeAttribute('weight');
       expect(filteredWeight.getHistogramValues()).toEqual([
         { title: '2.00-2.00', size: 100, value: 1 },
@@ -148,7 +148,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'add-attr', name: 'Add constant vertex attribute', x: 100, y: 200,
         after: 'create-vertices', params: { name: 'c' } });
-      const state = lib.workspace.openStateView('add-attr', 'project');
+      const state = lib.workspace.openStateView('add-attr', 'graph');
       expect(state.left.vertexAttribute('c').getHistogramValues(true))
         .toEqual([
           { title: '1.00-1.00', size: 100, value: 123456 },

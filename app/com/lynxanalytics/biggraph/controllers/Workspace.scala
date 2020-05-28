@@ -374,7 +374,7 @@ case class BoxOutputState(
   def projectState: CommonProjectState = {
     import CommonProjectState._
     success.check()
-    assert(isProject, s"Tried to access '$kind' as 'project'.")
+    assert(isProject, s"Tried to access '$kind' as 'graph'.")
     state.get.as[CommonProjectState]
   }
 
