@@ -1,13 +1,11 @@
-# Graph box outputs
+# Graphs
 
-A graph box output is a rich box output type that represents the base graph and its segmentations
-in one bundle. The <<state-popups,state popup>> for a graph output shows basic information about the base graph,
-such as the number of vertices and edges. It lists the scalars, attributes, and segmentations.
-Scalar values are displayed, attribute histograms are available on click, and segmentations can be
-opened to dig deeper.
-
-A remark to avoid some confusion: we usually use the word _graph_ for graph box outputs
-and also for referring to the base graph.
+We use the word graph for a rich box output type that represents the base graph
+and its segmentations in one bundle. The <<state-popups,state popup>> for a graph
+shows basic information about the base graph, such as the number of vertices and edges.
+It lists the scalars, attributes, and segmentations. Scalar values are displayed,
+attribute histograms are available on click, and segmentations can be opened to
+dig deeper.
 
 include::scalars.asciidoc[]
 

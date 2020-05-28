@@ -1,6 +1,6 @@
 ## Segmentations
 
-Segmentations are connected sub-graphs. The segmentation of a graph is another graph.
+The segmentation of a graph is another graph.
 The vertices of the segmentation are also called "segments".
 A set of edges exists between the base graph and its segmentation, representing membership
 in a segment. (To distinguish these special edges we also call them "links".)

@@ -92,13 +92,13 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val p2 = allStates(sql.output("table"))
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
-    assert(ex1.getMessage == "Input project of box pr1 is not connected.")
+    assert(ex1.getMessage == "Input graph of box pr1 is not connected.")
     assert(ex2.getMessage == """Inputs one, two of box sql have errors:
-  one: Input project of box pr2 has an error:
-    project: Input project of box pr1 is not connected.
-  two: Input project of box pr3 has an error:
-    project: Input project of box pr2 has an error:
-      project: Input project of box pr1 is not connected.""")
+  one: Input graph of box pr2 has an error:
+    graph: Input graph of box pr1 is not connected.
+  two: Input graph of box pr3 has an error:
+    graph: Input graph of box pr2 has an error:
+      graph: Input graph of box pr1 is not connected.""")
   }
 
   test("long errors") {
@@ -113,16 +113,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val allStates = context(ws).allStates
     val p = allStates(copy3.output("graph"))
     val ex = intercept[AssertionError] { p.project }
-    assert(ex.getMessage == """Inputs project, scalar of box copy3 have errors:
-  project: Inputs project, scalar of box copy2 have errors:
-    project: Inputs project, scalar of box copy1 have errors:
-      project: Unconnected
+    assert(ex.getMessage == """Inputs graph, scalar of box copy3 have errors:
+  graph: Inputs graph, scalar of box copy2 have errors:
+    graph: Inputs graph, scalar of box copy1 have errors:
+      graph: Unconnected
       scalar: Unconnected
-    scalar: Inputs project, scalar of box copy1 have errors:
-      project: Unconnected
+    scalar: Inputs graph, scalar of box copy1 have errors:
+      graph: Unconnected
       scalar: Unconnected
 ...
-      project: Unconnected
+      graph: Unconnected
       scalar: Unconnected""")
   }
 
