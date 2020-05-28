@@ -113,26 +113,26 @@ class TestTutorial3(TutorialTestCase):
     cls.init_outputs(
         'tutorial-03-test.yaml',
         ('03_Airlines_Vertex.csv', '03_Airlines_Edge.csv'))
-    cls.DATA_SQL_1_3 = [['3621', 'Americas'],
-                        ['3320', 'South-Asia/East-Africa'],
-                        ['3585', 'Americas'],
+    cls.DATA_SQL_1_3 = [['49', 'Americas'],
+                        ['100', 'Americas'],
+                        ['146', 'Americas'],
+                        ['156', 'Americas'],
+                        ['178', 'Americas'],
                         ['193', 'Americas'],
-                        ['507', 'Americas'],
-                        ['3645', 'Americas'],
-                        ['2276', 'China/East-Asia'],
-                        ['3386', 'China/East-Asia'],
-                        ['3199', 'China/East-Asia'],
-                        ['3369', 'China/East-Asia']]
-    cls.DATA_SQL_1_4 = [['1824', '3550'],
-                        ['3992', '3077'],
-                        ['2082', '2170'],
-                        ['3861', '3670'],
-                        ['1107', '340'],
-                        ['2372', '3388'],
-                        ['3395', '6392'],
-                        ['146', '580'],
-                        ['3878', '1852'],
-                        ['3520', '3793']]
+                        ['210', 'Europe/West-Africa'],
+                        ['287', 'Europe/West-Africa'],
+                        ['302', 'Europe/West-Africa'],
+                        ['340', 'Europe/West-Africa']]
+    cls.DATA_SQL_1_4 = [['49', '100'],
+                        ['49', '146'],
+                        ['49', '156'],
+                        ['49', '178'],
+                        ['49', '193'],
+                        ['49', '507'],
+                        ['49', '3462'],
+                        ['49', '3469'],
+                        ['49', '3484'],
+                        ['49', '3494']]
 
   def test_convert_vertex_attributes_to_position_2(self):
     scalars = self.get_project_scalars(
