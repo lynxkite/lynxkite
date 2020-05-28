@@ -18,7 +18,7 @@ module.exports = function(fw) {
     'segmentation by double created',
     'segmentation opens',
     function() {
-      const state = lib.workspace.openStateView('segment-op', 'project');
+      const state = lib.workspace.openStateView('segment-op', 'graph');
       state.left.openSegmentation('bucketing');
       expect(state.right.segmentCount()).toEqual(2);
       state.close();
@@ -42,7 +42,7 @@ module.exports = function(fw) {
     'segmentation copied to sub-segmentation',
     'sub-segmentation can be opened',
     function() {
-      const state = lib.workspace.openStateView('copy-op', 'project');
+      const state = lib.workspace.openStateView('copy-op', 'graph');
       state.left.openSegmentation('bucketing');
       state.right.openSegmentation('copy');
 
@@ -68,7 +68,7 @@ module.exports = function(fw) {
         after: 'copy-op', params: { name: 'bucketing' } });
     },
     function() {
-      const state = lib.workspace.openStateView('discard-segment', 'project');
+      const state = lib.workspace.openStateView('discard-segment', 'graph');
       expect(state.left.segmentation('bucketing').isPresent()).toBe(false);
       state.close();
     });
@@ -82,7 +82,7 @@ module.exports = function(fw) {
         after: 'eg0', params: { name: 'self' } });
     },
     function() {
-      const state = lib.workspace.openStateView('copy', 'project');
+      const state = lib.workspace.openStateView('copy', 'graph');
       state.left.openSegmentation('self');
       expect(state.right.getValue('segment-count')).toBe(4);
       expect(state.right.getValue('total-segment-size')).toBe(4);
@@ -99,7 +99,7 @@ module.exports = function(fw) {
         after: 'copy', params: { 'filterva_income': '*' } });
     },
     function() {
-      const state = lib.workspace.openStateView('filter-op', 'project');
+      const state = lib.workspace.openStateView('filter-op', 'graph');
       state.left.openSegmentation('self');
       expect(state.right.getValue('segment-count')).toBe(4);
       expect(state.right.getValue('total-segment-size')).toBe(2);

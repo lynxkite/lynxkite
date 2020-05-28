@@ -22,8 +22,8 @@ module.exports = function(fw) {
       });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL2', x: 700, y: 100 });
-      lib.workspace.connectBoxes('fba', 'project', 'sql', 'one');
-      lib.workspace.connectBoxes('cpr', 'project', 'sql', 'two');
+      lib.workspace.connectBoxes('fba', 'graph', 'sql', 'one');
+      lib.workspace.connectBoxes('cpr', 'graph', 'sql', 'two');
       lib.workspace.editBox('sql', { sql: `select ov.ordinal, ov.degree, tv.page_rank
 from \`one.vertices\` as ov inner join \`two.vertices\` as tv
 on ov.ordinal = tv.ordinal

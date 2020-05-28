@@ -9,7 +9,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
       const table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
@@ -136,7 +136,7 @@ module.exports = function(fw) {
           output: 'new_attr',
         }
       });
-      lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('new_attr', 'graph', 'sql', 'input');
       table = lib.workspace.openStateView('sql', 'table');
       table = runSQL('select new_attr from vertices');
       table.clickColumn('new_attr');
@@ -151,7 +151,7 @@ module.exports = function(fw) {
         ]);
       table.close();
       lib.workspace.deleteBoxes(['new_attr']);
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
     });
 
@@ -169,7 +169,7 @@ module.exports = function(fw) {
         id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300 });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 400 });
-      lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('copy', 'graph', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
       const table = runSQL(
         'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
@@ -182,7 +182,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
     }, function() {
       const se = lib.workspace.openBoxEditor('sql');
       const tableBrowser = se.getTableBrowser();
@@ -220,8 +220,8 @@ module.exports = function(fw) {
       lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL2', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'one');
-      lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'one');
+      lib.workspace.connectBoxes('eg1', 'graph', 'sql', 'two');
     }, function() {
       const se = lib.workspace.openBoxEditor('sql');
       const tableBrowser = se.getTableBrowser();

@@ -1,4 +1,4 @@
-Use base graph as segmentation### Grow segmentation
+### Grow segmentation
 
 Grows the segmentation along edges of the parent graph.
 
