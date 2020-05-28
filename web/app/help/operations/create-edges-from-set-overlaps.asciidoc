@@ -8,7 +8,7 @@ Connects segments with large enough overlaps.
 Communities are generated as a set of vertices, with no edges between them. But you
 may be interested in looking for some structure there, to see which
 communities are connected to others. You can generate edges between
-the communities by looking at how many vertices of the base project they have in common.
+the communities by looking at how many vertices of the base graph they have in common.
 
 *Parameters*
 

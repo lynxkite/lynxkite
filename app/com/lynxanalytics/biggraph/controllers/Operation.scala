@@ -189,7 +189,7 @@ object Operation {
         }
       }
       def segmentationsRecursively: List[FEOption] =
-        List(FEOption("", "Main project")) ++
+        List(FEOption("", "Main graph")) ++
           FEOption.list(
             segmentationsRecursively(project.rootEditor)
               .toList

@@ -5,7 +5,7 @@ attribute is not defined are discarded. Aggregations can be specified for how to
 the attributes, which may be different among the merged vertices. Any edge that connected two
 vertices that are merged will become a loop.
 
-Merge vertices by attributes might create parallel links between the base projects
+Merge vertices by attributes might create parallel links between the base graph
 and its segmentations. If it is important that there are no such parallel links
 (e.g. when performing aggregations to and from segmentations),
 make sure to run the <<merge-parallel-segmentation-links, Merge parallel segmentation links>>

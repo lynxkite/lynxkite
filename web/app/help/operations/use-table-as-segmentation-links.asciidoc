@@ -1,16 +1,16 @@
 ### Use table as segmentation links
 
-Import the connection between the main project and this segmentation from a table.
+Import the connection between the main graph and this segmentation from a table.
 Each row in the table represents a connection between one base vertex and one segment.
 
 ====
 include::{g}[tag=table-import]
 
-[p-base_id_attr]#Identifying vertex attribute in base project#::
+[p-base_id_attr]#Identifying vertex attribute in base graph#::
 The `String` vertex attribute that can be joined to the identifying column in the table.
 
-[p-base_id_column]#Identifying column for base project#::
-The table column that can be joined to the identifying attribute on the base project.
+[p-base_id_column]#Identifying column for base graph#::
+The table column that can be joined to the identifying attribute on the base graph.
 
 [p-seg_id_attr]#Identifying vertex attribute in segmentation#::
 The `String` vertex attribute that can be joined to the identifying column in the table.

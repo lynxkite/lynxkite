@@ -56,10 +56,10 @@ Restrictions narrow down the potential set of candidates that will be
 chosen when you click on the _Pick_ button. They have the same syntax as
 filters. (See <<Filter by attributes>>.) There are two ways to specify them:
 
-Use project attribute filters::
+Use graph attribute filters::
 (Default.) Use the currently set vertex attribute filters as restrictions.
 Use custom restrictions::
-Manually enter restrictions. When switching to this mode, the project filters
+Manually enter restrictions. When switching to this mode, the graph filters
 are automatically copied into the custom restriction list, which can be edited then.
 
 After picking one set of centers with the _Pick_ button the button is replaced by the _Next_ button.

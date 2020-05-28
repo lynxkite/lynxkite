@@ -65,7 +65,7 @@ object Categories {
   val WorkflowOperations =
     Category("Workflow", "blue", icon = "cogs", index = idx)
   val ManageProjectOperations =
-    Category("Manage project", "blue", icon = "wrench", index = idx)
+    Category("Manage graph", "blue", icon = "wrench", index = idx)
   val VisualizationOperations =
     Category("Visualization operations", "purple", icon = "eye", index = idx)
   val ExportOperations =

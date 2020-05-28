@@ -1,13 +1,13 @@
 ### SQL1
 
-Executes a SQL query on a single input, which can be either a project or a table. Outputs a table.
+Executes a SQL query on a single input, which can be either a graph or a table. Outputs a table.
 If the input is a table, it is available in the query as `input`. For example:
 
 ```
 select * from input
 ```
 
-If the input is a project, its internal tables are available directly.
+If the input is a graph, its internal tables are available directly.
 
 :prefix:
 :maybe-tick:
