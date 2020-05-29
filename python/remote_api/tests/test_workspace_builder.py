@@ -10,8 +10,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_one_box_ws(self):
     lk = lynx.kite.LynxKite()
     # Using explicit output name for test.
-    project = lk.createExampleGraph()['project'].get_project()
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    graph = lk.createExampleGraph()['graph'].get_graph()
+    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 4.0)
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')
@@ -21,7 +21,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     s = lk.createVertices(size=6)
     res = lk.get_state_id(s)
     scalars = {s.title: lk.get_scalar(s.id)
-               for s in lk.createVertices(size=6).get_project().scalars}
+               for s in lk.createVertices(size=6).get_graph().scalars}
     self.assertEqual(scalars['!vertex_count'].double, 6.0)
 
   def test_simple_chain(self):
@@ -48,8 +48,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
     new_edges = eg.sql('select * from edges where edge_weight > 1')
     new_graph = lk.useTableAsEdges(
         eg, new_edges, attr='id', src='src_id', dst='dst_id')
-    project = new_graph.get_project()
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    graph = new_graph.get_graph()
+    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 3.0)
 
@@ -84,9 +84,9 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()
-    project = lk.createExampleGraph().deriveScalar(
-        output='pi', expr=pp('${2+1.14}')).get_project()
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    graph = lk.createExampleGraph().deriveScalar(
+        output='pi', expr=pp('${2+1.14}')).get_graph()
+    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
     self.assertEqual(scalars['pi'].string, '3.14')
 
   def parametric_ws(self):
