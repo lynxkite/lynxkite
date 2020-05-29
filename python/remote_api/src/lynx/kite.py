@@ -563,11 +563,11 @@ class LynxKite:
   def change_acl(self, file: str, readACL: str, writeACL: str):
     '''Sets the read and write access control list for a path in LynxKite.'''
     return self._send('/remote/changeACL',
-                      dict(project=file, readACL=readACL, writeACL=writeACL))
+                      dict(graph=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
     '''List the objects in a directory, with their names, types, notes,
-    and other optional data about projects.'''
+    and other optional data about graphs.'''
 
     return self._send('/remote/list', dict(path=dir)).entries
 
@@ -679,7 +679,7 @@ class LynxKite:
   def get_scalar(self, guid: str) -> types.SimpleNamespace:
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
 
-  def get_project(self, state: str, path: str = '') -> types.SimpleNamespace:
+  def get_graph(self, state: str, path: str = '') -> types.SimpleNamespace:
     return self._ask('/ajax/getProjectOutput', dict(id=state, path=path))
 
   def get_export_result(self, state: str) -> types.SimpleNamespace:
@@ -908,9 +908,9 @@ class State:
     '''Returns the "raw" table data if this state is a table.'''
     return self.box.lk.get_table_data(self.box.lk.get_state_id(self), limit)
 
-  def get_project(self) -> types.SimpleNamespace:
-    '''Returns the project metadata if this state is a project.'''
-    return self.box.lk.get_project(self.box.lk.get_state_id(self))
+  def get_graph(self) -> types.SimpleNamespace:
+    '''Returns the graph metadata if this state is a graph.'''
+    return self.box.lk.get_graph(self.box.lk.get_state_id(self))
 
   def get_progress(self):
     '''Returns progress info about the state.'''
