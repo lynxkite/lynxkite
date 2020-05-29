@@ -79,18 +79,18 @@ class TestWorkspace(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
     self.assertEqual(1, len(outputs))
-    o = outputs['eg0', 'project']
+    o = outputs['eg0', 'graph']
     self.assertEqual(o.boxOutput.boxId, 'eg0')
-    self.assertEqual(o.boxOutput.id, 'project')
-    self.assertEqual(o.kind, 'project')
+    self.assertEqual(o.boxOutput.id, 'graph')
+    self.assertEqual(o.kind, 'graph')
     self.assertTrue(o.success.enabled)
 
   def test_state_access(self):
     lk = lynx.kite.LynxKite()
     outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
-    state = outputs['eg0', 'project'].stateId
-    project = lk.get_project(state)
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    state = outputs['eg0', 'graph'].stateId
+    graph = lk.get_graph(state)
+    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 4.0)
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')
@@ -122,7 +122,7 @@ class TestWorkspace(unittest.TestCase):
   def test_save_snapshot(self):
     lk = lynx.kite.LynxKite()
     outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
-    state = outputs['eg0', 'project'].stateId
+    state = outputs['eg0', 'graph'].stateId
     lk.remove_name('save_snapshot_test', force=True)
     lk.save_snapshot('save_snapshot_test', state)
     entries = lk.list_dir('')

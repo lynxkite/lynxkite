@@ -4,12 +4,12 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
-  test("Project union") {
+  test("Graph union") {
     val a = box("Create example graph")
     val b = box("Create example graph")
       .box("Rename vertex attributes", Map("change_age" -> "newage"))
       .box("Rename edge attributes", Map("change_comment" -> "newcomment"))
-    val union = box("Project union", Map("id_attr" -> "new_id"), Seq(a, b))
+    val union = box("Graph union", Map("id_attr" -> "new_id"), Seq(a, b))
     val project = union.project
 
     assert(project.vertexSet.rdd.count == 8)
@@ -36,11 +36,11 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     assert(eAttrs("newcomment").rdd.count == 4)
   }
 
-  test("Project union on vertex sets") {
+  test("Graph union on vertex sets") {
     val a = box("Create vertices", Map("size" -> "10"))
     val b = box("Create vertices", Map("size" -> "10"))
     val union = box(
-      "Project union",
+      "Graph union",
       Map("id_attr" -> "new_id"), Seq(a, b))
     val project = union.project
 
@@ -48,7 +48,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     assert(project.edgeBundle == null)
   }
 
-  test("Project union - useful error message (#1611)") {
+  test("Graph union - useful error message (#1611)") {
     val a = box("Create example graph")
     val b = box("Create example graph")
       .box("Rename vertex attributes", Map("change_age" -> "newage"))
@@ -56,7 +56,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
         "Add constant vertex attribute",
         Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
-      val union = box("Project union", Map("id_attr" -> "new_id"), Seq(a, b))
+      val union = box("Graph union", Map("id_attr" -> "new_id"), Seq(a, b))
       union.project
     }
     assert(ex.getMessage.contains(

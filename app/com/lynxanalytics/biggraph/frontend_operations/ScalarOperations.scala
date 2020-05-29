@@ -130,9 +130,9 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("Copy scalar from other project", List("project", "scalar"))(
+  register("Copy scalar from other graph", List("graph", "scalar"))(
     new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val them = projectInput("scalar")
       params ++= List(
         Choice("scalar", "Name of the scalar to copy", options = them.scalarList),

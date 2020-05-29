@@ -3,9 +3,9 @@
 Compares the edge sets of two segmentations and computes _precision_ and _recall_.
 In order to make this work, the edges of the both segmentation graphs should be
 matchable against each other. Therefore, this operation only allows comparing
-segmentations which were created using the <<Use base project as segmentation>> operation
-from the same project. (More precisely, a one to one correspondence is needed between
-the vertices of both segmentations and the base project.)
+segmentations which were created using the <<Use base graph as segmentation>> operation
+from the same graph. (More precisely, a one to one correspondence is needed between
+the vertices of both segmentations and the base graph.)
 
 You can use this operation for example to evaluate different colocation results against
 a reference result.

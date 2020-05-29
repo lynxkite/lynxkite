@@ -36,7 +36,7 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
     assert(seg.vertexAttributes("TZID").runtimeSafeCast[String].rdd.count == 418)
     val project = base.box(
       "Aggregate from segmentation",
-      Map("prefix" -> "timezones", "aggregate_TZID" -> "vector", "apply_to_project" -> ".timezones"))
+      Map("prefix" -> "timezones", "aggregate_TZID" -> "vector", "apply_to_graph" -> ".timezones"))
       .project
     val tzids = project.vertexAttributes("timezones_TZID_vector").runtimeSafeCast[Vector[String]]
     assert(tzids.rdd.collect.toSet == Set(

@@ -34,8 +34,8 @@ class TestWorkspaceDecorator(unittest.TestCase):
       return (lk.createVertices(size='5')
               .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
 
-    project = add_ws(a='2', b='3', c='4').get_project()
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    graph = add_ws(a='2', b='3', c='4').get_graph()
+    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
     self.assertEqual(scalars['total'].string, '9')
 
   def test_multiple_ws_decorators(self):

@@ -22,8 +22,8 @@ module.exports = function(fw) {
       });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL2', x: 700, y: 100 });
-      lib.workspace.connectBoxes('fba', 'project', 'sql', 'one');
-      lib.workspace.connectBoxes('cpr', 'project', 'sql', 'two');
+      lib.workspace.connectBoxes('fba', 'graph', 'sql', 'one');
+      lib.workspace.connectBoxes('cpr', 'graph', 'sql', 'two');
       lib.workspace.editBox('sql', { sql: `select ov.ordinal, ov.degree, tv.page_rank
 from \`one.vertices\` as ov inner join \`two.vertices\` as tv
 on ov.ordinal = tv.ordinal
@@ -61,7 +61,7 @@ order by ordinal''')`;
       lib.pythonPopup();
     },
     function() {
-      let expectedCode = `ce = lk.createRandomEdges(input_project_for_ce, degree='4')
+      let expectedCode = `ce = lk.createRandomEdges(input_graph_for_ce, degree='4')
 cpr = lk.computePageRank(ce)
 cd = lk.computeDegree(ce)`;
       lib.expectPythonCode(expectedCode);

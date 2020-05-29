@@ -1,8 +1,8 @@
-### Project union
+### Graph union
 
 The resulting graph is just a disconnected graph containing the vertices and edges of
-the two originating projects. All vertex and edge attributes are preserved. If an attribute
-exists in both projects, it must have the same data type in both.
+the two originating graphs. All vertex and edge attributes are preserved. If an attribute
+exists in both graphs, it must have the same data type in both.
 
 The resulting graph will have as many vertices as the sum of the vertex counts in the two
 source graphs. The same with the edges.
@@ -12,14 +12,14 @@ Segmentations are discarded.
 ====
 *Example use case*
 
-You have imported a call data graph in one project and a Facebook graph in another.
+You have imported two graphs: a call data graph and a Facebook graph.
 Some, but not all vertices have an email address associated with them.
 We want to merge the two graphs into a single graph that represents connections
 (either calls or Facebook friendships) between people.
 
 A simple procedure for connecting the two graphs would be the following.
 
-. Take the union of the two projects.
+. Take the union of the two graphs.
 . Use <<Merge vertices by attribute>> to combine the vertices that can be exactly matched
 based on their email address.
 . Use <<Fingerprint based on attributes>> to identify more matches based on neighborhood

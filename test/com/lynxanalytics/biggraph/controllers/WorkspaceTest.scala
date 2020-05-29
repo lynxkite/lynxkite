@@ -53,9 +53,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("pagerank on example graph") {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-    val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
+    val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("graph" -> eg.output("graph")))
     val ws = Workspace.from(eg, pr)
-    val project = context(ws).allStates(pr.output("project")).project
+    val project = context(ws).allStates(pr.output("graph")).project
     import graph_api.Scripting._
     assert(project.vertexAttributes("pagerank").rdd.values.collect.toSet == Set(
       1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
@@ -65,9 +65,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val merge = Box(
       "merge", "Merge vertices by attribute", Map("key" -> "gender"), 0, 20,
-      Map("project" -> eg.output("project")))
+      Map("graph" -> eg.output("graph")))
     val ws = Workspace.from(eg, merge)
-    val project = context(ws).allStates(merge.output("project")).project
+    val project = context(ws).allStates(merge.output("graph")).project
     assert(dataManager.get(project.scalars("!vertex_count_delta")) == -2)
   }
 
@@ -81,48 +81,48 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("errors") {
     val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map())
-    val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
-    val pr3 = pr1.copy(id = "pr3", inputs = Map("project" -> pr2.output("project")))
+    val pr2 = pr1.copy(id = "pr2", inputs = Map("graph" -> pr1.output("graph")))
+    val pr3 = pr1.copy(id = "pr3", inputs = Map("graph" -> pr2.output("graph")))
     val sql = Box(
       "sql", "SQL2", Map(), 0, 100,
-      Map("one" -> pr2.output("project"), "two" -> pr3.output("project")))
+      Map("one" -> pr2.output("graph"), "two" -> pr3.output("graph")))
     val ws = Workspace.from(pr1, pr2, pr3, sql)
     val allStates = context(ws).allStates
-    val p1 = allStates(pr1.output("project"))
+    val p1 = allStates(pr1.output("graph"))
     val p2 = allStates(sql.output("table"))
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
-    assert(ex1.getMessage == "Input project of box pr1 is not connected.")
+    assert(ex1.getMessage == "Input graph of box pr1 is not connected.")
     assert(ex2.getMessage == """Inputs one, two of box sql have errors:
-  one: Input project of box pr2 has an error:
-    project: Input project of box pr1 is not connected.
-  two: Input project of box pr3 has an error:
-    project: Input project of box pr2 has an error:
-      project: Input project of box pr1 is not connected.""")
+  one: Input graph of box pr2 has an error:
+    graph: Input graph of box pr1 is not connected.
+  two: Input graph of box pr3 has an error:
+    graph: Input graph of box pr2 has an error:
+      graph: Input graph of box pr1 is not connected.""")
   }
 
   test("long errors") {
     val input1 = Box("input1", "Input", Map(), 0, 20, Map())
-    val copy1 = Box("copy1", "Copy scalar from other project", Map(), 0, 50, Map(
-      "project" -> input1.output("input"), "scalar" -> input1.output("input")))
+    val copy1 = Box("copy1", "Copy scalar from other graph", Map(), 0, 50, Map(
+      "graph" -> input1.output("input"), "scalar" -> input1.output("input")))
     val copy2 = copy1.copy(id = "copy2", inputs = Map(
-      "project" -> copy1.output("project"), "scalar" -> copy1.output("project")))
+      "graph" -> copy1.output("graph"), "scalar" -> copy1.output("graph")))
     val copy3 = copy2.copy(id = "copy3", inputs = Map(
-      "project" -> copy2.output("project"), "scalar" -> copy2.output("project")))
+      "graph" -> copy2.output("graph"), "scalar" -> copy2.output("graph")))
     val ws = Workspace.from(input1, copy1, copy2, copy3)
     val allStates = context(ws).allStates
-    val p = allStates(copy3.output("project"))
+    val p = allStates(copy3.output("graph"))
     val ex = intercept[AssertionError] { p.project }
-    assert(ex.getMessage == """Inputs project, scalar of box copy3 have errors:
-  project: Inputs project, scalar of box copy2 have errors:
-    project: Inputs project, scalar of box copy1 have errors:
-      project: Unconnected
+    assert(ex.getMessage == """Inputs graph, scalar of box copy3 have errors:
+  graph: Inputs graph, scalar of box copy2 have errors:
+    graph: Inputs graph, scalar of box copy1 have errors:
+      graph: Unconnected
       scalar: Unconnected
-    scalar: Inputs project, scalar of box copy1 have errors:
-      project: Unconnected
+    scalar: Inputs graph, scalar of box copy1 have errors:
+      graph: Unconnected
       scalar: Unconnected
 ...
-      project: Unconnected
+      graph: Unconnected
       scalar: Unconnected""")
   }
 
@@ -131,7 +131,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace.from(eg)
       set("test-workspace", ws)
-      val id = getOutputIds("test-workspace")(eg.output("project"))
+      val id = getOutputIds("test-workspace")(eg.output("graph"))
       val o = getProjectOutput(id)
       val income = o.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
@@ -153,16 +153,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         "test-workspace",
         Workspace.from(
           eg,
-          cc.copy(inputs = Map("project" -> eg.output("project"))),
-          pr.copy(inputs = Map("project" -> cc.output("project")))))
+          cc.copy(inputs = Map("graph" -> eg.output("graph"))),
+          pr.copy(inputs = Map("graph" -> cc.output("graph")))))
       val op = getOpMeta("test-workspace", "pr")
       assert(
         op.parameters.map(_.id) ==
-          Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
+          Seq("apply_to_graph", "name", "weights", "iterations", "damping", "direction"))
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
       assert(
-        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", ".cc"))
+        op.parameters.find(_.id == "apply_to_graph").get.options.map(_.id) == Seq("", ".cc"))
     }
   }
 
@@ -172,19 +172,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
       val convert = Box(
         "convert", "Convert vertex attribute to Double",
-        Map("attr" -> "ordinal"), 0, 0, Map("project" -> blanks.output("project")))
+        Map("attr" -> "ordinal"), 0, 0, Map("graph" -> blanks.output("graph")))
       val srcs = Box(
         "srcs", "Derive vertex attribute",
         Map("output" -> "src", "expr" -> "if (ordinal == 0) \"Adam\" else \"Eve\""),
-        0, 0, Map("project" -> convert.output("project")))
+        0, 0, Map("graph" -> convert.output("graph")))
       val dsts = Box(
         "dsts", "Derive vertex attribute",
         Map("output" -> "dst", "expr" -> "if (ordinal == 0) \"Eve\" else \"Bob\""),
-        0, 0, Map("project" -> srcs.output("project")))
+        0, 0, Map("graph" -> srcs.output("graph")))
       val combine = Box(
         "combine", "Use table as edges",
         Map("attr" -> "name", "src" -> "src", "dst" -> "dst"), 0, 0,
-        Map("project" -> eg.output("project"), "table" -> dsts.output("project")))
+        Map("graph" -> eg.output("graph"), "table" -> dsts.output("graph")))
       val ws = Workspace.from(eg, blanks, convert, srcs, dsts, combine)
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "combine")
@@ -194,7 +194,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "src").get.options.map(_.id) ==
           Seq("!unset", "dst", "id", "ordinal", "src"))
-      val project = context(ws).allStates(combine.output("project")).project
+      val project = context(ws).allStates(combine.output("graph")).project
       import graph_api.Scripting._
       import graph_util.Scripting._
       assert(project.edgeBundle.countScalar.value == 2)
@@ -206,12 +206,12 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
         "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
-        0, 20, Map("project" -> eg.output("project")))
+        0, 20, Map("graph" -> eg.output("graph")))
       // use a different pagerankParams to prevent reusing the attribute computed in an earlier
       // test
       val pr = Box("pr", "Compute PageRank", pagerankParams + ("iterations" -> "3"), 0, 20,
-        Map("project" -> cc.output("project")))
-      val prOutput = pr.output("project")
+        Map("graph" -> cc.output("graph")))
+      val prOutput = pr.output("graph")
       val ws = Workspace.from(eg, cc, pr)
       set("test-workspace", ws)
       val stateIds = getOutputIds("test-workspace")
@@ -223,7 +223,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(progressBeforePR.sum > 0)
       import graph_api.Scripting._
       // trigger PR computation
-      context(ws).allStates(pr.output("project")).project.vertexAttributes(pagerankParams("name"))
+      context(ws).allStates(pr.output("graph")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(
         user,
@@ -236,7 +236,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     using("test-workspace") {
       // box with unconnected input
       val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
-      val prOutput = pr.output("project")
+      val prOutput = pr.output("graph")
       val ws = Workspace.from(pr)
       set("test-workspace", ws)
       val stateIds = getOutputIds("test-workspace")
@@ -251,11 +251,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("circular dependencies") {
     using("test-workspace") {
       val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20,
-        Map("project" -> BoxOutput("pr2", "project")))
+        Map("graph" -> BoxOutput("pr2", "graph")))
       val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20,
-        Map("project" -> BoxOutput("pr1", "project")))
+        Map("graph" -> BoxOutput("pr1", "graph")))
       val pr3 = Box("pr3", "Compute PageRank", pagerankParams, 0, 20,
-        Map("project" -> BoxOutput("pr2", "project")))
+        Map("graph" -> BoxOutput("pr2", "graph")))
       val badBoxes = List(pr1, pr2, pr3)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       set("test-workspace", Workspace.from(eg :: badBoxes: _*))
@@ -264,9 +264,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         case (boxOutput, _, success, _) => (boxOutput, success)
       }.toMap
       for (box <- badBoxes) {
-        assert(!outputs(box.output("project")).enabled)
+        assert(!outputs(box.output("graph")).enabled)
       }
-      assert(outputs(eg.output("project")).enabled)
+      assert(outputs(eg.output("graph")).enabled)
     }
   }
 
@@ -276,9 +276,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "imp", "Use table as segmentation", Map(
         "name" -> "self", "base_id_attr" -> "name",
         "base_id_column" -> "name", "seg_id_column" -> "name"), 0, 0,
-      Map("project" -> eg.output("project"), "table" -> eg.output("project")))
+      Map("graph" -> eg.output("graph"), "table" -> eg.output("graph")))
     val ws = Workspace.from(eg, imp)
-    val p = context(ws).allStates(imp.output("project")).project
+    val p = context(ws).allStates(imp.output("graph")).project
     assert(p.segmentationNames.contains("self"))
   }
 
@@ -316,17 +316,17 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val const = Box(
       "const", "Add constant vertex attribute",
-      Map("value" -> "1", "type" -> "String"), 0, 20, Map("project" -> eg.output("project")),
+      Map("value" -> "1", "type" -> "String"), 0, 20, Map("graph" -> eg.output("graph")),
       Map("name" -> "$p1 $p2"))
     val ws = Workspace(List(anchor, eg, const))
     assert(
-      context(ws).allStates(const.output("project")).project
+      context(ws).allStates(const.output("graph")).project
         .vertexAttributes.contains("def1 def2"))
     assert(
-      context(ws, "p1" -> "some1").allStates(const.output("project")).project
+      context(ws, "p1" -> "some1").allStates(const.output("graph")).project
         .vertexAttributes.contains("some1 def2"))
     assert(intercept[AssertionError] {
-      context(ws, "p3" -> "some3").allStates(const.output("project")).project
+      context(ws, "p3" -> "some3").allStates(const.output("graph")).project
     }.getMessage.contains("Unrecognized parameter: p3"))
   }
 
@@ -337,12 +337,12 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "const", "Add constant vertex attribute",
       Map("value" -> "1", "type" -> "String"),
       0, 20,
-      Map("project" -> eg.output("project")),
+      Map("graph" -> eg.output("graph")),
       Map("name" ->
         """${vertexAttributes.filter(_.typeName == "Double").map(_.name).mkString("-")}"""))
     val ws = Workspace(List(anchorBox, eg, const))
     assert(
-      context(ws).allStates(const.output("project")).project
+      context(ws).allStates(const.output("graph")).project
         .vertexAttributes.contains("age-income"))
   }
 
@@ -373,7 +373,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       Map(), 0, 20, Map("table" -> csv.output("table")),
       Map())
     val ws = Workspace(List(anchor, csv, vs))
-    val attrs = context(ws).allStates(vs.output("project")).project.vertexAttributes
+    val attrs = context(ws).allStates(vs.output("graph")).project.vertexAttributes
     assert(attrs.contains("vertexId"))
     assert(attrs.contains("name"))
     assert(attrs.contains("age"))
@@ -382,8 +382,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("compute box - project") {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-    val seg = Box("seg", "Segment by String attribute", Map(), 0, 0, Map("project" -> eg.output("project")))
-    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> seg.output("project")))
+    val seg = Box("seg", "Segment by String attribute", Map(), 0, 0, Map("graph" -> eg.output("graph")))
+    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> seg.output("graph")))
     create("test-compute-box-project")
     val ws = Workspace(List(anchor, eg, seg, compute))
     set("test-compute-box-project", ws)
@@ -394,7 +394,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("compute box - table") {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
+    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("graph")))
     val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> sql.output("table")))
     create("test-compute-box-table")
     val ws = Workspace(List(anchor, eg, sql, compute))
@@ -410,7 +410,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val sts = Box("sts", "Save to snapshot",
-      Map("path" -> "test-save-to-snapshot_snapshot"), 0, 0, Map("state" -> eg.output("project")))
+      Map("path" -> "test-save-to-snapshot_snapshot"), 0, 0, Map("state" -> eg.output("graph")))
     create("test-save-to-snapshot")
     val ws = Workspace(List(anchor, eg, sts))
     set("test-save-to-snapshot", ws)
@@ -420,7 +420,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     Await.ready(op.trigger(controller, gdc), Duration.Inf)
     val entry = DirectoryEntry.fromName("test-save-to-snapshot_snapshot")
     assert(entry.exists)
-    assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "project")
+    assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "graph")
   }
 
   test("custom box") {
@@ -429,14 +429,14 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
       val pr = Box(
         "pr", "Compute PageRank", pagerankParams - "name", 0, 0,
-        Map("project" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
+        Map("graph" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
       val outputBox = Box(
-        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("graph")))
       set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
 
       // Now use "test-custom-box" as a custom box.
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-      val cb = Box("cb", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      val cb = Box("cb", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("graph")))
       assert({
         // Relying on default parameters.
         val ws = Workspace.from(eg, cb)
@@ -458,21 +458,21 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
         val aggr = Box("aggr", "Aggregate edge attribute globally",
           Map("prefix" -> "", "aggregate_weight" -> "sum"), 0, 0,
-          Map("project" -> eg.output("project")))
+          Map("graph" -> eg.output("graph")))
         set("test-custom-box", Workspace(List(anchor, eg, aggr)))
         // We connect aggr to the inputBox instead of eg0.
         get("test-custom-box").workspace.boxes.find(_.id == "aggr").get
-          .copy(inputs = Map("project" -> inputBox.output("input")))
+          .copy(inputs = Map("graph" -> inputBox.output("input")))
       }
 
       // Let's create a custom box.
       val outputBox = Box(
-        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> aggr.output("project")))
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> aggr.output("graph")))
       set("test-custom-box", Workspace(List(anchor, inputBox, aggr, outputBox)))
 
       // Now use "test-custom-box" as a custom box.
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-      val cb1 = Box("cb1", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      val cb1 = Box("cb1", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("graph")))
       assert({
         val ws = Workspace.from(eg, cb1)
         context(ws).allStates(cb1.output("out1")).project.scalars.contains("weight_sum")
@@ -480,8 +480,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
       // Remove the comment edge attribute and see if the custom box still works.
       val dea = Box("d", "Discard edge attributes", Map("name" -> "comment"), 0, 0,
-        Map("project" -> eg.output("project")))
-      val cb2 = Box("cb2", "test-custom-box", Map(), 0, 0, Map("in1" -> dea.output("project")))
+        Map("graph" -> eg.output("graph")))
+      val cb2 = Box("cb2", "test-custom-box", Map(), 0, 0, Map("in1" -> dea.output("graph")))
       assert({
         val ws = Workspace.from(eg, dea, cb2)
         context(ws).allStates(cb2.output("out1")).project.scalars.contains("weight_sum")
@@ -489,19 +489,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
-  test("broken parameters: parametric apply_to_project with error") {
+  test("broken parameters: parametric apply_to_graph with error") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val pr = Box(
-        "pr", "Compute PageRank", pagerankParams, 0, 100, Map("project" -> eg.output("project")),
-        Map("apply_to_project" -> "$x"))
+        "pr", "Compute PageRank", pagerankParams, 0, 100, Map("graph" -> eg.output("graph")),
+        Map("apply_to_graph" -> "$x"))
       val ws = Workspace.from(eg, pr)
-      val project = context(ws).allStates(pr.output("project"))
+      val project = context(ws).allStates(pr.output("graph"))
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "pr")
-      // $x is undefined, so the value of "apply_to_project" is unavailable. It would be used for
+      // $x is undefined, so the value of "apply_to_graph" is unavailable. It would be used for
       // defining the later parameters, so those parameters are missing.
-      assert(op.parameters.map(_.id) == Seq("apply_to_project"))
+      assert(op.parameters.map(_.id) == Seq("apply_to_graph"))
       // The error is reported by marking the operation as disabled.
       // Also the output carries an error.
       assert(op.status.disabledReason.contains("not found: value x"))
@@ -516,16 +516,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         "pr", "Compute PageRank", Map(
           "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
           "direction" -> "all edges"),
-        0, 100, Map("project" -> eg.output("project")),
+        0, 100, Map("graph" -> eg.output("graph")),
         Map("iterations" -> "$x"))
       val ws = Workspace.from(eg, pr)
-      val project = context(ws).allStates(pr.output("project"))
+      val project = context(ws).allStates(pr.output("graph"))
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "pr")
       // $x is undefined, so the value of "iterations" is unavailable. No parameters depend on it,
       // so the parameter list is not affected. Everything is editable.
       assert(op.parameters.map(_.id) ==
-        Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
+        Seq("apply_to_graph", "name", "weights", "iterations", "damping", "direction"))
       // The output carries an error.
       assert(project.isError)
     }
@@ -538,7 +538,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "pr", "Compute PageRank", Map(
         "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
         "direction" -> "all edges"),
-      0, 100, Map("project" -> eg1.output("project")),
+      0, 100, Map("graph" -> eg1.output("graph")),
       Map("iterations" -> "$x"))
     val ws = Workspace.from(eg1, eg2, pr)
     val ctx = context(ws)
@@ -548,7 +548,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("import union of table snapshots") {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
+    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("graph")))
     create("import_table_snapshot")
     set("import_table_snapshot", Workspace.from(eg, sql))
     val outputs = getOutputIds("import_table_snapshot")
