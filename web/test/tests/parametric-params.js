@@ -17,7 +17,7 @@ module.exports = function(fw) {
       boxEditor.close();
     },
     function() {
-      const state = lib.workspace.openStateView('ace', 'project');
+      const state = lib.workspace.openStateView('ace', 'graph');
       const hist = state.left.edgeAttribute('weight').getHistogramValues();
       const expected = [{title: '6.00-6.00', size: 100, value: 4}];
       expect(hist).toEqual(expected);

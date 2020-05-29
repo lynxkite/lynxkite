@@ -1,10 +1,11 @@
-# Projects
+# Graphs
 
-Projects are a rich box output type that represent graphs and their segmentations in one bundle.
-The <<state-popups,state popup>> for a project output shows basic information about the graph,
-such as the number of vertices and edges. It lists the scalars, attributes, and segmentations.
-Scalar values are displayed, attribute histograms are available on click, and segmentations can be
-opened to dig deeper.
+We use the word graph for a rich box output type that represents the base graph
+and its segmentations in one bundle. The <<state-popups,state popup>> for a graph
+shows basic information about the base graph, such as the number of vertices and edges.
+It lists the scalars, attributes, and segmentations. Scalar values are displayed,
+attribute histograms are available on click, and segmentations can be opened to
+dig deeper.
 
 include::scalars.asciidoc[]
 

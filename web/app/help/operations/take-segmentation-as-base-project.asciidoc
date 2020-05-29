@@ -1,3 +1,0 @@
-### Take segmentation as base project
-
-Takes a segmentation of a project and returns the segmentation as a base project itself.

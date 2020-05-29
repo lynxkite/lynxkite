@@ -274,7 +274,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register(
     "Use table as vertex attributes", List(projectInput, "attributes"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val attributes = tableLikeInput("attributes").asProject
       params ++= List(
         Choice("id_attr", "Vertex attribute",

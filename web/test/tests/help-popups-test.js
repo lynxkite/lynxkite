@@ -12,17 +12,17 @@ module.exports = function(fw) {
     function() {
       lib.setEnablePopups(true);
       lib.splash.openNewProject('test-example');
-      var helpIcon = $('help-popup[href="project-header-buttons"]');
-      lib.expectNotElement(lib.helpPopup('project-header-buttons'));
+      var helpIcon = $('help-popup[href="graph-header-buttons"]');
+      lib.expectNotElement(lib.helpPopup('graph-header-buttons'));
       browser.actions().mouseMove(helpIcon).perform();  // hover mouse over icon
       // Popup should open after hover delay.
       lib.wait(function() {
-        return lib.helpPopup('project-header-buttons').isPresent();
+        return lib.helpPopup('graph-header-buttons').isPresent();
       });
       browser.actions().mouseMove(lib.left.side, { x: 1, y: 1 }).perform();  // move mouse away
       // Drop is not part of Angular and hiding happens on a short timeout. We need to wait.
       lib.wait(function() {
-        return lib.helpPopup('project-header-buttons').isPresent().then(
+        return lib.helpPopup('graph-header-buttons').isPresent().then(
           function(present) { return !present; });
       });
       lib.setEnablePopups(false);

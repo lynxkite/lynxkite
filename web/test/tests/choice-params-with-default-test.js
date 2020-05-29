@@ -16,7 +16,7 @@ module.exports = function(fw) {
         params: { name: 'page_rank_incoming', direction: 'incoming edges', iterations: '1' } });
     },
     function() {
-      const state = lib.workspace.openStateView('pr2', 'project');
+      const state = lib.workspace.openStateView('pr2', 'graph');
       expect(
         state.left.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
         state.left.vertexAttribute('page_rank_default').getHistogramValues());
@@ -55,7 +55,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'discard', name: 'Discard vertex attributes', x: 100, y: 200, after: 'ex'});
       const box = lib.workspace.openBoxEditor('discard').moveTo(500, 100);
-      const state = lib.workspace.openStateView('discard', 'project').moveTo(500, 400);
+      const state = lib.workspace.openStateView('discard', 'graph').moveTo(500, 400);
       function attrs() {
         return state.left.side.$$('entity[kind="vertex-attribute"]').map(e => e.getText());
       }

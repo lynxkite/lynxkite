@@ -1,0 +1,5 @@
+### Take segmentation links as base graph
+
+Replaces the current graph with the links from its base graph to the selected segmentation, represented
+as vertices. The vertices will have `base_` and `segment_` prefixed attributes generated for the
+attributes on the base graph and the segmentation respectively.

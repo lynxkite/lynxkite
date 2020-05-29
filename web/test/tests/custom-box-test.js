@@ -29,9 +29,9 @@ module.exports = function(fw) {
         id: 'cc', name: 'Compute clustering coefficient', x: 100, y: 200, after: 'pr' });
       lib.workspace.addBox({
         id: 'out', name: 'Output', x: 100, y: 300 });
-      lib.workspace.connectBoxes('cc', 'project', 'out', 'output');
+      lib.workspace.connectBoxes('cc', 'graph', 'out', 'output');
       lib.workspace.editBox('out', { name: 'out' });
-      lib.workspace.connectBoxes('in', 'input', 'pr', 'project');
+      lib.workspace.connectBoxes('in', 'input', 'pr', 'graph');
       lib.workspace.close();
     },
     function() {});
@@ -45,7 +45,7 @@ module.exports = function(fw) {
         id: 'eg', name: 'Create example graph', x: 100, y: 100 });
       lib.workspace.addBox({
         id: 'cb', name: 'custom_boxes/test-custom-box', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg', 'project', 'cb', 'in');
+      lib.workspace.connectBoxes('eg', 'graph', 'cb', 'in');
     },
     function() {});
 
@@ -79,7 +79,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.selectBox('cb');
       $('#dive-down').click();
-      let state = lib.workspace.openStateView('cc', 'project');
+      let state = lib.workspace.openStateView('cc', 'graph');
       expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
       expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(true);
       state.close();
@@ -88,7 +88,7 @@ module.exports = function(fw) {
       const cc = lib.workspace.openBoxEditor('cc');
       cc.populateOperation({ name: 'clustco' });
       cc.close();
-      state = lib.workspace.openStateView('cc', 'project');
+      state = lib.workspace.openStateView('cc', 'graph');
       expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(false);
       expect(state.left.vertexAttribute('clustco').isPresent()).toBe(true);
       state.close();
@@ -122,7 +122,7 @@ module.exports = function(fw) {
       setParametric('pr3', 'name', '${prname}_3');
 
       function checkOutput() {
-        const state = lib.workspace.openStateView('pr3', 'project');
+        const state = lib.workspace.openStateView('pr3', 'graph');
         expect(state.left.vertexAttribute('default_pr_1').isPresent()).toBe(true);
         expect(state.left.vertexAttribute('default_pr_2').isPresent()).toBe(true);
         expect(state.left.vertexAttribute('default_pr_3').isPresent()).toBe(true);
@@ -163,8 +163,8 @@ module.exports = function(fw) {
       lib.workspace.selectBoxes(['eg', 'pr2']);
       $('#save-selection-as-custom-box').click();
       lib.submitInlineInput($('#save-selection-as-custom-box-input'), 'my-custom-box');
-      lib.workspace.expectConnected('my-custom-box_1', 'project', 'pr1', 'project');
-      lib.workspace.expectConnected('my-custom-box_1', 'project-2', 'pr3', 'project');
+      lib.workspace.expectConnected('my-custom-box_1', 'graph', 'pr1', 'graph');
+      lib.workspace.expectConnected('my-custom-box_1', 'graph-2', 'pr3', 'graph');
     },
     function() {});
 

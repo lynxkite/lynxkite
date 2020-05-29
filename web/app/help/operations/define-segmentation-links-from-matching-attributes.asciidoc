@@ -1,13 +1,13 @@
 ### Define segmentation links from matching attributes
 
-Connect vertices in the base project with segments based on matching attributes.
+Connect vertices in the base graph with segments based on matching attributes.
 
-This operation can be used (among other things) to create connections between two projects once
+This operation can be used (among other things) to create connections between two graphs once
 one has been imported as a segmentation of the other.
-(See <<Use other project as segmentation>>.)
+(See <<Use other graph as segmentation>>.)
 
 ====
-[p-base_id_attr]#Identifying vertex attribute in base project#::
+[p-base_id_attr]#Identifying vertex attribute in base graph#::
 A vertex will be connected to a segment if the selected vertex attribute of the vertex
 matches the selected vertex attribute of the segment.
 

@@ -206,7 +206,7 @@ Workspace.prototype = {
           { boxId: '${ boxData.id }' });
         `);
     if (after) {
-      this.connectBoxes(after, 'project', id, 'project');
+      this.connectBoxes(after, 'graph', id, 'graph');
     }
     if (inputs) {
       for (let i = 0; i < inputs.length; ++i) {

@@ -73,7 +73,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     def addSegmentationParameters = params ++= List(
       Choice(
         "base_id_attr",
-        s"Identifying vertex attribute in base project",
+        s"Identifying vertex attribute in base graph",
         options = FEOption.list(parent.vertexAttributeNames[String].toList)),
       Choice(
         "seg_id_attr",
@@ -273,7 +273,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use base project as segmentation")(new ProjectTransformation(_) {
+  register("Use base graph as segmentation")(new ProjectTransformation(_) {
     params += Param("name", "Segmentation name", defaultValue = "self_as_segmentation")
     def enabled = project.hasVertexSet
 
@@ -290,9 +290,9 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use other project as segmentation", List("project", "segmentation"))(
+  register("Use other graph as segmentation", List("graph", "segmentation"))(
     new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val them = projectInput("segmentation")
       params += Param("name", "Segmentation's name", defaultValue = "segmentation")
       def enabled = project.hasVertexSet && them.hasVertexSet
@@ -307,7 +307,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register(
     "Use table as segmentation", List(projectInput, "table"))(
       new ProjectOutputOperation(_) {
-        override lazy val project = projectInput("project")
+        override lazy val project = projectInput("graph")
         lazy val segTable = tableLikeInput("table").asProject
         params ++= List(
           Param("name", s"Name of new segmentation"),
@@ -368,14 +368,14 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
 
   register(
     "Use table as segmentation links", List(projectInput, "links"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val links = tableLikeInput("links").asProject
       def seg = project.asSegmentation
       def parent = seg.parent
       if (project.isSegmentation) params ++= List(
         Choice(
           "base_id_attr",
-          s"Identifying vertex attribute in base project",
+          s"Identifying vertex attribute in base graph",
           options = FEOption.unset +: parent.vertexAttrList),
         Choice(
           "base_id_column",

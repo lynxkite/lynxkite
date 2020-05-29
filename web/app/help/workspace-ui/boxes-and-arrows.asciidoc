@@ -17,7 +17,7 @@ on the box opens its <<Box parameters popup>>, which allows you to set the param
 
 A box can have: inputs (on its left) and outputs (on its right).
 A box will indicate the number of boxes that can be connected to
-it and the type of the required input or output (for example: project, table).
+it and the type of the required input or output (for example: graph, table).
 
 You can add arrows to the viewport by connecting the boxes. Boxes can be connected two ways:
 

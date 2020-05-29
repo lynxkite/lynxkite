@@ -41,10 +41,10 @@ class TutorialTestCase(unittest.TestCase):
     cls.outputs = cls.lk.fetch_states(boxes)
 
   @classmethod
-  def get_project_scalars(cls, box_id, box_output_id, project_path=""):
+  def get_graph_scalars(cls, box_id, box_output_id, graph_path=""):
     state = cls.outputs[box_id, box_output_id].stateId
-    project = cls.lk.get_project(state, project_path)
-    return {s.title: cls.lk.get_scalar(s.id) for s in project.scalars}
+    graph = cls.lk.get_graph(state, graph_path)
+    return {s.title: cls.lk.get_scalar(s.id) for s in graph.scalars}
 
 
 class TestTutorial2(TutorialTestCase):
@@ -56,30 +56,30 @@ class TestTutorial2(TutorialTestCase):
         ('beno_facebook_vertices.csv', 'beno_facebook_edges.csv'))
 
   def test_graph_visualization_1(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Graph-visualization_1',
         'visualization')
     self.assertEqual(scalars['!vertex_count'].double, 403)
     self.assertEqual(scalars['!edge_count'].double, 3500)
 
   def test_graph_visualization_2(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Graph-visualization_2',
         'visualization')
     self.assertEqual(scalars['!vertex_count'].double, 402)
     self.assertEqual(scalars['!edge_count'].double, 3098)
 
   def test_find_infocom_communities_1(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Find-infocom-communities_1',
-        'project',
+        'graph',
         '.communities')
     self.assertEqual(scalars['!nonEmpty'].double, 37)
     self.assertEqual(scalars['!belongsToEdges'].double, 500)
     self.assertEqual(scalars['!coverage'].double, 349)
 
   def test_graph_visualization_6(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Graph-visualization_6',
         'visualization')
     self.assertEqual(scalars['!vertex_count'].double, 403)
@@ -135,29 +135,29 @@ class TestTutorial3(TutorialTestCase):
                         ['49', '3494']]
 
   def test_convert_vertex_attributes_to_position_2(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Convert-vertex-attributes-to-position_2',
-        'project')
+        'graph')
     self.assertEqual(scalars['!vertex_count'].double, 8107)
 
   def test_convert_vertex_attributes_to_position_1(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Convert-vertex-attributes-to-position_1',
-        'project')
+        'graph')
     self.assertEqual(scalars['!vertex_count'].double, 8107)
     self.assertEqual(scalars['!edge_count'].double, 67202)
 
   def test_convert_vertex_attributes_to_position_3(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Convert-vertex-attributes-to-position_3',
-        'project')
+        'graph')
     self.assertEqual(scalars['!vertex_count'].double, 262)
     self.assertEqual(scalars['!edge_count'].double, 7743)
 
   def test_find_modular_clustering_1(self):
-    scalars = self.get_project_scalars(
+    scalars = self.get_graph_scalars(
         'Find-modular-clustering_1',
-        'project',
+        'graph',
         '.modular_clusters')
     self.assertEqual(scalars['!coverage'].double, 262)
     self.assertEqual(scalars['!nonEmpty'].double, 4)

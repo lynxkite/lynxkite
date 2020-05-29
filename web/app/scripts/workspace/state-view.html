@@ -28,7 +28,7 @@
     </button>
     <button
       id="instrument-with-sql"
-      ng-show="state.kind === 'table' || state.kind === 'project'"
+      ng-show="state.kind === 'table' || state.kind === 'graph'"
       ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
       class="btn btn-default"
       ng-click="setInstrument($index, 'SQL1', {persist: 'no'})">
@@ -44,7 +44,7 @@
     </button>
     <button
       id="instrument-with-visualize"
-      ng-show="state.kind === 'project'"
+      ng-show="state.kind === 'graph'"
       ng-class="{ active: instruments[$index].operationId === 'Graph visualization' }"
       class="btn btn-default"
       ng-click="setInstrument($index, 'Graph visualization')">
@@ -78,7 +78,7 @@
 <div class="clearfix">
 <project-state-view
   state-id="lastState.stateId"
-  ng-if="lastState.kind === 'project'">
+  ng-if="lastState.kind === 'graph'">
 </project-state-view>
 <export-result
   state-id="lastState.stateId"

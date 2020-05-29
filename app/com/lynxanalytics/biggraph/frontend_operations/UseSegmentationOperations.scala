@@ -17,7 +17,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Copy edges to base project")(new ProjectTransformation(_) with SegOp {
+  register("Copy edges to base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     override def visibleScalars =
       if (project.isSegmentation && project.edgeBundle != null) {
@@ -139,7 +139,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Link project and segmentation by fingerprint")(new ProjectTransformation(_) with SegOp {
+    "Link base graph and segmentation by fingerprint")(new ProjectTransformation(_) with SegOp {
       def addSegmentationParameters = params ++= List(
         NonNegInt("mo", "Minimum overlap", default = 1),
         Ratio("ms", "Minimum similarity", defaultValue = "0.0"),

@@ -52,18 +52,18 @@ Instruments are not saved into the workspace. But they are built from regular bo
 calculations can always be reproduced using conventional boxes.
 
 
-### Project state
+### Graph state
 
 [.popup]
 image::images/project-state.png[Project state screenshot]
 
-A "project" is a rich type that represents graphs and their segmentations in one bundle. The popup
-for a project output shows basic information about the graph, such as the number of vertices and
-edges. It lists the scalars, attributes, and segmentations. Scalar values are displayed, attribute
+We use the word graph for a rich type that represents the base graph
+and its segmentations in one bundle. The popup for a graph shows basic information
+about the base graph, such as the number of vertices and edges. It lists the scalars,
+attributes, and segmentations. Scalar values are displayed, attribute
 histograms are available on click, and segmentations can be opened to dig deeper.
 
-The <<Projects>> chapter gives a more in-depth description of projects.
-
+The <<Graphs>> chapter gives a more in-depth description of graphs.
 
 ### Table state
 
@@ -71,7 +71,7 @@ The <<Projects>> chapter gives a more in-depth description of projects.
 image::images/table-state.png[Table state screenshot]
 
 Tables are the same in LynxKite as in relational databases and spreadsheet programs: they are a
-matrix of columns and rows. Tables are the input and output of SQL queries. Projects can be built
+matrix of columns and rows. Tables are the input and output of SQL queries. Graphs can be built
 from tables via <<Use table as vertices>>, <<Use table as edges>>, and similar operations.
 
 

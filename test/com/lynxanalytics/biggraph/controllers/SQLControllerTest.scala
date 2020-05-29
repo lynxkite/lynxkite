@@ -25,7 +25,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -40,7 +40,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on edges") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -55,7 +55,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on edge_attributes") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -70,7 +70,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with subquery on edges") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -91,7 +91,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val egSeg = box("Create example graph").box(
       "Segment by String attribute",
       Map("name" -> "gender_seg", "attr" -> "gender"))
-    egSeg.snapshotOutput("test_dir/people", "project")
+    egSeg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -106,7 +106,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices from root directory") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -121,7 +121,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices with attribute name quoted with backticks") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
         directory = "test_dir",
@@ -135,7 +135,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with upper case snapshot name") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/PEOPLE", "project")
+    eg.snapshotOutput("test_dir/PEOPLE", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -150,7 +150,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with dot in the folder name") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "project")
+    eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -169,7 +169,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph").box(
       "Rename vertex attributes",
       Map("change_name" -> "NAME"))
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -184,7 +184,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("Export result of global SQL box") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val dfSpec = TableSpec.global(
       directory = "test_dir",
