@@ -854,14 +854,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             if (side.hasParent()) {
               if (side.isParentFilteredToSegment(id)) {
                 actions.push({
-                  title: 'Stop filtering base project to this segment',
+                  title: 'Stop filtering base graph to this segment',
                   callback: function() {
                     side.deleteParentsSegmentFilter();
                   },
                 });
               } else {
                 actions.push({
-                  title: 'Filter base project to this segment',
+                  title: 'Filter base graph to this segment',
                   callback: function() {
                     side.filterParentToSegment(id);
                   },
