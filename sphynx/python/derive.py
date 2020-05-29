@@ -54,7 +54,7 @@ def assert_no_extra(columns, name):
 
 
 assert_no_extra(vs.columns, 'vs')
-assert_no_extra(es.columns, 'es')
+assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
 assert_no_extra(scalars.__dict__.keys(), 'scalars')
 # Save outputs.
 typenames = {
