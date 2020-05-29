@@ -226,7 +226,7 @@ def create_edges_from_cooccurrence(find_maximal_cliques):
 @bdtest()
 def self_segmentation(random_attributes):
   edgeless = LK.discardEdges(random_attributes)
-  s = LK.useBaseProjectAsSegmentation(edgeless, name='segmentation')
+  s = LK.useBaseGraphAsSegmentation(edgeless, name='segmentation')
   return s
 
 
@@ -346,8 +346,8 @@ def replace_edges_with_triadic_closure(filter_high_degree_vertices_1000):
 
 
 @bdtest()
-def project_union(graph):
-  return LK.projectUnion(graph, graph)
+def graph_union(graph):
+  return LK.graphUnion(graph, graph)
 
 
 @bdtest()

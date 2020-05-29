@@ -31,7 +31,7 @@ Computing find_modular_clustering took 438.83 seconds
 Computing compute_pagerank took 35.58 seconds
 Computing create_snowball_sample took 9.95 seconds
 Computing replace_edges_with_triadic_closure took 79.66 seconds
-Computing project_union took 64.64 seconds
+Computing graph_union took 64.64 seconds
 Computing weighted_aggregate_edge_attribute_to_vertices took 12.44 seconds
 Computing weighted_aggregate_on_neighbors took 12.84 seconds
 Computing scala took 2.36 seconds
