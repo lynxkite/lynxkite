@@ -47,7 +47,8 @@ $(pip): python_requirements.txt
 	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/impact-analyzer-pipeline-test-passed: \
-  $(shell $(find) standard-pipelines/impact-analyzer)
+		$(shell $(find) standard-pipelines/impact-analyzer) \
+		impact-analyzer-dashboard/server/src/configChecker.ts
 	standard-pipelines/impact-analysis/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
 	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
