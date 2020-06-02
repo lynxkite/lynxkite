@@ -1,8 +1,0 @@
-### Discard scalars
-
-Throws away scalar values.
-
-====
-[p-name]#Name#::
-The scalars to discard.
-====

@@ -130,14 +130,14 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("Copy scalar from other graph", List("graph", "scalar"))(
+  register("Copy graph attribute from other graph", List("destination", "source"))(
     new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("graph")
-      lazy val them = projectInput("scalar")
+      override lazy val project = projectInput("destination")
+      lazy val them = projectInput("source")
       params ++= List(
-        Choice("scalar", "Name of the scalar to copy", options = them.scalarList),
+        Choice("scalar", "Name of the graph attribute to copy", options = them.scalarList),
         Param("save_as", "Save as"))
-      def enabled = FEStatus.assert(them.scalarNames.nonEmpty, "No scalars found.")
+      def enabled = FEStatus.assert(them.scalarNames.nonEmpty, "No graph attributes found.")
       def apply() = {
         val origName = params("scalar")
         val newName = params("save_as")
@@ -162,7 +162,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("Derive scalar")(new ProjectTransformation(_) {
+  register("Derive graph attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
       Code("expr", "Value", defaultValue = "", language = "scala"))
@@ -170,7 +170,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     override def summary = {
       val name = params("output")
       val expr = params("expr")
-      s"Derive scalar: $name = $expr"
+      s"Derive graph attribute: $name = $expr"
     }
     def apply() = {
       val expr = params("expr")

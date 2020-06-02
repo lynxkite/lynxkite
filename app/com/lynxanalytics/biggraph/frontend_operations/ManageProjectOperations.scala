@@ -28,15 +28,15 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Copy scalar")(new ProjectTransformation(_) {
+  register("Copy graph attribute")(new ProjectTransformation(_) {
     params ++= List(
       Choice("name", "Old name", options = project.scalarList),
       Param("destination", "New name"))
-    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
+    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No graph attributes")
     override def summary = {
       val from = params("name")
       val to = params("destination")
-      s"Copy scalar $from to $to"
+      s"Copy $from to $to"
     }
     def apply() = {
       project.newScalar(
@@ -94,12 +94,12 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Discard scalars")(new ProjectTransformation(_) {
+  register("Discard graph attributes")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.scalarList, multipleChoice = true)
     def enabled = FEStatus.enabled
     override def summary = {
       val names = params("name").replace(",", ", ")
-      s"Discard scalars: $names"
+      s"Discard $names"
     }
     def apply() = {
       for (param <- splitParam("name")) {
@@ -181,22 +181,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Rename scalar")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("before", "Old name", options = project.scalarList),
-      Param("after", "New name"))
-    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
-    override def summary = {
-      val from = params("before")
-      val to = params("after")
-      s"Rename scalar $from to $to"
-    }
-    def apply() = {
-      project.scalars(params("after")) = project.scalars(params("before"))
-      project.scalars(params("before")) = null
-    }
-  })
-
   register("Rename segmentation")(new ProjectTransformation(_) {
     params ++= List(
       Choice("before", "Old name", options = project.segmentationList),
@@ -261,6 +245,53 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
+  register("Rename graph attributes")(new ProjectTransformation(_) {
+    params += new DummyParam("text", "The new names for each attribute:")
+    params ++= project.scalarList.map {
+      s => Param(s"change_${s.id}", s.id, defaultValue = s.id)
+    }
+    def enabled = FEStatus.enabled
+    val scalarParams = params.toMap.collect {
+      case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
+    }
+    val deletedScalars = scalarParams.toMap.filter {
+      case (before, after) => after.isEmpty
+    }
+    val renamedScalars = scalarParams.toMap.filter {
+      case (before, after) => after.nonEmpty && before != after
+    }
+    override def summary = {
+      val renameStrings = renamedScalars.map {
+        case (before, after) =>
+          s"${before} to ${after}"
+      }
+      val deleteStrings = deletedScalars.keys
+      val deleteSummary =
+        if (deleteStrings.isEmpty) "" else s"Delete ${deleteStrings.mkString(", ")}"
+      val renameSummary =
+        if (renameStrings.isEmpty) ""
+        else if (deleteStrings.isEmpty) s"Rename ${renameStrings.mkString(", ")}"
+        else s" and rename ${renameStrings.mkString(", ")}"
+      deleteSummary + renameSummary
+    }
+    def apply() = {
+      deletedScalars.foreach {
+        case (before, after) => {
+          project.deleteScalar(before)
+        }
+      }
+      renamedScalars.foreach {
+        case (before, after) => {
+          project.newScalar(
+            after,
+            project.scalars(before),
+            project.viewer.getScalarNote(before))
+          project.scalars(before) = null
+        }
+      }
+    }
+  })
+
   register("Set edge attribute icons")(new ProjectTransformation(_) {
     params += new DummyParam("text", "The icons for each attribute:")
     params ++= project.edgeAttrList.map {
@@ -288,11 +319,11 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Set scalar icon")(new ProjectTransformation(_) {
+  register("Set graph attribute icon")(new ProjectTransformation(_) {
     params ++= List(
       Choice("name", "Name", options = project.scalarList),
       Param("icon", "Icon name"))
-    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
+    def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No graph attributes")
     override def summary = {
       val name = params("name")
       val icon = if (params("icon").nonEmpty) params("icon") else "nothing"

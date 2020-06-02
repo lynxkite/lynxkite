@@ -27,7 +27,7 @@ angular.module('biggraph')
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
     Side.prototype.sectionHumanName = {
-      'scalar': 'Scalars',
+      'scalar': 'Graph attributes',
       'vertex-attribute': 'Vertex attributes',
       'edge-attribute': 'Edge attributes',
       'segmentation': 'Segmentations',
@@ -102,16 +102,6 @@ angular.module('biggraph')
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
     };
-
-    Side.prototype.saveStateToBackend = function(scalarName, opFinishedCallback) {
-      this.applyOp(
-        'Save-UI-status-as-graph-attribute',
-        {
-          scalarName: scalarName,
-          uiStatusJson: this.getBackendJson(),
-        }).finally(opFinishedCallback);
-    };
-
 
     Side.prototype.updateViewData = function() {
       const vd = this.viewData || {};

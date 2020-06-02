@@ -50,8 +50,8 @@ supported:
   a plain input box in the custom box's parameters popup.
 - **Boolean:** Will appear as a true/false dropdown selection in the box parameters popup.
 - **Code:** Will appear as a multi-line code editor to the user.
-- **Vertex attribute, edge attribute, segmentation, scalar, column:** These types allow the user to
-  select an attribute, segmentation, scalar, or column of the input via a dropdown list. If the
+- **Vertex attribute, edge attribute, graph attribute, segmentation, column:** These types allow the user to
+  select an attribute, segmentation, or column of the input via a dropdown list. If the
   custom box has multiple inputs, the options belonging to all the inputs will be offered in the
   list.
 

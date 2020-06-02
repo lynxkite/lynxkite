@@ -52,11 +52,11 @@ Example: <<Copy edges to base graph>>.
 The operations in this category can change the overall graph structure by adding or
 discarding vertices and/or edges. Examples: <<Add reversed edges>>, and <<Merge vertices by attribute>>.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Scalars
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Graph attributes
 
-The operations in this category manipulate global graph attributes (aka scalars). For example, <<correlate-two-attributes>>
+The operations in this category manipulate global graph attributes. For example, <<correlate-two-attributes>>
 computes the Pearson-correlation coefficient of two attributes, and stores the result
-in a scalar.
+in a graph attribute.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-circle"></i></div></div></div>+++ Vertex attributes
 
@@ -107,7 +107,7 @@ Utility features to efficiently manage workfows. Examples: Users can add a <<Com
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage graph
 
-Utility features to manage and personalize graphs by manipulating (discarding, copying, renaming, etc.) attributes, scalars and segmentations. Example:
+Utility features to manage and personalize graphs by manipulating (discarding, copying, renaming, etc.) attributes and segmentations. Example:
 <<Rename edge attributes>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category purple"><i class="fa fa-eye"></i></div></div></div>+++ Visualization operations
@@ -231,9 +231,9 @@ include::copy-edges-to-base-graph.asciidoc[]
 
 include::copy-edges-to-segmentation.asciidoc[]
 
-include::copy-scalar-from-other-graph.asciidoc[]
+include::copy-graph-attribute-from-other-graph.asciidoc[]
 
-include::copy-scalar.asciidoc[]
+include::copy-graph-attribute.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
 
@@ -267,7 +267,7 @@ include::derive-column.asciidoc[]
 
 include::derive-edge-attribute.asciidoc[]
 
-include::derive-scalar.asciidoc[]
+include::derive-graph-attribute.asciidoc[]
 
 include::derive-vertex-attribute.asciidoc[]
 
@@ -277,7 +277,7 @@ include::discard-edges.asciidoc[]
 
 include::discard-loop-edges.asciidoc[]
 
-include::discard-scalars.asciidoc[]
+include::discard-graph-attributes.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
@@ -415,7 +415,7 @@ include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
 
 include::rename-edge-attributes.asciidoc[]
 
-include::rename-scalar.asciidoc[]
+include::rename-graph-attributes.asciidoc[]
 
 include::rename-segmentation.asciidoc[]
 
@@ -447,7 +447,7 @@ include::segment-by-vector-attribute.asciidoc[]
 
 include::set-edge-attribute-icons.asciidoc[]
 
-include::set-scalar-icon.asciidoc[]
+include::set-graph-attribute-icon.asciidoc[]
 
 include::set-segmentation-icon.asciidoc[]
 

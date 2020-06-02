@@ -52,7 +52,7 @@ object Categories {
   val StructureOperations =
     Category("Structure", "orange", icon = "asterisk", index = idx)
   val ScalarOperations =
-    Category("Scalars", "orange", icon = "globe", index = idx)
+    Category("Graph attributes", "orange", icon = "globe", index = idx)
   val VertexAttributeOperations =
     Category("Vertex attributes", "orange", icon = "circle", index = idx)
   val EdgeAttributeOperations =

@@ -9,7 +9,7 @@ https://www.google.com/get/noto/help/emoji/[Google Noto Font].
 This operation is more easily accessed from the segmentation's dropdown menu in the graph state view.
 
 ====
-[p-name]#Segmentation#::
+[p-name]#Name#::
 The segmentation to highlight.
 
 [p-icon]#Icon#::
