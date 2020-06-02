@@ -160,7 +160,7 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/go/bin/server") -> "sphynx/go/bin/server")
+  file("sphynx/go/bin/lynxkite-sphynx") -> "sphynx/go/bin/lynxkite-sphynx")
 
 
 
