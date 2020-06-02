@@ -1,9 +1,9 @@
 import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 
-name := "biggraph"
+name := "lynxkite"
 
 javaOptions in Test := Seq(
-  "-Dbiggraph.default.partitions.per.core=1",
+  "-Dlynxkite.default.partitions.per.core=1",
   "-Djava.security.policy=conf/security.policy",
   "-XX:PermSize=256M")
 

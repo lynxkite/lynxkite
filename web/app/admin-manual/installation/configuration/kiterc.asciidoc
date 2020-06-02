@@ -73,10 +73,10 @@ Specify the PID file for LynxKite servers.
 export KITE_PID_FILE=$HOME/kite.pid
 ```
 
-When set, each action performed by the biggraph script (start,stop,restart, etc.) is logged to
+When set, each action performed by the lynxkite script (start,stop,restart, etc.) is logged to
 this file.
 ```
-export KITE_SCRIPT_LOGS=$HOME/biggraph.log
+export KITE_SCRIPT_LOGS=$HOME/lynxkite.log
 ```
 
 Specify the user registry file for LynxKite servers.

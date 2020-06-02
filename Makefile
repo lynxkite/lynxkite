@@ -68,7 +68,7 @@ $(pip): python_requirements.txt
 .build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
 	impact-analyzer-dashboard/tests.sh && touch $@
 scala-dependency-licenses.md: build.sbt
-	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
+	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
 	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
 javascript-dependency-licenses.md: web/package.json
