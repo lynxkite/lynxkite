@@ -291,7 +291,7 @@ object BuiltIns {
     import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
     for ((file, json) <- loadBuiltIns(builtInsLocalDir)) {
       try {
-        val entry = DirectoryEntry.fromName("built-ins/" + file)
+        val entry = DirectoryEntry.fromName("built-ins/" + file.capitalize.replace("-", " "))
         val newWS = json.as[Workspace]
         // If the workspace from the disk is the same as the existing one, leave it alone.
         // This way we don't keep creating new checkpoints whenever LynxKite restarts.
