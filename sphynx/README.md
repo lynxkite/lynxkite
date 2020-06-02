@@ -11,7 +11,7 @@ environment variable `$SPHYNX_CERT_DIR`. If there is none, then the certificate 
 on start-up.
 
 If you want to run Sphynx alone, run
-`SPHYNX_PORT=<port> go/bin/server -keydir=<directory of cert.pem and private-key.pem files>`.
+`SPHYNX_PORT=<port> go/bin/lynxkite-sphynx -keydir=<directory of cert.pem and private-key.pem files>`.
 If no keydir is provided, then this starts a server without encryption. LynxKite
 can communicate with Sphynx only through encrypted channels, so this setup is only useful
 if you want to send requests manually. (E.g. from the command line for debugging purposes.)

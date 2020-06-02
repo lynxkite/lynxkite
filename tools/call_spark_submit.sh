@@ -321,7 +321,7 @@ stopSphynx () {
 }
 
 startSphynxForever () {
-  until go/bin/server -keydir=$SPHYNX_CERT_DIR
+  until go/bin/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
   do
     >&2 echo "Sphynx crashed with exit code $?. Restarting..."
     sleep 10
