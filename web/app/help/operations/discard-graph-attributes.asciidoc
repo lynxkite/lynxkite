@@ -1,0 +1,8 @@
+### Discard graph attributes
+
+Throws away graph attributes.
+
+====
+[p-name]#Name#::
+The graph attributes to discard.
+====

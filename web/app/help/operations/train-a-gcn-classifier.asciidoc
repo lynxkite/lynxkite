@@ -5,7 +5,7 @@ Applicable for classification problems.
 
 ====
 [p-save_as]#Save model as#::
-The resulting model will be saved as a Scalar using this name.
+The resulting model will be saved as a graph attribute using this name.
 
 [p-iterations]#Iterations#::
 Number of training iterations.

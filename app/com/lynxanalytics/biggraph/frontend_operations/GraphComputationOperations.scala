@@ -188,7 +188,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     params ++= List(
       Param("ename", "Output edge attribute name", defaultValue = "arc"),
       Param("vname", "Output vertex attribute name", defaultValue = "node"),
-      Param("pname", "The profit scalar variable", defaultValue = "profit"),
+      Param("pname", "Output graph attribute name for profit", defaultValue = "profit"),
       Param("rname", "Output vertex attribute name for the solution root points",
         defaultValue = "rootpoints"),
       Choice("edge_costs", "Cost attribute", options = project.edgeAttrList[Double]),

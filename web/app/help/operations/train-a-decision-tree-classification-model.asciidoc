@@ -11,7 +11,7 @@ parent node impurity and the weighted sum of the two child node impurities.
 https://spark.apache.org/docs/latest/mllib-decision-tree.html#basic-algorithm[More information about the parameters.]
 ====
 [p-name]#Model name#::
-The model will be stored as a scalar using this name.
+The model will be stored as a graph attribute using this name.
 
 [p-label]#Label attribute#::
 The vertex attribute the model is trained to predict.

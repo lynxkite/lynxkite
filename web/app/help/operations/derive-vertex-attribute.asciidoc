@@ -8,7 +8,7 @@ For example you can write `age * 2` to generate a new attribute
 that is the double of the _age_ attribute. Or you can write
 `if (gender == "Male") "Mr " + name else "Ms " + name` for a more complex example.
 
-You can also refer to graph attributes (aka scalars) in the Scala expression. For example,
+You can also refer to graph attributes in the Scala expression. For example,
 assuming that you have a graph attribute _income_average_,
 you can use the expression `if (income > income_average) 1.0 else 0.0` to
 identify people whose income is above average.

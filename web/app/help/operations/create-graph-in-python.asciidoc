@@ -16,11 +16,11 @@ es = pd.DataFrame({
   'dst': [1, 2, 3],
   'weight': [1, 2, 3],
 })
-scalars.band_name = 'The Amazing Alphabet'
+graph_attributes.band_name = 'The Amazing Alphabet'
 ----
 
-`scalars` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
-which makes it easy to set scalars.
+`graph_attributes` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
+which makes it easy to set graph attributes.
 
 `vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
 https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html[Pandas DataFrames].
@@ -37,13 +37,13 @@ through the _Inputs_ and _Outputs_ parameters.
 
 The currently supported types for outputs are:
 
-- `float` to create a `Double`-typed attribute or scalar.
-- `str` to create a `String`-typed attribute or scalar.
-- `np.ndarray` to create a `Vector[Double]`-typed attribute or scalar.
+- `float` to create a `Double`-typed attribute.
+- `str` to create a `String`-typed attribute.
+- `np.ndarray` to create a `Vector[Double]`-typed attribute.
 
 In the previous example we would set:
 
-- Outputs: `vs.name: str, es.weight: float, scalars.hello: str`
+- Outputs: `vs.name: str, es.weight: float, graph_attributes.hello: str`
 
 Alternatively, you can let LynxKite infer the outputs from the code.
 In this case you still need to specify the type of the outputs, but you can do so in the code
@@ -58,7 +58,7 @@ vs['name']: str = ['Alice', 'Bob', 'Cecil', 'Drew']
 es['src'] = [0, 0, 1]
 es['dst'] = [1, 2, 3]
 es['weight']: float = [1, 2, 3]
-scalars.band_name: str = 'The Amazing Alphabet'
+graph_attributes.band_name: str = 'The Amazing Alphabet'
 ----
 
 (This inference is based on simple regular expression parsing of the code and does not
@@ -81,7 +81,7 @@ vs['vector']: np.ndarray = np.eye(4, 4).tolist()
 The Python code you want to run. See the operation description for details.
 
 [p-outputs]#Outputs#::
-A comma-separated list of attributes and scalars that your code generates.
-These must be annotated with the type of the attribute or scalar.
-For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, scalars.my_new_scalar: str`.
+A comma-separated list of attributes that your code generates.
+These must be annotated with the type of the attribute.
+For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, graph_attributes.also_new: str`.
 ====
