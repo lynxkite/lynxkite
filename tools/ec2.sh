@@ -126,7 +126,7 @@ EOF
 # ======
 kite)
   # Restage and restart kite.
-  if [ ! -f "${KITE_BASE}/bin/biggraph" ]; then
+  if [ ! -f "${KITE_BASE}/bin/lynxkite" ]; then
     echo "You must run this script from inside a stage, not from the source tree!"
     exit 1
   fi
@@ -135,12 +135,12 @@ kite)
 
   rsync -ave "$SSH" -r --copy-dirlinks --exclude /logs --exclude RUNNING_PID \
     ${KITE_BASE}/ \
-    root@${HOST}:biggraphstage
+    root@${HOST}:lynxkitestage
 
   echo "Starting..."
   eval $SSH -t -t \
     root@${HOST} <<EOF
-biggraphstage/bin/biggraph restart
+lynxkitestage/bin/lynxkite restart
 exit
 EOF
 

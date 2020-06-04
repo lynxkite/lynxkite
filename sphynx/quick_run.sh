@@ -12,13 +12,13 @@ cd $(dirname $0)
 . sphynx_common.sh
 
 pushd $GOPATH/src/$GO_PKG
-go fmt $GO_PKG/server
-go get -v $GO_PKG/server
+go fmt $GO_PKG/lynxkite-sphynx
+go get -v $GO_PKG/lynxkite-sphynx
 popd
 
 mkdir -p ../stage/sphynx/go/bin/
-rm ../stage/sphynx/go/bin/server || true
-cp go/bin/server ../stage/sphynx/go/bin/
+rm ../stage/sphynx/go/bin/lynxkite-sphynx || true
+cp go/bin/lynxkite-sphynx ../stage/sphynx/go/bin/
 
-kill `pidof go/bin/server`
+kill `pidof go/bin/lynxkite-sphynx`
 # Sphynx restarts automatically.
