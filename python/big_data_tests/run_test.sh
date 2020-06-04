@@ -15,7 +15,7 @@ function download() {
     if [[ ! -d "$1" ]]; then
         mkdir $1
         aws s3 cp --recursive s3://lynxkite-test-data/$1 $1
-    fi      
+    fi
     cd ..
 }
 
@@ -43,10 +43,10 @@ PARQUET="file:${HERE}/parquet/"
 EOF
 
 export KITE_SITE_CONFIG=${HERE}/kiterc
-../../stage/bin/biggraph start
+../../stage/bin/lynxkite start
 
 function stop_kite {
-  ../../stage/bin/biggraph stop
+  ../../stage/bin/lynxkite stop
 }
 trap stop_kite EXIT
 

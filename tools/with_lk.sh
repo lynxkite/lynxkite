@@ -51,7 +51,7 @@ EOF
 
 # Start backend.
 KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
-KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../stage/bin/biggraph start
+KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../stage/bin/lynxkite start
 KITE_PID=`cat ${PID_FILE}`
 SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
 function kill_backend {
