@@ -136,7 +136,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     def enabled = project.hasEdgeBundle
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute, help)
+      project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute.asString, help)
     }
   })
 

@@ -10,30 +10,30 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 object ImportEdgesForExistingVertices extends OpFromJson {
-  class Input[A, B] extends MagicInputSignature {
+  class Input extends MagicInputSignature {
     val rows = vertexSet
-    val srcVidColumn = vertexAttribute[A](rows)
-    val dstVidColumn = vertexAttribute[B](rows)
+    val srcVidColumn = vertexAttribute[String](rows)
+    val dstVidColumn = vertexAttribute[String](rows)
     val sources = vertexSet
     val destinations = vertexSet
-    val srcVidAttr = vertexAttribute[A](sources)
-    val dstVidAttr = vertexAttribute[B](destinations)
+    val srcVidAttr = vertexAttribute[String](sources)
+    val dstVidAttr = vertexAttribute[String](destinations)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
-      inputs: Input[_, _])
+      inputs: Input)
     extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
   }
 
-  def run[A: TypeTag, B: TypeTag](
-    srcVidAttr: Attribute[A],
-    dstVidAttr: Attribute[B],
-    srcVidColumn: Attribute[A],
-    dstVidColumn: Attribute[B])(implicit m: MetaGraphManager): Output = {
+  def run(
+    srcVidAttr: Attribute[String],
+    dstVidAttr: Attribute[String],
+    srcVidColumn: Attribute[String],
+    dstVidColumn: Attribute[String])(implicit m: MetaGraphManager): Output = {
     import Scripting._
-    val op = ImportEdgesForExistingVertices[A, B]()(SerializableType[A], SerializableType[B])
+    val op = ImportEdgesForExistingVertices()
     op(
       op.srcVidColumn, srcVidColumn)(
         op.dstVidColumn, dstVidColumn)(
@@ -41,24 +41,10 @@ object ImportEdgesForExistingVertices extends OpFromJson {
             op.dstVidAttr, dstVidAttr).result
   }
 
-  def runtimeSafe[A, B](
-    srcVidAttr: Attribute[A],
-    dstVidAttr: Attribute[B],
-    srcVidColumn: Attribute[_],
-    dstVidColumn: Attribute[_])(implicit m: MetaGraphManager): Output = {
-    implicit val ta = srcVidAttr.typeTag
-    implicit val tb = dstVidAttr.typeTag
-    run(
-      srcVidAttr,
-      dstVidAttr,
-      srcVidColumn.runtimeSafeCast[A],
-      dstVidColumn.runtimeSafeCast[B])
-  }
-
-  def resolveEdges[A: reflect.ClassTag: Ordering, B: reflect.ClassTag: Ordering](
-    unresolvedEdges: UniqueSortedRDD[ID, (A, B)],
-    srcVidAttr: AttributeData[A],
-    dstVidAttr: AttributeData[B])(implicit rc: RuntimeContext): UniqueSortedRDD[ID, Edge] = {
+  def resolveEdges(
+    unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
+    srcVidAttr: AttributeData[String],
+    dstVidAttr: AttributeData[String])(implicit rc: RuntimeContext): UniqueSortedRDD[ID, Edge] = {
 
     val edgePartitioner = unresolvedEdges.partitioner.get
     val maxPartitioner = RDDUtils.maxPartitioner(
@@ -69,7 +55,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
       .assertUniqueKeys(maxPartitioner)
     val dstNameToVid = {
       if (srcVidAttr.gUID == dstVidAttr.gUID)
-        srcNameToVid.asInstanceOf[UniqueSortedRDD[B, ID]]
+        srcNameToVid.asInstanceOf[UniqueSortedRDD[String, ID]]
       else
         dstVidAttr.rdd
           .map(_.swap)
@@ -88,21 +74,15 @@ object ImportEdgesForExistingVertices extends OpFromJson {
       .sortUnique(edgePartitioner)
   }
 
-  def fromJson(j: JsValue) = {
-    val srcType = SerializableType.fromJson(j \ "srcType")
-    val dstType = SerializableType.fromJson(j \ "dstType")
-    ImportEdgesForExistingVertices()(srcType, dstType)
-  }
+  def fromJson(j: JsValue) = ImportEdgesForExistingVertices()
 }
 import ImportEdgesForExistingVertices._
-case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableType]()
-  extends SparkOperation[Input[A, B], Output] {
+case class ImportEdgesForExistingVertices()
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new Input[A, B]()
+  @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj(
-    "srcType" -> implicitly[SerializableType[A]].toJson,
-    "dstType" -> implicitly[SerializableType[B]].toJson)
+  override def toJson = Json.obj()
 
   def execute(
     inputDatas: DataSet,
@@ -137,7 +117,5 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
 // Use the new implementation, but without changing the serialized form.
 // This keeps the GUID unchanged and avoids recomputation.
 class ImportEdgeListForExistingVertexSetFromTable
-  extends ImportEdgesForExistingVertices[String, String]()(
-    SerializableType[String], SerializableType[String]) {
-  override def toJson = Json.obj()
+  extends ImportEdgesForExistingVertices() {
 }

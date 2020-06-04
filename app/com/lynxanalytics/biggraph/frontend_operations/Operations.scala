@@ -178,6 +178,14 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
+  def attrToString(attr: Attribute[_]): Attribute[String] = {
+    if (attr.is[String]) attr.runtimeSafeCast[String]
+    else if (attr.is[Long]) attr.runtimeSafeCast[Long].asString
+    else if (attr.is[Int]) attr.runtimeSafeCast[Int].asString
+    else if (attr.is[Double]) attr.runtimeSafeCast[Double].asString
+    else throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
+  }
+
   def parseAggregateParams(params: ParameterHolder) = {
     val aggregate = "aggregate_(.*)".r
     params.toMap.toSeq.collect {

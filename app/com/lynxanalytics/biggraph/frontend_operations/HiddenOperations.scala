@@ -52,7 +52,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         for ((name, attr) <- g.vertexAttributes) {
           project.newVertexAttribute(name, attr)
         }
-        project.newVertexAttribute("id", project.vertexSet.idAttribute)
+        project.newVertexAttribute("id", project.vertexSet.idAttribute.asString)
         project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       }
     })
@@ -70,7 +70,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       project.newVertexAttribute("kind", mg.vKind)
       project.newVertexAttribute("name", mg.vName)
       project.newVertexAttribute("progress", mg.vProgress)
-      project.newVertexAttribute("id", project.vertexSet.idAttribute)
+      project.newVertexAttribute("id", project.vertexSet.idAttribute.asString)
       project.edgeBundle = mg.es
       project.newEdgeAttribute("kind", mg.eKind)
       project.newEdgeAttribute("name", mg.eName)

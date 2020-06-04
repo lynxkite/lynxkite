@@ -56,7 +56,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       for ((name, attr) <- g.vertexAttributes) {
         project.newVertexAttribute(name, attr)
       }
-      project.newVertexAttribute("id", project.vertexSet.idAttribute)
+      project.newVertexAttribute("id", project.vertexSet.idAttribute.asString)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
@@ -188,19 +188,11 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   register(
     "Use table as vertices", List("table"))(factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("table").asProject
-      params += Param("id_attr", "Save internal ID as", defaultValue = "")
       def enabled = FEStatus.enabled
       def apply() = {
         project.vertexSet = vertices.vertexSet
         for ((name, attr) <- vertices.vertexAttributes) {
           project.newVertexAttribute(name, attr, "imported")
-        }
-        val idAttr = params("id_attr")
-        if (idAttr.nonEmpty) {
-          assert(
-            !project.vertexAttributes.contains(idAttr),
-            s"The input also contains a column called '$idAttr'. Please pick a different name.")
-          project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
         }
       }
     })
@@ -251,10 +243,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
         assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
         assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-        val idAttr = project.vertexAttributes(id)
-        val srcAttr = edges.vertexAttributes(src)
-        val dstAttr = edges.vertexAttributes(dst)
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        val idAttr = attrToString(project.vertexAttributes(id))
+        val srcAttr = attrToString(edges.vertexAttributes(src))
+        val dstAttr = attrToString(edges.vertexAttributes(dst))
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
           idAttr, idAttr, srcAttr, dstAttr)
         project.edgeBundle = imp.edges
         for ((name, attr) <- edges.vertexAttributes) {

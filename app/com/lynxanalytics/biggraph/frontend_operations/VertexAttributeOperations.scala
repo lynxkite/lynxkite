@@ -169,7 +169,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     def enabled = project.hasVertexSet
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      project.newVertexAttribute(params("name"), project.vertexSet.idAttribute, help)
+      project.newVertexAttribute(params("name"), project.vertexSet.idAttribute.asString, help)
     }
   })
 
