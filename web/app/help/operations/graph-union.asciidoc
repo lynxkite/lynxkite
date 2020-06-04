@@ -24,11 +24,4 @@ A simple procedure for connecting the two graphs would be the following.
 based on their email address.
 . Use <<Fingerprint based on attributes>> to identify more matches based on neighborhood
 similarity.
-
-*Parameters*
-
-[p-id_attr]#ID attribute name#::
-The internal vertex IDs change after the union. The old ID attributes are preserved, but no
-longer reflect the internal IDs. The new internal IDs will be exposed through a new attribute.
-This parameter sets the name of this new attribute.
 ====

@@ -304,7 +304,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   register("Graph union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
-    params += Param("id_attr", "ID attribute name", defaultValue = "new_id")
     def enabled = project.hasVertexSet && other.hasVertexSet
 
     def checkTypeCollision(other: ProjectViewer) = {
@@ -390,8 +389,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       for ((name, attr) <- newVertexAttributes) {
         project.newVertexAttribute(name, attr) // Clear notes.
       }
-      val idAttr = params("id_attr")
-      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
     }

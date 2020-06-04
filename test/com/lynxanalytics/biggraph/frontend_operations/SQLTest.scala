@@ -38,10 +38,10 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve"),
-      Seq(50.3, "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(2.0, "Male", 3, null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve"),
+      Seq(50.3, "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(2.0, "Male", "3", null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
   }
 
   test("edges table") {
@@ -51,14 +51,14 @@ class SQLTest extends OperationsTestBase {
       "src_income", "src_location", "src_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
-        20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Bob envies Adam", 3.0, 50.3,
-        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
-        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
-        "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve")))
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
+        20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam", "Bob envies Adam", 3.0, 50.3,
+        "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
+        "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
+        "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve")))
   }
 
   test("edge_attributes table") {
@@ -82,7 +82,7 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Adam", 0, 3.0), Seq("Eve", 0, 3.0), Seq("Bob", 0, 3.0), Seq("Isolated Joe", 3, 1.0)))
+      Seq("Adam", "0", 3.0), Seq("Eve", "0", 3.0), Seq("Bob", "0", 3.0), Seq("Isolated Joe", "3", 1.0)))
   }
 
   test("scalars table") {

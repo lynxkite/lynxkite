@@ -65,7 +65,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       }
       // Calculate sizes and ids at the end.
       result.newVertexAttribute("size", computeSegmentSizes(result))
-      result.newVertexAttribute("id", result.vertexSet.idAttribute)
+      result.newVertexAttribute("id", result.vertexSet.idAttribute.asString)
     }
   })
 
@@ -333,21 +333,21 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           assert(
             baseAttrName != FEOption.unset.id,
             "The base ID attribute parameter must be set.")
-          val baseColumn = segTable.vertexAttributes(baseColumnName)
-          val segColumn = segTable.vertexAttributes(segColumnName)
-          val baseAttr = project.vertexAttributes(baseAttrName)
+          val baseColumn = attrToString(segTable.vertexAttributes(baseColumnName))
+          val segColumn = attrToString(segTable.vertexAttributes(segColumnName))
+          val baseAttr = attrToString(project.vertexAttributes(baseAttrName))
           val segmentation = project.segmentation(params("name"))
 
           val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
           segmentation.newVertexAttribute(segColumnName, segAttr)
         }
 
-        def typedImport[A, B](
+        def typedImport(
           segmentation: SegmentationEditor,
-          baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
+          baseColumn: Attribute[String], segColumn: Attribute[String], baseAttr: Attribute[String]): Attribute[String] = {
           // Merge by segment ID to create the segments.
           val merge = {
-            val op = graph_operations.MergeVertices[B]()
+            val op = graph_operations.MergeVertices[String]()
             op(op.attr, segColumn).result
           }
           segmentation.setVertexSet(merge.segments, idAttr = "id")
@@ -355,12 +355,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           val segAttr = aggregateViaConnection(
             merge.belongsTo,
             // Use scalable aggregator.
-            AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
-          implicit val ta = baseColumn.typeTag
-          implicit val tb = segColumn.typeTag
+            AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[String]()))
           // Import belongs-to relationship as edges between the base and the segmentation.
           val imp = graph_operations.ImportEdgesForExistingVertices.run(
-            baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+            baseAttr, segAttr, baseColumn, segColumn)
           segmentation.belongsTo = imp.edges
           segAttr
         }
@@ -414,11 +412,11 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         assert(
           segAttrName != FEOption.unset.id,
           "The segmentation ID attribute parameter must be set.")
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-          parent.vertexAttributes(baseAttrName),
-          project.vertexAttributes(segAttrName),
-          links.vertexAttributes(baseColumnName),
-          links.vertexAttributes(segColumnName))
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
+          attrToString(parent.vertexAttributes(baseAttrName)),
+          attrToString(project.vertexAttributes(segAttrName)),
+          attrToString(links.vertexAttributes(baseColumnName)),
+          attrToString(links.vertexAttributes(segColumnName)))
         seg.belongsTo = imp.edges
       }
     })

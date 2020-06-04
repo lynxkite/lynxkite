@@ -24,9 +24,6 @@ A Double vertex attribute that specifies how many copies of the vertex should
 exist after the operation.
 (The Double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
 
-[p-idattr]#ID attribute name#::
-The name of the vertex attribute that will hold the new vertex ids.
-
 [p-idx]#Index attribute name#::
 The name of the attribute that will contain unique identifiers for the otherwise
 identical copies of the vertex.

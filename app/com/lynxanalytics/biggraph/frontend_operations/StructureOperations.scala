@@ -176,7 +176,6 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
   register("Split vertices")(new ProjectTransformation(_) {
     params ++= List(
       Choice("rep", "Repetition attribute", options = project.vertexAttrList[Double]),
-      Param("idattr", "ID attribute name", defaultValue = "new_id"),
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
@@ -191,7 +190,6 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
-      project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
     }
   })
 

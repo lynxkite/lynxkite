@@ -626,7 +626,7 @@ sealed trait ProjectEditor {
   }
   def setVertexSet(e: VertexSet, idAttr: String): Unit = {
     vertexSet = e
-    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e)
+    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e).asString
   }
 
   def edgeBundle = viewer.edgeBundle
