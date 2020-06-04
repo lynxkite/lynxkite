@@ -183,7 +183,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
       val op = graph_operations.SplitVertices()
-      op(op.attr, doubleAttr.asLong).result
+      op(op.attr, doubleAttr).result
     }
     def apply() = {
       val rep = params("rep")
@@ -204,7 +204,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No Double edge attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
       val op = graph_operations.SplitEdges()
-      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr).result
     }
     def apply() = {
       val rep = params("rep")

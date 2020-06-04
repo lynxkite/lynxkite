@@ -114,8 +114,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val op = graph_operations.SetOverlap(params("minOverlap").toInt)
       val res = op(op.belongsTo, seg.belongsTo).result
       project.edgeBundle = res.overlaps
-      // Long is better supported on the frontend than Int.
-      project.edgeAttributes("Overlap size") = res.overlapSize.asLong
+      project.edgeAttributes("Overlap size") = res.overlapSize
     }
   })
 

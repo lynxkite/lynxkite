@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
@@ -645,8 +646,15 @@ sealed trait ProjectEditor {
     }
   }
 
+  // Convert attr to a well-supported format.
+  private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
+    if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
+    else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
+    else attr
+  }
+
   def newVertexAttribute(name: String, attr: Attribute[_], note: String = null) = {
-    vertexAttributes(name) = attr
+    vertexAttributes(name) = supportedAttribute(attr)
     setElementNote(VertexAttributeKind, name, note)
   }
   def deleteVertexAttribute(name: String) = {
@@ -655,7 +663,7 @@ sealed trait ProjectEditor {
   }
 
   def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
-    edgeAttributes(name) = attr
+    edgeAttributes(name) = supportedAttribute(attr)
     setElementNote(EdgeAttributeKind, name, note)
   }
   def deleteEdgeAttribute(name: String) = {

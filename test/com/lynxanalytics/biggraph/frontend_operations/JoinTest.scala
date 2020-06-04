@@ -178,9 +178,6 @@ class JoinTest extends OperationsTestBase {
     val numEdges = numVertices * (numVertices - 1)
     val root = box("Create vertices", Map("size" -> s"$numVertices"))
       .box(
-        "Convert vertex attribute to Double",
-        Map("attr" -> "ordinal"))
-      .box(
         "Segment by Double attribute",
         Map("name" -> "seg", "attr" -> "ordinal", "interval_size" -> "1", "overlap" -> "no"))
       .box(
@@ -247,9 +244,6 @@ class JoinTest extends OperationsTestBase {
           "Add constant vertex attribute",
           Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
         .box("Connect vertices on attribute", Map("fromAttr" -> "const1", "toAttr" -> "const1"))
-        .box(
-          "Convert vertex attribute to Double",
-          Map("attr" -> "ordinal"))
     // Now split, filter, edges to vertices, and then filter again.
     val source = root
       .box(

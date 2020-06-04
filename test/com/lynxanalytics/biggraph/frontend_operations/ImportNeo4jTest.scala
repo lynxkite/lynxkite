@@ -89,7 +89,7 @@ class ImportNeo4jTest extends OperationsTestBase with BeforeAndAfterAll {
     val p = importNeo4j(Map(
       "node_label" -> "Person",
       "infer" -> "yes"))
-    assert(vattr[Long](p, "id") == Seq(1, 2, 3, 4, 5))
+    assert(vattr[Double](p, "id") == Seq(1, 2, 3, 4, 5))
     assert(vattr[String](p, "name") == Seq("p-1", "p-2", "p-3", "p-4", "p-5"))
     assert(vattr[Boolean](p, "alive") == Seq(false, false, false, true, true))
     assert(vattr[Double](p, "height") == Seq(1.5, 3.0, 4.5, 6.0, 7.5))
@@ -127,8 +127,8 @@ class ImportNeo4jTest extends OperationsTestBase with BeforeAndAfterAll {
     val p = importNeo4j(Map(
       "relationship_type" -> "KNOWS",
       "infer" -> "yes"))
-    assert(vattr[Long](p, "source_id$") == Seq(0, 1, 2, 3, 4))
-    assert(vattr[Long](p, "target_id$") == Seq(0, 1, 2, 3, 4))
+    assert(vattr[Double](p, "source_id$") == Seq(0, 1, 2, 3, 4))
+    assert(vattr[Double](p, "target_id$") == Seq(0, 1, 2, 3, 4))
     assert(vattr[Boolean](p, "spy") == Seq(false, false, false, true, true))
   }
 

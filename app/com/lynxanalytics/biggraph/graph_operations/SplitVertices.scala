@@ -11,21 +11,21 @@ object SplitVertices extends OpFromJson {
   class Output(
       implicit
       instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[Long]) extends MagicOutput(instance) {
+      inputs: VertexAttributeInput[Double]) extends MagicOutput(instance) {
 
     val newVertices = vertexSet
     val belongsTo = edgeBundle(
       newVertices,
       inputs.vs.entity,
       EdgeBundleProperties(isFunction = true, isEverywhereDefined = true))
-    val indexAttr = vertexAttribute[Long](newVertices)
+    val indexAttr = vertexAttribute[Double](newVertices)
   }
   def fromJson(j: JsValue) = SplitVertices()
 }
 import SplitVertices._
-case class SplitVertices() extends SparkOperation[VertexAttributeInput[Long], Output] {
+case class SplitVertices() extends SparkOperation[VertexAttributeInput[Double], Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new VertexAttributeInput[Long]
+  @transient override lazy val inputs = new VertexAttributeInput[Double]
   def outputMeta(instance: MetaGraphOperationInstance) = {
     new Output()(instance, inputs)
   }
@@ -40,9 +40,9 @@ case class SplitVertices() extends SparkOperation[VertexAttributeInput[Long], Ou
     val repetitionAttr = inputs.attr.rdd
 
     val requestedNumberOfVerticesWithIndex =
-      repetitionAttr.flatMapValues { numRepetitions => (0L until numRepetitions) }
+      repetitionAttr.flatMapValues { numRepetitions => (0.0 until numRepetitions by 1.0) }
 
-    val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
+    val partitioner = rc.partitionerForNRows(repetitionAttr.values.sum.toLong)
 
     val newIdAndOldIdAndZeroBasedIndex =
       requestedNumberOfVerticesWithIndex
