@@ -317,7 +317,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   object Direction {
     // Options suitable when edge attributes are involved.
-    val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    val attrOptions = FEOption.list("all edges", "incoming edges", "outgoing edges")
     def attrOptionsWithDefault(default: String): List[FEOption] = {
       assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
       FEOption.list(default) ++ attrOptions.filter(_.id != default)
