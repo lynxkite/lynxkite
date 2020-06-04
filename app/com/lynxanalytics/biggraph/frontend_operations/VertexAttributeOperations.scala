@@ -81,7 +81,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
       val sortKey = project.vertexAttributes(keyAttr)
       val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
-      project.newVertexAttribute(rankAttr, rank.asDouble, s"rank by $keyAttr" + help)
+      project.newVertexAttribute(rankAttr, rank, s"rank by $keyAttr" + help)
     }
   })
 

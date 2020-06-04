@@ -17,7 +17,7 @@ object SetOverlap extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
     extends MagicOutput(instance) {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
-    val overlapSize = edgeAttribute[Int](overlaps)
+    val overlapSize = edgeAttribute[Double](overlaps)
   }
   def fromJson(j: JsValue) = SetOverlap((j \ "minOverlap").as[Int])
 }
@@ -80,7 +80,7 @@ case class SetOverlap(minOverlap: Int) extends SparkOperation[Input, Output] {
     val numberedEdgesWithOverlaps = edgesWithOverlaps.randomNumbered(partitioner)
 
     output(o.overlaps, numberedEdgesWithOverlaps.mapValues(_._1))
-    output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2))
+    output(o.overlapSize, numberedEdgesWithOverlaps.mapValues(_._2.toDouble))
   }
 
   // Generates the edges for a set of sets. This is O(n^2), but the set should

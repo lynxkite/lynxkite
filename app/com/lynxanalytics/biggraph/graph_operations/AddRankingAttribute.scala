@@ -15,11 +15,11 @@ object AddRankingAttribute extends OpFromJson {
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input[_]) extends MagicOutput(instance) {
-    val ordinal = vertexAttribute[Long](inputs.vertices.entity)
+    val ordinal = vertexAttribute[Double](inputs.vertices.entity)
   }
 
   def run[T](
-    attr: Attribute[T], ascending: Boolean)(implicit m: MetaGraphManager): Attribute[Long] = {
+    attr: Attribute[T], ascending: Boolean)(implicit m: MetaGraphManager): Attribute[Double] = {
     import Scripting._
     val st = SerializableType[T](attr.typeTag)
     val op = AddRankingAttribute[T](ascending)(st)
@@ -56,7 +56,7 @@ case class AddRankingAttribute[T: SerializableType](
     val ord = implicitly[Ordering[T]]
     val sorted = swapped.sortByKey(ascending)
     val zipped = sorted.zipWithIndex()
-    val result = zipped.map { case ((key, id), idx) => id -> idx }
+    val result = zipped.map { case ((key, id), idx) => id -> idx.toDouble }
     output(o.ordinal, result.sortUnique(sortKey.partitioner.get))
   }
 }

@@ -170,13 +170,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
-      val convert = Box(
-        "convert", "Convert vertex attribute to Double",
-        Map("attr" -> "ordinal"), 0, 0, Map("graph" -> blanks.output("graph")))
       val srcs = Box(
         "srcs", "Derive vertex attribute",
         Map("output" -> "src", "expr" -> "if (ordinal == 0) \"Adam\" else \"Eve\""),
-        0, 0, Map("graph" -> convert.output("graph")))
+        0, 0, Map("graph" -> blanks.output("graph")))
       val dsts = Box(
         "dsts", "Derive vertex attribute",
         Map("output" -> "dst", "expr" -> "if (ordinal == 0) \"Eve\" else \"Bob\""),
@@ -185,7 +182,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         "combine", "Use table as edges",
         Map("attr" -> "name", "src" -> "src", "dst" -> "dst"), 0, 0,
         Map("graph" -> eg.output("graph"), "table" -> dsts.output("graph")))
-      val ws = Workspace.from(eg, blanks, convert, srcs, dsts, combine)
+      val ws = Workspace.from(eg, blanks, srcs, dsts, combine)
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "combine")
       assert(

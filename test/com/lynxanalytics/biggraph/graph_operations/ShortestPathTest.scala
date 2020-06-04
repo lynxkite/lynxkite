@@ -20,7 +20,7 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     }
     val startingDistance = DeriveScala.derive[Double](
       "if (ordinal < 3) Some(1000.0) else None",
-      Seq("ordinal" -> ordinal.asDouble.entity))
+      Seq("ordinal" -> ordinal.entity))
 
     val edgeDistance = AddConstantAttribute.run(es.idSet, 1.0)
     val distance = {
