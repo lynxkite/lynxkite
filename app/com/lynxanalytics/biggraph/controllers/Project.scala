@@ -350,6 +350,7 @@ object ProjectViewer {
     typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
+      .replace("Double", "number")
   }
 
   def feTypeName[T](e: TypedEntity[T]): String =
