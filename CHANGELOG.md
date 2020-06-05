@@ -8,6 +8,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - _"Create Graph in Python"_ box added.
  - Removed _"Predict with a graph neural network"_ operation.
+ - Removed _"Predict attribute by viral modeling"_ box. It is more flexible to do the same
+   thing through a series of more elemental boxes.
+   A built-in box ("Predict from communities"_) has been added to serve as a starting point.
  - Made it easier to use graph convolutional boxes: added _"Bundle vertex attributes into a Vector"_
    and _"One-hot encode attribute"_ boxes.
  - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
