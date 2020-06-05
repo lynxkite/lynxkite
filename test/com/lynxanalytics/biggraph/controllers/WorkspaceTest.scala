@@ -190,7 +190,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
           Seq("!unset", "age", "gender", "id", "income", "location", "name"))
       assert(
         op.parameters.find(_.id == "src").get.options.map(_.id) ==
-          Seq("!unset", "dst", "id", "ordinal", "src"))
+          Seq("!unset", "dst", "ordinal", "src"))
       val project = context(ws).allStates(combine.output("graph")).project
       import graph_api.Scripting._
       import graph_util.Scripting._

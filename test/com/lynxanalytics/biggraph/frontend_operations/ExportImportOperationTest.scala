@@ -18,15 +18,12 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import vertices as vertices
     {
       val project = eg
-        .box("Use table as vertices", Map(
-          "id_attr" -> "new_id"))
+        .box("Use table as vertices")
         .project
       assert(project.vertexSet.rdd.count == 4)
       assert(project.edgeBundle == null)
       val vAttrs = project.vertexAttributes.toMap
-      // 6 original +1 new_id
-      assert(vAttrs.size == 7)
-      assert(vAttrs("id") == vAttrs("new_id"))
+      assert(vAttrs.size == 6)
       assert(
         vAttrs("name").rdd.map(_._2).collect.toSet == Set("Adam", "Eve", "Bob", "Isolated Joe"))
     }
@@ -35,14 +32,13 @@ class ExportImportOperationTest extends OperationsTestBase {
     {
       val project = eg
         .box("Take edges as vertices")
-        .box("Use table as vertices", Map(
-          "id_attr" -> "id"))
+        .box("Use table as vertices")
         .project
       assert(project.vertexSet.rdd.count == 4)
       assert(project.edgeBundle == null)
       val vAttrs = project.vertexAttributes.toMap
-      // 2 original edge attr, 2 * 6 src and dst attributes + 1 id
-      assert(vAttrs.size == 15)
+      // 2 original edge attr, 2 * 6 src and dst attributes
+      assert(vAttrs.size == 14)
       assert(vAttrs("edge_weight").rdd.map(_._2).collect.toSet == Set(1.0, 2.0, 3.0, 4.0))
       assert(
         vAttrs("src_name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
@@ -66,8 +62,8 @@ class ExportImportOperationTest extends OperationsTestBase {
       assert(project.edgeBundle.rdd.count == 4)
       val vAttrs = project.vertexAttributes.toMap
       val eAttrs = project.edgeAttributes.toMap
-      // id, stringId
-      assert(vAttrs.size == 2)
+      // stringId
+      assert(vAttrs.size == 1)
       // 6 from base vertices, 2 from connected components
       assert(eAttrs.size == 8)
 
