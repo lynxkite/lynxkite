@@ -9,14 +9,14 @@ boxes:
       to.
 
       Change the **metric** parameter to
-      use the average or other aggregation instead
-      of the median.
+      use the median or other aggregation instead
+      of the average.
 
       Change the **minimal samples** parameter to
       ignore communities with too few known values.
     parameters: >-
       [{"kind":"vertex attribute (Double)","id":"Attribute to
-      predict","defaultValue":"","$$hashKey":"object:43381"},{"kind":"segmentation","id":"Segmentation","defaultValue":"","$$hashKey":"object:43464"},{"kind":"text","id":"Metric","defaultValue":"median","$$hashKey":"object:43790"},{"kind":"text","id":"Minimal
+      predict","defaultValue":"","$$hashKey":"object:43381"},{"kind":"segmentation","id":"Segmentation","defaultValue":"","$$hashKey":"object:43464"},{"kind":"text","id":"Metric","defaultValue":"average","$$hashKey":"object:43790"},{"kind":"text","id":"Minimal
       samples","defaultValue":"3","$$hashKey":"object:43954"}]
   parametricParameters: {}
   x: 0
