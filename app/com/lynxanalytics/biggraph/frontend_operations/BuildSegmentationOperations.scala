@@ -333,9 +333,9 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           assert(
             baseAttrName != FEOption.unset.id,
             "The base ID attribute parameter must be set.")
-          val baseColumn = attrToString(segTable.vertexAttributes(baseColumnName))
-          val segColumn = attrToString(segTable.vertexAttributes(segColumnName))
-          val baseAttr = attrToString(project.vertexAttributes(baseAttrName))
+          val baseColumn = segTable.vertexAttributes(baseColumnName).asString
+          val segColumn = segTable.vertexAttributes(segColumnName).asString
+          val baseAttr = project.vertexAttributes(baseAttrName).asString
           val segmentation = project.segmentation(params("name"))
 
           val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
@@ -413,10 +413,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           segAttrName != FEOption.unset.id,
           "The segmentation ID attribute parameter must be set.")
         val imp = graph_operations.ImportEdgesForExistingVertices.run(
-          attrToString(parent.vertexAttributes(baseAttrName)),
-          attrToString(project.vertexAttributes(segAttrName)),
-          attrToString(links.vertexAttributes(baseColumnName)),
-          attrToString(links.vertexAttributes(segColumnName)))
+          parent.vertexAttributes(baseAttrName).asString,
+          project.vertexAttributes(segAttrName).asString,
+          links.vertexAttributes(baseColumnName).asString,
+          links.vertexAttributes(segColumnName).asString)
         seg.belongsTo = imp.edges
       }
     })
