@@ -14,7 +14,7 @@ For example, it can calculate the average age per kilogram of the friends of eac
 Save the aggregated attributes with this prefix.
 
 [p-weight]#Weight#::
-The `Double` attribute to use as weight.
+The `number` attribute to use as weight.
 
 [p-direction]#Aggregate on#::
  - `incoming edges`: Aggregate across the edges coming in to each vertex.

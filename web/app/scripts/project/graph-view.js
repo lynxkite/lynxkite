@@ -603,7 +603,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (colorMeta) {
       colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
       const fullLegendTitle = legendTitle + ': ' + colorMeta.title;
-      if (colorMeta.typeName === 'Double') {
+      if (colorMeta.typeName === 'number') {
         const values = mapByAttr(siblings, colorKey, 'double');
         resultMap = doubleColorMap(values, mapName);
         const bounds = common.minmax(values);
@@ -716,17 +716,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
       let color = colorMap ? colorMap.undefined : UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
-        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // in case of numbers the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
-        color = (side.vertexAttrs.color.typeName === 'Double') ?
+        color = (side.vertexAttrs.color.typeName === 'number') ?
           colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
 
       let labelColor;
       if (labelColorAttr && vertex.attrs[labelColorAttr].defined) {
-        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // in case of numbers the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
-        labelColor = (side.vertexAttrs.labelColor.typeName === 'Double') ?
+        labelColor = (side.vertexAttrs.labelColor.typeName === 'number') ?
           labelColorMap[vertex.attrs[labelColorAttr].double] :
           labelColorMap[vertex.attrs[labelColorAttr].string];
       }

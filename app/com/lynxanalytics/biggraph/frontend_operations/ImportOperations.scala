@@ -153,7 +153,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import Neo4j")(new ImportOperation(_) {
     params ++= List(
-      Param("node_label", "Node Label"),
+      Param("node_label", "Node label"),
       Param("relationship_type", "Relationship type"),
       NonNegInt("num_partitions", "Number of partitions", default = 0),
       Choice("infer", "Infer types", options = FEOption.noyes),

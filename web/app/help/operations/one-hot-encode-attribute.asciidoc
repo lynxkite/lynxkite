@@ -1,7 +1,7 @@
 ### One-hot encode attribute
 
 Encodes a categorical `String` attribute into a https://en.wikipedia.org/wiki/One-hot[one-hot]
-`Vector[Double]`. For example, if you apply it to the `name` attribute of the example graph
+`Vector[number]`. For example, if you apply it to the `name` attribute of the example graph
 with categories `Adam,Eve,Isolated Joe,Sue`, you end up with
 
 |===

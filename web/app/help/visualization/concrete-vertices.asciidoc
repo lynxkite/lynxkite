@@ -79,7 +79,7 @@ Shows the value of the attribute as a label on the displayed vertices.
 Color::
 Colors vertices based on this attribute. A different color will be selected for each value
 of the attribute. If the attribute is numeric, the selected color will be a continuous function of
-the attribute value. This is available for `String` and `Double` attributes.
+the attribute value. This is available for `String` and `number` attributes.
 
 Opacity::
 Changes the opacity of vertices based on this attribute. The higher the value of the
@@ -100,19 +100,19 @@ Size::
 The size of vertices will be set based on this attribute. Only available for numeric attributes.
 
 Position::
-Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
+Available on attributes of type `(number, number)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
-(You can create a `(Double, Double)` from two Double attributes using the
+(You can create a `(number, number)` from two number attributes using the
 <<Convert vertex attributes to position>> operation.)
 
 Geo coordinates::
-Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
+Available on attributes of type `(number, number)`. The attribute will be interpreted as a
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
-(You can create a `(Double, Double)` attribute from two Double attributes using the
+(You can create a `(number, number)` attribute from two number attributes using the
 <<Convert vertex attributes to position>> operation.)
 
 Slider::
-Available for `Double` attributes. Adds an interactive slider to the visualization.
+Available for `number` attributes. Adds an interactive slider to the visualization.
 As you move the slider from the minimum to the maximum value of the attribute,
 the vertices change their color. Vertices below the selected value get the first color,
 vertices above the selected value get the second color.
@@ -129,7 +129,7 @@ Will show the value of the attribute as a label on each edge.
 Edge color::
 Will color edges based on this attribute. A different color will be selected for each value
 of the attribute. If the attribute is numeric, the selected color will be a continuous function of
-the attribute value. Coloring is available for `String` and `Double` attributes.
+the attribute value. Coloring is available for `String` and `number` attributes.
 
 Width::
 The width of edge will be set based on this attribute. Only available for numeric attributes.

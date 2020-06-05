@@ -7,7 +7,7 @@ model predictions are generated for all the vertices.
 The prediction is created in a new attribute named after the predicted attribute, such as
 `age_prediction`.
 
-This operation only supports `Double`-typed (numeric) attributes. You can come up with ways to
+This operation only supports `number`-typed attributes. You can come up with ways to
 map other types to numbers to include them in the prediction. For example mapping gender to `0.0`
 and `1.0` makes sense.
 

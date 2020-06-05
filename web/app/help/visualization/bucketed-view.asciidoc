@@ -13,7 +13,7 @@ If the attribute has more possible values than the number of buckets selected by
 program will show buckets for the most frequent values and creates an extra `Other` bucket for the
 rest.
 
-For `Double` attributes buckets will correspond to intervals. We split the interval `[min, max]`
+For `number` attributes buckets will correspond to intervals. We split the interval `[min, max]`
 (where `min` and `max` are the minimum and maximum values of the attribute respectively)
 into subintervals of the same length. E.g. we might end up with buckets `[0, 10)`,
 `[10, 20)`, `[20, 30]`.

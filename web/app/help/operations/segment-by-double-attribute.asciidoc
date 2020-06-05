@@ -1,6 +1,6 @@
-### Segment by Double attribute
+### Segment by numeric attribute
 
-Segments the vertices by a `Double` vertex attribute.
+Segments the vertices by a `number` vertex attribute.
 
 The domain of the attribute is split into intervals of the given size and every vertex that
 belongs to a given interval will belong to one segment. Empty segments are not created.
@@ -10,7 +10,7 @@ belongs to a given interval will belong to one segment. Empty segments are not c
 The new segmentation will be saved under this name.
 
 [p-attr]#Attribute#::
-The `Double` attribute to segment by.
+The `number` attribute to segment by.
 
 [p-interval_size]#Interval size#::
 The attribute's domain will be split into intervals of this size. The splitting always starts at

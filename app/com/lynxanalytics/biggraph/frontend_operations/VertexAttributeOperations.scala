@@ -22,7 +22,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Param("name", "Attribute name"),
       Param("value", "Value", defaultValue = "1"),
-      Choice("type", "Type", options = FEOption.list("Double", "String")))
+      Choice("type", "Type", options = FEOption.list("number", "String")))
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("name")
@@ -34,7 +34,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val value = params("value")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = (params("type") == "Double"), value)
+          isDouble = (params("type") == "number"), value)
       project.newVertexAttribute(
         params("name"), op(op.vs, project.vertexSet).result.attr, s"constant $value")
     }
@@ -85,7 +85,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Convert vertex attribute to Double")(new ProjectTransformation(_) {
+  register("Convert vertex attribute to number")(new ProjectTransformation(_) {
     def eligible =
       project.vertexAttrList[String] ++
         project.vertexAttrList[Long] ++

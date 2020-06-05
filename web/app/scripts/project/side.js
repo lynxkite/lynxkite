@@ -170,7 +170,7 @@ angular.module('biggraph')
         const edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
         if (edgeColorAttr !== undefined) {
           vd.edgeAttrs.edgeColor =
-            (edgeColorAttr.typeName === 'Double') ?
+            (edgeColorAttr.typeName === 'number') ?
               aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
         }
       }

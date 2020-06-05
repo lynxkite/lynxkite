@@ -37,9 +37,9 @@ through the _Inputs_ and _Outputs_ parameters.
 
 The currently supported types for outputs are:
 
-- `float` to create a `Double`-typed attribute.
+- `float` to create a `number`-typed attribute.
 - `str` to create a `String`-typed attribute.
-- `np.ndarray` to create a `Vector[Double]`-typed attribute.
+- `np.ndarray` to create a `Vector[number]`-typed attribute.
 
 In the previous example we would set:
 

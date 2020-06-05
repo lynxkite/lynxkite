@@ -28,7 +28,7 @@ the files in the `KITE_META/resources/shapefiles` directory. A Shapefile consist
 and `.dbf` file of the same name.
 
 [p-distance]#Distance#::
-Vertices are connected to geographical segments if within this distance. The distance has to use 
+Vertices are connected to geographical segments if within this distance. The distance has to use
 the same metric and coordinate reference system as the features within the Shapefile.
 
 [p-ignoreUnsupportedShapes]#Ignore unsupported shape types#::

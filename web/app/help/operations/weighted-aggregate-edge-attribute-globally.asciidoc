@@ -9,7 +9,7 @@ weighted by the rates across an entire call dataset.
 Save the aggregated values with this prefix.
 
 [p-weight]#Weight#::
-The `Double` attribute to use as weight.
+The `number` attribute to use as weight.
 
 include::{g}[tag=weighted-aggregators]
 ====
