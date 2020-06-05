@@ -9,7 +9,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     val b = box("Create example graph")
       .box("Rename vertex attributes", Map("change_age" -> "newage"))
       .box("Rename edge attributes", Map("change_comment" -> "newcomment"))
-    val union = box("Graph union", Map("id_attr" -> "new_id"), Seq(a, b))
+    val union = box("Graph union", Map(), Seq(a, b))
     val project = union.project
 
     assert(project.vertexSet.rdd.count == 8)
@@ -17,8 +17,8 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
-    // 6 original +1 renamed +1 new_id
-    assert(vAttrs.size == 8)
+    // 6 original +1 renamed
+    assert(vAttrs.size == 7)
     val eAttrs = project.edgeAttributes.toMap
     // 2 original +1 renamed
     assert(eAttrs.size == 3)
@@ -39,9 +39,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   test("Graph union on vertex sets") {
     val a = box("Create vertices", Map("size" -> "10"))
     val b = box("Create vertices", Map("size" -> "10"))
-    val union = box(
-      "Graph union",
-      Map("id_attr" -> "new_id"), Seq(a, b))
+    val union = box("Graph union", Map(), Seq(a, b))
     val project = union.project
 
     assert(project.vertexSet.rdd.count == 20)
@@ -56,7 +54,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
         "Add constant vertex attribute",
         Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
-      val union = box("Graph union", Map("id_attr" -> "new_id"), Seq(a, b))
+      val union = box("Graph union", Map(), Seq(a, b))
       union.project
     }
     assert(ex.getMessage.contains(
