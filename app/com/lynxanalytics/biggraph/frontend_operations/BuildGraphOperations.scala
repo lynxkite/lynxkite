@@ -124,7 +124,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     def enabled = FEStatus.enabled
     def apply() = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
-      project.setVertexSet(result.vs, idAttr = "id")
+      project.vertexSet = result.vs
       project.newVertexAttribute("ordinal", result.ordinal)
     }
   })
@@ -214,7 +214,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           op(op.srcAttr, edges.vertexAttributes(src).runtimeSafeCast[String])(
             op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
         }
-        project.setVertexSet(eg.vs, idAttr = "id")
+        project.vertexSet = eg.vs
         project.newVertexAttribute("stringId", eg.stringId)
         project.edgeBundle = eg.es
         for ((name, attr) <- edges.vertexAttributes) {
