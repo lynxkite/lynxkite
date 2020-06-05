@@ -625,10 +625,6 @@ sealed trait ProjectEditor {
       }
     }
   }
-  def setVertexSet(e: VertexSet, idAttr: String): Unit = {
-    vertexSet = e
-    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e).asString
-  }
 
   def edgeBundle = viewer.edgeBundle
   def edgeBundle_=(e: EdgeBundle) = {
@@ -920,6 +916,10 @@ class SegmentationEditor(
       val op = graph_operations.EmptyEdgeBundle()
       belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
+  }
+  def setVertexSet(e: VertexSet, idAttr: String): Unit = {
+    vertexSet = e
+    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e).asString
   }
 }
 
