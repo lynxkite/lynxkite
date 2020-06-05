@@ -64,7 +64,8 @@ case class CustomOperationParameterMeta(
     kind: String,
     defaultValue: String) {
   assert(
-    CustomOperationParameterMeta.validKinds.contains(kind),
+    CustomOperationParameterMeta.validKinds.contains(kind) ||
+      CustomOperationParameterMeta.deprecatedKinds.contains(kind),
     s"'$kind' is not a valid parameter type.")
 }
 object CustomOperationParameterMeta {
@@ -72,15 +73,23 @@ object CustomOperationParameterMeta {
     "text",
     "boolean",
     "code",
+    "vertex attribute",
+    "vertex attribute (Double)",
+    "vertex attribute (String)",
+    "edge attribute",
+    "edge attribute (Double)",
+    "edge attribute (String)",
+    "graph attribute",
+    "segmentation",
+    "column")
+  val deprecatedKinds = List(
     "vertexattribute",
     "vertexattribute (Double)",
     "vertexattribute (String)",
     "edgeattribute",
     "edgeattribute (Double)",
     "edgeattribute (String)",
-    "segmentation",
-    "scalar",
-    "column")
+    "scalar")
 }
 
 case class FEOperationSpec(
@@ -714,15 +723,23 @@ class CustomBoxOperation(
         case "text" => Param(id, id, dv)
         case "boolean" => Choice(id, id, FEOption.bools)
         case "code" => Code(id, id, "plain_text", dv)
+        case "vertex attribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
+        case "vertex attribute (Double)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
+        case "vertex attribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
+        case "edge attribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
+        case "edge attribute (Double)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
+        case "edge attribute (String)" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
+        case "graph attribute" => Choice(id, id, projects.flatMap(_.scalarList).toList)
+        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
+        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
+        // Deprecated forms.
+        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "vertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
         case "vertexattribute (Double)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
         case "vertexattribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
         case "edgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
         case "edgeattribute (Double)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
         case "edgeattribute (String)" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
-        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
-        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
-        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
       }
     }
   }

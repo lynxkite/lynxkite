@@ -1,0 +1,16 @@
+### Derive graph attribute
+
+Generates a new <<graph-attributes, graph attribute>> based on existing graph attributes.
+The value expression can be an arbitrary Scala expression, and it can refer to existing
+graph attributes as if they were local variables.
+
+For example you could derive a new graph attribute as `something_sum / something_count` to get the average
+of something.
+
+====
+[p-output]#Save as#::
+The new graph attribute will be created under this name.
+
+[p-expr]#Value#::
+The Scala expression. You can enter multiple lines in the editor.
+====

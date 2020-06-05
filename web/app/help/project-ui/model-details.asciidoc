@@ -1,7 +1,7 @@
 [[model-details]]
 ## Machine learning models
 
-Machine learning models are one type of scalar.
+Machine learning models are stored as graph attributes.
 They are created by a machine learning operation (for example <<train-linear-regression-model>>)
 and used for prediction with the <<predict-with-model>> operation or for classification with the
 <<classify-with-model>> operation.

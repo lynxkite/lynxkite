@@ -416,7 +416,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       val edgeBundle = project.edgeBundle
       val vertexAttrs = project.vertexAttributes.toMap
       val edgeAttrs = project.edgeAttributes.toMap
-      project.scalars = Map()
       project.vertexSet = edgeBundle.idSet
       for ((name, attr) <- vertexAttrs) {
         project.newVertexAttribute(
