@@ -647,15 +647,8 @@ sealed trait ProjectEditor {
     }
   }
 
-  // Convert attr to a well-supported format.
-  private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
-    if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
-    else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
-    else attr
-  }
-
   def newVertexAttribute(name: String, attr: Attribute[_], note: String = null) = {
-    vertexAttributes(name) = supportedAttribute(attr)
+    vertexAttributes(name) = attr
     setElementNote(VertexAttributeKind, name, note)
   }
   def deleteVertexAttribute(name: String) = {
@@ -664,7 +657,7 @@ sealed trait ProjectEditor {
   }
 
   def newEdgeAttribute(name: String, attr: Attribute[_], note: String = null) = {
-    edgeAttributes(name) = supportedAttribute(attr)
+    edgeAttributes(name) = attr
     setElementNote(EdgeAttributeKind, name, note)
   }
   def deleteEdgeAttribute(name: String) = {
@@ -696,6 +689,13 @@ sealed trait ProjectEditor {
     state = state.copy(elementMetadata = newAllMeta)
   }
 
+  // Convert attr to a well-supported format.
+  private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
+    if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
+    else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
+    else attr
+  }
+
   def vertexAttributes =
     new StateMapHolder[Attribute[_]] {
       protected def getMap = viewer.vertexAttributes
@@ -706,9 +706,13 @@ sealed trait ProjectEditor {
           attr.vertexSet == viewer.vertexSet,
           s"Vertex attribute $name does not match vertex set")
       }
+      override def set(name: String, entity: Attribute[_]) = {
+        // Convert attributes whenever they are added to a project.
+        super.set(name, supportedAttribute(entity))
+      }
     }
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
-    vertexAttributes.updateEntityMap(attrs)
+    vertexAttributes.updateEntityMap(attrs.mapValues(supportedAttribute(_)))
   def vertexAttributeNames[T: TypeTag] = viewer.vertexAttributeNames[T]
 
   def edgeAttributes =
@@ -721,9 +725,13 @@ sealed trait ProjectEditor {
           attr.vertexSet == viewer.edgeBundle.idSet,
           s"Edge attribute $name does not match edge bundle")
       }
+      override def set(name: String, entity: Attribute[_]) = {
+        // Convert attributes whenever they are added to a project.
+        super.set(name, supportedAttribute(entity))
+      }
     }
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
-    edgeAttributes.updateEntityMap(attrs)
+    edgeAttributes.updateEntityMap(attrs.mapValues(supportedAttribute(_)))
   def edgeAttributeNames[T: TypeTag] = viewer.edgeAttributeNames[T]
 
   def scalars =
