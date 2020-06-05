@@ -7,10 +7,10 @@ It lists the attributes and segmentations. Graph attribute values are displayed,
 attribute histograms are available on click, and segmentations can be opened to
 dig deeper.
 
-include::graph-attributes.asciidoc[]
-
-include::model-details.asciidoc[]
-
 include::attributes.asciidoc[]
 
+include::graph-attributes.asciidoc[]
+
 include::segmentations.asciidoc[]
+
+include::model-details.asciidoc[]
