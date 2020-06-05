@@ -8,7 +8,7 @@ vertex of the edge using the format `src$attribute` and `dst$attribute`.
 For example you can write `weight * scala.math.abs(src$age - dst$age)` to generate a new
 attribute that is the weighted age difference of the two endpoints of the edge.
 
-You can also refer to graph attributes (aka scalars) in the Scala expression. For example,
+You can also refer to graph attributes in the Scala expression. For example,
 assuming that you have a graph attribute _age_average_, you can use the expression
 `if (src$age < age_average / 2 && dst$age > age_average * 2) 1.0 else 0.0`
 to identify connections between relatively young and relatively old people.
