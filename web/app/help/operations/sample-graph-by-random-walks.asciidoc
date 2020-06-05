@@ -21,10 +21,10 @@ following procedure.
 attribute by `first_traversed`.
 . Rank the vertices by `first_reached`.
 . Filter the vertices by the rank attribute to keep the only vertex of rank `n`.
-. Aggregate `first_reached` to a scalar on the filtered graph (use either _average_, _first_,
+. Aggregate `first_reached` to a graph attribute on the filtered graph (use either _average_, _first_,
 _max_, _min_, or _most_common_ - there is only one vertex in the filtered graph).
-. Filter the vertices and edges of the original graph and keep the ones that has smaller or equal
-`first_reached` or `first_traversed` values than the value of the derived scalar.
+. Filter the vertices and edges of the original graph and keep the ones that have smaller or equal
+`first_reached` or `first_traversed` values than the value of the derived graph attribute.
 
 ====
 [p-startpoints]#Number of start points#::
