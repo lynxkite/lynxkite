@@ -5,7 +5,7 @@ const lib = require('../test-lib.js');
 function tableIsGood(t) {
   t.expect(
     ['age', 'gender', 'id', 'income', 'location', 'name'],
-    ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
+    ['Double', 'String', 'String', 'Double', '(Double, Double)', 'String'],
     [['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
       ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
       ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],

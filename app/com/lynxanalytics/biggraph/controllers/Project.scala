@@ -687,7 +687,8 @@ sealed trait ProjectEditor {
 
   // Convert attr to a well-supported format.
   private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
-    if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
+    if (attr == null) null
+    else if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
     else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
     else attr
   }

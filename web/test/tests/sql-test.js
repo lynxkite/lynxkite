@@ -13,7 +13,7 @@ module.exports = function(fw) {
       const table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
-        ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
+        ['Double', 'String', 'String', 'Double', '(Double, Double)', 'String'],
         [
           ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
           ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
@@ -60,7 +60,7 @@ module.exports = function(fw) {
     '"order by" works right',
     'select id, name from vertices order by name',
     ['id', 'name'],
-    ['Long', 'String'],
+    ['String', 'String'],
     [
       [ '0', 'Adam' ],
       [ '2', 'Bob' ],

@@ -276,8 +276,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           absolutePath = "",
           name = field.name,
           objectType = "column",
-          columnType = ProjectViewer.feTypeName(
-            SQLHelper.typeTagFromDataType(field.dataType)))
+          columnType = SQLHelper.typeTagFromDataType(field.dataType).tpe.toString)
       })
   }
 
@@ -297,7 +296,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val table = request.dfSpec.globalSQL(user)
     val tableContents = dataManager.get(TableToScalar.run(table, request.maxRows))
     SQLQueryResult(
-      header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      header = tableContents.header.map { case (name, tt) => SQLColumn(name, tt.tpe.toString) },
       data = tableContents.rows)
   }
 
@@ -305,7 +304,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val e = TableToScalar.run(table, sampleRows)
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
-      header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      header = tableContents.header.map { case (name, tt) => TableColumn(name, tt.tpe.toString) },
       data = tableContents.rows)
   }
 

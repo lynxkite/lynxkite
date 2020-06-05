@@ -5,17 +5,17 @@ const lib = require('../test-lib.js');
 module.exports = function(fw) {
   fw.transitionTest(
     'test-example workspace with example graph',
-    'segmentation by double created',
+    'segmentation by number created',
     function() {
       lib.workspace.addBox({
-        id: 'segment-op', name: 'Segment by Double attribute', x: 100, y: 200,
+        id: 'segment-op', name: 'Segment by numeric attribute', x: 100, y: 200,
         after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
     });
 
   fw.statePreservingTest(
-    'segmentation by double created',
+    'segmentation by number created',
     'segmentation opens',
     function() {
       const state = lib.workspace.openStateView('segment-op', 'graph');
@@ -25,7 +25,7 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
-    'segmentation by double created',
+    'segmentation by number created',
     'segmentation copied to sub-segmentation',
     function() {
       let params = {

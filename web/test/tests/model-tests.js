@@ -39,7 +39,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'con0',
-        name: 'Convert vertex attribute to Double',
+        name: 'Convert vertex attribute to number',
         x: 100, y: 300});
       lib.workspace.connectBoxes('utv', 'graph', 'con0', 'graph');
       lib.workspace.openBoxEditor('con0').populateOperation({
