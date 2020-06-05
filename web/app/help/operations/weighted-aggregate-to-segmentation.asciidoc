@@ -5,7 +5,7 @@ For example, it can calculate the average age per kilogram of each clique.
 
 ====
 [p-weight]#Weight#::
-The `Double` attribute to use as weight.
+The `number` attribute to use as weight.
 
 include::{g}[tag=weighted-aggregators]
 ====

@@ -27,7 +27,7 @@ Two identifying attributes have to be selected.
 Two identifying attributes have to be selected.
 
 [p-weights]#Edge weights#::
-What `Double` edge attribute to use as edge weight. The edge weights are also considered when
+What `number` edge attribute to use as edge weight. The edge weights are also considered when
 calculating the similarity between two vertices.
 
 [p-mo]#Minimum overlap#::

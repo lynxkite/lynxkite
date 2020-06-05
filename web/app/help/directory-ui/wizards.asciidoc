@@ -4,7 +4,7 @@
 Wizards are dedicated tools that distill complex analysis workflows into a series of
 simple steps. See <<Authoring wizards>> to learn how they are created.
 
-Wizards appear in the workspace browser with the 
+Wizards appear in the workspace browser with the
 +++<span class="icon glyphicon glyphicon-gift"></span>+++ icon.
 
 If you click a wizard, a copy will be created in your user directory.

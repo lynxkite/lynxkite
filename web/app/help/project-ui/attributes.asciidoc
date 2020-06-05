@@ -9,7 +9,7 @@ of the attribute is a value from the attribute's type.
 
 Clicking on a vertex or edge attribute opens a menu with the for following information/controls.
 
-* The type of the attribute (e.g. `String`, `Double`, ...).
+* The type of the attribute (e.g. `String`, `number`, ...).
 * A short description of how the attribute was created, if available, with link to a relevant help
 page.
 * A histogram of the attribute, if the attribute is already computed. A menu item to compute the

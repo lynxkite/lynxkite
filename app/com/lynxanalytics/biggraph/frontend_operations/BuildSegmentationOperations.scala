@@ -421,14 +421,14 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       }
     })
 
-  register("Segment by Double attribute")(new ProjectTransformation(_) {
+  register("Segment by numeric attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes.")
+      project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -567,7 +567,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].size >= 2,
-      "Less than two Double vertex attributes.")
+      "Less than two numeric vertex attributes.")
     override def summary = {
       val beginAttrName = params("begin_attr")
       val endAttrName = params("end_attr")
@@ -630,7 +630,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           "There must be a String attribute or a sub-segmentation to define event locations") &&
           FEStatus.assert(
             project.vertexAttrList[Double].nonEmpty,
-            "There must be a Double attribute to define event times")
+            "There must be a numeric attribute to define event times")
 
     override def summary = {
       val name = params("name")

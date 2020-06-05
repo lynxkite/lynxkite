@@ -1,7 +1,6 @@
-### Convert edge attribute to Double
+### Convert edge attribute to number
 
-Converts the selected `String` typed edge attributes to `Double` (floating point
-number) type.
+Converts the selected `String` typed edge attributes to the `number` type.
 
 The attributes will be converted in-place. If you want to keep the original `String` attribute as
 well, make a copy first!

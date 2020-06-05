@@ -1,8 +1,8 @@
 ### Bundle vertex attributes into a Vector
 
-Bundles the chosen `Double` and `Vector[Double]` attributes into one `Vector` attribute.
-By default, LynxKite puts the Double attributes after each other in alphabetical order and
-then concatenates the Double Vector attributes to the resulting Vector in alphabetical
+Bundles the chosen `number` and `Vector[number]` attributes into one `Vector` attribute.
+By default, LynxKite puts the numeric attributes after each other in alphabetical order and
+then concatenates the Vector attributes to the resulting Vector in alphabetical
 order as well. The resulting attribute is undefined where any of the input attributes
 is undefined.
 

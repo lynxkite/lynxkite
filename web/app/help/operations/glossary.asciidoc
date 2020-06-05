@@ -121,7 +121,7 @@ rarely do you need to give random seeds any thought.
 end::random-seed[]
 
 tag::random-attribute[]
-Generates a new random Double attribute with the specified distribution, which can be either
+Generates a new random numeric attribute with the specified distribution, which can be either
 (1) a Standard Normal (i.e., Gaussian) distribution with a mean of 0 and a standard deviation of 1, or (2)
 a Standard Uniform distribution where values fall between 0 and 1.
 
@@ -142,7 +142,7 @@ end::random-attribute[]
 tag::weighted-aggregators[]
 The available weighted aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
  ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
  ** `weighted_average`
@@ -157,7 +157,7 @@ end::weighted-aggregators[]
 tag::global-aggregators[]
 The available aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `average`
  ** `count` (number of cases where the attribute is defined)
  ** `first` (arbitrarily picks a value)
@@ -174,7 +174,7 @@ end::global-aggregators[]
 tag::local-aggregators[]
 The available aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `average`
  ** `count_distinct` (the number of distinct values)
  ** `count_most_common` (the number of occurrences of the most common value)

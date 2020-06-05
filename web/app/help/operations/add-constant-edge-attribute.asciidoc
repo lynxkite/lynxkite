@@ -16,8 +16,8 @@ the edge attribute will tell which graph the edge originally belonged to.
 The new attribute will be created under this name.
 
 [p-value]#Value#::
-The attribute value. Should be a number if _Type_ is set to `Double`.
+The attribute value. Should be a number if _Type_ is set to `number`.
 
 [p-type]#Type#::
-The operation can create either `Double` (numeric) or `String` typed attributes.
+The operation can create either `number` (numeric) or `String` typed attributes.
 ====

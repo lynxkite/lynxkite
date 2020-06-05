@@ -199,10 +199,10 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     def enabled = project.hasEdgeBundle &&
       FEStatus.assert(
         project.vertexAttrList[Double].size >= 2,
-        "At least two Double vertex attributes are needed.") &&
+        "At least two numeric vertex attributes are needed.") &&
         FEStatus.assert(
           project.edgeAttrList[Double].size >= 1,
-          "At least one Double edge attribute is needed.")
+          "At least one numeric edge attribute is needed.")
     def apply() = {
       assert(params("ename").nonEmpty, "Please set an edge attribute name for the result")
       assert(params("vname").nonEmpty, "Please set a vertex attribute name for the result")

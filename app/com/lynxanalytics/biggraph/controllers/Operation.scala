@@ -74,10 +74,10 @@ object CustomOperationParameterMeta {
     "boolean",
     "code",
     "vertex attribute",
-    "vertex attribute (Double)",
+    "vertex attribute (number)",
     "vertex attribute (String)",
     "edge attribute",
-    "edge attribute (Double)",
+    "edge attribute (number)",
     "edge attribute (String)",
     "graph attribute",
     "segmentation",
@@ -724,10 +724,10 @@ class CustomBoxOperation(
         case "boolean" => Choice(id, id, FEOption.bools)
         case "code" => Code(id, id, "plain_text", dv)
         case "vertex attribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
-        case "vertex attribute (Double)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
+        case "vertex attribute (number)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
         case "vertex attribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
         case "edge attribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
-        case "edge attribute (Double)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
+        case "edge attribute (number)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
         case "edge attribute (String)" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
         case "graph attribute" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)

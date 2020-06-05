@@ -15,7 +15,7 @@ A simple example:
 ```
 6.0 * 7.0
 ```
-will generate a constant Double attribute of value `42.0`. You can also use values of other attributes
+will generate a constant numeric attribute of value `42.0`. You can also use values of other attributes
 in the expression:
 ```
 6.0 * age
@@ -48,8 +48,8 @@ the following.
 
 * `Double`
 * `String`
-* `Int`
-* `Long`
+* `Int` (will be automatically converted to `Double`)
+* `Long` (will be automatically converted to `Double`)
 * `Vector[X]` where `X` is a supported type
 * `(X, Y)` where `X` and `Y` are supported types
 
