@@ -243,9 +243,9 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
         assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
         assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-        val idAttr = attrToString(project.vertexAttributes(id))
-        val srcAttr = attrToString(edges.vertexAttributes(src))
-        val dstAttr = attrToString(edges.vertexAttributes(dst))
+        val idAttr = project.vertexAttributes(id).asString
+        val srcAttr = edges.vertexAttributes(src).asString
+        val dstAttr = edges.vertexAttributes(dst).asString
         val imp = graph_operations.ImportEdgesForExistingVertices.run(
           idAttr, idAttr, srcAttr, dstAttr)
         project.edgeBundle = imp.edges
