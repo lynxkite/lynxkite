@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Renamed "scalars" to "graph attributes". Renamed "projects" to "graphs". These mysterious names
+   were largely used for historical reasons. This is an incompatible change, but we can help migrate
+   existing workspaces if necessary.
  - _"Create Graph in Python"_ box added.
  - Removed _"Predict with a graph neural network"_ operation.
  - Removed _"Predict attribute by viral modeling"_ box. It is more flexible to do the same
@@ -15,7 +18,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    and _"One-hot encode attribute"_ boxes.
  - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
  - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
- - Renamed "project" to "graph".
 
 ### 3.2.1
 

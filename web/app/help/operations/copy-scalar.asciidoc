@@ -1,8 +1,0 @@
-### Copy scalar
-
-Creates a copy of a scalar.
-
-====
-[p-from]#Old name#:: The scalar to copy.
-[p-to]#New name#:: The name of the copy.
-====

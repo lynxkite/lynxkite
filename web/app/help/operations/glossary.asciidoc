@@ -49,9 +49,8 @@ end::database-export[]
 tag::file-export[]
 There are two ways to access the exported data:
 
- - Set _Destination path_ to `<auto>`. A download link will be created as a scalar.
-   You can download the file through this link. This works even for large files as long as
-   they fit on your hard drive.
+ - Set _Destination path_ to `<auto>`. A download link will be generated.
+   This works even for large files as long as they fit on your hard drive.
  - Set _Destination path_ to a distributed file system path that you can access. This allows
    you to access the exported data using the standard tools for the file system. A download link
    will still be provided, but the standard tools can allow for higher throughput access.
@@ -225,9 +224,9 @@ Example: `select max(weight) from {maybe-tick}{prefix}edge_attributes{maybe-tick
 You can not query the `edge_attributes` table if there are no edge attributes, even if the edges
 themselves are defined.
 
- - All the scalars can be accessed in the `scalars` table.
+ - All the graph attributes can be accessed in the `graph_attributes` table.
 +
-Example: `select {backtick}!vertex_count{backtick} from {maybe-tick}{prefix}scalars{maybe-tick}`
+Example: `select {backtick}!vertex_count{backtick} from {maybe-tick}{prefix}graph_attributes{maybe-tick}`
 
  - All the edge and vertex attributes can be accessed in the `edges` table. Each row of this
 table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes

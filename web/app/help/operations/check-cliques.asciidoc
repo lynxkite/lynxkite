@@ -2,7 +2,7 @@
 
 Validates that the segments of the segmentation are in fact cliques.
 
-Creates a new `invalid_cliques` scalar, which lists non-clique segment IDs up to a certain number.
+Creates a new `invalid_cliques` graph attribute, which lists non-clique segment IDs up to a certain number.
 
 ====
 [p-selected]#Segment IDs to check#::
