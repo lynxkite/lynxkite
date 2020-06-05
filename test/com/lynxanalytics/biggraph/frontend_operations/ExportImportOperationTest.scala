@@ -81,10 +81,10 @@ class ExportImportOperationTest extends OperationsTestBase {
   }
 
   test("Use table as edges") {
-    val edges = importSeq(Seq("src", "dst", "value"), Seq(
-      ("Adam", "Eve", "value1"),
-      ("Isolated Joe", "Bob", "value2"),
-      ("Eve", "Alice", "value3")))
+    val edges = importSeq(Seq("src", "dst", "string", "number"), Seq(
+      ("Adam", "Eve", "value1", 1L),
+      ("Isolated Joe", "Bob", "value2", 2L),
+      ("Eve", "Alice", "value3", 3L)))
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
@@ -95,11 +95,16 @@ class ExportImportOperationTest extends OperationsTestBase {
       .project
     assert(Seq(Edge(0, 1), Edge(3, 2)) ==
       project.edgeBundle.rdd.collect.toSeq.map(_._2))
-    val valueAttr = project.edgeBundle.rdd
-      .join(project.edgeAttributes("value").runtimeSafeCast[String].rdd)
+    val stringAttr = project.edgeBundle.rdd
+      .join(project.edgeAttributes("string").runtimeSafeCast[String].rdd)
       .values
     assert(Seq((Edge(0, 1), "value1"), (Edge(3, 2), "value2")) ==
-      valueAttr.collect.toSeq.sorted)
+      stringAttr.collect.toSeq.sorted)
+    val numberAttr = project.edgeBundle.rdd
+      .join(project.edgeAttributes("number").runtimeSafeCast[Double].rdd)
+      .values
+    assert(Seq((Edge(0, 1), 1.0), (Edge(3, 2), 2.0)) ==
+      numberAttr.collect.toSeq.sorted)
   }
 
   test("Use table as vertex attributes") {
