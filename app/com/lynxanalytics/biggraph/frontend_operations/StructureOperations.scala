@@ -89,7 +89,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
       val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
-      project.setVertexSet(m.segments, idAttr = "id")
+      project.vertexSet = m.segments
       for ((name, segViewer) <- oldSegmentations) {
         val seg = project.segmentation(name)
         seg.segmentationState = segViewer.segmentationState
@@ -155,7 +155,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def apply() = {
       val op = graph_operations.EdgeGraph()
       val g = op(op.es, project.edgeBundle).result
-      project.setVertexSet(g.newVS, idAttr = "id")
+      project.vertexSet = g.newVS
       project.edgeBundle = g.newES
     }
   })
