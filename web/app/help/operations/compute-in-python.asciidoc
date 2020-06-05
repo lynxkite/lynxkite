@@ -1,6 +1,6 @@
 ### Compute in Python
 
-Executes custom Python code to define new attributes.
+Executes custom Python code to define new vertex, edge, or graph attributes.
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
 two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
