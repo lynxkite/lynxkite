@@ -11,12 +11,12 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
 
     @subworkspace
     def select(x, column):
-      return x.sql1(sql=f'select id, {column} from vertices')
+      return x.sql1(sql=f'select id, {column} from vertices order by id', persist='no')
 
     eg = lk.createExampleGraph()
     output = select(eg, 'name')
     expected = pd.DataFrame(
-        {'id': [0., 1., 2., 3.], 'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})
+        {'id': ['0', '1', '2', '3'], 'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})
     pd.testing.assert_frame_equal(output.df(), expected, check_like=True)
 
   def test_multiple_instances(self):
@@ -29,11 +29,11 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     eg = lk.createExampleGraph()
     names = select(eg, 'name')
     ages = select(eg, 'age')
-    result = lk.sql('select name, age from one join two where one.id = two.id', ages, names, ages,
+    result = lk.sql('select name, age from one join two where one.id = two.id order by name', ages, names, ages,
                     persist='no')
     expected = pd.DataFrame({
-        'name': ['Adam', 'Eve', 'Isolated Joe', 'Bob'],
-        'age': [20.3, 18.2, 2, 50.3]})
+        'name': ['Adam', 'Bob', 'Eve', 'Isolated Joe'],
+        'age': [20.3, 50.3, 18.2, 2]})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
 
   def test_recursive_instances(self):
