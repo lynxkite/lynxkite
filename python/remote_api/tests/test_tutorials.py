@@ -44,7 +44,7 @@ class TutorialTestCase(unittest.TestCase):
   def get_graph_attributes(cls, box_id, box_output_id, graph_path=""):
     state = cls.outputs[box_id, box_output_id].stateId
     graph = cls.lk.get_graph(state, graph_path)
-    return {s.title: cls.lk.get_graph_attribute(s.id) for s in graph.graph_attributes}
+    return {s.title: cls.lk.get_graph_attribute(s.id) for s in graph.graphAttributes}
 
 
 class TestTutorial2(TutorialTestCase):
