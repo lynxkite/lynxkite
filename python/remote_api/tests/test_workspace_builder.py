@@ -11,7 +11,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     # Using explicit output name for test.
     graph = lk.createExampleGraph()['graph'].get_graph()
-    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
+    scalars = {s.title: lk.get_graph_attribute(s.id) for s in graph.graph_attributes}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 4.0)
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')
@@ -20,8 +20,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     s = lk.createVertices(size=6)
     res = lk.get_state_id(s)
-    scalars = {s.title: lk.get_scalar(s.id)
-               for s in lk.createVertices(size=6).get_graph().scalars}
+    scalars = {s.title: lk.get_graph_attribute(s.id)
+               for s in lk.createVertices(size=6).get_graph().graph_attributes}
     self.assertEqual(scalars['!vertex_count'].double, 6.0)
 
   def test_simple_chain(self):
@@ -49,7 +49,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     new_graph = lk.useTableAsEdges(
         eg, new_edges, attr='id', src='src_id', dst='dst_id')
     graph = new_graph.get_graph()
-    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
+    scalars = {s.title: lk.get_graph_attribute(s.id) for s in graph.graph_attributes}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 3.0)
 
@@ -84,9 +84,9 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()
-    graph = lk.createExampleGraph().deriveScalar(
+    graph = lk.createExampleGraph().deriveGraphAttribute(
         output='pi', expr=pp('${2+1.14}')).get_graph()
-    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
+    scalars = {s.title: lk.get_graph_attribute(s.id) for s in graph.graph_attributes}
     self.assertEqual(scalars['pi'].string, '3.14')
 
   def parametric_ws(self):
