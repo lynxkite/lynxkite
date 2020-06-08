@@ -375,7 +375,7 @@
   operationId: SQL1
   parameters:
     persist: no
-    sql: 'select `airportID`, `segment_name` from `vertices` order by `airportID` limit 10'
+    sql: 'select cast(airportID as int), segment_name from vertices order by airportID limit 10'
   x: 2263.397698676726
   y: 770.2684029858457
   inputs:
@@ -397,7 +397,7 @@
   operationId: SQL1
   parameters:
     sql: >-
-      select `dst_airportID_most_common`, `src_airportID_most_common` from
+      select cast(dst_airportID_most_common as int), cast(src_airportID_most_common as int) from
       `edge_attributes` order by `dst_airportID_most_common`*100000+`src_airportID_most_common` limit 10
   x: 2209.6211859746286
   y: 893.7552099314037
