@@ -235,7 +235,7 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feScalarList(scalars),
+      graphAttributes = feScalarList(scalars),
       vertexAttributes = feAttributeList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
       edgeAttributes = feAttributeList(edgeAttributes, EdgeAttributeKind),
       segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
@@ -339,7 +339,7 @@ sealed trait ProjectViewer {
 }
 
 object ProjectViewer {
-  val ScalarTableName = "scalars"
+  val ScalarTableName = "graph_attributes"
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
   val EdgeAttributeTableName = "edge_attributes"
