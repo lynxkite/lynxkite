@@ -154,7 +154,8 @@ angular.module('biggraph')
         function onError(failure) {
           resource.$resolved = true;
           resource.$statusCode = failure.status;
-          if (failure.status === 401) { // Unauthorized.
+          // Go to login if we're unauthorized (401) and not logged in.
+          if (failure.status === 401 && util.user.email === undefined) {
             redirectToLogin(resource);
           } else {
             resource.$error = util.responseToErrorMessage(failure);
