@@ -12,7 +12,7 @@ Example usage::
 
     import lynx.kite
     lk = lynx.kite.LynxKite()
-    lk.createExampleGraph().sql('select * from scalars').df()
+    lk.createExampleGraph().sql('select * from graph_attributes').df()
 '''
 import copy
 import functools
@@ -676,7 +676,7 @@ class LynxKite:
     _assert_lk_success(output, box_id, plug)
     return output.stateId
 
-  def get_scalar(self, guid: str) -> types.SimpleNamespace:
+  def get_graph_attribute(self, guid: str) -> types.SimpleNamespace:
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
 
   def get_graph(self, state: str, path: str = '') -> types.SimpleNamespace:
@@ -713,10 +713,10 @@ class LynxKite:
     _assert_lk_success(output, box_id, 'exported')
     export = self.get_export_result(output.stateId)
     if export.result.computeProgress != 1:
-      scalar = self.get_scalar(export.result.id)
+      scalar = self.get_graph_attribute(export.result.id)
       assert scalar.string == 'Export done.', scalar.string
       export = self.get_export_result(output.stateId)
-      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+      assert export.result.computeProgress == 1, 'Failed to compute export result graph attribute.'
     return export
 
   def download_file(self, path: str) -> bytes:
@@ -929,10 +929,10 @@ class State:
     state_id = lk.get_state_id(self)
     export = lk.get_export_result(state_id)
     if export.result.computeProgress != 1:
-      scalar = lk.get_scalar(export.result.id)
+      scalar = lk.get_graph_attribute(export.result.id)
       assert scalar.string == 'Export done.', scalar.string
       export = lk.get_export_result(state_id)
-      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+      assert export.result.computeProgress == 1, 'Failed to compute export result graph attribute.'
     return export.parameters.path
 
   def compute(self) -> None:
