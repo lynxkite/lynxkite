@@ -476,12 +476,8 @@ object ProductionJsonServer extends JsonServer {
     val table = workspaceController.getOutput(user, request.id).table
     sqlController.getTableSample(table, request.sampleRows)
   }
-  def getTableBrowserNodesForBox = jsonGet(getTableBrowserNodesForBoxData)
-  def getTableBrowserNodesForBoxData(
-    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
-    val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
-    sqlController.getTableBrowserNodesForBox(user, inputTables, request.path)
-  }
+  def getTableBrowserNodesForBox =
+    jsonGet(sqlController.getTableBrowserNodesForBox(workspaceController))
 
   val sparkClusterController =
     new SparkClusterController(BigGraphProductionEnvironment, workspaceController)

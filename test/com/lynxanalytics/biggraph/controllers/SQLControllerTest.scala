@@ -13,6 +13,7 @@ import scala.concurrent.duration.Duration
 class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBase {
   override val user = serving.User.singleuser
   val sqlController = new SQLController(this, ops = null)
+  val workspaceController = new WorkspaceController(this)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
 
@@ -201,42 +202,51 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   }
 
-  // TODO: Depends on https://app.asana.com/0/194476945034319/354006072569797.
-  /*
-  test("list project tables") {
-    createProject(name = "example1")
-    createDirectory(name = "dir")
-    createProject(name = "dir/example2")
-    run("Create example graph", on = "dir/example2")
-    run(
-      "Segment by Double attribute",
-      params = Map(
-        "name" -> "bucketing",
-        "attr" -> "age",
-        "interval_size" -> "0.1",
-        "overlap" -> "no"),
-      on = "dir/example2")
-    run(
-      "Segment by Double attribute",
-      params = Map(
-        "name" -> "vertices", // This segmentation is named vertices to test extremes.
-        "attr" -> "age",
-        "interval_size" -> "0.1",
-        "overlap" -> "no"),
-      on = "dir/example2")
-
-    // List tables and segmentation of a project.
-    val res1 = await(
-      sqlController.getTableBrowserNodes(
-        user, TableBrowserNodeRequest(path = "dir/example2")))
-    assert(List(
-      TableBrowserNode("dir/example2.edges", "edges", "table"),
-      TableBrowserNode("dir/example2.edge_attributes", "edge_attributes", "table"),
-      TableBrowserNode("dir/example2.vertices", "vertices", "table"),
-      TableBrowserNode("dir/example2.bucketing", "bucketing", "segmentation"),
-      TableBrowserNode("dir/example2.vertices", "vertices", "segmentation")) == res1.list)
+  def getMeta(box: TestBox) = {
+    val name = "tmp"
+    workspaceController.createWorkspace(user, CreateWorkspaceRequest(name))
+    workspaceController.setWorkspace(user, SetWorkspaceRequest(WorkspaceReference(name), box.workspace))
+    GetOperationMetaRequest(WorkspaceReference(name), box.realBox.id)
   }
 
+  test("list project tables") {
+    val project = box("Create example graph")
+      .box(
+        "Segment by numeric attribute",
+        Map(
+          "name" -> "bucketing",
+          "attr" -> "age",
+          "interval_size" -> "0.1",
+          "overlap" -> "no"))
+      .box(
+        "Segment by numeric attribute",
+        Map(
+          "name" -> "vertices", // This segmentation is named vertices to test extremes.
+          "attr" -> "age",
+          "interval_size" -> "0.1",
+          "overlap" -> "no"))
+
+    // List tables and segmentation of a project.
+    val res1 = sqlController.getTableBrowserNodesForBox(workspaceController)(
+      user, TableBrowserNodeForBoxRequest(getMeta(project), ""))
+    assert(List(
+      TableBrowserNode("bucketing.belongs_to", "bucketing.belongs_to", "table"),
+      TableBrowserNode("bucketing.graph_attributes", "bucketing.graph_attributes", "table"),
+      TableBrowserNode("bucketing.vertices", "bucketing.vertices", "table"),
+      TableBrowserNode("edge_attributes", "edge_attributes", "table"),
+      TableBrowserNode("edges", "edges", "table"),
+      TableBrowserNode("graph.bucketing.belongs_to", "graph.bucketing.belongs_to", "table"),
+      TableBrowserNode("graph.bucketing.graph_attributes", "graph.bucketing.graph_attributes", "table"),
+      TableBrowserNode("graph.bucketing.vertices", "graph.bucketing.vertices", "table"),
+      TableBrowserNode("graph.edge_attributes", "graph.edge_attributes", "table"),
+      TableBrowserNode("graph.edges", "graph.edges", "table"),
+      TableBrowserNode("graph.graph_attributes", "graph.graph_attributes", "table"),
+      TableBrowserNode("graph.vertices", "graph.vertices", "table"),
+      TableBrowserNode("graph_attributes", "graph_attributes", "table"),
+      TableBrowserNode("vertices", "vertices", "table")) == res1.list)
+  }
+
+  /*
   def checkExampleGraphColumns(req: TableBrowserNodeRequest, idTypeOverride: String = "ID") = {
     val res = await(sqlController.getTableBrowserNodes(user, req))
     val expected = List(

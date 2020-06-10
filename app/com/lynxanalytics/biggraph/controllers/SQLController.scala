@@ -156,13 +156,14 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     ImportBoxResponse(guid, parameterSettings)
   }
 
-  def getTableBrowserNodesForBox(
-    user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
-    if (path.isEmpty) { // Top level request, for boxes that means input tables.
+  def getTableBrowserNodesForBox(workspaceController: WorkspaceController)(
+    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
+    val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
+    if (request.path.isEmpty) { // Top level request, for boxes that means input tables.
       getInputTablesForBox(user, inputTables)
     } else { // Lower level request, for boxes that means table columns.
-      assert(inputTables.contains(path), s"$path is not a valid proto table")
-      getColumnsFromSchema(inputTables(path).schema)
+      assert(inputTables.contains(request.path), s"${request.path} is not a valid proto table")
+      getColumnsFromSchema(inputTables(request.path).schema)
     }
   }
 
