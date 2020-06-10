@@ -693,8 +693,15 @@ sealed trait ProjectEditor {
     else attr
   }
 
-  def vertexAttributes =
-    new StateMapHolder[Attribute[_]] {
+  abstract class AttributeStateMapHolder extends StateMapHolder[Attribute[_]] {
+    override def set(name: String, entity: Attribute[_]) = {
+      // Convert attributes whenever they are added to a project.
+      super.set(name, supportedAttribute(entity))
+    }
+  }
+
+  def vertexAttributes: StateMapHolder[Attribute[_]] =
+    new AttributeStateMapHolder {
       protected def getMap = viewer.vertexAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(vertexAttributeGUIDs = newMap)
@@ -703,17 +710,13 @@ sealed trait ProjectEditor {
           attr.vertexSet == viewer.vertexSet,
           s"Vertex attribute $name does not match vertex set")
       }
-      override def set(name: String, entity: Attribute[_]) = {
-        // Convert attributes whenever they are added to a project.
-        super.set(name, supportedAttribute(entity))
-      }
     }
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
     vertexAttributes.updateEntityMap(attrs.mapValues(supportedAttribute(_)))
   def vertexAttributeNames[T: TypeTag] = viewer.vertexAttributeNames[T]
 
-  def edgeAttributes =
-    new StateMapHolder[Attribute[_]] {
+  def edgeAttributes: StateMapHolder[Attribute[_]] =
+    new AttributeStateMapHolder {
       protected def getMap = viewer.edgeAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(edgeAttributeGUIDs = newMap)
@@ -721,10 +724,6 @@ sealed trait ProjectEditor {
         assert(
           attr.vertexSet == viewer.edgeBundle.idSet,
           s"Edge attribute $name does not match edge bundle")
-      }
-      override def set(name: String, entity: Attribute[_]) = {
-        // Convert attributes whenever they are added to a project.
-        super.set(name, supportedAttribute(entity))
       }
     }
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
