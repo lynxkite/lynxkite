@@ -103,27 +103,27 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("long errors") {
     val input1 = Box("input1", "Input", Map(), 0, 20, Map())
-    val copy1 = Box("copy1", "Copy scalar from other graph", Map(), 0, 50, Map(
-      "graph" -> input1.output("input"), "scalar" -> input1.output("input")))
+    val copy1 = Box("copy1", "Copy graph attribute from other graph", Map(), 0, 50, Map(
+      "destination" -> input1.output("input"), "source" -> input1.output("input")))
     val copy2 = copy1.copy(id = "copy2", inputs = Map(
-      "graph" -> copy1.output("graph"), "scalar" -> copy1.output("graph")))
+      "destination" -> copy1.output("graph"), "source" -> copy1.output("graph")))
     val copy3 = copy2.copy(id = "copy3", inputs = Map(
-      "graph" -> copy2.output("graph"), "scalar" -> copy2.output("graph")))
+      "destination" -> copy2.output("graph"), "source" -> copy2.output("graph")))
     val ws = Workspace.from(input1, copy1, copy2, copy3)
     val allStates = context(ws).allStates
     val p = allStates(copy3.output("graph"))
     val ex = intercept[AssertionError] { p.project }
-    assert(ex.getMessage == """Inputs graph, scalar of box copy3 have errors:
-  graph: Inputs graph, scalar of box copy2 have errors:
-    graph: Inputs graph, scalar of box copy1 have errors:
-      graph: Unconnected
-      scalar: Unconnected
-    scalar: Inputs graph, scalar of box copy1 have errors:
-      graph: Unconnected
-      scalar: Unconnected
+    assert(ex.getMessage == """Inputs destination, source of box copy3 have errors:
+  destination: Inputs destination, source of box copy2 have errors:
+    destination: Inputs destination, source of box copy1 have errors:
+      destination: Unconnected
+      source: Unconnected
+    source: Inputs destination, source of box copy1 have errors:
+      destination: Unconnected
+      source: Unconnected
 ...
-      graph: Unconnected
-      scalar: Unconnected""")
+      destination: Unconnected
+      source: Unconnected""")
   }
 
   test("getProjectOutput") {

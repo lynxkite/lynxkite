@@ -28,7 +28,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "123 weird # name", "type" -> "Double", "value" -> "0.0"))
+        Map("name" -> "123 weird # name", "type" -> "number", "value" -> "0.0"))
       .box(
         "Derive vertex attribute",
         Map("output" -> "output", "expr" -> "`123 weird # name`"))
@@ -52,7 +52,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "UPPERCASE", "type" -> "Double", "value" -> "0.0"))
+        Map("name" -> "UPPERCASE", "type" -> "number", "value" -> "0.0"))
       .box(
         "Derive vertex attribute",
         Map("output" -> "output", "expr" -> "UPPERCASE"))

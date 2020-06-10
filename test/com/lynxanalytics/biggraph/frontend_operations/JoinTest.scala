@@ -10,7 +10,7 @@ class JoinTest extends OperationsTestBase {
     val source = root
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "seven", "value" -> "7", "type" -> "Double"))
+        Map("name" -> "seven", "value" -> "7", "type" -> "number"))
     val target = root
     val project = box("Graph rejoin", Map("attrs" -> "seven"), Seq(target, source)).project
 
@@ -24,7 +24,7 @@ class JoinTest extends OperationsTestBase {
     val source = root
       .box(
         "Add constant edge attribute",
-        Map("name" -> "eight", "value" -> "8", "type" -> "Double"))
+        Map("name" -> "eight", "value" -> "8", "type" -> "number"))
     val target = root
     val project = box(
       "Graph rejoin",
@@ -43,7 +43,7 @@ class JoinTest extends OperationsTestBase {
     val target = root
     val source = root
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map(
           "name" -> "bucketing",
           "attr" -> "age",
@@ -61,7 +61,7 @@ class JoinTest extends OperationsTestBase {
           "apply_to_graph" -> ".bucketing",
           "name" -> "ten",
           "value" -> "10",
-          "type" -> "Double"))
+          "type" -> "number"))
     val project = box(
       "Graph rejoin",
       Map(
@@ -111,7 +111,7 @@ class JoinTest extends OperationsTestBase {
         Map("filterva_age" -> "> 40")) // Keep only Bob
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
+        Map("name" -> "ten", "value" -> "10", "type" -> "number"))
 
     val project = box(
       "Graph rejoin",
@@ -137,7 +137,7 @@ class JoinTest extends OperationsTestBase {
         Map("filterva_age" -> "", "filterea_weight" -> ">1"))
       .box(
         "Add constant edge attribute",
-        Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
+        Map("name" -> "ten", "value" -> "10", "type" -> "number"))
 
     val project = box(
       "Graph rejoin",
@@ -156,7 +156,7 @@ class JoinTest extends OperationsTestBase {
       root.box("Add constant edge attribute")
         .box(
           "Add constant edge attribute",
-          Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
+          Map("name" -> "const1", "value" -> "1", "type" -> "number"))
     val target =
       root.box(
         "Filter by attributes",
@@ -178,11 +178,11 @@ class JoinTest extends OperationsTestBase {
     val numEdges = numVertices * (numVertices - 1)
     val root = box("Create vertices", Map("size" -> s"$numVertices"))
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "ordinal", "interval_size" -> "1", "overlap" -> "no"))
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_graph" -> ".seg"))
+        Map("name" -> "const1", "value" -> "1", "type" -> "number", "apply_to_graph" -> ".seg"))
       .box(
         "Connect vertices on attribute",
         Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_graph" -> ".seg"))
@@ -237,12 +237,11 @@ class JoinTest extends OperationsTestBase {
   }
 
   test("Complex test") {
-
     val root =
       box("Create vertices", Map("size" -> "10"))
         .box(
           "Add constant vertex attribute",
-          Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
+          Map("name" -> "const1", "value" -> "1", "type" -> "number"))
         .box("Connect vertices on attribute", Map("fromAttr" -> "const1", "toAttr" -> "const1"))
     // Now split, filter, edges to vertices, and then filter again.
     val source = root
@@ -306,7 +305,7 @@ class JoinTest extends OperationsTestBase {
   test("Segmentations work with filters") {
     val (target, sourceRoot) = getTargetSource()
     val source = sourceRoot.box(
-      "Segment by Double attribute",
+      "Segment by numeric attribute",
       Map(
         "name" -> "bucketing",
         "attr" -> "age",

@@ -43,7 +43,7 @@ class AuxiliaryOperationTest extends OperationsTestBase {
     val fiftyFives = box("Create example graph")
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "const55", "type" -> "Double"),
+        Map("name" -> "const55", "type" -> "number"),
         Seq(),
         Map("value" -> "${ (1 to 10).sum }"))
       .project
