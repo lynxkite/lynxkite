@@ -25,22 +25,36 @@ case class Node2Vec(dimensions: Int, iterations: Int, walkLength: Int, walksPerN
     "walksPerNode" -> walksPerNode, "contextSize" -> contextSize)
 }
 
-object TSNE extends OpFromJson {
+object EmbedVectors {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val vector = vertexAttribute[Vector[Double]](vs)
   }
-  class Output(implicit
+  class Output(dimensions: Int)(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val embedding = vertexAttribute[(Double, Double)](inputs.vs.entity)
+    val embedding =
+      if (dimensions == 2) vertexAttribute[(Double, Double)](inputs.vs.entity)
+      else vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = TSNE((j \ "perplexity").as[Double])
 }
-case class TSNE(perplexity: Double) extends TypedMetaGraphOp[TSNE.Input, TSNE.Output] {
-  @transient override lazy val inputs = new TSNE.Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new TSNE.Output()(instance, inputs)
-  override def toJson = Json.obj("perplexity" -> perplexity)
+trait EmbedVectors extends TypedMetaGraphOp[EmbedVectors.Input, EmbedVectors.Output] {
+  val dimensions: Int
+  @transient override lazy val inputs = new EmbedVectors.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new EmbedVectors.Output(dimensions)(instance, inputs)
+}
+object PCA extends OpFromJson {
+  def fromJson(j: JsValue) = PCA((j \ "dimensions").as[Int])
+}
+case class PCA(dimensions: Int) extends EmbedVectors {
+  override def toJson = Json.obj("dimensions" -> dimensions)
+}
+object TSNE extends OpFromJson {
+  def fromJson(j: JsValue) = TSNE((j \ "dimensions").as[Int], (j \ "perplexity").as[Double])
+}
+case class TSNE(dimensions: Int, perplexity: Double) extends EmbedVectors {
+  override def toJson = Json.obj("dimensions" -> dimensions, "perplexity" -> perplexity)
 }
 
 object PyTorchGeometricDataset extends OpFromJson {

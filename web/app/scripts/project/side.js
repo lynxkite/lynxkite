@@ -40,7 +40,7 @@ angular.module('biggraph')
     };
     Side.prototype.sectionElements = function(section) {
       if (section === 'scalar') {
-        return this.project.scalars.filter(function(s) {
+        return this.project.graphAttributes.filter(function(s) {
           return s.title[0] !== '!';
         });
       } else if (section === 'vertex-attribute') {
@@ -618,7 +618,7 @@ angular.module('biggraph')
       if (!this.loaded()) { return; }
       this.abandonScalars();
       this.scalars = {};
-      const scalars = this.project.scalars;
+      const scalars = this.project.graphAttributes;
       for (let i = 0; i < scalars.length; ++i) {
         const scalar = scalars[i];
         this.scalars[scalar.title] = util.lazyFetchScalarValue(

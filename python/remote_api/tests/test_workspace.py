@@ -90,7 +90,7 @@ class TestWorkspace(unittest.TestCase):
     outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
     state = outputs['eg0', 'graph'].stateId
     graph = lk.get_graph(state)
-    scalars = {s.title: lk.get_scalar(s.id) for s in graph.scalars}
+    scalars = {s.title: lk.get_graph_attribute(s.id) for s in graph.graphAttributes}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 4.0)
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')

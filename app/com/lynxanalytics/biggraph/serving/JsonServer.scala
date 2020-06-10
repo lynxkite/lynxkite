@@ -561,7 +561,7 @@ object ProductionJsonServer extends JsonServer {
       authMethods = getAuthMethods,
       googleClientId = GoogleAuth.clientId,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics evolved"),
+      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "The Complete Graph Data Science Platform"),
       frontendConfig = LoggedEnvironment.envOrElse("KITE_FRONTEND_CONFIG", "{}"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version,
