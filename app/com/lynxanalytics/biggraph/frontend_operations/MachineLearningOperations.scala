@@ -126,28 +126,27 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register(
-    "Reduce vertex attributes to two dimensions")(new ProjectTransformation(_) {
-      params ++= List(
-        Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
-        Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
-        Choice(
-          "features", "Attributes",
-          options = project.vertexAttrList[Double], multipleChoice = true))
-      def enabled = FEStatus.assert(
-        project.vertexAttrList[Double].size >= 2, "Less than two vertex attributes.")
-      def apply() = {
-        val featureNames = splitParam("features").sorted
-        assert(featureNames.size >= 2, "Please select at least two attributes.")
-        val features = featureNames.map {
-          name => project.vertexAttributes(name).runtimeSafeCast[Double]
-        }
-        val op = graph_operations.ReduceDimensions(features.size)
-        val result = op(op.features, features).result
-        project.newVertexAttribute(params("output_name1"), result.attr1, help)
-        project.newVertexAttribute(params("output_name2"), result.attr2, help)
+  register("Reduce attribute dimensions")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("save_as", "Save reduced position as", defaultValue = "embedding"),
+      Choice("vector", "High-dimensional vector", options = project.vertexAttrList[Vector[Double]]),
+      Param("dimensions", "Dimensions", defaultValue = "2"),
+      Choice("method", "Embedding method", options = FEOption.list("t-SNE", "PCA")),
+      Param("perplexity", "Perplexity", defaultValue = "30", group = "t-SNE options"))
+    def enabled = FEStatus.assert(
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
+      val dimensions = params("dimensions").toInt
+      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
+      val op = params("method") match {
+        case "t-SNE" => graph_operations.TSNE(dimensions, params("perplexity").toDouble)
+        case "PCA" => graph_operations.PCA(dimensions)
       }
-    })
+      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
+    }
+  })
 
   register("Split to train and test set")(new ProjectTransformation(_) {
     params ++= List(
@@ -373,22 +372,6 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val contextSize = params("context_size").toInt
       val op = graph_operations.Node2Vec(dimensions, iterations, walkLength, walksPerNode, contextSize)
       project.vertexAttributes(name) = op(op.es, project.edgeBundle).result.embedding
-    }
-  })
-
-  register("Embed with t-SNE")(new ProjectTransformation(_) {
-    params ++= List(
-      Param("save_as", "The name of the embedding", defaultValue = "tsne"),
-      Choice("vector", "Vector", options = project.vertexAttrList[Vector[Double]]),
-      Param("perplexity", "Perplexity", defaultValue = "30"))
-    def enabled = FEStatus.assert(
-      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
-    def apply() = {
-      val name = params("save_as")
-      assert(name.nonEmpty, "Please set the name of the embedding.")
-      val op = graph_operations.TSNE(params("perplexity").toDouble)
-      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
-      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
     }
   })
 
