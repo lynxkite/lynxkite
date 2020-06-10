@@ -7,7 +7,7 @@ class CopyEdgesToSegmentationTest extends OperationsTestBase {
   test("Copy edges to cliques") {
     val base = box("Create vertices", Map("size" -> "5"))
       .box("Create random edges", Map("degree" -> "5", "seed" -> "0"))
-      .box("Add constant edge attribute", Map("name" -> "const", "value" -> "1", "type" -> "Double"))
+      .box("Add constant edge attribute", Map("name" -> "const", "value" -> "1", "type" -> "number"))
       .box("Find maximal cliques", Map("name" -> "cliques", "bothdir" -> "false", "min" -> "3"))
     val project1 = base.project
     assert(project1.edgeBundle.toPairSeq.size == 21)

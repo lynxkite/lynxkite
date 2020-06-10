@@ -12,7 +12,7 @@ class CopyEdgesToBaseProjectTest extends OperationsTestBase {
         Map("degree" -> "5", "seed" -> "0", "apply_to_graph" -> ".copy"))
       .box(
         "Add constant edge attribute",
-        Map("name" -> "const", "value" -> "1", "type" -> "Double", "apply_to_graph" -> ".copy"))
+        Map("name" -> "const", "value" -> "1", "type" -> "number", "apply_to_graph" -> ".copy"))
       .box("Copy edges to base graph", Map("apply_to_graph" -> ".copy"))
       .project
     assert(project.edgeBundle.toPairSeq.size == 21)

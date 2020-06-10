@@ -10,11 +10,11 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation handles belongsTo edges properly") {
     val project = box("Create example graph")
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
       .box(
         "Add constant vertex attribute",
-        Map("name" -> "const", "value" -> "1.0", "type" -> "Double", "apply_to_graph" -> ".seg"))
+        Map("name" -> "const", "value" -> "1.0", "type" -> "number", "apply_to_graph" -> ".seg"))
       .box(
         "Merge vertices by attribute",
         Map("key" -> "const", "aggregate_bottom" -> "", "aggregate_id" -> "",
@@ -27,7 +27,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation stays sane after filtering (which uses pullBack)") {
     val seg = box("Create example graph")
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
       .box("Filter by attributes", Map(
         "filterva_age" -> "> 10",
@@ -42,7 +42,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation stays sane after filtering on the segmentation side (this uses pullBack)") {
     val seg = box("Create example graph")
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
       .box("Add rank attribute", Map(
         "rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending", "apply_to_graph" -> ".seg"))
@@ -56,7 +56,7 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation stays sane after merging vertices") {
     val project = box("Create example graph")
       .box(
-        "Segment by Double attribute",
+        "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
       .box("Merge vertices by attribute", Map("key" -> "gender")).project
     val seg = project.segmentation("seg")

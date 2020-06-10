@@ -135,11 +135,11 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       override lazy val project = projectInput("destination")
       lazy val them = projectInput("source")
       params ++= List(
-        Choice("scalar", "Name of the graph attribute to copy", options = them.scalarList),
+        Choice("graph_attribute", "Name of the graph attribute to copy", options = them.scalarList),
         Param("save_as", "Save as"))
       def enabled = FEStatus.assert(them.scalarNames.nonEmpty, "No graph attributes found.")
       def apply() = {
-        val origName = params("scalar")
+        val origName = params("graph_attribute")
         val newName = params("save_as")
         val scalarName = if (newName.isEmpty) origName else newName
         project.scalars(scalarName) = them.scalars(origName)

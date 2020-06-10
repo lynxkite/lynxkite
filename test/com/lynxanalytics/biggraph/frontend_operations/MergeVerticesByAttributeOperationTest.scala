@@ -43,7 +43,7 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
       .box("Add constant vertex attribute", Map(
         "name" -> "constant",
         "value" -> "1",
-        "type" -> "Double",
+        "type" -> "number",
         "apply_to_graph" -> ".bucketing"))
       .box("Merge vertices by attribute", Map(
         "key" -> "constant",
