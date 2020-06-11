@@ -1,0 +1,26 @@
+### Reduce attribute dimensions
+
+Transforms (embeds) a `Vector` attribute to a lower-dimensional space.
+This is great for laying out graphs for visualizations based on vertex attributes
+rather than graph structure.
+
+====
+[p-save_as]#Save embeding as#::
+The new attribute will be created under this name.
+
+[p-vector]#High-dimensional vector#::
+The high-dimensional vertex attribute that we want to embed.
+
+[p-dimensions]#Dimensions#::
+Number of dimensions in the output vector. A `(number, number)` coordinate
+pair is output for 2 dimensions, which can be visualized as a position.
+
+[p-method]#Embedding method#::
+The dimensionality reduction method to use.
+https://en.wikipedia.org/wiki/Principal_component_analysis[Principal component analysis] or
+https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding[t-SNE].
+(Implementations provided by https://scikit-learn.org/[scikit-learn].)
+
+[p-perplexity]#Perplexity#::
+Size of the vertex neighborhood to consider for t-SNE.
+====

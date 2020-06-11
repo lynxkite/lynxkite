@@ -275,15 +275,13 @@ include::discard-edge-attributes.asciidoc[]
 
 include::discard-edges.asciidoc[]
 
-include::discard-loop-edges.asciidoc[]
-
 include::discard-graph-attributes.asciidoc[]
+
+include::discard-loop-edges.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
-
-include::embed-vertices-with-t-sne.asciidoc[]
 
 include::embed-vertices.asciidoc[]
 
@@ -399,8 +397,6 @@ include::one-hot-encode-attribute.asciidoc[]
 
 include::output.asciidoc[]
 
-include::predict-attribute-by-viral-modeling.asciidoc[]
-
 include::predict-edges-with-hyperbolic-positions.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
@@ -411,7 +407,7 @@ include::predict-with-model.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
-include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
+include::reduce-attribute-dimensions.asciidoc[]
 
 include::rename-edge-attributes.asciidoc[]
 

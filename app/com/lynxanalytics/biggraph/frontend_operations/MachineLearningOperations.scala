@@ -128,7 +128,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Reduce attribute dimensions")(new ProjectTransformation(_) {
     params ++= List(
-      Param("save_as", "Save reduced position as", defaultValue = "embedding"),
+      Param("save_as", "Save embedding as", defaultValue = "embedding"),
       Choice("vector", "High-dimensional vector", options = project.vertexAttrList[Vector[Double]]),
       Param("dimensions", "Dimensions", defaultValue = "2"),
       Choice("method", "Embedding method", options = FEOption.list("t-SNE", "PCA")),
