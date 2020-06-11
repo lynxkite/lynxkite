@@ -225,68 +225,53 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
           "attr" -> "age",
           "interval_size" -> "0.1",
           "overlap" -> "no"))
+      .box("SQL1")
 
     // List tables and segmentation of a project.
-    val res1 = sqlController.getTableBrowserNodesForBox(workspaceController)(
+    val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
       user, TableBrowserNodeForBoxRequest(getMeta(project), ""))
-    assert(List(
-      TableBrowserNode("bucketing.belongs_to", "bucketing.belongs_to", "table"),
-      TableBrowserNode("bucketing.graph_attributes", "bucketing.graph_attributes", "table"),
-      TableBrowserNode("bucketing.vertices", "bucketing.vertices", "table"),
-      TableBrowserNode("edge_attributes", "edge_attributes", "table"),
-      TableBrowserNode("edges", "edges", "table"),
-      TableBrowserNode("graph.bucketing.belongs_to", "graph.bucketing.belongs_to", "table"),
-      TableBrowserNode("graph.bucketing.graph_attributes", "graph.bucketing.graph_attributes", "table"),
-      TableBrowserNode("graph.bucketing.vertices", "graph.bucketing.vertices", "table"),
-      TableBrowserNode("graph.edge_attributes", "graph.edge_attributes", "table"),
-      TableBrowserNode("graph.edges", "graph.edges", "table"),
-      TableBrowserNode("graph.graph_attributes", "graph.graph_attributes", "table"),
-      TableBrowserNode("graph.vertices", "graph.vertices", "table"),
-      TableBrowserNode("graph_attributes", "graph_attributes", "table"),
-      TableBrowserNode("vertices", "vertices", "table")) == res1.list)
+    assert(res.list == List(
+      "bucketing.belongs_to",
+      "bucketing.graph_attributes",
+      "bucketing.vertices",
+      "edge_attributes",
+      "edges",
+      "graph_attributes",
+      "input.bucketing.belongs_to",
+      "input.bucketing.graph_attributes",
+      "input.bucketing.vertices",
+      "input.edge_attributes",
+      "input.edges",
+      "input.graph_attributes",
+      "input.vertices",
+      "input.vertices.belongs_to",
+      "input.vertices.graph_attributes",
+      "input.vertices.vertices",
+      "vertices",
+      "vertices.belongs_to",
+      "vertices.graph_attributes",
+      "vertices.vertices").map(t => TableBrowserNode(t, t, "table")))
   }
 
-  /*
-  def checkExampleGraphColumns(req: TableBrowserNodeRequest, idTypeOverride: String = "ID") = {
-    val res = await(sqlController.getTableBrowserNodes(user, req))
+  def checkExampleGraphColumns(response: TableBrowserNodeResponse) = {
     val expected = List(
       TableBrowserNode("", "age", "column", "Double"),
       TableBrowserNode("", "income", "column", "Double"),
-      TableBrowserNode("", "id", "column", idTypeOverride),
+      TableBrowserNode("", "id", "column", "String"),
       TableBrowserNode("", "location", "column", "(Double, Double)"),
       TableBrowserNode("", "name", "column", "String"),
       TableBrowserNode("", "gender", "column", "String"))
-
-    assert(expected.sortBy(_.name) == res.list.sortBy(_.name))
+    assert(expected.sortBy(_.name) == response.list.sortBy(_.name))
   }
 
   test("list project table columns") {
-    run("Create example graph")
-    checkExampleGraphColumns(
-      TableBrowserNodeRequest(
-        path = "Test_Project.vertices",
-        isImplicitTable = true))
+    val project = box("Create example graph").box("SQL1")
+    val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
+      user, TableBrowserNodeForBoxRequest(getMeta(project), "vertices"))
+    checkExampleGraphColumns(res)
   }
 
-  test("list view columns") {
-    run("Create example graph")
-    sqlController.createViewDFSpec(
-      user,
-      SQLCreateViewRequest(
-        name = "view1",
-        privacy = "public-write",
-        overwrite = false,
-        dfSpec = DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "SELECT * FROM `Test_Project.vertices`")))
-
-    // Check that columns of view are listed:
-    checkExampleGraphColumns(
-      TableBrowserNodeRequest(path = "view1"),
-      idTypeOverride = "Long")
-  }
-
+  /*
   test("list table columns") {
     run("Create example graph")
     await(sqlController.exportSQLQueryToTable(
