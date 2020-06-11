@@ -112,7 +112,14 @@ case class VertexAttributeToString[T]()
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
-    output(o.attr, inputs.attr.rdd.mapValues(_.toString))
+    if (inputs.attr.data.is[Double]) {
+      val df = new java.text.DecimalFormat(
+        "0", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH))
+      df.setMaximumFractionDigits(10)
+      output(o.attr, inputs.attr.rdd.mapValues(df.format))
+    } else {
+      output(o.attr, inputs.attr.rdd.mapValues(_.toString))
+    }
   }
 }
 
