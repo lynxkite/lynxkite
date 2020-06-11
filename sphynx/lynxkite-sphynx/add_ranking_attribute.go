@@ -59,9 +59,9 @@ func (a LongAttributeSorterSlice) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*LongAttribute, error) {
-	ranking := &LongAttribute{
-		Values:  make([]int64, length),
+func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*DoubleAttribute, error) {
+	ranking := &DoubleAttribute{
+		Values:  make([]float64, length),
 		Defined: make([]bool, length),
 	}
 	switch sortKey := sortKey.(type) {
@@ -78,7 +78,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 		if ascending {
 			for i := 0; i < len(w) && w[i].defined; i++ {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(i)
+				ranking.Values[idx] = float64(i)
 				ranking.Defined[idx] = true
 			}
 		} else {
@@ -87,7 +87,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 			}
 			for j := 0; i >= 0; i-- {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(j)
+				ranking.Values[idx] = float64(j)
 				ranking.Defined[idx] = true
 				j++
 			}
@@ -105,7 +105,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 		if ascending {
 			for i := 0; i < len(w) && w[i].defined; i++ {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(i)
+				ranking.Values[idx] = float64(i)
 				ranking.Defined[idx] = true
 			}
 		} else {
@@ -114,7 +114,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 			}
 			for j := 0; i >= 0; i-- {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(j)
+				ranking.Values[idx] = float64(j)
 				ranking.Defined[idx] = true
 				j++
 			}
@@ -132,7 +132,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 		if ascending {
 			for i := 0; i < len(w) && w[i].defined; i++ {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(i)
+				ranking.Values[idx] = float64(i)
 				ranking.Defined[idx] = true
 			}
 		} else {
@@ -141,7 +141,7 @@ func doAddRankingAttribute(sortKey TabularEntity, length int, ascending bool) (*
 			}
 			for j := 0; i >= 0; i-- {
 				idx := w[i].idx
-				ranking.Values[idx] = int64(j)
+				ranking.Values[idx] = float64(j)
 				ranking.Defined[idx] = true
 				j++
 			}

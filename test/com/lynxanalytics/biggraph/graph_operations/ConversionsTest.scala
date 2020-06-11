@@ -15,7 +15,7 @@ class ConversionsTest extends FunSuite with TestGraphOp {
       op(op.attr, graph.age).result.attr
     }
     assert(string.rdd.collect.toMap
-      == Map(0 -> "20.3", 1 -> "18.2", 2 -> "50.3", 3 -> "2.0"))
+      == Map(0 -> "20.3", 1 -> "18.2", 2 -> "50.3", 3 -> "2"))
   }
 
   test("vertex attribute to double") {
