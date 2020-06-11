@@ -308,7 +308,7 @@ boxes:
       select
         1 as ID,
         "Vertices" as Attribute,
-        scalars.`!vertex_count` as Sum,
+        graph_attributes.`!vertex_count` as Sum,
         double(null) as Avg,
         double(null) as Min,
         double(null) as `5% percentile`,
@@ -316,7 +316,7 @@ boxes:
         double(null) as `95% percentile`,
         double(null) as Max,
         double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`
-      from scalars
+      from graph_attributes
   x: 293.0
   y: 532.0
 - id: SQL1_7
@@ -330,7 +330,7 @@ boxes:
       select
         2 as ID,
         "Edges" as Attribute,
-        scalars.`!edge_count` as Sum,
+        graph_attributes.`!edge_count` as Sum,
         double(null) as Avg,
         double(null) as Min,
         double(null) as `5% percentile`,
@@ -338,7 +338,7 @@ boxes:
         double(null) as `95% percentile`,
         double(null) as Max,
         double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`
-      from scalars
+      from graph_attributes
   parametricParameters: {}
   x: 284.0
   y: 647.0
