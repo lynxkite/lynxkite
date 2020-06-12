@@ -52,7 +52,7 @@ can be useful:
 * For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
 
 [p-ref6]#Pairwise interval filters#::
-For the `(number, number)` type, you can use interval filters to filter the first and second
+For the `Vector[number]` type, you can use interval filters to filter the first and second
 coordinates. List the intervals for the first and second coordinates separated with a comma.
 Intervals can be specified with brackets, just like for the simple interval filters.
 For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.

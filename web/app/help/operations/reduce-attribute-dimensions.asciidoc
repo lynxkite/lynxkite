@@ -12,8 +12,7 @@ The new attribute will be created under this name.
 The high-dimensional vertex attribute that we want to embed.
 
 [p-dimensions]#Dimensions#::
-Number of dimensions in the output vector. A `(number, number)` coordinate
-pair is output for 2 dimensions, which can be visualized as a position.
+Number of dimensions in the output vector.
 
 [p-method]#Embedding method#::
 The dimensionality reduction method to use.
