@@ -38,7 +38,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def summary = s"Output ${params("name")}"
     })
 
-  register("Project rejoin", List("target", "source"), List(projectOutput))(
+  register("Graph rejoin", List("target", "source"), List(projectOutput))(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
@@ -301,10 +301,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
     })
 
-  register("Project union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
+  register("Graph union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
-    params += Param("id_attr", "ID attribute name", defaultValue = "new_id")
     def enabled = project.hasVertexSet && other.hasVertexSet
 
     def checkTypeCollision(other: ProjectViewer) = {
@@ -390,8 +389,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       for ((name, attr) <- newVertexAttributes) {
         project.newVertexAttribute(name, attr) // Clear notes.
       }
-      val idAttr = params("id_attr")
-      project.newVertexAttribute(idAttr, project.vertexSet.idAttribute)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
     }
@@ -405,7 +402,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Take segmentation as base project")(new ProjectTransformation(_) with SegOp {
+  register("Take segmentation as base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled
     def apply() = {
@@ -419,7 +416,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       val edgeBundle = project.edgeBundle
       val vertexAttrs = project.vertexAttributes.toMap
       val edgeAttrs = project.edgeAttributes.toMap
-      project.scalars = Map()
       project.vertexSet = edgeBundle.idSet
       for ((name, attr) <- vertexAttrs) {
         project.newVertexAttribute(
@@ -433,7 +429,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Take segmentation links as base project")(new ProjectTransformation(_) with SegOp {
+  register("Take segmentation links as base graph")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled
     def apply() = {
@@ -547,28 +543,27 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute in Python")(new ProjectTransformation(_) {
-    val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
-      case "yes" => true
-      case "no" => false
-      case "" => false
-      case unexpected => throw new AssertionError(
-        s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
-    }
     params ++= List(
-      Param("inputs", "Inputs"),
-      Param("outputs", "Outputs"),
+      Param("inputs", "Inputs", defaultValue = "<infer from code>"),
+      Param("outputs", "Outputs", defaultValue = "<infer from code>"),
       Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
-    private def split(s: String) = if (s.trim.nonEmpty) s.split(",", -1).map(_.trim).toSeq else Seq()
+    private def pythonInputs = {
+      if (params("inputs") == "<infer from code>") PythonUtilities.inferInputs(params("code"))
+      else splitParam("inputs")
+    }
+    private def pythonOutputs = {
+      if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
+      else splitParam("outputs")
+    }
     override def summary = {
-      val outputs = split(params("outputs")).map(_.replaceFirst(":.*", "")).mkString(", ")
+      val outputs = pythonOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
       if (outputs.isEmpty) "Compute in Python"
       else s"Compute $outputs in Python"
     }
     def apply() = {
-      assert(allowed, "Python code execution is disabled on this server for security reasons.")
-      PythonUtilities.run(
-        params("code"), split(params("inputs")), split(params("outputs")), project)
+      PythonUtilities.assertAllowed()
+      PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
     }
   })
 

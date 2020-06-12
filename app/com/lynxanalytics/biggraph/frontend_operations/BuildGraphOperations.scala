@@ -56,7 +56,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       for ((name, attr) <- g.vertexAttributes) {
         project.newVertexAttribute(name, attr)
       }
-      project.newVertexAttribute("id", project.vertexSet.idAttribute)
+      project.newVertexAttribute("id", project.vertexSet.idAttribute.asString)
       project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       for ((name, s) <- g.scalars) {
         project.scalars(name) = s.entity
@@ -124,7 +124,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     def enabled = FEStatus.enabled
     def apply() = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
-      project.setVertexSet(result.vs, idAttr = "id")
+      project.vertexSet = result.vs
       project.newVertexAttribute("ordinal", result.ordinal)
     }
   })
@@ -188,19 +188,11 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   register(
     "Use table as vertices", List("table"))(factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("table").asProject
-      params += Param("id_attr", "Save internal ID as", defaultValue = "")
       def enabled = FEStatus.enabled
       def apply() = {
         project.vertexSet = vertices.vertexSet
         for ((name, attr) <- vertices.vertexAttributes) {
           project.newVertexAttribute(name, attr, "imported")
-        }
-        val idAttr = params("id_attr")
-        if (idAttr.nonEmpty) {
-          assert(
-            !project.vertexAttributes.contains(idAttr),
-            s"The input also contains a column called '$idAttr'. Please pick a different name.")
-          project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
         }
       }
     })
@@ -222,7 +214,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           op(op.srcAttr, edges.vertexAttributes(src).runtimeSafeCast[String])(
             op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
         }
-        project.setVertexSet(eg.vs, idAttr = "id")
+        project.vertexSet = eg.vs
         project.newVertexAttribute("stringId", eg.stringId)
         project.edgeBundle = eg.es
         for ((name, attr) <- edges.vertexAttributes) {
@@ -233,7 +225,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   register(
     "Use table as edges", List(projectInput, "table"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val edges = tableLikeInput("table").asProject
       params ++= List(
         Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
@@ -251,10 +243,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
         assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
         assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-        val idAttr = project.vertexAttributes(id)
-        val srcAttr = edges.vertexAttributes(src)
-        val dstAttr = edges.vertexAttributes(dst)
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+        val idAttr = project.vertexAttributes(id).asString
+        val srcAttr = edges.vertexAttributes(src).asString
+        val dstAttr = edges.vertexAttributes(dst).asString
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
           idAttr, idAttr, srcAttr, dstAttr)
         project.edgeBundle = imp.edges
         for ((name, attr) <- edges.vertexAttributes) {
@@ -262,4 +254,19 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         }
       }
     })
+
+  registerProjectCreatingOp("Create graph in Python")(new ProjectOutputOperation(_) {
+    params ++= List(
+      Param("outputs", "Outputs", defaultValue = "<infer from code>"),
+      Code("code", "Python code", language = "python"))
+    def enabled = FEStatus.enabled
+    private def pythonOutputs = {
+      if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
+      else splitParam("outputs")
+    }
+    def apply() = {
+      PythonUtilities.assertAllowed()
+      PythonUtilities.create(params("code"), pythonOutputs, project)
+    }
+  })
 }

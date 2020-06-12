@@ -1,0 +1,8 @@
+### Rename graph attributes
+
+Changes the name of graph attributes.
+
+====
+[p-title]#The new names for each attribute#::
+If the new name is empty, the attribute will be discarded.
+====

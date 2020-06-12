@@ -49,9 +49,8 @@ end::database-export[]
 tag::file-export[]
 There are two ways to access the exported data:
 
- - Set _Destination path_ to `<auto>`. A download link will be created as a project scalar.
-   You can download the file through this link. This works even for large files as long as
-   they fit on your hard drive.
+ - Set _Destination path_ to `<auto>`. A download link will be generated.
+   This works even for large files as long as they fit on your hard drive.
  - Set _Destination path_ to a distributed file system path that you can access. This allows
    you to access the exported data using the standard tools for the file system. A download link
    will still be provided, but the standard tools can allow for higher throughput access.
@@ -122,7 +121,7 @@ rarely do you need to give random seeds any thought.
 end::random-seed[]
 
 tag::random-attribute[]
-Generates a new random Double attribute with the specified distribution, which can be either
+Generates a new random numeric attribute with the specified distribution, which can be either
 (1) a Standard Normal (i.e., Gaussian) distribution with a mean of 0 and a standard deviation of 1, or (2)
 a Standard Uniform distribution where values fall between 0 and 1.
 
@@ -143,7 +142,7 @@ end::random-attribute[]
 tag::weighted-aggregators[]
 The available weighted aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
  ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
  ** `weighted_average`
@@ -158,7 +157,7 @@ end::weighted-aggregators[]
 tag::global-aggregators[]
 The available aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `average`
  ** `count` (number of cases where the attribute is defined)
  ** `first` (arbitrarily picks a value)
@@ -175,7 +174,7 @@ end::global-aggregators[]
 tag::local-aggregators[]
 The available aggregators are:
 
- * For `Double` attributes:
+ * For `number` attributes:
  ** `average`
  ** `count_distinct` (the number of distinct values)
  ** `count_most_common` (the number of occurrences of the most common value)
@@ -212,7 +211,7 @@ tag::sql-box[]
 
 See the <<SQL syntax>> section for more.
 
-The following tables are available for SQL access for project inputs:
+The following tables are available for SQL access for graph inputs:
 
  - All the vertex attributes can be accessed in the `vertices` table.
 +
@@ -225,9 +224,9 @@ Example: `select max(weight) from {maybe-tick}{prefix}edge_attributes{maybe-tick
 You can not query the `edge_attributes` table if there are no edge attributes, even if the edges
 themselves are defined.
 
- - All the scalars can be accessed in the `scalars` table.
+ - All the graph attributes can be accessed in the `graph_attributes` table.
 +
-Example: `select {backtick}!vertex_count{backtick} from {maybe-tick}{prefix}scalars{maybe-tick}`
+Example: `select {backtick}!vertex_count{backtick} from {maybe-tick}{prefix}graph_attributes{maybe-tick}`
 
  - All the edge and vertex attributes can be accessed in the `edges` table. Each row of this
 table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes
@@ -236,7 +235,7 @@ of the source and destination vertices are prefixed with `src_` and `dst_` respe
 Example:
 `select max(edge_weight) from {maybe-tick}{prefix}edges{maybe-tick} where src_age < dst_age`
 
- - The `belongs_to` table is defined for each segmentation of a project or a segmentation. It
+ - The `belongs_to` table is defined for each segmentation of a graph or a segmentation. It
 contains the vertex attributes for the connected pairs of base and segmentation vertices prefixed
 with `base_` and `segment_` respectively.
 +

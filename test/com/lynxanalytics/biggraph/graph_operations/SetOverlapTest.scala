@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class SetOverlapTest extends FunSuite with TestGraphOp {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.
-  def getOverlaps(nodes: Seq[(Seq[Int], Int)], minOverlap: Int): Map[(Int, Int), Int] = {
+  def getOverlaps(nodes: Seq[(Seq[Int], Int)], minOverlap: Int): Map[(Int, Int), Double] = {
     val g = SegmentedTestGraph(nodes).result
     val op = SetOverlap(minOverlap)
     val so = op(op.vs, g.vs)(op.segments, g.segments)(op.belongsTo, g.belongsTo).result

@@ -1,0 +1,8 @@
+### Copy graph attribute
+
+Creates a copy of a graph attribute.
+
+====
+[p-from]#Old name#:: The graph attribute to copy.
+[p-to]#New name#:: The name of the copy.
+====

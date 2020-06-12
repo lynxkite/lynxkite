@@ -30,11 +30,11 @@ $(pip): python_requirements.txt
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-prep-done
-	./tools/install_spark.sh && ./.test_backend.sh -s && ./.test_backend.sh && touch $@
+	./tools/install_spark.sh && ./test_backend.sh -s && ./test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
-	./.test_frontend.sh && touch $@
+	./test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done $(pip)
 	tools/with_lk.sh python/remote_api/test.sh && touch $@
 .build/automation-python-test-passed: $(shell $(find) python/remote_api python/automation) \
@@ -47,7 +47,8 @@ $(pip): python_requirements.txt
 	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/impact-analyzer-pipeline-test-passed: \
-  $(shell $(find) standard-pipelines/impact-analyzer) $(pip)
+		$(shell $(find) standard-pipelines/impact-analyzer) \
+		impact-analyzer-dashboard/server/src/configChecker.ts
 	standard-pipelines/impact-analysis/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
 	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
@@ -67,7 +68,7 @@ $(pip): python_requirements.txt
 .build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
 	impact-analyzer-dashboard/tests.sh && touch $@
 scala-dependency-licenses.md: build.sbt
-	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
+	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
 	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
 javascript-dependency-licenses.md: web/package.json

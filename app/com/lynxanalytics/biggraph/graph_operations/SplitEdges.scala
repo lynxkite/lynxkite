@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.spark_util._
 object SplitEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
-    val attr = edgeAttribute[Long](es)
+    val attr = edgeAttribute[Double](es)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
@@ -22,7 +22,7 @@ object SplitEdges extends OpFromJson {
       newEdges.idSet,
       inputs.es.entity.idSet,
       EdgeBundleProperties(isFunction = true, isEverywhereDefined = true))
-    val indexAttr = edgeAttribute[Long](newEdges)
+    val indexAttr = edgeAttribute[Double](newEdges)
   }
   def fromJson(j: JsValue) = SplitEdges()
 }
@@ -44,10 +44,10 @@ case class SplitEdges() extends SparkOperation[Input, Output] {
 
     val newEdgesWithIndex =
       edges.sortedJoin(repetitionAttr).flatMapValues {
-        case (edge, numRepetitions) => (0L until numRepetitions).map(index => (edge, index))
+        case (edge, numRepetitions) => (0.0 until numRepetitions by 1.0).map(index => (edge, index))
       }
 
-    val partitioner = rc.partitionerForNRows(repetitionAttr.values.reduce(_ + _)) // Attr is Long.
+    val partitioner = rc.partitionerForNRows(repetitionAttr.values.sum.toLong)
 
     val newIdAndOldIdAndEdgeAndZeroBasedIndex =
       newEdgesWithIndex

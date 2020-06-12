@@ -1,6 +1,6 @@
 ### Segment by interval
 
-Segments the vertices by a pair of `Double` vertex attributes representing intervals.
+Segments the vertices by a pair of `number` vertex attributes representing intervals.
 
 The domain of the attributes is split into intervals of the given size. Each of these
 intervals will represent a segment. Each vertex will belong to each segment whose
@@ -11,10 +11,10 @@ interval intersects with the interval of the vertex. Empty segments are not crea
 The new segmentation will be saved under this name.
 
 [p-begin_attr]#Begin attribute#::
-The `Double` attribute corresponding the beginning of intervals to segment by.
+The `number` attribute corresponding the beginning of intervals to segment by.
 
 [p-end_attr]#End attribute#::
-The `Double` attribute corresponding the end of intervals to segment by.
+The `number` attribute corresponding the end of intervals to segment by.
 
 [p-interval_size]#interval size#::
 The attribute's domain will be split into intervals of this size. The splitting always starts at
@@ -22,5 +22,5 @@ zero.
 
 [p-overlap]#overlap#::
 If you enable overlapping intervals, then each interval will have a 50% overlap
-with both the previous and the next interval. 
+with both the previous and the next interval.
 ====

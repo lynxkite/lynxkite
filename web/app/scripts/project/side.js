@@ -27,7 +27,7 @@ angular.module('biggraph')
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
     Side.prototype.sectionHumanName = {
-      'scalar': 'Scalars',
+      'scalar': 'Graph attributes',
       'vertex-attribute': 'Vertex attributes',
       'edge-attribute': 'Edge attributes',
       'segmentation': 'Segmentations',
@@ -40,7 +40,7 @@ angular.module('biggraph')
     };
     Side.prototype.sectionElements = function(section) {
       if (section === 'scalar') {
-        return this.project.scalars.filter(function(s) {
+        return this.project.graphAttributes.filter(function(s) {
           return s.title[0] !== '!';
         });
       } else if (section === 'vertex-attribute') {
@@ -102,16 +102,6 @@ angular.module('biggraph')
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
     };
-
-    Side.prototype.saveStateToBackend = function(scalarName, opFinishedCallback) {
-      this.applyOp(
-        'Save-UI-status-as-graph-attribute',
-        {
-          scalarName: scalarName,
-          uiStatusJson: this.getBackendJson(),
-        }).finally(opFinishedCallback);
-    };
-
 
     Side.prototype.updateViewData = function() {
       const vd = this.viewData || {};
@@ -180,7 +170,7 @@ angular.module('biggraph')
         const edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
         if (edgeColorAttr !== undefined) {
           vd.edgeAttrs.edgeColor =
-            (edgeColorAttr.typeName === 'Double') ?
+            (edgeColorAttr.typeName === 'number') ?
               aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
         }
       }
@@ -628,7 +618,7 @@ angular.module('biggraph')
       if (!this.loaded()) { return; }
       this.abandonScalars();
       this.scalars = {};
-      const scalars = this.project.scalars;
+      const scalars = this.project.graphAttributes;
       for (let i = 0; i < scalars.length; ++i) {
         const scalar = scalars[i];
         this.scalars[scalar.title] = util.lazyFetchScalarValue(

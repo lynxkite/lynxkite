@@ -21,7 +21,7 @@ import scala.collection.immutable.Seq
 object SegmentByGeographicalProximity extends OpFromJson {
   class Input(val attrNames: Seq[String]) extends MagicInputSignature {
     val vertices = vertexSet
-    val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
+    val coordinates = vertexAttribute[Vector[Double]](vertices)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
@@ -81,7 +81,7 @@ case class SegmentByGeographicalProximity(
 
     val factory = new org.locationtech.jts.geom.GeometryFactory()
     val links = inputs.coordinates.rdd.mapValues {
-      case (lat, lon) => getSegmentIdForPosition(lat, lon, geometries, factory)
+      v => getSegmentIdForPosition(v(0), v(1), geometries, factory)
     }.flatMapValues(sids => sids)
 
     output(o.segments, segmentAttributes.mapValues(_ => ()))

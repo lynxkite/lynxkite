@@ -65,7 +65,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       }
       // Calculate sizes and ids at the end.
       result.newVertexAttribute("size", computeSegmentSizes(result))
-      result.newVertexAttribute("id", result.vertexSet.idAttribute)
+      result.newVertexAttribute("id", result.vertexSet.idAttribute.asString)
     }
   })
 
@@ -73,7 +73,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     def addSegmentationParameters = params ++= List(
       Choice(
         "base_id_attr",
-        s"Identifying vertex attribute in base project",
+        s"Identifying vertex attribute in base graph",
         options = FEOption.list(parent.vertexAttributeNames[String].toList)),
       Choice(
         "seg_id_attr",
@@ -273,7 +273,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use base project as segmentation")(new ProjectTransformation(_) {
+  register("Use base graph as segmentation")(new ProjectTransformation(_) {
     params += Param("name", "Segmentation name", defaultValue = "self_as_segmentation")
     def enabled = project.hasVertexSet
 
@@ -290,9 +290,9 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use other project as segmentation", List("project", "segmentation"))(
+  register("Use other graph as segmentation", List("graph", "segmentation"))(
     new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val them = projectInput("segmentation")
       params += Param("name", "Segmentation's name", defaultValue = "segmentation")
       def enabled = project.hasVertexSet && them.hasVertexSet
@@ -307,7 +307,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register(
     "Use table as segmentation", List(projectInput, "table"))(
       new ProjectOutputOperation(_) {
-        override lazy val project = projectInput("project")
+        override lazy val project = projectInput("graph")
         lazy val segTable = tableLikeInput("table").asProject
         params ++= List(
           Param("name", s"Name of new segmentation"),
@@ -333,21 +333,21 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           assert(
             baseAttrName != FEOption.unset.id,
             "The base ID attribute parameter must be set.")
-          val baseColumn = segTable.vertexAttributes(baseColumnName)
-          val segColumn = segTable.vertexAttributes(segColumnName)
-          val baseAttr = project.vertexAttributes(baseAttrName)
+          val baseColumn = segTable.vertexAttributes(baseColumnName).asString
+          val segColumn = segTable.vertexAttributes(segColumnName).asString
+          val baseAttr = project.vertexAttributes(baseAttrName).asString
           val segmentation = project.segmentation(params("name"))
 
           val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
           segmentation.newVertexAttribute(segColumnName, segAttr)
         }
 
-        def typedImport[A, B](
+        def typedImport(
           segmentation: SegmentationEditor,
-          baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
+          baseColumn: Attribute[String], segColumn: Attribute[String], baseAttr: Attribute[String]): Attribute[String] = {
           // Merge by segment ID to create the segments.
           val merge = {
-            val op = graph_operations.MergeVertices[B]()
+            val op = graph_operations.MergeVertices[String]()
             op(op.attr, segColumn).result
           }
           segmentation.setVertexSet(merge.segments, idAttr = "id")
@@ -355,12 +355,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           val segAttr = aggregateViaConnection(
             merge.belongsTo,
             // Use scalable aggregator.
-            AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
-          implicit val ta = baseColumn.typeTag
-          implicit val tb = segColumn.typeTag
+            AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[String]()))
           // Import belongs-to relationship as edges between the base and the segmentation.
           val imp = graph_operations.ImportEdgesForExistingVertices.run(
-            baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+            baseAttr, segAttr, baseColumn, segColumn)
           segmentation.belongsTo = imp.edges
           segAttr
         }
@@ -368,14 +366,14 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
 
   register(
     "Use table as segmentation links", List(projectInput, "links"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val links = tableLikeInput("links").asProject
       def seg = project.asSegmentation
       def parent = seg.parent
       if (project.isSegmentation) params ++= List(
         Choice(
           "base_id_attr",
-          s"Identifying vertex attribute in base project",
+          s"Identifying vertex attribute in base graph",
           options = FEOption.unset +: parent.vertexAttrList),
         Choice(
           "base_id_column",
@@ -414,23 +412,23 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         assert(
           segAttrName != FEOption.unset.id,
           "The segmentation ID attribute parameter must be set.")
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-          parent.vertexAttributes(baseAttrName),
-          project.vertexAttributes(segAttrName),
-          links.vertexAttributes(baseColumnName),
-          links.vertexAttributes(segColumnName))
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
+          parent.vertexAttributes(baseAttrName).asString,
+          project.vertexAttributes(segAttrName).asString,
+          links.vertexAttributes(baseColumnName).asString,
+          links.vertexAttributes(segColumnName).asString)
         seg.belongsTo = imp.edges
       }
     })
 
-  register("Segment by Double attribute")(new ProjectTransformation(_) {
+  register("Segment by numeric attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes.")
+      project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -529,18 +527,18 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Segment by geographical proximity")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Name"),
-      Choice("position", "Position", options = project.vertexAttrList[(Double, Double)]),
+      Choice("position", "Position", options = project.vertexAttrList[Vector[Double]]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"),
       Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
         options = FEOption.boolsDefaultFalse))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[(Double, Double)].nonEmpty, "No position vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
 
     def apply() = {
       import com.lynxanalytics.biggraph.graph_util.Shapefile
       val shapeFilePath = getShapeFilePath(params)
-      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[Vector[Double]]
       val shapefile = Shapefile(shapeFilePath)
       val op = graph_operations.SegmentByGeographicalProximity(
         shapeFilePath,
@@ -569,7 +567,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].size >= 2,
-      "Less than two Double vertex attributes.")
+      "Less than two numeric vertex attributes.")
     override def summary = {
       val beginAttrName = params("begin_attr")
       val endAttrName = params("end_attr")
@@ -632,7 +630,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           "There must be a String attribute or a sub-segmentation to define event locations") &&
           FEStatus.assert(
             project.vertexAttrList[Double].nonEmpty,
-            "There must be a Double attribute to define event times")
+            "There must be a numeric attribute to define event times")
 
     override def summary = {
       val name = params("name")

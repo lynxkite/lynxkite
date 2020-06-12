@@ -38,10 +38,10 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve"),
-      Seq(50.3, "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(2.0, "Male", 3, null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve"),
+      Seq(50.3, "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(2.0, "Male", "3", null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
   }
 
   test("edges table") {
@@ -51,14 +51,14 @@ class SQLTest extends OperationsTestBase {
       "src_income", "src_location", "src_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
-        20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Bob envies Adam", 3.0, 50.3,
-        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
-        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
-        "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve")))
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
+        20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam", "Bob envies Adam", 3.0, 50.3,
+        "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
+        "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
+        "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve")))
   }
 
   test("edge_attributes table") {
@@ -82,11 +82,11 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Adam", 0, 3.0), Seq("Eve", 0, 3.0), Seq("Bob", 0, 3.0), Seq("Isolated Joe", 3, 1.0)))
+      Seq("Adam", "0", 3.0), Seq("Eve", "0", 3.0), Seq("Bob", "0", 3.0), Seq("Isolated Joe", "3", 1.0)))
   }
 
   test("scalars table") {
-    val table = runQueryOnExampleGraph("select `!edge_count`, `!vertex_count` from scalars")
+    val table = runQueryOnExampleGraph("select `!edge_count`, `!vertex_count` from graph_attributes")
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("!edge_count", "!vertex_count"))
     assert(data == Seq(Seq(4.0, 4.0)))
@@ -94,7 +94,7 @@ class SQLTest extends OperationsTestBase {
 
   test("scalars table different column order") {
     val table = runQueryOnExampleGraph(
-      "select greeting, `!vertex_count`, `!edge_count` from scalars")
+      "select greeting, `!vertex_count`, `!edge_count` from graph_attributes")
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("greeting", "!vertex_count", "!edge_count"))
     assert(data == Seq(Seq("Hello world! 😀 ", 4.0, 4.0)))
@@ -367,8 +367,8 @@ class SQLTest extends OperationsTestBase {
 
   test("user defined functions - geodistance") {
     val t = box("Create example graph")
-      .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location._1"))
-      .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location._2"))
+      .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location(0)"))
+      .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location(1)"))
       .box("SQL1", Map("sql" -> "select geodistance(src_lat, src_lon, dst_lat, dst_lon) from edges")).table
     assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
       Seq(7023993.307994274), // New York / Budapest ~7k kilometers.
@@ -441,7 +441,7 @@ class SQLTest extends OperationsTestBase {
 
   test("array columns can be persisted") {
     val t = box("Create example graph")
-      .box("Compute degree", Map())
+      .box("Compute degree", Map("direction" -> "incoming edges"))
       .box("Merge vertices by attribute", Map("key" -> "degree", "aggregate_age" -> "set"))
       .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
       .box("SQL1", Map("sql" -> "select age_set from input"))
@@ -454,7 +454,7 @@ class SQLTest extends OperationsTestBase {
 
   test("nested array columns can be persisted") {
     val t = box("Create example graph")
-      .box("Compute degree", Map())
+      .box("Compute degree", Map("direction" -> "incoming edges"))
       .box("Merge vertices by attribute", Map("key" -> "degree", "aggregate_age" -> "vector"))
       .box("Add constant vertex attribute", Map("name" -> "c"))
       .box("Merge vertices by attribute", Map("key" -> "c", "aggregate_age_vector" -> "vector"))

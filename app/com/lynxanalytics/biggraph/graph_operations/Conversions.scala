@@ -15,8 +15,7 @@ case class DynamicValue(
     string: String = "",
     defined: Boolean = true,
     double: Option[Double] = None,
-    x: Option[Double] = None,
-    y: Option[Double] = None)
+    vector: List[Double] = Nil)
 object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
@@ -40,10 +39,6 @@ object DynamicValue {
         double = Some(value.asInstanceOf[Int].toDouble), string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
-    else if (typeOf[T] =:= typeOf[(Double, Double)]) value => {
-      val tuple = value.asInstanceOf[(Double, Double)]
-      DynamicValue(string = value.toString, x = Some(tuple._1), y = Some(tuple._2))
-    }
     else if (typeOf[T] <:< typeOf[Seq[_]]) {
       seqConverter(TypeTagUtil.typeArgs(typeTag[T]).head).asInstanceOf[T => DynamicValue]
     } else if (typeOf[T] <:< typeOf[Set[_]]) {
@@ -73,12 +68,26 @@ object DynamicValue {
 
   def seqConverter[T](tt: TypeTag[_]): (Seq[T] => DynamicValue) = {
     val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
-    seq => DynamicValue(string = seq.map(e => innerConverter(e).string).mkString(", "))
+    if (tt.tpe =:= typeOf[Double]) {
+      seq =>
+        DynamicValue(
+          string = seq.map(e => innerConverter(e).string).mkString(", "),
+          vector = seq.asInstanceOf[Seq[Double]].toList)
+    } else {
+      seq => DynamicValue(string = seq.map(e => innerConverter(e).string).mkString(", "))
+    }
   }
 
   def setConverter[T](tt: TypeTag[_]): (Set[T] => DynamicValue) = {
     val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
-    set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
+    if (tt.tpe =:= typeOf[Double]) {
+      set =>
+        DynamicValue(
+          string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "),
+          vector = set.asInstanceOf[Seq[Double]].toList)
+    } else {
+      set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
+    }
   }
 }
 
@@ -112,7 +121,16 @@ case class VertexAttributeToString[T]()
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
-    output(o.attr, inputs.attr.rdd.mapValues(_.toString))
+    if (inputs.attr.data.is[Double]) {
+      // Double.toString always adds a ".0" at the end. ("1981.0")
+      // We avoid that using DecimalFormat.
+      val df = new java.text.DecimalFormat(
+        "0", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH))
+      df.setMaximumFractionDigits(10)
+      output(o.attr, inputs.attr.rdd.mapValues(df.format))
+    } else {
+      output(o.attr, inputs.attr.rdd.mapValues(_.toString))
+    }
   }
 }
 

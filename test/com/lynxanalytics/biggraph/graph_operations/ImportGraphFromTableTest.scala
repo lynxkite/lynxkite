@@ -22,16 +22,4 @@ class ImportGraphFromTableTest extends FunSuite with TestGraphOp {
     assert(Seq((1, (0, 1)), (2, (1, 0)), (4, (2, 1))) ==
       result.edges.toIdPairSeq)
   }
-
-  test("import edges by ID") {
-    val table = SmallTestGraph(
-      Map(0 -> Seq(), 1 -> Seq(), 2 -> Seq(), 3 -> Seq()))().result
-    val srcColumn = AddVertexAttribute.run(table.vs, Map(0 -> 0L, 1 -> 1L, 2 -> 2L, 3 -> 2L))
-    val dstColumn = AddVertexAttribute.run(table.vs, Map(0 -> 1L, 1 -> 0L, 2 -> 0L, 3 -> 1L))
-    val graph = ExampleGraph().result
-
-    val result = ImportEdgesForExistingVertices.run(
-      graph.vertices.idAttribute, graph.vertices.idAttribute, srcColumn, dstColumn)
-    assert(graph.edges.toIdPairSeq == result.edges.toIdPairSeq)
-  }
 }

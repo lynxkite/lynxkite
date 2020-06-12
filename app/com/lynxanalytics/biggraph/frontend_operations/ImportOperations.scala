@@ -153,7 +153,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import Neo4j")(new ImportOperation(_) {
     params ++= List(
-      Param("node_label", "Node Label"),
+      Param("node_label", "Node label"),
       Param("relationship_type", "Relationship type"),
       NonNegInt("num_partitions", "Number of partitions", default = 0),
       Choice("infer", "Infer types", options = FEOption.noyes),
@@ -242,7 +242,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import well-known graph dataset", List(), List("project"))(
+  register("Import well-known graph dataset", List(), List("graph"))(
     new ProjectOutputOperation(_) {
       params += Choice("name", "Name", options = FEOption.list(
         "Cora", "CiteSeer", "Karate Club", "PubMed"))

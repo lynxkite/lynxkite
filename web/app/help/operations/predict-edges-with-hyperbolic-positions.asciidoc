@@ -2,10 +2,10 @@
 <<experimental-operation,+++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*>>
 
 Creates additional edges in a graph based on
-hyperbolic distances between vertices. 
- _2 * size_ edges will be added because 
+hyperbolic distances between vertices.
+ _2 * size_ edges will be added because
 the new edges are undirected.
-Vertices must have two _Double_ vertex attributes to be 
+Vertices must have two _number_ vertex attributes to be
 used as radial and angular coordinates.
 
 ====
@@ -19,11 +19,11 @@ The number of edges a vertex creates from itself
  upon addition to the growth simulation graph.
 
 [p-internaldegree]#Internal degree#::
-The average number of edges created between older vertices whenever 
+The average number of edges created between older vertices whenever
 a new vertex is added to the growth simulation graph.
 
 [p-exponent]#Exponent#::
-The exponent of the power-law degree distribution. 
+The exponent of the power-law degree distribution.
 Values can be 0.5 - 1, endpoints excluded.
 
 [p-radial]#Radial#::

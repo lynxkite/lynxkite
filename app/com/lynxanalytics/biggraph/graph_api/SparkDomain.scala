@@ -406,20 +406,6 @@ class SparkDomain(
                 (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst"))))
                 .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
             })
-            case e: Attribute[_] if e.typeTag == typeTag[(Double, Double)] =>
-              def attr(e: Attribute[(Double, Double)]) = {
-                val vs = getData(e.vertexSet)
-                val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val df = sparkSession.read.parquet(srcPath)
-                val rdd = df.rdd
-                val size = rdd.count()
-                val valueIdx = df.schema.fieldIndex("value")
-                val castRDD = rdd
-                  .map(r => (r.getAs[Long]("id"), (r.getStruct(valueIdx))))
-                  .mapValues { case Row(x: Double, y: Double) => (x, y) }
-                new AttributeData[(Double, Double)](e, castRDD.sortUnique(partitioner), Some(size))
-              }
-              SafeFuture.async(attr(e.asInstanceOf[Attribute[(Double, Double)]]))
             case e: Attribute[_] if e.typeTag == typeTag[Vector[Double]] =>
               def attr(e: Attribute[Vector[Double]]) = {
                 val vs = getData(e.vertexSet)

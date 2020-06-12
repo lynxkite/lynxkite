@@ -1,6 +1,6 @@
 ### Copy edges to segmentation
 
-Copies the edges from the base project to the segmentation. The copy is performed along the links
-between the base project and the segmentation. If a base vertex belongs to no segments, its edges
+Copies the edges from the base graph to the segmentation. The copy is performed along the links
+between the base graph and the segmentation. If a base vertex belongs to no segments, its edges
 will not be found in the result. If a base vertex belongs to multiple segments, its edges will
 have multiple copies in the result.

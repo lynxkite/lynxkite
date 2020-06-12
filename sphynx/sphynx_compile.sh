@@ -10,5 +10,5 @@ go get -u github.com/xitongsys/parquet-go/writer
 go get -u github.com/xitongsys/parquet-go-source/local
 
 cd $GOPATH/src/$GO_PKG
-go fmt $GO_PKG/server
-go get -v $GO_PKG/server
+go fmt $GO_PKG/lynxkite-sphynx
+go get -v $GO_PKG/lynxkite-sphynx

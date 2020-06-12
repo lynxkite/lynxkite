@@ -22,7 +22,7 @@ In this table you can specify:
 - The **box** from which you want to use the parameter or output state.
 - The **popup** column lets you choose _"parameters"_ (to use the parameter popup) or
   one of the output states of the box.
-- The order of the steps using the buttons on the right. Press 
+- The order of the steps using the buttons on the right. Press
   +++<span class="icon glyphicon glyphicon-chevron-up"></span>+++ or
   +++<span class="icon glyphicon glyphicon-chevron-down"></span>+++ to move the step up or down, or
   +++<span class="icon glyphicon glyphicon-remove"></span>+++ to delete the step.

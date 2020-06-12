@@ -189,7 +189,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       scope.availableColorMaps = function() {
         if (scope.isFilter('slider')) {
           return ['Blue to orange', 'Orange to blue', 'Visible to invisible', 'Invisible to visible'];
-        } else if (scope.entity.typeName === 'Double') {
+        } else if (scope.entity.typeName === 'number') {
           const cms = Object.keys(chroma.brewer).filter(k =>
             k[0] === k[0].toUpperCase() && !util.qualitativeColorMaps.includes(k));
           // Also offer reversed versions.
@@ -224,7 +224,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           if (!scope.availableColorMaps().includes(state)) {
             state = 'Blue to orange';
           }
-        } else if (scope.entity.typeName === 'Double') {
+        } else if (scope.entity.typeName === 'number') {
           if (state === undefined) {
             state = 'LynxKite Classic';
           } else if (util.qualitativeColorMaps.includes(state)) {
@@ -256,7 +256,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         } else if (state.graphMode === 'sampled' && state.display === 'svg') {
           vs.push('Label');
           const hasLabel = state.attributeTitles.label !== undefined;
-          if (e.typeName === 'Double') {
+          if (e.typeName === 'number') {
             vs.push('Size');
             vs.push('Color');
             vs.push('Opacity');
@@ -271,7 +271,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
             }
             vs.push('Icon');
             vs.push('Image');
-          } else if (e.typeName === '(Double, Double)') {
+          } else if (e.typeName === 'Vector[number]') {
             vs.push('Geo coordinates');
             vs.push('Position');
           }
@@ -287,12 +287,12 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         const state = scope.side.state;
         const vs = [];
         if (state.graphMode === 'bucketed') {
-          if (e.typeName === 'Double') {
+          if (e.typeName === 'number') {
             vs.push('Width');
           }
         } else if (state.graphMode === 'sampled' && state.display === 'svg') {
           vs.push('Edge label');
-          if (e.typeName === 'Double') {
+          if (e.typeName === 'number') {
             vs.push('Edge color');
             vs.push('Width');
           } else if (e.typeName === 'String') {

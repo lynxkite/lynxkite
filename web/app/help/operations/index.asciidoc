@@ -45,18 +45,18 @@ Example: <<Find connected components>>.
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Use segmentation
 
 These operations modify <<segmentations>>.
-Example: <<Copy edges to base project>>.
+Example: <<Copy edges to base graph>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-asterisk"></i></div></div></div>+++ Structure
 
 The operations in this category can change the overall graph structure by adding or
 discarding vertices and/or edges. Examples: <<Add reversed edges>>, and <<Merge vertices by attribute>>.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Scalars
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Graph attributes
 
-The operations in this category manipulate global graph attributes (aka scalars). For example, <<correlate-two-attributes>>
+The operations in this category manipulate global graph attributes. For example, <<correlate-two-attributes>>
 computes the Pearson-correlation coefficient of two attributes, and stores the result
-in a scalar.
+in a graph attribute.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-circle"></i></div></div></div>+++ Vertex attributes
 
@@ -103,11 +103,11 @@ data with the operation <<Classify with model>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue"><i class="fa fa-cogs"></i></div></div></div>+++ Workflow
 
-Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Project union>>.
+Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Graph union>>.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage project
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage graph
 
-Utility features to manage and personalize projects by manipulating (discarding, copying, renaming, etc.) attributes, scalars and segmentations. Example:
+Utility features to manage and personalize graphs by manipulating (discarding, copying, renaming, etc.) attributes and segmentations. Example:
 <<Rename edge attributes>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category purple"><i class="fa fa-eye"></i></div></div></div>+++ Visualization operations
@@ -179,6 +179,8 @@ include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
 
+include::bundle-vertex-attributes-into-a-vector.asciidoc[]
+
 include::check-cliques.asciidoc[]
 
 include::classify-with-model.asciidoc[]
@@ -221,17 +223,15 @@ include::convert-vertex-attribute-to-double.asciidoc[]
 
 include::convert-vertex-attribute-to-string.asciidoc[]
 
-include::convert-vertex-attributes-to-position.asciidoc[]
-
 include::copy-edge-attribute.asciidoc[]
 
-include::copy-edges-to-base-project.asciidoc[]
+include::copy-edges-to-base-graph.asciidoc[]
 
 include::copy-edges-to-segmentation.asciidoc[]
 
-include::copy-scalar-from-other-project.asciidoc[]
+include::copy-graph-attribute-from-other-graph.asciidoc[]
 
-include::copy-scalar.asciidoc[]
+include::copy-graph-attribute.asciidoc[]
 
 include::copy-segmentation.asciidoc[]
 
@@ -249,6 +249,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
+include::create-graph-in-python.asciidoc[]
+
 include::create-random-edges.asciidoc[]
 
 include::create-scale-free-random-edges.asciidoc[]
@@ -263,7 +265,7 @@ include::derive-column.asciidoc[]
 
 include::derive-edge-attribute.asciidoc[]
 
-include::derive-scalar.asciidoc[]
+include::derive-graph-attribute.asciidoc[]
 
 include::derive-vertex-attribute.asciidoc[]
 
@@ -271,15 +273,13 @@ include::discard-edge-attributes.asciidoc[]
 
 include::discard-edges.asciidoc[]
 
-include::discard-loop-edges.asciidoc[]
+include::discard-graph-attributes.asciidoc[]
 
-include::discard-scalars.asciidoc[]
+include::discard-loop-edges.asciidoc[]
 
 include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
-
-include::embed-vertices-with-t-sne.asciidoc[]
 
 include::embed-vertices.asciidoc[]
 
@@ -339,6 +339,10 @@ include::find-triangles.asciidoc[]
 
 include::fingerprint-based-on-attributes.asciidoc[]
 
+include::graph-rejoin.asciidoc[]
+
+include::graph-union.asciidoc[]
+
 include::graph-visualization.asciidoc[]
 
 include::grow-segmentation.asciidoc[]
@@ -367,7 +371,7 @@ include::import-well-known-graph-dataset.asciidoc[]
 
 include::input.asciidoc[]
 
-include::link-project-and-segmentation-by-fingerprint.asciidoc[]
+include::link-base-graph-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
 
@@ -387,31 +391,25 @@ include::merge-two-vertex-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
 
-include::output.asciidoc[]
+include::one-hot-encode-attribute.asciidoc[]
 
-include::predict-attribute-by-viral-modeling.asciidoc[]
+include::output.asciidoc[]
 
 include::predict-edges-with-hyperbolic-positions.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
 
-include::predict-with-a-graph-neural-network.asciidoc[]
-
 include::predict-with-gcn.asciidoc[]
 
 include::predict-with-model.asciidoc[]
 
-include::project-rejoin.asciidoc[]
-
-include::project-union.asciidoc[]
-
 include::pull-segmentation-one-level-up.asciidoc[]
 
-include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
+include::reduce-attribute-dimensions.asciidoc[]
 
 include::rename-edge-attributes.asciidoc[]
 
-include::rename-scalar.asciidoc[]
+include::rename-graph-attributes.asciidoc[]
 
 include::rename-segmentation.asciidoc[]
 
@@ -443,7 +441,7 @@ include::segment-by-vector-attribute.asciidoc[]
 
 include::set-edge-attribute-icons.asciidoc[]
 
-include::set-scalar-icon.asciidoc[]
+include::set-graph-attribute-icon.asciidoc[]
 
 include::set-segmentation-icon.asciidoc[]
 
@@ -479,9 +477,9 @@ include::sql9.asciidoc[]
 
 include::take-edges-as-vertices.asciidoc[]
 
-include::take-segmentation-as-base-project.asciidoc[]
+include::take-segmentation-as-base-graph.asciidoc[]
 
-include::take-segmentation-links-as-base-project.asciidoc[]
+include::take-segmentation-links-as-base-graph.asciidoc[]
 
 include::train-a-decision-tree-classification-model.asciidoc[]
 
@@ -499,11 +497,11 @@ include::train-linear-regression-model.asciidoc[]
 
 include::transform.asciidoc[]
 
-include::use-base-project-as-segmentation.asciidoc[]
+include::use-base-graph-as-segmentation.asciidoc[]
 
 include::use-metagraph-as-graph.asciidoc[]
 
-include::use-other-project-as-segmentation.asciidoc[]
+include::use-other-graph-as-segmentation.asciidoc[]
 
 include::use-table-as-edge-attributes.asciidoc[]
 

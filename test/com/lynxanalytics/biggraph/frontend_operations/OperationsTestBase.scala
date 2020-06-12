@@ -59,7 +59,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     def ctx = workspace.context(user, ops, Map())
 
     lazy val project: RootProjectEditor =
-      ctx.allStates(realBox.output("project")).project
+      ctx.allStates(realBox.output("graph")).project
 
     lazy val exportResult: Scalar[String] =
       ctx.allStates(realBox.output("exported")).exportResult

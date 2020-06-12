@@ -1,9 +1,9 @@
 ### Compute in Python
 
-Executes custom Python code to define new attributes or scalars.
+Executes custom Python code to define new vertex, edge, or graph attributes.
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
-two new edge attributes (`score` and `names`), and two new scalars (`hello` and `average_age`).
+two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
 (You can try it on the <<Create example graph, example graph>> which
 has the attributes used in this code.)
 
@@ -13,12 +13,12 @@ vs['with_title'] = 'The Honorable ' + vs.name
 vs['age_squared'] = vs.age ** 2
 es['score'] = es.weight + es.comment.str.len()
 es['names'] = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
-scalars.hello = scalars.greeting.lower()
-scalars.average_age = vs.age.mean()
+graph_attributes.hello = graph_attributes.greeting.lower()
+graph_attributes.average_age = vs.age.mean()
 ----
 
-`scalars` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
-that makes it easy to get and set scalars.
+`graph_attributes` is a https://docs.python.org/3/library/types.html#types.SimpleNamespace[SimpleNamespace]
+that makes it easy to get and set graph attributes.
 
 `vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
 https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html[Pandas DataFrames].
@@ -38,24 +38,68 @@ For outputs you must also declare their types.
 
 The currently supported types for outputs are:
 
-- `float` to create a `Double`-typed attribute or scalar.
-- `str` to create a `String`-typed attribute or scalar.
+- `float` to create a `number`-typed attribute.
+- `str` to create a `String`-typed attribute.
+- `np.ndarray` to create a `Vector[number]`-typed attribute.
 
 In the previous example we would set:
 
-- Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, scalars.greeting`
-- Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, scalars.hello: str, scalars.average_age: float`
+- Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting`
+- Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, graph_attributes.hello: str, graph_attributes.average_age: float`
+
+Alternatively, you can let LynxKite infer the inputs and outputs from the code.
+In this case you still need to specify the type of the outputs, but you can do so in the code
+using a type annotation. For example:
+
+[source,python]
+----
+vs['age_squared']: float = vs.age ** 2
+----
+
+(This inference is based on simple regular expression parsing of the code and does not
+cover all possibilities. Please list the inputs and outputs explicitly if the inference
+fails.)
+
+**Working with vectors**
+
+Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
+
+To output a vector-typed attribute use `v.tolist()`:
+
+[source,python]
+----
+# Put the age and its double into a vector.
+v = np.array([[1, 2]]) * vs.age[:, None]
+vs['v'] = v.tolist()
+----
+
+On the <<Create example graph, example graph>> this would output:
+
+----
+               v
+0   [20.3, 40.6]
+1   [18.2, 36.4]
+2  [50.3, 100.6]
+3     [2.0, 4.0]
+----
+
+To use this attribute in another Python box use `np.stack(v)`:
+
+[source,python]
+----
+vs['total_v'] = np.stack(vs.v).sum(axis=1)
+----
 
 ====
 [p-code]#Code#::
 The Python code you want to run. See the operation description for details.
 
 [p-inputs]#Inputs#::
-A comma-separated list of attributes and scalars that your code wants to use.
-For example, `vs.my_attribute, vs.another_attribute, scalars.my_scalar`.
+A comma-separated list of attributes that your code wants to use.
+For example, `vs.my_attribute, vs.another_attribute, graph_attributes.last_one`.
 
 [p-outputs]#Outputs#::
-A comma-separated list of attributes and scalars that your code generates.
-These must be annotated with the type of the attribute or scalar.
-For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, scalars.my_new_scalar: str`.
+A comma-separated list of attributes that your code generates.
+These must be annotated with the type of the attribute.
+For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, graph_attributes.also_new: str`.
 ====

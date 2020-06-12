@@ -156,13 +156,14 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     ImportBoxResponse(guid, parameterSettings)
   }
 
-  def getTableBrowserNodesForBox(
-    user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
-    if (path.isEmpty) { // Top level request, for boxes that means input tables.
+  def getTableBrowserNodesForBox(workspaceController: WorkspaceController)(
+    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
+    val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
+    if (request.path.isEmpty) { // Top level request, for boxes that means input tables.
       getInputTablesForBox(user, inputTables)
     } else { // Lower level request, for boxes that means table columns.
-      assert(inputTables.contains(path), s"$path is not a valid proto table")
-      getColumnsFromSchema(inputTables(path).schema)
+      assert(inputTables.contains(request.path), s"${request.path} is not a valid proto table")
+      getColumnsFromSchema(inputTables(request.path).schema)
     }
   }
 
@@ -276,8 +277,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           absolutePath = "",
           name = field.name,
           objectType = "column",
-          columnType = ProjectViewer.feTypeName(
-            SQLHelper.typeTagFromDataType(field.dataType)))
+          columnType = SQLHelper.typeTagFromDataType(field.dataType).tpe.toString)
       })
   }
 
@@ -297,7 +297,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val table = request.dfSpec.globalSQL(user)
     val tableContents = dataManager.get(TableToScalar.run(table, request.maxRows))
     SQLQueryResult(
-      header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      header = tableContents.header.map { case (name, tt) => SQLColumn(name, tt.tpe.toString) },
       data = tableContents.rows)
   }
 
@@ -305,7 +305,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val e = TableToScalar.run(table, sampleRows)
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
-      header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      header = tableContents.header.map { case (name, tt) => TableColumn(name, tt.tpe.toString) },
       data = tableContents.rows)
   }
 

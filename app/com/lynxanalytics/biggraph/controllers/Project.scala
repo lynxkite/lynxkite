@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
@@ -235,7 +236,7 @@ sealed trait ProjectViewer {
       vertexSet = vs,
       edgeBundle = eb,
       notes = state.notes,
-      scalars = feScalarList(scalars),
+      graphAttributes = feScalarList(scalars),
       vertexAttributes = feAttributeList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
       edgeAttributes = feAttributeList(edgeAttributes, EdgeAttributeKind),
       segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
@@ -339,7 +340,7 @@ sealed trait ProjectViewer {
 }
 
 object ProjectViewer {
-  val ScalarTableName = "scalars"
+  val ScalarTableName = "graph_attributes"
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
   val EdgeAttributeTableName = "edge_attributes"
@@ -349,6 +350,7 @@ object ProjectViewer {
     typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
       .replace("com.lynxanalytics.biggraph.model.", "")
+      .replace("Double", "number")
   }
 
   def feTypeName[T](e: TypedEntity[T]): String =
@@ -623,10 +625,6 @@ sealed trait ProjectEditor {
       }
     }
   }
-  def setVertexSet(e: VertexSet, idAttr: String): Unit = {
-    vertexSet = e
-    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e)
-  }
 
   def edgeBundle = viewer.edgeBundle
   def edgeBundle_=(e: EdgeBundle) = {
@@ -687,8 +685,23 @@ sealed trait ProjectEditor {
     state = state.copy(elementMetadata = newAllMeta)
   }
 
-  def vertexAttributes =
-    new StateMapHolder[Attribute[_]] {
+  // Convert attr to a well-supported format.
+  private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
+    if (attr == null) null
+    else if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
+    else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
+    else attr
+  }
+
+  abstract class AttributeStateMapHolder extends StateMapHolder[Attribute[_]] {
+    override def set(name: String, entity: Attribute[_]) = {
+      // Convert attributes whenever they are added to a project.
+      super.set(name, supportedAttribute(entity))
+    }
+  }
+
+  def vertexAttributes: StateMapHolder[Attribute[_]] =
+    new AttributeStateMapHolder {
       protected def getMap = viewer.vertexAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(vertexAttributeGUIDs = newMap)
@@ -699,11 +712,11 @@ sealed trait ProjectEditor {
       }
     }
   def vertexAttributes_=(attrs: Map[String, Attribute[_]]) =
-    vertexAttributes.updateEntityMap(attrs)
+    vertexAttributes.updateEntityMap(attrs.mapValues(supportedAttribute(_)))
   def vertexAttributeNames[T: TypeTag] = viewer.vertexAttributeNames[T]
 
-  def edgeAttributes =
-    new StateMapHolder[Attribute[_]] {
+  def edgeAttributes: StateMapHolder[Attribute[_]] =
+    new AttributeStateMapHolder {
       protected def getMap = viewer.edgeAttributes
       protected def updateMap(newMap: Map[String, UUID]) =
         state = state.copy(edgeAttributeGUIDs = newMap)
@@ -714,7 +727,7 @@ sealed trait ProjectEditor {
       }
     }
   def edgeAttributes_=(attrs: Map[String, Attribute[_]]) =
-    edgeAttributes.updateEntityMap(attrs)
+    edgeAttributes.updateEntityMap(attrs.mapValues(supportedAttribute(_)))
   def edgeAttributeNames[T: TypeTag] = viewer.edgeAttributeNames[T]
 
   def scalars =
@@ -903,6 +916,10 @@ class SegmentationEditor(
       val op = graph_operations.EmptyEdgeBundle()
       belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
+  }
+  def setVertexSet(e: VertexSet, idAttr: String): Unit = {
+    vertexSet = e
+    vertexAttributes(idAttr) = graph_operations.IdAsAttribute.run(e).asString
   }
 }
 

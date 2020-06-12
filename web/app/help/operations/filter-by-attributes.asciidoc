@@ -18,18 +18,18 @@ vertices/edges where a specific attribute is undefined.
 
 [p-ref2]#Comma separated list#::
 This filter is a comma-separated list of values you want to match. It can be used for
-`String`, `Double`, and `Long` types. For example `medium,high` would be a String filter
+`String` and `number` types. For example `medium,high` would be a String filter
 to match these two values only, e.g., it would exclude `low` values. Another example is `19,20,30`.
 
 [p-ref3]#Comparison filters#::
-These filters are available for `String`, `Double`, and `Long` types.
+These filters are available for `String` and `number` types.
 You can specify bounds, with the `<`, `>`, `&lt;=`, `>=` operators;
 furthermore, `=` and `==` are also accepted as operators, providing exact matching.
 For example `>=12.5` will match values no less than 12.5. Another example is `&lt;=apple`: this matches
 the word `apple` itself plus those words that come before `apple` in a lexicographic ordering.
 
 [p-ref4]#Interval filters#::
-For `String`, `Double`, and `Long` types you can specify intervals with brackets.
+For `String` and `number` types you can specify intervals with brackets.
 The parenthesis (`( )`) denotes an exclusive boundary
 and the square bracket (`[ ]`) denotes an inclusive boundary. The lower and upper boundaries can be
 both inclusive or exclusive, or they can be different.
@@ -52,7 +52,7 @@ can be useful:
 * For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
 
 [p-ref6]#Pairwise interval filters#::
-For the `(Double, Double)` type, you can use interval filters to filter the first and second
+For the `Vector[number]` type, you can use interval filters to filter the first and second
 coordinates. List the intervals for the first and second coordinates separated with a comma.
 Intervals can be specified with brackets, just like for the simple interval filters.
 For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.
@@ -60,7 +60,7 @@ For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4
 [p-ref7]#All and exists filters#::
 These filters can be used for attributes whose type is `Vector`.
 The filter `all(...)` will match the `Vector` only when the internal filter matches all elements of the
-`Vector`. You can also use `forall` and `Ɐ` as synonyms. For example `all(<0)` for a `Vector[Double]` will
+`Vector`. You can also use `forall` and `Ɐ` as synonyms. For example `all(<0)` for a `Vector[number]` will
 match when the `Vector` contains no positive items. (This would include empty `Vector` values.)
 The second filter in this category is `any(...)`; this will will match the `Vector` only when
 the internal filter matches at least one element of

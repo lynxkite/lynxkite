@@ -3,5 +3,5 @@
 Triggers the computations for all entities associated with its input.
 
  - For table inputs, it computes the table.
- - For project inputs, it computes the vertices and edges, their attributes, scalars,
+ - For graph inputs, it computes the vertices and edges, all attributes,
    and the same transitively for all segments plus the segmentation links.

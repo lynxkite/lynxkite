@@ -1,6 +1,6 @@
 ### SQL10
 
-Executes an SQL query on its ten inputs, which can be either projects or tables. Outputs a table.
+Executes an SQL query on its ten inputs, which can be either graphs or tables. Outputs a table.
 The inputs are available in the query as `one`, `two`, `three`, `four`, `five`, `six`, `seven`,
 `eight`, `nine`, `ten`. For example:
 

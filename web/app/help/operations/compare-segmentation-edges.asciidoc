@@ -3,9 +3,9 @@
 Compares the edge sets of two segmentations and computes _precision_ and _recall_.
 In order to make this work, the edges of the both segmentation graphs should be
 matchable against each other. Therefore, this operation only allows comparing
-segmentations which were created using the <<Use base project as segmentation>> operation
-from the same project. (More precisely, a one to one correspondence is needed between
-the vertices of both segmentations and the base project.)
+segmentations which were created using the <<Use base graph as segmentation>> operation
+from the same graph. (More precisely, a one to one correspondence is needed between
+the vertices of both segmentations and the base graph.)
 
 You can use this operation for example to evaluate different colocation results against
 a reference result.
@@ -21,7 +21,7 @@ _numCommonEdges := number of common edges in the two segmentation graphs_ +
 _precision := numCommonEdges / numTestEdges_ +
 _recall := numCommonEdges / numGoldenEdges_
 
-The results will be created as scalars in the test segmentaion. Parallel edges
+The results will be created as graph attributes in the test segmentation. Parallel edges
 are treated as one edge. Also, for each matching edge an edge attribute is
 created in both segmentation graphs.
 

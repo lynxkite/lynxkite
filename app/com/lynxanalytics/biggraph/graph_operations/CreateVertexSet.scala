@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object CreateVertexSet extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val vs = vertexSet
-    val ordinal = vertexAttribute[Long](vs)
+    val ordinal = vertexAttribute[Double](vs)
   }
   def fromJson(j: JsValue) = CreateVertexSet((j \ "size").as[Long])
 }
@@ -28,7 +28,7 @@ case class CreateVertexSet(size: Long) extends SparkOperation[NoInput, Output] {
     // for each partition.
     // https://github.com/apache/spark/blob/v1.3.0/core/src/main/scala/org/apache/spark/rdd/ParallelCollectionRDD.scala#L142
     val partitioner = rc.partitionerForNRows(size)
-    val ordinals = rc.sparkContext.parallelize(0L until size, partitioner.numPartitions)
+    val ordinals = rc.sparkContext.parallelize(0.0 until size by 1.0, partitioner.numPartitions)
     val attr = ordinals.randomNumbered(partitioner)
     output(o.vs, attr.mapValues(_ => ()))
     output(o.ordinal, attr)

@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'has the proper vertex count',
     function() {
-      const state = lib.workspace.openStateView('eg0', 'project');
+      const state = lib.workspace.openStateView('eg0', 'graph');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(4);
       expect(state.left.attributeCount()).toEqual(8);
@@ -27,7 +27,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with example graph state open',
     function() {
-      lib.workspace.openStateView('eg0', 'project');
+      lib.workspace.openStateView('eg0', 'graph');
     },
     function() {
     });
@@ -48,7 +48,7 @@ module.exports = function(fw) {
     'has the proper vertex count',
     function() {
       const state = lib.workspace.openStateView(
-        'reversed-edges', 'project');
+        'reversed-edges', 'graph');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(8);
       expect(state.left.attributeCount()).toEqual(8);
