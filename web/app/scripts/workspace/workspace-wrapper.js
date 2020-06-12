@@ -116,7 +116,7 @@ angular.module('biggraph')
           const dst = this.boxes[i];
           const inputs = dst.instance.inputs;
           for (let inputName in inputs) {
-            if (inputs.hasOwnProperty(inputName)) {
+            if (Object.prototype.hasOwnProperty.call(inputs, inputName)) {
               const input = inputs[inputName];
               const src = this.boxMap[input.boxId];
               if (src) {
@@ -386,11 +386,11 @@ angular.module('biggraph')
           const oldBox = boxes[i];
           const newBox = mapping[oldBox.id];
           for (let key in oldBox.inputs) {
-            if (!oldBox.inputs.hasOwnProperty(key)) {
-              break;
+            if (!Object.prototype.hasOwnProperty.call(oldBox.inputs, key)) {
+              continue;
             }
             const oldInputId = oldBox.inputs[key].boxId;
-            if (mapping.hasOwnProperty(oldInputId)) {
+            if (Object.prototype.hasOwnProperty.call(mapping, oldInputId)) {
               const newInput = mapping[oldInputId];
               newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
             }
