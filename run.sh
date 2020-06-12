@@ -4,4 +4,4 @@ cd $(dirname $0)
 
 make backend
 tools/install_spark.sh
-stage/bin/biggraph "$@" interactive
+stage/bin/lynxkite "$@" interactive

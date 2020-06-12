@@ -30,8 +30,8 @@ configuration provided by Hadoop may be suboptimal.
 
 ### Running LynxKite
 
-LynxKite can be started with the `biggraph` command in the `bin` directory of the LynxKite installation.
-For example: `kite_2.6.2/bin/biggraph start`. Use the
+LynxKite can be started with the `lynxkite` command in the `bin` directory of the LynxKite installation.
+For example: `kite_2.6.2/bin/lynxkite start`. Use the
 `start` / `stop` / `restart` options if you want to run it as a daemon. Or, you can use the
 `interactive` command option, which starts up the program tied to your current shell session, so its output
 will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the

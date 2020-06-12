@@ -4,5 +4,6 @@ from . import util
 
 op = util.Op()
 x = op.input_vector('vector')
-z = TSNE(perplexity=op.params['perplexity']).fit_transform(x)
-op.output('embedding', z, type=util.DoubleTuple2Attribute)
+dim = op.params['dimensions']
+z = TSNE(n_components=dim, perplexity=op.params['perplexity']).fit_transform(x)
+op.output('embedding', z, type=util.DoubleVectorAttribute)

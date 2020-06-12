@@ -25,22 +25,34 @@ case class Node2Vec(dimensions: Int, iterations: Int, walkLength: Int, walksPerN
     "walksPerNode" -> walksPerNode, "contextSize" -> contextSize)
 }
 
-object TSNE extends OpFromJson {
+object EmbedVectors {
   class Input extends MagicInputSignature {
     val vs = vertexSet
     val vector = vertexAttribute[Vector[Double]](vs)
   }
-  class Output(implicit
+  class Output(dimensions: Int)(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val embedding = vertexAttribute[(Double, Double)](inputs.vs.entity)
+    val embedding = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
-  def fromJson(j: JsValue) = TSNE((j \ "perplexity").as[Double])
 }
-case class TSNE(perplexity: Double) extends TypedMetaGraphOp[TSNE.Input, TSNE.Output] {
-  @transient override lazy val inputs = new TSNE.Input()
-  def outputMeta(instance: MetaGraphOperationInstance) = new TSNE.Output()(instance, inputs)
-  override def toJson = Json.obj("perplexity" -> perplexity)
+trait EmbedVectors extends TypedMetaGraphOp[EmbedVectors.Input, EmbedVectors.Output] {
+  val dimensions: Int
+  @transient override lazy val inputs = new EmbedVectors.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new EmbedVectors.Output(dimensions)(instance, inputs)
+}
+object PCA extends OpFromJson {
+  def fromJson(j: JsValue) = PCA((j \ "dimensions").as[Int])
+}
+case class PCA(dimensions: Int) extends EmbedVectors {
+  override def toJson = Json.obj("dimensions" -> dimensions)
+}
+object TSNE extends OpFromJson {
+  def fromJson(j: JsValue) = TSNE((j \ "dimensions").as[Int], (j \ "perplexity").as[Double])
+}
+case class TSNE(dimensions: Int, perplexity: Double) extends EmbedVectors {
+  override def toJson = Json.obj("dimensions" -> dimensions, "perplexity" -> perplexity)
 }
 
 object PyTorchGeometricDataset extends OpFromJson {
@@ -169,4 +181,56 @@ case class PredictWithGCN()
   @transient override lazy val inputs = new PredictWithGCN.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new PredictWithGCN.Output()(instance, inputs)
   override def toJson = Json.obj()
+}
+
+object BundleVertexAttributesIntoVector extends OpFromJson {
+  class Input(numDoubleElements: Int, numVectorElements: Int) extends MagicInputSignature {
+    val vs = vertexSet
+    val doubleElements = (0 until numDoubleElements).map {
+      i => vertexAttribute[Double](vs, Symbol(s"doubleElement-$i"))
+    }
+    val vectorElements = (0 until numVectorElements).map {
+      i => vertexAttribute[Vector[Double]](vs, Symbol(s"vectorElement-$i"))
+    }
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val vectorAttr = vertexAttribute[Vector[Double]](inputs.vs.entity)
+  }
+
+  def fromJson(j: JsValue) = BundleVertexAttributesIntoVector(
+    (j \ "numDoubleElements").as[Int],
+    (j \ "numVectorElements").as[Int])
+}
+
+case class BundleVertexAttributesIntoVector(
+    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[BundleVertexAttributesIntoVector.Input, BundleVertexAttributesIntoVector.Output] {
+  @transient override lazy val inputs = new BundleVertexAttributesIntoVector.Input(numDoubleElements, numVectorElements)
+  def outputMeta(instance: MetaGraphOperationInstance) = new BundleVertexAttributesIntoVector.Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "numDoubleElements" -> numDoubleElements,
+    "numVectorElements" -> numVectorElements)
+}
+
+object OneHotEncoder extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+    val catAttr = vertexAttribute[String](vs)
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val oneHotVector = vertexAttribute[Vector[Double]](inputs.vs.entity)
+  }
+
+  def fromJson(j: JsValue) = OneHotEncoder(
+    (j \ "categories").as[Seq[String]])
+}
+
+case class OneHotEncoder(categories: Seq[String]) extends TypedMetaGraphOp[OneHotEncoder.Input, OneHotEncoder.Output] {
+  @transient override lazy val inputs = new OneHotEncoder.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) = new OneHotEncoder.Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "categories" -> categories)
 }

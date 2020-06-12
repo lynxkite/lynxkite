@@ -5,8 +5,8 @@ Adds an attribute with a fixed value to every edge.
 ====
 *Example use case*
 
-Create a constant edge attribute with value 'A' to the graph in project A.
-Then, create a constant edge attribute with value 'B' to the graph in project B. Use the same
+Create a constant edge attribute with value 'A' in graph A.
+Then, create a constant edge attribute with value 'B' in graph B. Use the same
 attribute name in both cases. From then on, if a union graph is created from these two graphs,
 the edge attribute will tell which graph the edge originally belonged to.
 
@@ -16,8 +16,8 @@ the edge attribute will tell which graph the edge originally belonged to.
 The new attribute will be created under this name.
 
 [p-value]#Value#::
-The attribute value. Should be a number if _Type_ is set to `Double`.
+The attribute value. Should be a number if _Type_ is set to `number`.
 
 [p-type]#Type#::
-The operation can create either `Double` (numeric) or `String` typed attributes.
+The operation can create either `number` (numeric) or `String` typed attributes.
 ====

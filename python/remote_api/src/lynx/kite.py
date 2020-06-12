@@ -12,7 +12,7 @@ Example usage::
 
     import lynx.kite
     lk = lynx.kite.LynxKite()
-    lk.createExampleGraph().sql('select * from scalars').df()
+    lk.createExampleGraph().sql('select * from graph_attributes').df()
 '''
 import copy
 import functools
@@ -563,11 +563,11 @@ class LynxKite:
   def change_acl(self, file: str, readACL: str, writeACL: str):
     '''Sets the read and write access control list for a path in LynxKite.'''
     return self._send('/remote/changeACL',
-                      dict(project=file, readACL=readACL, writeACL=writeACL))
+                      dict(graph=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
     '''List the objects in a directory, with their names, types, notes,
-    and other optional data about projects.'''
+    and other optional data about graphs.'''
 
     return self._send('/remote/list', dict(path=dir)).entries
 
@@ -676,10 +676,10 @@ class LynxKite:
     _assert_lk_success(output, box_id, plug)
     return output.stateId
 
-  def get_scalar(self, guid: str) -> types.SimpleNamespace:
+  def get_graph_attribute(self, guid: str) -> types.SimpleNamespace:
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
 
-  def get_project(self, state: str, path: str = '') -> types.SimpleNamespace:
+  def get_graph(self, state: str, path: str = '') -> types.SimpleNamespace:
     return self._ask('/ajax/getProjectOutput', dict(id=state, path=path))
 
   def get_export_result(self, state: str) -> types.SimpleNamespace:
@@ -713,10 +713,10 @@ class LynxKite:
     _assert_lk_success(output, box_id, 'exported')
     export = self.get_export_result(output.stateId)
     if export.result.computeProgress != 1:
-      scalar = self.get_scalar(export.result.id)
+      scalar = self.get_graph_attribute(export.result.id)
       assert scalar.string == 'Export done.', scalar.string
       export = self.get_export_result(output.stateId)
-      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+      assert export.result.computeProgress == 1, 'Failed to compute export result graph attribute.'
     return export
 
   def download_file(self, path: str) -> bytes:
@@ -908,9 +908,9 @@ class State:
     '''Returns the "raw" table data if this state is a table.'''
     return self.box.lk.get_table_data(self.box.lk.get_state_id(self), limit)
 
-  def get_project(self) -> types.SimpleNamespace:
-    '''Returns the project metadata if this state is a project.'''
-    return self.box.lk.get_project(self.box.lk.get_state_id(self))
+  def get_graph(self) -> types.SimpleNamespace:
+    '''Returns the graph metadata if this state is a graph.'''
+    return self.box.lk.get_graph(self.box.lk.get_state_id(self))
 
   def get_progress(self):
     '''Returns progress info about the state.'''
@@ -929,10 +929,10 @@ class State:
     state_id = lk.get_state_id(self)
     export = lk.get_export_result(state_id)
     if export.result.computeProgress != 1:
-      scalar = lk.get_scalar(export.result.id)
+      scalar = lk.get_graph_attribute(export.result.id)
       assert scalar.string == 'Export done.', scalar.string
       export = lk.get_export_result(state_id)
-      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+      assert export.result.computeProgress == 1, 'Failed to compute export result graph attribute.'
     return export.parameters.path
 
   def compute(self) -> None:
@@ -1447,8 +1447,8 @@ class SingleOutputCustomBox(CustomBox, State):
 def _python_name(name: str) -> str:
   '''Transforms a space separated string into a camelCase format.
 
-  The operation "Use base project as segmentation" will be called as
-  ``useBaseProjectAsSegmentation``. Dashes are ommitted.
+  The operation "Use base graph as segmentation" will be called as
+  ``useBaseGraphAsSegmentation``. Dashes are ommitted.
   '''
   name = ''.join([c if c.isalnum() or c == ' ' else '' for c in name])
   return ''.join(

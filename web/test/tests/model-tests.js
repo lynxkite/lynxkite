@@ -27,7 +27,7 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('ib0', 'table', 'utv', 'table');
     },
     function() {
-      const state = lib.workspace.openStateView('utv', 'project');
+      const state = lib.workspace.openStateView('utv', 'graph');
       expect(state.left.vertexCount()).toEqual(5);
       lib.workspace.closeLastPopup();
     }
@@ -39,9 +39,9 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'con0',
-        name: 'Convert vertex attribute to Double',
+        name: 'Convert vertex attribute to number',
         x: 100, y: 300});
-      lib.workspace.connectBoxes('utv', 'project', 'con0', 'project');
+      lib.workspace.connectBoxes('utv', 'graph', 'con0', 'graph');
       lib.workspace.openBoxEditor('con0').populateOperation({
         'attr': ['age', 'yob']
       });
@@ -50,14 +50,14 @@ module.exports = function(fw) {
         id: 'train0',
         name: 'Train linear regression model',
         x: 100, y: 400});
-      lib.workspace.connectBoxes('con0', 'project', 'train0', 'project');
+      lib.workspace.connectBoxes('con0', 'graph', 'train0', 'graph');
       lib.workspace.openBoxEditor('train0').populateOperation({
         'name': 'age_from_yob',
         'label': 'age',
         'features': ['yob']
       });
       lib.workspace.closeLastPopup();
-      const state = lib.workspace.openStateView('train0', 'project');
+      const state = lib.workspace.openStateView('train0', 'graph');
       expect(state.left.scalarValue('age_from_yob').getText())
         .toBe('Linear regression model predicting age');
       const model = state.left.scalar('age_from_yob');
@@ -80,7 +80,7 @@ module.exports = function(fw) {
         id: 'pred0',
         name: 'Predict with model',
         x: 300, y: 430});
-      lib.workspace.connectBoxes('train0', 'project', 'pred0', 'project');
+      lib.workspace.connectBoxes('train0', 'graph', 'pred0', 'graph');
       // The default value for feature is good this time.
       lib.workspace.openBoxEditor('pred0').populateOperation({
         'name': 'age_prediction',
@@ -91,13 +91,13 @@ module.exports = function(fw) {
         id: 'derive0',
         name: 'Derive vertex attribute',
         x: 450, y: 430});
-      lib.workspace.connectBoxes('pred0', 'project', 'derive0', 'project');
+      lib.workspace.connectBoxes('pred0', 'graph', 'derive0', 'graph');
       lib.workspace.openBoxEditor('derive0').populateOperation({
         'output': 'age_prediction_string',
         'expr': 'age_prediction.toInt.toString'
       });
       lib.workspace.closeLastPopup();
-      const ap = lib.workspace.openStateView('derive0', 'project');
+      const ap = lib.workspace.openStateView('derive0', 'graph');
       const attr = ap.left.vertexAttribute('age_prediction_string');
       expect(attr.getHistogramValues()).toEqual([
         { title: '25', size: 100, value: 1 },

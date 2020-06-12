@@ -278,7 +278,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val age = result.age.rdd.collect().toMap
     assert(age(3L) == 2.0)
     val location = result.location.rdd.collect().toMap
-    assert(location(3L) == (-33.8674869, 151.2069902))
+    assert(location(3L) == Vector(-33.8674869, 151.2069902))
     val gender = result.gender.rdd.collect().toMap
     assert(gender(3L) == "Male")
     val income = result.income.rdd.collect().toMap

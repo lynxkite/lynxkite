@@ -10,7 +10,7 @@ class SplitEdgesOperationTest extends OperationsTestBase {
       .project
     val weight = project.edgeAttributes("weight").runtimeSafeCast[Double]
     assert(weight.rdd.values.collect.toSeq.sorted == Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4))
-    val index = project.edgeAttributes("index").runtimeSafeCast[Long]
+    val index = project.edgeAttributes("index").runtimeSafeCast[Double]
     assert(index.rdd.values.collect.toSeq.sorted == Seq(0, 0, 0, 0, 1, 1, 1, 2, 2, 3))
   }
 }

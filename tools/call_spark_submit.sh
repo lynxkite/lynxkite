@@ -321,7 +321,7 @@ stopSphynx () {
 }
 
 startSphynxForever () {
-  until go/bin/server -keydir=$SPHYNX_CERT_DIR
+  until go/bin/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
   do
     >&2 echo "Sphynx crashed with exit code $?. Restarting..."
     sleep 10
@@ -335,11 +335,12 @@ startSphynx () {
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
-      -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
+      -subj "/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
     cd "$stage_dir/sphynx"
     startSphynxForever &
     SPHYNX_PID=$!
+    trap "kill $!; exit 1" INT
     echo $SPHYNX_PID > $SPHYNX_PID_FILE
     cd -
   fi

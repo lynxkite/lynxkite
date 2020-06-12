@@ -95,59 +95,6 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Predict with a graph neural network")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
-      Param("output", "Save as"),
-      Choice("features", "Predictors", options = FEOption.unset +: project.vertexAttrList[Double], multipleChoice = true),
-      Choice("networkLayout", "Network layout", options = FEOption.list("GRU", "LSTM", "MLP")),
-      NonNegInt("networkSize", "Size of the network", default = 3),
-      NonNegInt("radius", "Iterations in prediction", default = 3),
-      Choice("hideState", "Hide own state", options = FEOption.bools),
-      NonNegDouble("forgetFraction", "Forget fraction", defaultValue = "0.0"),
-      NonNegDouble("knownLabelWeight", "Weight for known labels", defaultValue = "1.0"),
-      NonNegInt("numberOfTrainings", "Number of trainings", default = 50),
-      NonNegInt("iterationsInTraining", "Iterations in training", default = 2),
-      NonNegInt("subgraphsInTraining", "Subgraphs in training", default = 10),
-      NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
-      NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
-      NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
-      RandomSeed("seed", "Seed", context.box),
-      NonNegDouble("learningRate", "Learning rate", defaultValue = "0.1"))
-    def enabled = project.hasEdgeBundle && FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No vertex attributes.")
-    def apply() = {
-      val labelName = params("label")
-      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
-      val features: Seq[Attribute[Double]] =
-        if (params("features") == FEOption.unset.id) Seq()
-        else {
-          val featureNames = splitParam("features")
-          featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
-        }
-      val prediction = {
-        val op = graph_operations.PredictViaNNOnGraphV1(
-          featureCount = features.length,
-          networkSize = params("networkSize").toInt,
-          learningRate = params("learningRate").toDouble,
-          radius = params("radius").toInt,
-          hideState = params("hideState").toBoolean,
-          forgetFraction = params("forgetFraction").toDouble,
-          trainingRadius = params("trainingRadius").toInt,
-          maxTrainingVertices = params("maxTrainingVertices").toInt,
-          minTrainingVertices = params("minTrainingVertices").toInt,
-          iterationsInTraining = params("iterationsInTraining").toInt,
-          subgraphsInTraining = params("subgraphsInTraining").toInt,
-          numberOfTrainings = params("numberOfTrainings").toInt,
-          knownLabelWeight = params("knownLabelWeight").toDouble,
-          seed = params("seed").toInt,
-          gradientCheckOn = false,
-          networkLayout = params("networkLayout"))
-        op(op.edges, project.edgeBundle)(op.label, label)(op.features, features).result.prediction
-      }
-      project.vertexAttributes(params("output")) = prediction
-    }
-  })
-
   register("Predict vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
@@ -179,28 +126,27 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register(
-    "Reduce vertex attributes to two dimensions")(new ProjectTransformation(_) {
-      params ++= List(
-        Param("output_name1", "First dimension name", defaultValue = "reduced_dimension1"),
-        Param("output_name2", "Second dimension name", defaultValue = "reduced_dimension2"),
-        Choice(
-          "features", "Attributes",
-          options = project.vertexAttrList[Double], multipleChoice = true))
-      def enabled = FEStatus.assert(
-        project.vertexAttrList[Double].size >= 2, "Less than two vertex attributes.")
-      def apply() = {
-        val featureNames = splitParam("features").sorted
-        assert(featureNames.size >= 2, "Please select at least two attributes.")
-        val features = featureNames.map {
-          name => project.vertexAttributes(name).runtimeSafeCast[Double]
-        }
-        val op = graph_operations.ReduceDimensions(features.size)
-        val result = op(op.features, features).result
-        project.newVertexAttribute(params("output_name1"), result.attr1, help)
-        project.newVertexAttribute(params("output_name2"), result.attr2, help)
+  register("Reduce attribute dimensions")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("save_as", "Save embedding as", defaultValue = "embedding"),
+      Choice("vector", "High-dimensional vector", options = project.vertexAttrList[Vector[Double]]),
+      Param("dimensions", "Dimensions", defaultValue = "2"),
+      Choice("method", "Embedding method", options = FEOption.list("t-SNE", "PCA")),
+      Param("perplexity", "Perplexity", defaultValue = "30", group = "t-SNE options"))
+    def enabled = FEStatus.assert(
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
+      val dimensions = params("dimensions").toInt
+      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
+      val op = params("method") match {
+        case "t-SNE" => graph_operations.TSNE(dimensions, params("perplexity").toDouble)
+        case "PCA" => graph_operations.PCA(dimensions)
       }
-    })
+      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
+    }
+  })
 
   register("Split to train and test set")(new ProjectTransformation(_) {
     params ++= List(
@@ -426,22 +372,6 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val contextSize = params("context_size").toInt
       val op = graph_operations.Node2Vec(dimensions, iterations, walkLength, walksPerNode, contextSize)
       project.vertexAttributes(name) = op(op.es, project.edgeBundle).result.embedding
-    }
-  })
-
-  register("Embed with t-SNE")(new ProjectTransformation(_) {
-    params ++= List(
-      Param("save_as", "The name of the embedding", defaultValue = "tsne"),
-      Choice("vector", "Vector", options = project.vertexAttrList[Vector[Double]]),
-      Param("perplexity", "Perplexity", defaultValue = "30"))
-    def enabled = FEStatus.assert(
-      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
-    def apply() = {
-      val name = params("save_as")
-      assert(name.nonEmpty, "Please set the name of the embedding.")
-      val op = graph_operations.TSNE(params("perplexity").toDouble)
-      val vector = project.vertexAttributes(params("vector")).runtimeSafeCast[Vector[Double]]
-      project.vertexAttributes(name) = op(op.vector, vector).result.embedding
     }
   })
 

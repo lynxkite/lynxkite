@@ -111,7 +111,7 @@ case class FEProject(
     vertexSet: String = "",
     edgeBundle: String = "",
     notes: String = "",
-    scalars: List[FEScalar] = List(),
+    graphAttributes: List[FEScalar] = List(),
     vertexAttributes: List[FEAttribute] = List(),
     edgeAttributes: List[FEAttribute] = List(),
     segmentations: List[FESegmentation] = List())

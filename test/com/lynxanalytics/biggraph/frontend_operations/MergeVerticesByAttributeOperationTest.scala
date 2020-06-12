@@ -43,14 +43,14 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
       .box("Add constant vertex attribute", Map(
         "name" -> "constant",
         "value" -> "1",
-        "type" -> "Double",
-        "apply_to_project" -> ".bucketing"))
+        "type" -> "number",
+        "apply_to_graph" -> ".bucketing"))
       .box("Merge vertices by attribute", Map(
         "key" -> "constant",
         "aggregate_gender" -> "",
         "aggregate_id" -> "",
         "aggregate_size" -> "",
-        "apply_to_project" -> ".bucketing")).project
+        "apply_to_graph" -> ".bucketing")).project
     val bucketing = project.segmentation("bucketing")
     assert(bucketing.scalars("!coverage").value == 4)
     assert(bucketing.scalars("!belongsToEdges").value == 4)

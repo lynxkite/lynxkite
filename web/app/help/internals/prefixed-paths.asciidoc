@@ -2,7 +2,7 @@
 ## Prefixed paths
 
 LynxKite provides read and write access to distributed file systems for the purpose of importing
-and exporting project data. To make this access secure and convenient, paths are specified relative
+and exporting data. To make this access secure and convenient, paths are specified relative
 to _prefixes_.
 
 Prefixes are configured during LynxKite deployment through the `prefix_definitions.txt` file.

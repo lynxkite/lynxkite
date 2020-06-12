@@ -38,11 +38,11 @@ update the configuration via the following steps:
 
 ## Stop currently running LynxKite version
 
-Use the command `kite-x.y.z/bin/biggraph stop` where `x.y.z` is the version of your _original_ LynxKite.
+Use the command `kite-x.y.z/bin/lynxkite stop` where `x.y.z` is the version of your _original_ LynxKite.
 
 ## Run the new version of LynxKite
 
-Start the new version of LynxKite with `kite-x.y.z/bin/biggraph start`, where `x.y.z` is the version
+Start the new version of LynxKite with `kite-x.y.z/bin/lynxkite start`, where `x.y.z` is the version
 of your _new_ LynxKite. Note that the migration can take several minutes when the upgraded
 LynxKite is started for the first time.
 

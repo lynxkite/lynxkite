@@ -6,6 +6,21 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Renamed "scalars" to "graph attributes". Renamed "projects" to "graphs". These mysterious names
+   were largely used for historical reasons. This is an incompatible change, but we can help migrate
+   existing workspaces if necessary.
+ - _"Create Graph in Python"_ box added.
+ - Removed _"Predict with a graph neural network"_ operation.
+ - Removed _"Predict attribute by viral modeling"_ box. It is more flexible to do the same
+   thing through a series of more elemental boxes.
+   A built-in box ("Predict from communities"_) has been added to serve as a starting point.
+ - Made it easier to use graph convolutional boxes: added _"Bundle vertex attributes into a Vector"_
+   and _"One-hot encode attribute"_ boxes.
+ - _"Compute in Python"_ boxes now support `Vector[Double]` attributes.
+ - Replaced the _"Reduce vertex attributes to two dimensions"_ and _"Embed with t-SNE"_ boxes with
+   the new _"Reduce attribute dimensions"_ box which offers both PCA and t-SNE.
+ - Inputs and outputs for _"Compute in Python"_ can now be inferred from the code.
+
 ### 3.2.1
 
  - More accurate progress indicators for box outputs.

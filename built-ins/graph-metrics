@@ -15,26 +15,26 @@ boxes:
   y: 0.0
 - id: Compute-degree_1
   inputs:
-    project:
-      boxId: input-project
+    graph:
+      boxId: input-graph
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: outgoing edges
     name: odegree
   parametricParameters: {}
   x: -67.11468696817506
   y: 762.746548242263
-- id: input-project
+- id: input-graph
   inputs: {}
   operationId: Input
   parameters:
-    name: project
+    name: graph
   parametricParameters: {}
   x: -496.140485410232
   y: 738.2951266670741
-- id: output-project
+- id: output-graph
   inputs:
     output:
       boxId: SQL2_7
@@ -47,12 +47,12 @@ boxes:
   y: 718.1548460520909
 - id: Compute-degree_2
   inputs:
-    project:
-      boxId: input-project
+    graph:
+      boxId: input-graph
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: incoming edges
     name: idegree
   parametricParameters: {}
@@ -60,12 +60,12 @@ boxes:
   y: 410.62527446546426
 - id: Compute-degree_3
   inputs:
-    project:
-      boxId: input-project
+    graph:
+      boxId: input-graph
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: all edges
     name: adegree
   parametricParameters: {}
@@ -73,12 +73,12 @@ boxes:
   y: 280.3149738993578
 - id: Compute-degree_4
   inputs:
-    project:
-      boxId: input-project
+    graph:
+      boxId: input-graph
       id: input
   operationId: Compute degree
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     direction: symmetric edges
     name: sdegree
   parametricParameters: {}
@@ -86,12 +86,12 @@ boxes:
   y: 886.684672116515
 - id: Find-connected-components_1
   inputs:
-    project:
-      boxId: input-project
+    graph:
+      boxId: input-graph
       id: input
   operationId: Find connected components
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     directions: ignore directions
     name: connected_components
   parametricParameters: {}
@@ -101,7 +101,7 @@ boxes:
   inputs:
     input:
       boxId: Compute-degree_2
-      id: project
+      id: graph
   operationId: SQL1
   parameters: {}
   parametricParameters:
@@ -141,7 +141,7 @@ boxes:
   inputs:
     input:
       boxId: Compute-degree_1
-      id: project
+      id: graph
   operationId: SQL1
   parameters: {}
   parametricParameters:
@@ -164,7 +164,7 @@ boxes:
   inputs:
     input:
       boxId: Compute-degree_4
-      id: project
+      id: graph
   operationId: SQL1
   parameters: {}
   parametricParameters:
@@ -276,7 +276,7 @@ boxes:
   inputs:
     input:
       boxId: Find-connected-components_1
-      id: project
+      id: graph
   operationId: SQL1
   parameters: {}
   parametricParameters:
@@ -299,7 +299,7 @@ boxes:
 - id: SQL1_8
   inputs:
     input:
-      boxId: input-project
+      boxId: input-graph
       id: input
   operationId: SQL1
   parameters: {}
@@ -308,7 +308,7 @@ boxes:
       select
         1 as ID,
         "Vertices" as Attribute,
-        scalars.`!vertex_count` as Sum,
+        graph_attributes.`!vertex_count` as Sum,
         double(null) as Avg,
         double(null) as Min,
         double(null) as `5% percentile`,
@@ -316,13 +316,13 @@ boxes:
         double(null) as `95% percentile`,
         double(null) as Max,
         double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`
-      from scalars
+      from graph_attributes
   x: 293.0
   y: 532.0
 - id: SQL1_7
   inputs:
     input:
-      boxId: input-project
+      boxId: input-graph
       id: input
   operationId: SQL1
   parameters:
@@ -330,7 +330,7 @@ boxes:
       select
         2 as ID,
         "Edges" as Attribute,
-        scalars.`!edge_count` as Sum,
+        graph_attributes.`!edge_count` as Sum,
         double(null) as Avg,
         double(null) as Min,
         double(null) as `5% percentile`,
@@ -338,7 +338,7 @@ boxes:
         double(null) as `95% percentile`,
         double(null) as Max,
         double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`
-      from scalars
+      from graph_attributes
   parametricParameters: {}
   x: 284.0
   y: 647.0
@@ -346,7 +346,7 @@ boxes:
   inputs:
     input:
       boxId: Compute-degree_3
-      id: project
+      id: graph
   operationId: SQL1
   parameters: {}
   parametricParameters:
@@ -385,7 +385,7 @@ boxes:
   inputs:
     input:
       boxId: Compute-degree_3
-      id: project
+      id: graph
   operationId: SQL1
   parameters:
     sql: |-
@@ -413,7 +413,7 @@ boxes:
   inputs:
     input:
       boxId: Find-connected-components_1
-      id: project
+      id: graph
   operationId: SQL1
   parameters:
     sql: |-

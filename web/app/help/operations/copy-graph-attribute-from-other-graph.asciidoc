@@ -1,0 +1,21 @@
+### Copy graph attribute from other graph
+
+This operation can take a graph attribute from another graph and copy it
+to the current graph.
+
+It can be useful if we trained a machine learning model in one graph, and would like
+to apply this model in another graph for predicting undefined attribute values.
+
+====
+[p-sourceproject]#Other graph's name#::
+The name of the other graph from where we want to copy a graph attribute.
+
+[p-sourcescalarname]#Name of the graph attribute in the other graph#::
+The name of the graph attribute in the other graph. If it is a simple string, then
+the graph attribute with that name has to be in the root of the other graph. If it is
+a `.`-separated string, then it means a graph attribute in a segmentation of the other graph.
+The syntax for this case is: `seg_1.seg_2.....seg_n.graph_attribute`.
+
+[p-destscalarname]#Name for the graph attribute in this graph#::
+This will be the name of the copied graph attribute in this graph.
+====

@@ -120,7 +120,7 @@ The dependencies between the different dags can be handled by Airflow _sensors_.
 ## Boxes and states
 
 - LK2 workspace: connected _boxes_
-- boxes can have input and output plugs , which have names, like "project", "table", "input", ...
+- boxes can have input and output plugs , which have names, like "graph", "table", "input", ...
 - the outputs of boxes called _states_
 
 ---

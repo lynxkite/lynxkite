@@ -11,10 +11,8 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
 
   test("example graph") {
     val g = ExampleGraph()().result
-
-    val longAttr = DoubleAttributeToLong.run(g.weight)
     val op = SplitVertices()
-    val res = op(op.attr, longAttr).result
+    val res = op(op.attr, g.weight).result
     assert(res.newVertices.rdd.count() == 10)
     assert(res.indexAttr.rdd.values.collect.toSeq.sorted ==
       Seq[Long](
@@ -39,8 +37,7 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
       expr,
       Seq("name" -> g.name.entity))
     val splitOp = SplitVertices()
-    val longAttr = DoubleAttributeToLong.run(derived)
-    val res = splitOp(splitOp.attr, longAttr).result
+    val res = splitOp(splitOp.attr, derived).result
     assert(res.newVertices.rdd.count() == 100)
     assert(res.indexAttr.rdd.values.collect.toSeq.sorted ==
       (0 to 99))

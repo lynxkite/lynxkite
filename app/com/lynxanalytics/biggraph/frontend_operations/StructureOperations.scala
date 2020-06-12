@@ -89,7 +89,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
       val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
-      project.setVertexSet(m.segments, idAttr = "id")
+      project.vertexSet = m.segments
       for ((name, segViewer) <- oldSegmentations) {
         val seg = project.segmentation(name)
         seg.segmentationState = segViewer.segmentationState
@@ -155,7 +155,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def apply() = {
       val op = graph_operations.EdgeGraph()
       val g = op(op.es, project.edgeBundle).result
-      project.setVertexSet(g.newVS, idAttr = "id")
+      project.vertexSet = g.newVS
       project.edgeBundle = g.newES
     }
   })
@@ -176,14 +176,13 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
   register("Split vertices")(new ProjectTransformation(_) {
     params ++= List(
       Choice("rep", "Repetition attribute", options = project.vertexAttrList[Double]),
-      Param("idattr", "ID attribute name", defaultValue = "new_id"),
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes")
+      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
       val op = graph_operations.SplitVertices()
-      op(op.attr, doubleAttr.asLong).result
+      op(op.attr, doubleAttr).result
     }
     def apply() = {
       val rep = params("rep")
@@ -191,7 +190,6 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
 
       project.pullBack(split.belongsTo)
       project.vertexAttributes(params("idx")) = split.indexAttr
-      project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
     }
   })
 
@@ -201,10 +199,10 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
-      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No Double edge attributes")
+      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No numeric edge attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
       val op = graph_operations.SplitEdges()
-      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
+      op(op.es, project.edgeBundle)(op.attr, doubleAttr).result
     }
     def apply() = {
       val rep = params("rep")

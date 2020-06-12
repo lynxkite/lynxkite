@@ -13,6 +13,7 @@ import scala.concurrent.duration.Duration
 class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBase {
   override val user = serving.User.singleuser
   val sqlController = new SQLController(this, ops = null)
+  val workspaceController = new WorkspaceController(this)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
 
@@ -25,7 +26,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -40,7 +41,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on edges") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -55,7 +56,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on edge_attributes") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -70,7 +71,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with subquery on edges") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -91,7 +92,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val egSeg = box("Create example graph").box(
       "Segment by String attribute",
       Map("name" -> "gender_seg", "attr" -> "gender"))
-    egSeg.snapshotOutput("test_dir/people", "project")
+    egSeg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -106,7 +107,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices from root directory") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -121,7 +122,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql on vertices with attribute name quoted with backticks") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
         directory = "test_dir",
@@ -135,7 +136,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with upper case snapshot name") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/PEOPLE", "project")
+    eg.snapshotOutput("test_dir/PEOPLE", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -150,7 +151,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("global sql with dot in the folder name") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "project")
+    eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -169,7 +170,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph").box(
       "Rename vertex attributes",
       Map("change_name" -> "NAME"))
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       TableSpec.global(
@@ -184,7 +185,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   test("Export result of global SQL box") {
     val eg = box("Create example graph")
-    eg.snapshotOutput("test_dir/people", "project")
+    eg.snapshotOutput("test_dir/people", "graph")
 
     val dfSpec = TableSpec.global(
       directory = "test_dir",
@@ -201,82 +202,76 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
 
   }
 
-  // TODO: Depends on https://app.asana.com/0/194476945034319/354006072569797.
-  /*
-  test("list project tables") {
-    createProject(name = "example1")
-    createDirectory(name = "dir")
-    createProject(name = "dir/example2")
-    run("Create example graph", on = "dir/example2")
-    run(
-      "Segment by Double attribute",
-      params = Map(
-        "name" -> "bucketing",
-        "attr" -> "age",
-        "interval_size" -> "0.1",
-        "overlap" -> "no"),
-      on = "dir/example2")
-    run(
-      "Segment by Double attribute",
-      params = Map(
-        "name" -> "vertices", // This segmentation is named vertices to test extremes.
-        "attr" -> "age",
-        "interval_size" -> "0.1",
-        "overlap" -> "no"),
-      on = "dir/example2")
-
-    // List tables and segmentation of a project.
-    val res1 = await(
-      sqlController.getTableBrowserNodes(
-        user, TableBrowserNodeRequest(path = "dir/example2")))
-    assert(List(
-      TableBrowserNode("dir/example2.edges", "edges", "table"),
-      TableBrowserNode("dir/example2.edge_attributes", "edge_attributes", "table"),
-      TableBrowserNode("dir/example2.vertices", "vertices", "table"),
-      TableBrowserNode("dir/example2.bucketing", "bucketing", "segmentation"),
-      TableBrowserNode("dir/example2.vertices", "vertices", "segmentation")) == res1.list)
+  def getMeta(box: TestBox) = {
+    val name = "tmp"
+    workspaceController.createWorkspace(user, CreateWorkspaceRequest(name))
+    workspaceController.setWorkspace(user, SetWorkspaceRequest(WorkspaceReference(name), box.workspace))
+    GetOperationMetaRequest(WorkspaceReference(name), box.realBox.id)
   }
 
-  def checkExampleGraphColumns(req: TableBrowserNodeRequest, idTypeOverride: String = "ID") = {
-    val res = await(sqlController.getTableBrowserNodes(user, req))
+  test("list project tables") {
+    val project = box("Create example graph")
+      .box(
+        "Segment by numeric attribute",
+        Map(
+          "name" -> "bucketing",
+          "attr" -> "age",
+          "interval_size" -> "0.1",
+          "overlap" -> "no"))
+      .box(
+        "Segment by numeric attribute",
+        Map(
+          "name" -> "vertices", // This segmentation is named vertices to test extremes.
+          "attr" -> "age",
+          "interval_size" -> "0.1",
+          "overlap" -> "no"))
+      .box("SQL1")
+
+    // List tables and segmentation of a project.
+    val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
+      user, TableBrowserNodeForBoxRequest(getMeta(project), ""))
+    assert(res.list == List(
+      "bucketing.belongs_to",
+      "bucketing.graph_attributes",
+      "bucketing.vertices",
+      "edge_attributes",
+      "edges",
+      "graph_attributes",
+      "input.bucketing.belongs_to",
+      "input.bucketing.graph_attributes",
+      "input.bucketing.vertices",
+      "input.edge_attributes",
+      "input.edges",
+      "input.graph_attributes",
+      "input.vertices",
+      "input.vertices.belongs_to",
+      "input.vertices.graph_attributes",
+      "input.vertices.vertices",
+      "vertices",
+      "vertices.belongs_to",
+      "vertices.graph_attributes",
+      "vertices.vertices").map(t => TableBrowserNode(t, t, "table")))
+  }
+
+  def checkExampleGraphColumns(response: TableBrowserNodeResponse) = {
     val expected = List(
       TableBrowserNode("", "age", "column", "Double"),
       TableBrowserNode("", "income", "column", "Double"),
-      TableBrowserNode("", "id", "column", idTypeOverride),
-      TableBrowserNode("", "location", "column", "(Double, Double)"),
+      TableBrowserNode("", "id", "column", "String"),
+      TableBrowserNode("", "location", "column", "Array[Double]"),
       TableBrowserNode("", "name", "column", "String"),
       TableBrowserNode("", "gender", "column", "String"))
-
-    assert(expected.sortBy(_.name) == res.list.sortBy(_.name))
+    assert(expected.sortBy(_.name) == response.list.sortBy(_.name))
   }
 
   test("list project table columns") {
-    run("Create example graph")
-    checkExampleGraphColumns(
-      TableBrowserNodeRequest(
-        path = "Test_Project.vertices",
-        isImplicitTable = true))
+    val project = box("Create example graph").box("SQL1")
+    val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
+      user, TableBrowserNodeForBoxRequest(getMeta(project), "vertices"))
+    checkExampleGraphColumns(res)
   }
 
-  test("list view columns") {
-    run("Create example graph")
-    sqlController.createViewDFSpec(
-      user,
-      SQLCreateViewRequest(
-        name = "view1",
-        privacy = "public-write",
-        overwrite = false,
-        dfSpec = DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "SELECT * FROM `Test_Project.vertices`")))
-
-    // Check that columns of view are listed:
-    checkExampleGraphColumns(
-      TableBrowserNodeRequest(path = "view1"),
-      idTypeOverride = "Long")
-  }
-
+  /*
   test("list table columns") {
     run("Create example graph")
     await(sqlController.exportSQLQueryToTable(

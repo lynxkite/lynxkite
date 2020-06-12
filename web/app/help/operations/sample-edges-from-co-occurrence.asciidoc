@@ -1,6 +1,6 @@
 ### Sample edges from co-occurrence
 
-Connects vertices in the parent project with a given probability
+Connects vertices in the parent graph with a given probability
 if they co-occur in any segments.
 Multiple co-occurrences will have the same chance of being selected
 as single ones. Loop edges are also included with the same probability.
@@ -21,7 +21,3 @@ The random seed.
 +
 include::{g}[tag=random-seed]
 ====
-
-
-
-

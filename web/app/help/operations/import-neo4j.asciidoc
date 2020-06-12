@@ -12,8 +12,8 @@ In case you want to change the values of the variables, you will have to restart
 changes to take effect.
 
 ====
-[p-node_label]#Node Label#::
-The label for the type of node that you want to import from Neo4j. All the nodes with that label will be 
+[p-node_label]#Node label#::
+The label for the type of node that you want to import from Neo4j. All the nodes with that label will be
 imported as a table, with each property as a column. You can specify the properties to import using the
 `Columns to import` parameter. The id ( `id()` function of Neo4j) of the node will be automatically included
 in the import as the special variable `id$`.
@@ -36,7 +36,7 @@ parallelism.
 
 [p-infer]#Infer types#::
 Automatically tries to cast data types from Neo4j. For example a column full of numbers will become a
-`Double`. If disabled, all columns are imported as ``String``. It is recommended to set this to false,
+`number`. If disabled, all columns are imported as ``String``. It is recommended to set this to false,
 as Neo4j types do not integrate very well with Spark (Eg. Date types from Neo4j are not supported).
 
 include::{g}[tag=import-box]

@@ -77,7 +77,7 @@ class ImportBoxTest extends OperationsTestBase {
 
   test("import from CSV with type inference") {
     val p = csvToProject("with-header", List(), infer = true)
-    assert(vattr[Int](p, "vertexId") == Seq(0, 1, 2))
+    assert(vattr[Double](p, "vertexId") == Seq(0, 1, 2))
     assert(vattr[String](p, "name") == Seq("Adam", "Bob", "Eve"))
     assert(vattr[Double](p, "age") == Seq(18.2, 20.3, 50.3))
   }
@@ -121,13 +121,13 @@ class ImportBoxTest extends OperationsTestBase {
   }
 
   def checkSqliteSubscribers(box: TestBox) = {
-    val p = box.box("Use table as vertices", Map("id_attr" -> "new_id")).project
+    val p = box.box("Use table as vertices").project
     assert(vattr[String](p, "n") == Seq("A", "B", "C", "D"))
-    assert(vattr[Long](p, "id") == Seq(1, 2, 3, 4, 5))
+    assert(vattr[Double](p, "id") == Seq(1, 2, 3, 4, 5))
     assert(vattr[String](p, "name") == Seq("Beata", "Daniel", "Felix", "Oliver"))
     assert(vattr[String](p, "race condition") == Seq("Dwarf", "Gnome", "Halfling", "Troll"))
     assert(vattr[Double](p, "level") == Seq(10.0, 20.0))
-    assert(p.vertexAttributes.keySet == Set("new_id", "n", "id", "name", "race condition", "level"))
+    assert(p.vertexAttributes.keySet == Set("n", "id", "name", "race condition", "level"))
   }
 
   test("import from SQLite (no partitioning)") {
@@ -196,8 +196,8 @@ class ImportBoxTest extends OperationsTestBase {
 
   def checkSqliteNonConventionalTable(box: TestBox) = {
     val p = box.box("Use table as vertices").project
-    assert(vattr[Long](p, "id") == Seq(1L))
-    assert(vattr[Long](p, "colname with space") == Seq(1L))
+    assert(vattr[Double](p, "id") == Seq(1))
+    assert(vattr[Double](p, "colname with space") == Seq(1))
     assert(vattr[String](p, "a") == Seq("x"))
   }
 

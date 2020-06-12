@@ -15,7 +15,7 @@ object EnhancedExampleGraph extends OpFromJson {
     val age = vertexAttribute[Double](vertices)
     val gender = vertexAttribute[String](vertices)
     val income = vertexAttribute[Double](vertices) // Partially defined.
-    val location = vertexAttribute[(Double, Double)](vertices)
+    val location = vertexAttribute[Vector[Double]](vertices)
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
@@ -141,14 +141,14 @@ case class EnhancedExampleGraph() extends SparkOperation[Input, Output] {
       (Adam, 1000.0),
       (Joe, 2000.0))).sortUnique(partitioner))
     output(o.location, sc.parallelize(Seq(
-      (Adam, (40.71448, -74.00598)), // New York
-      (Eve, (47.5269674, 19.0323968)), // Budapest
-      (Bob, (1.352083, 103.819836)), // Singapore
-      (Joe, (-33.8674869, 151.2069902)), // Sydney
-      (Cat, (1.352083, 103.819836)), // Singapore
-      (Fish, (1.352083, 103.819836)), // Singapore
-      (Mouse, (1.352083, 103.819836)), // Singapore
-      (Wanda, (3.1412, 101.68653)) // Kuala Lumpur
+      (Adam, Vector(40.71448, -74.00598)), // New York
+      (Eve, Vector(47.5269674, 19.0323968)), // Budapest
+      (Bob, Vector(1.352083, 103.819836)), // Singapore
+      (Joe, Vector(-33.8674869, 151.2069902)), // Sydney
+      (Cat, Vector(1.352083, 103.819836)), // Singapore
+      (Fish, Vector(1.352083, 103.819836)), // Singapore
+      (Mouse, Vector(1.352083, 103.819836)), // Singapore
+      (Wanda, Vector(3.1412, 101.68653)) // Kuala Lumpur
     )).sortUnique(partitioner))
     output(o.comment, sc.parallelize(Seq(
       (eAdamEve, "Adam loves Eve"),

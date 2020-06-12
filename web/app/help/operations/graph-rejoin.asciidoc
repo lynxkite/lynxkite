@@ -1,0 +1,44 @@
+### Graph rejoin
+
+This operation allows the user to join (i.e., carry over) attributes from one graph to another one.
+This is only allowed when the target of the join (where the attributes are taken to) and the source
+(where the attributes are taken from) are compatible. Compatibility in this context means that
+the source and the target have a "common ancestor", which makes it possible to perform the join.
+Suppose, for example, that operation <<take-edges-as-vertices>> have been applied, and then some
+new vertex attributes have been computed on the resulting graph. These new vertex
+attributes can now be joined back to the original graph (that was the input for
+<<take-edges-as-vertices>>), because there is a correspondence between the edges of the
+original graph and the vertices that contain the newly computed vertex attributes.
+
+Conversely, the edges and the vertices of a graph will not be compatible (even
+if the number of edges is the same as the number of vertices), because no such
+correspondence can be established between the edges and the vertices in this case.
+
+Additionally, it is possible to join segmentations from another graph. This operation
+has an additional requirement (besides compatibility), namely, that both the target of the
+join (the left side) and the source be vertices (and not edges).
+
+Please, bear it in mind that both attributes and segmentations will overwrite
+the original attributes and segmentations on the right side in case there is
+a name collision.
+
+When vertex attributes are joined, it is also possible to copy over the edges from
+the source graph (provided that the source graph has edges). In this case, the
+original edges in the target graph are dropped, and the source edges (along with
+their attributes) will take their place.
+
+====
+[p-attrs]#Attributes#::
+Attributes that should be joined to the graph. They overwrite attributes in the
+target graph which have identical names.
+
+[p-segs]#Segmentations#::
+Segmentations to join to the graph. They overwrite segmentations in the target
+side of the graph which have identical names.
+
+[p-edge]#Copy edges#::
+When set, the edges of the source graph (and their attributes) will replace
+the edges of the target graph.
+
+
+====

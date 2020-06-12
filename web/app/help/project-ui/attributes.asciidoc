@@ -9,7 +9,7 @@ of the attribute is a value from the attribute's type.
 
 Clicking on a vertex or edge attribute opens a menu with the for following information/controls.
 
-* The type of the attribute (e.g. `String`, `Double`, ...).
+* The type of the attribute (e.g. `String`, `number`, ...).
 * A short description of how the attribute was created, if available, with link to a relevant help
 page.
 * A histogram of the attribute, if the attribute is already computed. A menu item to compute the
@@ -17,7 +17,7 @@ histogram otherwise. By default, for performance reasons, histograms are only co
 sample of all the available data. Click the _"precise"_
 checkbox to request a computation using all the data. Click the _"logarithmic"_ checkbox, to use a
 logarithmic X-axis with logarithmic buckets. (Useful when the distribution is strongly skewed.)
-* If you are viewing the project in a <<Graph visualization>> box: Controls for adding the attribute
+* If you are viewing the graph in a <<Graph visualization>> box: Controls for adding the attribute
 * to the current visualization, if <<concrete-vertices-view>> or
 <<bucketed-view>> is enabled. See details in <<concrete-visualization-options>>.
 

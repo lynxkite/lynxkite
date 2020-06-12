@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(
@@ -51,7 +52,7 @@ object Categories {
   val StructureOperations =
     Category("Structure", "orange", icon = "asterisk", index = idx)
   val ScalarOperations =
-    Category("Scalars", "orange", icon = "globe", index = idx)
+    Category("Graph attributes", "orange", icon = "globe", index = idx)
   val VertexAttributeOperations =
     Category("Vertex attributes", "orange", icon = "circle", index = idx)
   val EdgeAttributeOperations =
@@ -65,7 +66,7 @@ object Categories {
   val WorkflowOperations =
     Category("Workflow", "blue", icon = "cogs", index = idx)
   val ManageProjectOperations =
-    Category("Manage project", "blue", icon = "wrench", index = idx)
+    Category("Manage graph", "blue", icon = "wrench", index = idx)
   val VisualizationOperations =
     Category("Visualization operations", "purple", icon = "eye", index = idx)
   val ExportOperations =
@@ -82,8 +83,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   implicit lazy val manager = env.metaGraphManager
 
-  protected val projectInput = "project" // The default input name, just to avoid typos.
-  protected val projectOutput = "project"
+  protected val projectInput = "graph" // The default input name, just to avoid typos.
+  protected val projectOutput = "graph"
 
   def registerProjectCreatingOp(id: String)(factory: Context => ProjectOutputOperation): Unit = {
     registerOp(id, defaultIcon, category, List(), List(projectOutput), factory)
@@ -316,7 +317,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   object Direction {
     // Options suitable when edge attributes are involved.
-    val attrOptions = FEOption.list("incoming edges", "outgoing edges", "all edges")
+    val attrOptions = FEOption.list("all edges", "incoming edges", "outgoing edges")
     def attrOptionsWithDefault(default: String): List[FEOption] = {
       assert(attrOptions.map(_.id).contains(default), s"$default not in $attrOptions")
       FEOption.list(default) ++ attrOptions.filter(_.id != default)
@@ -411,25 +412,35 @@ object ScalaUtilities {
 
 object PythonUtilities {
   import com.lynxanalytics.biggraph.graph_operations.DerivePython
+  import com.lynxanalytics.biggraph.graph_operations.CreateGraphInPython
   import DerivePython._
+
+  val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
+    case "yes" => true
+    case "no" => false
+    case "" => false
+    case unexpected => throw new AssertionError(
+      s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
+  }
+  def assertAllowed() = {
+    assert(allowed, "Python code execution is disabled on this server for security reasons.")
+  }
 
   private def toSerializableType(pythonType: String) = {
     pythonType match {
       case "str" => SerializableType.string
       case "float" => SerializableType.double
+      case "np.ndarray" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }
 
-  def run(
-    code: String, inputs: Seq[String], outputs: Seq[String],
-    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Unit = {
-    // Parse the output list into Fields.
-    val api = Seq("vs", "es", "scalars")
-    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*(\w+)".r
-    val outputFields = outputs.map {
+  val api = Seq("vs", "es", "scalars")
+
+  // Parses the output list into Fields.
+  def outputFields(outputs: Seq[String]): Seq[Field] = {
+    val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-zA-Z0-9.]+)".r
+    outputs.map {
       case outputDeclaration(parent, name, tpe) =>
         assert(
           api.contains(parent),
@@ -438,6 +449,13 @@ object PythonUtilities {
       case output => throw new AssertionError(
         s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
     }
+  }
+
+  def derive(
+    code: String, inputs: Seq[String], outputs: Seq[String],
+    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+    implicit
+    manager: MetaGraphManager): Unit = {
     // Parse the input list into Fields.
     val existingFields = project.vertexAttributes.map {
       case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
@@ -459,7 +477,7 @@ object PythonUtilities {
       }
     }
     // Run the operation.
-    val op = DerivePython(code, inputFields.toList, outputFields.toList)
+    val op = DerivePython(code, inputFields.toList, outputFields(outputs).toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
@@ -487,5 +505,46 @@ object PythonUtilities {
     for ((f, i) <- res.scalarFields.zipWithIndex) {
       project.newScalar(f.name, res.scalars(i))
     }
+  }
+
+  def create(
+    code: String, outputs: Seq[String],
+    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+    implicit
+    manager: MetaGraphManager): Unit = {
+    // Run the operation.
+    val res = CreateGraphInPython(code, outputFields(outputs).toList)().result
+    project.vertexSet = res.vertices
+    project.edgeBundle = res.edges
+    // Save the outputs into the project.
+    for ((f, i) <- res.attrFields.zipWithIndex) {
+      f.parent match {
+        case "vs" => project.newVertexAttribute(f.name, res.attrs(i))
+        case "es" => project.newEdgeAttribute(f.name, res.attrs(i))
+      }
+    }
+    for ((f, i) <- res.scalarFields.zipWithIndex) {
+      project.newScalar(f.name, res.scalars(i))
+    }
+  }
+
+  def inferInputs(code: String): Seq[String] = {
+    val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
+    val mentions = api.flatMap { parent =>
+      val a = s"$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
+        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}").toSeq
+      a ++ b
+    }.toSet
+    (mentions -- outputs).toSeq.sorted
+  }
+  def inferOutputs(code: String): Seq[String] = {
+    api.flatMap { parent =>
+      val a = s"""$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
+        .findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
+        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}")
+      a ++ b
+    }.sorted
   }
 }

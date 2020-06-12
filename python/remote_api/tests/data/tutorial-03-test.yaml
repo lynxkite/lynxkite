@@ -18,33 +18,32 @@
 - id: Use-table-as-edges_1
   operationId: Use table as edges
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     attr: airportID
     src: src_airportID
     dst: dst_airportID
   x: 479.6211969189475
   y: 655.7735018376236
   inputs:
-    project:
+    graph:
       boxId: Use-table-as-vertices_1
-      id: project
+      id: graph
     table:
       boxId: Import-CSV_2
       id: table
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_1
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  operationId: Bundle vertex attributes into a Vector
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     output: position
-    x: lat
-    y: longitude
+    elements: lat,longitude
   x: 648.0189556961745
   y: 559.8912893305912
   inputs:
-    project:
+    graph:
       boxId: Use-table-as-edges_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_1
   operationId: Graph visualization
@@ -55,9 +54,9 @@
   x: 958.9049417444368
   y: 560.3482738013375
   inputs:
-    project:
-      boxId: Convert-vertex-attributes-to-position_1
-      id: project
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
   parametricParameters: {}
 - id: SQL1_1
   operationId: SQL1
@@ -69,17 +68,18 @@
       boxId: Import-CSV_1
       id: table
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_2
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_2
+  operationId: Bundle vertex attributes into a Vector
   parameters:
-    x: lat
-    y: longitude
+    apply_to_graph: ''
+    output: position
+    elements: lat,longitude
   x: 719.5
   y: 431.8995334147175
   inputs:
-    project:
+    graph:
       boxId: Use-table-as-vertices_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: SQL1_2
   operationId: SQL1
@@ -100,9 +100,9 @@
   x: 941.2042099061963
   y: 432.316665649414
   inputs:
-    project:
-      boxId: Convert-vertex-attributes-to-position_2
-      id: project
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_2
+      id: graph
   parametricParameters: {}
 - id: Merge-parallel-edges_1
   operationId: Merge parallel edges
@@ -117,9 +117,9 @@
   x: 652.9647239391028
   y: 742.2341643484789
   inputs:
-    project:
-      boxId: Convert-vertex-attributes-to-position_1
-      id: project
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
   parametricParameters: {}
 - id: Filter-by-attributes_1
   operationId: Filter by attributes
@@ -128,9 +128,9 @@
   x: 809.2969147331922
   y: 652.3271681701466
   inputs:
-    project:
+    graph:
       boxId: Merge-parallel-edges_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Compute-degree_1
   operationId: Compute degree
@@ -139,9 +139,9 @@
   x: 984.7717283706693
   y: 733.335420296229
   inputs:
-    project:
+    graph:
       boxId: Filter-by-attributes_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Filter-by-attributes_2
   operationId: Filter by attributes
@@ -150,23 +150,22 @@
   x: 1140.2974779273727
   y: 652.6527052994032
   inputs:
-    project:
+    graph:
       boxId: Compute-degree_1
-      id: project
+      id: graph
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_3
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_3
+  operationId: Bundle vertex attributes into a Vector
   parameters:
-    apply_to_project: ''
+    apply_to_graph: ''
     output: position
-    x: lat
-    y: longitude
+    elements: lat,longitude
   x: 1169.680831214823
   y: 479.13614417532506
   inputs:
-    project:
+    graph:
       boxId: Filter-by-attributes_2
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_3
   operationId: Graph visualization
@@ -177,9 +176,9 @@
   x: 1313.2134338895012
   y: 363.57558945252407
   inputs:
-    project:
-      boxId: Convert-vertex-attributes-to-position_3
-      id: project
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_3
+      id: graph
   parametricParameters: {}
 - id: Import-CSV_1
   operationId: Import CSV
@@ -245,9 +244,9 @@
   x: 1339.6667786510368
   y: 603.0572331789774
   inputs:
-    project:
-      boxId: Convert-vertex-attributes-to-position_3
-      id: project
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_3
+      id: graph
   parametricParameters: {}
 - id: Find-modular-clustering_1
   operationId: Find modular clustering
@@ -256,9 +255,9 @@
   x: 1472.7056290966239
   y: 480.4923237068167
   inputs:
-    project:
+    graph:
       boxId: Find-connected-components_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_4
   operationId: Graph visualization
@@ -269,23 +268,23 @@
   x: 1611.6219032125398
   y: 363.5924179797992
   inputs:
-    project:
+    graph:
       boxId: Find-modular-clustering_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Aggregate-to-segmentation_1
   operationId: Aggregate to segmentation
   parameters:
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     aggregate_daylightSavingsTime: 'most_common,set'
     aggregate_tz: 'average,set'
     aggregate_tz_name: most_common
   x: 1618.7849304514223
   y: 600.0883102040235
   inputs:
-    project:
+    graph:
       boxId: Find-modular-clustering_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_5
   operationId: Graph visualization
@@ -296,9 +295,9 @@
   x: 1862.5687645860778
   y: 597.5235243646347
   inputs:
-    project:
+    graph:
       boxId: Derive-vertex-attribute_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Derive-vertex-attribute_1
   operationId: Derive vertex attribute
@@ -313,14 +312,14 @@
       } else {
         "Europe/West-Africa"
       }
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     output: segment_name
   x: 1740.947032451802
   y: 735.7820985821559
   inputs:
-    project:
+    graph:
       boxId: Aggregate-to-segmentation_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_6
   operationId: Graph visualization
@@ -331,21 +330,21 @@
   x: 1730.1145673717633
   y: 473.67440905318387
   inputs:
-    project:
+    graph:
       boxId: Aggregate-to-segmentation_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Aggregate-from-segmentation_1
   operationId: Aggregate from segmentation
   parameters:
-    apply_to_project: .modular_clusters
+    apply_to_graph: .modular_clusters
     aggregate_segment_name: most_common
   x: 1892.1878455412382
   y: 873.2615738907056
   inputs:
-    project:
+    graph:
       boxId: Derive-vertex-attribute_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Graph-visualization_7
   operationId: Graph visualization
@@ -356,9 +355,9 @@
   x: 2198.040701938418
   y: 656.1638003896435
   inputs:
-    project:
+    graph:
       boxId: Rename-vertex-attributes_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Rename-vertex-attributes_1
   operationId: Rename vertex attributes
@@ -367,20 +366,21 @@
   x: 2034.7298567491962
   y: 771.2144522304629
   inputs:
-    project:
+    graph:
       boxId: Aggregate-from-segmentation_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: SQL1_3
   operationId: SQL1
   parameters:
-    sql: 'select `airportID`, `segment_name` from `vertices`'
+    persist: no
+    sql: 'select cast(airportID as int), segment_name from vertices order by airportID limit 10'
   x: 2263.397698676726
   y: 770.2684029858457
   inputs:
     input:
       boxId: Rename-vertex-attributes_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Export-to-CSV_1
   operationId: Export to CSV
@@ -396,14 +396,14 @@
   operationId: SQL1
   parameters:
     sql: >-
-      select `dst_airportID_most_common`, `src_airportID_most_common` from
-      `edge_attributes`
+      select cast(dst_airportID_most_common as int), cast(src_airportID_most_common as int) from
+      `edge_attributes` order by `dst_airportID_most_common`*100000+`src_airportID_most_common` limit 10
   x: 2209.6211859746286
   y: 893.7552099314037
   inputs:
     input:
       boxId: Rename-vertex-attributes_1
-      id: project
+      id: graph
   parametricParameters: {}
 - id: Export-to-CSV_2
   operationId: Export to CSV

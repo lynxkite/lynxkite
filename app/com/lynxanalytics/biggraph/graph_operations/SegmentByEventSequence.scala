@@ -120,7 +120,7 @@ object SegmentByEventSequence extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val segmentDescription = vertexAttribute[String](segments)
-    val segmentSize = vertexAttribute[Long](segments)
+    val segmentSize = vertexAttribute[Double](segments)
     val belongsTo = edgeBundle(
       inputs.personVs.entity,
       segments,
@@ -208,7 +208,7 @@ case class SegmentByEventSequence(
     output(
       o.segmentSize,
       segmentIdToCodeAndPersons.mapValues {
-        case (_, persons) => persons.size.toLong
+        case (_, persons) => persons.size.toDouble
       })
   }
 

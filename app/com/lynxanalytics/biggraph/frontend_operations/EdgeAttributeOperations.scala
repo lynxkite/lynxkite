@@ -21,7 +21,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
-      Choice("type", "Type", options = FEOption.list("Double", "String")))
+      Choice("type", "Type", options = FEOption.list("number", "String")))
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("name")
@@ -31,7 +31,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     def apply() = {
       val value = params("value")
       val res = {
-        if (params("type") == "Double") {
+        if (params("type") == "number") {
           project.edgeBundle.const(value.toDouble)
         } else {
           project.edgeBundle.const(value)
@@ -70,7 +70,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Convert edge attribute to Double")(new ProjectTransformation(_) {
+  register("Convert edge attribute to number")(new ProjectTransformation(_) {
     def eligible =
       project.edgeAttrList[String] ++
         project.edgeAttrList[Long] ++
@@ -136,7 +136,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     def enabled = project.hasEdgeBundle
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
-      project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute, help)
+      project.newEdgeAttribute(params("name"), project.edgeBundle.idSet.idAttribute.asString, help)
     }
   })
 
@@ -196,7 +196,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register(
     "Use table as edge attributes", List(projectInput, "attributes"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
+      override lazy val project = projectInput("graph")
       lazy val attributes = tableLikeInput("attributes").asProject
       params ++= List(
         Choice("id_attr", "Edge attribute",

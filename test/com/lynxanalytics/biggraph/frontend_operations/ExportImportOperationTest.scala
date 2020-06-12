@@ -12,21 +12,18 @@ class ExportImportOperationTest extends OperationsTestBase {
         "name" -> "cc",
         "directions" -> "ignore directions"))
       .box("Convert vertex attribute to String", Map(
-        "apply_to_project" -> ".cc",
+        "apply_to_graph" -> ".cc",
         "attr" -> "id"))
 
     // Import vertices as vertices
     {
       val project = eg
-        .box("Use table as vertices", Map(
-          "id_attr" -> "new_id"))
+        .box("Use table as vertices")
         .project
       assert(project.vertexSet.rdd.count == 4)
       assert(project.edgeBundle == null)
       val vAttrs = project.vertexAttributes.toMap
-      // 6 original +1 new_id
-      assert(vAttrs.size == 7)
-      assert(vAttrs("id") == vAttrs("new_id"))
+      assert(vAttrs.size == 6)
       assert(
         vAttrs("name").rdd.map(_._2).collect.toSet == Set("Adam", "Eve", "Bob", "Isolated Joe"))
     }
@@ -35,14 +32,13 @@ class ExportImportOperationTest extends OperationsTestBase {
     {
       val project = eg
         .box("Take edges as vertices")
-        .box("Use table as vertices", Map(
-          "id_attr" -> "id"))
+        .box("Use table as vertices")
         .project
       assert(project.vertexSet.rdd.count == 4)
       assert(project.edgeBundle == null)
       val vAttrs = project.vertexAttributes.toMap
-      // 2 original edge attr, 2 * 6 src and dst attributes + 1 id
-      assert(vAttrs.size == 15)
+      // 2 original edge attr, 2 * 6 src and dst attributes
+      assert(vAttrs.size == 14)
       assert(vAttrs("edge_weight").rdd.map(_._2).collect.toSet == Set(1.0, 2.0, 3.0, 4.0))
       assert(
         vAttrs("src_name").runtimeSafeCast[String].rdd.map(_._2).collect.toSeq.sorted ==
@@ -55,8 +51,8 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import belongs to as edges
     {
       val project = eg
-        .box("Take segmentation links as base project", Map(
-          "apply_to_project" -> ".cc"))
+        .box("Take segmentation links as base graph", Map(
+          "apply_to_graph" -> ".cc"))
         .box("Use table as graph", Map(
           "src" -> "base_name",
           "dst" -> "segment_id"))
@@ -66,8 +62,8 @@ class ExportImportOperationTest extends OperationsTestBase {
       assert(project.edgeBundle.rdd.count == 4)
       val vAttrs = project.vertexAttributes.toMap
       val eAttrs = project.edgeAttributes.toMap
-      // id, stringId
-      assert(vAttrs.size == 2)
+      // stringId
+      assert(vAttrs.size == 1)
       // 6 from base vertices, 2 from connected components
       assert(eAttrs.size == 8)
 
@@ -85,10 +81,10 @@ class ExportImportOperationTest extends OperationsTestBase {
   }
 
   test("Use table as edges") {
-    val edges = importSeq(Seq("src", "dst", "value"), Seq(
-      ("Adam", "Eve", "value1"),
-      ("Isolated Joe", "Bob", "value2"),
-      ("Eve", "Alice", "value3")))
+    val edges = importSeq(Seq("src", "dst", "string", "number"), Seq(
+      ("Adam", "Eve", "value1", 1L),
+      ("Isolated Joe", "Bob", "value2", 2L),
+      ("Eve", "Alice", "value3", 3L)))
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
@@ -99,11 +95,16 @@ class ExportImportOperationTest extends OperationsTestBase {
       .project
     assert(Seq(Edge(0, 1), Edge(3, 2)) ==
       project.edgeBundle.rdd.collect.toSeq.map(_._2))
-    val valueAttr = project.edgeBundle.rdd
-      .join(project.edgeAttributes("value").runtimeSafeCast[String].rdd)
+    val stringAttr = project.edgeBundle.rdd
+      .join(project.edgeAttributes("string").runtimeSafeCast[String].rdd)
       .values
     assert(Seq((Edge(0, 1), "value1"), (Edge(3, 2), "value2")) ==
-      valueAttr.collect.toSeq.sorted)
+      stringAttr.collect.toSeq.sorted)
+    val numberAttr = project.edgeBundle.rdd
+      .join(project.edgeAttributes("number").runtimeSafeCast[Double].rdd)
+      .values
+    assert(Seq((Edge(0, 1), 1.0), (Edge(3, 2), 2.0)) ==
+      numberAttr.collect.toSeq.sorted)
   }
 
   test("Use table as vertex attributes") {

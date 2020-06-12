@@ -1,0 +1,130 @@
+boxes:
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: |-
+      Predicts a vertex attribute based on the most
+      homogeneous community that the vertex belongs
+      to.
+
+      Change the **metric** parameter to
+      use the median or other aggregation instead
+      of the average.
+
+      Change the **minimal samples** parameter to
+      ignore communities with too few known values.
+    parameters: >-
+      [{"kind":"vertex attribute (number)","id":"Attribute to
+      predict","defaultValue":"","$$hashKey":"object:43381"},{"kind":"segmentation","id":"Segmentation","defaultValue":"","$$hashKey":"object:43464"},{"kind":"text","id":"Metric","defaultValue":"average","$$hashKey":"object:43790"},{"kind":"text","id":"Minimal
+      samples","defaultValue":"3","$$hashKey":"object:43954"}]
+  parametricParameters: {}
+  x: 0
+  y: 0
+- id: Aggregate-to-segmentation_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Aggregate to segmentation
+  parameters: {}
+  parametricParameters:
+    aggregate_predict_this_attribute: '${Metric},std_deviation,count'
+    apply_to_graph: .$Segmentation
+  x: 300
+  y: 300
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 50
+  y: 150
+- id: Weighted-aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Weighted aggregate from segmentation
+  parameters:
+    aggregate_prediction: by_min_weight
+    apply_to_graph: .connected_components
+    prefix: community
+    weight: predict_this_attribute_std_deviation
+  parametricParameters: {}
+  x: 300
+  y: 450
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    apply_to_graph: .connected_components
+  parametricParameters:
+    filterva_predict_this_attribute_count: '>=${`Minimal samples`}'
+  x: 550
+  y: 300
+- id: output-graph
+  inputs:
+    output:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 800
+  y: 600
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive vertex attribute
+  parameters:
+    output: predict_this_attribute
+  parametricParameters:
+    expr: '${`Attribute to predict`}'
+  x: 50
+  y: 300
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    apply_to_graph: .connected_components
+    output: prediction
+  parametricParameters:
+    expr: predict_this_attribute_$Metric
+  x: 50
+  y: 450
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Weighted-aggregate-from-segmentation_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_predict_this_attribute: ''
+  parametricParameters:
+    change_community_prediction_by_min_weight_by_predict_this_attribute_std_deviation: '${`Attribute to predict`}_prediction'
+  x: 550
+  y: 450
+- id: Discard-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Discard vertex attributes
+  parameters:
+    apply_to_graph: .connected_components
+  parametricParameters:
+    name: >-
+      predict_this_attribute_${Metric},predict_this_attribute_count,predict_this_attribute_std_deviation,prediction
+  x: 800
+  y: 450

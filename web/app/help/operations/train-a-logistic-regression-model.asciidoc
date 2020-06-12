@@ -12,7 +12,7 @@ independent variables by estimating probabilities using a logistic function.
 The current implementation of logistic regression only supports binary classes.
 ====
 [p-name]#Model name#::
-The model will be stored as a scalar using this name.
+The model will be stored as a graph attribute using this name.
 
 [p-label]#Label attribute#::
 The vertex attribute for which the model is trained to classify. The attribute should

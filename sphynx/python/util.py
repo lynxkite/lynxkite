@@ -11,12 +11,10 @@ import json
 DoubleAttribute = 'DoubleAttribute'
 StringAttribute = 'StringAttribute'
 DoubleVectorAttribute = 'DoubleVectorAttribute'
-DoubleTuple2Attribute = 'DoubleTuple2Attribute'
 PA_TYPES = {
     DoubleAttribute: pa.float64(),
     StringAttribute: pa.string(),
     DoubleVectorAttribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
-    DoubleTuple2Attribute: pa.list_(pa.field('element', pa.float64(), nullable=False)),
 }
 
 

@@ -64,7 +64,8 @@ case class CustomOperationParameterMeta(
     kind: String,
     defaultValue: String) {
   assert(
-    CustomOperationParameterMeta.validKinds.contains(kind),
+    CustomOperationParameterMeta.validKinds.contains(kind) ||
+      CustomOperationParameterMeta.deprecatedKinds.contains(kind),
     s"'$kind' is not a valid parameter type.")
 }
 object CustomOperationParameterMeta {
@@ -72,15 +73,23 @@ object CustomOperationParameterMeta {
     "text",
     "boolean",
     "code",
+    "vertex attribute",
+    "vertex attribute (number)",
+    "vertex attribute (String)",
+    "edge attribute",
+    "edge attribute (number)",
+    "edge attribute (String)",
+    "graph attribute",
+    "segmentation",
+    "column")
+  val deprecatedKinds = List(
     "vertexattribute",
     "vertexattribute (Double)",
     "vertexattribute (String)",
     "edgeattribute",
     "edgeattribute (Double)",
     "edgeattribute (String)",
-    "segmentation",
-    "scalar",
-    "column")
+    "scalar")
 }
 
 case class FEOperationSpec(
@@ -189,7 +198,7 @@ object Operation {
         }
       }
       def segmentationsRecursively: List[FEOption] =
-        List(FEOption("", "Main project")) ++
+        List(FEOption("", "Main graph")) ++
           FEOption.list(
             segmentationsRecursively(project.rootEditor)
               .toList
@@ -461,7 +470,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
 
   protected def splitParam(param: String): Seq[String] = {
     val p = params(param)
-    if (p.isEmpty) Seq()
+    if (p.trim.isEmpty) Seq()
     else p.split(",", -1).map(_.trim)
   }
 }
@@ -469,8 +478,8 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
 // A ProjectOutputOperation is an operation that has 1 project-typed output.
 abstract class ProjectOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
-    context.meta.outputs == List("project"),
-    s"A ProjectOperation must output a project. $context")
+    context.meta.outputs == List("graph"),
+    s"A ProjectOperation must output a graph. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(CommonProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
@@ -489,9 +498,9 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
 abstract class ProjectTransformation(
     context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
-    context.meta.inputs == List("project"),
-    s"A ProjectTransformation must input a single project. $context")
-  override lazy val project = projectInput("project")
+    context.meta.inputs == List("graph"),
+    s"A ProjectTransformation must input a single graph. $context")
+  override lazy val project = projectInput("graph")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     val before = project.rootEditor.viewer
@@ -714,15 +723,23 @@ class CustomBoxOperation(
         case "text" => Param(id, id, dv)
         case "boolean" => Choice(id, id, FEOption.bools)
         case "code" => Code(id, id, "plain_text", dv)
+        case "vertex attribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
+        case "vertex attribute (number)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
+        case "vertex attribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
+        case "edge attribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
+        case "edge attribute (number)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
+        case "edge attribute (String)" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
+        case "graph attribute" => Choice(id, id, projects.flatMap(_.scalarList).toList)
+        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
+        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
+        // Deprecated forms.
+        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "vertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
         case "vertexattribute (Double)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
         case "vertexattribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)
         case "edgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
         case "edgeattribute (Double)" => Choice(id, id, projects.flatMap(_.edgeAttrList[Double]).toList)
         case "edgeattribute (String)" => Choice(id, id, projects.flatMap(_.edgeAttrList[String]).toList)
-        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
-        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
-        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
       }
     }
   }

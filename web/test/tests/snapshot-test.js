@@ -10,7 +10,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'snapshot created',
     function() {
-      const state = lib.workspace.openStateView('eg0', 'project');
+      const state = lib.workspace.openStateView('eg0', 'graph');
       const snapshotBox = state.popup.$('#save-as-snapshot-box');
       const snapshotButton = state.popup.$('#save-as-snapshot-button');
 

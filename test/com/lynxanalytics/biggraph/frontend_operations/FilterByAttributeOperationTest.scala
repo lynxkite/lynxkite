@@ -19,10 +19,10 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
           Map("degree" -> "2.0", "seed" -> "42"))
         .box(
           "Add constant edge attribute",
-          Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
+          Map("name" -> "e", "value" -> "0.0", "type" -> "number"))
         .box(
           "Add constant vertex attribute",
-          Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
+          Map("name" -> "v", "value" -> "0.0", "type" -> "number"))
         .box(
           "Filter by attributes",
           Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
@@ -38,7 +38,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
         Map("name" -> "cc", "directions" -> "ignore directions"))
       .box(
         "Filter by attributes",
-        Map("filterva_size" -> "3", "apply_to_project" -> ".cc"))
+        Map("filterva_size" -> "3", "apply_to_graph" -> ".cc"))
     val c1 = base.project.segmentation("cc").vertexSet.rdd.keys.take(1).head
     val project2 = base.box(
       "Filter by attributes",

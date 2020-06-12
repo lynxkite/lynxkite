@@ -1,0 +1,28 @@
+### One-hot encode attribute
+
+Encodes a categorical `String` attribute into a https://en.wikipedia.org/wiki/One-hot[one-hot]
+`Vector[number]`. For example, if you apply it to the `name` attribute of the example graph
+with categories `Adam,Eve,Isolated Joe,Sue`, you end up with
+
+|===
+| name | one-hot
+
+| Adam | Vector(1,0,0,0)
+| Eve | Vector(0,1,0,0)
+| Bob | Vector(0,0,0,0)
+| Isolated Joe | Vector(0,0,1,0)
+|===
+
+
+====
+*Parameters*
+
+[p-output]#Save as#::
+The new attribute will be created under this name.
+
+[p-catAttr]#Categorical attribute#::
+The attribute you would like to turn into a one-hot Vector.
+
+[p-categories]#Categories::
+Possible categories separated by commas.
+====

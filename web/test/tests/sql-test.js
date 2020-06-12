@@ -9,16 +9,16 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
       const table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
-        ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
+        ['Double', 'String', 'String', 'Double', 'Array[Double]', 'String'],
         [
-          ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
-          ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
-          ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],
-          ['2', 'Male', '3', 'null', '(-33.8674869,151.2069902)', 'Isolated Joe'],
+          ['20.3', 'Male', '0', '1000', 'WrappedArray(40.71448, -74.00598)', 'Adam'],
+          ['18.2', 'Female', '1', 'null', 'WrappedArray(47.5269674, 19.0323968)', 'Eve'],
+          ['50.3', 'Male', '2', '2000', 'WrappedArray(1.352083, 103.819836)', 'Bob'],
+          ['2', 'Male', '3', 'null', 'WrappedArray(-33.8674869, 151.2069902)', 'Isolated Joe'],
         ]);
     }, function() {});
 
@@ -60,7 +60,7 @@ module.exports = function(fw) {
     '"order by" works right',
     'select id, name from vertices order by name',
     ['id', 'name'],
-    ['Long', 'String'],
+    ['String', 'String'],
     [
       [ '0', 'Adam' ],
       [ '2', 'Bob' ],
@@ -136,7 +136,7 @@ module.exports = function(fw) {
           output: 'new_attr',
         }
       });
-      lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('new_attr', 'graph', 'sql', 'input');
       table = lib.workspace.openStateView('sql', 'table');
       table = runSQL('select new_attr from vertices');
       table.clickColumn('new_attr');
@@ -151,7 +151,7 @@ module.exports = function(fw) {
         ]);
       table.close();
       lib.workspace.deleteBoxes(['new_attr']);
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
     });
 
@@ -166,10 +166,10 @@ module.exports = function(fw) {
         id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }});
       lib.workspace.addBox({
         after: 'rnd',
-        id: 'copy', name: 'Use base project as segmentation', x: 100, y: 300 });
+        id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300 });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 400 });
-      lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('copy', 'graph', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
       const table = runSQL(
         'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
@@ -182,18 +182,18 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
     }, function() {
       const se = lib.workspace.openBoxEditor('sql');
       const tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
-      tableBrowser.expectNode([2], 'input.edge_attributes', '`input.edge_attributes`');
-      tableBrowser.expectNode([3], 'input.edges', '`input.edges`');
-      tableBrowser.expectNode([4], 'input.scalars', '`input.scalars`');
-      tableBrowser.expectNode([5], 'input.vertices', '`input.vertices`');
-      tableBrowser.expectNode([6], 'scalars', '`scalars`');
+      tableBrowser.expectNode([2], 'graph_attributes', '`graph_attributes`');
+      tableBrowser.expectNode([3], 'input.edge_attributes', '`input.edge_attributes`');
+      tableBrowser.expectNode([4], 'input.edges', '`input.edges`');
+      tableBrowser.expectNode([5], 'input.graph_attributes', '`input.graph_attributes`');
+      tableBrowser.expectNode([6], 'input.vertices', '`input.vertices`');
       tableBrowser.expectNode([7], 'vertices', '`vertices`');
       tableBrowser.toggleNode([7]);
       tableBrowser.expectNode([7, 0], '*ALL*');
@@ -220,19 +220,19 @@ module.exports = function(fw) {
       lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL2', x: 100, y: 200 });
-      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'one');
-      lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
+      lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'one');
+      lib.workspace.connectBoxes('eg1', 'graph', 'sql', 'two');
     }, function() {
       const se = lib.workspace.openBoxEditor('sql');
       const tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'one.edge_attributes', '`one.edge_attributes`');
       tableBrowser.expectNode([1], 'one.edges', '`one.edges`');
-      tableBrowser.expectNode([2], 'one.scalars', '`one.scalars`');
+      tableBrowser.expectNode([2], 'one.graph_attributes', '`one.graph_attributes`');
       tableBrowser.expectNode([3], 'one.vertices', '`one.vertices`');
       tableBrowser.expectNode([4], 'two.edge_attributes', '`two.edge_attributes`');
       tableBrowser.expectNode([5], 'two.edges', '`two.edges`');
-      tableBrowser.expectNode([6], 'two.scalars', '`two.scalars`');
+      tableBrowser.expectNode([6], 'two.graph_attributes', '`two.graph_attributes`');
       tableBrowser.expectNode([7], 'two.vertices', '`two.vertices`');
       tableBrowser.toggleNode([3]);
       tableBrowser.expectNode([3, 0], '*ALL*');

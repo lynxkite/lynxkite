@@ -8,20 +8,19 @@ For example you can write `age * 2` to generate a new attribute
 that is the double of the _age_ attribute. Or you can write
 `if (gender == "Male") "Mr " + name else "Ms " + name` for a more complex example.
 
-You can also refer to graph attributes (aka scalars) in the Scala expression. For example,
+You can also refer to graph attributes in the Scala expression. For example,
 assuming that you have a graph attribute _income_average_,
 you can use the expression `if (income > income_average) 1.0 else 0.0` to
 identify people whose income is above average.
 
 Back quotes can be used to refer to attribute names that are not valid Scala identifiers.
 
-The Scala expression can only return specific types:
-
-- `Double`,
+The Scala expression can return any of the following types:
 - `String`,
-- `Int`,
-- `Long`,
-- ``Vector``s combined from the above.
+- `Double`, which will be presented as `number`
+- `Int`, which will be automatically converted to `Double`
+- `Long`, which will be automatically converted to `Double`
+- `Vector`s or `Set`s combined from the above.
 
 In case you do not want to define the expression for every input, you can return an `Option`
 created from the above types. E.g. `if (income > 1000) Some(age) else None`.

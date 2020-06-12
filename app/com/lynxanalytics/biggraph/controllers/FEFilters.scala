@@ -215,14 +215,6 @@ object FEFilters {
     val filter = P(Start ~ (comparison | commaSeparatedList | interval) ~ End)
   }
 
-  object GeoParser extends BaseTypedParser[(Double, Double)](None) {
-    val geo = P(ws ~ DoubleParser.interval ~ ws ~ "," ~ ws ~ DoubleParser.interval ~ ws).map {
-      x =>
-        PairFilter(x._1, x._2).asInstanceOf[Filter[(Double, Double)]]
-    }
-    val filter = P(Start ~ geo ~ End)
-  }
-
   class VectorParser extends TokenParser {
     def forall[T: TypeTag] =
       P(("forall" | "all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(
@@ -231,12 +223,16 @@ object FEFilters {
       P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
         x => Exists(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
     def parse[T: TypeTag](spec: String): Filter[T] = {
-      val outerNotFilter = P(Start ~ "!" ~ notWs.! ~ End).map { x =>
+      val outerNotFilter = P("!" ~ notWs.!).map { x =>
         NotFilter(filterFromSpec(x)(typeTag[Vector[T]]).asInstanceOf[Filter[T]])
       }
-      val matchAllFilter = P(Start ~ "*" ~ End).map(_ => MatchAllFilter().asInstanceOf[Filter[T]])
-      val vec = P(Start ~ (forall | exists) ~ End)
-      val expr = P(outerNotFilter | matchAllFilter | vec)
+      val matchAllFilter = P("*").map(_ => MatchAllFilter().asInstanceOf[Filter[T]])
+      val vec = P(forall | exists)
+      val intervals = P(
+        DoubleParser.interval ~ ws ~ "," ~ ws ~ DoubleParser.interval).map {
+          x => VectorFilter(x._1, x._2).asInstanceOf[Filter[T]]
+        }
+      val expr = P(Start ~ ws ~ (outerNotFilter | matchAllFilter | vec | intervals) ~ ws ~ End)
       import fastparse.core.Parsed
       val Parsed.Success(filter, _) = expr.parse(spec)
       filter
@@ -254,8 +250,6 @@ object FEFilters {
       LongParser.parse(spec).asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[Double]) {
       DoubleParser.parse(spec).asInstanceOf[Filter[T]]
-    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
-      GeoParser.parse(spec).asInstanceOf[Filter[T]]
     } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
       val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
       new VectorParser().parse(spec)(elementTypeTag).asInstanceOf[Filter[T]]

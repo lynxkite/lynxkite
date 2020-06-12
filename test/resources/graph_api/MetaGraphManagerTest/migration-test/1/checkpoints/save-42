@@ -1,6 +1,6 @@
 {
   "snapshot": {
-    "kind": "project",
+    "kind": "graph",
     "success": {
       "enabled": true,
       "disabledReason": ""

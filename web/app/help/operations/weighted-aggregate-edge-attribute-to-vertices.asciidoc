@@ -8,7 +8,7 @@ For example it can calculate the average cost per second of calls for each perso
 Save the aggregated attributes with this prefix.
 
 [p-weight]#Weight#::
-The `Double` attribute to use as weight.
+The `number` attribute to use as weight.
 
 [p-direction]#Aggregate on#::
  - `incoming edges`: Aggregate across the edges coming in to each vertex.

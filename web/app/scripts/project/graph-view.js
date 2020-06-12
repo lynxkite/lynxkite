@@ -603,7 +603,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (colorMeta) {
       colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
       const fullLegendTitle = legendTitle + ': ' + colorMeta.title;
-      if (colorMeta.typeName === 'Double') {
+      if (colorMeta.typeName === 'number') {
         const values = mapByAttr(siblings, colorKey, 'double');
         resultMap = doubleColorMap(values, mapName);
         const bounds = common.minmax(values);
@@ -716,17 +716,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
       let color = colorMap ? colorMap.undefined : UNCOLORED;
       if (colorAttr && vertex.attrs[colorAttr].defined) {
-        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // in case of numbers the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
-        color = (side.vertexAttrs.color.typeName === 'Double') ?
+        color = (side.vertexAttrs.color.typeName === 'number') ?
           colorMap[vertex.attrs[colorAttr].double] : colorMap[vertex.attrs[colorAttr].string];
       }
 
       let labelColor;
       if (labelColorAttr && vertex.attrs[labelColorAttr].defined) {
-        // in case of doubles the keys are strings converted from the DynamicValue's double field
+        // in case of numbers the keys are strings converted from the DynamicValue's double field
         // we can't just use the string field of the DynamicValue as 1.0 would turn to '1'
-        labelColor = (side.vertexAttrs.labelColor.typeName === 'Double') ?
+        labelColor = (side.vertexAttrs.labelColor.typeName === 'number') ?
           labelColorMap[vertex.attrs[labelColorAttr].double] :
           labelColorMap[vertex.attrs[labelColorAttr].string];
       }
@@ -854,14 +854,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             if (side.hasParent()) {
               if (side.isParentFilteredToSegment(id)) {
                 actions.push({
-                  title: 'Stop filtering base project to this segment',
+                  title: 'Stop filtering base graph to this segment',
                   callback: function() {
                     side.deleteParentsSegmentFilter();
                   },
                 });
               } else {
                 actions.push({
-                  title: 'Filter base project to this segment',
+                  title: 'Filter base graph to this segment',
                   callback: function() {
                     side.filterParentToSegment(id);
                   },
@@ -1016,8 +1016,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             rect.x <= event.pageX && event.pageX <= rect.x + rect.width &&
             rect.y <= event.pageY && event.pageY <= rect.y + rect.height &&
             // We haven't hit the top or bottom.
-            (div.scrollTop !== 0 || event.deltaY > 0) &&
-            (div.scrollTop + rect.height !== div.scrollHeight || event.deltaY < 0)) {
+            (div.scrollTop > 0 || event.deltaY > 0) &&
+            (div.scrollTop + rect.height < div.scrollHeight || event.deltaY < 0)) {
             div.scrollBy({ top: event.deltaY, behavior: 'auto' });
             return true; // Stop zooming.
           }
@@ -1300,14 +1300,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       v.degree = 0;
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
         const pos = v.data.attrs[positionAttr];
-        v.x = pos.x;
-        v.y = -pos.y; // Flip Y axis to look more mathematical.
+        v.x = pos.vector[0] || 0;
+        v.y = -pos.vector[1] || 0; // Flip Y axis to look more mathematical.
         v.frozen += 2; // Will be unfrozen once after initialization.
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
         const pos = v.data.attrs[geoAttr];
-        v.x = map.lon2x(pos.y);
-        v.y = map.lat2y(pos.x);
+        v.x = map.lon2x(pos.vector[1] || 0);
+        v.y = map.lat2y(pos.vector[0] || 0);
         v.frozen += 2; // Will be unfrozen once after initialization.
       }
       v.forceOX = v.x;

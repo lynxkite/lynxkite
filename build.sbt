@@ -1,9 +1,9 @@
 import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 
-name := "biggraph"
+name := "lynxkite"
 
 javaOptions in Test := Seq(
-  "-Dbiggraph.default.partitions.per.core=1",
+  "-Dlynxkite.default.partitions.per.core=1",
   "-Djava.security.policy=conf/security.policy",
   "-XX:PermSize=256M")
 
@@ -160,7 +160,7 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/go/bin/server") -> "sphynx/go/bin/server")
+  file("sphynx/go/bin/lynxkite-sphynx") -> "sphynx/go/bin/lynxkite-sphynx")
 
 
 

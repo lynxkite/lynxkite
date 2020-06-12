@@ -15,12 +15,12 @@ class GraphMetricsTest extends OperationsTestBase {
 
   // All 2 plot tests use this box
   val plotBox = box("Create example graph")
-    .box("built-ins/graph-metrics", Map(
+    .box("built-ins/Graph metrics", Map(
       "CustomPercentile" -> "0"))
 
   test("graph metrics works (Output: General Metrics)") {
     val gmbox1 = box("Create example graph")
-      .box("built-ins/graph-metrics", Map(
+      .box("built-ins/Graph metrics", Map(
         "CustomPercentile" -> "0")).output("General Metrics")
 
     val table1 = gmbox1.table
@@ -38,7 +38,7 @@ class GraphMetricsTest extends OperationsTestBase {
       Seq("Connected Components", 2.0, 2.0, 1.0, 1.1, 2.0, 2.8999999999999995, 3.0, 1.0)))
 
     val gmbox2 = box("Create example graph")
-      .box("built-ins/graph-metrics", Map(
+      .box("built-ins/Graph metrics", Map(
         "CustomPercentile" -> "0.7")).output("General Metrics")
 
     // Testing schema again, because it's dependent on the input

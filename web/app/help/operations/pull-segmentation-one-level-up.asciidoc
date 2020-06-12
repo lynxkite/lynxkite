@@ -3,5 +3,5 @@
 Creates a copy of a segmentation in the parent of its parent segmentation.
 In the created segmentation, the set of segments will be the same as in the
 original. A vertex will be made member of a segment if it was transitively
-member of the corresponding segment in the original segmentation. The attributes,
-scalars and sub-segmentations of the segmentation are also copied.
+member of the corresponding segment in the original segmentation. The attributes
+and sub-segmentations of the segmentation are also copied.
