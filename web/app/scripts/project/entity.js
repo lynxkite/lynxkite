@@ -271,7 +271,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
             }
             vs.push('Icon');
             vs.push('Image');
-          } else if (e.typeName === '(number, number)') {
+          } else if (e.typeName === 'Vector[number]') {
             vs.push('Geo coordinates');
             vs.push('Position');
           }

@@ -15,8 +15,7 @@ case class DynamicValue(
     string: String = "",
     defined: Boolean = true,
     double: Option[Double] = None,
-    x: Option[Double] = None,
-    y: Option[Double] = None)
+    vector: List[Double] = Nil)
 object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
@@ -69,12 +68,26 @@ object DynamicValue {
 
   def seqConverter[T](tt: TypeTag[_]): (Seq[T] => DynamicValue) = {
     val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
-    seq => DynamicValue(string = seq.map(e => innerConverter(e).string).mkString(", "))
+    if (tt.tpe =:= typeOf[Double]) {
+      seq =>
+        DynamicValue(
+          string = seq.map(e => innerConverter(e).string).mkString(", "),
+          vector = seq.asInstanceOf[Seq[Double]].toList)
+    } else {
+      seq => DynamicValue(string = seq.map(e => innerConverter(e).string).mkString(", "))
+    }
   }
 
   def setConverter[T](tt: TypeTag[_]): (Set[T] => DynamicValue) = {
     val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
-    set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
+    if (tt.tpe =:= typeOf[Double]) {
+      set =>
+        DynamicValue(
+          string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "),
+          vector = set.asInstanceOf[Seq[Double]].toList)
+    } else {
+      set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
+    }
   }
 }
 
