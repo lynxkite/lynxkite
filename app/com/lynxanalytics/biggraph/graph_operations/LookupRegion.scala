@@ -17,7 +17,7 @@ object LookupRegion extends OpFromJson {
     NewParameter[Boolean]("ignoreUnsupportedShapes", false)
   class Input extends MagicInputSignature {
     val vertices = vertexSet
-    val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
+    val coordinates = vertexAttribute[Vector[Double]](vertices)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
@@ -66,22 +66,23 @@ case class LookupRegion(
 
     val factory = new org.locationtech.jts.geom.GeometryFactory()
     output(o.attribute, inputs.coordinates.rdd.flatMapValues {
-      case (lat, lon) => regionAttributeMapping
-        .find {
-          case (bounds, geometry, _) =>
-            // Do the faster BoundingBox check first.
-            bounds.contains(lon, lat) && (geometry match {
-              // The actual classes and ways to check differ for implementations. These 2 cases
-              // are probably not the complete list.
-              case g: org.opengis.geometry.Geometry =>
-                g.contains(new org.geotools.geometry.DirectPosition2D(lon, lat))
-              case g: org.locationtech.jts.geom.Geometry =>
-                g.contains(factory.createPoint(new org.locationtech.jts.geom.Coordinate(lon, lat)))
-              case _ =>
-                assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
-                false
-            })
-        }.map(_._3)
+      v =>
+        regionAttributeMapping
+          .find {
+            case (bounds, geometry, _) =>
+              // Do the faster BoundingBox check first.
+              bounds.contains(v(1), v(0)) && (geometry match {
+                // The actual classes and ways to check differ for implementations. These 2 cases
+                // are probably not the complete list.
+                case g: org.opengis.geometry.Geometry =>
+                  g.contains(new org.geotools.geometry.DirectPosition2D(v(1), v(0)))
+                case g: org.locationtech.jts.geom.Geometry =>
+                  g.contains(factory.createPoint(new org.locationtech.jts.geom.Coordinate(v(1), v(0))))
+                case _ =>
+                  assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
+                  false
+              })
+          }.map(_._3)
     })
   }
 }

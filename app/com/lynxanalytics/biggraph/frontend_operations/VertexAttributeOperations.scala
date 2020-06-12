@@ -112,27 +112,6 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       }
     })
 
-  register("Convert vertex attributes to position")(new ProjectTransformation(_) {
-    params ++= List(
-      Param("output", "Save as", defaultValue = "position"),
-      Choice("x", "X or latitude", options = project.vertexAttrList[Double]),
-      Choice("y", "Y or longitude", options = project.vertexAttrList[Double]))
-    def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
-    def apply() = {
-      assert(params("output").nonEmpty, "Please set an attribute name.")
-      val paramX = params("x")
-      val paramY = params("y")
-      val pos = {
-        val op = graph_operations.JoinAttributes[Double, Double]()
-        val x = project.vertexAttributes(paramX).runtimeSafeCast[Double]
-        val y = project.vertexAttributes(paramY).runtimeSafeCast[Double]
-        op(op.a, x)(op.b, y).result.attr
-      }
-      project.newVertexAttribute(params("output"), pos, s"($paramX, $paramY)" + help)
-    }
-  })
-
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
@@ -227,18 +206,18 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Lookup region")(new ProjectTransformation(_) {
     params ++= List(
-      Choice("position", "Position", options = project.vertexAttrList[(Double, Double)]),
+      Choice("position", "Position", options = project.vertexAttrList[Vector[Double]]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
       Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
         options = FEOption.boolsDefaultFalse),
       Param("output", "Output name"))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[(Double, Double)].nonEmpty, "No position vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
 
     def apply() = {
       val shapeFilePath = getShapeFilePath(params)
-      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[Vector[Double]]
       val op = graph_operations.LookupRegion(
         shapeFilePath,
         params("attribute"),

@@ -258,7 +258,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       TableBrowserNode("", "age", "column", "Double"),
       TableBrowserNode("", "income", "column", "Double"),
       TableBrowserNode("", "id", "column", "String"),
-      TableBrowserNode("", "location", "column", "(Double, Double)"),
+      TableBrowserNode("", "location", "column", "Vector[Double]"),
       TableBrowserNode("", "name", "column", "String"),
       TableBrowserNode("", "gender", "column", "String"))
     assert(expected.sortBy(_.name) == response.list.sortBy(_.name))

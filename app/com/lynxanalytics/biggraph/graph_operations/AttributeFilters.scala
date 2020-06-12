@@ -167,17 +167,16 @@ object DoubleGE extends FromJson[GE[Double]] { // Backward compatibility
   def fromJson(j: JsValue) = GE((j \ "bound").as[Double])(SerializableType[Double])
 }
 
-object PairFilter extends FromJson[PairFilter[_, _]] {
-  def fromJson(j: JsValue) =
-    PairFilter(
-      TypedJson.read[Filter[_]](j \ "filter1"),
-      TypedJson.read[Filter[_]](j \ "filter2"))
+object VectorFilter extends FromJson[VectorFilter[_]] {
+  def fromJson(j: JsValue) = {
+    val filters = (j \ "filters").as[Seq[JsValue]].map(j => TypedJson.read[Filter[_]](j))
+    VectorFilter(filters: _*)
+  }
 }
-case class PairFilter[T1, T2](filter1: Filter[T1], filter2: Filter[T2]) extends Filter[(T1, T2)] {
-  def matches(value: (T1, T2)) = filter1.matches(value._1) && filter2.matches(value._2)
-  override def toJson = Json.obj(
-    "filter1" -> filter1.toTypedJson,
-    "filter2" -> filter2.toTypedJson)
+case class VectorFilter[T](filters: Filter[T]*) extends Filter[Vector[T]] {
+  def matches(value: Vector[T]) = filters.zip(value).forall { case (f, v) => f.matches(v) }
+  override def toJson =
+    Json.obj("filters" -> play.api.libs.json.JsArray(filters.map(_.toTypedJson)))
 }
 
 object OneOf extends FromJson[OneOf[_]] {
