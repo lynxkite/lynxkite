@@ -42,7 +42,7 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
     assert(tzids.rdd.collect.toSet == Set(
       (0, Vector("America/New_York")),
       (1, Vector("Europe/Budapest")),
-      (2, Vector("Asia/Singapore", "Asia/Kuala_Lumpur")),
+      (2, Vector("Asia/Kuala_Lumpur", "Asia/Singapore")),
       (3, Vector("Australia/Sydney"))))
   }
 }
