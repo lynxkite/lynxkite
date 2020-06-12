@@ -246,32 +246,18 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
   }
 
-  test("Position input and output") {
+  test("Vector input and output") {
     val project = box("Create example graph")
       .box(
         "Derive vertex attribute",
         Map("output" -> "output", "expr" -> "location"))
       .project
-    val attr = project.vertexAttributes("output").runtimeSafeCast[(Double, Double)]
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Vector[Double]]
     assert(attr.rdd.collect.toMap == Map(
-      0 -> (40.71448, -74.00598),
-      1 -> (47.5269674, 19.0323968),
-      2 -> (1.352083, 103.819836),
-      3 -> (-33.8674869, 151.2069902)))
-  }
-
-  test("Position in vector") {
-    val project = box("Create example graph")
-      .box(
-        "Derive vertex attribute",
-        Map("output" -> "output", "expr" -> "Vector(location)"))
-      .project
-    val attr = project.vertexAttributes("output").runtimeSafeCast[Vector[(Double, Double)]]
-    assert(attr.rdd.collect.toMap == Map(
-      0 -> Vector((40.71448, -74.00598)),
-      1 -> Vector((47.5269674, 19.0323968)),
-      2 -> Vector((1.352083, 103.819836)),
-      3 -> Vector((-33.8674869, 151.2069902))))
+      0 -> Vector(40.71448, -74.00598),
+      1 -> Vector(47.5269674, 19.0323968),
+      2 -> Vector(1.352083, 103.819836),
+      3 -> Vector(-33.8674869, 151.2069902)))
   }
 
   test("Nested Tuple2") {

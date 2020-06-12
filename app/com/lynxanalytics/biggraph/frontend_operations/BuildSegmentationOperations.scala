@@ -527,18 +527,18 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Segment by geographical proximity")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Name"),
-      Choice("position", "Position", options = project.vertexAttrList[(Double, Double)]),
+      Choice("position", "Position", options = project.vertexAttrList[Vector[Double]]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"),
       Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
         options = FEOption.boolsDefaultFalse))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[(Double, Double)].nonEmpty, "No position vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
 
     def apply() = {
       import com.lynxanalytics.biggraph.graph_util.Shapefile
       val shapeFilePath = getShapeFilePath(params)
-      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[Vector[Double]]
       val shapefile = Shapefile(shapeFilePath)
       val op = graph_operations.SegmentByGeographicalProximity(
         shapeFilePath,

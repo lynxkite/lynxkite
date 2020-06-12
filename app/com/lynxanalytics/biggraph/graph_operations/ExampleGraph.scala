@@ -11,7 +11,7 @@ object ExampleGraph extends OpFromJson {
     val age = vertexAttribute[Double](vertices)
     val gender = vertexAttribute[String](vertices)
     val income = vertexAttribute[Double](vertices) // Partially defined.
-    val location = vertexAttribute[(Double, Double)](vertices)
+    val location = vertexAttribute[Vector[Double]](vertices)
     val comment = edgeAttribute[String](edges)
     val weight = edgeAttribute[Double](edges)
     val greeting = scalar[String]
@@ -62,10 +62,10 @@ case class ExampleGraph() extends ScalaOperation[NoInput, Output] {
       0L -> 1000.0,
       2L -> 2000.0)
     outputs('location) = Map(
-      0L -> (40.71448, -74.00598), // New York
-      1L -> (47.5269674, 19.0323968), // Budapest
-      2L -> (1.352083, 103.819836), // Singapore
-      3L -> (-33.8674869, 151.2069902)) // Sydney
+      0L -> Vector(40.71448, -74.00598), // New York
+      1L -> Vector(47.5269674, 19.0323968), // Budapest
+      2L -> Vector(1.352083, 103.819836), // Singapore
+      3L -> Vector(-33.8674869, 151.2069902)) // Sydney
     outputs('comment) = Map(
       0L -> "Adam loves Eve",
       1L -> "Eve loves Adam",

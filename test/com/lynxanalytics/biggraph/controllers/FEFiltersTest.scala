@@ -103,18 +103,18 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
   }
 
   test("position test") {
-    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((13, 1)))
-    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((12, 1)))
-    assert(FEFilters.filterFromSpec[(Double, Double)]("[12,34),[1,1.5)").matches((12, 1)))
-    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34],[1,1.5)").matches((34, 1)))
-    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),[1,1.5)").matches((34, 1)))
-    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((12, 1)))
-    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((13, 1)))
-    assert(!FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5)").matches((13, 1.5)))
-    assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5]").matches((13, 1.5)))
+    assert(FEFilters.filterFromSpec[Vector[Double]]("(12,34),[1,1.5)").matches(Vector(13, 1)))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("(12,34),[1,1.5)").matches(Vector(12, 1)))
+    assert(FEFilters.filterFromSpec[Vector[Double]]("[12,34),[1,1.5)").matches(Vector(12, 1)))
+    assert(FEFilters.filterFromSpec[Vector[Double]]("(12,34],[1,1.5)").matches(Vector(34, 1)))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("(12,34),[1,1.5)").matches(Vector(34, 1)))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("(12,34),(1,1.5)").matches(Vector(12, 1)))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("(12,34),(1,1.5)").matches(Vector(13, 1)))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("(12,34),(1,1.5)").matches(Vector(13, 1.5)))
+    assert(FEFilters.filterFromSpec[Vector[Double]]("(12,34),(1,1.5]").matches(Vector(13, 1.5)))
     // Make sure spaces are okay.
     assert(
-      FEFilters.filterFromSpec[(Double, Double)](" ( 12 , 34 ) , ( 1 , 1.5 ] ").matches((13, 1.5)))
+      FEFilters.filterFromSpec[Vector[Double]](" ( 12 , 34 ) , ( 1 , 1.5 ] ").matches(Vector(13, 1.5)))
   }
 
   test("syntax error") {

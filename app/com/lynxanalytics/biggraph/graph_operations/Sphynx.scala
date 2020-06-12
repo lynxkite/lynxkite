@@ -33,9 +33,7 @@ object EmbedVectors {
   class Output(dimensions: Int)(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val embedding =
-      if (dimensions == 2) vertexAttribute[(Double, Double)](inputs.vs.entity)
-      else vertexAttribute[Vector[Double]](inputs.vs.entity)
+    val embedding = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 }
 trait EmbedVectors extends TypedMetaGraphOp[EmbedVectors.Input, EmbedVectors.Output] {

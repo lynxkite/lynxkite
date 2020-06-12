@@ -40,10 +40,6 @@ object DynamicValue {
         double = Some(value.asInstanceOf[Int].toDouble), string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
-    else if (typeOf[T] =:= typeOf[(Double, Double)]) value => {
-      val tuple = value.asInstanceOf[(Double, Double)]
-      DynamicValue(string = value.toString, x = Some(tuple._1), y = Some(tuple._2))
-    }
     else if (typeOf[T] <:< typeOf[Seq[_]]) {
       seqConverter(TypeTagUtil.typeArgs(typeTag[T]).head).asInstanceOf[T => DynamicValue]
     } else if (typeOf[T] <:< typeOf[Set[_]]) {
