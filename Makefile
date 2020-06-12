@@ -30,11 +30,11 @@ $(pip): python_requirements.txt
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-prep-done
-	./tools/install_spark.sh && ./.test_backend.sh -s && ./.test_backend.sh && touch $@
+	./tools/install_spark.sh && ./test_backend.sh -s && ./test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
-	./.test_frontend.sh && touch $@
+	./test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done $(pip)
 	tools/with_lk.sh python/remote_api/test.sh && touch $@
 .build/automation-python-test-passed: $(shell $(find) python/remote_api python/automation) \
