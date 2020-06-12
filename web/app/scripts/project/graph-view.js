@@ -1301,7 +1301,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
         const pos = v.data.attrs[positionAttr];
         v.x = pos.vector[0] || 0;
-        v.y = -pos.vector[0] || 0; // Flip Y axis to look more mathematical.
+        v.y = -pos.vector[1] || 0; // Flip Y axis to look more mathematical.
         v.frozen += 2; // Will be unfrozen once after initialization.
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {

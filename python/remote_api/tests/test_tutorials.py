@@ -134,22 +134,22 @@ class TestTutorial3(TutorialTestCase):
                         ['49', '3484'],
                         ['49', '3494']]
 
-  def test_convert_vertex_attributes_to_position_2(self):
+  def test_bundle_vertex_attributes_into_a_vector_2(self):
     scalars = self.get_graph_attributes(
-        'Convert-vertex-attributes-to-position_2',
+        'Bundle-vertex-attributes-into-a-Vector_2',
         'graph')
     self.assertEqual(scalars['!vertex_count'].double, 8107)
 
-  def test_convert_vertex_attributes_to_position_1(self):
+  def test_bundle_vertex_attributes_into_a_vector_1(self):
     scalars = self.get_graph_attributes(
-        'Convert-vertex-attributes-to-position_1',
+        'Bundle-vertex-attributes-into-a-Vector_1',
         'graph')
     self.assertEqual(scalars['!vertex_count'].double, 8107)
     self.assertEqual(scalars['!edge_count'].double, 67202)
 
-  def test_convert_vertex_attributes_to_position_3(self):
+  def test_bundle_vertex_attributes_into_a_vector_3(self):
     scalars = self.get_graph_attributes(
-        'Convert-vertex-attributes-to-position_3',
+        'Bundle-vertex-attributes-into-a-Vector_3',
         'graph')
     self.assertEqual(scalars['!vertex_count'].double, 262)
     self.assertEqual(scalars['!edge_count'].double, 7743)

@@ -32,13 +32,12 @@
       boxId: Import-CSV_2
       id: table
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_1
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  operationId: Bundle vertex attributes into a Vector
   parameters:
     apply_to_graph: ''
     output: position
-    x: lat
-    y: longitude
+    elements: lat,longitude
   x: 648.0189556961745
   y: 559.8912893305912
   inputs:
@@ -56,7 +55,7 @@
   y: 560.3482738013375
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_1
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
       id: graph
   parametricParameters: {}
 - id: SQL1_1
@@ -69,11 +68,12 @@
       boxId: Import-CSV_1
       id: table
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_2
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_2
+  operationId: Bundle vertex attributes into a Vector
   parameters:
-    x: lat
-    y: longitude
+    apply_to_graph: ''
+    output: position
+    elements: lat,longitude
   x: 719.5
   y: 431.8995334147175
   inputs:
@@ -101,7 +101,7 @@
   y: 432.316665649414
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_2
+      boxId: Bundle-vertex-attributes-into-a-Vector_2
       id: graph
   parametricParameters: {}
 - id: Merge-parallel-edges_1
@@ -118,7 +118,7 @@
   y: 742.2341643484789
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_1
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
       id: graph
   parametricParameters: {}
 - id: Filter-by-attributes_1
@@ -154,13 +154,12 @@
       boxId: Compute-degree_1
       id: graph
   parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_3
-  operationId: Convert vertex attributes to position
+- id: Bundle-vertex-attributes-into-a-Vector_3
+  operationId: Bundle vertex attributes into a Vector
   parameters:
     apply_to_graph: ''
     output: position
-    x: lat
-    y: longitude
+    elements: lat,longitude
   x: 1169.680831214823
   y: 479.13614417532506
   inputs:
@@ -178,7 +177,7 @@
   y: 363.57558945252407
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_3
+      boxId: Bundle-vertex-attributes-into-a-Vector_3
       id: graph
   parametricParameters: {}
 - id: Import-CSV_1
@@ -246,7 +245,7 @@
   y: 603.0572331789774
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_3
+      boxId: Bundle-vertex-attributes-into-a-Vector_3
       id: graph
   parametricParameters: {}
 - id: Find-modular-clustering_1
