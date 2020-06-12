@@ -1300,14 +1300,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       v.degree = 0;
       if (positionAttr !== undefined && v.data.attrs[positionAttr].defined) {
         const pos = v.data.attrs[positionAttr];
-        v.x = pos.x;
-        v.y = -pos.y; // Flip Y axis to look more mathematical.
+        v.x = pos.vector[0] || 0;
+        v.y = -pos.vector[0] || 0; // Flip Y axis to look more mathematical.
         v.frozen += 2; // Will be unfrozen once after initialization.
       }
       if (geoAttr !== undefined && v.data.attrs[geoAttr].defined) {
         const pos = v.data.attrs[geoAttr];
-        v.x = map.lon2x(pos.y);
-        v.y = map.lat2y(pos.x);
+        v.x = map.lon2x(pos.vector[1] || 0);
+        v.y = map.lat2y(pos.vector[0] || 0);
         v.frozen += 2; // Will be unfrozen once after initialization.
       }
       v.forceOX = v.x;
