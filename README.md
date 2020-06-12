@@ -1,242 +1,96 @@
-LynxKite
-========
+# LynxKite
 
-## Global setup steps
+[LynxKite](https://lynxkite.com/) is a complete graph data science platform for very large graphs
+and other datasets.
+It seamlessly combines the benefits of a friendly graphical interface and a powerful Python API.
 
-Install `nvm` (https://github.com/creationix/nvm). Then:
+- Hundreds of scalable **graph operations**, including graph metrics like PageRank, embeddedness,
+  and centrality, machine learning methods including
+  [GCNs](https://tkipf.github.io/graph-convolutional-networks/), graph segmentations like modular
+  clustering, and various transformation tools like aggregations on neighborhoods.
+- The two main data types are **graphs and relational tables**. Switch back and forth between the
+  two as needed to describe complex logical flows. Run SQL on both.
+- A **friendly web UI** for building powerful pipelines of operation boxes. Define your own custom
+  boxes to structure your logic.
+- Tight integration with **Python** lets you implement custom transformations or create whole
+  workflows through a simple API.
+- Integrates with the **Hadoop ecosystem**. Import and export from CSV, JSON, Parquet, ORC, JDBC,
+  Hive, or Neo4j.
+- [Fully documented.](https://lynxkite.com/docs/latest)
+- Proven in production on large clusters and real datasets.
+- Fully configurable **graph visualizations** and **statistical plots**. Experimental 3D and
+  ray-traced graph renderings.
 
-    nvm install 6.10
-    nvm alias default 6.10
-    npm install -g gulp
-    # Install Yarn.
-    sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
-    echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-    sudo apt-get update && sudo apt-get install yarn
-
-
-Install `Java SDK` and `sbt` (Scala Build Tool):
-
-    echo "deb http://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
-    sudo apt-get update
-    sudo apt-get install openjdk-8-jdk
-    sudo apt-get install sbt
-
-(Actually sbt installation would automatically pull a JDK, but in the current
-Ubuntu 16.04 LTS for some reason it installs the not-even-released-yet JDK 9. No good.)
-
-Install Spark:
-
-    tools/install_spark.sh
-
-For various tools you will require Python and AWS CLI. To install dependencies please run:
-
-    sudo -H pip3 install -r python_requirements.txt
-
-Before running the above command you may also need to install the following packages:
-
-    sudo apt-get install libmysqlclient-dev
-    sudo apt-get install python3.x-dev --upgrade 
-    
-and make sure setuptools is upgraded to the latest version (which includes compatible package `find_namespace_packages`) 
-    
-    sudo pip3 install setuptools --upgrade
+LynxKite is under active development. Check out our [Roadmap](https://lynxkite.com/roadmap) to see
+what we have planned for future releases.
 
 
-Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
-to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
-LynxKite startup, add a line to `/etc/avahi/hosts`:
+## Getting started
 
-    0.0.0.0 any.local
+Quick try:
 
-Install Docker using https://get.docker.com/.
+```
+docker run --rm -p2200:2200 lynxkite/lynxkite
+```
 
-Install Inkscape:
+Setup with persistent data:
 
-    sudo apt-get install inkscape
+```
+docker run \
+  -p 2200:2200 \
+  -v ~/lynxkite/meta:/metadata -v ~/lynxkite/data:/data \
+  -e KITE_MASTER_MEMORY_MB=1024 \
+  --name lynxkite lynxkite/lynxkite
+```
 
-Install Puppeteer 0.13 or newer.
 
-    npm install -g puppeteer
-    # Make sure everyone can execute Chromium.
-    sudo chmod -R o=u /usr/lib/node_modules/puppeteer/.local-chromium/
-    sudo chmod -R o-w /usr/lib/node_modules/puppeteer/.local-chromium/
+## Contributing
 
-Install LaTex:
+If you find any bugs, have any questions, feature requests or comments, please
+[file an issue](https://github.com/lynxkite/lynxkite/issues/new)
+or email us at lynxkite@lynxkite.com.
 
-    sudo apt-get install texlive-latex-recommended
-    sudo apt-get install texlive-fonts-recommended
-    sudo apt-get install texlive-formats-extra
+To build LynxKite you will need:
 
-Install `hub`, the command line interface for GitHub.
-Download from https://github.com/github/hub/releases and copy the binary to `/usr/local/bin`.
+- [Node.js](https://nodejs.org/) 10+ with [Yarn](http://yarnpkg.org/)
+- Java 8 and [SBT](https://www.scala-sbt.org/)
+- Python 3.7+ with [Conda](https://docs.conda.io/en/latest/miniconda.html)
+- Go 1.14+
 
-To be able to create signed CloudFront URLs for releases,
-obtain `pk-APKAJBDZZHY2ZM7ELY2A.der` and put it in the `$HOME/.ssh` directory.
-You can find this file in the secrets repository:
-https://github.com/biggraph/secrets
-See `README.md` file in that repository on usage.
-
-For the single-node server you need to install Go:
-
-    GO_VERSION="1.13.1"
-    GO_TAR=go$GO_VERSION.linux-amd64.tar.gz
-    wget -nc https://dl.google.com/go/$GO_TAR
-    tar -C /usr/local -xzf $GO_TAR
-
-Then add it to your path by adding `PATH="/usr/local/go/bin:$PATH"` to `.bashrc`.
-
-## Per repository setup
-
-Set up `git` pre-commit hooks:
+Before the first build:
 
     tools/git/setup.sh
-
-Set up web build tools:
-
-    cd web
-    yarn
-
-## Configure .kiterc
-
+    tools/install_spark.sh
+    sphynx/python/install-dependencies.sh
     cp conf/kiterc_template ~/.kiterc
-    vi ~/.kiterc # Change defaults if necessary.
 
-## Alternative way to setup LynxKite using a docker container
+We use `make` for building the whole project.
 
-See [SETUP_DOCKER.md](SETUP_DOCKER.md).
-
-## Run LynxKite
-
-To build and run LynxKite invoke the `run.sh` shell script.
-
-## Backend development
-
-Execute `run.sh`. This will build the frontend and the backend if necessary and start Lynxkite
- after.
-
-You can run `make backend-test` to run the backend test, or you can start `sbt` and run
-`test-only *SomethingTest` to run just one test.
-
-## Frontend development
-
-When working on the frontend you can avoid running `run.sh` all the time. Start LynxKite with
-`run.sh`, then run `gulp.sh` to start a frontend development proxy.  If you access LynxKite through
- the proxy, any changes to frontend files will perform the necessary frontend build steps and reload
- the page in the browser.
-
-Frontend tests (Protractor tests) can be run with `make frontend-test`. This builds and starts
-LynxKite, runs the Protractor tests, then shuts down LynxKite. To run a single test the test
-code has to be modified. After the one or two `function` parameters add a `'solo'` parameter to mark
- the test for solo running. (Multiple tests can be marked with `'solo'` at the same time.) Run
- `VERBOSE=true gulp test` to enable verbose mode, which prints the tests names as it goes. Run
- `gulp test:serve` to run the tests against the development proxy. This allows for quick iteration
- against tests.
-
-By default LynxKite runs on port 2200 and `gulp test` and `gulp serve` look for it on this port. If
-you run LynxKite on a different port (say 1234), run `PORT=1234 gulp test` and `PORT=1234 gulp
-test`.
-
-The Protractor tests pop up an actual browser. If you want to avoid this, use `xvfb-run gulp test`.
-This will run the frontend tests in a virtual framebuffer. (In Ubuntu `xfvb-run` is available in
-package `xvfb`.)
+    make
+    stage/bin/lynxkite interactive
 
 
-## Ecosystem development
+## Tests
 
-You can run `make ecosystem-test` to run all tests, or run
-`{chronomaster,python/remote_api}/test.sh *something*` to run tests from just one file.
+We have test suits for the different parts of the system:
+
+- **Backend tests** are unit tests for the Scala code. They can also be executed with Sphynx as the
+  backend. If you run `make backend-test` it will do both. Or you can start `sbt` and run
+  `test-only *SomethingTest` to run just one test. Run `./test_backend.sh -si` to start `sbt` with
+  Sphynx as the backend.
+
+- **Frontend tests** use [Protractor](https://www.protractortest.org/) to simulate a user's actions
+  on the UI. `make frontend-test` will build everything, start a temporary LynxKite instance and run
+  the tests against that. Use `xvfb-run` for headless execution. If you already have a running
+  LynxKite instance and you don't mind erasing all data from it, run `npx gulp test` in the `web`
+  directory. You can start up a dev proxy that watches the frontend source code for changes with
+  `npx gulp serve`. Run the test suite against the dev proxy with `npx gulp test:serve`.
+
+- **Python API tests** are started with `make remote_api-test`. If you already have a running
+  LynxKite that is okay to test on, run `python/remote_api/test.sh`. This script can also run a
+  subset of the test suite: `python/remote_api/test.sh -p *something*`
 
 
-## Big Data tests
+## License
 
-If you want to measure the effect of a code change on big data, run `make big-data-test`
-and create a new PR containing the new test results. These results are in `ecosystem/tests/results`.
-There are four different data sets used by the performance tests labeled `small`, `medium`, `large` and
-`xlarge`. By default big data tests use the `medium` sized data set.
-
-The tests run on an EMR cluster, launched by `test_big_data.py`. The command
-
-        make big-data-test
-
-builds LynxKite and Ecosystem, and by default uses this new build to run the tests. After building
-LynxKite it calls `test_big_data.py`. You can also call `test_big_data.py` manually, but before doing this,
-don't forget to build your currently checked out branch (`make ecosystem` or `ecosystem/native/build.sh`),
-or use a release. In the later case you need to update your `biggraph_releases` repo.
-
-## Test results on Jenkins
-
-To see the details of the automatic tests, click on `Details` link on GitHub in the box that is
-showing the tests.
-
-Jenkins runs on the local network in the Budapest office. To access these results from
-outside of the office, you can use the
-[SSH gateway](https://github.com/biggraph/deployments/tree/master/budapest-office) and
-[FoxyProxy](https://github.com/biggraph/biggraph/wiki/Accessing-our-instances-in-public-clouds).
-
-### Jenkins cleanup
-
-It can happen that Jenkins runs out of _inodes_, and it causes
-"No space left on device" error.  To resolve this issue you can do the following.
-
- 1. Login to Jenkins: `ssh jenkins@192.168.0.37`. (Password is in the secrets repo.)
-
- 2. Check available inodes: `df -i`
-
- 3. Start docker shell: `docker exec -u root -it lynx-jenkins bash`
-
- 4. Delete content of `/tmp` in the container: `rm -Rf /tmp/*` If there are a huge number of files in `/tmp` this
-command may fail wih `[Argument list too long]`. In that case the solution is to delete (`rm -r /tmp`) and recreate (`mkdir /tmp`) the `/tmp` folder
-with proper (`chmod 1777 /tmp`) permissions.
-
-## Run executors on different JVM-s.
-
-Sometimes you want to use a non-local setup on your local machine: e.g., three executors on
-three different JVMs, each separate from the driver JVM. This is a better approximation
-of a production environment, while still comparatively easy to work with.
-Here's how I managed to set it up.
-
- 1. Start spark master:
-
-        ~/spark-<version>/sbin/start-master.sh
-
- 2. Start 3 executors:
-
-        SPARK_WORKER_INSTANCES=3 ~/spark-<version>/sbin/start-slave.sh spark://$(hostname):7077
-
-    (Using "localhost" instead of "$(hostname)" did not work for me)
-
- 3. In my .kiterc:
-
-        export SPARK_MASTER=spark://$(hostname):7077
-        export EXECUTOR_MEMORY=6g
-        export NUM_EXECUTORS=3
-        export NUM_CORES_PER_EXECUTOR=2
-
-## Release guide
-
-Before doing a release, please run the following tests:
-```
-tools/emr_based_test.sh frontend
-make big-data-test
-```
-If you are changing Spark settings or Spark version, then also this one:
-```
-test_spark.sh
-```
-After this, please create a PR that updates the generated big data test result file.
-(`make big-data-test` is the same as saying `Big Data Test please` in a PR, but this one can reuse
-the cluster started in the previous line.)
-
-## What is this `yarn.lock`?
-
-From https://yarnpkg.com/en/docs/yarn-lock:
-
-> All `yarn.lock` files should be checked into source control (e.g. git or mercurial). This allows
-Yarn to install the same exact dependency tree across all machines, whether it be your coworker’s
-laptop or a CI server.
-
-```
-error Your lockfile needs to be updated, but yarn was run with `--frozen-lockfile`.
-```
-
-If you get this error, just run `yarn` in the `web` directory.
+- [GNU Affero General Public License v3.0](https://github.com/lynxkite/lynxkite/blob/master/LICENSE)
