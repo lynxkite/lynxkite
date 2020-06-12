@@ -152,12 +152,6 @@ func (e *VertexSet) estimatedMemUsage() int {
 	return i
 }
 
-func (e *DoubleTuple2Attribute) estimatedMemUsage() int {
-	i := len(e.Defined) * boolCost
-	i += len(e.Values) * 2 * float64Cost
-	return i
-}
-
 func (e *DoubleVectorAttribute) estimatedMemUsage() int {
 	if len(e.Defined) == 0 {
 		return 0

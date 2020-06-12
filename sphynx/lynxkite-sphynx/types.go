@@ -89,15 +89,6 @@ type StringAttribute struct {
 	Defined []bool
 }
 
-type DoubleTuple2AttributeValue struct {
-	X float64 `parquet:"name=x, type=DOUBLE"`
-	Y float64 `parquet:"name=y, type=DOUBLE"`
-}
-type DoubleTuple2Attribute struct {
-	Values  []DoubleTuple2AttributeValue
-	Defined []bool
-}
-
 type DoubleVectorAttributeValue []float64
 type DoubleVectorAttribute struct {
 	Values  []DoubleVectorAttributeValue

@@ -33,11 +33,12 @@ func init() {
 				Defined: []bool{true, false, true, false},
 			}
 			ea.output("income", income)
-			location := &DoubleTuple2Attribute{
-				Values: []DoubleTuple2AttributeValue{{40.71448, -74.00598},
-					{47.5269674, 19.0323968},
-					{1.352083, 103.819836},
-					{-33.8674869, 151.2069902}},
+			location := &DoubleVectorAttribute{
+				Values: []DoubleVectorAttributeValue{
+					[]float64{40.71448, -74.00598},
+					[]float64{47.5269674, 19.0323968},
+					[]float64{1.352083, 103.819836},
+					[]float64{-33.8674869, 151.2069902}},
 				Defined: []bool{true, true, true, true},
 			}
 			ea.output("location", location)

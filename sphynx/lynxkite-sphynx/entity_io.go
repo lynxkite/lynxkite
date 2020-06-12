@@ -42,9 +42,6 @@ func (_ *StringAttribute) typeName() string {
 func (_ *LongAttribute) typeName() string {
 	return "LongAttribute"
 }
-func (_ *DoubleTuple2Attribute) typeName() string {
-	return "DoubleTuple2Attribute"
-}
 func (_ *DoubleVectorAttribute) typeName() string {
 	return "DoubleVectorAttribute"
 }
@@ -375,50 +372,6 @@ type UnorderedDoubleAttributeRow struct {
 
 func (_ *DoubleAttribute) unorderedRow() interface{} {
 	return new(UnorderedDoubleAttributeRow)
-}
-
-func (a *DoubleTuple2Attribute) readFromOrdered(rec array.Record) error {
-	col := rec.Column(0).(*array.List)
-	defer col.Release()
-	a.Values = make([]DoubleTuple2AttributeValue, col.Len())
-	a.Defined = make([]bool, col.Len())
-	offsets := col.Offsets()
-	values := col.ListValues().(*array.Float64)
-	defer values.Release()
-	for i := 0; i < col.Len(); i++ {
-		a.Defined[i] = col.IsValid(i)
-		if a.Defined[i] {
-			start := int(offsets[i])
-			a.Values[i].X = values.Value(start)
-			a.Values[i].Y = values.Value(start + 1)
-		}
-	}
-	return nil
-}
-func (a *DoubleTuple2Attribute) toOrderedRows() array.Record {
-	b := array.NewListBuilder(arrowAllocator, arrow.PrimitiveTypes.Float64)
-	defer b.Release()
-	vb := b.ValueBuilder().(*array.Float64Builder)
-	defer vb.Release()
-	for i, v := range a.Values {
-		b.Append(a.Defined[i])
-		if a.Defined[i] {
-			vb.Append(v.X)
-			vb.Append(v.Y)
-		}
-	}
-	values := b.NewListArray()
-	defer values.Release()
-	return array.NewRecord(doubleVectorAttributeSchema, []array.Interface{values}, -1)
-}
-
-type UnorderedDoubleTuple2AttributeRow struct {
-	Id    int64                      `parquet:"name=id, type=INT64"`
-	Value DoubleTuple2AttributeValue `parquet:"name=value"`
-}
-
-func (_ *DoubleTuple2Attribute) unorderedRow() interface{} {
-	return new(UnorderedDoubleTuple2AttributeRow)
 }
 
 type UnorderedDoubleVectorAttributeRow struct {

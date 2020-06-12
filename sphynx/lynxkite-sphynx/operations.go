@@ -63,10 +63,6 @@ func (ea *EntityAccessor) getLongAttribute(name string) *LongAttribute {
 	return ea.inputs[name].(*LongAttribute)
 }
 
-func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
-	return ea.inputs[name].(*DoubleTuple2Attribute)
-}
-
 func (ea *EntityAccessor) getDoubleVectorAttribute(name string) *DoubleVectorAttribute {
 	return ea.inputs[name].(*DoubleVectorAttribute)
 }
