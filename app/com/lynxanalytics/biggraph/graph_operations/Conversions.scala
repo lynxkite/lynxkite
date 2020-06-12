@@ -113,6 +113,8 @@ case class VertexAttributeToString[T]()
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     if (inputs.attr.data.is[Double]) {
+      // Double.toString always adds a ".0" at the end. ("1981.0")
+      // We avoid that using DecimalFormat.
       val df = new java.text.DecimalFormat(
         "0", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH))
       df.setMaximumFractionDigits(10)
