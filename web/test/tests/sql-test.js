@@ -13,12 +13,12 @@ module.exports = function(fw) {
       const table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
-        ['Double', 'String', 'String', 'Double', '(Double, Double)', 'String'],
+        ['Double', 'String', 'String', 'Double', 'Array[Double]', 'String'],
         [
-          ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
-          ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
-          ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],
-          ['2', 'Male', '3', 'null', '(-33.8674869,151.2069902)', 'Isolated Joe'],
+          ['20.3', 'Male', '0', '1000', 'WrappedArray(40.71448, -74.00598)', 'Adam'],
+          ['18.2', 'Female', '1', 'null', 'WrappedArray(47.5269674, 19.0323968)', 'Eve'],
+          ['50.3', 'Male', '2', '2000', 'WrappedArray(1.352083, 103.819836)', 'Bob'],
+          ['2', 'Male', '3', 'null', 'WrappedArray(-33.8674869, 151.2069902)', 'Isolated Joe'],
         ]);
     }, function() {});
 
