@@ -223,8 +223,6 @@ include::convert-vertex-attribute-to-double.asciidoc[]
 
 include::convert-vertex-attribute-to-string.asciidoc[]
 
-include::convert-vertex-attributes-to-position.asciidoc[]
-
 include::copy-edge-attribute.asciidoc[]
 
 include::copy-edges-to-base-graph.asciidoc[]
