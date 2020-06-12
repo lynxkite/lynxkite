@@ -35,7 +35,7 @@ class TypeTagToFormatTest extends FunSuite {
   }
 
   test("TypeTag -> json conversions (DynamicValue)") {
-    val dv = DynamicValue("name", true, Some(1.2), Some(1.3), None)
+    val dv = DynamicValue("name", true, None, List(1.2, 1.3))
     testTag(dv)
   }
 

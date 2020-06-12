@@ -367,8 +367,8 @@ class SQLTest extends OperationsTestBase {
 
   test("user defined functions - geodistance") {
     val t = box("Create example graph")
-      .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location._1"))
-      .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location._2"))
+      .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location(0)"))
+      .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location(1)"))
       .box("SQL1", Map("sql" -> "select geodistance(src_lat, src_lon, dst_lat, dst_lon) from edges")).table
     assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
       Seq(7023993.307994274), // New York / Budapest ~7k kilometers.
