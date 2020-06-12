@@ -26,8 +26,6 @@ func createEntity(typeName string) (Entity, error) {
 		return &DoubleAttribute{}, nil
 	case "StringAttribute":
 		return &StringAttribute{}, nil
-	case "DoubleTuple2Attribute":
-		return &DoubleTuple2Attribute{}, nil
 	case "DoubleVectorAttribute":
 		return &DoubleVectorAttribute{}, nil
 	case "LongAttribute":

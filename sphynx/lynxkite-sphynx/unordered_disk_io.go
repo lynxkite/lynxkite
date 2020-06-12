@@ -115,8 +115,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	if in.Type == "Attribute" {
 		attributeType := in.AttributeType[len("TypeTag[") : len(in.AttributeType)-1]
 		switch attributeType {
-		case "(Double, Double)":
-			in.Type = "DoubleTuple2Attribute"
 		case "Vector[Double]":
 			in.Type = "DoubleVectorAttribute"
 		case "Array[com.lynxanalytics.biggraph.graph_api.ID]":
