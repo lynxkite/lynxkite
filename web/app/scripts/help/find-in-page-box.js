@@ -6,7 +6,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
     scope: {},
     templateUrl: 'scripts/help/find-in-page-box.html',
     link: function(scope) {
-      /* globals document, $ */
+      /* globals $ */
       // The position of the found result which is focused.
       // (Orange color, scrolled into view.)
       let focusedResultPos = 0;
