@@ -115,18 +115,12 @@ angular.module('biggraph')
         for (let i = 0; i < this.boxes.length; ++i) {
           const dst = this.boxes[i];
           const inputs = dst.instance.inputs;
-          for (let inputName in inputs) {
-            if (inputs.hasOwnProperty(inputName)) {
-              const input = inputs[inputName];
-              const src = this.boxMap[input.boxId];
-              if (src) {
-                const srcPlug = this._lookupArrowEndpoint(
-                  src, 'outputs', input.id);
-                const dstPlug = this._lookupArrowEndpoint(
-                  dst, 'inputs', inputName);
-                this.arrows.push(this._createArrow(
-                  srcPlug, dstPlug));
-              }
+          for (const [inputName, input] of Object.entries(inputs)) {
+            const src = this.boxMap[input.boxId];
+            if (src) {
+              const srcPlug = this._lookupArrowEndpoint(src, 'outputs', input.id);
+              const dstPlug = this._lookupArrowEndpoint(dst, 'inputs', inputName);
+              this.arrows.push(this._createArrow(srcPlug, dstPlug));
             }
           }
         }
@@ -389,14 +383,10 @@ angular.module('biggraph')
         for (let i = 0; i < boxes.length; ++i) {
           const oldBox = boxes[i];
           const newBox = mapping[oldBox.id];
-          for (let key in oldBox.inputs) {
-            if (!oldBox.inputs.hasOwnProperty(key)) {
-              break;
-            }
-            const oldInputId = oldBox.inputs[key].boxId;
-            if (mapping.hasOwnProperty(oldInputId)) {
-              const newInput = mapping[oldInputId];
-              newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
+          for (const [key, oldInput] of Object.entries(oldBox.inputs)) {
+            const newInput = mapping[oldInput.boxId];
+            if (newInput) {
+              newBox.inputs[key] = { boxId: newInput.id, id: oldInput.id };
             }
           }
         }
