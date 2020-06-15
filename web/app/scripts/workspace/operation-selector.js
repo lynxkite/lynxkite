@@ -106,12 +106,11 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
             threshold: 0.4,
             location: 0,
             distance: 100,
-            maxPatternLength: 32,
             minMatchCharLength: 1,
             keys: [ 'operationId' ]
           };
           const fuse = new Fuse(boxes, options);
-          return fuse.search(opFilter);
+          return fuse.search(opFilter).map(r => r.item);
         } else {
           return boxes;
         }
