@@ -1,0 +1,27 @@
+PREP
+====
+1. Build docker images: ../build.sh and then image/build.sh
+From now on HOST is the name of the machine the demo will be running on.
+2. Deploy the image to the demo host somehow (docker load ...)
+3. Copy run.sh, dags to target host
+3. Edit dags/common.py, set WORKSPACE_START_DATE around 10 minutes in the past
+(According to UTC timezone!)
+4. ./run.sh to start the container.
+5. Check that LK comes up on HOST:2200/
+6. Head to Airflow UI (http://HOST:8080/), enable input_generation DAG
+7. Wait for at least one successful, complete DAG run, then enable centrality DAG
+
+DEMO
+====
+1. Head over to jupyter UI (http://HOST:9596), start a terminal. Show how input
+files show up under /tmp/lake:
+ls -l /tmp/lake/busdata/schedules/*/*
+ls -l /tmp/lake/busdata/stop/*/*
+Explain roughly what those files are.
+2. Show the result in a notebook: how centrality and pagerank data shows up in
+mysql
+3. Go over centrality.py, explain the structure
+4. Show how this looks on Airflow UI
+5. Show how this looks on LK UI
+6. Snapshot a point and do some LK magic on it
+7. Show generate code and explain that it could be added to centrality.py easily
