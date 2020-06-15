@@ -6,7 +6,6 @@ import org.apache.spark.sql.types
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 object AttributesToTable extends OpFromJson {

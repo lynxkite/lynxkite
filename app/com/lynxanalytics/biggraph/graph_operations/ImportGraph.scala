@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
@@ -124,16 +123,7 @@ trait ImportCommon {
   protected def numberedLines(
     rc: RuntimeContext,
     input: RowInput): UniqueSortedRDD[ID, Seq[String]] = {
-    val numbered = input.lines(rc).copyWithAncestorsCached
-    val maxLines = Limitations.maxImportedLines
-    if (maxLines >= 0) {
-      val numLines = numbered.count
-      if (numLines > maxLines) {
-        throw new AssertionError(
-          s"Can't import $numLines lines as your licence only allows $maxLines.")
-      }
-    }
-    numbered
+    input.lines(rc).copyWithAncestorsCached
   }
 
   protected def readColumns(
