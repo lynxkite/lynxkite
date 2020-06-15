@@ -16,7 +16,7 @@ object CreateGraphInPython extends OpFromJson {
     private val names = fields.map(f => f.parent + "." + f.name)
     val edges = edgeBundle(vertices, vertices)
     private val parents = Map[String, VertexSet]("vs" -> vertices.entity, "es" -> edges.idSet)
-    val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
+    val (scalarFields, attrFields) = fields.partition(_.parent == "graph_attributes")
     val attrs = attrFields.map { f =>
       vertexAttribute(parents(f.parent), f.fullName)(f.tpe.typeTag)
     }

@@ -435,7 +435,7 @@ object PythonUtilities {
     }
   }
 
-  val api = Seq("vs", "es", "scalars")
+  val api = Seq("vs", "es", "graph_attributes")
 
   // Parses the output list into Fields.
   def outputFields(outputs: Seq[String]): Seq[Field] = {
@@ -462,7 +462,7 @@ object PythonUtilities {
     }.toMap ++ project.edgeAttributes.map {
       case (name, attr) => s"es.$name" -> Field("es", name, SerializableType(attr.typeTag))
     }.toMap ++ project.scalars.map {
-      case (name, s) => s"scalars.$name" -> Field("scalars", name, SerializableType(s.typeTag))
+      case (name, s) => s"graph_attributes.$name" -> Field("graph_attributes", name, SerializableType(s.typeTag))
     }.toMap + {
       "es.src" -> Field("es", "src", SerializableType.long)
     } + {
