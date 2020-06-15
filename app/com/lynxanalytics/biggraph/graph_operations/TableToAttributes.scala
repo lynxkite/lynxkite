@@ -6,7 +6,6 @@ import org.apache.spark.sql.types
 import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 object TableToAttributes extends OpFromJson {
@@ -26,13 +25,6 @@ object TableToAttributes extends OpFromJson {
   private def toNumberedLines(
     dataFrame: spark.sql.DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val numRows = dataFrame.count()
-    val maxRows = Limitations.maxImportedLines
-    if (maxRows >= 0) {
-      if (numRows > maxRows) {
-        throw new AssertionError(
-          s"Can't import $numRows lines as your licence only allows $maxRows.")
-      }
-    }
     val seqRDD = SQLHelper.toSeqRDD(dataFrame)
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._

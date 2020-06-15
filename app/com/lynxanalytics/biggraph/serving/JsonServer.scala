@@ -14,7 +14,6 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
-import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
@@ -157,17 +156,6 @@ case class GlobalSettings(
     version: String,
     graphrayEnabled: Boolean,
     defaultUIStatus: UIStatus)
-
-object AssertLicenseNotExpired {
-  def apply() = {
-    if (Limitations.isExpired()) {
-      val message = "Your licence has expired, please contact Lynx Analytics for a new licence."
-      println(message)
-      log.error(message)
-      throw new RuntimeException(message)
-    }
-  }
-}
 
 object AssertNotRunningAndRegisterRunning {
   private def getPidFile(pidFilePath: String): File = {
@@ -353,7 +341,6 @@ object ProductionJsonServer extends JsonServer {
   import FrontendJson._
   import WorkspaceJsonFormatters._
 
-  AssertLicenseNotExpired()
   AssertNotRunningAndRegisterRunning()
 
   // File upload.
