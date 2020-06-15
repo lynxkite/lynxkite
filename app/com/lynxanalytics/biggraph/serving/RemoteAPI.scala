@@ -59,6 +59,7 @@ object RemoteAPIProtocol {
 
 object RemoteAPIServer extends JsonServer {
   import RemoteAPIProtocol._
+  val userController = ProductionJsonServer.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
