@@ -49,10 +49,10 @@ boxes:
   operationId: Weighted aggregate from segmentation
   parameters:
     aggregate_prediction: by_min_weight
-    apply_to_graph: .connected_components
     prefix: community
     weight: predict_this_attribute_std_deviation
-  parametricParameters: {}
+  parametricParameters:
+    apply_to_graph: .$Segmentation
   x: 300
   y: 450
 - id: Filter-by-attributes_1
@@ -61,9 +61,9 @@ boxes:
       boxId: Aggregate-to-segmentation_1
       id: graph
   operationId: Filter by attributes
-  parameters:
-    apply_to_graph: .connected_components
+  parameters: {}
   parametricParameters:
+    apply_to_graph: .$Segmentation
     filterva_predict_this_attribute_count: '>=${`Minimal samples`}'
   x: 550
   y: 300
@@ -97,9 +97,9 @@ boxes:
       id: graph
   operationId: Derive vertex attribute
   parameters:
-    apply_to_graph: .connected_components
     output: prediction
   parametricParameters:
+    apply_to_graph: .$Segmentation
     expr: predict_this_attribute_$Metric
   x: 50
   y: 450
@@ -121,9 +121,9 @@ boxes:
       boxId: Rename-vertex-attributes_1
       id: graph
   operationId: Discard vertex attributes
-  parameters:
-    apply_to_graph: .connected_components
+  parameters: {}
   parametricParameters:
+    apply_to_graph: .$Segmentation
     name: >-
       predict_this_attribute_${Metric},predict_this_attribute_count,predict_this_attribute_std_deviation,prediction
   x: 800

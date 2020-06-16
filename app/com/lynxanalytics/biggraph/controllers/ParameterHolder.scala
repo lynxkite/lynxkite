@@ -66,13 +66,13 @@ class ParameterHolder(context: Operation.Context) {
       val paramTypes = Map(
         "vertexAttributes" -> typeTag[List[SimpleGraphEntity]],
         "edgeAttributes" -> typeTag[List[SimpleGraphEntity]],
-        "scalars" -> typeTag[List[SimpleGraphEntity]]) ++
+        "graphAttributes" -> typeTag[List[SimpleGraphEntity]]) ++
         context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
       val evaluator = com.lynxanalytics.sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
       evaluator.evaluate(Map(
         "vertexAttributes" -> vertexAttributes,
         "edgeAttributes" -> edgeAttributes,
-        "scalars" -> scalars) ++
+        "graphAttributes" -> scalars) ++
         context.workspaceParameters.toMap).toString
     } else if (context.box.parameters.contains(name)) {
       context.box.parameters(name)

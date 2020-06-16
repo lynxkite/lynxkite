@@ -6,7 +6,6 @@ import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.protection.Limitations
 
 import org.apache.spark
 import org.apache.spark.rdd

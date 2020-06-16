@@ -25,7 +25,7 @@ object DerivePython extends OpFromJson {
   }
 
   class Input(fields: Seq[Field]) extends MagicInputSignature {
-    val (scalarFields, propertyFields) = fields.partition(_.parent == "scalars")
+    val (scalarFields, propertyFields) = fields.partition(_.parent == "graph_attributes")
     val (edgeFields, attrFields) = propertyFields.partition(
       f => f.parent == "es" && (f.name == "src" || f.name == "dst"))
     val edgeParents = edgeFields.map(_.parent).toSet
@@ -41,7 +41,7 @@ object DerivePython extends OpFromJson {
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input, fields: Seq[Field]) extends MagicOutput(instance) {
-    val (scalarFields, attrFields) = fields.partition(_.parent == "scalars")
+    val (scalarFields, attrFields) = fields.partition(_.parent == "graph_attributes")
     val attrs = attrFields.map { f =>
       inputs.vss.get(f.parent) match {
         case Some(vs) => vertexAttribute(vs.entity, f.fullName)(f.tpe.typeTag)
