@@ -167,6 +167,32 @@ export KITE_EXTRA_JARS=
 # export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 # ===========================================================
 
+# The following settings configure Google OAuth for LynxKite.
+# export KITE_GOOGLE_CLIENT_SECRET='???'
+# export KITE_GOOGLE_CLIENT_ID='???.apps.googleusercontent.com'
+# export KITE_GOOGLE_HOSTED_DOMAIN='example.com'
+# export KITE_GOOGLE_REQUIRED_SUFFIX='@example.com'
+# export KITE_GOOGLE_WIZARD_ONLY='yes'
+# export KITE_GOOGLE_PUBLIC_ACCESS='yes'
+
+# Use the following configurations to set up LDAP authentication.
+
+# ===========================================================
+# The URL of the LDAP server, e.g. ldap://localhost:389.
+# export LDAP_URL=
+
+# The authentication method, e.g. simple or DIGEST-MD5 as explained in
+# the Java LDAP documentation (http://docs.oracle.com/javase/jndi/tutorial/ldap/security/index.html)
+# and SASL documentation (http://docs.oracle.com/javase/jndi/tutorial/ldap/security/sasl.html).
+# export LDAP_AUTHENTICATION=simple
+
+# The template for the principal. It must contain the word <USERNAME> to be substituted with the
+# username given at login, for example uid=<USERNAME>,ou=People,dc=example,dc=com or
+# cn=<USERNAME>,ou=People,dc=example,dc=com. This is required so the user does not have to specify
+# the full distinguished name on the web UI.
+# export LDAP_PRINCIPAL_TEMPLATE=
+# ===========================================================
+
 # On a Kerberos-secured Hadoop cluster, set the KERBEROS_PRINCIPAL and KERBEROS_KEYTAB
 # variables. The principal acts like a user name and the keytab file acts like a password.
 # export KERBEROS_PRINCIPAL=
@@ -210,10 +236,6 @@ export KITE_EXTRA_JARS=
 # Specify the length of the protected time period in days, while the cleaner does not
 # delete data files. It can be integer or double value.
 # export KITE_CLEANER_MIN_AGE_DAYS=14
-
-# The ecosystem docker image comes with JupyterLab, which can be used to run
-# LK Python API code. The default port of JupyterLab is 8888, but it can be changed.
-# export KITE_JUPYTER_PORT=9999
 
 # Specify where Sphynx (the single-node server) is running and where the certificate can be found.
 # If any of these is unset, no Sphynx server is assumed.

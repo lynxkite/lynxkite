@@ -26,6 +26,9 @@ abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
+  // UserController is initialized later but referred in asyncAction().
+  def userController: UserController
+
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
 
@@ -35,7 +38,8 @@ abstract class JsonServer extends mvc.Controller {
   }
 
   def getUser(request: mvc.Request[_], withAuth: Boolean = productionMode): Option[User] = {
-    Some(User.singleuser)
+    if (withAuth) userController.get(request)
+    else Some(User.singleuser)
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
@@ -148,7 +152,12 @@ case class ResultException(result: mvc.Result) extends Exception
 
 case class Empty()
 
+case class AuthMethod(id: String, name: String)
+
 case class GlobalSettings(
+    hasAuth: Boolean,
+    authMethods: List[AuthMethod],
+    googleClientId: String,
     title: String,
     tagline: String,
     frontendConfig: String,
@@ -320,6 +329,14 @@ object FrontendJson {
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
 
+  implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
+  implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
+  implicit val rDeleteUserRequest = json.Json.reads[DeleteUserRequest]
+  implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
+  implicit val wUser = json.Json.writes[User]
+  implicit val wUserList = json.Json.writes[UserList]
+
+  implicit val wAuthMethod = json.Json.writes[AuthMethod]
   import UIStatusSerialization.fUIStatus
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
@@ -485,6 +502,18 @@ object ProductionJsonServer extends JsonServer {
       .trigger(workspaceController, drawingController)
   }
 
+  val userController = new UserController(BigGraphProductionEnvironment)
+  val passwordLogin = userController.passwordLogin
+  val googleLogin = userController.googleLogin
+  val signedUsernameLogin = userController.signedUsernameLogin
+  val logout = userController.logout
+  def getUsers = jsonGet(userController.getUsers)
+  def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
+  def changeUser = jsonPost(userController.changeUser, logRequest = false)
+  def deleteUser = jsonPost(userController.deleteUser, logRequest = false)
+  def createUser = jsonPost(userController.createUser, logRequest = false)
+  def getUserData = jsonGet(userController.getUserData)
+
   val cleanerController = new CleanerController(BigGraphProductionEnvironment, workspaceController.ops)
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
   def moveToCleanerTrash = jsonPost(cleanerController.moveToCleanerTrash)
@@ -500,8 +529,20 @@ object ProductionJsonServer extends JsonServer {
 
   val version = KiteInstanceInfo.kiteVersion
 
+  def getAuthMethods = {
+    val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
+    if (productionMode) {
+      authMethods += AuthMethod("lynxkite", "LynxKite")
+      if (LDAPProps.hasLDAP) { authMethods += AuthMethod("ldap", "LDAP") }
+    }
+    authMethods.toList
+  }
+
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
+      hasAuth = productionMode,
+      authMethods = getAuthMethods,
+      googleClientId = GoogleAuth.clientId,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "The Complete Graph Data Science Platform"),
       frontendConfig = LoggedEnvironment.envOrElse("KITE_FRONTEND_CONFIG", "{}"),

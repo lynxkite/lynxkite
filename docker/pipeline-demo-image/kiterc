@@ -1,0 +1,12 @@
+export SPARK_VERSION=$(cat /tmp/build/stage/conf/SPARK_VERSION)
+export SPARK_HOME=/tmp/spark-$SPARK_VERSION
+export SPARK_MASTER=local
+export KITE_META_DIR=/tmp/kite_meta
+export KITE_DATA_DIR=file:/tmp/kite_data
+export KITE_PID_FILE=/tmp/kite.pid
+export KITE_USERS_FILE=/tmp/kite_users.txt
+export NUM_CORES_PER_EXECUTOR='*'
+export KITE_MASTER_MEMORY_MB=10000
+export KITE_HTTP_PORT=2200
+export KITE_HTTP_ADDRESS=0.0.0.0
+export KITE_LOCAL_TMP=/tmp

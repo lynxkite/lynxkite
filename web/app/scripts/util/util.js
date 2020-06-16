@@ -123,6 +123,23 @@ angular.module('biggraph')
       return toResource(req);
     }
 
+    // We're encoding the path (e.g., /workspaces/ws) in a search query
+    // so that we can go back there after the login.
+    // Also, we're forcing the login to go through https, so http://try.lynxkite.com
+    // gets redirected to https://try.lynxkite.com
+    function redirectToLogin(resource) {
+      resource.$error = 'Redirecting to login page.';
+      const orig = $location.path();
+      if (orig === '/login') {
+        return;
+      }
+      $location.url('/login');
+      $location.search('originalPath', orig);
+      const absUrl = $location.absUrl();
+      const withoutProtocol = absUrl.substring($location.protocol().length);
+      $window.location.href = 'https' + withoutProtocol;
+    }
+
     // Replaces a promise with another promise that behaves like Angular's ngResource.
     // It will populate itself with the response data and set $resolved, $error, and $statusCode.
     // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
@@ -137,7 +154,12 @@ angular.module('biggraph')
         function onError(failure) {
           resource.$resolved = true;
           resource.$statusCode = failure.status;
-          resource.$error = util.responseToErrorMessage(failure);
+          // Go to login if we're unauthorized (401) and not logged in.
+          if (failure.status === 401 && util.user.email === undefined) {
+            redirectToLogin(resource);
+          } else {
+            resource.$error = util.responseToErrorMessage(failure);
+          }
           return $q.reject(failure);
         });
       resource.$resolved = false;

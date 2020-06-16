@@ -1,0 +1,13 @@
+Steps to start up demo:
+1. Build image using ./build.sh in the parent directory
+2. Download these CSV files under the image directory:
+https://drive.google.com/file/d/1kpEhAFozvimh7KTrpiF8blraahIXVn7b/view?usp=sharing
+https://drive.google.com/file/d/1JG_5MnH_Nzoadw01E9LB6w7boY8pbZK7/view?usp=sharing
+(DO NOT PUSH THESE TO THE REPO!)
+3. ./image/build.sh
+4. ./run.sh
+
+If you want to run in a machine where the github repo is not available, then you will need to:
+- Load the image built in step 3 on the host
+- Copy run.sh and the dags directory under the same parent directory
+- ./run.sh
