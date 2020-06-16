@@ -67,14 +67,14 @@ $(pip): python_requirements.txt
 	shell_ui/test.sh && touch $@
 .build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
 	impact-analyzer-dashboard/tests.sh && touch $@
-scala-dependency-licenses.md: build.sbt
+dependency-licenses/scala.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
-javascript-dependency-licenses.txt: web/package.json
+dependency-licenses/javascript.txt: web/package.json
 	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
-javascript-dependency-licenses.md: web/package.json
+dependency-licenses/javascript.md: web/package.json
 	cd web && LC_ALL=C yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../$@
 
-.build/licenses-done: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md
+.build/licenses-done: dependency-licenses/scala.md dependency-licenses/javascript.txt dependency-licenses/javascript.md
 	touch $@
 
 # Short aliases for command-line use.
