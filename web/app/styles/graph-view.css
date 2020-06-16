@@ -2,18 +2,17 @@ svg.graph-view {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: #001b31 /* Brand color. */ !important; /* Make sure it shows in print. */
+  background: #001b31; /* Brand color. */
   user-select: none;
 }
 svg.graph-view.loading {
   --c: #39bcf340;
-  /* Because of the !important background above, these need to be !important too. */
   background-image: linear-gradient(
     45deg, transparent 25%, var(--c) 25%, var(--c) 26%,
     transparent 26%, transparent 27%, var(--c) 27%, var(--c) 50%,
     transparent 50%, transparent 75%, var(--c) 75%, var(--c) 76%,
-    transparent 76%, transparent 77%, var(--c) 77%, var(--c)) !important;
-  background-size: 200px 200px !important;
+    transparent 76%, transparent 77%, var(--c) 77%, var(--c));
+  background-size: 200px 200px;
   animation: graph-view-loading 2s cubic-bezier(0.5, 0.2, 0.5, 0.8) infinite;
 }
 @keyframes graph-view-loading {
