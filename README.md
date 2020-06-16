@@ -1,4 +1,4 @@
-# LynxKite
+# LynxKite Enterprise
 
 [LynxKite](https://lynxkite.com/) is a complete graph data science platform for very large graphs
 and other datasets.
@@ -89,8 +89,3 @@ We have test suits for the different parts of the system:
 - **Python API tests** are started with `make remote_api-test`. If you already have a running
   LynxKite that is okay to test on, run `python/remote_api/test.sh`. This script can also run a
   subset of the test suite: `python/remote_api/test.sh -p *something*`
-
-
-## License
-
-- [GNU Affero General Public License v3.0](https://github.com/lynxkite/lynxkite/blob/master/LICENSE)
