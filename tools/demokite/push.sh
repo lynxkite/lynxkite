@@ -13,10 +13,12 @@ export NUM_CORES_PER_EXECUTOR=${NUM_CORES_PER_EXECUTOR:-*}
 export KITE_HOSTNAME=${KITE_HOSTNAME:-$INSTANCE.lynxanalytics.com}
 
 docker/lynxkite/local-letsencrypt/build.sh
-
-ecosystem/cloud-dev/push_image.sh lynx/kite_letsencrypt:latest
 gcloud config set project $PROJECT
 IMAGE="${CONTINENT}.gcr.io/$PROJECT/lynx-kite_letsencrypt"
+docker tag lynx/kite_letsencrypt:latest "$IMAGE"
+gcloud auth configure-docker
+>&2 docker push "$IMAGE"
+
 SSH="gcloud compute ssh $INSTANCE --zone $ZONE --command"
 USER="kite"
 if [ "$INSTANCE" == "pizzakite" ]; then
