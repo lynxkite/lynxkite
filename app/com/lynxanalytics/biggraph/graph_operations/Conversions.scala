@@ -84,7 +84,7 @@ object DynamicValue {
       set =>
         DynamicValue(
           string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "),
-          vector = set.asInstanceOf[Seq[Double]].toList)
+          vector = set.asInstanceOf[Set[Double]].toList)
     } else {
       set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
     }
