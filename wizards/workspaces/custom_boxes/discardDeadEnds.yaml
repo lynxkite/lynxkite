@@ -1,0 +1,78 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters: {}
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Compute-degree_3
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Compute degree
+  parameters:
+    direction: all neighbors
+    name: sdegree
+  parametricParameters: {}
+  x: 200.0
+  y: 114.12794298143922
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: Filter-by-attributes_3
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_should_keep: '>0'
+  parametricParameters: {}
+  x: 475.48546279754464
+  y: 303.0
+- id: Discard-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_3
+      id: graph
+  operationId: Discard vertex attributes
+  parameters:
+    name: sdegree,should_keep
+  parametricParameters: {}
+  x: 411.58072871444983
+  y: 144.5607875225587
+- id: output-graph
+  inputs:
+    output:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 611.5807287144498
+  y: 150.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Compute-degree_3
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      vs['should_keep'] = (
+       vs.is_first.notna() |
+       vs.is_second.notna() |
+       (vs.sdegree > 1)
+      ).astype(float)
+    inputs: vs.is_first, vs.is_second, vs.sdegree
+    outputs: 'vs.should_keep: float'
+  parametricParameters: {}
+  x: 240.0
+  y: 392.703125

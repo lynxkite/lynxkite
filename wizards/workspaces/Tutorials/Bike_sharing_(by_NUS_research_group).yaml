@@ -1,0 +1,702 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: |
+      # IoT data interpretation with Graphs
+
+      This tutorial was created by a research group
+      at [NUS](http://www.nus.edu.sg/) including
+      Benita Neo Yan Ting,
+      Ng Jian Lai,
+      Victoria Teo Wei Xuan,
+      and Neo Ann Qi. Their blog post about the
+      research will soon be shared.
+
+      ### Introduction
+
+      Bike-sharing companies generate huge volumes
+      of data, from the trips completed to the
+      status of the stations
+      (i.e. whether there are enough bikes or
+      docks). This tutorial is
+      looking at the Baywheels bike-sharing
+      dataset in the San Francisco Bay Area
+      downloaded from [Kaggle](https://www.kaggle.com/benhamner/sf-bay-area-bike-share).
+
+      Baywheels is a dock-based bike-sharing
+      system. This means that users can rent a
+      bike from a dock and return it to another
+      dock at their destination. This is tracked
+      by their smartphones and sensors by the
+      docks. Users will be charged based on the
+      duration of their ride and their subscription
+      type. 
+
+      ### Data description
+      The data covers 70 stations in the Bay Area,
+      namely in 5 city clusters: San Francisco,
+      San Jose, Palo Alto, Redwood City and
+      Mountain View. The data covers about
+      670,000 trips that occurred between 29th
+      August 2013 to 29th August 2015.
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/7c909554c6b183233329e66cc73092ec.station.csv
+    imported_columns: name,lat,long,dock_count,city,installation_date, id
+    imported_table: cda6233c-4924-3d17-b416-09d544324729
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "name,lat,long,dock_count,city,installation_date, id",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/7c909554c6b183233329e66cc73092ec.station.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 150.0
+  y: 900.0
+- id: Import-Parquet_1
+  inputs: {}
+  operationId: Import Parquet
+  parameters:
+    filename: UPLOAD$/f6cd16685219a0fc3989a4f1db35f15f.trip.parquet
+    imported_table: 99e91a6b-40fc-3e78-add5-148ba511dbcf
+    last_settings: |-
+      {
+        "sql" : "",
+        "imported_columns" : "",
+        "filename" : "UPLOAD$/f6cd16685219a0fc3989a4f1db35f15f.trip.parquet",
+        "limit" : ""
+      }
+  parametricParameters: {}
+  x: 150.0
+  y: 750.0
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
+    table:
+      boxId: SQL1_1
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: id
+    dst: end_station_id
+    src: start_station_id
+  parametricParameters: {}
+  x: 900.0
+  y: 500.0
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 400.0
+  y: 900.0
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: Import-Parquet_1
+      id: table
+  operationId: SQL1
+  parameters:
+    input_names: trips
+    sql: |-
+      SELECT
+      INT(ID), 
+      DOUBLE(duration), 
+      string(start_date), 
+      DAYOFWEEK(CAST(start_date AS TIMESTAMP)) AS what_day, 
+      date_format(start_date, "eeee"),
+      STRING(start_station_name),
+      INT(start_station_id), 
+      string(end_date), 
+      STRING(end_station_name), 
+      INT(end_station_id),
+      INT(bike_id),
+      STRING(subscription_type), 
+      INT(zip_code)
+      FROM trips
+    summary: Changing of the datatype
+  parametricParameters: {}
+  x: 550.0
+  y: 750.0
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterea_subscription_type: Customer
+  parametricParameters: {}
+  x: 1200.0
+  y: 700.0
+- id: Filter-by-attributes_2
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterea_subscription_type: Subscriber
+  parametricParameters: {}
+  x: 1450.0
+  y: 700.0
+- id: Use-table-as-vertices_2
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 250.0
+  y: 1300.0
+- id: Use-table-as-edges_2
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_2
+      id: graph
+    table:
+      boxId: SQL2_1
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: city
+    dst: end_city
+    src: start_city
+  parametricParameters: {}
+  x: 850.0
+  y: 1100.0
+- id: Merge-vertices-by-attribute_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_2
+      id: graph
+  operationId: Merge vertices by attribute
+  parameters:
+    aggregate_city: count_distinct
+    aggregate_lat: average
+    aggregate_long: average
+  parametricParameters: {}
+  x: 450.0
+  y: 1300.0
+- id: SQL2_1
+  inputs:
+    one:
+      boxId: Import-Parquet_1
+      id: table
+    two:
+      boxId: Import-CSV_1
+      id: table
+  operationId: SQL2
+  parameters:
+    input_names: trips, station
+    sql: |-
+      SELECT t.* 
+          , s.city AS start_city
+         , s2.city AS end_city
+      FROM trips t
+      LEFT JOIN station s
+      ON t.start_station_id = s.id
+      LEFT JOIN station s2
+      ON t.end_station_id = s2.id
+    summary: Get start and end city
+  parametricParameters: {}
+  x: 500.0
+  y: 1100.0
+- id: Compute-degree_1
+  inputs:
+    graph:
+      boxId: Discard-loop-edges_2
+      id: graph
+  operationId: Compute degree
+  parameters:
+    name: in_degree
+  parametricParameters: {}
+  x: 1900.0
+  y: 700.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Compute-degree_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: in_degree/out_degree
+    output: in_out_ratio
+  parametricParameters: {}
+  x: 2450.0
+  y: 600.0
+- id: Compute-degree_2
+  inputs:
+    graph:
+      boxId: Compute-degree_1
+      id: graph
+  operationId: Compute degree
+  parameters:
+    direction: outgoing edges
+    name: out_degree
+  parametricParameters: {}
+  x: 2150.0
+  y: 700.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Compute-degree_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: out_degree/in_degree
+    output: out_in_ratio
+  parametricParameters: {}
+  x: 2450.0
+  y: 800.0
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_3
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"city":"San
+      Francisco"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","label":"name","color":"out_in_ranking","size":"out_in_ratio"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Reds
+      🗘","labelColorMap":"Viridis","edgeColorMap":"Rainbow","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 3200.0
+  y: 800.0
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_4
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"name","label
+      size":"in_degree","color":"in_out_ranking","geo coordinates":"position"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Reds
+      🗘","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 3200.0
+  y: 600.0
+- id: Add-rank-attribute_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: in_out_ratio
+    order: descending
+    rankattr: in_out_ranking
+  parametricParameters: {}
+  x: 2700.0
+  y: 600.0
+- id: Add-rank-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: out_in_ratio
+    order: descending
+    rankattr: out_in_ranking
+  parametricParameters: {}
+  x: 2700.0
+  y: 800.0
+- id: Filter-by-attributes_3
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_2
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_out_in_ranking: 0,1,2,3,4,5,6,7,8,9
+  parametricParameters: {}
+  x: 2950.0
+  y: 800.0
+- id: Filter-by-attributes_4
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_in_out_ranking: 0,1,2,3,4,5,6,7,8,9
+  parametricParameters: {}
+  x: 2950.0
+  y: 600.0
+- id: Graph-visualization_3
+  inputs:
+    graph:
+      boxId: Discard-loop-edges_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"city","geo
+      coordinates":"position","color":"city"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"LynxKite
+      Colors","labelColorMap":"Viridis","edgeColorMap":"LynxKite Colors","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1250.0
+  y: 1300.0
+- id: Comment
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      Merge the tables together to get the city indicators of the start and end city in order to check for intercity trips
+  parametricParameters: {}
+  x: 300.0
+  y: 1200.0
+- id: Discard-loop-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_2
+      id: graph
+  operationId: Discard loop edges
+  parameters: {}
+  parametricParameters: {}
+  x: 1100.0
+  y: 1100.0
+- id: Aggregate-edge-attribute-to-vertices_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    aggregate_ID: count
+    direction: incoming edges
+  parametricParameters: {}
+  x: 1200.0
+  y: 300.0
+- id: Compute-centrality_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Compute centrality
+  parameters:
+    algorithm: Average distance
+    direction: all edges
+  parametricParameters: {}
+  x: 1950.0
+  y: 450.0
+- id: Graph-visualization_4
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"city":"San
+      Francisco"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","label":"centrality","label color":"centrality"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"BuGn","labelColorMap":"BuGn
+      🗘","edgeColorMap":"Viridis","sliderPos":63},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 2150.0
+  y: 450.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Merge the tables together with their station ids to connect the edges with the
+      vertices.
+  parametricParameters: {}
+  x: 600.0
+  y: 700.0
+- id: Graph-visualization_5
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"city":"San
+      Francisco","edge_ID_count":"> 30000"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"name","size":"edge_ID_count","color":"name","edge
+      color":"subscription_type_most_common","geo coordinates":"position"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Greens","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1650.0
+  y: 250.0
+- id: Use-table-as-graph_1
+  inputs:
+    table:
+      boxId: Import-Parquet_1
+      id: table
+  operationId: Use table as graph
+  parameters:
+    dst: end_station_name
+    src: start_station_name
+  parametricParameters: {}
+  x: 800.0
+  y: 300.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Visualising just the trips that have taken regardless of the stations data
+  parametricParameters: {}
+  x: 600.0
+  y: 250.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Convert trips count into a vertex to get the size of the trips of each station.
+      When graphing, apply filters to help understand and breakdown the data. It is
+      also wise to make use of the size, colour and label features.
+  parametricParameters: {}
+  x: 1250.0
+  y: 100.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Convert trips count into a vertex to get the size of the trips of each station.
+      When graphing, apply filters to help understand and breakdown the data. It is
+      also wise to make use of the size, colour and label features.
+  parametricParameters: {}
+  x: 1900.0
+  y: 300.0
+- id: Merge-parallel-edges-by-attribute_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Merge parallel edges by attribute
+  parameters:
+    aggregate_duration: average
+    key: start_station_id
+  parametricParameters: {}
+  x: 1150.0
+  y: 950.0
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Filter the different kind of customer types to compare them side by side
+  parametricParameters: {}
+  x: 1100.0
+  y: 650.0
+- id: Graph-visualization_6
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_5
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"city":"San
+      Francisco"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"name","geo
+      coordinates":"position","edge label":"duration_mins","color":"name"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"LynxKite
+      Colors","labelColorMap":"Viridis","edgeColorMap":"LynxKite Colors","sliderColorMap":"Blue
+      to orange","lastCentersRequest":{"count":10,"filters":[{"attributeName":"city","valueSpec":"San
+      Francisco"}]},"lastCentersResponse":["-8730854457551617996","-8372471039069781959","-7931467245975240657","-6914829022220255198","-6067572364315459521","-5751058043676655575","-5256749969817206720","-5121607135926419394","-5058560954506149835","-4922475538502647762"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 2150.0
+  y: 950.0
+- id: Graph-visualization_7
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges-by-attribute_2
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"city","color":"city","edge
+      label":"duration_average","width":"duration_average","edge color":"start_city"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"LynxKite
+      Colors","labelColorMap":"Viridis","edgeColorMap":"Pastel1","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1800.0
+  y: 1200.0
+- id: Merge-parallel-edges-by-attribute_2
+  inputs:
+    graph:
+      boxId: Discard-loop-edges_1
+      id: graph
+  operationId: Merge parallel edges by attribute
+  parameters:
+    aggregate_duration: average
+    key: start_city
+  parametricParameters: {}
+  x: 1600.0
+  y: 1200.0
+- id: Graph-visualization_8
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"city":"San
+      Francisco","edge_ID_count":""},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","label":"dock_count","color":"name"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Greens","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1650.0
+  y: 350.0
+- id: Filter-by-attributes_5
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterea_start_station_id: '70'
+    filterva_city: San Francisco
+  parametricParameters: {}
+  x: 1900.0
+  y: 950.0
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Merge the edges that start from the same station together and get the average
+      duration from each station to get the duration out. Filter only works on Double
+      attributes, therefore, we change it to Double.
+  parametricParameters: {}
+  x: 1100.0
+  y: 850.0
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Calculate the in and out degrees from the stations by the number of edges it
+      has.
+  parametricParameters: {}
+  x: 1850.0
+  y: 600.0
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Convert trips count into a vertex to get the size of the trips of each station.
+      When graphing, apply filters to help understand and breakdown the data. It is
+      also wise to make use of the size, colour and label features.
+  parametricParameters: {}
+  x: 2450.0
+  y: 450.0
+- id: Discard-loop-edges_2
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Discard loop edges
+  parameters: {}
+  parametricParameters: {}
+  x: 1700.0
+  y: 600.0
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Merging the parallel edges by their same city and then getting the average duration
+      to see how long the intercity trips last.
+  parametricParameters: {}
+  x: 1300.0
+  y: 1100.0
+- id: Derive-edge-attribute_1
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges-by-attribute_1
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    expr: (duration_average/60).round
+    output: duration_mins
+  parametricParameters: {}
+  x: 1600.0
+  y: 950.0
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: lat,long
+    output: position
+  parametricParameters: {}
+  x: 700.0
+  y: 900.0
+- id: Bundle-vertex-attributes-into-a-Vector_2
+  inputs:
+    graph:
+      boxId: Merge-vertices-by-attribute_1
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: lat_average,long_average
+    output: position
+  parametricParameters: {}
+  x: 700.0
+  y: 1300.0
+- id: Merge-parallel-edges_1
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_1
+      id: graph
+  operationId: Merge parallel edges
+  parameters:
+    aggregate_subscription_type: most_common
+  parametricParameters: {}
+  x: 1400.0
+  y: 300.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: 'Data used:  trip.parquet,  station.csv'
+  parametricParameters: {}
+  x: 0.0
+  y: 700.0

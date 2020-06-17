@@ -1,0 +1,96 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Predict-with-model_1
+  inputs:
+    graph:
+      boxId: Train-linear-regression-model_1
+      id: graph
+  operationId: Predict with model
+  parameters: {}
+  parametricParameters:
+    name: ${ATTR_TO_PREDICT}_linreg_prediction
+  x: 844.0673647788601
+  y: 234.42708768364287
+- id: Train-linear-regression-model_1
+  inputs:
+    graph:
+      boxId: Add-random-vertex-attribute_1
+      id: graph
+  operationId: Train linear regression model
+  parameters: {}
+  parametricParameters:
+    features: |-
+      ${vertexAttributes
+      .filterNot(_.name == ATTR_TO_PREDICT)
+      .filter(_.typeName == "Double")
+      .map(_.name)
+      .mkString(",")
+      }
+    label: $ATTR_TO_PREDICT
+  x: 557.6181638122637
+  y: 236.942699349922
+- id: Add-random-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Add random vertex attribute
+  parameters:
+    dist: Standard Uniform
+    name: dummy_random
+  parametricParameters: {}
+  x: 213.5046915626349
+  y: 232.72498076944453
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      We add a random attribute because the input might not have any other attributes. This does not prevent all possible failures (e.g., an all-constant column), but it is better than nothing
+  parametricParameters: {}
+  x: 200.0
+  y: 75.0
+- id: output-graph 2
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph 2
+  parametricParameters: {}
+  x: 1335.5323815675026
+  y: 233.23599421433101
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Predict-with-model_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+  parametricParameters:
+    expr: |-
+      ${ATTR_TO_PREDICT}_linreg_prediction match {
+        case Some(x) => x
+        case None => average
+      }
+    output: ${ATTR_TO_PREDICT}_linreg_prediction
+  x: 1059.5701950022828
+  y: 463.0752174757715

@@ -1,0 +1,158 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters: {}
+  parametricParameters: {}
+  x: -65.213238302399
+  y: -4.347549220159934
+- id: Import-well-known-graph-dataset_1
+  inputs: {}
+  operationId: Import well-known graph dataset
+  parameters:
+    name: Karate Club
+  parametricParameters: {}
+  x: 150.0
+  y: 250.0
+- id: Split-to-train-and-test-set_1
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Split to train and test set
+  parameters:
+    test_set_ratio: '0.95'
+  parametricParameters: {}
+  x: 550.0
+  y: 200.0
+- id: Train-a-GCN-classifier_3
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Train a GCN classifier
+  parameters:
+    forget: 'false'
+    iterations: '200'
+    label: true_label_train
+    seed: '42'
+  parametricParameters: {}
+  x: 750.0
+  y: 200.0
+- id: Predict-with-GCN_3
+  inputs:
+    graph:
+      boxId: Train-a-GCN-classifier_3
+      id: graph
+  operationId: Predict with GCN
+  parameters:
+    label: true_label_train
+  parametricParameters: {}
+  x: 950.0
+  y: 200.0
+- id: Graph-visualization_3
+  inputs:
+    graph:
+      boxId: Predict-with-GCN_3
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"prediction","color":"true_label"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1153.1088592902388
+  y: 200.0
+- id: Find-modular-clustering_1
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Find modular clustering
+  parameters: {}
+  parametricParameters: {}
+  x: 500.0
+  y: 500.0
+- id: Copy-edges-to-segmentation_1
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Copy edges to segmentation
+  parameters:
+    apply_to_graph: .modular_clusters
+  parametricParameters: {}
+  x: 750.0
+  y: 500.0
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Copy-edges-to-segmentation_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"true_label"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","projectPath":".modular_clusters","graphMode":"sampled"}}
+  parametricParameters: {}
+  x: 1000.0
+  y: 500.0
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Import-well-known-graph-dataset_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_y: true_label
+  parametricParameters: {}
+  x: 350.0
+  y: 250.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 1. Zachary's karate club
+
+      We are given the social relationships in a karate club. We also know, that
+      eventually the club split into two. Can we guess who belonged
+      to which group at the end?
+  parametricParameters: {}
+  x: 45.76664924072469
+  y: 113.85772875183201
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 2. GNN
+
+      In our first approach, we are applying a GNN directly to
+      the problem. Interestingly, this works even with a super
+      small training set: just containing two known labels, one
+      from each eventual group. Based on this, a traditional
+      supervised training gives us a model which is able to
+      predict the new group for all members with amazing accuracy.
+  parametricParameters: {}
+  x: 550.0
+  y: 0.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 3. Modular clustering
+
+      Next, we use modular clustering, partitioning the graph
+      with as low as possible ratio of cross-partition edges.
+
+      This, without any supervised input, yields four partitions.
+
+      We can see that two of these resulting partitions almost
+      perfectly cover one of the resulting groups while the
+      other two make up the other group.
+  parametricParameters: {}
+  x: 573.3762252286699
+  y: 630.5282548603163

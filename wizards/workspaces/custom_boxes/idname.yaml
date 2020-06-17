@@ -1,0 +1,43 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Created from Users/singleuser/In progress wizards/Multi-model prediction/2020-02-06
+      12:48:23
+    parameters: >-
+      [{"kind":"vertexattribute","id":"ID_Column","defaultValue":"","$$hashKey":"object:35400"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Derive-graph-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive graph attribute
+  parameters:
+    expr: '1.0'
+  parametricParameters:
+    output: id_${ID_Column}
+  x: 297.0
+  y: 162.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-graph-attribute
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 589.0
+  y: 160.0

@@ -1,0 +1,269 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: |-
+      Runs modular clustering.
+      Outputs the clustered graph and two
+      useful visualizations.
+    parameters: >-
+      [{"kind":"edge attribute (number)","id":"Weight attribute","defaultValue":"","$$hashKey":"object:23559"},{"kind":"text","id":"Min
+      weight for visualization","defaultValue":"","$$hashKey":"object:30776"},{"kind":"text","id":"Min
+      degree for visualization","defaultValue":"","$$hashKey":"object:2530"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Find-modular-clustering_1
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  operationId: Find modular clustering
+  parameters:
+    max_iterations: '10'
+    weights: weight
+  parametricParameters: {}
+  x: 200.0
+  y: 300.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Graph-visualization_1
+      id: visualization
+  operationId: Output
+  parameters:
+    name: two-pane visualization
+  parametricParameters: {}
+  x: 800.0
+  y: 50.0
+- id: Derive-edge-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive edge attribute
+  parameters:
+    output: weight
+  parametricParameters:
+    expr: |-
+      ${
+        if (`Weight attribute`.nonEmpty) `Weight attribute`
+        else "1.0"
+      }
+  x: 200.0
+  y: 150.0
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"segmentation[modular_clusters]":"exists(-4029974629949898743)"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"degree","label":"id","color":"side","width":"weight"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":true,"sliderPos":50,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"},"right":{"projectPath":".modular_clusters","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"size","label":"size"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  parametricParameters: {}
+  x: 550.0
+  y: 50.0
+- id: Aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Weighted-aggregate-to-segmentation_1
+      id: graph
+  operationId: Aggregate from segmentation
+  parameters:
+    aggregate_id: first
+    aggregate_id_by_max_weight_by_degree: first
+    apply_to_graph: .modular_clusters
+  parametricParameters: {}
+  x: 650.0
+  y: 200.0
+- id: Weighted-aggregate-to-segmentation_1
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Weighted aggregate to segmentation
+  parameters:
+    aggregate_id: by_max_weight
+    apply_to_graph: .modular_clusters
+  parametricParameters: {}
+  x: 450.0
+  y: 200.0
+- id: Compute-in-Python_1
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_1
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: >-
+      vs['cluster'] = 'Cluster around ' + vs.modular_clusters_id_by_max_weight_by_degree_first
+    inputs: vs.modular_clusters_id_by_max_weight_by_degree_first
+    outputs: 'vs.cluster: str'
+  parametricParameters: {}
+  x: 850.0
+  y: 200.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Add-random-vertex-attribute_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: (if (side == "A") 0.0 else 200.0) + random * 10
+    output: y
+  parametricParameters: {}
+  x: 800.0
+  y: 500.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Add-random-vertex-attribute_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: modular_clusters_id_first.toLong % 1000 + random * 10
+    output: x
+  parametricParameters: {}
+  x: 800.0
+  y: 350.0
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: x,y
+    output: position
+  parametricParameters: {}
+  x: 1050.0
+  y: 500.0
+- id: Add-random-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Compute-in-Python_1
+      id: graph
+  operationId: Add random vertex attribute
+  parameters: {}
+  parametricParameters: {}
+  x: 550.0
+  y: 350.0
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":0,"attributeTitles":{"position":"position","size":"degree","color":"cluster","width":"weight"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  parametricParameters: {}
+  x: 1250.0
+  y: 350.0
+- id: Add-random-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Add random vertex attribute
+  parameters: {}
+  parametricParameters: {}
+  x: 550.0
+  y: 500.0
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
+  operationId: Filter by attributes
+  parameters: {}
+  parametricParameters:
+    filterea_weight: |-
+      ${
+        if (`Min weight for visualization`.nonEmpty)
+          ">=" + `Min weight for visualization`
+        else ""
+      }
+    filterva_degree: |-
+      ${
+        if (`Min degree for visualization`.nonEmpty)
+          ">=" + `Min degree for visualization`
+        else ""
+      }
+  x: 1050.0
+  y: 350.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      **Above:** Getting a modular clustering is easy.
+      Everything to the right is for building up
+      our custom visualizations.
+  parametricParameters: {}
+  x: 0.0
+  y: 600.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      **To the left:** The cluster IDs are 64-bit random
+      numbers internally. To make the visualization look
+      better we turn them into short strings.
+
+      The vertices are then positioned so that the "A"
+      side is on top and the "B" side is on the bottom.
+      Horizontally we place the vertices according to the
+      cluster ID.
+  parametricParameters: {}
+  x: 950.0
+  y: 200.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      **Above:** For computing X and Y we add a (different)
+      random number. This forms a cloud from the nodes in
+      the same cluster. We then need to combine the X and Y
+      attributes into a position attribute.
+
+      The filtering is added to limit the browser memory
+      used for the visualization. The idea is to discard
+      edges and vertices that would be nearly invisible
+      anyway.
+  parametricParameters: {}
+  x: 500.0
+  y: 600.0
+- id: Output_1
+  inputs:
+    output:
+      boxId: Graph-visualization_2
+      id: visualization
+  operationId: Output
+  parameters:
+    name: filtered whole-graph visualization
+  parametricParameters: {}
+  x: 1450.0
+  y: 350.0
+- id: Output_2
+  inputs:
+    output:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 200.0
+  y: 450.0

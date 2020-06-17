@@ -1,0 +1,53 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: >-
+      [{"kind":"text","id":"First entity","defaultValue":""},{"kind":"text","id":"Second
+      entity","defaultValue":""}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: custom_boxes/selectOneWithName_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: custom_boxes/selectOneWithName
+  parameters:
+    Result: is_first
+  parametricParameters:
+    Thing: ${`First entity`}
+  x: 200.0
+  y: 100.0
+- id: custom_boxes/selectOneWithName_2
+  inputs:
+    graph:
+      boxId: custom_boxes/selectOneWithName_1
+      id: graph
+  operationId: custom_boxes/selectOneWithName
+  parameters:
+    Result: is_second
+  parametricParameters:
+    Thing: ${`Second entity`}
+  x: 400.0
+  y: 100.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: custom_boxes/selectOneWithName_2
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 600.0
+  y: 100.0

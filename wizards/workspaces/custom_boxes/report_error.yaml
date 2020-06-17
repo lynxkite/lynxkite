@@ -1,0 +1,99 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"},{"kind":"text","id":"ATTR_PREDICTED","defaultValue":"","$$hashKey":"object:8743"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive vertex attribute
+  parameters: {}
+  parametricParameters:
+    expr: |
+      math.abs($ATTR_TO_PREDICT - $ATTR_PREDICTED)
+    output: ${ATTR_PREDICTED}_error
+  x: 169.3695095784176
+  y: 194.72364156422495
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -157.71514806918265
+  y: 157.82058585467024
+- id: Aggregate-vertex-attribute-globally_1
+  inputs:
+    graph:
+      boxId: custom_boxes/copy_vattr_1
+      id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_dummy_error: average
+  parametricParameters: {}
+  x: 711.9538614600671
+  y: 340.18309174035784
+- id: Discard-graph-attributes_1
+  inputs:
+    graph:
+      boxId: Copy-graph-attribute_1
+      id: graph
+  operationId: Discard graph attributes
+  parameters:
+    name: dummy_error_average
+  parametricParameters: {}
+  x: 1094.8090794830705
+  y: 75.0
+- id: Copy-graph-attribute_1
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  operationId: Copy graph attribute
+  parameters:
+    name: dummy_error_average
+  parametricParameters:
+    destination: ${ATTR_PREDICTED}_average_error
+  x: 797.6853127907548
+  y: 79.88913910279143
+- id: Discard-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-graph-attributes_1
+      id: graph
+  operationId: Discard vertex attributes
+  parameters:
+    name: dummy_error
+  parametricParameters: {}
+  x: 1221.680913698236
+  y: 249.1975877698094
+- id: output-graph 2
+  inputs:
+    output:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph 2
+  parametricParameters: {}
+  x: 1753.0907630810523
+  y: 264.1719081748307
+- id: custom_boxes/copy_vattr_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: custom_boxes/copy vattr
+  parameters:
+    COPIED_ATTR: dummy_error
+  parametricParameters:
+    ATTR_TO_COPY: ${ATTR_PREDICTED}_error
+  x: 445.38440015621933
+  y: 482.9575165856478

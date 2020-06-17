@@ -1,0 +1,110 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    in_progress: no
+    steps: >-
+      [{"box":"Import-CSV_1","popup":"parameters","title":"Import a CSV","description":"Loading
+      a CSV file as a bipartite graph is easy in LynxKite.\nYou can look at the workspace
+      of this wizard to see how to do it.\n\nCustomized visualizations can be built
+      in LynxKite for any purpose.\nThis wizard shows two effective ways of looking
+      at the results of\nmodular clustering in bipartite graphs.\n\nYour CSV file
+      describes connections\nbetween an \"A\" side and a \"B\" side. It has to have
+      two columns\nthat we can use as the \"A\" side IDs and the \"B\" side IDs.\n\nIf
+      it has a connection weight column, that's even better!\n\n If you don't have
+      a dataset on hand, you can look at the small movies-actors dataset we have preloaded."},{"box":"custom_boxes/Columns-to-bipartite-graph_1","popup":"parameters","title":"Pick
+      ID columns"},{"box":"custom_boxes/Modular-clustering-on-bipartite-graph_1","popup":"parameters","title":"Pick
+      edge weight and set up visualization","description":"You can leave all of these
+      empty if you don't have\nedge weights and don't want to filter the whole-graph\nvisualization.\n\nFiltering
+      is recommended for large graphs. The\nlow-degree vertices and low-weight edges
+      will\nbe nearly invisible anyway, but they can\nbring your browser to its knees."},{"box":"custom_boxes/Modular-clustering-on-bipartite-graph_1","popup":"two-pane
+      visualization","title":"Look at clusters one by one","description":"This split-pane
+      view has one cluster of your bipartite graph on the left.\nThe right-hand side
+      shows all of the clusters.\n\nTry clicking on a cluster on the right and pick
+      **Filter base graph to this segment**.\nThe left-hand side will then show the
+      members of that cluster."},{"box":"custom_boxes/Modular-clustering-on-bipartite-graph_1","popup":"filtered
+      whole-graph visualization","title":"Look at a filtered view of the whole graph","description":"This
+      view shows the whole graph structure.\nThe \"A\" side is on top, the \"B\" side
+      is on the bottom.\nHorizontally each cluster is placed together. If the dataset
+      is well clustered,\nwe expect to see most edges going vertically, within the
+      clusters.\n\nWe also gave the clusters different colors so they stand out better.
+      \n\nUse the mouse wheel or double click to zoom."}]
+    wizard: yes
+  parametricParameters: {}
+  x: 30.0
+  y: 58.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: >-
+      UPLOAD$/f98c6c356f8bc815848986d88e384c34.example-movie-cast.csv
+    imported_table: 2b96a37e-5690-363f-85d8-31b65b2aa4d0
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/f98c6c356f8bc815848986d88e384c34.example-movie-cast.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 31.0
+  y: 219.0
+- id: Compute-degree_1
+  inputs:
+    graph:
+      boxId: custom_boxes/Columns-to-bipartite-graph_1
+      id: graph
+  operationId: Compute degree
+  parameters:
+    direction: all edges
+  parametricParameters: {}
+  x: 578.0
+  y: 219.0
+- id: custom_boxes/Columns-to-bipartite-graph_1
+  inputs:
+    input:
+      boxId: Import-CSV_1
+      id: table
+  operationId: custom_boxes/Columns to bipartite graph
+  parameters:
+    ID for side A: actor
+    ID for side B: movie
+  parametricParameters: {}
+  x: 307.0
+  y: 219.0
+- id: custom_boxes/Modular-clustering-on-bipartite-graph_1
+  inputs:
+    graph:
+      boxId: Compute-degree_1
+      id: graph
+  operationId: custom_boxes/Modular clustering on bipartite graph
+  parameters:
+    Min degree for visualization: ''
+    Min weight for visualization: ''
+  parametricParameters: {}
+  x: 866.0
+  y: 217.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      The box below is a **custom box**, which is another workspace. You can dive
+      into that workspace by clicking the ![arrow](/arrow.png) icon on the toolbar.
+  parametricParameters: {}
+  x: 256.33294738915157
+  y: 90.6875

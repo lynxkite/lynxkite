@@ -1,0 +1,73 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_PREDICT","defaultValue":"income","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: input-graph-attribute
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph attribute
+  parametricParameters: {}
+  x: -3.8337746209420445
+  y: 365.166225379058
+- id: Graph-rejoin_1
+  inputs:
+    source:
+      boxId: input-graph-attribute
+      id: input
+    target:
+      boxId: input-graph
+      id: input
+  operationId: Graph rejoin
+  parameters: {}
+  parametricParameters:
+    attrs: ${ATTR_TO_PREDICT}_aggregate_prediction
+  x: 438.6878235567857
+  y: 230.8923816041995
+- id: Graph-rejoin_2
+  inputs:
+    source:
+      boxId: input-source 2
+      id: input
+    target:
+      boxId: Graph-rejoin_1
+      id: graph
+  operationId: Graph rejoin
+  parameters: {}
+  parametricParameters:
+    attrs: ${ATTR_TO_PREDICT}_viral_prediction
+  x: 419.7017509395533
+  y: 484.0047795943757
+- id: input-source 2
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: source 2
+  parametricParameters: {}
+  x: -22.209767518061625
+  y: 600.1398450120412
+- id: output-graph
+  inputs:
+    output:
+      boxId: Graph-rejoin_2
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 987.5255852150051
+  y: 557.9288020759061

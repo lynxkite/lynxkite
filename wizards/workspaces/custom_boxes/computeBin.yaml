@@ -1,0 +1,41 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from Multi-model prediction - Andras
+    parameters: >-
+      [{"kind":"vertexattribute","id":"attribute","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Derive-vertex-attribute_10
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive vertex attribute
+  parameters: {}
+  parametricParameters:
+    expr: math.round(${attribute} / bin_size) * bin_size
+    output: ${attribute}_bin
+  x: 200.0
+  y: 75.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_10
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 400.0
+  y: 150.0

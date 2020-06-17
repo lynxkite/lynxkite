@@ -1,0 +1,386 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Created from Users/singleuser/In progress wizards/Multi-model prediction/2020-01-31
+      15:16:44
+    parameters: >-
+      [{"kind":"vertex attribute (number)","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Aggregate-on-neighbors_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_4
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_internal_defined: sum
+    direction: all neighbors
+  parametricParameters: {}
+  x: 642.3980800865123
+  y: 138.88007325523347
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -174.37437836231385
+  y: 130.72036955796867
+- id: custom_boxes/copy-vattr_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: custom_boxes/copy vattr
+  parameters:
+    COPIED_ATTR: internal_attribute_to_predict
+  parametricParameters:
+    ATTR_TO_COPY: $ATTR_TO_PREDICT
+  x: 155.20722958567313
+  y: 141.26172598336808
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: |-
+      internal_attribute_to_predict match {
+        case None => neighborhood_internal_defined_sum.getOrElse(-1.0)
+        case _ => -1.0
+      }
+    output: internal_sample_goodness
+  parametricParameters: {}
+  x: 883.8655170108436
+  y: 139.59937256883845
+- id: Add-rank-attribute_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: internal_sample_goodness
+    order: descending
+    rankattr: internal_ranking
+  parametricParameters: {}
+  x: 1155.8551327271666
+  y: 143.43092444653374
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_8
+      id: graph
+  operationId: Graph visualization
+  parameters: {}
+  parametricParameters:
+    state: |2-
+            {
+              "left": {
+                "projectPath": "",
+                "graphMode": "sampled",
+                "display": "svg",
+                "filters": {
+                  "vertex": {},
+                  "edge": {}
+                },
+                "bucketCount": 4,
+                "preciseBucketSizes": false,
+                "relativeEdgeDensity": false,
+                "axisOptions": {
+                  "vertex": {},
+                  "edge": {}
+                },
+                "sampleRadius": 1,
+                "attributeTitles": {
+                  "label": "IdAndValue"
+                },
+                "animate": {
+                  "enabled": false,
+                  "style": "expand",
+                  "labelAttraction": 0
+                },
+                "centers": [
+                  "*"
+                ],
+                "customVisualizationFilters": true,
+                "vertexColorMap": "Viridis",
+                "labelColorMap": "Viridis",
+                "edgeColorMap": "Viridis",
+                "sliderPos": 50,
+                "lastCentersRequest": {
+                  "count": 1,
+                  "filters": [
+                    {
+                      "attributeName": "internal_ranking",
+                      "valueSpec": "0"
+                    }
+                  ]
+                },
+                "lastCentersResponse": [
+                  "*"
+                ]
+              },
+              "right": {
+                "display": "svg",
+                "filters": {
+                  "vertex": {},
+                  "edge": {}
+                },
+                "bucketCount": 4,
+                "preciseBucketSizes": false,
+                "relativeEdgeDensity": false,
+                "axisOptions": {
+                  "vertex": {},
+                  "edge": {}
+                },
+                "sampleRadius": 1,
+                "attributeTitles": {},
+                "animate": {
+                  "enabled": false,
+                  "style": "expand",
+                  "labelAttraction": 0
+                },
+                "centers": [
+                  "auto"
+                ],
+                "customVisualizationFilters": false,
+                "vertexColorMap": "Viridis",
+                "labelColorMap": "Viridis",
+                "edgeColorMap": "Viridis"
+              }
+            }
+  x: 1612.3046531895488
+  y: 362.05458083078577
+- id: Aggregate-on-neighbors_2
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_1
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_internal_ranking: min
+    direction: all neighbors
+  parametricParameters: {}
+  x: -67.25057789321302
+  y: 379.29328537408577
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_internal_keep: '1.0'
+  parametricParameters: {}
+  x: 490.7389522074593
+  y: 453.3671459966268
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: |-
+      if (internal_ranking == 0 || neighborhood_internal_ranking_min == 0) 1.0
+      else 0.0
+    output: internal_keep
+  parametricParameters: {}
+  x: 261.26880763450356
+  y: 390.31721114693903
+- id: Derive-vertex-attribute_3
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_3
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: |-
+      if (internal_ranking == 0 || internal_triangle_ranking < 5) 1.0
+      else 0.0
+    output: internal_keep2
+  parametricParameters: {}
+  x: 622.1978426083258
+  y: 661.3225363628504
+- id: Filter-by-attributes_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_3
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_internal_keep2: '1.0'
+  parametricParameters: {}
+  x: 935.038817573478
+  y: 659.1887123764196
+- id: Find-triangles_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_3
+      id: graph
+  operationId: Find triangles
+  parameters:
+    bothdir: 'false'
+  parametricParameters: {}
+  x: 1266.5533870948734
+  y: 391.18045692655187
+- id: Aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Find-triangles_1
+      id: graph
+  operationId: Aggregate from segmentation
+  parameters:
+    aggregate_id: first
+    apply_to_graph: .triangles
+  parametricParameters: {}
+  x: -56.17964518922514
+  y: 655.8926471064038
+- id: Add-rank-attribute_3
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_1
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: triangles_id_first
+    rankattr: internal_triangle_ranking
+  parametricParameters: {}
+  x: 300.86667557861443
+  y: 661.7949492500018
+- id: Derive-vertex-attribute_4
+  inputs:
+    graph:
+      boxId: custom_boxes/copy-vattr_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: |-
+      internal_attribute_to_predict match {
+      case Some(_) => 1.0
+      case None => 0.0
+      }
+    output: internal_defined
+  parametricParameters: {}
+  x: 425.9890139966983
+  y: 141.1167829636324
+- id: Derive-vertex-attribute_5
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: |-
+      if (internal_ranking == 0.0 || internal_defined == 1.0 ) 1.0
+      else 0.0
+    output: internal_keep0
+  parametricParameters: {}
+  x: 714.1905056559752
+  y: 436.45985327205415
+- id: Filter-by-attributes_3
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_5
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_internal_keep0: '1.0'
+  parametricParameters: {}
+  x: 1008.3964054602174
+  y: 378.3593768673336
+- id: Output_1
+  inputs:
+    output:
+      boxId: Graph-visualization_1
+      id: visualization
+  operationId: Output
+  parameters:
+    name: samplevisualization
+  parametricParameters: {}
+  x: 1990.198526079101
+  y: 381.59352109014736
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: custom_boxes/copy-vattr_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"bucketed","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":true,"relativeEdgeDensity":true,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"x":"Age","y":"Gender"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  parametricParameters: {}
+  x: 1339.2378033375799
+  y: -107.03729291527824
+- id: Derive-vertex-attribute_7
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_9
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    output: internal_value_to_predict2
+  parametricParameters:
+    expr: |-
+      $ATTR_TO_PREDICT match {
+      case Some(x) => x.toString
+      case None => "??"
+      }
+  x: 505.299155186687
+  y: 939.561271343456
+- id: Derive-vertex-attribute_8
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_7
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: >-
+      internal_user.toString      + " (" + internal_value_to_predict2 + ")"
+    output: IdAndValue
+  parametricParameters: {}
+  x: 920.0404675866912
+  y: 911.7681782443269
+- id: Derive-vertex-attribute_9
+  inputs:
+    graph:
+      boxId: Add-constant-vertex-attribute_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    output: internal_user
+  parametricParameters:
+    expr: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("id_"))
+      .map(_.name)
+      .head.substring(3)}
+  x: 179.2977149385262
+  y: 950.3968518570316
+- id: Add-constant-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_2
+      id: graph
+  operationId: Add constant vertex attribute
+  parameters:
+    name: internal_name_of_id
+    type: String
+  parametricParameters:
+    value: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("id_"))
+      .map(_.name)
+      .head.substring(3)}
+  x: -110.72430499123712
+  y: 955.2305521891946

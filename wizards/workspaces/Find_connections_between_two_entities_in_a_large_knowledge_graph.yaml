@@ -1,0 +1,576 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    in_progress: no
+    parameters: >-
+      [{"kind":"text","id":"MaxSize","defaultValue":"25","$$hashKey":"object:5654"}]
+    steps: >-
+      [{"box":"custom_boxes/find-connections-select-both_1","popup":"parameters","title":"Select
+      two entities","description":"Data exploration and visualization allow data scientists
+      and analysts to better\nunderstand the data structure and generate hypothesis
+      for predictive analysis.\n\nThis fun wizard lets you find connections between
+      any two subjects in a large knowledge graph.\nWe hope you find some interesting
+      and surprising connections.\n\nWe have created this wizard to show a complex
+      application that everybody can\ntry without uploading their own data or being
+      an expert in a particular domain.\nThe complexity comes from searching for a
+      relevant subgraph of a large graph.\nFinding the shortest path between A and
+      B is a good start.\nBut there are many equally short paths.\nWe want to select
+      the most interesting paths and their neighborhood to present an interesting
+      story.\n\nClick _\"View workspace\"_ at the bottom to see how our solution works.\n\nThe
+      dataset comes from a [Wikidata](https://www.wikidata.org/) dump dated 2019-08-05.\nIt
+      has been filtered to entries with short titles. (At most 12 letters.)\nIt still
+      includes more than 1.5 million entries and 3 million connections between them.\n\nTry
+      to look at pairs like these to get started:\n\n  * Jon Snow - Lionel Messi\n  *
+      Superman - Gandalf\n  * Matrix - Basketball\n  * Mike Tyson - Tacitus\n\n"},{"box":"Graph-visualization_1","popup":"visualization","title":"Take
+      a look at their relationship","description":"LynxKite provides a flexible and
+      powerful way to visualize graph data. You can select which vertex and edge attributes
+      are visualized and also the manner in which they are visualized. For example,
+      according to the legend you're about to see below, the vertex colors indicate
+      the kind (e.g., human) of the entities; the labels on the vertices display the
+      name of the entity; and the color of the edge between two entities encodes the
+      type of their relationship. You can check all the possible visualization methods
+      [here](http://try.lynxkite.com/#/help#concrete-visualization-options).\n\n You
+      might see no visualization at all: this means that either of the entities you
+      chose was missing from the data.\n"}]
+    wizard: yes
+  parametricParameters: {}
+  x: -13.245941084546196
+  y: 132.8540504242513
+- id: Compute-distance-via-shortest-path_1
+  inputs:
+    graph:
+      boxId: Add-reversed-edges_1
+      id: graph
+  operationId: Compute distance via shortest path
+  parameters:
+    edge_distance: distance
+    name: from_first
+    starting_distance: is_first
+  parametricParameters: {}
+  x: 2350.0
+  y: 350.0
+- id: Compute-distance-via-shortest-path_2
+  inputs:
+    graph:
+      boxId: Compute-distance-via-shortest-path_1
+      id: graph
+  operationId: Compute distance via shortest path
+  parameters:
+    edge_distance: distance
+    name: from_second
+    starting_distance: is_second
+  parametricParameters: {}
+  x: 2550.0
+  y: 350.0
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterea_reversed: =0
+  parametricParameters:
+    filterva_ranking: <$MaxSize
+  x: 2300.0
+  y: 750.0
+- id: Add-reversed-edges_1
+  inputs:
+    graph:
+      boxId: custom_boxes/find-connections-select-both_1
+      id: graph
+  operationId: Add reversed edges
+  parameters:
+    distattr: reversed
+  parametricParameters: {}
+  x: 2150.0
+  y: 350.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    columns: id,name
+    error_handling: DROPMALFORMED
+    filename: >-
+      UPLOAD$/365c31d5e542179aebbd014018255ed4.filtered-12-names.csv
+    imported_table: 6c526593-040b-3173-88e5-41a92a5b6493
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "id,name",
+        "filename" : "UPLOAD$/365c31d5e542179aebbd014018255ed4.filtered-12-names.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "DROPMALFORMED",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: -665.5483834997418
+  y: 695.9557200607852
+- id: Add-rank-attribute_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_7
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: score
+    order: descending
+  parametricParameters: {}
+  x: 2126.361494958115
+  y: 748.4948489279551
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    columns: src,rel,dst
+    error_handling: DROPMALFORMED
+    filename: >-
+      UPLOAD$/8a03b429d3e98d5f0610af27767fe4dc.filtered-12-edges.csv
+    imported_table: a34048cf-cc34-39e2-9f2a-e0b5a8f0f5db
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "src,rel,dst",
+        "filename" : "UPLOAD$/8a03b429d3e98d5f0610af27767fe4dc.filtered-12-edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "DROPMALFORMED",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: -665.5483834997418
+  y: 493.2089469542043
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+    table:
+      boxId: SQL1_2
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: id
+    dst: dst
+    src: src
+  parametricParameters: {}
+  x: -205.65227072520486
+  y: 700.0
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: -423.33386310778
+  y: 683.1178609290838
+- id: Derive-edge-attribute_2
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_2
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      es['is_instance'] = np.where(
+        es.rel == 'instance of',
+        vs.idegree[es.dst], 0.0)
+      es['class_name'] = np.where(
+        es.is_instance,
+        vs.name[es.dst], np.nan)
+    inputs: vs.idegree, vs.name, es.rel, es.dst
+    outputs: 'es.is_instance: float, es.class_name: str'
+  parametricParameters: {}
+  x: 574.6680670901062
+  y: 1008.3317419430612
+- id: Weighted-aggregate-edge-attribute-to-vertices_1
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_2
+      id: graph
+  operationId: Weighted aggregate edge attribute to vertices
+  parameters:
+    aggregate_class_name: by_max_weight
+    direction: outgoing edges
+    weight: is_instance
+  parametricParameters: {}
+  x: -48.11108989257415
+  y: 1230.1103260252435
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-edge-attributes_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_edge_class_name_by_max_weight_by_is_instance: kind
+  parametricParameters: {}
+  x: 465.1112808594068
+  y: 1216.8879552732626
+- id: Discard-edge-attributes_1
+  inputs:
+    graph:
+      boxId: Weighted-aggregate-edge-attribute-to-vertices_1
+      id: graph
+  operationId: Discard edge attributes
+  parameters:
+    name: class_name,dst,is_instance,src
+  parametricParameters: {}
+  x: 196.2221797851483
+  y: 1218.7768653806884
+- id: Derive-vertex-attribute_6
+  inputs:
+    graph:
+      boxId: custom_boxes/discardDeadEnds_3
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: >-
+      if (is_first.isDefined || is_second.isDefined) Some(Vector(is_first.getOrElse(30.0),is_second.getOrElse(30.0)))
+      else None
+    output: position
+  parametricParameters: {}
+  x: 2617.7980172397
+  y: 1097.7247083009408
+- id: Compute-degree_2
+  inputs:
+    graph:
+      boxId: Rename-edge-attributes_1
+      id: graph
+  operationId: Compute degree
+  parameters:
+    direction: all edges
+  parametricParameters: {}
+  x: 775.5563507438219
+  y: 500.0
+- id: Derive-edge-attribute_4
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_2
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      es['distance'] = np.log(np.sqrt(
+        vs.degree[es.src].values *
+        vs.degree[es.dst].values))
+    inputs: vs.degree, es.src, es.dst
+    outputs: 'es.distance: float'
+  parametricParameters: {}
+  x: 871.0012992494186
+  y: 812.7027926410034
+- id: SQL1_2
+  inputs:
+    input:
+      boxId: Import-CSV_2
+      id: table
+  operationId: SQL1
+  parameters:
+    sql: |
+      select * from input where rel != 'depicts'
+  parametricParameters: {}
+  x: -139.55541757813288
+  y: 493.2089469542043
+- id: Filter-by-attributes_2
+  inputs:
+    graph:
+      boxId: Compute-degree_2
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_degree: <1000
+  parametricParameters: {}
+  x: 1050.0
+  y: 500.0
+- id: Derive-vertex-attribute_7
+  inputs:
+    graph:
+      boxId: Compute-distance-via-shortest-path_2
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: vs['score'] = 1 / (vs.from_first + vs.from_second)
+    inputs: vs.from_first, vs.from_second
+    outputs: 'vs.score: float'
+  parametricParameters: {}
+  x: 2750.0
+  y: 350.0
+- id: custom_boxes/discardDeadEnds_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: custom_boxes/discardDeadEnds
+  parameters: {}
+  parametricParameters: {}
+  x: 1807.1191896048947
+  y: 1103.1353534793789
+- id: custom_boxes/discardDeadEnds_2
+  inputs:
+    graph:
+      boxId: custom_boxes/discardDeadEnds_1
+      id: graph
+  operationId: custom_boxes/discardDeadEnds
+  parameters: {}
+  parametricParameters: {}
+  x: 2049.0399265108163
+  y: 1104.6327339535621
+- id: custom_boxes/discardDeadEnds_3
+  inputs:
+    graph:
+      boxId: custom_boxes/discardDeadEnds_2
+      id: graph
+  operationId: custom_boxes/discardDeadEnds
+  parameters: {}
+  parametricParameters: {}
+  x: 2300.0
+  y: 1100.0
+- id: Derive-edge-attribute_6
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: es['is_instance'] = (es.rel == 'instance of').astype(float)
+    inputs: es.rel
+    outputs: 'es.is_instance: float'
+  parametricParameters: {}
+  x: -317.00019096683263
+  y: 1010.2206520504872
+- id: Aggregate-edge-attribute-to-vertices_2
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_6
+      id: graph
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    aggregate_is_instance: sum
+  parametricParameters: {}
+  x: -51.88891010742584
+  y: 1010.2206520504874
+- id: Rename-vertex-attributes_2
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_2
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_edge_is_instance_sum: idegree
+  parametricParameters: {}
+  x: 266.1118537599047
+  y: 1002.6650116207838
+- id: Graph-rejoin_1
+  inputs:
+    source:
+      boxId: Fill-vertex-attributes-with-constant-default-values_1
+      id: graph
+    target:
+      boxId: Derive-edge-attribute_4
+      id: graph
+  operationId: Graph rejoin
+  parameters:
+    attrs: kind
+  parametricParameters: {}
+  x: 1089.476490132038
+  y: 1072.7392739646994
+- id: Fill-vertex-attributes-with-constant-default-values_1
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Fill vertex attributes with constant default values
+  parameters:
+    fill_kind: unknown
+  parametricParameters: {}
+  x: 758.5562133302013
+  y: 1199.88776430643
+- id: Merge-parallel-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Merge parallel edges
+  parameters:
+    aggregate_rel: most_common
+  parametricParameters: {}
+  x: 212.98036605619447
+  y: 624.6115141394667
+- id: Rename-edge-attributes_1
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges_1
+      id: graph
+  operationId: Rename edge attributes
+  parameters:
+    change_rel_most_common: rel
+  parametricParameters: {}
+  x: 467.49790349221115
+  y: 619.4193677169889
+- id: Derive-edge-attribute_1
+  inputs:
+    graph:
+      boxId: custom_boxes/findConnectionsPrecompute_1
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: es['relation_strength'] = 1 / es.distance
+    inputs: es.distance, vs.name_lower
+    outputs: 'es.relation_strength: float'
+  parametricParameters: {}
+  x: 1471.2924900910557
+  y: 561.7295584728466
+- id: custom_boxes/find-connections-select-both_1
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  operationId: custom_boxes/find-connections-select-both
+  parameters:
+    First entity: Superman
+    Second entity: Gandalf
+  parametricParameters: {}
+  x: 1656.255964577988
+  y: 348.71889389899144
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Import the sampled knowledge graph
+  parametricParameters: {}
+  x: -536.9139971479447
+  y: 502.75070068349885
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Keep only one relationship between any two entity
+  parametricParameters: {}
+  x: 141.76290995674975
+  y: 413.8659738198215
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Remove insanely high degree entities
+  parametricParameters: {}
+  x: 741.4923911566004
+  y: 404.4288819936081
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Try to find the "kind" for entities, as the other entity which it is an "instance_of"
+      and which has the most possible instances (to find generic notions).
+  parametricParameters: {}
+  x: 69.88967397475645
+  y: 902.6650116207836
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Define distance. Our aim is that the length of a path from A to B represents
+      the log probability of reaching from A to B via a sequence of associations on
+      this path.
+  parametricParameters: {}
+  x: 729.9867953259754
+  y: 698.6626910551105
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Merge in kinds
+  parametricParameters: {}
+  x: 1070.2772360867439
+  y: 984.7969749178159
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Reciprocal of distance for visualization
+  parametricParameters: {}
+  x: 1627.6431552490708
+  y: 570.1601739207597
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      Have the user select the entities. Selected entities will be marked with the `is_first` and `is_second` attributes.
+
+      This is a **custom box**, which is another workspace. You can dive into it by clicking the ![arrow](/arrow.png) icon on the top toolbar.
+  parametricParameters: {}
+  x: 1639.5097827986565
+  y: 190.56024823010662
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Score vertices based on distances to both entities.
+  parametricParameters: {}
+  x: 2350.0
+  y: 250.0
+- id: Comment_11
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Keep top vertices only
+  parametricParameters: {}
+  x: 2150.0
+  y: 650.0
+- id: Comment_12
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Remove dead ends in the visualization
+  parametricParameters: {}
+  x: 2000.0
+  y: 1050.0
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_6
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":0,"attributeTitles":{"position":"position","label":"name","color":"kind","width":"relation_strength","edge
+      color":"rel"},"animate":{"enabled":true,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  parametricParameters: {}
+  x: 2838.1529356189667
+  y: 842.2582861718602
+- id: custom_boxes/findConnectionsPrecompute_1
+  inputs:
+    input:
+      boxId: Graph-rejoin_1
+      id: graph
+  operationId: custom_boxes/findConnectionsPrecompute
+  parameters: {}
+  parametricParameters: {}
+  x: 1268.1088726934795
+  y: 817.6229367371451

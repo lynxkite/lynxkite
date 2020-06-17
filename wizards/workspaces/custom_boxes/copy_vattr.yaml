@@ -1,0 +1,41 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_COPY","defaultValue":"","$$hashKey":"object:1568"},{"kind":"text","id":"COPIED_ATTR","defaultValue":"","$$hashKey":"object:3358"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 794.4304229319297
+  y: 153.3810773162429
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive vertex attribute
+  parameters: {}
+  parametricParameters:
+    expr: $ATTR_TO_COPY
+    output: $COPIED_ATTR
+  x: 398.63971363152456
+  y: 157.17000046005103

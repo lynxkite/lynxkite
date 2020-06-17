@@ -1,0 +1,166 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Created from Users/singleuser/In progress wizards/Multi-model prediction/2020-01-31
+      15:16:44
+    parameters: >-
+      [{"kind":"vertex attribute (number)","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: -83.03844018487673
+  y: -51.80062621395217
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: custom_boxes/copy-vattr_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    output: internal_defined
+  parametricParameters:
+    expr: |-
+      $ATTR_TO_PREDICT match {
+      case Some(_) => 1.0
+      case None => 0.0
+      }
+  x: 559.4411657773506
+  y: 158.3504832937937
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -341.91752675425107
+  y: 158.1178724211775
+- id: Aggregate-vertex-attribute-globally_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_internal_defined: count,sum
+    aggregate_internal_to_predict: std_deviation,average
+  parametricParameters: {}
+  x: 944.7414042318348
+  y: 156.3794254411055
+- id: Derive-graph-attribute_2
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  operationId: Derive graph attribute
+  parameters:
+    expr: internal_defined_sum / internal_defined_count
+    output: internal_defined_ratio
+  parametricParameters: {}
+  x: 1271.9560329576482
+  y: 155.09229273838642
+- id: Derive-graph-attribute_3
+  inputs:
+    graph:
+      boxId: Derive-graph-attribute_2
+      id: graph
+  operationId: Derive graph attribute
+  parameters:
+    output: (1) status
+  parametricParameters:
+    expr: |-
+      internal_defined_ratio match {
+      case 1.0 => "There are no unknown values! Nothing to predict!"
+      case _  =>
+        (100 * (internal_defined_sum / internal_defined_count)).toInt.toString +
+        "% labelled (" + internal_defined_sum.toLong.toString + " out of " + internal_defined_count.toLong.toString + ")"
+      }
+  x: -326.22570243629133
+  y: 478.37478614758174
+- id: Discard-graph-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-edge-attributes_1
+      id: graph
+  operationId: Discard graph attributes
+  parameters:
+    name: >-
+      internal_defined_count,internal_defined_ratio,internal_defined_sum
+  parametricParameters: {}
+  x: 755.8355597711173
+  y: 485.66621244984503
+- id: Discard-vertex-attributes_2
+  inputs:
+    graph:
+      boxId: Derive-graph-attribute_3
+      id: graph
+  operationId: Discard vertex attributes
+  parameters: {}
+  parametricParameters:
+    name: ${vertexAttributes.map(_.name).mkString(",")}
+  x: 102.65689967381356
+  y: 491.996572479395
+- id: Discard-edge-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-vertex-attributes_2
+      id: graph
+  operationId: Discard edge attributes
+  parameters: {}
+  parametricParameters:
+    name: ${edgeAttributes.map(_.name).mkString(",")}
+  x: 446.2078283961915
+  y: 492.86234602325214
+- id: output-graph
+  inputs:
+    output:
+      boxId: Discard-graph-attributes_2
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 1880.7134900404942
+  y: 301.50755274295017
+- id: custom_boxes/copy-vattr_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: custom_boxes/copy vattr
+  parameters:
+    COPIED_ATTR: internal_to_predict
+  parametricParameters:
+    ATTR_TO_COPY: $ATTR_TO_PREDICT
+  x: 125.49880614400601
+  y: 161.73708786368334
+- id: Rename-graph-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-graph-attributes_1
+      id: graph
+  operationId: Rename graph attributes
+  parameters:
+    change_internal_to_predict_average: (2) average
+    change_internal_to_predict_std_deviation: (3) standard_deviation
+  parametricParameters: {}
+  x: 1038.8992445650981
+  y: 473.1313008884065
+- id: Discard-graph-attributes_2
+  inputs:
+    graph:
+      boxId: Rename-graph-attributes_1
+      id: graph
+  operationId: Discard graph attributes
+  parameters: {}
+  parametricParameters:
+    name: |-
+      ${graphAttributes
+      .map(_.name)
+      .filterNot(_.startsWith("!"))
+      .filterNot(_ == "(3) standard_deviation")
+      .filter(_.contains("_"))
+      .mkString(",")
+      }
+  x: 1604.404424460349
+  y: 430.11601361497816
