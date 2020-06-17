@@ -298,7 +298,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]], multipleChoice = true))
     override def summary = {
       val elementNames = splitParam("elements")
-      s"Create Vector from ${elementNames.mkString(", ")}"
+      val output = params("output")
+      s"Bundle ${elementNames.mkString(", ")} as $output"
     }
     def enabled = FEStatus.enabled
     def apply(): Unit = {
