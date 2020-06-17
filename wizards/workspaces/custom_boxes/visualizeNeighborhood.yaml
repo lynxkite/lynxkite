@@ -1,0 +1,143 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from knowledge_play
+    parameters: >-
+      [{"kind":"vertexattribute","id":"based_on","defaultValue":"is_first","$$hashKey":"object:26401"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Aggregate-on-neighbors_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_target: max
+    direction: all edges
+  parametricParameters: {}
+  x: 200.0
+  y: 75.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: Merge-two-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_1
+      id: graph
+  operationId: Merge two vertex attributes
+  parameters:
+    attr1: target
+    attr2: neighborhood_target_max
+    name: included
+  parametricParameters: {}
+  x: 450.0
+  y: 75.0
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_4
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"name","color":"kind","width":"relation_strength","edge
+      color":"rel"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  parametricParameters: {}
+  x: 1950.0
+  y: 75.0
+- id: Filter-by-attributes_3
+  inputs:
+    graph:
+      boxId: Merge-two-vertex-attributes_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_included: '0.0'
+  parametricParameters: {}
+  x: 750.0
+  y: 75.0
+- id: Aggregate-edge-attribute-to-vertices_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_3
+      id: graph
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    aggregate_relation_strength: sum
+    direction: all edges
+  parametricParameters: {}
+  x: 1050.0
+  y: 75.0
+- id: Add-rank-attribute_2
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_1
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    keyattr: edge_relation_strength_sum
+    order: descending
+  parametricParameters: {}
+  x: 1300.0
+  y: 75.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Add-rank-attribute_2
+      id: graph
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      vs['keep'] = (
+        vs.target.notna() |
+        (vs.ranking < 20)
+      ).astype(float)
+    inputs: vs.target, vs.ranking
+    outputs: 'vs.keep: float'
+  parametricParameters: {}
+  x: 1550.0
+  y: 75.0
+- id: Filter-by-attributes_4
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_keep: '1.0'
+  parametricParameters: {}
+  x: 1750.0
+  y: 75.0
+- id: output-visualization
+  inputs:
+    output:
+      boxId: Graph-visualization_1
+      id: visualization
+  operationId: Output
+  parameters:
+    name: visualization
+  parametricParameters: {}
+  x: 2150.0
+  y: 150.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Compute in Python
+  parameters:
+    outputs: 'vs.target: float'
+  parametricParameters:
+    code: vs['target'] = vs.$based_on
+    inputs: vs.$based_on
+  x: 126.0
+  y: 343.703125

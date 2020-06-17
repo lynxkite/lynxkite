@@ -1,0 +1,258 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    in_progress: no
+    steps: >-
+      [{"title":"Vertex upload","description":"Upload the CSV file for vertices. For
+      example, you could use [this csv file](https://d955izgyg907d.cloudfront.net/public/demog_vertices.csv)\nhere.
+      **Use the upload icon on the right for the upload!** (instead of entering the
+      filename manually). After your upload is complete, please, **don't forget to
+      press the import button!**\n", "box":"Import-CSV_1","popup":"parameters"},{"title":"Choose
+      the id field","description":"In your vertex file, one special column is the
+      one that contains some id that is unique for the row. This id is used to identify
+      the vertices in your graph. Select the name of this column here.\n","box":"custom_boxes/idname_1","popup":"parameters"},{"title":"Choose
+      the attribute you want to predict","description":"In your vertex file, another
+      special column is the one that contains numeric values but some values are missing.
+      Our goal is to predict these missing values. Choose the name of this column
+      here.","box":"custom_boxes/fieldnames_1","popup":"parameters"},{"title":"Edge
+      upload","description":"Upload the CSV file for edges. For example, you could
+      use [this csv file](https://d955izgyg907d.cloudfront.net/public/demog_edges.csv)\nhere.
+      **Use the upload icon on the right for the upload!** (instead of entering the
+      filename manually). After your upload is complete, please, **don't forget to
+      press the import button!**\n", "box":"Import-CSV_2","popup":"parameters"},{"title":"Select
+      the source and destination columns in the file","description":"Each row in your
+      edge CSV file defines an edge in the graph that points from the id in your Source
+      field to the id in your Destination field. (These ids are the ones you specified
+      earlier when you imported the vertex csv file.). Please, speficy here which
+      column corresponds to the source and which to the destination edge.","box":"custom_boxes/edgefieldnames_1","popup":"parameters"},{"box":"custom_boxes/predict_attribute_1","popup":"precheck","title":"Basic
+      checks","description":"We check what percentage of the values are missing (and
+      thus, should be predicted). Also, we write some basic statistics about the existing
+      values for this column."},{"title":"Bucketed graph check","description":"The
+      bucketed graph check allows users to understand if using features of the graph
+      has the potential to improve prediction.\nIn this chart, nodes represent a group
+      of vertices that are similar with respect to the attribute to be predicted.\nThe
+      width of the edge connecting two groups represents the number of connections
+      between any two members of\nthat group. For graph-based attribute prediction
+      to work well, the edge that connects a group to itself should be\nrelatively
+      thick, meaning that vertices that are similar to each other with respect to
+      the attribute to be\npredicted tend to be connected.\n\nIn this chart, both
+      the x-axis and the y-axis represent the same groups: this provides a clearer
+      (diagonal) visual\nrepresentation.\n","box":"custom_boxes/predict_attribute_1","popup":"bucketed"},{"box":"custom_boxes/predict_attribute_1","popup":"sample","title":"Graph
+      sample","description":"This visualization shows a sample of the graph that was
+      input. Here, one vertex does not have the attribute to be predicted, while its
+      neighborhood does. In similar scenarios, this environment helps LynxKite to
+      come up with a better prediction for the missing value."},{"title":"Model performance
+      overview: barcharts","description": "The error distribution of each model. Computing
+      this can take some time, since we are splitting our data into a train set and
+      a test set, build three models, and evaluate each model against the test set.
+      The resulting bar chart should give you an indication about the performance
+      of the models: higher bars in the middle region are better (more predictions
+      are near to zero error), whereas higher bars towards the edges are worse (more
+      predictions are off the mark).", "box":"custom_boxes/predict_attribute_1","popup":"errors"},{"title":"Model
+      performance comparison","description":"The mean squared error for each of the
+      three methods. A lower value means better prediction accuracy. Unless you have
+      already completed the previous step, computing this can take some time, since
+      we are splitting our data into a train set and a test set, build three models,
+      and evaluate each model against the test set.", "box":"custom_boxes/predict_attribute_1","popup":"errorscalars"},{"title":"Download
+      results","description":"Download a CSV file that contains the results. This
+      file is almost the same as your input CSV file, but it contains three additional
+      columns: the three predictions given by the three prediction methods. We fall
+      back to the linear regression results where the graph-based prediction methods
+      could not come up with anything.\nClick on the play button to start the computation;
+      click on the Download text if the computation has finished. **The computation
+      can take longer**, as we are applying each of our three models to the whole
+      input data set." ,"box":"Export-to-CSV_1","popup":"exported"}]
+    wizard: yes
+  parametricParameters: {}
+  x: -500.9537991655231
+  y: -313.54671794332813
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: ''
+    infer: yes
+  parametricParameters: {}
+  x: -687.8290956350858
+  y: -47.665074094513855
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: ''
+    infer: yes
+  parametricParameters: {}
+  x: -956.2381012854662
+  y: 382.3174151894384
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: -421.864822870094
+  y: -43.20860616935678
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Copy-graph-attribute-from-other-graph_2
+      id: graph
+    table:
+      boxId: custom_boxes/edgefieldnames_1
+      id: graph
+  operationId: Use table as edges
+  parameters: {}
+  parametricParameters:
+    attr: |-
+      ${graphAttributes
+      .map(_.name)
+      .filter(_.startsWith("id_"))
+      .head.substring(3)}
+    dst: |-
+      ${graphAttributes
+      .map(_.name)
+      .filter(_.startsWith("dst_"))
+      .head.substring(4)}
+    src: |-
+      ${graphAttributes
+      .map(_.name)
+      .filter(_.startsWith("src_"))
+      .head.substring(4)}
+  x: 184.9925176505925
+  y: 384.88782544501413
+- id: custom_boxes/predict_attribute_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: custom_boxes/predict attribute
+  parameters: {}
+  parametricParameters:
+    ATTR_TO_PREDICT: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("predict_"))
+      .map(_.name)
+      .head.substring(8)}
+  x: 516.2305150813844
+  y: 395.4323213427613
+- id: Export-to-CSV_1
+  inputs:
+    table:
+      boxId: custom_boxes/predict_attribute_1
+      id: results
+  operationId: Export to CSV
+  parameters:
+    for_download: yes
+  parametricParameters: {}
+  x: 892.1689205801404
+  y: -56.59076709549298
+- id: custom_boxes/fieldnames_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: custom_boxes/fieldnames
+  parameters: {}
+  parametricParameters: {}
+  x: 440.1254356803145
+  y: -75.13053658934352
+- id: Use-table-as-vertices_2
+  inputs:
+    table:
+      boxId: Import-CSV_2
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: -774.2380072539443
+  y: 754.4070546688662
+- id: Copy-graph-attribute-from-other-graph_1
+  inputs:
+    destination:
+      boxId: custom_boxes/fieldnames_1
+      id: graph
+    source:
+      boxId: custom_boxes/edgefieldnames_1
+      id: graph
+  operationId: Copy graph attribute from other graph
+  parameters: {}
+  parametricParameters:
+    graph_attribute: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("src"))
+      .map(_.name)
+      .head}
+    save_as: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("src"))
+      .map(_.name)
+      .head}
+  x: -459.1713265385307
+  y: 364.33794952196416
+- id: custom_boxes/edgefieldnames_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_2
+      id: graph
+  operationId: custom_boxes/edgefieldnames
+  parameters:
+    ColumnNameForSource: Source
+  parametricParameters: {}
+  x: -391.5212095754279
+  y: 748.3258509588403
+- id: Copy-graph-attribute-from-other-graph_2
+  inputs:
+    destination:
+      boxId: Copy-graph-attribute-from-other-graph_1
+      id: graph
+    source:
+      boxId: custom_boxes/edgefieldnames_1
+      id: graph
+  operationId: Copy graph attribute from other graph
+  parameters: {}
+  parametricParameters:
+    graph_attribute: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("dst"))
+      .map(_.name)
+      .head}
+    save_as: |-
+      ${graphAttributes
+      .filter(_.name.startsWith("dst"))
+      .map(_.name)
+      .head}
+  x: -149.63469096163854
+  y: 377.0071936265197
+- id: Convert-vertex-attribute-to-number_1
+  inputs:
+    graph:
+      boxId: custom_boxes/idname_1
+      id: graph
+  operationId: Convert vertex attribute to number
+  parameters: {}
+  parametricParameters:
+    attr: |-
+      ${vertexAttributes
+      .filterNot{x => ("id_" + x.name ==
+       graphAttributes.map(_.name).filter(_.startsWith("id_")).head)}
+      .filter{
+         x => (x.typeName == "Long" || x.typeName == "Int")
+      }
+      .map(_.name)
+      .mkString(",")}
+  x: 145.27923608036065
+  y: -55.07474290492753
+- id: custom_boxes/idname_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+  operationId: custom_boxes/idname
+  parameters:
+    ID_Column: User_ID
+  parametricParameters: {}
+  x: -154.4628093839014
+  y: -46.81876052317375

@@ -1,0 +1,253 @@
+- id: anchor
+  operationId: Anchor
+  parameters: {}
+  x: 0
+  y: 0
+  inputs: {}
+  parametricParameters: {}
+- id: Import-CSV_1
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/fd368b1e3b00384564b2a69f3786343a.routes.csv
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/fd368b1e3b00384564b2a69f3786343a.routes.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    imported_table: 42b5b660-f05a-36f5-bbbc-48e07e7c280b
+  x: 116.54783373797977
+  y: 444.3420172896988
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-graph_1
+  operationId: Use table as graph
+  parameters:
+    src: ' source airport'
+    dst: ' destination apirport'
+  x: 316.5478337379798
+  y: 444.3420172896988
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  parametricParameters: {}
+- id: Graph-visualization_1
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"bucketed","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":6,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{"degree":{"logarithmic":true},"page_rank":{"logarithmic":true}},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"degree","label":"stringId","x":"degree","y":"page_rank"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  x: 1179.5478337379798
+  y: 231.3420172896988
+  inputs:
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
+  parametricParameters: {}
+- id: Compute-degree_1
+  operationId: Compute degree
+  parameters: {}
+  x: 616.5478337379798
+  y: 294.3420172896988
+  inputs:
+    graph:
+      boxId: Use-table-as-graph_1
+      id: graph
+  parametricParameters: {}
+- id: Compute-PageRank_1
+  operationId: Compute PageRank
+  parameters: {}
+  x: 816.5478337379798
+  y: 294.3420172896988
+  inputs:
+    graph:
+      boxId: Compute-degree_1
+      id: graph
+  parametricParameters: {}
+- id: Custom-plot_1
+  operationId: Custom plot
+  parameters:
+    plot_code: |-
+      Vegas()
+        .withData(table)
+        .encodeX("degree", Quant)
+        .encodeY("page_rank", Quant)
+        .mark(Point)
+  x: 1179.5478337379798
+  y: 81.34201728969879
+  inputs:
+    table:
+      boxId: Compute-PageRank_1
+      id: graph
+  parametricParameters: {}
+- id: SQL1_1
+  operationId: SQL1
+  parameters:
+    sql: |-
+      select percentile(
+        greatest(src_degree, dst_degree),
+        0.5)
+      from `edges`
+  x: 1179.5478337379798
+  y: 381.3420172896988
+  inputs:
+    input:
+      boxId: Compute-PageRank_1
+      id: graph
+  parametricParameters: {}
+- id: Import-CSV_2
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/31bf50b9842fe38dc16b345ccc468d4a.airports-extended.csv
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "idx,name,city,country,iata,icao,lat,long,alt,tz,dst,tz_name,type,source",
+        "filename" : "UPLOAD$/31bf50b9842fe38dc16b345ccc468d4a.airports-extended.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    imported_table: 0634cc93-138b-3a65-994c-ba906f51bcf9
+    columns: 'idx,name,city,country,iata,icao,lat,long,alt,tz,dst,tz_name,type,source'
+  x: 766.5478337379798
+  y: 594.3420172896988
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-vertex-attributes_1
+  operationId: Use table as vertex attributes
+  parameters:
+    id_attr: stringId
+    id_column: iata
+  x: 1216.5478337379798
+  y: 594.3420172896988
+  inputs:
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
+    attributes:
+      boxId: Import-CSV_2
+      id: table
+  parametricParameters: {}
+- id: Convert-vertex-attribute-to-Double_1
+  operationId: Convert vertex attribute to Double
+  parameters:
+    attr: 'lat,long'
+  x: 1416.5478337379798
+  y: 594.3420172896988
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Convert-vertex-attributes-to-position_1
+  operationId: Convert vertex attributes to position
+  parameters:
+    x: lat
+    y: long
+  x: 1666.5478337379798
+  y: 594.3420172896988
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-Double_1
+      id: graph
+  parametricParameters: {}
+- id: Graph-visualization_2
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"degree":">212"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","label":"city"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
+  x: 1866.5478337379798
+  y: 594.3420172896988
+  inputs:
+    graph:
+      boxId: Convert-vertex-attributes-to-position_1
+      id: graph
+  parametricParameters: {}
+- id: Comment_1
+  operationId: Comment
+  parameters:
+    comment: >
+      ## Issue:
+
+      You are a coffee serving company trying to increase global visibility of
+      your brand:
+
+      You want to place ads in different airports in the world.
+
+      These ads need to target as many different airports as possible.
+
+      How do you choose which airports to place ads on?
+  x: -23.452166262020228
+  y: 140.0295172896988
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_2
+  operationId: Comment
+  parameters:
+    comment: >-
+      #### First Option:
+
+      * Count the number of connections that each airport has.
+
+      * Get the airports with the most number of different destinations (top
+      50%).
+
+
+      #### Second Option:
+
+      * Find the centrality (importance) of each airport.
+
+      * Get the most central airports.
+  x: 535.6934069540482
+  y: 54.6715557344578
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_3
+  operationId: Comment
+  parameters:
+    comment: |-
+      ##### 1)
+       * Compute degree of each airport.
+       * Determine the airports that receive 50% or more of different destinations.
+
+      ##### 2)
+       * Compute the PageRank of each airport.
+       * Compare PageRank and degree to understand better the relationship between each other.
+       * Find the airports with most centrality.
+  x: 1300.9084438141933
+  y: 188.48359261879756
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_4
+  operationId: Comment
+  parameters:
+    comment: Put those airports in a graph.
+  x: 1340.1893694696537
+  y: 730.1257544760881
+  inputs: {}
+  parametricParameters: {}

@@ -1,0 +1,111 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters: {}
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Input_1
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 250.0
+  y: 300.0
+- id: Output_1
+  inputs:
+    output:
+      boxId: SQL1_1
+      id: table
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 1800.0
+  y: 300.0
+- id: Aggregate-vertex-attribute-globally_1
+  inputs:
+    graph:
+      boxId: Input_1
+      id: input
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_Age_train: average
+  parametricParameters: {}
+  x: 800.0
+  y: 300.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: Age_prediction.getOrElse(Age_train_average)
+    output: Age_prediction
+  parametricParameters: {}
+  x: 1000.0
+  y: 300.0
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select SQRT(AVG(POW(Age_prediction - Age_test, 2))) as RMSE, AVG(ABS(Age_prediction - Age_test)) as MeanError from vertices limit 10
+  parametricParameters: {}
+  x: 1400.0
+  y: 300.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 6.A. Custom box structure
+
+      Custom boxes are nothing else just saved LynxKite workspaces.
+      The only thing special about them are the Input and Output
+      boxes. When used in another workspace, the custom box will have an input plug for
+      each of its Input boxes and one output plug for each of
+      its Output boxes. When implementing a custom box, you
+      have to take input data from the output plugs of the Input
+      boxes and connect your result into the Output boxes.
+  parametricParameters: {}
+  x: 100.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 6.B. Backfilling the prediction
+
+      These two boxes take care of the backfill. The first simply
+      calculates the global average of the Age_train attribute.
+
+      The second one uses that to compute a modified Age_prediction
+      attribute which takes the value of the original whenever available
+      and takes the previously computed average otherwise.
+  parametricParameters: {}
+  x: 700.0
+  y: 50.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 6.C. Computing the error metrics
+
+      We use simple straightforward SQL to compute the metrics
+      we need.
+
+      Notice that you can easily run SQL against different
+      projections of your graph. Here we run on vertices
+      but we could just as well query edges or segmentation.
+  parametricParameters: {}
+  x: 1200.0
+  y: 50.0

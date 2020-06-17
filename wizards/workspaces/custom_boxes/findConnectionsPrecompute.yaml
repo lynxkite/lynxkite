@@ -1,0 +1,118 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Keep only the one giant component and precompute stuff
+    parameters: >-
+      [{"kind":"text","id":"MaxSize2","defaultValue":"25","$$hashKey":"object:5654"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: SQL1_2
+      id: table
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: |-
+      SELECT t.name_lower as name_lower,
+           t.degree as max_degree,
+           t.id as id2,
+           m.cnt_name as cnt_name
+        FROM ( SELECT name_lower
+                    , MAX(degree) AS max_degree
+                    , COUNT(name) as cnt_name
+                 FROM input
+               GROUP
+                   BY name_lower ) AS m
+      INNER
+        JOIN input AS t
+          ON t.name_lower = m.name_lower
+         AND t.degree = m.max_degree
+    summary: Pick highest-degree entities for each name
+  parametricParameters: {}
+  x: 750.0
+  y: 250.0
+- id: SQL1_2
+  inputs:
+    input:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: 'SELECT lower(name) as name_lower, * from vertices'
+    summary: Lowercase names
+  parametricParameters: {}
+  x: 550.0
+  y: 250.0
+- id: input-input
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input
+  parametricParameters: {}
+  x: -75.23873045739231
+  y: 65.08499660128561
+- id: Use-table-as-vertex-attributes_1
+  inputs:
+    attributes:
+      boxId: SQL1_1
+      id: table
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Use table as vertex attributes
+  parameters:
+    id_attr: id
+    id_column: id2
+    unique_keys: 'false'
+  parametricParameters: {}
+  x: 865.1438654749313
+  y: 51.14749708681313
+- id: output-graph
+  inputs:
+    output:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 1237.8426161035172
+  y: 357.9770873677428
+- id: Find-connected-components_1
+  inputs:
+    graph:
+      boxId: input-input
+      id: input
+  operationId: Find connected components
+  parameters: {}
+  parametricParameters: {}
+  x: 62.20991163342603
+  y: 253.21673972721726
+- id: Aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Find-connected-components_1
+      id: graph
+  operationId: Aggregate from segmentation
+  parameters:
+    aggregate_size: first
+    apply_to_graph: .connected_components
+  parametricParameters: {}
+  x: 327.5661573850332
+  y: 254.81171593621661
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_connected_components_size_first: '>1000000'
+  parametricParameters: {}
+  x: 546.1160554236017
+  y: 27.196780511789825

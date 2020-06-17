@@ -1,0 +1,67 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from knowledge_play
+    parameters: >-
+      [{"kind":"text","id":"Thing","defaultValue":"","$$hashKey":"object:2985"},{"kind":"text","id":"Result","defaultValue":"","$$hashKey":"object:16491"}]
+  parametricParameters: {}
+  x: 117.0
+  y: 0.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 83.48081491760237
+  y: 101.26744277866894
+- id: output-graph
+  inputs:
+    output:
+      boxId: Graph-rejoin_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 926.6039230321555
+  y: 113.0
+- id: Graph-rejoin_1
+  inputs:
+    source:
+      boxId: Add-constant-vertex-attribute_1
+      id: graph
+    target:
+      boxId: input-graph
+      id: input
+  operationId: Graph rejoin
+  parameters: {}
+  parametricParameters:
+    attrs: $Result
+  x: 607.5986417943275
+  y: 99.07393353415802
+- id: Add-constant-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Add constant vertex attribute
+  parameters:
+    value: '0'
+  parametricParameters:
+    name: $Result
+  x: 385.37103644143303
+  y: 244.92260961212025
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Filter by attributes
+  parameters: {}
+  parametricParameters:
+    filterva_name: ''
+    filterva_name_lower: ${Thing.toLowerCase}
+  x: 114.8703374055718
+  y: 346.6308109693257

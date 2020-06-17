@@ -1,0 +1,106 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_PREDICT","defaultValue":"age","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Find-infocom-communities_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Find infocom communities
+  parameters:
+    bothdir: 'false'
+  parametricParameters: {}
+  x: 197.10163385322673
+  y: 143.1116044491723
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -31.88202761450618
+  y: 158.69509844031987
+- id: built-ins/Predict-from-communities_1
+  inputs:
+    graph:
+      boxId: Find-infocom-communities_1
+      id: graph
+  operationId: built-ins/Predict from communities
+  parameters:
+    Minimal samples: '2'
+  parametricParameters:
+    Attribute to predict: $ATTR_TO_PREDICT
+  x: 542.0876850277946
+  y: 140.18828096350262
+- id: custom_boxes/copy_vattr_1
+  inputs:
+    graph:
+      boxId: built-ins/Predict-from-communities_1
+      id: graph
+  operationId: custom_boxes/copy vattr
+  parameters: {}
+  parametricParameters:
+    ATTR_TO_COPY: ${ATTR_TO_PREDICT}_prediction
+    COPIED_ATTR: ${ATTR_TO_PREDICT}_viral_prediction
+  x: 832.5797081264094
+  y: 70.0458597159766
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 1917.8498986959585
+  y: 325.74722239309756
+- id: Merge-two-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: custom_boxes/copy_vattr_1
+      id: graph
+  operationId: Merge two vertex attributes
+  parameters: {}
+  parametricParameters:
+    attr1: ${ATTR_TO_PREDICT}_viral_prediction
+    attr2: ${ATTR_TO_PREDICT}_aggregate_prediction
+    name: ${ATTR_TO_PREDICT}_viral_prediction
+  x: 824.2661295983031
+  y: 455.5874630721258
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Merge-two-vertex-attributes_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+  parametricParameters:
+    expr: |-
+      ${ATTR_TO_PREDICT}_viral_prediction match {
+        case Some(x) => x
+        case None => average
+      }
+    output: ${ATTR_TO_PREDICT}_viral_prediction
+  x: 1184.264132757401
+  y: 637.5807145471571
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: custom_boxes/copy_vattr_1
+      id: graph
+  operationId: SQL1
+  parameters: {}
+  parametricParameters:
+    sql: |
+      select $ATTR_TO_PREDICT, ${ATTR_TO_PREDICT}_viral_prediction,${ATTR_TO_PREDICT}_aggregate_prediction from vertices
+  x: 1115.4418722925702
+  y: 182.27904298778182

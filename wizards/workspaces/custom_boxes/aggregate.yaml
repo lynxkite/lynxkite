@@ -1,0 +1,82 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"text","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: -39.85691157559928
+  y: -10.99501008982049
+- id: Aggregate-on-neighbors_1
+  inputs:
+    graph:
+      boxId: custom_boxes/copy_vattr_1
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_attribute_to_aggregate: most_common,average
+    direction: all edges
+  parametricParameters: {}
+  x: 581.4275756347946
+  y: 197.48925634539583
+- id: custom_boxes/copy_vattr_2
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_1
+      id: graph
+  operationId: custom_boxes/copy vattr
+  parameters:
+    ATTR_TO_COPY: neighborhood_attribute_to_aggregate_average
+  parametricParameters:
+    COPIED_ATTR: ${ATTR_TO_PREDICT}_aggregate_prediction
+  x: 825.5457851759003
+  y: 252.3410658607761
+- id: Input_1
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input
+  parametricParameters: {}
+  x: -168.9602137163282
+  y: 227.83857090568634
+- id: custom_boxes/copy_vattr_1
+  inputs:
+    graph:
+      boxId: Input_1
+      id: input
+  operationId: custom_boxes/copy vattr
+  parameters:
+    COPIED_ATTR: attribute_to_aggregate
+  parametricParameters:
+    ATTR_TO_COPY: $ATTR_TO_PREDICT
+  x: 179.8521130512699
+  y: 235.07205828877233
+- id: Output_1
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: output
+  parametricParameters: {}
+  x: 1505.4286941347198
+  y: 221.63365010302476
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: custom_boxes/copy_vattr_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+  parametricParameters:
+    expr: |-
+      ${ATTR_TO_PREDICT}_aggregate_prediction match {
+        case Some(x) => x
+        case None => average
+      }
+    output: ${ATTR_TO_PREDICT}_aggregate_prediction
+  x: 1131.516237503869
+  y: 349.60670697848093

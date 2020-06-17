@@ -1,0 +1,55 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Created from Users/singleuser/In progress wizards/Multi-model prediction/2020-02-06
+      11:04:42
+    parameters: >-
+      [{"kind":"vertexattribute","id":"ColumnNameForSource","defaultValue":"","$$hashKey":"object:38096"},{"kind":"vertexattribute","id":"ColumnNameForDestination","defaultValue":"","$$hashKey":"object:38295"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Derive-graph-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive graph attribute
+  parameters:
+    expr: '1.0'
+  parametricParameters:
+    output: src_${ColumnNameForSource}
+  x: 214.06805536016861
+  y: 76.17233794668073
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -8.206365626765027
+  y: 178.1361107203372
+- id: Derive-graph-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-graph-attribute_1
+      id: graph
+  operationId: Derive graph attribute
+  parameters:
+    expr: '1.0'
+  parametricParameters:
+    output: dst_${ColumnNameForDestination}
+  x: 454.7808317277456
+  y: 73.87066166938602
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-graph-attribute_2
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 726.2934464752694
+  y: 181.65312456037935

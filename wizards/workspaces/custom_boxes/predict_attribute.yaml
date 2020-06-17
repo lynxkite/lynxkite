@@ -1,0 +1,610 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from demog-wizard
+    parameters: >-
+      [{"kind":"vertexattribute","id":"ATTR_TO_PREDICT","defaultValue":"","$$hashKey":"object:1568"}]
+  parametricParameters: {}
+  x: -19.917228142354034
+  y: -252.9487974078962
+- id: Convert-vertex-attribute-to-number_1
+  inputs:
+    graph:
+      boxId: Merge-parallel-edges_1
+      id: graph
+  operationId: Convert vertex attribute to number
+  parameters: {}
+  parametricParameters:
+    attr: |-
+      ${vertexAttributes
+      .filter{
+       x => x.typeName == "Long" || x.typeName == "Int"}
+      .map(_.name)
+      .mkString(",")}
+  x: -657.9667811582674
+  y: 237.6736221619023
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: -1375.3275215876463
+  y: 208.5383435524385
+- id: Output_2
+  inputs:
+    output:
+      boxId: custom_boxes/getresult_1
+      id: table
+  operationId: Output
+  parameters:
+    name: results
+  parametricParameters: {}
+  x: 383.1534463704814
+  y: 282.52372887770684
+- id: custom_boxes/precheck_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: custom_boxes/precheck
+  parameters: {}
+  parametricParameters:
+    ATTR_TO_PREDICT: $ATTR_TO_PREDICT
+  x: -111.30449974519279
+  y: -154.728959516478
+- id: custom_boxes/visualsample_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: custom_boxes/visualsample
+  parameters: {}
+  parametricParameters:
+    ATTR_TO_PREDICT: $ATTR_TO_PREDICT
+  x: -88.76527627233096
+  y: 131.41743370255992
+- id: Output_1
+  inputs:
+    output:
+      boxId: custom_boxes/precheck_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: precheck
+  parametricParameters: {}
+  x: 445.35766110687064
+  y: -209.90025899527703
+- id: Output_3
+  inputs:
+    output:
+      boxId: custom_boxes/visualsample_1
+      id: samplevisualization
+  operationId: Output
+  parameters:
+    name: sample
+  parametricParameters: {}
+  x: 281.56883336976716
+  y: 117.38079131481436
+- id: custom_boxes/getresult_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: custom_boxes/getresult
+  parameters: {}
+  parametricParameters:
+    ATTR_TO_PREDICT: $ATTR_TO_PREDICT
+  x: -99.18318381228335
+  y: 290.3477815874133
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Add-random-vertex-attribute_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    output: internal_flag
+  parametricParameters:
+    expr: |-
+      $ATTR_TO_PREDICT match {
+      case None => "undef"
+      case Some(_) =>
+        if (internal_random.get < 0.1) "test"
+        else "train"
+      }
+  x: -503.16700632167885
+  y: 486.52154777857595
+- id: Add-random-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: Add random vertex attribute
+  parameters:
+    dist: Standard Uniform
+    name: internal_random
+    seed: '351973571'
+  parametricParameters: {}
+  x: -723.7429005268309
+  y: 614.5881651428504
+- id: Discard-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Discard vertex attributes
+  parameters:
+    name: internal_random
+  parametricParameters: {}
+  x: -172.9709837515362
+  y: 523.2903908219405
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    output: internal_value_to_predict
+  parametricParameters:
+    expr: |-
+      internal_flag match {
+        case Some("undef") => None
+        case Some("train") => $ATTR_TO_PREDICT
+        case Some("test") => None
+      }
+  x: 129.2093289722468
+  y: 526.4584987933368
+- id: Convert-vertex-attribute-to-String_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Convert vertex attribute to String
+  parameters: {}
+  parametricParameters:
+    attr: $ATTR_TO_PREDICT
+  x: -245.21116771642892
+  y: 799.8084205403103
+- id: custom_boxes/getresult_2
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-String_1
+      id: graph
+  operationId: custom_boxes/getresult
+  parameters:
+    ATTR_TO_PREDICT: internal_value_to_predict
+  parametricParameters: {}
+  x: -526.1689177673392
+  y: 968.5503928862801
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: custom_boxes/getresult_2
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: -628.7987891190305
+  y: 1233.4434538003284
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_internal_flag: test
+  parametricParameters: {}
+  x: -297.1380235999727
+  y: 1128.377407161654
+- id: Derive-vertex-attribute_3
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: aggregate_error_square
+  parametricParameters:
+    expr: |-
+      ($ATTR_TO_PREDICT - internal_value_to_predict_aggregate_prediction)*
+      ($ATTR_TO_PREDICT - internal_value_to_predict_aggregate_prediction)
+  x: 257.06601530365356
+  y: 1140.5103269266835
+- id: Derive-vertex-attribute_4
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_3
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: viral_error_square
+  parametricParameters:
+    expr: |-
+      ($ATTR_TO_PREDICT - internal_value_to_predict_viral_prediction)*
+      ($ATTR_TO_PREDICT - internal_value_to_predict_viral_prediction)
+  x: 573.2894413406666
+  y: 1122.316871284056
+- id: Derive-vertex-attribute_5
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_4
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: linreg_error_square
+  parametricParameters:
+    expr: |-
+      ($ATTR_TO_PREDICT - internal_value_to_predict_linreg_prediction)*
+      ($ATTR_TO_PREDICT - internal_value_to_predict_linreg_prediction)
+  x: 886.4777367725712
+  y: 1114.06560480219
+- id: Aggregate-vertex-attribute-globally_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_5
+      id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_aggregate_error_square: average
+    aggregate_linreg_error_square: average
+    aggregate_viral_error_square: average
+  parametricParameters: {}
+  x: 655.181043633744
+  y: 503.7051871420897
+- id: Convert-vertex-attribute-to-number_2
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Convert vertex attribute to number
+  parameters: {}
+  parametricParameters:
+    attr: $ATTR_TO_PREDICT
+  x: 8.387232593862379
+  y: 1135.8809731921879
+- id: Output_5
+  inputs:
+    output:
+      boxId: SQL1_2
+      id: table
+  operationId: Output
+  parameters:
+    name: error graph attributes
+  parametricParameters: {}
+  x: 1359.7836205618587
+  y: 455.71897368498094
+- id: Derive-vertex-attribute_6
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_5
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: aggregate_error
+  parametricParameters:
+    expr: |
+      $ATTR_TO_PREDICT - internal_value_to_predict_aggregate_prediction
+  x: -134.59060195768163
+  y: 1499.9900909403352
+- id: Derive-vertex-attribute_7
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_6
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: viral_error
+  parametricParameters:
+    expr: >-
+      ($ATTR_TO_PREDICT - internal_value_to_predict_viral_prediction)
+  x: 353.454694885285
+  y: 1505.2353578101731
+- id: Derive-vertex-attribute_8
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_7
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: linreg_error
+  parametricParameters:
+    expr: >-
+      ($ATTR_TO_PREDICT - internal_value_to_predict_linreg_prediction)
+  x: 728.7466387755526
+  y: 1507.1209918712905
+- id: Derive-vertex-attribute_9
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_8
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: >-
+      Vector(aggregate_error, viral_error, linreg_error).map(math.abs(_)).max
+    output: max_error
+  parametricParameters: {}
+  x: 1072.8105714703502
+  y: 1499.491979926525
+- id: Aggregate-vertex-attribute-globally_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_9
+      id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_max_error: max
+  parametricParameters: {}
+  x: 1388.7997572366755
+  y: 1490.0738053579344
+- id: Derive-graph-attribute_1
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_2
+      id: graph
+  operationId: Derive graph attribute
+  parameters:
+    expr: max_error_max / 5
+    output: bin_size
+  parametricParameters: {}
+  x: 1535.3541519577689
+  y: 1197.4466903932093
+- id: custom_boxes/computeBin_1
+  inputs:
+    graph:
+      boxId: Derive-graph-attribute_1
+      id: graph
+  operationId: custom_boxes/computeBin
+  parameters:
+    attribute: aggregate_error
+  parametricParameters: {}
+  x: 1625.6309209361718
+  y: 932.909376723641
+- id: custom_boxes/computeBin_2
+  inputs:
+    graph:
+      boxId: custom_boxes/computeBin_3
+      id: graph
+  operationId: custom_boxes/computeBin
+  parameters:
+    attribute: linreg_error
+  parametricParameters: {}
+  x: 1894.5078999198186
+  y: 947.050286808582
+- id: custom_boxes/computeBin_3
+  inputs:
+    graph:
+      boxId: custom_boxes/computeBin_1
+      id: graph
+  operationId: custom_boxes/computeBin
+  parameters:
+    attribute: viral_error
+  parametricParameters: {}
+  x: 1766.0562585363098
+  y: 671.4588811111645
+- id: Output_10
+  inputs:
+    output:
+      boxId: Custom-plot_6
+      id: plot
+  operationId: Output
+  parameters:
+    name: errors
+  parametricParameters: {}
+  x: 3373.3624797017583
+  y: 645.3188506532476
+- id: SQL1_9
+  inputs:
+    input:
+      boxId: custom_boxes/computeBin_2
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select "Neighborhood" as model, aggregate_error_bin as bin, count(*) as count from vertices group by bin
+  parametricParameters: {}
+  x: 2174.801418704424
+  y: 681.9509332162195
+- id: SQL1_10
+  inputs:
+    input:
+      boxId: custom_boxes/computeBin_2
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select "Community" as model, viral_error_bin as bin, count(*) as count from vertices group by bin
+  parametricParameters: {}
+  x: 2214.210044978135
+  y: 962.3195660482876
+- id: SQL1_11
+  inputs:
+    input:
+      boxId: custom_boxes/computeBin_2
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select "Regression" as model, linreg_error_bin as bin, count(*) as count from vertices group by bin
+  parametricParameters: {}
+  x: 2205.885920803124
+  y: 1209.4240472678669
+- id: SQL3_1
+  inputs:
+    one:
+      boxId: SQL1_9
+      id: table
+    three:
+      boxId: SQL1_11
+      id: table
+    two:
+      boxId: SQL1_10
+      id: table
+  operationId: SQL3
+  parameters:
+    sql: |
+      select * from (select * from one) union (select * from two) union (select * from three)
+  parametricParameters: {}
+  x: 2584.065262538059
+  y: 976.7361885874541
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: Graph visualization
+  parameters: {}
+  parametricParameters:
+    state: |
+      {
+        "left": {
+          "projectPath": "",
+          "graphMode": "bucketed",
+          "display": "svg",
+          "filters": {
+            "vertex": {},
+            "edge": {}
+          },
+          "bucketCount": 6,
+          "preciseBucketSizes": true,
+          "relativeEdgeDensity": true,
+          "axisOptions": {
+            "vertex": {},
+            "edge": {}
+          },
+          "sampleRadius": 1,
+          "attributeTitles": {
+            "x": "$ATTR_TO_PREDICT",
+            "y": "$ATTR_TO_PREDICT"
+          },
+          "animate": {
+            "enabled": false,
+            "style": "expand",
+            "labelAttraction": 0
+          },
+          "centers": [
+            "auto"
+          ],
+          "customVisualizationFilters": false,
+          "vertexColorMap": "Viridis",
+          "labelColorMap": "Viridis",
+          "edgeColorMap": "Viridis",
+          "sliderPos": 50
+        },
+        "right": {
+          "display": "svg",
+          "filters": {
+            "vertex": {},
+            "edge": {}
+          },
+          "bucketCount": 4,
+          "preciseBucketSizes": false,
+          "relativeEdgeDensity": false,
+          "axisOptions": {
+            "vertex": {},
+            "edge": {}
+          },
+          "sampleRadius": 1,
+          "attributeTitles": {},
+          "animate": {
+            "enabled": false,
+            "style": "expand",
+            "labelAttraction": 0
+          },
+          "centers": [
+            "auto"
+          ],
+          "customVisualizationFilters": false,
+          "vertexColorMap": "Viridis",
+          "labelColorMap": "Viridis",
+          "edgeColorMap": "Viridis"
+        }
+      }
+  x: -86.44546579178068
+  y: -4.744588134018599
+- id: Output_11
+  inputs:
+    output:
+      boxId: Graph-visualization_1
+      id: visualization
+  operationId: Output
+  parameters:
+    name: bucketed
+  parametricParameters: {}
+  x: 263.2222972742178
+  y: -26.163719566255445
+- id: Custom-plot_6
+  inputs:
+    table:
+      boxId: SQL1_8
+      id: table
+  operationId: Custom plot
+  parameters:
+    plot_code: |-
+      Vegas()
+       .withData(table)
+       .encodeColumn("bin", Ordinal, scale=Scale(padding=10),
+         axis=Axis(orient=Orient.Bottom))
+       .encodeY("count", Quant, axis=Axis(grid=false))
+       .encodeX("model", Nom, hideAxis=true,
+         scale=Scale(niceEnable=false))
+       .encodeColor("model", Nom)
+       .mark(Bar)
+       .configFacet(cell=CellConfig(strokeWidth = 0))
+  parametricParameters: {}
+  x: 2952.011841938872
+  y: 617.5737267356802
+- id: SQL1_8
+  inputs:
+    input:
+      boxId: SQL3_1
+      id: table
+  operationId: SQL1
+  parameters:
+    sql: |
+      select model, `count`, cast (cast (bin as DECIMAL(15,1)) as Double) as bin from input
+  parametricParameters: {}
+  x: 2678.579949035141
+  y: 631.3320657253516
+- id: Add-reversed-edges_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Add reversed edges
+  parameters: {}
+  parametricParameters: {}
+  x: -1116.2649307207191
+  y: 306.7875686023044
+- id: Merge-parallel-edges_1
+  inputs:
+    graph:
+      boxId: Add-reversed-edges_1
+      id: graph
+  operationId: Merge parallel edges
+  parameters: {}
+  parametricParameters: {}
+  x: -904.5341560139974
+  y: 325.40280890902477
+- id: SQL1_2
+  inputs:
+    input:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |+
+      select stack(3,
+      "Neighborhood", aggregate_error_square_average,
+      "Community", viral_error_square_average,
+      "Linear regression", linreg_error_square_average)
+      as (Method, `Mean Square Error`) from graph_attributes
+
+  parametricParameters: {}
+  x: 974.6961518887283
+  y: 497.73348220335276

@@ -1,0 +1,591 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters: {}
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    columns: Source,Destination
+    filename: UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv
+    imported_table: e4e8cd12-1fab-3a1b-bd5a-8669f7746c7f
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "Source,Destination",
+        "filename" : "UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 1104.6417103388937
+  y: 700.9672455421545
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv
+    imported_table: 0e9bd8ff-eeec-3dd9-841e-dba1fa4fa98a
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 904.6417103388937
+  y: 500.9672455421545
+- id: Split-to-train-and-test-set_1
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-number_1
+      id: graph
+  operationId: Split to train and test set
+  parameters:
+    seed: '1167456500'
+  parametricParameters: {}
+  x: 1904.6417103388937
+  y: 500.9672455421545
+- id: Aggregate-on-neighbors_1
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_Age_train: average
+    direction: all edges
+  parametricParameters: {}
+  x: 2704.641710338894
+  y: 1450.9672455421546
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_neighborhood_Age_train_average: Age_prediction
+  parametricParameters: {}
+  x: 2954.641710338894
+  y: 1450.9672455421546
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      ### 8. Neighborhood method
+
+      Here we use the observation that people tend to interact
+      with others of similar age. So we simply compute the
+      average age of all connections and use that as our prediction.
+
+      Using the evaluation box we see significantly better results than earlier.
+  parametricParameters: {}
+  x: 2704.641710338894
+  y: 1250.9672455421546
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 1. Intro
+
+      In this interactive tutorial we are going to analyse the Pokec dataset available
+      thanks to the Standford Network Analysis Project. It is data originating from a
+      Slovakian social network - Pokec -, containing very basic user demographic data and user
+      connections on the social network.
+
+      There are two files, the
+      relationships table which contains the social connections and the profiles table which includes
+      the attributes for each user.
+      The original data was downloaded from <https://snap.stanford.edu/data/soc-Pokec.html>.
+
+      For this demo, we have only included users living in Prievidza,
+      a small city in the center of Slovakia.
+
+      Among the attributes, we are going to concentrate on age. It is only available for around 2/3 of the users.
+      Our task is to predict age for the rest!
+
+      Please follow along the numbered comments for a detailed explanation of what's
+      going on in this analysis. (You can pan the workspace by grabbing any empty space with your mouse.)
+      Click on the 3D icons - that we call boxes -
+      to check how we parameterized each operation. Click on the circles on the right side of boxes,
+      representing their outputs, to explore the data at any stage of the workspace.
+  parametricParameters: {}
+  x: 405.84345108489697
+  y: 225.03629594512176
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 4. Model Selection
+
+      We split our workspace in four at this point - each path is
+      about trying one particular modeling approach to solve this problem.
+  parametricParameters: {}
+  x: 2104.641710338894
+  y: 450.9672455421545
+- id: Find-infocom-communities_1
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Find infocom communities
+  parameters:
+    adjacency_threshold: '0.7'
+    bothdir: 'false'
+  parametricParameters: {}
+  x: 2504.641710338894
+  y: 1900.9672455421546
+- id: Predict-with-model_3
+  inputs:
+    graph:
+      boxId: Train-linear-regression-model_2
+      id: graph
+  operationId: Predict with model
+  parameters:
+    name: Age_prediction
+  parametricParameters: {}
+  x: 2954.641710338894
+  y: 950.9672455421545
+- id: Train-linear-regression-model_2
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Train linear regression model
+  parameters:
+    features: Gender,Last_Login_Days,Registration_Days
+    label: Age_train
+  parametricParameters: {}
+  x: 2704.641710338894
+  y: 950.9672455421545
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_2
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 1104.6417103388937
+  y: 500.9672455421545
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: User_ID
+    dst: Destination
+    src: Source
+  parametricParameters: {}
+  x: 1304.6417103388937
+  y: 500.9672455421545
+- id: Convert-vertex-attribute-to-number_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Convert vertex attribute to number
+  parameters:
+    attr: Age,Gender,Last_Login_Days,Registration_Days
+  parametricParameters: {}
+  x: 1504.6417103388937
+  y: 500.9672455421545
+- id: Graph-rejoin_1
+  inputs:
+    source:
+      boxId: Rename-vertex-attributes_4
+      id: graph
+    target:
+      boxId: Rename-vertex-attributes_5
+      id: graph
+  operationId: Graph rejoin
+  parameters:
+    attrs: neighborhood_Age_prediction
+  parametricParameters: {}
+  x: 4604.641710338894
+  y: 1750.9672455421546
+- id: Rename-vertex-attributes_4
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_Age_prediction: neighborhood_Age_prediction
+  parametricParameters: {}
+  x: 4354.641710338894
+  y: 1450.9672455421546
+- id: Merge-two-vertex-attributes_3
+  inputs:
+    graph:
+      boxId: Graph-rejoin_1
+      id: graph
+  operationId: Merge two vertex attributes
+  parameters:
+    attr1: Age_prediction
+    attr2: neighborhood_Age_prediction
+    name: Age_prediction
+  parametricParameters: {}
+  x: 4804.641710338894
+  y: 1750.9672455421546
+- id: Derive-vertex-attribute_12
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: None.asInstanceOf[Option[Double]]
+    output: Age_prediction
+  parametricParameters: {}
+  x: 2704.641710338894
+  y: 500.9672455421545
+- id: Aggregate-to-segmentation_2
+  inputs:
+    graph:
+      boxId: Find-infocom-communities_1
+      id: graph
+  operationId: Aggregate to segmentation
+  parameters:
+    aggregate_Age_train: std_deviation,count,median
+    apply_to_graph: .communities
+  parametricParameters: {}
+  x: 3004.641710338894
+  y: 1900.9672455421546
+- id: Weighted-aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  operationId: Weighted aggregate from segmentation
+  parameters:
+    aggregate_Age_train_median: by_min_weight
+    apply_to_graph: .communities
+    weight: Age_train_std_deviation
+  parametricParameters: {}
+  x: 3954.641710338894
+  y: 1900.9672455421546
+- id: Rename-vertex-attributes_5
+  inputs:
+    graph:
+      boxId: Weighted-aggregate-from-segmentation_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    "change_communities_Age_train_median_by_min_weight_by_Age_train_std_deviation": Age_prediction
+  parametricParameters: {}
+  x: 4254.641710338894
+  y: 1900.9672455421546
+- id: Filter-by-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_2
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    apply_to_graph: .communities
+    filterva_Age_train_count: '>=3'
+    filterva_Age_train_std_deviation: <=1
+  parametricParameters: {}
+  x: 3554.641710338894
+  y: 1900.9672455421546
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 2. Creating the graph
+
+      There are various ways to import data to LynxKite (see the Import operation category),
+      but here we use the simplest of all: just upload and import CSV files.
+      You can just drag your CSV files to a workspace and LynxKite will create the
+      corresponding "Import CSV" boxes for you.
+
+      The outputs of those boxes are tables: simple, old school relational tables. You can
+      interact with those as well in LynxKite, but to use its real power,
+      you want to turn those into a graph.
+
+      In this workspace, we do this in two steps. First, we use the "Use table as vertices" box
+      to make the vertex data into a graph without edges. Then, using the "User table as edges"
+      box we hook up the edges to the previously loaded vertices.
+      For this latter operation we have to tell the system which
+      vertex attribute to use as vertex identifiers and which edge attributes
+      contain the source and destination vertex identifier of an edge.
+
+      Once we created the graph, we convert numeric attributes to numbers - they were
+      imported as string originally.
+  parametricParameters: {}
+  x: 1054.6417103388937
+  y: 0.967245542154501
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      ### 3. Splitting train and test data
+
+      To be able to evaluate our models, we put aside 10% of known
+      ages as a test set. This results in two new attributes: Age_train and Age_test.
+      On each user where we know the Age originally, exacly one of these attributes will
+      be defined - Age_train in 90% of the cases and Age_test for the rest.
+
+      We will take care to use only Age_train in our models and evaluate against Age_test.
+  parametricParameters: {}
+  x: 1704.6417103388937
+  y: 200.9672455421545
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 5. Baseline model
+
+      In our baseline model we do something pretty stupid: we
+      create a prediction that is - wait for it - nowhere defined.
+
+      We are going to test different models and most of those will not
+      provide a prediction for every single user. So to be able to
+      fairly compare those, we are going to backfill the predictions
+      with a trivial value - simply the age average in the population.
+
+      Because of this "backfill" that we apply in our evaluation
+      the above explained baseline makes sense - in effect it means
+      we just use population average as our prediction for
+      all users.
+
+      To implement our extra stupid model, we use the Derive vertex attribute
+      box. It allows to create a new attribute using a Scala
+      expression. In this case, we just use None, meaning the
+      resulting attribute is undefined everywhere.
+  parametricParameters: {}
+  x: 2454.641710338894
+  y: 100.9672455421545
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 6. Evaluation
+
+      We want to use the exact same evaluation procedure
+      for all models. So, we encapsulate it into a so called
+      custom box, called Evaluate Age Prediction and reuse the very same
+      box in all the modeling paths below.
+
+      The process is backfilling the Age_prediction attribute
+      with the population age average and then computing
+      MSE and error average on the test set.
+
+      To see the detailed implementation of this box, select it
+      and click the Dive into custom box ... button from the
+      top toolbar (look for a downward pointing arrow). You can
+      then come back to this top level workspace using the
+      up arrow in the toolbar.
+
+      Click on the output plug of the box to see the baseline error metrics!
+  parametricParameters: {}
+  x: 2954.641710338894
+  y: 100.9672455421545
+- id: Tutorials/custom_boxes/Evaluate-Age-Prediction_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_12
+      id: graph
+  operationId: Tutorials/custom_boxes/Evaluate Age Prediction
+  parameters: {}
+  parametricParameters: {}
+  x: 3104.641710338894
+  y: 500.9672455421545
+- id: Tutorials/custom_boxes/Evaluate-Age-Prediction_2
+  inputs:
+    graph:
+      boxId: Predict-with-model_3
+      id: graph
+  operationId: Tutorials/custom_boxes/Evaluate Age Prediction
+  parameters: {}
+  parametricParameters: {}
+  x: 3154.641710338894
+  y: 950.9672455421545
+- id: Tutorials/custom_boxes/Evaluate-Age-Prediction_3
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Tutorials/custom_boxes/Evaluate Age Prediction
+  parameters: {}
+  parametricParameters: {}
+  x: 3254.641710338894
+  y: 1350.9672455421546
+- id: Tutorials/custom_boxes/Evaluate-Age-Prediction_4
+  inputs:
+    graph:
+      boxId: Merge-two-vertex-attributes_3
+      id: graph
+  operationId: Tutorials/custom_boxes/Evaluate Age Prediction
+  parameters: {}
+  parametricParameters: {}
+  x: 5154.641710338894
+  y: 1750.9672455421546
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 7. Linear regression
+
+      As a next attempt, we are going to use simple linear regression.
+      First we build a model using train data and try to apply
+      it on the test set.
+
+      The results are terrible. No surprise there: we have no
+      user attributes that can conceivably significantly
+      correlate with age.
+
+      Check the output plug of the Evaluation Box to see that
+      errors are barely better than for our
+      baseline model.
+  parametricParameters: {}
+  x: 2704.641710338894
+  y: 700.9672455421545
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 9. Finding communities
+
+      In our most advanced methods we are going to use communities
+      detected by LynxKite to get even better predictions.
+
+      First, we use the Find infocom communities box to run
+      a sophisticated community search on our graph.
+
+      The result of this is a so called segmentation, called communities.
+
+      A segmentation is simply a collection of subsets - not necessarily
+      disjoint - of vertices.
+  parametricParameters: {}
+  x: 2354.641710338894
+  y: 1600.9672455421546
+- id: Comment_11
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      ### 10. Aggregations on the communities
+
+      Beside vertices and edges, segments - in our
+      case communities - can also have attributes in LynxKite.
+
+      Using this box we are defining three new attributes on our
+      freshly created communities by aggregating Age_train
+      in different ways.
+
+      For each community we compute its median, its standard deviation and
+      also we compute how many of its members have a known age.
+  parametricParameters: {}
+  x: 2804.641710338894
+  y: 1600.9672455421546
+- id: Comment_12
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 11. Filtering communities
+
+      Here we are filtering communities: keeping only those
+      that seem to be well suited to use for age prediction.
+
+      We use two criteria: we keep communities which have
+      enough members with known age (Age_train_count >= 3)
+      and where the standard deviation of age is low enough
+      (Age_train_std_deviation <= 1).
+
+      The idea here is that if a user is a member of an
+      age-homogeneous community then we can have a very accurate
+      estimation for his/her age using the median age of that
+      age-homogeneous community.
+  parametricParameters: {}
+  x: 3354.641710338894
+  y: 1600.9672455421546
+- id: Comment_13
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 12. Age prediction using communities
+
+      Now all we have to do is to select a community
+      for each user and get the median age of that community,
+      and use that as our prediction.
+
+      This can be easily done with the "Weighted aggregate from segmentation" box,
+      using the "By min weight" aggregation. What it means
+      is that for each user we choose among his/her communities the one
+      where standard deviation is the lowest.
+  parametricParameters: {}
+  x: 3854.641710338894
+  y: 1600.9672455421546
+- id: Comment_14
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ### 13. Merge with neighborhood predictions
+
+      Community predictions are great, but unfortunately not
+      all users are a member of an age-homogeneous community.
+      It means that our community method does not yield a
+      prediction for all users.
+
+      No problem, let's backfill it using our previous method!
+
+      We use the "Graph rejoin" box to take the prediction result
+      from our previous model as a new attribute and then
+      merge the community prediction with the neighborhood one -
+      taking care to use the community one whenever both are
+      defined.
+
+      And with this, we arrive to our most accurate model yet
+      as well as to the end of this tutorial!
+
+      Thanks for your attention!
+  parametricParameters: {}
+  x: 4554.641710338894
+  y: 1350.9672455421546

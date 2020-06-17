@@ -1,0 +1,50 @@
+<html style="
+  background: #001831;
+  text-align: center;
+  color: white;
+  font-size: 1vw;
+  padding-top: 10vh;
+  ">
+  <head><title>...</title></head>
+  <body>
+    <p>LynxKite is starting up...</p>
+    
+    <svg height="305.82388" width="238.89809">
+      <g transform="matrix(0.98694781, -0.16104042, -0.14689438232209598, 1.3714095982314884, -18.537563322346827, 105.4348107487973)">
+        <path style="fill:#ffffff" d="M 62.105469 -32.40625 A 49.879963 49.879963 0 0 0 50.119141 0 A 49.879963 49.879963 0 0 0 100 49.880859 A 49.879963 49.879963 0 0 0 119.57812 45.816406 A 54.289671 56.292997 89.251657 0 1 111.96875 46.345703 A 54.289671 56.292997 89.251657 0 1 55.96875 -8.1757812 A 54.289671 56.292997 89.251657 0 1 62.105469 -32.40625 z " id="disc1">
+          <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 100 0" to="-360 100 0" dur="2.0s" keySplines="0.5 0.05 0.5 0.95" keyTimes="0;1" calcMode="spline" repeatCount="indefinite"/>
+        </path>
+      </g>
+      <g transform="matrix(0.7974862, 0.60333719, -0.5540601879064857, 0.522753388996183, -30.162619042136185, -36.87756342180869)">
+        <path style="fill:#39bcf3" d="M 269.65625 -69.830078 A 103.03357 113.56623 84.547197 0 1 289.93945 -10.919922 A 103.03357 113.56623 84.547197 0 1 175.77148 93.474609 A 103.03357 113.56623 84.547197 0 1 167.85938 93.203125 A 98.69677 98.69677 0 0 0 200 98.697266 A 98.69677 98.69677 0 0 0 298.69727 0 A 98.69677 98.69677 0 0 0 269.65625 -69.830078 z " id="disc2">
+          <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 200 0" to="-360 200 0" dur="2.4s" keySplines="0.5 0.05 0.5 0.95" keyTimes="0;1" calcMode="spline" repeatCount="indefinite"/>
+        </path>
+      </g>
+      <g transform="matrix(0.99734924, 0.07276329, -0.4515717387768081, 2.088941245809576, -172.274719665603, 184.72889919544502)">
+        <path style="fill:#39bcf3" d="M 300 -45.099609 A 45.098854 45.098854 0 0 0 254.90039 0 A 45.098854 45.098854 0 0 0 257.19922 14.033203 A 53.066918 47.874613 88.167772 0 1 257.13281 12.279297 A 53.066918 47.874613 88.167772 0 1 304.7168 -40.761719 A 53.066918 47.874613 88.167772 0 1 333.67969 -29.908203 A 45.098854 45.098854 0 0 0 300 -45.099609 z " id="disc3">
+          <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 300 0" to="-360 300 0" dur="2.5s" keySplines="0.5 0.05 0.5 0.95" keyTimes="0;1" calcMode="spline" repeatCount="indefinite"/>
+        </path>
+      </g>
+      <g transform="matrix(0.98059672, 0.19603592, -0.2491084217271425, 0.30701639272107334, -272.78964608964634, 52.933107263617586)">
+        <path style="fill:#39bcf3" d="M 400 -113.12109 A 113.12061 113.12061 0 0 0 372.81641 -109.68945 A 123.56112 113.29895 79.433801 0 1 392.05664 -111.41797 A 123.56112 113.29895 79.433801 0 1 508.89648 12.167969 A 123.56112 113.29895 79.433801 0 1 507.44336 35.142578 A 113.12061 113.12061 0 0 0 513.12109 0 A 113.12061 113.12061 0 0 0 400 -113.12109 z M 372.66211 -109.6543 A 113.12061 113.12061 0 0 0 369.17969 -108.8125 A 123.56112 113.29895 79.433801 0 1 372.66211 -109.6543 z " id="disc4">
+          <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 400 0" to="-360 400 0" dur="3.0s" keySplines="0.5 0.05 0.5 0.95" keyTimes="0;1" calcMode="spline" repeatCount="indefinite"/>
+        </path>
+      </g>
+    </svg>
+
+    <script>
+
+async function loadIfReady() {
+  const res = await fetch(window.location);
+  const text = await res.text();
+  if (text.includes('LynxKite is starting up')) {
+    setTimeout(loadIfReady, 1000);
+  } else {
+    window.location.reload(true);
+  }
+}
+loadIfReady();
+
+    </script>
+  </body>
+</html>

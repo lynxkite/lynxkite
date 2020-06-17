@@ -1,0 +1,122 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: |-
+      Treats the input table as a list of edges in a bipartite graph.
+      Pick which columns hold the vertex IDs on the two sides.
+
+      The resulting graph output includes all the columns as edge attributes.
+      Each vertex gets an `id` and a `side` attribute.
+      `side` is either `A` or `B`.
+    parameters: >-
+      [{"kind":"column","id":"ID for side A","defaultValue":"","$$hashKey":"object:8774"},{"kind":"column","id":"ID
+      for side B","defaultValue":"","$$hashKey":"object:8968"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: input-input
+      id: input
+  operationId: SQL1
+  parameters:
+    summary: SQL to add A/B ID prefixes
+  parametricParameters:
+    sql: |
+      select
+        concat('A-', ${`ID for side A`}) as __internal_A,
+        concat('B-', ${`ID for side B`}) as __internal_B,
+        *
+      from input
+  x: 200.0
+  y: 150.0
+- id: input-input
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: Use-table-as-graph_1
+  inputs:
+    table:
+      boxId: SQL1_1
+      id: table
+  operationId: Use table as graph
+  parameters:
+    dst: __internal_B
+    src: __internal_A
+  parametricParameters: {}
+  x: 450.0
+  y: 150.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: if (id.startsWith("A-")) "A" else "B"
+    output: side
+  parametricParameters: {}
+  x: 200.0
+  y: 350.0
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Discard-edge-attributes_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_stringId: id
+  parametricParameters: {}
+  x: 450.0
+  y: 250.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 750.0
+  y: 350.0
+- id: Discard-edge-attributes_1
+  inputs:
+    graph:
+      boxId: Use-table-as-graph_1
+      id: graph
+  operationId: Discard edge attributes
+  parameters: {}
+  parametricParameters:
+    name: >-
+      __internal_A,__internal_B,${`ID for side A`},${`ID for side B`}
+  x: 200.0
+  y: 250.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: id.drop(2)
+    output: id
+  parametricParameters: {}
+  x: 450.0
+  y: 350.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      The first two boxes take care of building a graph
+      from the table. The rest just make the output tidier.
+  parametricParameters: {}
+  x: 650.0
+  y: 150.0
