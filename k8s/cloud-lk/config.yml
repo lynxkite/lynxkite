@@ -1,0 +1,37 @@
+proxy:
+  https:
+    hosts:
+      - demo.lynxkite.com
+    letsencrypt:
+      contactEmail: administrator@lynxanalytics.com
+
+auth:
+  admin:
+    users:
+      - andras.nemeth@lynxanalytics.com
+      - daniel.darabos@lynxanalytics.com
+      - fai@lynxanalytics.com
+      - gabor.krivachy@lynxanalytics.com
+      - gabor.olah@lynxanalytics.com
+      - hanna.gabor@lynxanalytics.com
+
+hub:
+  extraEnv:
+    JUPYTER_ENABLE_LAB: 1
+  extraConfig: |
+    c.KubeSpawner.cmd = ['/usr/local/bin/lynx-start.sh']
+    c.KubeSpawner.http_timeout = 300
+
+singleuser:
+  networkTools:
+    image:
+      # A GCR copy of jupyterhub/k8s-network-tools:0.9-b51ffeb for more reliable speed.
+      name: gcr.io/external-lynxkite/k8s-network-tools
+      tag: 0.9-b51ffeb
+  image:
+    name: gcr.io/external-lynxkite/cloud-lk-notebook
+    tag: v1
+    pullPolicy: Always
+  defaultUrl: '/lab'
+  memory:
+    guarantee: 4G

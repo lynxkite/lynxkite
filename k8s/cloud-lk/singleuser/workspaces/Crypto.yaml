@@ -1,0 +1,958 @@
+- id: anchor
+  operationId: Anchor
+  parameters: {}
+  x: 0
+  y: 0
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-graph_2
+  operationId: Use table as graph
+  parameters:
+    src: from_address
+    dst: to_address
+  x: 1439
+  y: 556
+  inputs:
+    table:
+      boxId: Import-CSV_5
+      id: table
+  parametricParameters: {}
+- id: Convert-edge-attribute-to-Double_3
+  operationId: Convert edge attribute to Double
+  parameters:
+    attr: 'eth_value,eth_value_sum,num_txn,to_address_prev_balance'
+  x: 1639
+  y: 556
+  inputs:
+    graph:
+      boxId: Use-table-as-graph_2
+      id: graph
+  parametricParameters: {}
+- id: Find-connected-components_1
+  operationId: Find connected components
+  parameters: {}
+  x: 1539
+  y: 706
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_6
+      id: graph
+  parametricParameters: {}
+- id: Find-modular-clustering_1
+  operationId: Find modular clustering
+  parameters:
+    max_iterations: '5'
+    weights: num_txn
+  x: 1639
+  y: 856
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_2
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-from-segmentation_1
+  operationId: Aggregate from segmentation
+  parameters:
+    apply_to_graph: .modular_clusters
+    aggregate_id: first
+    aggregate_size: first
+  x: 1889
+  y: 856
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  parametricParameters: {}
+- id: Import-CSV_5
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/ebcfffd17db77b1fe520bafbe4d9f044.eth_transactions_filtered_v2.csv
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/ebcfffd17db77b1fe520bafbe4d9f044.eth_transactions_filtered_v2.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    imported_table: d8d2779f-a1be-3a68-9e6c-16fc232a424d
+  x: 1189
+  y: 556
+  inputs: {}
+  parametricParameters: {}
+- id: Aggregate-from-segmentation_3
+  operationId: Aggregate from segmentation
+  parameters:
+    apply_to_graph: .connected_components
+    aggregate_size: max
+  x: 1789
+  y: 706
+  inputs:
+    graph:
+      boxId: Find-connected-components_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-edge-attribute_1
+  operationId: Derive edge attribute
+  parameters:
+    output: txn_between_clusters
+    expr: >-
+      if(src$modular_clusters_id_first != dst$modular_clusters_id_first) 1.0
+      else 0.0
+  x: 1989
+  y: 1006
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-Double_2
+      id: graph
+  parametricParameters: {}
+- id: Convert-vertex-attribute-to-Double_2
+  operationId: Convert vertex attribute to Double
+  parameters:
+    attr: modular_clusters_id_first
+  x: 1739
+  y: 1006
+  inputs:
+    graph:
+      boxId: Discard-segmentation_3
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-edge-attribute-to-vertices_5
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    aggregate_num_txn: sum
+    prefix: inedge
+    aggregate_eth_value_sum: max
+    aggregate_eth_value: average
+    aggregate_to_address_prev_balance: average
+  x: 1889
+  y: 556
+  inputs:
+    graph:
+      boxId: Convert-edge-attribute-to-Double_3
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-edge-attribute-to-vertices_6
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    aggregate_num_txn: sum
+    prefix: outedge
+    direction: outgoing edges
+    aggregate_eth_value_sum: max
+    aggregate_eth_value: average
+  x: 1289
+  y: 706
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_5
+      id: graph
+  parametricParameters: {}
+- id: Rename-vertex-attributes_2
+  operationId: Rename vertex attributes
+  parameters:
+    change_inedge_to_address_prev_balance_average: balance_avg
+    change_outedge_eth_value_sum_max: outedge_txn_max
+    change_inedge_eth_value_sum_max: inedge_txn_max
+    change_connected_components_size_max: conn_comp_size
+    change_inedge_num_txn_sum: inedge_txn_count
+    change_outedge_num_txn_sum: outedge_txn_count
+  x: 1339
+  y: 856
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Discard-segmentation_2
+  operationId: Discard segmentation
+  parameters: {}
+  x: 2139
+  y: 856
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_1
+      id: graph
+  parametricParameters: {}
+- id: Discard-segmentation_3
+  operationId: Discard segmentation
+  parameters: {}
+  x: 1439
+  y: 1006
+  inputs:
+    graph:
+      boxId: Discard-segmentation_2
+      id: graph
+  parametricParameters: {}
+- id: Compute-PageRank_1
+  operationId: Compute PageRank
+  parameters: {}
+  x: 2339
+  y: 1156
+  inputs:
+    graph:
+      boxId: Approximate-clustering-coefficient_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-edge-attribute_4
+  operationId: Derive edge attribute
+  parameters:
+    output: total_txn_between_clusters
+    expr: txn_between_clusters * num_txn
+  x: 2239
+  y: 1006
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-edge-attribute-to-vertices_7
+  operationId: Aggregate edge attribute to vertices
+  parameters:
+    direction: all edges
+    aggregate_total_txn_between_clusters: sum
+    prefix: ''
+  x: 1539
+  y: 1156
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_4
+      id: graph
+  parametricParameters: {}
+- id: Discard-edge-attributes_1
+  operationId: Discard edge attributes
+  parameters:
+    name: >-
+      eth_value,eth_value_sum,from_address,num_txn,to_address,to_address_prev_balance,total_txn_between_clusters,txn_between_clusters
+  x: 1789
+  y: 1156
+  inputs:
+    graph:
+      boxId: Aggregate-edge-attribute-to-vertices_7
+      id: graph
+  parametricParameters: {}
+- id: Compute-centrality_1
+  operationId: Compute centrality
+  parameters:
+    direction: all edges
+  x: 1589
+  y: 1306
+  inputs:
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
+  parametricParameters: {}
+- id: Train-a-k-means-clustering-model_1
+  operationId: Train a k-means clustering model
+  parameters:
+    name: cluster_model
+    features: >-
+      clustering_coefficient,log_degree_sc,log_inedge_txn_count_sc,log_inedge_txn_max_sc,log_inedge_value_avg_sc,log_outedge_txn_count_sc,log_outedge_txn_max_sc,log_txn_between_clusters_sc
+    k: '4'
+  x: 3039
+  y: 556
+  inputs:
+    graph:
+      boxId: Tutorials/custom_boxes/ScaleVariables_1
+      id: graph
+  parametricParameters: {}
+- id: Classify-with-model_1
+  operationId: Classify with model
+  parameters:
+    name: cluster
+  x: 3239
+  y: 556
+  inputs:
+    graph:
+      boxId: Train-a-k-means-clustering-model_1
+      id: graph
+  parametricParameters: {}
+- id: Convert-vertex-attribute-to-String_1
+  operationId: Convert vertex attribute to String
+  parameters:
+    attr: cluster
+  x: 2889
+  y: 706
+  inputs:
+    graph:
+      boxId: Classify-with-model_1
+      id: graph
+  parametricParameters: {}
+- id: Segment-by-String-attribute_1
+  operationId: Segment by String attribute
+  parameters: {}
+  x: 3139
+  y: 706
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-String_1
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-to-segmentation_1
+  operationId: Aggregate to segmentation
+  parameters:
+    aggregate_Miner: sum
+    apply_to_graph: .bucketing
+    aggregate_inedge_eth_value_average: average
+    aggregate_outedge_eth_value_average: average
+    aggregate_Exchange: sum
+    aggregate_outedge_txn_count: average
+    aggregate_modular_clusters_size_first: average
+    aggregate_total_value_avg: average
+    aggregate_page_rank: average
+    aggregate_total_count_txn: average
+    aggregate_balance_avg: average
+    aggregate_outedge_txn_max: average
+    aggregate_inedge_txn_count: average
+    aggregate_clustering_coefficient: average
+    aggregate_total_txn_between_clusters_sum: average
+    aggregate_degree: average
+    aggregate_inedge_txn_max: average
+    aggregate_centrality: average
+  x: 3589
+  y: 1056
+  inputs:
+    graph:
+      boxId: Fill-vertex-attributes-with-constant-default-values_1
+      id: graph
+  parametricParameters: {}
+- id: Graph-visualization_1
+  operationId: Graph visualization
+  parameters:
+    state: "{\"left\":{\"projectPath\":\"\",\"graphMode\":null,\"display\":\"svg\",\"filters\":{\"vertex\":{},\"edge\":{}},\"bucketCount\":4,\"preciseBucketSizes\":false,\"relativeEdgeDensity\":false,\"axisOptions\":{\"vertex\":{},\"edge\":{}},\"sampleRadius\":1,\"attributeTitles\":{},\"animate\":{\"enabled\":false,\"style\":\"expand\",\"labelAttraction\":0},\"centers\":[\"auto\"],\"customVisualizationFilters\":false,\"vertexColorMap\":\"Viridis\",\"labelColorMap\":\"Viridis\",\"edgeColorMap\":\"Viridis\",\"sliderPos\":50},\"right\":{\"display\":\"svg\",\"filters\":{\"vertex\":{},\"edge\":{}},\"bucketCount\":4,\"preciseBucketSizes\":false,\"relativeEdgeDensity\":false,\"axisOptions\":{\"vertex\":{},\"edge\":{}},\"sampleRadius\":1,\"attributeTitles\":{\"label\":\"Exchange_sum\",\"size\":\"size\",\"color\":\"cluster\"},\"animate\":{\"enabled\":false,\"style\":\"expand\",\"labelAttraction\":0},\"centers\":[\"*\"],\"customVisualizationFilters\":false,\"vertexColorMap\":\"PiYG \U0001F5D8\",\"labelColorMap\":\"LynxKite Classic\",\"edgeColorMap\":\"Viridis\",\"projectPath\":\".bucketing\",\"sliderPos\":50,\"graphMode\":\"sampled\"}}"
+  x: 3739
+  y: 556
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_1
+      id: graph
+  parametricParameters: {}
+- id: Import-CSV_1
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/8e51344fbbb3dc5786a1801ece81eef8.eth_exchange_list_v2.csv
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/8e51344fbbb3dc5786a1801ece81eef8.eth_exchange_list_v2.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    imported_table: 8177752c-46e0-3fa6-95f7-ceabc9bff70c
+  x: 3089
+  y: 856
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-vertex-attributes_1
+  operationId: Use table as vertex attributes
+  parameters:
+    id_attr: stringId
+    id_column: ADDRESS
+  x: 3339
+  y: 856
+  inputs:
+    attributes:
+      boxId: Import-CSV_1
+      id: table
+    graph:
+      boxId: Segment-by-String-attribute_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_1
+  operationId: Derive vertex attribute
+  parameters:
+    output: Exchange
+    expr: if(CATEGORY == "Exchange") 1.0 else 0.0
+  x: 3539
+  y: 856
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_2
+  operationId: Derive vertex attribute
+  parameters:
+    output: Miner
+    expr: if(CATEGORY == "Mining")1.0 else 0.0
+  x: 3089
+  y: 1056
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  parametricParameters: {}
+- id: Filter-by-attributes_1
+  operationId: Filter by attributes
+  parameters:
+    filterva_connected_components_size_max: '>140000'
+  x: 1989
+  y: 706
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_3
+      id: graph
+  parametricParameters: {}
+- id: Approximate-clustering-coefficient_1
+  operationId: Approximate clustering coefficient
+  parameters: {}
+  x: 2039
+  y: 1156
+  inputs:
+    graph:
+      boxId: Discard-edge-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Compute-degree_1
+  operationId: Compute degree
+  parameters:
+    direction: all neighbors
+  x: 1889
+  y: 1306
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  parametricParameters: {}
+- id: Fill-vertex-attributes-with-constant-default-values_2
+  operationId: Fill vertex attributes with constant default values
+  parameters:
+    fill_inedge_eth_value_average: '0'
+    fill_prop_incoming_txn: '0'
+    fill_inedge_txn_max: '0'
+    fill_total_value_avg: '0'
+    fill_total_count_txn: '0'
+    fill_prop_txn_between_clusters: '0'
+    fill_balance_avg: '0'
+    fill_inedge_txn_count: '0'
+    fill_outedge_txn_max: '0'
+    fill_outedge_eth_value_average: '0'
+    fill_outedge_txn_count: '0'
+    fill_total_txn_between_clusters_sum: '0'
+  x: 2489
+  y: 1456
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_6
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_3
+  operationId: Derive vertex attribute
+  parameters:
+    output: prop_incoming_txn
+    expr: inedge_txn_count/(inedge_txn_count+outedge_txn_count)
+  x: 2139
+  y: 1306
+  inputs:
+    graph:
+      boxId: Compute-degree_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_4
+  operationId: Derive vertex attribute
+  parameters:
+    output: prop_txn_between_clusters
+    expr: total_txn_between_clusters_sum/(inedge_txn_count+outedge_txn_count)
+  x: 2389
+  y: 1306
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_3
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_5
+  operationId: Derive vertex attribute
+  parameters:
+    output: total_count_txn
+    expr: inedge_txn_count+outedge_txn_count
+  x: 1739
+  y: 1456
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_4
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_6
+  operationId: Derive vertex attribute
+  parameters:
+    output: total_value_avg
+    expr: >-
+      (inedge_eth_value_average*inedge_txn_count +
+
+      outedge_eth_value_average*outedge_txn_count)/(inedge_txn_count+outedge_txn_count)
+  x: 2139
+  y: 1456
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_5
+      id: graph
+  parametricParameters: {}
+- id: Filter-by-attributes_2
+  operationId: Filter by attributes
+  parameters:
+    filterva_cluster: '1.0,3.0'
+  x: 3033
+  y: 1440
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_1
+      id: graph
+  parametricParameters: {}
+- id: Discard-segmentation_1
+  operationId: Discard segmentation
+  parameters: {}
+  x: 3311
+  y: 1432
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_2
+      id: graph
+  parametricParameters: {}
+- id: Discard-vertex-attributes_1
+  operationId: Discard vertex attributes
+  parameters:
+    name: >-
+      ADDRESS,ENTITY,cluster,log_balance_avg_sc,log_centrality_sc,log_degree_sc,log_inedge_txn_count_sc,log_inedge_txn_max_sc,log_inedge_value_avg_sc,log_modular_clusters_size_sc,log_outedge_txn_count_sc,log_outedge_txn_max_sc,log_outedge_value_avg_sc,log_page_rank_sc,log_total_count_txn_sc,log_total_value_avg_sc,log_txn_between_clusters_sc
+  x: 3687
+  y: 1432
+  inputs:
+    graph:
+      boxId: Discard-segmentation_1
+      id: graph
+  parametricParameters: {}
+- id: Discard-scalars_1
+  operationId: Discard scalars
+  parameters:
+    name: cluster_model
+  x: 3031
+  y: 1634
+  inputs:
+    graph:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Train-a-k-means-clustering-model_2
+  operationId: Train a k-means clustering model
+  parameters:
+    features: >-
+      log_balance_avg_sc,log_inedge_txn_count_sc,log_inedge_txn_max_sc,log_outedge_txn_max_sc,log_page_rank_sc,prop_txn_between_clusters
+    k: '4'
+  x: 3634.16
+  y: 1633.9086959041808
+  inputs:
+    graph:
+      boxId: Tutorials/custom_boxes/ScaleVariables_2
+      id: graph
+  parametricParameters: {}
+- id: Classify-with-model_2
+  operationId: Classify with model
+  parameters:
+    name: clusters
+  x: 2999
+  y: 1836
+  inputs:
+    graph:
+      boxId: Train-a-k-means-clustering-model_2
+      id: graph
+  parametricParameters: {}
+- id: Convert-vertex-attribute-to-String_2
+  operationId: Convert vertex attribute to String
+  parameters:
+    attr: clusters
+  x: 3301
+  y: 1848
+  inputs:
+    graph:
+      boxId: Classify-with-model_2
+      id: graph
+  parametricParameters: {}
+- id: Segment-by-String-attribute_2
+  operationId: Segment by String attribute
+  parameters:
+    attr: clusters
+  x: 3647
+  y: 1848
+  inputs:
+    graph:
+      boxId: Convert-vertex-attribute-to-String_2
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-to-segmentation_2
+  operationId: Aggregate to segmentation
+  parameters:
+    aggregate_Miner: sum
+    apply_to_graph: .bucketing
+    aggregate_prop_incoming_txn: average
+    aggregate_inedge_eth_value_average: average
+    aggregate_outedge_eth_value_average: average
+    aggregate_Exchange: sum
+    aggregate_outedge_txn_count: average
+    aggregate_modular_clusters_size_first: average
+    aggregate_total_value_avg: average
+    aggregate_page_rank: average
+    aggregate_total_count_txn: average
+    aggregate_balance_avg: average
+    aggregate_outedge_txn_max: average
+    aggregate_inedge_txn_count: average
+    aggregate_clustering_coefficient: average
+    aggregate_total_txn_between_clusters_sum: average
+    aggregate_degree: average
+    aggregate_inedge_txn_max: average
+    aggregate_centrality: average
+  x: 3979
+  y: 1844
+  inputs:
+    graph:
+      boxId: Segment-by-String-attribute_2
+      id: graph
+  parametricParameters: {}
+- id: Graph-visualization_2
+  operationId: Graph visualization
+  parameters:
+    state: "{\"left\":{\"projectPath\":\"\",\"graphMode\":null,\"display\":\"svg\",\"filters\":{\"vertex\":{},\"edge\":{}},\"bucketCount\":4,\"preciseBucketSizes\":false,\"relativeEdgeDensity\":false,\"axisOptions\":{\"vertex\":{},\"edge\":{}},\"sampleRadius\":1,\"attributeTitles\":{},\"animate\":{\"enabled\":false,\"style\":\"expand\",\"labelAttraction\":0},\"centers\":[\"auto\"],\"customVisualizationFilters\":false,\"vertexColorMap\":\"Viridis\",\"labelColorMap\":\"Viridis\",\"edgeColorMap\":\"Viridis\",\"sliderPos\":50},\"right\":{\"display\":\"svg\",\"filters\":{\"vertex\":{},\"edge\":{}},\"bucketCount\":4,\"preciseBucketSizes\":false,\"relativeEdgeDensity\":false,\"axisOptions\":{\"vertex\":{},\"edge\":{}},\"sampleRadius\":1,\"attributeTitles\":{\"label\":\"Exchange_sum\",\"size\":\"size\",\"color\":\"clusters\"},\"animate\":{\"enabled\":false,\"style\":\"expand\",\"labelAttraction\":0},\"centers\":[\"*\"],\"customVisualizationFilters\":false,\"vertexColorMap\":\"PiYG \U0001F5D8\",\"labelColorMap\":\"LynxKite Classic\",\"edgeColorMap\":\"Viridis\",\"projectPath\":\".bucketing\",\"sliderPos\":50,\"graphMode\":\"sampled\"}}"
+  x: 4251
+  y: 1630
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_2
+      id: graph
+  parametricParameters: {}
+- id: Filter-by-attributes_3
+  operationId: Filter by attributes
+  parameters:
+    filterva_clusters: '2.0,3.0'
+  x: 4239
+  y: 1916
+  inputs:
+    graph:
+      boxId: Aggregate-to-segmentation_2
+      id: graph
+  parametricParameters: {}
+- id: SQL1_1
+  operationId: SQL1
+  parameters:
+    sql: |
+      select stringId, balance_avg,
+      inedge_eth_value_average,
+      inedge_txn_count,
+      outedge_eth_value_average,
+      outedge_txn_count
+      from vertices
+  x: 4459
+  y: 1916
+  inputs:
+    input:
+      boxId: Filter-by-attributes_3
+      id: graph
+  parametricParameters: {}
+- id: Export-to-CSV_1
+  operationId: Export to CSV
+  parameters: {}
+  x: 4699
+  y: 1916
+  inputs:
+    table:
+      boxId: SQL1_1
+      id: table
+  parametricParameters: {}
+- id: Comment_1
+  operationId: Comment
+  parameters:
+    comment: |-
+      # Intro to this demo:
+      Cryptocurrencies such as Ethereum have grown
+      enormously in the last few years. Each transaction
+      between a pair of wallets within the Ethereum environment
+      is public and linkable to the previous owner. There are
+      different types of wallet owners:
+      * Users: People trading with Ethereum cryptocurrency.
+      * Exchanges: The 'banks' of the crypto world. They allow
+      exchanges between different types of currencies and withhold
+      money for many users.
+      * Miners: Computers introducing new blocks into the blockchain
+      and getting paid in Ether to do so.
+      * Tokens: Digital assets for contracts within the
+      Ethereum Virtual Machine.
+      * Smart Contracts: Transactional instructions between
+      users.
+
+      A first step towards analysing this blockchain environment
+      is to correctly classify each wallet. In this demo, we
+      try to identify which wallets are more likely to be
+      exchanges according to their transactional behaviour.
+  x: 205.895
+  y: 61.9326
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_2
+  operationId: Comment
+  parameters:
+    comment: >
+      ### Intro to the dataset:
+
+      Ethereum transactions are publicly available through
+
+      Google BigQuery or other webpages. We use the first
+
+      three months of 2019. To make the data size more
+
+      manageable, we group up the dataset into monthly values
+
+      and keep only the wallets which have more than two
+
+      connections and have an average balance greater than
+
+      0. With this pre filtering we take out most of the
+
+      Tokens, as they don't keep any Ether balance.
+
+      ### Methodology
+
+      We can get a list of known exchange wallets from <https://etherscan.io/>.
+
+      On the other hand, many other exchanges are not timely identified by this
+
+      public source, therefore machine learning is need to identify
+
+      potential exchanges.
+
+
+
+      Only a small portion (53 wallets) of the 145k
+
+      wallets are identified as exchanges, as such applying tradtional
+      classification
+
+      algorithm would not be ideal for such data set.
+
+      We turn to behavioral driven clustering approach to predict potential
+      exchanges.
+  x: 236.364
+  y: 572.138
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_3
+  operationId: Comment
+  parameters:
+    comment: |+
+      #### Data Preparation
+      _Filter Outliers:_
+
+      Read the monthly data and filter out disconnected
+      wallets as they come from isolated transactions.
+
+      _Calculate Features:_
+
+      Calculate the following features to use in the
+      clustering model:
+      * Average Balance.
+      * Incoming Transactions:
+        * Maximum ETH Value.
+        * Average ETH Value.
+        * Number of Transactions.
+      * Outgoing Transactions:
+        * Maximum ETH Value.
+        * Average ETH Value.
+        * Number of Transactions.
+
+  x: 957.555
+  y: 61.9326
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_4
+  operationId: Comment
+  parameters:
+    comment: |-
+      #### Modeling - first iteration:
+      Perform a log transformation and scale all the variables to
+      a 0-1 range.
+
+      Iteratively, perform a k-means clustering algorithm
+      maximizing the number of exchange labeled nodes
+      in a single cluster by changing the attributes used.
+
+      The best combination of features found is:
+      * Clustering Coefficient.
+      * Degree.
+      * Inedge Number of Transactions.
+      * Inedge Maximum ETH Value.
+      * Inedge Average ETH Value.
+      * Outedge Number of Transactions.
+      * Outedge Maximum ETH Value.
+      * Number of Transactions Between Modular Clusters.
+
+      With a division into 4 clusters.
+  x: 2789.49
+  y: 52.1912
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_5
+  operationId: Comment
+  parameters:
+    comment: |+
+      #### Clustering Results:
+      More than 96% of the identified exchanges are
+      within clusters 1.0 and 3.0, but they also include
+      more than 65% of the identified miners. This
+      first clustering algorithm fails to differentiate
+      properly between miners and exchanges, as both
+      of them handle big amounts of ETH and have many
+      transactions.
+
+  x: 3595.53
+  y: 62.7225
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_6
+  operationId: Comment
+  parameters:
+    comment: >-
+      #### Results:
+
+      After a two step clustering algorithm, we identify
+
+      two exchange clusters. The first exchange cluster (2.0) seems to
+
+      correspond to the smaller and less known exchanges, they
+
+      have lower average ETH balance and transactions, exchanges like
+
+      Huobi or Cobinhood belong here. The second exchange cluster (3.0) seems
+      to
+
+      be of the more known and bigger exchanges, like Binance or Bittrex, and
+
+      they withhold higher amounts of ETH and more overall transactions.
+
+
+      From 145K wallets, we've identified 20K (roughly 13%) wallets which
+
+      are more likely to belong to an exchange.
+  x: 3991
+  y: 1268
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_7
+  operationId: Comment
+  parameters:
+    comment: |-
+      #### Data Preparation (continued)
+      * Proportion Incoming Transactions.
+      * Total Number of Transactions.
+      * Total Average Value.
+      * Graph Related Attributes:
+        * Number of Transactions Between Modular Clusters.
+        * Proportion of Transactions Between Modular Clusters.
+        * Clustering Coefficient.
+        * PageRank.
+        * Centrality.
+        * Degree.
+  x: 1485.41
+  y: 59.391
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_9
+  operationId: Comment
+  parameters:
+    comment: |-
+      #### Modeling - second iteration
+      To differentiate between miners and exchanges
+      within these two clusters (1.0 and 3.0), we build
+      a new clustering model and apply it to only the
+      wallets in these clusters.
+
+      Again, we iteratively
+      find the best combination of features and number
+      of clusters that discern exchanges from miners.
+
+      The best combination of features found is:
+      * Balance.
+      * Inedge Number of Transactions.
+      * Inedge Maximum ETH Value.
+      * Outedge Maximum ETH Value.
+      * PageRank.
+      * Proportion of Transactions Between Modular Clusters.
+
+      With a new set of 4 clusters.
+  x: 3967.75
+  y: 751.951
+  inputs: {}
+  parametricParameters: {}
+- id: Custom-plot_1
+  operationId: Custom plot
+  parameters:
+    plot_code: |
+      Vegas()
+        .withData(table)
+        .encodeX("clusters", Nom)
+        .encodeY("balance_avg_average", Quant,
+        scale=Scale(scaleType=ScaleType.Log),
+        axis=Axis(title="balance", grid=false))
+        .mark(Point)
+        .configMark(filled = true, size = 500)
+        .encodeColor("total_value_avg_average", Quant,
+        bin=Bin(maxbins=3.0),
+        scale=Scale(rangeNominals=List("#CEECF5", "#0404B4")),
+        legend=Legend(orient = "right", title="transaction value" ))
+    apply_to_table: .bucketing
+  x: 4247
+  y: 1756
+  inputs:
+    table:
+      boxId: Aggregate-to-segmentation_2
+      id: graph
+  parametricParameters: {}
+- id: Fill-vertex-attributes-with-constant-default-values_1
+  operationId: Fill vertex attributes with constant default values
+  parameters:
+    fill_Exchange: '0'
+    fill_Miner: '0'
+  x: 3339
+  y: 1056
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  parametricParameters: {}
+- id: Tutorials/custom_boxes/ScaleVariables_1
+  operationId: Tutorials/custom_boxes/ScaleVariables
+  parameters: {}
+  x: 2757.34
+  y: 557.6965322016233
+  inputs:
+    graph:
+      boxId: Fill-vertex-attributes-with-constant-default-values_2
+      id: graph
+  parametricParameters: {}
+- id: Tutorials/custom_boxes/ScaleVariables_2
+  operationId: Tutorials/custom_boxes/ScaleVariables
+  parameters: {}
+  x: 3321.15
+  y: 1631.1564119947718
+  inputs:
+    graph:
+      boxId: Discard-scalars_1
+      id: graph
+  parametricParameters: {}

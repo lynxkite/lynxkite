@@ -1,0 +1,426 @@
+- id: anchor
+  operationId: Anchor
+  parameters:
+    description: >-
+      Created from
+      Users/santiago.veintimilla@lynxanalytics.com/Tutorials/Crypto_Tutorial
+    parameters: '[]'
+  x: 0
+  y: 0
+  inputs: {}
+  parametricParameters: {}
+- id: input-graph
+  operationId: Input
+  parameters:
+    name: graph
+  x: -50
+  y: 100
+  inputs: {}
+  parametricParameters: {}
+- id: output-graph
+  operationId: Output
+  parameters:
+    name: graph
+  x: 2300
+  y: 200
+  inputs:
+    output:
+      boxId: Discard-vertex-attributes_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_1
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_balance_avg
+    expr: Math.log(balance_avg+1)
+  x: 1200
+  y: 700
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_8
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_2
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_centrality
+    expr: Math.log(centrality+1)
+  x: 266.02463235843896
+  y: 167.70859437409734
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_28
+      id: graph
+  parametricParameters: {}
+- id: Aggregate-vertex-attribute-globally_1
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_log_txn_between_clusters: 'max,min'
+    aggregate_log_inedge_txn_max: 'max,min'
+    aggregate_log_total_value_avg: 'max,min'
+    aggregate_log_degree: 'max,min'
+    aggregate_log_inedge_value_avg: 'max,min'
+    aggregate_log_balance_avg: 'max,min'
+    aggregate_log_centrality: 'max,min'
+    aggregate_log_total_count_txn: 'max,min'
+    aggregate_log_outedge_value_avg: 'max,min'
+    aggregate_log_modular_clusters_size: 'max,min'
+    aggregate_log_page_rank: 'max,min'
+    aggregate_log_outedge_txn_count: 'max,min'
+    aggregate_log_inedge_txn_count: 'max,min'
+    aggregate_log_outedge_txn_max: 'max,min'
+  x: 950
+  y: 50
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_3
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_balance_avg_sc
+    expr: >-
+      (log_balance_avg-log_balance_avg_min)/(log_balance_avg_max-log_balance_avg_min)
+  x: 1100
+  y: 150
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  parametricParameters: {}
+- id: Discard-scalars_1
+  operationId: Discard scalars
+  parameters:
+    name: >-
+      log_balance_avg_max,log_balance_avg_min,log_centrality_max,log_centrality_min,log_degree_max,log_degree_min,log_inedge_txn_count_max,log_inedge_txn_count_min,log_inedge_txn_max_max,log_inedge_txn_max_min,log_inedge_value_avg_max,log_inedge_value_avg_min,log_modular_clusters_size_max,log_modular_clusters_size_min,log_outedge_txn_count_max,log_outedge_txn_count_min,log_outedge_txn_max_max,log_outedge_txn_max_min,log_outedge_value_avg_max,log_outedge_value_avg_min,log_page_rank_max,log_page_rank_min,log_total_count_txn_max,log_total_count_txn_min,log_total_value_avg_max,log_total_value_avg_min,log_txn_between_clusters_max,log_txn_between_clusters_min
+  x: 1851.0739766924255
+  y: 91.68972470787762
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_27
+      id: graph
+  parametricParameters: {}
+- id: Discard-vertex-attributes_1
+  operationId: Discard vertex attributes
+  parameters:
+    name: >-
+      log_balance_avg,log_centrality,log_degree,log_inedge_txn_count,log_inedge_txn_max,log_inedge_value_avg,log_modular_clusters_size,log_outedge_txn_count,log_outedge_txn_max,log_outedge_value_avg,log_page_rank,log_total_count_txn,log_total_value_avg,log_txn_between_clusters
+  x: 2051.0739766924257
+  y: 191.68972470787762
+  inputs:
+    graph:
+      boxId: Discard-scalars_1
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_4
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_degree
+    expr: Math.log(degree)
+  x: 401.0739766924255
+  y: 291.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_5
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_value_avg
+    expr: Math.log(inedge_eth_value_average+1)
+  x: 501.0739766924255
+  y: 391.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_4
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_6
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_txn_count
+    expr: Math.log(inedge_txn_count+1)
+  x: 601.0739766924253
+  y: 491.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_5
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_7
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_txn_max
+    expr: Math.log(inedge_txn_max+1)
+  x: 701.0739766924253
+  y: 591.6897247078776
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_6
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_8
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_modular_clusters_size
+    expr: Math.log(modular_clusters_size_first)
+  x: 1100
+  y: 550
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_13
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_9
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_value_avg
+    expr: Math.log(outedge_eth_value_average+1)
+  x: 601.0739766924253
+  y: 91.68972470787762
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_14
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_10
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_txn_count
+    expr: Math.log(outedge_txn_count+1)
+  x: 701.0739766924253
+  y: 191.68972470787762
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_9
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_11
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_txn_max
+    expr: Math.log(outedge_txn_max+1)
+  x: 801.0739766924253
+  y: 291.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_10
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_12
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_page_rank
+    expr: Math.log(page_rank+1)
+  x: 901.0739766924253
+  y: 366.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_11
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_13
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_txn_between_clusters
+    expr: Math.log(total_txn_between_clusters_sum+1)
+  x: 1001.0739766924253
+  y: 466.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_12
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_14
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_total_count_txn
+    expr: Math.log(total_count_txn)
+  x: 801.0739766924253
+  y: 691.6897247078775
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_7
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_15
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_centrality_sc
+    expr: >-
+      (log_centrality-log_centrality_min)/(log_centrality_max-log_centrality_min)
+  x: 1200
+  y: 300
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_3
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_16
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_degree_sc
+    expr: (log_degree-log_degree_min)/(log_degree_max-log_degree_min)
+  x: 1301.0739766924253
+  y: 391.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_15
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_17
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_value_avg_sc
+    expr: >-
+      (log_inedge_value_avg-log_inedge_value_avg_min)/(log_inedge_value_avg_max-log_inedge_value_avg_min)
+  x: 1401.0739766924253
+  y: 491.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_16
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_18
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_txn_count_sc
+    expr: >-
+      (log_inedge_txn_count-log_inedge_txn_count_min)/(log_inedge_txn_count_max-log_inedge_txn_count_min)
+  x: 1501.0739766924253
+  y: 591.6897247078776
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_17
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_19
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_inedge_txn_max_sc
+    expr: >-
+      (log_inedge_txn_max-log_inedge_txn_max_min)/(log_inedge_txn_max_max-log_inedge_txn_max_min)
+  x: 1601.0739766924253
+  y: 691.6897247078775
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_18
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_20
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_total_value_avg_sc
+    expr: >-
+      (log_total_value_avg-log_total_value_avg_min)/(log_total_value_avg_max-log_total_value_avg_min)
+  x: 1351.0739766924253
+  y: 91.68972470787762
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_19
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_21
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_modular_clusters_size_sc
+    expr: >-
+      (log_modular_clusters_size-log_modular_clusters_size_min)/(log_modular_clusters_size_max-log_modular_clusters_size_min)
+  x: 1451.0739766924253
+  y: 191.68972470787762
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_20
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_22
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_value_avg_sc
+    expr: >-
+      (log_outedge_value_avg-log_outedge_value_avg_min)/(log_outedge_value_avg_max-log_outedge_value_avg_min)
+  x: 1551.0739766924253
+  y: 291.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_21
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_23
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_txn_count_sc
+    expr: >-
+      (log_outedge_txn_count-log_outedge_txn_count_min)/(log_outedge_txn_count_max-log_outedge_txn_count_min)
+  x: 1651.0739766924253
+  y: 391.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_22
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_24
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_outedge_txn_max_sc
+    expr: >-
+      (log_outedge_txn_max-log_outedge_txn_max_min)/(log_outedge_txn_max_max-log_outedge_txn_max_min)
+  x: 1751.0739766924253
+  y: 491.68972470787764
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_23
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_25
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_total_count_txn_sc
+    expr: >-
+      (log_total_count_txn-log_total_count_txn_min)/(log_total_count_txn_max-log_total_count_txn_min)
+  x: 1851.0739766924255
+  y: 591.6897247078776
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_24
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_26
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_page_rank_sc
+    expr: (log_page_rank-log_page_rank_min)/(log_page_rank_max-log_page_rank_min)
+  x: 1951.0739766924255
+  y: 691.6897247078775
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_25
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_27
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_txn_between_clusters_sc
+    expr: >-
+      (log_txn_between_clusters-log_txn_between_clusters_min)/(log_txn_between_clusters_max-log_txn_between_clusters_min)
+  x: 2151.0739766924257
+  y: 691.6897247078775
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_26
+      id: graph
+  parametricParameters: {}
+- id: Derive-vertex-attribute_28
+  operationId: Derive vertex attribute
+  parameters:
+    output: log_total_value_avg
+    expr: Math.log(total_value_avg+1)
+  x: 150
+  y: 100
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  parametricParameters: {}
