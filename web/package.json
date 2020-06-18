@@ -3,7 +3,7 @@
   "private": true,
   "dependencies": {
     "ace-builds": "1.2.5",
-    "angular": "1.7.9",
+    "angular": "1.8.0",
     "angular-cookies": "1.7.7",
     "angular-hotkeys": "1.7.0",
     "angular-route": "1.7.7",
