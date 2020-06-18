@@ -138,56 +138,56 @@
   inputs: {}
   parametricParameters: {}
 - id: Use-table-as-vertex-attributes_1
+  inputs:
+    attributes:
+      boxId: Import-CSV_2
+      id: table
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
   operationId: Use table as vertex attributes
   parameters:
     id_attr: stringId
     id_column: iata
-  x: 1216.5478337379798
-  y: 594.3420172896988
-  inputs:
-    graph:
-      boxId: Compute-PageRank_1
-      id: graph
-    attributes:
-      boxId: Import-CSV_2
-      id: table
   parametricParameters: {}
-- id: Convert-vertex-attribute-to-Double_1
-  operationId: Convert vertex attribute to Double
-  parameters:
-    attr: 'lat,long'
-  x: 1416.5478337379798
-  y: 594.3420172896988
-  inputs:
-    graph:
-      boxId: Use-table-as-vertex-attributes_1
-      id: graph
-  parametricParameters: {}
-- id: Convert-vertex-attributes-to-position_1
-  operationId: Convert vertex attributes to position
-  parameters:
-    x: lat
-    y: long
-  x: 1666.5478337379798
-  y: 594.3420172896988
-  inputs:
-    graph:
-      boxId: Convert-vertex-attribute-to-Double_1
-      id: graph
-  parametricParameters: {}
+  x: 1200
+  y: 600
 - id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
   operationId: Graph visualization
   parameters:
     state: >-
       {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"degree":">212"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
       coordinates":"position","label":"city"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis"}}
-  x: 1866.5478337379798
-  y: 594.3420172896988
+  parametricParameters: {}
+  x: 1900
+  y: 600
+- id: Bundle-vertex-attributes-into-a-Vector_1
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_1
+      boxId: Convert-vertex-attribute-to-number_1
       id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: 'lat,long'
+    output: position
   parametricParameters: {}
+  x: 1650
+  y: 600
+- id: Convert-vertex-attribute-to-number_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  operationId: Convert vertex attribute to number
+  parameters:
+    attr: 'lat,long'
+  parametricParameters: {}
+  x: 1450
+  y: 600
 - id: Comment_1
   operationId: Comment
   parameters:

@@ -27,18 +27,17 @@ for f in /tmp/build/python/documentation/*.{png,ipynb}; do
 done
 
 echo 'copy from preloaded'
-mkdir -p .kite/data
-mkdir -p .kite/meta/1/operations
+mkdir -p .kite4/data
+mkdir -p .kite4/meta/1/operations
 
-cp -R /tmp/preloaded_lk_data/data .kite/
-cp -R /tmp/preloaded_lk_data/meta/1/operations .kite/meta/1/
+cp -R /tmp/preloaded_lk_data/data .kite4/
+cp -R /tmp/preloaded_lk_data/meta/1/operations .kite4/meta/1/
 
 echo 'starting the surrogate LK page'
 /tmp/scripts/lk_startup/serve.py /tmp/scripts/lk_startup/index.html 8000 &
 echo "$!" > /tmp/startup_page.pid
 
 echo 'starting lynxkite'
-/tmp/scripts/delete_multiple_ops.py --folder /home/jovyan/.kite/meta/1/operations
 cd /tmp
 rm -rf /tmp/kite.pid /tmp/sphynx.pid
 # Start LynxKite and Nginx in the background with authentication

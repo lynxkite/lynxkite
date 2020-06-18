@@ -1,8 +1,8 @@
 #!/bin/bash -xue
 # Emulates the user's home environment and starts a LynxKite that can be used to edit it.
-# 
+#
 # After your edits are done, you can use the preload_tool to update the contents of
-# preloaded_lk_data from home/.kite/ (That command will only copy the absolutely
+# preloaded_lk_data from home/.kite4/ (That command will only copy the absolutely
 # necessary files, you have to copy things manually if you want to have more there.)
 #
 # Then you can run build.sh to create the new image that contains your edits.
