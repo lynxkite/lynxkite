@@ -472,7 +472,7 @@
   operationId: Comment
   parameters:
     comment: >-
-      Visualising just the trips that have taken regardless of the stations data
+      Visualising just the trips that have taken place regardless of the stations data
   parametricParameters: {}
   x: 600.0
   y: 250.0
@@ -597,10 +597,11 @@
   inputs: {}
   operationId: Comment
   parameters:
-    comment: >-
-      Merge the edges that start from the same station together and get the average
-      duration from each station to get the duration out. Filter only works on Double
-      attributes, therefore, we change it to Double.
+    comment: |-
+      Merge the edges that start from the same
+      station together and get the average
+      duration from each station to get the
+      duration out.
   parametricParameters: {}
   x: 1100.0
   y: 850.0
@@ -618,10 +619,10 @@
   inputs: {}
   operationId: Comment
   parameters:
-    comment: >-
-      Convert trips count into a vertex to get the size of the trips of each station.
-      When graphing, apply filters to help understand and breakdown the data. It is
-      also wise to make use of the size, colour and label features.
+    comment: |-
+      Calculate the in and out ratio by deriving
+      the vertex attribute, and rank the top 10
+      to visualise the crucial stations.
   parametricParameters: {}
   x: 2450.0
   y: 450.0
