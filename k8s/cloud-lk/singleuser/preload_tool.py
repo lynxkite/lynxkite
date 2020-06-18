@@ -35,7 +35,7 @@ Use case 2) Generating the preloaded_lk_data
 
 
 This command will generate a basic preloaded_lk_data directory, by copying over the necessary files from
-home/.kite. See the README.md file how this works.
+home/.kite4. See the README.md file how this works.
 
 '''
 from ruamel import yaml

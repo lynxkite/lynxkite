@@ -5,7 +5,7 @@ https://app.asana.com/0/153258440689361/1149619076199089 about
 why this is necessary.
 
 Example usage:
-./delete_multiple_ops.py --folder /home/jovyan/.kite/meta/1/operations
+./delete_multiple_ops.py --folder /home/jovyan/.kite4/meta/1/operations
 
 '''
 import json

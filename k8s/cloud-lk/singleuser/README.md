@@ -11,7 +11,7 @@ you need to do the following.
 1. Still on [pizzabox](https://pizzabox.lynxanalytics.com), look at all the import operations in the
    workspace and find their `File` parameter, for example `UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.sok-relationships-filtered.csv`.
    You need to retrieve all such imported files (in the case of pizzabox, they are
-   in directory `/home/kite/kite/data/uploads`) and copy them to `home/.kite/data/uploads`.
+   in directory `/home/kite/kite/data/uploads`) and copy them to `home/.kite4/data/uploads`.
 
 1. Update the script `scripts/upload_workspaces.sh` so that it uploads `NewWorkspace.yaml` as well.
 
@@ -28,11 +28,11 @@ you need to do the following.
 1. Update the contents of the directory `preloaded_lk_data`:
 
        rm -rf preloaded_lk_data
-       ./preload_tool.py --task=copy --ws_dir workspaces --preloaded_dir preloaded_lk_data --source_dir home/.kite
+       ./preload_tool.py --task=copy --ws_dir workspaces --preloaded_dir preloaded_lk_data --source_dir home/.kite4
 
 1. Run `./build.sh`
 
-1. Delete (or rename directory home/.kite)
+1. Delete (or rename) `home/.kite4`:
 
        rm -rf home/.kite
 
