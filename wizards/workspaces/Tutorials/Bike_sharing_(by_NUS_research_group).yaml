@@ -472,7 +472,8 @@
   operationId: Comment
   parameters:
     comment: >-
-      Visualising just the trips that have taken place regardless of the stations data
+      Visualising just the trips that have taken place regardless of the stations
+      data
   parametricParameters: {}
   x: 600.0
   y: 250.0

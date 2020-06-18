@@ -64,6 +64,36 @@ def upload(filename, rewrite):
   lk.save_workspace(wn, ws)
   fix_imports(filename, rewrite)
 
+def remove_guids(ws):
+  for b in ws:
+    if b['operationId'] == 'Import CSV':
+      b['parameters']['imported_table'] = ''
+
+  
+def needs_upload(filename, rewrite):
+  wn = ws_name(filename)
+  entry = lk.get_directory_entry(wn)
+  if not entry.exists:
+    print(f'New workspace {wn}')
+    return True
+  if not entry.isWorkspace:
+    print(f'Trying to override non-workspace: {wn}!')
+    sys.exit(-1)
+  with open('workspaces/' + filename) as f:
+    ws_new = yaml.safe_load(f)
+    if not rewrite:
+      remove_guids(ws_new)
+  ws_old = lynx.kite.to_simple_dicts(lk.get_workspace_boxes(wn))
+  if not rewrite:
+    remove_guids(ws_old)
+  if ws_old != ws_new:
+    print(f'Modified workspace {wn}')
+    fn = f'workspaces/{filename}.orig'
+    with open(fn, 'w') as f:
+      yaml.safe_dump(ws_old, f, default_flow_style=False)
+    print(f'Current server version saved as {fn}')
+    return True
+  return False
 
 def usage():
   print('Usage:')
@@ -95,7 +125,19 @@ else:
   usage()
 
 
+to_upload = []
+rewrite = sys.argv[1] == '--remote'
+
 for root, dirs, files in os.walk('workspaces'):
   for f in files:
     if f.endswith('.yaml'):
-      upload((root + '/' + f)[len('workspaces/'):], sys.argv[1] == '--remote')
+      fn = (root + '/' + f)[len('workspaces/'):]
+      if needs_upload(fn, rewrite):
+        to_upload.append(fn)
+
+if to_upload:
+  input("Press Enter to continue or Ctrl-C to exit...")
+  for fn in to_upload:
+    upload(fn, rewrite)
+else:
+  print('Nothing new to upload')
