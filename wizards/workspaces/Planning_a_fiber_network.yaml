@@ -3,34 +3,29 @@
   operationId: Anchor
   parameters:
     steps: >-
-      [{"title":"Understanding the problem","description":"Here comes a description
-      of the problem and the format of the input data.","box":"SQL1_2","popup":"table"},{"title":"Data
-      on the map","description":"Look at all these Access Points and target clients
-      on the map","box":"Graph-visualization_4","popup":"visualization"},{"title":"Street
-      segment data","description":"Explain the other input data, street segments.","box":"Import-CSV_4","popup":"table"},{"title":"Look
-      at a small area","description":"Explain that we turned the data into the graph.
-      We are looking at the vertices contained in a small area","box":"Graph-visualization_1","popup":"visualization"},{"title":"Set
-      up business parameters","description":"Explain what is what. Encourage users
-      to play around. Maybe mention a few parameter sets that are interesting.","box":"custom_boxes/OptimalFiberNetwork_1","popup":"parameters"},{"title":"Project
-      NPV","description":"Exlain. This should show how profitable fiber project is
-      possible.","box":"SQL1_1","popup":"table"},{"title":"Network plan","description":"Explain
-      that this shows the optimal network plan for the optimal profit mentioned above.","box":"Graph-visualization_5","popup":"visualization"}]
+      [{"title":"Understanding the problem","description":"Here comes a
+      description of the problem and the format of the input
+      data.","box":"SQL1_2","popup":"table"},{"title":"Data on the
+      map","description":"Look at all these Access Points and target clients on
+      the
+      map","box":"Graph-visualization_4","popup":"visualization"},{"title":"Street
+      segment data","description":"Explain the other input data, street
+      segments.","box":"Import-CSV_4","popup":"table"},{"title":"Look at a small
+      area","description":"Explain that we turned the data into the graph. We
+      are looking at the vertices contained in a small
+      area","box":"Graph-visualization_1","popup":"visualization"},{"title":"Set
+      up business parameters","description":"Explain what is what. Encourage
+      users to play around. Maybe mention a few parameter sets that are
+      interesting.","box":"custom_boxes/OptimalFiberNetwork_1","popup":"parameters"},{"title":"Network
+      plan","description":"Explain that this shows the optimal network plan for
+      the optimal profit mentioned
+      above.","box":"Graph-visualization_5","popup":"visualization"},{"title":"Project
+      NPV","description":"Exlain. This should show how profitable fiber project
+      is possible.","box":"SQL1_1","popup":"table"}]
     wizard: yes
   parametricParameters: {}
   x: -379.257406154777
   y: -15.958305709814447
-- id: Convert-vertex-attributes-to-position_2
-  inputs:
-    graph:
-      boxId: Use-table-as-edges_2
-      id: graph
-  operationId: Convert vertex attributes to position
-  parameters:
-    x: lat
-    y: lon
-  parametricParameters: {}
-  x: 450.0
-  y: 450.0
 - id: Graph-visualization_4
   inputs:
     graph:
@@ -41,40 +36,25 @@
     state: >-
       {"left":{"graphPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"node_type":"!Crossing"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
       coordinates":"position","color":"node_type","icon":"node_type","size":"importance"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
-      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
       to orange"}}
   parametricParameters: {}
-  x: 800.0
-  y: 100.0
-- id: Graph-visualization_5
-  inputs:
-    graph:
-      boxId: custom_boxes/OptimalFiberNetwork_1
-      id: graph
-  operationId: Graph visualization
-  parameters:
-    state: >-
-      {"left":{"graphPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
-      coordinates":"position","size":"importance","color":"node_type","icon":"node_type"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"GnBu","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
-      to orange","lastCentersRequest":{"count":1,"filters":[],"offset":1},"lastCentersResponse":["-9216140793692027317"],"edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
-      to orange"}}
-  parametricParameters: {}
-  x: 1350.0
-  y: 450.0
+  x: 700
+  y: 150
 - id: Derive-vertex-attribute_1
   inputs:
     graph:
-      boxId: Convert-vertex-attributes-to-position_2
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
       id: graph
   operationId: Derive vertex attribute
   parameters:
     defined_attrs: 'false'
-    expr: >-
-      if (node_type.get == "AccessPoint") Some(20000.0) else revenue
+    expr: if (node_type.get == "AccessPoint") Some(20000.0) else revenue
     output: importance
   parametricParameters: {}
-  x: 700.0
-  y: 450.0
+  x: 700
+  y: 450
 - id: custom_boxes/OptimalFiberNetwork_1
   inputs:
     graph:
@@ -83,14 +63,14 @@
   operationId: custom_boxes/OptimalFiberNetwork
   parameters: {}
   parametricParameters: {}
-  x: 1100.0
-  y: 450.0
+  x: 1100
+  y: 450
 - id: Import-CSV_3
   inputs: {}
   operationId: Import CSV
   parameters:
     filename: UPLOAD$/bb8ffb69079d472fcf6392e29fe951ff.KalocsaGeoNodes.csv
-    imported_table: 595958e4-69fa-3d45-bf01-96985fae30b5
+    imported_table: 1f8d2d09-7945-366c-ad4f-41e172a1550d
     infer: yes
     last_settings: |-
       {
@@ -112,15 +92,14 @@
         "delimiter" : ","
       }
   parametricParameters: {}
-  x: -300.0
-  y: 450.0
+  x: -300
+  y: 450
 - id: Import-CSV_4
   inputs: {}
   operationId: Import CSV
   parameters:
-    filename: >-
-      UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv
-    imported_table: cad02561-26bf-31d9-b9e3-c0f717ee784d
+    filename: UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv
+    imported_table: 21ef500a-5503-3e81-b4bc-ec01f0518c08
     infer: yes
     last_settings: |-
       {
@@ -142,8 +121,8 @@
         "delimiter" : ","
       }
   parametricParameters: {}
-  x: -300.0
-  y: 650.0
+  x: -300
+  y: 650
 - id: Use-table-as-vertices_2
   inputs:
     table:
@@ -152,8 +131,8 @@
   operationId: Use table as vertices
   parameters: {}
   parametricParameters: {}
-  x: -50.0
-  y: 450.0
+  x: -50
+  y: 450
 - id: Use-table-as-edges_2
   inputs:
     graph:
@@ -168,8 +147,8 @@
     dst: dst
     src: src
   parametricParameters: {}
-  x: 200.0
-  y: 450.0
+  x: 200
+  y: 450
 - id: Graph-visualization_1
   inputs:
     graph:
@@ -180,11 +159,12 @@
     state: >-
       {"left":{"graphPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"lat":"[46.526,46.533]","lon":"[18.98,18.99]"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{"lat":{"logarithmic":false},"lon":{"logarithmic":true}},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
       coordinates":"position","size":"importance","color":"node_type","icon":"node_type"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":true,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
-      to orange","lastCentersRequest":{"count":1,"filters":[{"attributeName":"node_type","valueSpec":"AccessPoint"}]},"lastCentersResponse":["-9158709130960041817"],"edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange","lastCentersRequest":{"count":1,"filters":[{"attributeName":"node_type","valueSpec":"AccessPoint"}]},"lastCentersResponse":["-9158709130960041817"],"edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
       to orange"}}
   parametricParameters: {}
-  x: 1100.0
-  y: 100.0
+  x: 1100
+  y: 150
 - id: SQL1_1
   inputs:
     input:
@@ -192,11 +172,12 @@
       id: graph
   operationId: SQL1
   parameters:
-    sql: |
-      select CAST(ProjectNPV / 1000 as INT) as `Optimal Net Present Value for your fiber project (in thousand USD)` from scalars
+    sql: >
+      select CAST(ProjectNPV / 1000 as INT) as `Optimal Net Present Value for
+      your fiber project (in thousand USD)` from graph_attributes
   parametricParameters: {}
-  x: 1358.7756483121289
-  y: 192.5135616929842
+  x: 1400
+  y: 150
 - id: SQL1_2
   inputs:
     input:
@@ -211,5 +192,33 @@
       UNION
       (select * from input where  node_type = 'AccessPoint' limit 3)
   parametricParameters: {}
-  x: -50.0
-  y: 250.0
+  x: -50
+  y: 200
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_2
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: 'lat,lon'
+    output: position
+  parametricParameters: {}
+  x: 450
+  y: 450
+- id: Graph-visualization_5
+  inputs:
+    graph:
+      boxId: custom_boxes/OptimalFiberNetwork_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","size":"importance","color":"node_type","icon":"node_type"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1400
+  y: 450
