@@ -99,8 +99,8 @@
       boxId: Use-table-as-vertex-attributes_2
       id: graph
   parametricParameters: {}
-- id: Convert-vertex-attribute-to-Double_3
-  operationId: Convert vertex attribute to Double
+- id: Convert-vertex-attribute-to-number_3
+  operationId: Convert vertex attribute to number
   parameters:
     attr: 'Age,Gender,Last_Login_Days,Registration_Days,User_ID'
   x: -450
@@ -162,7 +162,7 @@
   y: 1340.280836101356
   inputs:
     graph:
-      boxId: Convert-vertex-attribute-to-Double_3
+      boxId: Convert-vertex-attribute-to-number_3
       id: graph
   parametricParameters: {}
 - id: Discard-vertex-attributes_4
@@ -243,93 +243,50 @@
       id: graph
   parametricParameters: {}
 - id: Find-infocom-communities_2
-  operationId: Find infocom communities
-  parameters:
-    bothdir: 'false'
-  x: 1100
-  y: 1400
   inputs:
     graph:
       boxId: Discard-segmentation_1
       id: graph
-  parametricParameters: {}
-- id: Predict-attribute-by-viral-modeling_2
-  operationId: Predict attribute by viral modeling
+  operationId: Find infocom communities
   parameters:
-    apply_to_graph: .communities
-    seed: '1167456500'
-    min_ratio_defined: '0.5'
-    max_deviation: '3'
-    min_num_defined: '2'
-  x: 1300
-  y: 1300
-  inputs:
-    graph:
-      boxId: Find-infocom-communities_2
-      id: graph
+    bothdir: 'false'
   parametricParameters: {}
-- id: Discard-scalars_2
-  operationId: Discard scalars
-  parameters:
-    name: >-
-      viral Age coverage after iteration 1,viral Age coverage after iteration
-      2,viral Age coverage after iteration 3,viral Age coverage initial,viral
-      Age mean absolute prediction error after iteration 1,viral Age mean
-      absolute prediction error after iteration 2,viral Age mean absolute
-      prediction error after iteration 3
-  x: 1450
+  x: 1100
   y: 1400
-  inputs:
-    graph:
-      boxId: Predict-attribute-by-viral-modeling_2
-      id: graph
-  parametricParameters: {}
-- id: Discard-vertex-attributes_5
-  operationId: Discard vertex attributes
-  parameters:
-    name: >-
-      viral_Age_after_iteration_1,viral_Age_after_iteration_2,viral_Age_spread_over_iterations,viral_Age_test,viral_Age_train,viral_roles
-  x: 1600
-  y: 1300
-  inputs:
-    graph:
-      boxId: Discard-scalars_2
-      id: graph
-  parametricParameters: {}
-- id: Rename-vertex-attributes_5
-  operationId: Rename vertex attributes
-  parameters:
-    change_viral_Age_after_iteration_3: Age_prediction
-  x: 1750
-  y: 1400
-  inputs:
-    graph:
-      boxId: Discard-vertex-attributes_5
-      id: graph
-  parametricParameters: {}
 - id: Derive-vertex-attribute_12
+  inputs:
+    graph:
+      boxId: built-ins/Predict-from-communities_1
+      id: graph
   operationId: Derive vertex attribute
   parameters:
-    output: error
     expr: Math.abs(Age_test-Age_prediction)
-  x: 1900
-  y: 1300
-  inputs:
-    graph:
-      boxId: Rename-vertex-attributes_5
-      id: graph
+    output: error
   parametricParameters: {}
-- id: Aggregate-vertex-attribute-globally_2
-  operationId: Aggregate vertex attribute globally
-  parameters:
-    aggregate_error: average
-  x: 2050
+  x: 1750
   y: 1400
+- id: Aggregate-vertex-attribute-globally_2
   inputs:
     graph:
       boxId: Derive-vertex-attribute_12
       id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_error: average
   parametricParameters: {}
+  x: 2050
+  y: 1400
+- id: built-ins/Predict-from-communities_1
+  inputs:
+    graph:
+      boxId: Find-infocom-communities_2
+      id: graph
+  operationId: built-ins/Predict from communities
+  parameters:
+    Minimal samples: '2'
+  parametricParameters: {}
+  x: 1400
+  y: 1400
 - id: Find-triangles_2
   operationId: Find triangles
   parameters:
@@ -835,59 +792,17 @@
       boxId: Derive-vertex-attribute_1
       id: graph
   parametricParameters: {}
-- id: Predict-attribute-by-viral-modeling_1
-  operationId: Predict attribute by viral modeling
-  parameters:
-    apply_to_graph: .communities
-    seed: '1167456500'
-    max_deviation: '10'
-    min_num_defined: '2'
-  x: 350
-  y: 1700
+- id: built-ins/Predict-from-communities_2
   inputs:
     graph:
       boxId: Find-infocom-communities_1
       id: graph
-  parametricParameters: {}
-- id: Discard-scalars_1
-  operationId: Discard scalars
+  operationId: built-ins/Predict from communities
   parameters:
-    name: >-
-      viral Age coverage after iteration 1,viral Age coverage after iteration
-      2,viral Age coverage after iteration 3,viral Age coverage initial,viral
-      Age mean absolute prediction error after iteration 1,viral Age mean
-      absolute prediction error after iteration 2,viral Age mean absolute
-      prediction error after iteration 3
-  x: 550
-  y: 1800
-  inputs:
-    graph:
-      boxId: Predict-attribute-by-viral-modeling_1
-      id: graph
+    Minimal samples: '2'
   parametricParameters: {}
-- id: Discard-vertex-attributes_1
-  operationId: Discard vertex attributes
-  parameters:
-    name: >-
-      viral_Age_after_iteration_1,viral_Age_after_iteration_2,viral_Age_spread_over_iterations,viral_Age_test,viral_Age_train,viral_roles
   x: 750
-  y: 1700
-  inputs:
-    graph:
-      boxId: Discard-scalars_1
-      id: graph
-  parametricParameters: {}
-- id: Rename-vertex-attributes_1
-  operationId: Rename vertex attributes
-  parameters:
-    change_viral_Age_after_iteration_3: Age_prediction
-  x: 950
   y: 1800
-  inputs:
-    graph:
-      boxId: Discard-vertex-attributes_1
-      id: graph
-  parametricParameters: {}
 - id: Merge-two-vertex-attributes_1
   operationId: Merge two vertex attributes
   parameters:
@@ -909,7 +824,7 @@
   y: 1700
   inputs:
     graph:
-      boxId: Rename-vertex-attributes_1
+      boxId: built-ins/Predict-from-communities_2
       id: graph
   parametricParameters: {}
 - id: Merge-two-vertex-attributes_2
@@ -951,7 +866,7 @@
   operationId: Discard vertex attributes
   parameters:
     name: >-
-      Age_prediction,Age_prediction_new,Last_Login_Days,Region,Registration_Days,id,neighborhood_Age_average,stringId
+      Age_prediction,Age_prediction_new,Last_Login_Days,Region,Registration_Days,neighborhood_Age_average,stringId
   x: 2400
   y: 1700
   inputs:

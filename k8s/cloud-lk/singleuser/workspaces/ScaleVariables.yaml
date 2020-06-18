@@ -89,8 +89,8 @@
       boxId: Aggregate-vertex-attribute-globally_1
       id: graph
   parametricParameters: {}
-- id: Discard-scalars_1
-  operationId: Discard scalars
+- id: Discard-graph-attributes_1
+  operationId: Discard graph attributes
   parameters:
     name: >-
       log_balance_avg_max,log_balance_avg_min,log_centrality_max,log_centrality_min,log_degree_max,log_degree_min,log_inedge_txn_count_max,log_inedge_txn_count_min,log_inedge_txn_max_max,log_inedge_txn_max_min,log_inedge_value_avg_max,log_inedge_value_avg_min,log_modular_clusters_size_max,log_modular_clusters_size_min,log_outedge_txn_count_max,log_outedge_txn_count_min,log_outedge_txn_max_max,log_outedge_txn_max_min,log_outedge_value_avg_max,log_outedge_value_avg_min,log_page_rank_max,log_page_rank_min,log_total_count_txn_max,log_total_count_txn_min,log_total_value_avg_max,log_total_value_avg_min,log_txn_between_clusters_max,log_txn_between_clusters_min
@@ -110,7 +110,7 @@
   y: 191.68972470787762
   inputs:
     graph:
-      boxId: Discard-scalars_1
+      boxId: Discard-graph-attributes_1
       id: graph
   parametricParameters: {}
 - id: Derive-vertex-attribute_4

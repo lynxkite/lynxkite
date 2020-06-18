@@ -17,8 +17,8 @@
       boxId: Import-CSV_5
       id: table
   parametricParameters: {}
-- id: Convert-edge-attribute-to-Double_3
-  operationId: Convert edge attribute to Double
+- id: Convert-edge-attribute-to-number_3
+  operationId: Convert edge attribute to number
   parameters:
     attr: 'eth_value,eth_value_sum,num_txn,to_address_prev_balance'
   x: 1639
@@ -114,11 +114,11 @@
   y: 1006
   inputs:
     graph:
-      boxId: Convert-vertex-attribute-to-Double_2
+      boxId: Convert-vertex-attribute-to-number_2
       id: graph
   parametricParameters: {}
-- id: Convert-vertex-attribute-to-Double_2
-  operationId: Convert vertex attribute to Double
+- id: Convert-vertex-attribute-to-number_2
+  operationId: Convert vertex attribute to number
   parameters:
     attr: modular_clusters_id_first
   x: 1739
@@ -140,7 +140,7 @@
   y: 556
   inputs:
     graph:
-      boxId: Convert-edge-attribute-to-Double_3
+      boxId: Convert-edge-attribute-to-number_3
       id: graph
   parametricParameters: {}
 - id: Aggregate-edge-attribute-to-vertices_6
@@ -542,8 +542,8 @@
       boxId: Discard-segmentation_1
       id: graph
   parametricParameters: {}
-- id: Discard-scalars_1
-  operationId: Discard scalars
+- id: Discard-graph-attributes_1
+  operationId: Discard graph attributes
   parameters:
     name: cluster_model
   x: 3031
@@ -953,6 +953,6 @@
   y: 1631.1564119947718
   inputs:
     graph:
-      boxId: Discard-scalars_1
+      boxId: Discard-graph-attributes_1
       id: graph
   parametricParameters: {}
