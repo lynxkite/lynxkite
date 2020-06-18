@@ -1,0 +1,132 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: >-
+      [{"kind":"text","id":"AccessPointCost","defaultValue":"1000","$$hashKey":"object:150214"},{"kind":"text","id":"FiberCostPerMeter","defaultValue":"150","$$hashKey":"object:153402"},{"kind":"text","id":"DiscountRatio","defaultValue":"0.05","$$hashKey":"object:154485"},{"kind":"text","id":"ROIYears","defaultValue":"3","$$hashKey":"object:155013"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Derive-edge-attribute_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Derive edge attribute
+  parameters:
+    expr: |-
+      import math._;
+
+      val r = 6371000; // radius of Earth in metres
+      val lat1 = src$lat * Pi/180
+      val lat2 = dst$lat * Pi/180
+      val lon1 = src$lon * Pi/180
+      val lon2 = dst$lon * Pi/180
+
+      val d_lat = lat2-lat1
+      val d_lon = lon2-lon1
+
+      val a = (
+        sin(d_lat/2) * sin(d_lat/2) +
+        cos(lat1) * cos(lat2) * sin(d_lon/2) * sin(d_lon/2))
+      val c = 2 * atan2(sqrt(a), sqrt(1-a))
+
+      r * c
+    output: distance
+  parametricParameters: {}
+  x: 250.0
+  y: 300.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 50.0
+  y: 300.0
+- id: Find-Steiner-tree_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_6
+      id: graph
+  operationId: Find Steiner tree
+  parameters:
+    gain: total_discounted_revenue
+    root_costs: starting_cost
+  parametricParameters: {}
+  x: 1050.0
+  y: 300.0
+- id: Filter-by-attributes_2
+  inputs:
+    graph:
+      boxId: Find-Steiner-tree_2
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_node: '*'
+  parametricParameters: {}
+  x: 1250.0
+  y: 300.0
+- id: Derive-edge-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    output: cost
+  parametricParameters:
+    expr: distance * $FiberCostPerMeter
+  x: 650.0
+  y: 300.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: starting_cost
+  parametricParameters:
+    expr: >-
+      if (node_type == "AccessPoint") Some(1.0 * $AccessPointCost) else None
+  x: 450.0
+  y: 300.0
+- id: Derive-vertex-attribute_6
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    output: total_discounted_revenue
+  parametricParameters:
+    expr: |-
+      (revenue *
+        (1 - Math.pow(1 - $DiscountRatio, $ROIYears)) /
+        $DiscountRatio)
+  x: 850.0
+  y: 300.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: Rename-scalar_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 1650.0
+  y: 300.0
+- id: Rename-scalar_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_2
+      id: graph
+  operationId: Rename scalar
+  parameters:
+    after: ProjectNPV
+    before: profit
+  parametricParameters: {}
+  x: 1450.0
+  y: 300.0
