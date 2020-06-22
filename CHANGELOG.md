@@ -22,7 +22,7 @@ We can help migrate existing workspaces to LynxKite 4.0 if necessary.
    (It was an early prototype, long since succeeded by the _"Predict with GCN"_ box.)
  - Removed _"Predict attribute by viral modeling"_ box. It is more flexible to do the same
    thing through a series of more elemental boxes.
-   A built-in box ("Predict from communities"_) has been added to serve as a starting point.
+   A built-in box (_"Predict from communities"_) has been added to serve as a starting point.
  - Made it easier to use graph convolutional boxes: added _"Bundle vertex attributes into a Vector"_
    and _"One-hot encode attribute"_ boxes.
  - Replaced the _"Reduce vertex attributes to two dimensions"_ and _"Embed with t-SNE"_ boxes with
