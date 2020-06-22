@@ -2,6 +2,8 @@
 
 include::prefixed-paths.asciidoc[]
 
+include::access-control.asciidoc[]
+
 include::jdbc-details.asciidoc[]
 
 include::sql-syntax.asciidoc[]
