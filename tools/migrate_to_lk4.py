@@ -54,19 +54,42 @@ MAPPING = {
   }
 
 
+def writenew(src, dst, **kwargs):
+  with open(f'new_checkpoints/save-{dst}', 'w') as f:
+    json.dump({
+      **kwargs,
+      'checkpoint': dst,
+      'previousCheckpoint': src }, f)
+
+
 def migrate(src, dst):
   if not os.path.exists(f'checkpoints/save-{src}'):
     return False
   with open(f'checkpoints/save-{src}') as f:
     j = json.load(f)
-    if 'workspace' not in j:
+    if 'workspace' in j:
+      writenew(src, dst, workspace=migrate_ws(j['workspace']))
+      return True
+    elif 'snapshot' in j:
+      writenew(src, dst, snapshot=migrate_snapshot(j['snapshot']))
+      return True
+    else:
       return False
-    ws = j['workspace']
+
+
+def migrate_snapshot(s):
+  if s['kind'] == 'project':
+    s['kind'] = 'graph'
+  return s
+
+
+def migrate_ws(ws):
   for b in ws['boxes']:
     # "project" -> "graph"
     inputs = b['inputs']
     if 'project' in inputs:
       inputs['graph'] = inputs['project']
+      del inputs['project']
     for i in inputs.values():
       if i['id'] == 'project':
         i['id'] = 'graph'
@@ -92,12 +115,7 @@ def migrate(src, dst):
         parameters['change_' + parameters['before']] = parameters['after']
         del parameters['before']
         del parameters['after']
-  with open(f'new_checkpoints/save-{dst}', 'w') as f:
-    json.dump({
-      'workspace': ws,
-      'checkpoint': dst,
-      'previousCheckpoint': src }, f)
-  return True
+  return ws
 
 
 if args.list:
