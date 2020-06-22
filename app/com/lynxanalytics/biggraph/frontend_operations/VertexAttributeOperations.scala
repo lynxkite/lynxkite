@@ -90,7 +90,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       project.vertexAttrList[String] ++
         project.vertexAttrList[Long] ++
         project.vertexAttrList[Int]
-    params += Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true)
+    params += Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true,
+      hiddenOptions = project.vertexAttrList[Double])
     def enabled = project.hasVertexSet
     def apply() = {
       for (name <- splitParam("attr")) {

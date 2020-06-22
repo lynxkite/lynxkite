@@ -5,15 +5,6 @@ group the items is by user: so the workspaces and snaphots of one user would be 
 workspaces and snapshots of another. This organization is encouraged by assigning a private folder to each user
 inside the `Users` folder.
 
-Folders can have access control settings. A list of users who can read or write the folder contents
-can be specified by opening the settings panel
-(+++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++).
-See the section on <<access-control>> for more details.
-
-Administrator users have access to everything and can fine-tune the access control settings to set
-up any desired system of permissions. This is recommended as part of the LynxKite installation
-procedure.
-
 Click +++<span class="icon glyphicon glyphicon-plus"></span>+++ _New folder_
 to create a new folder inside the current folder.
 

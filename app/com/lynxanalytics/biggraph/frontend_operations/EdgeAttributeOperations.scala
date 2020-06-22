@@ -75,7 +75,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       project.edgeAttrList[String] ++
         project.edgeAttrList[Long] ++
         project.edgeAttrList[Int]
-    params += Choice("attr", "Edge attribute", options = eligible, multipleChoice = true)
+    params += Choice("attr", "Edge attribute", options = eligible, multipleChoice = true,
+      hiddenOptions = project.edgeAttrList[Double])
     def enabled = project.hasEdgeBundle
     def apply() = {
       for (name <- splitParam("attr")) {
