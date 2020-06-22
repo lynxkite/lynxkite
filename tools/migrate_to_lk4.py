@@ -1,4 +1,35 @@
-'''Tool for migrating workspaces from LynxKite 3.x to LynxKite 4.x.'''
+'''Tool for migrating workspaces from LynxKite 3.x to LynxKite 4.x.
+
+The whole process would look like this:
+
+  # Copy metadata, uploads, and imported tables. (Remote steps.)
+  cp backup/meta/9/tags.journal kite/meta/1/tags.journal
+  cp -R backup/meta/9/checkpoints kite/meta/1/checkpoints
+  cp -R backup/data/uploads kite/data/uploads
+  for f in `cd backup/meta/9/operations; grep -rl ImportDataFrame .`; do
+    cp backup/meta/9/operations/$f kite/meta/1/operations/
+  done
+  for guid in `grep -r '"t"' kite/meta/1/operations | cut -d'"' -f4`; do
+    cp -R backup/data/tables/$guid kite/data/tables/
+  done
+  for guid in `grep -r '"guid"' kite/meta/1/operations | cut -d'"' -f4`; do
+    cp -R backup/data/operations/$guid kite/data/operations/
+  done
+
+  # Migrate checkpoints. (Local steps.)
+  scp host:kite/meta/1/tags.journal .
+  python migrate_to_lk4.py --tags tags.journal --list > cps
+  scp host:cps .
+  for f in `cat cps`; do
+    scp host:kite/meta/1/checkpoints/$f checkpoints/
+  done
+  python migrate_to_lk4.py --tags tags.journal  > new_tags.journal
+  scp -r new_checkpoints new_tags.journal host:
+  # (Remote steps.)
+  cp new_checkpoints/* kite/meta/1/checkpoints/
+  cat new_tags.journal >> kite/meta/1/tags.journal
+
+'''
 import argparse
 import json
 import os
