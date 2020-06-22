@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 4.0.0
+
 **We've open-sourced LynxKite!**
 
 We took this opportunity to make many changes that break compatibility with the LynxKite 3.x series.
