@@ -19,7 +19,6 @@ The whole process would look like this:
   # Migrate checkpoints. (Local steps.)
   scp host:kite/meta/1/tags.journal .
   python migrate_to_lk4.py --tags tags.journal --list > cps
-  scp host:cps .
   for f in `cat cps`; do
     scp host:kite/meta/1/checkpoints/$f checkpoints/
   done
