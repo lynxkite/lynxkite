@@ -211,8 +211,8 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
         val eg = {
           val op = graph_operations.VerticesToEdges()
-          op(op.srcAttr, edges.vertexAttributes(src).runtimeSafeCast[String])(
-            op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
+          op(op.srcAttr, edges.vertexAttributes(src).asString)(
+            op.dstAttr, edges.vertexAttributes(dst).asString).result
         }
         project.vertexSet = eg.vs
         project.newVertexAttribute("stringId", eg.stringId)
