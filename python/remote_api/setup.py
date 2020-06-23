@@ -2,7 +2,7 @@ from setuptools import find_namespace_packages, setup
 import os
 
 setup(
-    name='lynxkite-python-api',
+    name='lynxkite-client',
     version=os.environ.get('VERSION', 'snapshot'),
     install_requires=[
         'requests',
