@@ -31,6 +31,7 @@ const del = require('del');
 const glob = require('glob');
 const gulp = require('gulp');
 const http = require('https');
+const annotate = require('./basic-annotate.js');
 const fs = require('fs');
 const httpProxy = require('http-proxy');
 const lazypipe = require('lazypipe');
@@ -77,7 +78,7 @@ function getOrbitalControls(done) {
 // Preprocesses JavaScript files.
 gulp.task('js', gulp.series(getOrbitalControls, function js() {
   return gulp.src('app/scripts/**/*.js')
-    .pipe($.ngAnnotate())
+    .pipe(annotate)
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(browserSync.stream());
 }));
