@@ -32,6 +32,7 @@ const glob = require('glob');
 const gulp = require('gulp');
 const http = require('https');
 const annotate = require('./basic-annotate.js');
+const filesort = require('./basic-filesort.js');
 const fs = require('fs');
 const httpProxy = require('http-proxy');
 const lazypipe = require('lazypipe');
@@ -86,7 +87,7 @@ gulp.task('js', gulp.series(getOrbitalControls, function js() {
 // Preprocesses HTML files.
 gulp.task('html', gulp.series('css', 'js', function html() {
   const css = gulp.src('.tmp/**/*.css', { read: false });
-  const js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
+  const js = gulp.src('.tmp/**/*.js').pipe(filesort());
   return gulp.src('app/index.html')
     .pipe($.inject(css, { ignorePath: '.tmp' }))
     .pipe($.inject(js, { ignorePath: '.tmp' }))
