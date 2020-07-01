@@ -111,7 +111,7 @@ users.
 
 To see if that is the case on your cluster, check the `hadoop.proxyuser.hive.groups` property in
 the `core-site.xml` on the Hive Metastore host. If its value is set to `*` or it is not set then
-that means that there is no restriction on who can acces the Hive Metastore. However, if it
+that means that there is no restriction on who can access the Hive Metastore. However, if it
 contains a list of groups, then add the group of the user running LynxKite to the list.
 
 For Cloudera-specific details, see the Cloudera 5.6 documentation on

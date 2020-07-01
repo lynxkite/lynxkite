@@ -1,7 +1,7 @@
 ## LynxKite with Kerberos
 
 LynxKite supports running on Kerberos-secured clusters. To enable this, you will need to set
-`KERBEROS_PRINCIPAL` and `KERBEROS_KEYTAB` in your <<kiterc-file,`.kiterc`>> respecitvely.
+`KERBEROS_PRINCIPAL` and `KERBEROS_KEYTAB` in your <<kiterc-file,`.kiterc`>> respectively.
 
 You will need to contact your administrator to obtain the keytab file. In a typical setup, you
 could do the following to obtain a Keytab file. Start the `ktutil` shell and then enter:

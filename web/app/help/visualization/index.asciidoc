@@ -21,7 +21,7 @@ Use your mouse wheel or scroll gesture to zoom in and out. Left double-click and
 double-click can also be used for this.
 
 Panning::
-Hold down your left mouse button anywhere on the visualizaton screen and drag the graph around.
+Hold down your left mouse button anywhere on the visualization screen and drag the graph around.
 
 Zooming objects in/out::
 Hold down the Shift button while zooming in and out to only change the size of objects
