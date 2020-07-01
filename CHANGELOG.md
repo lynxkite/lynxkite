@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Fixed issue with interactive tutorials ([#30](https://github.com/lynxkite/lynxkite/issues/30)).
+
 ### 4.0.0
 
 **We've open-sourced LynxKite!**
