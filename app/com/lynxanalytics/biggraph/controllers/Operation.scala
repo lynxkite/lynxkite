@@ -315,7 +315,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   private val customBoxesCategory = Operation.Category(
     Workspace.customBoxesCategory,
     "blue",
-    icon = "superpowers",
+    icon = "hat-cowboy",
     index = 999,
     browseByDir = true)
 

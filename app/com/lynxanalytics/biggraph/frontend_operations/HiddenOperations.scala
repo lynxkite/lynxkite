@@ -80,7 +80,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       s"External computation $i",
       (1 to i).map(_.toString).toList,
       List("table"),
-      "superpowers")(new TableOutputOperation(_) {
+      "hat-cowboy")(new TableOutputOperation(_) {
         params += Param("snapshot_prefix", "Snapshot prefix")
         def enabled = FEStatus.enabled
         override def getOutputs() = {
