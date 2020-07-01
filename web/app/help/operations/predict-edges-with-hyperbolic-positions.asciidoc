@@ -8,6 +8,10 @@ the new edges are undirected.
 Vertices must have two _number_ vertex attributes to be
 used as radial and angular coordinates.
 
+The algorithm is based on
+https://arxiv.org/abs/1106.0286[Popularity versus Similarity in Growing Networks] and
+https://arxiv.org/abs/1205.4384[Network Mapping by Replaying Hyperbolic Growth].
+
 ====
 [p-size]#Number of predictions#::
 The number of edges to generate.
