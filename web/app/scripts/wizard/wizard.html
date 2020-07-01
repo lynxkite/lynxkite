@@ -29,7 +29,7 @@
             <span class="lead">{{ step.title }}</span>
             <button ng-show="expanded === $index"
               drop-tooltip="Switch to maximized view"
-              class="btn wizard-maximize-button fa fa-expand"
+              class="btn wizard-maximize-button fas fa-expand"
               ng-click="toggleMaximized()">
             </button>
           </div>
@@ -81,17 +81,17 @@
   <div class="wizard-top-steps">
     <a class="step" ng-if="expanded > 0" drop-tooltip="Go to previous step"
       ng-click="moveToStep(expanded - 1)">
-      {{ steps[expanded - 1].title }} <i class="fa fa-long-arrow-left"></i></a>
+      {{ steps[expanded - 1].title }} <i class="fas fa-long-arrow-left"></i></a>
     <div class="step active">
       {{ steps[expanded].title }}
       <button drop-tooltip="Switch to sequential view"
-        class="btn wizard-minimize-button fa fa-compress"
+        class="btn wizard-minimize-button fas fa-compress"
         ng-click="toggleMaximized()">
       </button>
     </div>
     <a class="step" ng-if="expanded < steps.length - 1" drop-tooltip="Go to next step"
       ng-click="moveToStep(expanded + 1);">
-      <i class="fa fa-long-arrow-right"></i> {{ steps[expanded + 1].title }}</a>
+      <i class="fas fa-long-arrow-right"></i> {{ steps[expanded + 1].title }}</a>
   </div>
 
   <div ng-show="steps[expanded].description" trusted-html="steps[expanded].html" class="description">

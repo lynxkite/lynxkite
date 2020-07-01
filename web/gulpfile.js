@@ -121,8 +121,8 @@ gulp.task('dist', gulp.series('asciidoctor', 'genTemplates', 'html', function di
     'node_modules/bootstrap/dist/fonts/*',
   ], { base: 'node_modules/bootstrap/dist' });
   const fontAwesomeFonts = gulp.src([
-    'node_modules/font-awesome/fonts/*',
-  ], {base: 'node_modules/font-awesome'});
+    'node_modules/@fortawesome/fontawesome-free/webfonts/*',
+  ], {base: 'node_modules/@fortawesome'});
   const typefaces = gulp.src([
     'node_modules/typeface-exo-2/files/*',
   ], {base: 'node_modules/typeface-exo-2'});

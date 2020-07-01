@@ -6,7 +6,7 @@ import PIL.ImageChops
 import PIL.ImageOps
 import subprocess
 import unicodedata
-import yaml
+from ruamel import yaml
 
 
 def povray(output_file, font, caption, shadow_pass):
@@ -55,16 +55,18 @@ def lookup_fontawesome_codepoint(name, registry={}):
   if not registry:
     with open('icons.yml') as f:
       fa = yaml.load(f.read())
-    for i in fa['icons']:
-      ch = chr(int(i['unicode'], 16))
-      registry[i['id']] = ch
+    for i in fa:
+      ch = chr(int(fa[i]['unicode'], 16))
+      if 'regular' in fa[i]['styles']:
+        registry[i] = 'fa-regular-400.ttf', ch
+      if 'solid' in fa[i]['styles']:
+        registry[i] = 'fa-solid-900.ttf', ch
   return registry[name]
 
 
 def render(name):
   try:
-    font = 'fontawesome-webfont.ttf'
-    character = lookup_fontawesome_codepoint(name)
+    font, character = lookup_fontawesome_codepoint(name)
   except KeyError:  # Not a Font Awesome character name.
     font = 'NotoSansSymbols-Regular.ttf'
     character = unicodedata.lookup(name.upper())
@@ -86,15 +88,19 @@ def main():
         'NotoSansSymbols-Regular.ttf',
     ]).check_returncode()
     os.remove('NotoSansSymbols-unhinted.zip')
-  if not os.path.exists('fontawesome-webfont.ttf'):
+  if not os.path.exists('fa-regular-400.ttf'):
     subprocess.run([
         'wget',
-        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/fonts/fontawesome-webfont.ttf',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/5.13.1/webfonts/fa-regular-400.ttf',
+    ]).check_returncode()
+    subprocess.run([
+        'wget',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/5.13.1/webfonts/fa-solid-900.ttf',
     ]).check_returncode()
   if not os.path.exists('icons.yml'):
     subprocess.run([
         'wget',
-        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/src/icons.yml',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/5.13.1/metadata/icons.yml',
     ]).check_returncode()
   render('anchor')
   render('black down-pointing triangle')
@@ -107,19 +113,19 @@ def main():
   render('gavel')
   render('filter')
   render('th-large')
-  render('globe')
+  render('globe-americas')
   render('asterisk')
-  render('circle')
+  render('dot-circle')
   render('share-alt')
   render('podcast')
   render('signal')
-  render('android')
+  render('robot')
   render('wrench')
   render('eye')
-  render('superpowers')
-  render('snowflake-o')
+  render('hat-cowboy')
+  render('snowflake')
   render('cogs')
-  render('user-circle-o')
+  render('user-circle')
   render('ankh')
 
 

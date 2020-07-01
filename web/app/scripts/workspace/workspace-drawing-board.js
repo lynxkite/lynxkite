@@ -941,7 +941,7 @@ angular.module('biggraph')
                   and look at their outputs.
 
                   <p>A good box to start with is the <i>Create example graph</i> box in the
-                  <i>Build graph</i> <i class="fa fa-gavel"></i> category.
+                  <i>Build graph</i> <i class="fas fa-gavel"></i> category.
 
                   <p>If you want to learn more, be sure to follow the
                   <i class="glyphicon glyphicon-question-sign"></i> signs, skim the

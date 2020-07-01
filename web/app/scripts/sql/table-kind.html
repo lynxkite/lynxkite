@@ -1,6 +1,6 @@
 <button ng-class="{ btn: true, 'btn-primary': stale(), 'btn-default': !stale() }"
   ng-click="importBox()" ng-disabled="inProgress" drop-tooltip="{{ tooltip() }}">
-  <i class="fa fa-check" ng-show="!stale() && !inProgress" style="color: green;"></i>
-  <i class="fa fa-spinner fa-spin" ng-show="inProgress"></i>
-  {{ stale() ? 'Import' : 'Reimport' }} <i class="fa fa-play"></i>
+  <i class="fas fa-check" ng-show="!stale() && !inProgress" style="color: green;"></i>
+  <i class="fas fa-spinner fa-spin" ng-show="inProgress"></i>
+  {{ stale() ? 'Import' : 'Reimport' }} <i class="fas fa-play"></i>
 </button>

@@ -1,5 +1,7 @@
 ├─ (BSD-2-Clause OR MIT OR Apache-2.0)
 │  └─ rc@1.2.8
+├─ (CC-BY-4.0 AND OFL-1.1 AND MIT)
+│  └─ @fortawesome/fontawesome-free@5.13.1
 ├─ (GPL-2.0 OR MIT)
 │  └─ ua-parser-js@0.7.17
 ├─ (MIT AND Zlib)
@@ -8,8 +10,6 @@
 │  └─ atob@2.1.2
 ├─ (MIT OR GPL-3.0)
 │  └─ jszip@3.2.0
-├─ (OFL-1.1 AND MIT)
-│  └─ font-awesome@4.7.0
 ├─ (WTFPL OR MIT)
 │  └─ path-is-inside@1.0.2
 ├─ Apache-2.0
@@ -262,7 +262,7 @@
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
-│  ├─ bootstrap-tourist@0.2.1
+│  ├─ bootstrap-tourist@0.3.2
 │  ├─ bootstrap@3.4.1
 │  ├─ brace-expansion@1.1.11
 │  ├─ braces@1.8.5
@@ -540,7 +540,7 @@
 │  ├─ jasmine-core@2.8.0
 │  ├─ jasmine@2.8.0
 │  ├─ jasminewd2@2.2.0
-│  ├─ jquery@3.5.0
+│  ├─ jquery@3.5.1
 │  ├─ js-tokens@4.0.0
 │  ├─ js-yaml@3.13.1
 │  ├─ jsbn@0.1.1
