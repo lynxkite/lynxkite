@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "github.com/biggraph/biggraph/sphynx/proto"
+	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/source"
