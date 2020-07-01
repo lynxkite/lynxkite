@@ -1,7 +1,7 @@
 ### Copy edges to base graph
 
 Copies the edges from a segmentation to the base graph. The copy is performed along the links
-between the the segmentation and the base graph. If two segments are connected with some
+between the segmentation and the base graph. If two segments are connected with some
 edges, then each edge will be copied to each pairs of members of the segments.
 
 This operation has a potential to create trillions of edges or more.
