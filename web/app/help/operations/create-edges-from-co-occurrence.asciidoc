@@ -5,6 +5,6 @@ Multiple co-occurrences will result in multiple parallel edges. Loop edges
 are generated for each segment that a vertex belongs to. The attributes of
 the segment are copied to the edges created from it.
 
-This operation has a potential to create a trillions of edges or more.
+This operation has a potential to create trillions of edges or more.
 The number of edges created is the sum of squares of the segment sizes.
 It is recommended to drop very large segments before running this computation.
