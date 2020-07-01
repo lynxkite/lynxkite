@@ -4,7 +4,7 @@ Copies the edges from a segmentation to the base graph. The copy is performed al
 between the the segmentation and the base graph. If two segments are connected with some
 edges, then each edge will be copied to each pairs of members of the segments.
 
-This operation has a potential to create a trillions of edges or more.
+This operation has a potential to create trillions of edges or more.
 The number of edges created is the sum of the source and destination segment sizes multiplied
 together for each edge in the segmentation.
 It is recommended to drop very large segments before running this computation.
