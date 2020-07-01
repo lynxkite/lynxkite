@@ -1,5 +1,9 @@
 '''Python interface for the LynxKite Remote API.
 
+Installation::
+
+    pip install lynxkite-client
+
 The default LynxKite connection parameters can be configured through the following environment
 variables::
 
