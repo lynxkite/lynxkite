@@ -1,5 +1,9 @@
 '''Python interface for the LynxKite Remote API.
 
+Installation::
+
+    pip install lynxkite-client
+
 The default LynxKite connection parameters can be configured through the following environment
 variables::
 
@@ -1933,7 +1937,7 @@ def _topological_sort(dependencies: Dict[T, Set[T]]) -> Iterable[Set[T]]:
 
 
 class LynxException(Exception):
-  '''Raised when LynxKite indicates that an error has occured while processing a command.'''
+  '''Raised when LynxKite indicates that an error has occurred while processing a command.'''
 
   def __init__(self, error):
     super(LynxException, self).__init__(error)

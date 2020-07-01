@@ -1,6 +1,7 @@
 ### Predict with GCN
 
-Uses a trained GCN to make predictions.
+Uses a trained https://tkipf.github.io/graph-convolutional-networks/[Graph Convolutional Network]
+to make predictions.
 
 ====
 [p-save_as]#Save prediction as#::
