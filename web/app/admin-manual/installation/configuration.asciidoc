@@ -37,12 +37,6 @@ For example: `kite_2.6.2/bin/lynxkite start`. Use the
 will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the
 program.
 
-### Access control setup
-
-After the users are created, HDFS/Linux directory level access control can be enabled
-as explained in <<prefix-based-access-control>>. LynxKite level access control can be managed
-directly on the LynxKite Web UI.
-
 ### HTTPS setup
 
 To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
