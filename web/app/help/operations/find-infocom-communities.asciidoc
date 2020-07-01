@@ -5,7 +5,7 @@ Creates a segmentation of overlapping communities.
 The algorithm finds maximal cliques then merges them to communities.
 Two cliques are merged if they sufficiently overlap.
 More details can be found in
-http://www.insead.edu/facultyresearch/research/details_papers.cfm?id=24896[
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1753903[
 Information Communities: The Network Structure of Communication].
 
 It often makes sense to filter out high degree vertices before detecting

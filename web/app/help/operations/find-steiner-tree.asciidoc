@@ -6,6 +6,9 @@ this operation will yield a forest (a set of trees) that is a subgraph of the gi
 graph. Furthermore, in this subgraph, the sum of the gains
 minus the sum of the (edge and root) costs approximate the maximal possible value.
 
+Finding this optimal subgraph is called the
+https://en.wikipedia.org/wiki/Steiner_tree_problem#Steiner_tree_in_graphs_and_variants[Prize-collecting Steiner Tree Problem].
+
 The operation will result in four outputs: (1) A new edge attribute, which will specify which
 edges are part of the optimal solution. Its value will be 1.0 for edges that
 are part of the optimal forest and not defined otherwise; (2) A new vertex
