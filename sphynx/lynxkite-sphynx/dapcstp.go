@@ -4,7 +4,7 @@
 package main
 
 import (
-	"dapcstp"
+	"github.com/lynxkite/lynxkite/sphynx/dapcstp"
 )
 
 // The function graph will convert the problem specification described in

@@ -6,6 +6,15 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))
+- Fixed issue with graph attributes in _"Create graph in Python"_. ([#25](https://github.com/lynxkite/lynxkite/pull/25))
+- Fixed issue with non-String attributes in _"Use table as graph"_. ([#26](https://github.com/lynxkite/lynxkite/pull/26))
+- Replaced trademarked box icons (it was an accident!) with free ones.
+  Also switched to FontAwesome 5 everywhere to get a better selection of icons.
+- Improved the User Guide. ([#38](https://github.com/lynxkite/lynxkite/pull/38), [#39](https://github.com/lynxkite/lynxkite/pull/39))
+
+### 4.0.0
+
 **We've open-sourced LynxKite!**
 
 We took this opportunity to make many changes that break compatibility with the LynxKite 3.x series.

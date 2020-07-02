@@ -2,7 +2,7 @@
 
 ### Java version
 
-You need Java 8 or higher on the system.
+You need Java 8 on the system.
 
 ### Write permission
 

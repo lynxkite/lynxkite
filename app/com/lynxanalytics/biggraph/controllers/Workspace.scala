@@ -42,7 +42,7 @@ case class Workspace(
     val outputs = boxes.filter(_.operationId == "Output").flatMap(b => b.parameters.get("name"))
     BoxMetadata(
       categoryId = Workspace.customBoxesCategory,
-      icon = if (icon.nonEmpty) icon else "images/icons/superpowers.png",
+      icon = if (icon.nonEmpty) icon else "images/icons/hat-cowboy.png",
       color = "natural",
       operationId = name,
       inputs = inputs,

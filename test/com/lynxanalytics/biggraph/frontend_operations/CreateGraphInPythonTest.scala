@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class CreateGraphInPythonTest extends OperationsTestBase {
   test("simple graph", SphynxOnly) {
     val p = box("Create graph in Python", Map(
-      "outputs" -> "vs.name: str, es.weight: float, scalars.hello: str",
+      "outputs" -> "vs.name: str, es.weight: float, graph_attributes.hello: str",
       "code" -> """
 vs = pd.DataFrame({
   'name': ['Alice', 'Bob', 'Cecil', 'Drew'],
@@ -17,7 +17,7 @@ es = pd.DataFrame({
   'dst': [0, 2, 1],
   'weight': [1, 2, 3],
 })
-scalars.hello = 'hello'
+graph_attributes.hello = 'hello'
           """))
       .box("Compute degree", Map("direction" -> "all edges"))
       .project

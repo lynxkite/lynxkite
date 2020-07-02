@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+option go_package = "github.com/lynxkite/lynxkite/sphynx/proto";
 option java_package = "com.lynxanalytics.biggraph.graph_api.proto";
 
 package sphynx;

@@ -8,7 +8,7 @@ LynxKite logs various activities. The log directory can be configured in
 The main log of LynxKite is the application log. LynxKite creates a new log file every day (except
 for those days when it is not used). It automatically deletes the log files older than 60 days.
 
-The application logs the following activites (among other things):
+The application logs the following activities (among other things):
 
 - User login attempts, successful logins and logouts.
 - All HTTP requests received by the web server including the user and the URL.
