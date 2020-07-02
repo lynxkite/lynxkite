@@ -2,7 +2,7 @@
 # Starts up a LynxKite instance which requires authentication on a random port
 # (exported as $HTTPS_PORT/$HTTP_PORT), runs a command, then shuts down LynxKite.
 
-if [ ! -f "$(dirname $0)/../stage.sh" ]; then
+if [ ! -h "$(dirname $0)/../stage" ]; then
   echo "You must run this script from the source tree, not from inside a stage!"
   exit 1
 fi
