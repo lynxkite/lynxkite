@@ -56,6 +56,9 @@ export KITE_PID_FILE=$HOME/kite.pid
 # this file.
 export KITE_SCRIPT_LOGS=$HOME/lynxkite.log
 
+# Specify the user registry file for LynxKite servers.
+export KITE_USERS_FILE=$HOME/kite_users
+
 # Specify the YARN configuration directory. It is needed if you want to run against YARN.
 # export YARN_CONF_DIR=/etc/hadoop/...
 
@@ -148,6 +151,13 @@ export KITE_EXTRA_JARS=
 
 # Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=2201
+
+# By default if you turn on HTTPS, only logged-in users will be able to access the LynxKite UI.
+# If you want users to be able to have read-only access without logging in, set
+# KITE_ACCESS_WITHOUT_LOGIN to yes. Whether these users are restricted to using wizards
+# is controlled by the second setting.
+# export KITE_ACCESS_WITHOUT_LOGIN=yes
+# export KITE_WIZARD_ONLY_WITHOUT_LOGIN=yes
 
 # Set the keystore file and password with the HTTPS keys. Use the default values for a fake HTTPS
 # certificate. If you have your own intranet CA or a wildcard certificate, you can generate a

@@ -1,9 +1,9 @@
 [[installing-binaries]]
 ## Installing the LynxKite binaries
 
-The LynxKite archive file is *lynxkite-<version_number>.tar*. Unpack this file to any
+The LynxKite archive file is *kite_<version_number>.tar*. Unpack this file to any
 convenient directory with the command  `tar xf kite_<version_number>.tar`. This
-creates a directory *lynxkite-<version_number>*. Make sure that you do this unpacking
+creates a directory *kite_<version_number>*. Make sure that you do this unpacking
 on the target Lunux platform. Unpacking on Windows then copying is known to cause problems.
 
 LynxKite needs a copy of a pre-built Apache Spark in the home directory. You can use
