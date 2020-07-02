@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/arrow/ipc"
 	"github.com/apache/arrow/go/arrow/memory"
-	pb "github.com/biggraph/biggraph/sphynx/proto"
+	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"io/ioutil"
 	"log"
 	"os"
