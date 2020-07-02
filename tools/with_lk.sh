@@ -56,11 +56,11 @@ KITE_PID=`cat ${PID_FILE}`
 SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
 function kill_backend {
   echo "Shutting down server on port $HTTP_PORT"
-  kill $KITE_PID
+  kill $KITE_PID || true
   while kill -0 $KITE_PID 2> /dev/null; do sleep 1; done
   rm -f "$KITE_USERS_FILE"
   echo "Shutting down Sphynx."
-  kill $SPHYNX_PID
+  kill $SPHYNX_PID || true
   while kill -0 $SPHYNX_PID 2> /dev/null; do sleep 1; done
   rm -rf "$TMP"
 }
