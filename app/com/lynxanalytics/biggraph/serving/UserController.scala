@@ -14,16 +14,23 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.controllers._
 
 object User {
-  val singleuser = User("(single-user)", isAdmin = true, wizardOnly = false)
-  val notLoggedIn = new User("(not logged in)", isAdmin = false, wizardOnly =
-    util.Properties.envOrElse("KITE_WIZARD_ONLY_WITHOUT_LOGIN", "") == "yes") {
-    override def home = util.Properties.envOrElse("KITE_HOME_WITHOUT_LOGIN", super.home)
-  }
   val dir = "Users"
+  val singleuser = User(
+    email = "(single-user)", isAdmin = true, wizardOnly = false, home = "/")
+  val notLoggedIn = User(
+    email = "(not logged in)",
+    isAdmin = false,
+    auth = "none",
+    home = util.Properties.envOrElse("KITE_HOME_WITHOUT_LOGIN", dir + "/(not logged in)"),
+    wizardOnly = util.Properties.envOrElse("KITE_WIZARD_ONLY_WITHOUT_LOGIN", "") == "yes")
+  def apply(
+    email: String, isAdmin: Boolean, wizardOnly: Boolean, auth: String = "none",
+    home: String = null): User =
+    new User(email, isAdmin, wizardOnly, auth, if (home == null) s"$dir/$email" else home) {}
 }
-case class User(email: String, isAdmin: Boolean, wizardOnly: Boolean, auth: String = "none") {
+// Abstract so that it doesn't generate an apply() method.
+abstract case class User(email: String, isAdmin: Boolean, wizardOnly: Boolean, auth: String, home: String) {
   override def toString = email
-  def home = User.dir + "/" + email
 }
 
 case class UserList(users: List[User])
