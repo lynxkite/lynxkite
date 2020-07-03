@@ -66,7 +66,7 @@ es['score']: float = es.weight + es.comment.str.len()
 es['names']: str = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
 graph_attributes.hello: str = graph_attributes.greeting.lower()
 graph_attributes.average_age: float = vs.age.mean()
-          """))
+          """.trim))
       .project
     assert(
       get(p.vertexAttributes("with_title").runtimeSafeCast[String]) ==
