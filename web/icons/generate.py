@@ -125,7 +125,7 @@ def main():
   render('hat-cowboy')
   render('snowflake')
   render('cogs')
-  render('user-circle')
+  render('comment-alt')
   render('ankh')
 
 
