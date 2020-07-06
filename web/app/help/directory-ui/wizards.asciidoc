@@ -28,6 +28,6 @@ Click on a heading to move to that step. You can move back or forward as much as
 Your changes are captured in your _"In progress wizards"_ directory.
 
 Steps with visualizations or large parameter lists benefit from a full-screen view.
-Click the +++<span class="icon fa fa-expand"></span>+++ icon on the current step to switch
-to maximized view. Click the +++<span class="icon fa fa-compress"></span>+++ icon to
+Click the +++<span class="icon fas fa-expand"></span>+++ icon on the current step to switch
+to maximized view. Click the +++<span class="icon fas fa-compress"></span>+++ icon to
 return to the sequential view.

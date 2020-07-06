@@ -52,17 +52,17 @@ object Categories {
   val StructureOperations =
     Category("Structure", "orange", icon = "asterisk", index = idx)
   val ScalarOperations =
-    Category("Graph attributes", "orange", icon = "globe", index = idx)
+    Category("Graph attributes", "orange", icon = "globe-americas", index = idx)
   val VertexAttributeOperations =
-    Category("Vertex attributes", "orange", icon = "circle", index = idx)
+    Category("Vertex attributes", "orange", icon = "dot-circle", index = idx)
   val EdgeAttributeOperations =
     Category("Edge attributes", "orange", icon = "share-alt", index = idx)
   val AttributePropagationOperations =
     Category("Attribute propagation", "orange", icon = "podcast", index = idx)
   val GraphComputationOperations =
-    Category("Graph computation", "blue", icon = "snowflake-o", index = idx)
+    Category("Graph computation", "blue", icon = "snowflake", index = idx)
   val MachineLearningOperations =
-    Category("Machine learning", "blue", icon = "android", index = idx)
+    Category("Machine learning", "blue", icon = "robot", index = idx)
   val WorkflowOperations =
     Category("Workflow", "blue", icon = "cogs", index = idx)
   val ManageProjectOperations =
@@ -531,8 +531,8 @@ object PythonUtilities {
   def inferInputs(code: String): Seq[String] = {
     val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
     val mentions = api.flatMap { parent =>
-      val a = s"$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
-      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
+      val a = s"\\W$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched.tail).toSeq
+      val b = s"""\\W$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
         .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}").toSeq
       a ++ b
     }.toSet
@@ -540,10 +540,10 @@ object PythonUtilities {
   }
   def inferOutputs(code: String): Seq[String] = {
     api.flatMap { parent =>
-      val a = s"""$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
-        .findAllMatchIn(code).map(_.matched).toSeq
-      val b = s"""$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
-        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}")
+      val a = s"""\\W$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
+        .findAllMatchIn(code).map(_.matched.tail).toSeq
+      val b = s"""\\W$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
+        .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}").toSeq
       a ++ b
     }.sorted
   }

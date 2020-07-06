@@ -25,16 +25,18 @@ object OperationParams {
       options: List[FEOption],
       multipleChoice: Boolean = false,
       allowUnknownOption: Boolean = false,
+      hiddenOptions: List[FEOption] = Nil, // Not offered on the UI, but not an error.
       override val group: String = "") extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = if (multipleChoice) "" else options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
+        val hiddenValues = hiddenOptions.map { x => x.id }.toSet
         val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
           if (value.isEmpty) Set() else value.split(",", -1).toSet
         }
-        val unknown = givenValues -- possibleValues
+        val unknown = givenValues -- possibleValues -- hiddenValues
         assert(
           unknown.isEmpty,
           s"Unknown option for $id: ${unknown.mkString(", ")}" +

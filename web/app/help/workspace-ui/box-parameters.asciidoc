@@ -29,7 +29,7 @@ Parametric parameters can reference <<anchor, workspace parameters>>.
 For example, consider a workspace with two <<Import CSV>> boxes, one importing `accounts-2017.csv`
 and the other importing `transactions-2017.csv`. You could add a workspace parameter called `date`
 with default value `2017`. Make the file name parameter of the import boxes parametric by clicking
-the +++<i class="fa fa-dollar"></i>+++ icon to the right of the parameter input. Change the file
+the +++<i class="fas fa-dollar"></i>+++ icon to the right of the parameter input. Change the file
 name parameters to `accounts-$date.csv` and `transactions-$date.csv`. Now `2017` will be substituted
 for `$date`, importing the same files as before.
 
@@ -58,7 +58,7 @@ The list of parameters for many boxes is determined dynamically. For example in
 an aggregation for attribute `X` but then changed the input to no longer have an attribute called
 `X`, then the parameter that sets aggregation on `X` becomes an unexpected parameter.
 
-Unexpected parameters are treated as errors. You can click the +++<i class="fa fa-remove"></i>+++
+Unexpected parameters are treated as errors. You can click the +++<i class="fas fa-times"></i>+++
 icon to the right to remove the unexpected parameter. Or you can change the input so that the
 parameter becomes recognized again.
 

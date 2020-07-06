@@ -6,6 +6,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 4.0.1
+
+- Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))
+- Fixed issue with graph attributes in _"Create graph in Python"_. ([#25](https://github.com/lynxkite/lynxkite/pull/25))
+- Fixed issue with non-String attributes in _"Use table as graph"_. ([#26](https://github.com/lynxkite/lynxkite/pull/26))
+- Replaced trademarked box icons (it was an accident!) with free ones.
+  Also switched to FontAwesome 5 everywhere to get a better selection of icons.
+- Improved the User Guide. ([#38](https://github.com/lynxkite/lynxkite/pull/38), [#39](https://github.com/lynxkite/lynxkite/pull/39))
+
+### 4.0.0
+
 **We've open-sourced LynxKite!**
 
 We took this opportunity to make many changes that break compatibility with the LynxKite 3.x series.
@@ -22,7 +33,7 @@ We can help migrate existing workspaces to LynxKite 4.0 if necessary.
    (It was an early prototype, long since succeeded by the _"Predict with GCN"_ box.)
  - Removed _"Predict attribute by viral modeling"_ box. It is more flexible to do the same
    thing through a series of more elemental boxes.
-   A built-in box ("Predict from communities"_) has been added to serve as a starting point.
+   A built-in box (_"Predict from communities"_) has been added to serve as a starting point.
  - Made it easier to use graph convolutional boxes: added _"Bundle vertex attributes into a Vector"_
    and _"One-hot encode attribute"_ boxes.
  - Replaced the _"Reduce vertex attributes to two dimensions"_ and _"Embed with t-SNE"_ boxes with

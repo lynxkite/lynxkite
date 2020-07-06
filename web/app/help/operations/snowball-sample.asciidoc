@@ -21,7 +21,7 @@ The (approximate) fraction of vertices to use as starting points.
 Limits the size of the neighborhoods of the start points.
 
 [p-attrname]#Attribute name#::
-The name of the attribute which shows how far the the sample vertices are from the closest start point.
+The name of the attribute which shows how far the sample vertices are from the closest start point.
 
 [p-seed]#Seed#::
 The random seed.

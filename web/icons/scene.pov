@@ -48,8 +48,8 @@ Center_Object(
     text {
       ttf Font Caption 0.2, 0
       rotate <90, 0, 0>
-      translate 0.1 * z
-      scale 2
+      translate 0.15 * z
+      scale 1.9
       #if (shadow_pass = 1)
         no_image
       #end

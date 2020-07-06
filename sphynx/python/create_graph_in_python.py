@@ -10,7 +10,7 @@ if os.environ.get('SPHYNX_CHROOT_PYTHON') == 'yes':
   op.run_in_chroot()
 
 # Load inputs.
-scalars = types.SimpleNamespace()
+graph_attributes = types.SimpleNamespace()
 vs = pd.DataFrame()
 es = pd.DataFrame()
 
@@ -38,7 +38,7 @@ def assert_no_extra(columns, name):
 
 assert_no_extra(vs.columns, 'vs')
 assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
-assert_no_extra(scalars.__dict__.keys(), 'scalars')
+assert_no_extra(graph_attributes.__dict__.keys(), 'graph_attributes')
 # Save outputs.
 field_names = {f['parent'] + '.' + f['name'] for f in op.params['outputFields']}
 if 'src' in es.columns and 'dst' in es.columns:
@@ -68,9 +68,9 @@ for fullname in op.outputs.keys():
     elif parent == 'es':
       assert name in es.columns, f'es does not have a column named "{name}"'
       op.output(fullname, es[name], type=typemapping[typenames[fullname]])
-    elif parent == 'scalars':
-      assert hasattr(scalars, name), f'scalars.{name} is not defined'
-      op.output_scalar(fullname, getattr(scalars, name))
+    elif parent == 'graph_attributes':
+      assert hasattr(graph_attributes, name), f'graph_attributes.{name} is not defined'
+      op.output_scalar(fullname, getattr(graph_attributes, name))
   except BaseException:
     import sys
     print(f'\nCould not output {fullname}:\n', file=sys.stderr)

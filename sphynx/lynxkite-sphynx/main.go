@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	pb "github.com/biggraph/biggraph/sphynx/proto"
+	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"log"
@@ -183,6 +183,9 @@ func (s *Server) Clear(ctx context.Context, in *pb.ClearRequest) (*pb.ClearReply
 
 func main() {
 	port := os.Getenv("SPHYNX_PORT")
+	if port == "" {
+		log.Fatalf("Please set SPHYNX_PORT.")
+	}
 	keydir := flag.String(
 		"keydir", "", "directory of cert.pem and private-key.pem files (for encryption)")
 	flag.Parse()
@@ -203,6 +206,7 @@ func main() {
 
 	sphynxServer := NewServer()
 	pb.RegisterSphynxServer(s, &sphynxServer)
+	log.Printf("Sphynx listening on port %v", port)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
