@@ -269,7 +269,7 @@
   operationId: Comment
   parameters:
     comment: |-
-      # 3. Creating the graph
+      ## 3. Creating the graph
 
       As a first processing step, we turn our data into a
       graph. This is super simple with LynxKite. You just
@@ -288,7 +288,7 @@
       ## 4. Prep for visualization
 
       Here we add two new vertex attribute to our graph
-      exclusivly for visualization purposes.
+      exclusively for visualization purposes.
 
       First, we bundle the lat and lon attributes into a
       single vector as this is the format the visualization
