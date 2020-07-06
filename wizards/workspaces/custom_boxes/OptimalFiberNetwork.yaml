@@ -5,8 +5,8 @@
     parameters: >-
       [{"kind":"text","id":"AccessPointCost","defaultValue":"1000","$$hashKey":"object:150214"},{"kind":"text","id":"FiberCostPerMeter","defaultValue":"150","$$hashKey":"object:153402"},{"kind":"text","id":"DiscountRatio","defaultValue":"0.05","$$hashKey":"object:154485"},{"kind":"text","id":"ROIYears","defaultValue":"3","$$hashKey":"object:155013"}]
   parametricParameters: {}
-  x: 0
-  y: 0
+  x: 0.0
+  y: 0.0
 - id: Derive-edge-attribute_1
   inputs:
     graph:
@@ -34,16 +34,16 @@
       r * c
     output: distance
   parametricParameters: {}
-  x: 250
-  y: 300
+  x: 300.0
+  y: 300.0
 - id: input-graph
   inputs: {}
   operationId: Input
   parameters:
     name: graph
   parametricParameters: {}
-  x: 50
-  y: 300
+  x: 50.0
+  y: 300.0
 - id: Find-Steiner-tree_2
   inputs:
     graph:
@@ -54,8 +54,8 @@
     gain: total_discounted_revenue
     root_costs: starting_cost
   parametricParameters: {}
-  x: 1050
-  y: 300
+  x: 1300.0
+  y: 300.0
 - id: Filter-by-attributes_2
   inputs:
     graph:
@@ -65,8 +65,8 @@
   parameters:
     filterva_node: '*'
   parametricParameters: {}
-  x: 1250
-  y: 300
+  x: 1300.0
+  y: 650.0
 - id: Derive-edge-attribute_2
   inputs:
     graph:
@@ -77,8 +77,8 @@
     output: cost
   parametricParameters:
     expr: distance * $FiberCostPerMeter
-  x: 650
-  y: 300
+  x: 200.0
+  y: 700.0
 - id: Derive-vertex-attribute_2
   inputs:
     graph:
@@ -88,9 +88,10 @@
   parameters:
     output: starting_cost
   parametricParameters:
-    expr: if (node_type == "AccessPoint") Some(1.0 * $AccessPointCost) else None
-  x: 450
-  y: 300
+    expr: >-
+      if (node_type == "AccessPoint") Some(1.0 * $AccessPointCost) else None
+  x: 800.0
+  y: 300.0
 - id: Derive-vertex-attribute_6
   inputs:
     graph:
@@ -104,8 +105,8 @@
       (revenue *
         (1 - Math.pow(1 - $DiscountRatio, $ROIYears)) /
         $DiscountRatio)
-  x: 850
-  y: 300
+  x: 800.0
+  y: 700.0
 - id: output-graph
   inputs:
     output:
@@ -115,8 +116,8 @@
   parameters:
     name: graph
   parametricParameters: {}
-  x: 1650
-  y: 300
+  x: 1750.0
+  y: 650.0
 - id: Rename-graph-attributes_1
   inputs:
     graph:
@@ -126,5 +127,94 @@
   parameters:
     change_profit: ProjectNPV
   parametricParameters: {}
-  x: 1450
-  y: 300
+  x: 1550.0
+  y: 650.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 1. Length of street segments
+
+      As our first preparatory step, we compute the length
+      of each street segment in meters. We use the
+      Haversine formula.
+  parametricParameters: {}
+  x: 100.0
+  y: 150.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 2. Starting costs
+
+      Next, we define how much it costs to start a new network
+      from a given root point. This is only defined for
+      APs and the value is given by a workspace parameter,
+       `AccessPointCost`.
+       
+      (You can check out the Anchor box of this workspace
+      to see all the workspace parameters.)
+  parametricParameters: {}
+  x: 650.0
+  y: 100.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 3. Cost of laying cable on a segment
+
+      Now, for each street segment we compute the cost
+      of laying fibre cable there. It is simply the
+      product of the length and the `FiberCostPerMeter`
+      workspace parameter.
+  parametricParameters: {}
+  x: 50.0
+  y: 500.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 4. Revenue present value
+
+      We compute the present value of future expected
+      revenues for each potential client. We use the well
+      known present value formula with the given
+      `DiscountRatio` and `ROIYears`.
+  parametricParameters: {}
+  x: 600.0
+  y: 500.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 5. Steiner tree time!
+
+      Now everything is prepared, we can apply the
+      `Find Steiner tree` box. All we have to do is to select
+      the previously prepared attributes as the parameters
+      of the operation.
+  parametricParameters: {}
+  x: 1150.0
+  y: 150.0
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 6. Cleanup
+
+      We use the attributes output by the `Find Steiner tree` box
+      to filter the graph, and only retain those edges
+      and vertices that were selected as part of the
+      optimal solution.
+
+      We then also rename the resulting graph attribute to
+      have a more problem specific name.
+  parametricParameters: {}
+  x: 1350.0
+  y: 450.0
