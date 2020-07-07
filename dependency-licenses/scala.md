@@ -149,6 +149,7 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.oauth-client # google-oauth-client # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.oauth-client # google-oauth-client-java6 # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.googlecode.concurrentlinkedhashmap # concurrentlinkedhashmap-lru # 1.4.2 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.hadoop.gplcompression # hadoop-lzo # 0.4.20 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-collections # commons-collections # 3.2.1 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-configuration # commons-configuration # 1.10 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-lang # commons-lang # 2.6 | <notextile></notextile>
@@ -302,6 +303,7 @@ GPL | [GPL2 w/ CPE](http://glassfish.java.net/public/CDDL+GPL_1_1.html) | com.su
 GPL | [GPL2 w/ CPE](http://glassfish.java.net/public/CDDL+GPL_1_1.html) | com.sun.jersey # jersey-servlet # 1.19.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://oss.oracle.com/licenses/CDDL+GPL-1.1) | javax.xml.bind # jaxb-api # 2.3.0 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html) | org.neo4j.3rdparty.javax.ws.rs # jsr311-api # 1.1.2.r612 | <notextile></notextile>
+GPL | [The GNU General Public License, v2 with FOSS exception](null) | mysql # mysql-connector-java # 8.0.20 | <notextile></notextile>
 GPL with Classpath Extension | [CDDL + GPLv2 with classpath exception](https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html) | javax.servlet # javax.servlet-api # 3.1.0 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-classic # 1.1.1 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-core # 1.1.1 | <notextile></notextile>
