@@ -43,7 +43,7 @@ The currently supported types for outputs are:
 
 In the previous example we would set:
 
-- Outputs: `vs.name: str, es.weight: float, graph_attributes.hello: str`
+- Outputs: `vs.name: str, es.weight: float, graph_attributes.band_name: str`
 
 Alternatively, you can let LynxKite infer the outputs from the code.
 In this case you still need to specify the type of the outputs, but you can do so in the code
