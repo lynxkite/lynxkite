@@ -1,0 +1,461 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    steps: >-
+      [{"title":"Understanding the problem","description":"Our job is to plan an
+      optimal fiber network buildout for\nthe town of Kalocsa - or decide if no
+      profitable buildout is possible!\n\nWe know the value of each client and
+      the cost of the cable.\nWe want to decide which clients to connect and
+      how.\nE.g., it may not be worth connecting a client if they are low value
+      and too far\noff. But if there are a lot of low value clients in the same
+      spot then maybe\ntogether they are worth connecting after all.\n\nFor more
+      context, read our\n[blog
+      post](https://lynxkite.com/2020/07/06/lynxkite-for-fiber-design.html)\nabout
+      this problem!\n\nTo get to the specifics, we are given a CSV file with
+      locations in the town\nof Kalocsa. There are three kinds.\n\nA
+      `Crossing`\nis just a location where street segments meet.
+      Nothing\nspecial is going on there, but they are crucial to\nrepresent the
+      map of Kalocsa with a graph.\n\nA `Client` line in the input data
+      corresponds to a\npotential buyer of\nfiber network service. These lines
+      have the\n`revenue` column\ndefined which represents the expected yearly
+      income\nfrom that particular customer.\n\nFinally, an `AccessPoint` line
+      gives the location of,\nwell, an Access Point, a place where high
+      bandwith\nInternet is available. These are the points where our\nnew fiber
+      network can start from.\n\nEach location is associated with a GPS
+      coordinate.\n\nCheck below for a sample from the input
+      data!\n","box":"SQL1_2","popup":"table"},{"title":"Data on the
+      map","description":"Let's put the Clients and Access Points on the map!
+      The size of a client\ndot represents the amount of expected
+      revenue.","box":"Graph-visualization_3","popup":"visualization"},{"title":"Street
+      segment data","description":"As a next step, let's take a look at the
+      street segment data! Basically, this\ndefines the map: which locations are
+      directly connected to which other\nlocations via a street segment?\n\nThe
+      format is very simple: for each street segment of the town we have a row
+      in\nour second input file. Each row contains the ids of the startpoint and
+      endpoint\nof the represented segment. These ids refer to lines in the
+      input file we\nexaminded in step
+      1.\n","box":"Import-CSV_4","popup":"table"},{"title":"Look at a small
+      area","description":"LynxKite can easily turn these data files into a
+      graph. Let's take a look\nat a small part of the city, now with street
+      segments
+      added!","box":"Graph-visualization_2","popup":"visualization"},{"title":"Set
+      up business parameters","description":"As a next step, let's set up some
+      business parameters for the optimization!\nOf course, the optimal buildout
+      depends on a lot of factors.\n\nFirst, we need to tell the system the cost
+      of connecting to an existing Access\nPoint. The average cost of laying a
+      meter of fiber cable is also important.\nThese numbers are expected in
+      USD.\n\nFor assessing the net present value of a project, the system needs
+      to know\nwhat discount ratio we want to calculate with and how many years
+      we\nare willing to wait for returns.\n\nPlay around with these parameters
+      and see how the optimal solution changes\nin the next two steps!\n\nIf you
+      increase costs then gradually smaller buildouts become optimal.
+      It's\nsimply not worth anymore to connect far away clients. (Try e.g.
+      setting\nFiberCostPerMeter to 250 and 300!)\n\nIf you increase Access
+      Point cost then the  system will decide to use less\nAccess Points but lay
+      more cable to achive the same coverage. (Try\ne.g. AccessPointCost of
+      100000, lowering FiberCostPerMeter back to
+      150.)","box":"custom_boxes/OptimalFiberNetwork_1","popup":"parameters"},{"title":"Network
+      plan","description":"Now let LynxKite find the optimal fiber network
+      layout in just a few seconds\nfor your business scenario!\n\nWe are
+      running a\n[cutting edge
+      algorithm](https://www.semanticscholar.org/paper/A-Dual-Ascent-Based-Branch-and-Bound-Framework-for-Leitner-Ljubic/ee0ea4016df47a5b15c84ec43baf6ecd0b57af3d)
+      to optimize the buildout given all the data and parameters.\nSee below to
+      see the results visualized on the map!\n\nDepending on the parameters, it
+      may be that it is not worth building\nanything. In this case you will see
+      an empty map showing a random location\non Earth. (As there are no
+      vertices in this case, the visualization doesn't\nknow to still show
+      Kalocsa as the map
+      location.)\n","box":"Graph-visualization_5","popup":"visualization"},{"title":"Project
+      NPV","description":"Finally, here is the total net present value of the
+      optimal buildout shown\nabove!\n\nIf you are interested to take a peek
+      behind the scenes,\nclick below on the `open workspace` link to see the
+      workspace powering this wizard.","box":"SQL1_1","popup":"table"}]
+    wizard: yes
+  parametricParameters: {}
+  x: 49.95329054000291
+  y: 161.0966104701627
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: if (node_type.get == "AccessPoint") Some(20000.0) else revenue
+    output: importance
+  parametricParameters: {}
+  x: 1563.899570295081
+  y: 469.71734639949034
+- id: custom_boxes/OptimalFiberNetwork_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: custom_boxes/OptimalFiberNetwork
+  parameters: {}
+  parametricParameters: {}
+  x: 2063.899570295081
+  y: 919.7173463994905
+- id: Import-CSV_3
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/bb8ffb69079d472fcf6392e29fe951ff.KalocsaGeoNodes.csv
+    imported_table: 50e4403c-7432-319b-99ba-f8ddee7d5e11
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/bb8ffb69079d472fcf6392e29fe951ff.KalocsaGeoNodes.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 263.8995702950809
+  y: 369.71734639949034
+- id: Import-CSV_4
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv
+    imported_table: 02f4bb76-0692-3971-87e0-780aca262cee
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 263.8995702950809
+  y: 819.7173463994905
+- id: Use-table-as-vertices_2
+  inputs:
+    table:
+      boxId: Import-CSV_3
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 813.8995702950809
+  y: 469.71734639949034
+- id: Use-table-as-edges_2
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_2
+      id: graph
+    table:
+      boxId: Import-CSV_4
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: id
+    dst: dst
+    src: src
+  parametricParameters: {}
+  x: 1013.8995702950809
+  y: 469.71734639949034
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: custom_boxes/OptimalFiberNetwork_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: >
+      select CAST(ProjectNPV / 1000 as INT) as `Optimal Net Present Value for
+      your fiber project (in thousand USD)` from graph_attributes
+  parametricParameters: {}
+  x: 2713.8995702950806
+  y: 669.7173463994905
+- id: SQL1_2
+  inputs:
+    input:
+      boxId: Import-CSV_3
+      id: table
+  operationId: SQL1
+  parameters:
+    sql: |
+      (select * from input where  node_type = 'Crossing' limit 3)
+      UNION
+      (select * from input where  node_type = 'Client' limit 3)
+      UNION
+      (select * from input where  node_type = 'AccessPoint' limit 3)
+  parametricParameters: {}
+  x: 513.8995702950808
+  y: 369.71734639949034
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_2
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: 'lat,lon'
+    output: position
+  parametricParameters: {}
+  x: 1363.899570295081
+  y: 469.71734639949034
+- id: Graph-visualization_5
+  inputs:
+    graph:
+      boxId: custom_boxes/OptimalFiberNetwork_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","size":"importance","color":"node_type","icon":"node_type"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 2713.8995702950806
+  y: 1219.7173463994905
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 1. Location data
+
+      As our first input data, we have information about
+      locations in Kalocsa. There are three kinds.
+
+      A `Crossing`
+      is just a location where street segments meet. Nothing
+      special is going on there, but they are crucial to
+      represent the map of Kalocsa with a graph.
+
+      A `Client` line in the input data corresponds to a
+      potential buyer of
+      fiber network service. These lines have the
+      `revenue` column
+      defined which represents the expected yearly income
+      from that particular customer.
+
+      Finally, an `AccessPoint` line gives the location of,
+      well, an Access Point, a place where high bandwith
+      Internet is available. These are the points where our
+      new fiber network can start from.
+
+      Click on the output of the SQL box to see a sample
+      of this input file!
+  parametricParameters: {}
+  x: 165.2002684181785
+  y: -26.920102402502607
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 2. Street segment data
+
+      Our second input file describes Kalocsa's street segment.
+      Each street segment connects two locations from our
+      first input. We can lay fiber cable along these segments.
+
+      The data format is very simple, each line contains just
+      the ids of the two connected locations. Click on the
+      output of the import box for a peek!
+  parametricParameters: {}
+  x: 163.89957029508088
+  y: 569.7173463994905
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 3. Creating the graph
+
+      As a first processing step, we turn our data into a
+      graph. This is super simple with LynxKite. You just
+      use the rows of the first table as vertices and
+      the rows of second table as edges. The parameters of
+      the `Use table as edges` box tells the system which
+      columns to use for connecting the edges to the vertices.
+  parametricParameters: {}
+  x: 713.8995702950809
+  y: 269.7173463994904
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 4. Prep for visualization
+
+      Here we add two new vertex attribute to our graph
+      exclusively for visualization purposes.
+
+      First, we bundle the lat and lon attributes into a
+      single vector as this is the format the visualization
+      box requires for placing vertices on the map.
+
+      Second, we compute an `importance` attribute, to be able
+      to highlight APs and clients on our visualization.
+
+      The value of importance is 20000 for APs and the yearly
+      revenue for clients. For plain crossings it remains
+      undefined.
+  parametricParameters: {}
+  x: 1263.899570295081
+  y: 169.71734639949037
+- id: Graph-visualization_3
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"importance":">0"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{"importance":{"logarithmic":true}},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"importance","color":"node_type","geo
+      coordinates":"position"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1913.899570295081
+  y: 169.71734639949037
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"lat":"[46.526,46.533]","lon":"[18.98,18.99]"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"node_type","size":"importance","geo
+      coordinates":"position"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to
+      orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 2363.8995702950806
+  y: 169.71734639949037
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 5. Show important locations on the map
+
+      First, to get bird's eye view of the data, we just
+      visualize all important points on a map.
+
+      You see no edges in this case, simply because no two
+      important points are directly connected.
+  parametricParameters: {}
+  x: 1713.899570295081
+  y: -30.282653600509633
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 6. Closer look at a small area
+
+      In this visualization, we show all vertices in a given
+      rectangle (defined as filters on lat and lon).
+
+      In this case all vertices and edges are shown, so you
+      can see how the graph maps to the streets on the map.
+
+      We use importance to size the vertices, so plain
+      crossings will have a size of 0, that's why you only
+      see balls for important points on the visualization.
+  parametricParameters: {}
+  x: 2213.8995702950806
+  y: -80.2826536005096
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      ## 7. Finding the optimal fiber layout
+
+      This is where the magic happens!
+
+      This is a so called
+      custom box which represents an operation defined by
+      another workspace. To see the detailed implementation of this box,
+      select it
+      and click the Dive into custom box ... button from the
+      top toolbar (look for a downward pointing arrow). You can
+      then come back to this top level workspace using the
+      up arrow in the toolbar.
+
+      The parameters of this box can be used to configure
+      various business assumptions used in the
+      optimization. They are exposed to the wizard version
+      of this workspace, so non technical users can also
+      play around with different scenarios.
+
+      This box outputs the graph for the best buildout
+      found. So it will only contain edges and vertices
+      of the proposed fiber network.
+
+      It also adds a new `ProjectNPV` graph attribute.
+      It is the
+      present value of the total profit of the best buildout found.
+  parametricParameters: {}
+  x: 1913.899570295081
+  y: 419.71734639949034
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 8. Expose project NPV as a table
+
+      This SQL box just exposes the total NPV of the project
+      in a pretty table. Used to put the result on the wizard.
+  parametricParameters: {}
+  x: 2563.8995702950806
+  y: 519.7173463994905
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## 9. Visualize the optimal buildout
+
+      This is a visualization restricted to the vertices
+      and edges selected by the algorithm. It shows the
+      optimal way to build a fiber network under the current
+      business assumptions.
+
+      If it is not profitable to build anything then the
+      result is going to be an empy graph: one with no
+      vertices and edges. (In this case the map
+      will show a random location on Earth with no
+      vertices and edges.)
+  parametricParameters: {}
+  x: 2563.8995702950806
+  y: 919.7173463994905
