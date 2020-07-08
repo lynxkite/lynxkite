@@ -4,10 +4,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"sync"
 )
 
 type Server struct {
+	pb.UnimplementedSphynxServer
 	entityCache      EntityCache
 	dataDir          string
 	unorderedDataDir string

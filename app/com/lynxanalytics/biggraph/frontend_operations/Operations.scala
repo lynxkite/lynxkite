@@ -531,8 +531,8 @@ object PythonUtilities {
   def inferInputs(code: String): Seq[String] = {
     val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
     val mentions = api.flatMap { parent =>
-      val a = s"\\W$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched.tail).toSeq
-      val b = s"""\\W$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
+      val a = s"\\b$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""\\b$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
         .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}").toSeq
       a ++ b
     }.toSet
@@ -540,9 +540,9 @@ object PythonUtilities {
   }
   def inferOutputs(code: String): Seq[String] = {
     api.flatMap { parent =>
-      val a = s"""\\W$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
-        .findAllMatchIn(code).map(_.matched.tail).toSeq
-      val b = s"""\\W$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
+      val a = s"""\\b$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
+        .findAllMatchIn(code).map(_.matched).toSeq
+      val b = s"""\\b$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]\\s*:\\s*([a-zA-Z0-9.]+)""".r
         .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}").toSeq
       a ++ b
     }.sorted
