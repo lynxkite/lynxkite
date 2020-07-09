@@ -1,0 +1,38 @@
+name: Tests
+on: pull_request
+jobs:
+  test:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+
+    - name: Build backend
+      uses: ./github-actions/build
+      with:
+        make_target: backend

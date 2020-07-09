@@ -1,0 +1,12 @@
+name: 'Build and test LynxKite'
+inputs:
+  make_target:
+    description: 'make target'
+    required: true
+    default: 'all'
+outputs:
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.make_target }}
