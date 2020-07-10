@@ -101,7 +101,7 @@ libraryDependencies ++= Seq(
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
 def sparkJars(version: String) = {
-  val home = System.getProperty("user.home")
+  val home = System.getenv("HOME")
   val jarsDir = new java.io.File(s"$home/spark-$version/jars")
   (jarsDir * "*.jar").get
 }
