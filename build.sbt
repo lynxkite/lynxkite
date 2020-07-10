@@ -132,7 +132,7 @@ def myStage = Command.command("stage") { state =>
 commands += myStage
 
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
-testOptions in Test := Seq(Tests.Argument("-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
+testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
 
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
