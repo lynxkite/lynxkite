@@ -2,7 +2,7 @@ name: Tests
 on: pull_request
 jobs:
   test:
-    name: Build frontend
+    name: Test LynxKite
     runs-on: ubuntu-latest
     steps:
     - name: Check out code

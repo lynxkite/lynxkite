@@ -14,14 +14,14 @@ clean:
 	cd web && LC_ALL=C yarn --frozen-lockfile && npx gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
-.build/sphynx-prep-done: $(shell $(find) sphynx)
-	sphynx/build.sh && touch $@
+.build/sphynx-done: $(shell $(find) sphynx)
+	sphynx/python/install-dependencies.sh && sphynx/build.sh && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
-	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-prep-done
+	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
-	.build/sphynx-prep-done
+	.build/sphynx-done
 	./tools/install_spark.sh && ./test_backend.sh -s && ./test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
@@ -57,4 +57,4 @@ licenses: .build/licenses-done
 local-bd-test: .build/backend-done
 	python/big_data_tests/run_test.sh
 .PHONY: sphynx
-sphynx: .build/sphynx-prep-done
+sphynx: .build/sphynx-done
