@@ -32,7 +32,35 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go
 
-    - name: Build backend
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+
+    - name: Test backend
       uses: ./github-actions/build
       with:
-        make_target: backend
+        command: make backend-test
+
+    - name: Build frontend
+      uses: ./github-actions/build
+      with:
+        command: make frontend
+
+    - name: Build LynxKite
+      uses: ./github-actions/build
+      with:
+        command: make backend
+
+    - name: Test frontend
+      uses: ./github-actions/build
+      with:
+        command: xvfb-run -a make frontend-test
+
+    - name: Test Python API
+      uses: ./github-actions/build
+      with:
+        command: make remote_api-test

@@ -46,6 +46,3 @@ RUN \
 
 RUN \
   apt-get install -y zip openjdk-8-jdk
-
-COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]

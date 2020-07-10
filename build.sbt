@@ -102,7 +102,7 @@ libraryDependencies ++= Seq(
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
 def sparkJars(version: String) = {
   val home = System.getenv("HOME")
-  val jarsDir = new java.io.File(s"$home/spark-$version/jars")
+  val jarsDir = new java.io.File(s"$home/spark/spark-$version/jars")
   (jarsDir * "*.jar").get
 }
 
