@@ -168,7 +168,7 @@ mappings in Universal ++= Seq(
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
   file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
-
+sourceDirectory in Assets := new File("web/dist")
 
 mappings in Universal ~= {
   _.filterNot { case (_, relPath) => relPath == "README.md"}
