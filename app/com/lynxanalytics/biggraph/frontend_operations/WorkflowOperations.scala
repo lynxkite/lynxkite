@@ -501,6 +501,83 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
 
+  registerOp("Filter with SQL", "filter", category, List("input"), List("output"), new SmartOperation(_) {
+    private val input = context.inputs("input")
+    if (input.isProject) {
+      params ++= List(
+        Code("vertex_filter", "Vertex filter", language = "sql"),
+        Code("edge_filter", "Edge filter", language = "sql"))
+    } else {
+      params ++= List(
+        Code("filter", "Filter", language = "sql"))
+    }
+    override def summary = {
+      if (input.isProject) {
+        val vf = params("vertex_filter").trim
+        val ef = params("edge_filter").trim
+        if (vf.isEmpty && ef.isEmpty) "Filter with SQL"
+        else if (vf.nonEmpty && ef.nonEmpty) s"Filter to $vf; $ef"
+        else s"Filter to $vf$ef"
+      } else {
+        val f = params("filter").trim
+        if (f.isEmpty) "Filter with SQL"
+        else s"Filter to $f"
+      }
+    }
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      if (input.isProject) {
+        val project = input.project
+        def tables = project.viewer.getProtoTables.toMap
+        val before = project.rootEditor.viewer
+        if (params("vertex_filter").trim.nonEmpty) {
+          project.vertexAttributes.updateEntityMap(
+            project.vertexAttributes.iterator.toMap + ("!id" -> project.vertexSet.idAttribute))
+          val vf = graph_operations.ExecuteSQL.run(
+            "select `!id` from vertices where " + params("vertex_filter"), tables)
+          project.vertexAttributes.updateEntityMap(
+            project.vertexAttributes.iterator.toMap - "!id")
+          val newVS = {
+            val op = graph_operations.IDTableToVertexSet("!id")
+            op(op.t, vf).result.vs
+          }
+          val vertexEmbedding = {
+            val op = graph_operations.EmbeddingByID()
+            op(op.original, project.vertexSet)(op.filtered, newVS).result.identity
+          }
+          project.pullBack(vertexEmbedding)
+        }
+        if (params("edge_filter").trim.nonEmpty) {
+          project.edgeAttributes.updateEntityMap(
+            project.edgeAttributes.iterator.toMap + ("!id" -> project.edgeBundle.idSet.idAttribute))
+          val vf = graph_operations.ExecuteSQL.run(
+            "select `!id` from edge_attributes where " + params("edge_filter"), tables)
+          project.edgeAttributes.updateEntityMap(
+            project.edgeAttributes.iterator.toMap - "!id")
+          val newES = {
+            val op = graph_operations.IDTableToVertexSet("!id")
+            op(op.t, vf).result.vs
+          }
+          val edgeEmbedding = {
+            val op = graph_operations.EmbeddingByID()
+            op(op.original, project.edgeBundle.idSet)(op.filtered, newES).result.identity
+          }
+          project.pullBackEdges(edgeEmbedding)
+        }
+        updateDeltas(project.rootEditor, before)
+        Map(context.box.output("output") -> BoxOutputState.from(project))
+      } else {
+        assert(input.isTable, "Input must be a graph or a table.")
+        Map(context.box.output("output") -> BoxOutputState.from(
+          if (params("filter").trim.isEmpty) input.table
+          else graph_operations.ExecuteSQL.run(
+            "select * from input where " + params("filter"), Map("input" -> ProtoTable(input.table)))))
+      }
+    }
+    def apply(): Unit = ???
+  })
+
   registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
     def paramNames = tableInput("input").schema.fieldNames
     params ++= paramNames.map {

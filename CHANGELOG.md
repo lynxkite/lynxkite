@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added the _"Filter with SQL"_ box as a more flexible alternative to _"Filter by attributes"_.
+
 ### 4.0.1
 
 - Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))
