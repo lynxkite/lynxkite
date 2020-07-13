@@ -46,3 +46,5 @@ RUN \
 
 RUN \
   apt-get install -y zip openjdk-8-jdk
+
+RUN sed -i 's;/root;/github/home;' /etc/passwd
