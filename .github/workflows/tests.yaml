@@ -40,6 +40,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-spark
 
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/.conda
+        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+
     - name: Test backend
       uses: ./github-actions/build
       with:
