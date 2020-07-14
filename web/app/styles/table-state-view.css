@@ -1,8 +1,5 @@
-table-state-view {
-  overflow: auto;
-}
-
 table-state-view > div {
+  overflow: auto;
   padding-top: 10px;
 }
 
