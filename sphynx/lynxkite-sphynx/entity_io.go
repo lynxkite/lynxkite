@@ -7,7 +7,6 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"io/ioutil"
-	"log"
 	"os"
 	"reflect"
 )
@@ -398,7 +397,6 @@ func (s *Scalar) write(dirName string) error {
 	f, err := os.Create(fname)
 	defer f.Close()
 	fw := bufio.NewWriter(f)
-	log.Printf("Writing scalar %v: %v\n", dirName, []byte(*s))
 	if _, err := fw.Write([]byte(*s)); err != nil {
 		return fmt.Errorf("Writing scalar to file failed: %v", err)
 	}
