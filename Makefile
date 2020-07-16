@@ -20,7 +20,8 @@ clean:
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
 	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
-.build/backend-test-spark-passed: $(shell $(find) app test project conf) build.sbt
+.build/backend-test-spark-passed: $(shell $(find) app test project conf) build.sbt \
+	.build/sphynx-done
 	./tools/install_spark.sh && ./test_backend.sh && touch $@
 .build/backend-test-sphynx-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-done
