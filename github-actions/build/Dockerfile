@@ -37,7 +37,7 @@ RUN \
   wget -nv 'https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh' -O conda.sh && \
   bash conda.sh -b -p /opt/conda && \
   rm conda.sh && \
-  conda install python=3.7 mypy
+  conda install python=3.7 mypy numpy pandas ruamel.yaml
 
 # Install Go.
 RUN \
