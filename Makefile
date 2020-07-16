@@ -20,9 +20,11 @@ clean:
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
 	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
-.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
+.build/backend-test-spark-passed: $(shell $(find) app test project conf) build.sbt
+	./tools/install_spark.sh && ./test_backend.sh && touch $@
+.build/backend-test-sphynx-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-done
-	./tools/install_spark.sh && ./test_backend.sh -s && ./test_backend.sh && touch $@
+	./tools/install_spark.sh && ./test_backend.sh -s && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
@@ -43,8 +45,12 @@ dependency-licenses/javascript.md: web/package.json
 backend: .build/backend-done
 .PHONY: frontend
 frontend: .build/gulp-done
+.PHONY: backend-test-spark
+backend-test-spark: .build/backend-test-spark-passed
+.PHONY: backend-test-sphynx
+backend-test-sphynx: .build/backend-test-sphynx-passed
 .PHONY: backend-test
-backend-test: .build/backend-test-passed
+backend-test: backend-test-spark backend-test-sphynx
 .PHONY: frontend-test
 frontend-test: .build/frontend-test-passed
 .PHONY: remote_api-test

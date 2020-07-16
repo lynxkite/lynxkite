@@ -1,13 +1,12 @@
 name: Tests
 on: pull_request
 jobs:
-  test:
-    name: Test LynxKite
+  backend-test-spark:
+    name: Backend test with Spark
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-
     - name: Cache node modules
       uses: actions/cache@v2
       with:
@@ -15,7 +14,6 @@ jobs:
         key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-npm
-
     - name: Cache SBT stuff
       uses: actions/cache@v2
       with:
@@ -23,7 +21,6 @@ jobs:
         key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
         restore-keys: |
           ${{ runner.os }}-ivy2
-
     - name: Cache Go stuff
       uses: actions/cache@v2
       with:
@@ -31,7 +28,6 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go
-
     - name: Cache Spark
       uses: actions/cache@v2
       with:
@@ -39,7 +35,6 @@ jobs:
         key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
         restore-keys: |
           ${{ runner.os }}-spark
-
     - name: Cache Conda
       uses: actions/cache@v2
       with:
@@ -47,27 +42,164 @@ jobs:
         key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
         restore-keys: |
           ${{ runner.os }}-conda
-
-    - name: Test backend
-      uses: ./github-actions/build
-      with:
-        command: make backend-test
-
-    - name: Build frontend
-      uses: ./github-actions/build
-      with:
-        command: make frontend
-
     - name: Build LynxKite
       uses: ./github-actions/build
       with:
         command: make backend
+    - name: Test backend with Spark
+      uses: ./github-actions/build
+      with:
+        command: make backend-test-spark
 
+  backend-test-sphynx:
+    name: Test LynxKite
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/.conda
+        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Build LynxKite
+      uses: ./github-actions/build
+      with:
+        command: make backend
+    - name: Test backend with Sphynx
+      uses: ./github-actions/build
+      with:
+        command: make backend-test-sphynx
+
+  frontend-test:
+    name: Frontend test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/.conda
+        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Build frontend
+      uses: ./github-actions/build
+      with:
+        command: make frontend
+    - name: Build LynxKite
+      uses: ./github-actions/build
+      with:
+        command: make backend
     - name: Test frontend
       uses: ./github-actions/build
       with:
         command: xvfb-run -a make frontend-test
 
+  python-test:
+    name: Python test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/.conda
+        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Build LynxKite
+      uses: ./github-actions/build
+      with:
+        command: make backend
     - name: Test Python API
       uses: ./github-actions/build
       with:
