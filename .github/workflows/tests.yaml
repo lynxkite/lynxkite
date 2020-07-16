@@ -42,17 +42,13 @@ jobs:
         key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Build LynxKite
-      uses: ./github-actions/build
-      with:
-        command: make backend
     - name: Test backend with Spark
       uses: ./github-actions/build
       with:
         command: make backend-test-spark
 
   backend-test-sphynx:
-    name: Test LynxKite
+    name: Backend test with Sphynx
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
@@ -92,10 +88,6 @@ jobs:
         key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Build LynxKite
-      uses: ./github-actions/build
-      with:
-        command: make backend
     - name: Test backend with Sphynx
       uses: ./github-actions/build
       with:
@@ -142,14 +134,6 @@ jobs:
         key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Build frontend
-      uses: ./github-actions/build
-      with:
-        command: make frontend
-    - name: Build LynxKite
-      uses: ./github-actions/build
-      with:
-        command: make backend
     - name: Test frontend
       uses: ./github-actions/build
       with:
@@ -196,10 +180,6 @@ jobs:
         key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Build LynxKite
-      uses: ./github-actions/build
-      with:
-        command: make backend
     - name: Test Python API
       uses: ./github-actions/build
       with:
