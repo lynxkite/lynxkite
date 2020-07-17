@@ -37,12 +37,6 @@ For example: `kite_2.6.2/bin/lynxkite start`. Use the
 will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the
 program.
 
-### Access control setup
-
-After the users are created, HDFS/Linux directory level access control can be enabled
-as explained in <<prefix-based-access-control>>. LynxKite level access control can be managed
-directly on the LynxKite Web UI.
-
 ### HTTPS setup
 
 To enable HTTPS, a certificate is required. For testing purposes a self-signed certificate is
@@ -101,7 +95,7 @@ installation directory LynxKite is using to the `hive-site.xml` file.
 E.g. depending on your Hadoop distribution, something like this would do:
 
 ```
-ln -s /etc/hive/conf/hive-site.xml ~/spark-<version>/conf/
+ln -s /etc/hive/conf/hive-site.xml ~/spark/spark-<version>/conf/
 ```
 
 #### Getting authorization to read the metadata of a table
@@ -111,7 +105,7 @@ users.
 
 To see if that is the case on your cluster, check the `hadoop.proxyuser.hive.groups` property in
 the `core-site.xml` on the Hive Metastore host. If its value is set to `*` or it is not set then
-that means that there is no restriction on who can acces the Hive Metastore. However, if it
+that means that there is no restriction on who can access the Hive Metastore. However, if it
 contains a list of groups, then add the group of the user running LynxKite to the list.
 
 For Cloudera-specific details, see the Cloudera 5.6 documentation on

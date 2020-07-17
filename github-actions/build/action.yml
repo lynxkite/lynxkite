@@ -1,0 +1,12 @@
+name: 'Build environment for LynxKite'
+inputs:
+  command:
+    required: true
+outputs:
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - bash
+    - '-c'
+    - ${{ inputs.command }}

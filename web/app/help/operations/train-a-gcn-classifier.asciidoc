@@ -1,6 +1,7 @@
 ### Train a GCN classifier
 
-Trains a Graph Convolutional Network using https://pytorch-geometric.readthedocs.io/en/latest/[Pytorch Geometric].
+Trains a https://tkipf.github.io/graph-convolutional-networks/[Graph Convolutional Network]
+using https://pytorch-geometric.readthedocs.io/en/latest/[Pytorch Geometric].
 Applicable for classification problems.
 
 ====

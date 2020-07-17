@@ -17,12 +17,14 @@ A setting lower than the actual diameter of the graph can theoretically introduc
 to the results. In typical small world graphs this effect may be acceptable, however.
 
 [p-algorithm]#The centrality algorithm to use#::
-- The **harmonic centrality** of the vertex A is the sum of the reciprocals of all shortest paths to
-A.
-- **Lin's centrality** of the vertex A is the square of the size of its coreachable set divided by
-the sum of the shortest paths to A.
-- **Average distance** of the vertex A is the sum of the shortest paths to A divided by the size of
-its coreachable set.
+- The https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality[**harmonic centrality**]
+  of the vertex A is the sum of the reciprocals of all shortest paths to A.
+- https://www.centiserver.org/?q1=centrality&q2=Lin_Centrality[**Lin's centrality**]
+  of the vertex A is the square of the size of its coreachable set divided by
+  the sum of the shortest paths to A.
+- **Average distance**
+  (or https://en.wikipedia.org/wiki/Centrality#Closeness_centrality[closeness centrality])
+  of the vertex A is the sum of the shortest paths to A divided by the size of its coreachable set.
 
 [p-bits]#The precision of the algorithm#::
 The centrality algorithm is an approximation. This parameter sets the trade-off between

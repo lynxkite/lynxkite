@@ -22,7 +22,7 @@ filled in when the custom box is used in another workspace. But when you're edit
 of the custom box directly, there is nothing coming in yet. There are two solutions to this:
 
 - Place your custom box in a workspace. Connect its inputs. Select it and dive into the custom box
-with the +++<label class="btn btn-default"><i class="fa fa-level-down"></i></label>+++ button.
+with the +++<label class="btn btn-default"><i class="fas fa-level-down-alt"></i></label>+++ button.
 Now you will see and edit the workspace of the custom box in the context of the parent workspace.
 The input box will have a valid output: the state that is coming in from the parent workspace.
 +
@@ -31,7 +31,7 @@ Any changes you make will affect all instances of the custom box.
 - It is often the case that your workspace grows and you reach a point where you want to extract
 part of it into a custom box. Do not create a workspace in `custom_boxes` manually in this case.
 It is simpler to select the part of the workspace that you want to wrap into a custom box and click
-the +++<label class="btn btn-default"><i class="fa fa-superpowers"></i></label>+++
+the +++<label class="btn btn-default"><i class="fas fa-hat-cowboy"></i></label>+++
 _Save selection as custom box_ button instead.
 +
 The workspaces of custom boxes created this way will automatically have the input and output boxes

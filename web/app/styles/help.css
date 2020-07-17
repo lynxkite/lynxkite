@@ -134,13 +134,6 @@ code {
   content: "\2605  link here";
 }
 
-#whole-help .gui-only {
-  display: none;
-}
-.operation-toolbox .help-only {
-  display: none;
-}
-
 @media print {
   #toc {
     /* The table of contents would be quite useful in print. Unfortunately, there is no browser
