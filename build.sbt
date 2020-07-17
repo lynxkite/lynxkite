@@ -63,8 +63,10 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Neo4j driver & testing
   "neo4j-contrib" % "neo4j-spark-connector" % "2.1.0-M4",
-  "org.neo4j.test" % "neo4j-harness" % "3.5.1" % "test",
-  "com.sun.jersey" % "jersey-core" % "1.19.4" % "test", // Required to create Neo4j test server
+  "org.neo4j.test" % "neo4j-harness" % "3.5.1" % Test classifier "",
+  "org.neo4j" % "neo4j-io" % "3.5.1" % Test classifier "",
+  "org.neo4j" % "neo4j-common" % "3.5.1" % Test classifier "",
+  "com.sun.jersey" % "jersey-core" % "1.19.4" % Test classifier "", // Required to create Neo4j test server
   "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
     ExclusionRule(organization="org.specs2", name="specs2_2.11")),
   // Required because of Ammonite using a different scalaz version than the Play framework
@@ -93,14 +95,16 @@ libraryDependencies ++= Seq(
   "io.grpc" % "grpc-netty" % "1.24.0",
   "com.google.protobuf" % "protobuf-java" % "3.9.2",
   // Used for encrypted connection with Sphynx.
-  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final"
+  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
+  // This indirect dependency of ours is broken on Maven.
+  "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar"
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
 def sparkJars(version: String) = {
-  val home = System.getProperty("user.home")
-  val jarsDir = new java.io.File(s"$home/spark-$version/jars")
+  val home = System.getenv("HOME")
+  val jarsDir = new java.io.File(s"$home/spark/spark-$version/jars")
   (jarsDir * "*.jar").get
 }
 
@@ -111,7 +115,7 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 resolvers ++= Seq(
   "Twitter Repository" at "https://maven.twttr.com",
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
-  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/release/",
+  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/",
   "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven")
 
 // Runs "stage", then creates the "stage/version" file.
@@ -130,7 +134,7 @@ def myStage = Command.command("stage") { state =>
 commands += myStage
 
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
-testOptions in Test := Seq(Tests.Argument("-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
+testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
 
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
@@ -165,7 +169,7 @@ mappings in Universal ++= Seq(
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
   file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
-
+sourceDirectory in Assets := new File("web/dist")
 
 mappings in Universal ~= {
   _.filterNot { case (_, relPath) => relPath == "README.md"}
