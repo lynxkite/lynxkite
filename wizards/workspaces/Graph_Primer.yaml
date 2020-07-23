@@ -1,0 +1,515 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    steps: >-
+      [{"box":"Graph-visualization_1","popup":"visualization","title":"What is a graph?","description":"A
+      graph is a just a mathematical notion to represent any sort of connection\ndata.
+      A graph is made up of vertices, the entities whose connections we are\nconsidering,
+      and edges, which are just pairs of vertices which we know are\nconnected.\n\nTypically,
+      when we draw a graph we just put dots or circles to represent\nthe vertices
+      and we connect them with lines, to represent the edges.\n\nFor example, here
+      is a graph with four vertices and three edges:\n"},{"box":"Graph-visualization_2","popup":"visualization","title":"Directed
+      and undirected graphs","description":"The previous example was an undirected
+      graph. There an edge represented the\nfact that two vertices are connected,
+      but \"A is connected to B\" means the same\nthing as \"B is connected to A\".
+      In drawing, we just use plain lines in this\ncase, there is no source or destination
+      of an edge, both of its ends are the\nsame. E.g., we would use an undirected
+      graph to represent Facebook friendships.\n\nIn other cases, the direction of
+      the connection is important. In this case,\nwe use a directed graph in which
+      each edge has a well defined source and\ndestination. In drawing, we use arrows.
+      E.g. you would need a directed\ngraph to represent who follows whom on Twitter.\n\nHere
+      is now a directed graph. This has four vertices and four edges. Notice\nthat
+      it is absolutely possible that these in an edge from A to B and another,\ndistinct
+      one from B to A.\n"},{"box":"Graph-visualization_3","popup":"visualization","title":"Property
+      graphs","description":"Property graphs are a straightforward but very important
+      generalizations of\ngraphs. In property graphs vertices and edges can have properties,
+      or as\nwe call them in LynxKite, attributes. For example, in the Twitter graph\nthe
+      Twitter id of an account would be naturally represented as a vertex\nattribute.
+      If A follows B then the date when this relationship started would\nbe an example
+      of an edge attribute.\n\nSee below our favorite graph enriched with some attributes!
+      Now vertices\nhave a name and a gender. The name is shown below as a label while
+      the icon\nrepresents the gender. Edges have a textual description of the relationship,\nand
+      edge attribute. This is also shown as edge labels.\n\nYes, as you might have
+      suspected all along, I'm using the most\narchaic graph of all, the one mankind
+      had to first grapple with: a love\ntriangle.\n"},{"box":"Graph-visualization_4","popup":"visualization","title":"Graph
+      indicators","description":"The most straightforward way to make use of graph
+      struture is to compute\nsome numbers for the vertices and/or edges using the
+      graph structure and then\nuse these numbers in application.\n\nThe most famous
+      example of this is PageRank, the graph algorithm used by\nGoogle to rank pages
+      in its search results. In this case, Google takes\nthe directed graph made of
+      web pages (vertices) and links (edges), computes\na number - PageRank - for
+      all the vertices from this strucuture and use this\nnumber as a signal to decide
+      which pages matching a query are the most\nimportant to show to the user.\n\nPageRank
+      actually represents a probability. Say you select a vertex\nrandomly, then do
+      a \"walk\" on the graph starting from the selected vertex,\nalways following
+      directed edges and stopping at some time randomly. PageRank\nof a vertex `V`
+      then represents the probability of ending up in `V` at the\nend of the above
+      process. (Well, there is some normalization going on and\nof course I gloss
+      over the details, but this is the gist.)\n\nSee below for the PageRank computed
+      on our favorite graph!\n\nOther than PageRank, there are a lot of other numbers
+      we can compute on our\ngraph to quantitize the roles of vertices and edges in
+      a network. See for\nexample Centrality, Dispersion, Betweenness, etc.\n"},{"box":"Graph-visualization_5","popup":"visualization","title":"Graph
+      segmentation: cliques","description":"Another way to use graph structure is
+      to try to identify interesting\nsets of vertices. The most basic example is
+      cliques: we are looking\nfor sets of vertices in which every vertex is connected
+      to every other\nvertex.\n\nThis is useful as cliques can correspond to real
+      structures is the\nrepresented system. For example, in a social graph a clique
+      might correspond\nto, well, a clique. :) That is, a set of people who form a
+      social group, be\nit friends, colleagues, classmates, etc.\n\nCliques is just
+      an example of finding interesting sets, also check out for\nexample communities,
+      which is a relaxation of the clique definition.\n\nSee below the cliques of
+      a graph! On the left side, you see the\ngraph itself that we are investigating.
+      On the right, you see the cliques.\nEach clique is represented with a ball and
+      it is connected to the vertices\non the left that it contains.\n\nNote that
+      cliques can overlap!\n"},{"box":"Graph-visualization_6","popup":"visualization","title":"Graph
+      partitioning: modular clustering","description":"In some cases, we want to cut
+      out graphs into non-overlaping pieces. A\nvery common requirement against such
+      partitions is to have as few\nedges that go between different partitions as
+      possible. Modularity is\na mathematical formula capturing and quantitizing this
+      notiion. Modular\nclustering tries to find a partition of the graph maximizing
+      modularity.\n\nSee below for a simple example!\n"},{"box":"Graph-visualization_7","popup":"visualization","title":"Optimization
+      on a graph: shortest path","description":"A graph can also represent certain
+      possibilites, e.g. streets one can take\non a walk, possible partners one migh
+      mary, fiber cable segments one can build,\netc.\n\nGraph optimization is concerned
+      with finding - in some sense - the optimal one\nout of these possibilites.\n\nHere
+      we are, as typical in this primer, demonstrating the simplest and most\ncommon
+      graph optimization algorithm: shortest paths.\n\nWe start from a given vertex
+      A, we can travel along the directed edges. Each edge has a length. Our task
+      is to find the shortest possible path to another\nvertex B.\n\nAs it turns out,
+      it's not much more complicated to find the shortest\npath from A to all other
+      vertices! You see below the edges on the shortest\npaths highlighted. The color
+      of the vertices show the distance from the starting\npoint.\n"},{"box":"Graph-visualization_8","popup":"visualization","title":"Attribute
+      propagation along the edges","description":"Another common technique to use
+      graph structure is to propagate attributes\nalong the edges. For example, here
+      we compute the average age of neighbors\nfor all vertices. Something as simple
+      as that can already be very very useful,\ne.g. this neighborhood age average
+      can be a valuable signal if we want\nto predict unknown ages. But with more
+      tricky and iterative propagations\nwe can gain very interesting insights and
+      build strong graph models, e.g. to\nmodel the spread of a virus or the propagation
+      of an error condition through\na system.\n\nWe can also propagate attributes
+      to and from segments, e.g. it's very useful to\nknow the average age of members
+      in a clique.\n"}]
+    wizard: yes
+  parametricParameters: {}
+  x: 2.6068619515567377
+  y: 2.6068619515567377
+- id: Create-example-graph_1
+  inputs: {}
+  operationId: Create example graph
+  parameters: {}
+  parametricParameters: {}
+  x: 332.0
+  y: 159.703125
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Create-example-graph_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 750.0
+  y: 150.0
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Create-example-graph_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 750.0
+  y: 250.0
+- id: Graph-visualization_3
+  inputs:
+    graph:
+      boxId: Create-example-graph_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"name","icon":"gender","edge
+      label":"comment"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 750.0
+  y: 350.0
+- id: Compute-PageRank_1
+  inputs:
+    graph:
+      boxId: Create-example-graph_1
+      id: graph
+  operationId: Compute PageRank
+  parameters: {}
+  parametricParameters: {}
+  x: 750.0
+  y: 500.0
+- id: Graph-visualization_4
+  inputs:
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"page_rank","icon":"gender"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 950.0
+  y: 500.0
+- id: Create-graph-in-Python_1
+  inputs: {}
+  operationId: Create graph in Python
+  parameters:
+    code: |
+      vs = pd.DataFrame({
+        'name': ['0', '1', '2', '3', '4', '5', '6'],
+        'y': [0, 0, 1, 2, 2, 3, 3],
+        'x': [0, 2, 1, 0, 2, 0, 2],
+      })
+      es = pd.DataFrame({
+        'src': [0, 0, 1, 2, 2, 3, 3, 3, 4, 4, 5],
+        'dst': [1, 2, 2, 3, 4, 4, 5, 6, 5, 6, 6],
+      })
+    outputs: 'vs.name: str, vs.x: float, vs.y: float'
+  parametricParameters: {}
+  x: 350.0
+  y: 700.0
+- id: Find-maximal-cliques_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
+  operationId: Find maximal cliques
+  parameters:
+    bothdir: 'false'
+  parametricParameters: {}
+  x: 750.0
+  y: 700.0
+- id: Graph-visualization_5
+  inputs:
+    graph:
+      boxId: Find-maximal-cliques_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"position":"pos"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","projectPath":".maximal_cliques","graphMode":"sampled"}}
+  parametricParameters: {}
+  x: 950.0
+  y: 700.0
+- id: Bundle-vertex-attributes-into-a-Vector_1
+  inputs:
+    graph:
+      boxId: Create-graph-in-Python_1
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: x,y
+    output: pos
+  parametricParameters: {}
+  x: 550.0
+  y: 700.0
+- id: Find-modular-clustering_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_1
+      id: graph
+  operationId: Find modular clustering
+  parameters: {}
+  parametricParameters: {}
+  x: 750.0
+  y: 900.0
+- id: Graph-visualization_6
+  inputs:
+    graph:
+      boxId: Rename-vertex-attributes_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"position":"pos","color":"cluster_id"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1401.3034309757784
+  y: 901.3034309757784
+- id: Aggregate-from-segmentation_1
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Aggregate from segmentation
+  parameters:
+    aggregate_id: first
+    apply_to_graph: .modular_clusters
+  parametricParameters: {}
+  x: 950.0
+  y: 900.0
+- id: Rename-vertex-attributes_1
+  inputs:
+    graph:
+      boxId: Aggregate-from-segmentation_1
+      id: graph
+  operationId: Rename vertex attributes
+  parameters:
+    change_modular_clusters_id_first: cluster_id
+  parametricParameters: {}
+  x: 1150.0
+  y: 900.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/bb8ffb69079d472fcf6392e29fe951ff.KalocsaGeoNodes.csv
+    imported_table: 0c7b9028-b3fc-3902-a5bc-13cb16ec9b00
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/bb8ffb69079d472fcf6392e29fe951ff.KalocsaGeoNodes.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 350.0
+  y: 1100.0
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 550.0
+  y: 1100.0
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+    table:
+      boxId: Import-CSV_2
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: id
+    dst: dst
+    src: src
+  parametricParameters: {}
+  x: 750.0
+  y: 1100.0
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: >-
+      UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv
+    imported_table: 198e41b1-d5ce-37e6-bd7e-5b1030af8691
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/9991ae421edfedde6d50bcbf33530796.KalocsaStreetSegments.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 350.0
+  y: 1250.0
+- id: Bundle-vertex-attributes-into-a-Vector_2
+  inputs:
+    graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: Bundle vertex attributes into a Vector
+  parameters:
+    elements: lat,lon
+    output: position
+  parametricParameters: {}
+  x: 950.0
+  y: 1100.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Bundle-vertex-attributes-into-a-Vector_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: if (id == "id_1396440563") Some(0.0) else None
+    output: A
+  parametricParameters: {}
+  x: 1150.0
+  y: 1100.0
+- id: Compute-distance-via-shortest-path_1
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_1
+      id: graph
+  operationId: Compute distance via shortest path
+  parameters:
+    edge_distance: distance
+    iterations: '40'
+  parametricParameters: {}
+  x: 1150.0
+  y: 1300.0
+- id: Derive-edge-attribute_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    expr: |-
+      import math._;
+
+      val r = 6371000; // radius of Earth in metres
+      val lat1 = src$lat * Pi/180
+      val lat2 = dst$lat * Pi/180
+      val lon1 = src$lon * Pi/180
+      val lon2 = dst$lon * Pi/180
+
+      val d_lat = lat2-lat1
+      val d_lon = lon2-lon1
+
+      val a = (
+        sin(d_lat/2) * sin(d_lat/2) +
+        cos(lat1) * cos(lat2) * sin(d_lon/2) * sin(d_lon/2))
+      val c = 2 * atan2(sqrt(a), sqrt(1-a))
+
+      r * c
+    output: distance
+  parametricParameters: {}
+  x: 950.0
+  y: 1300.0
+- id: Derive-edge-attribute_2
+  inputs:
+    graph:
+      boxId: Compute-distance-via-shortest-path_1
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    expr: >-
+      if (Math.abs(dst$shortest_distance - src$shortest_distance - distance) < 0.01)
+      20.0 else 5.0
+    output: on shortest path
+  parametricParameters: {}
+  x: 1400.0
+  y: 1300.0
+- id: Graph-visualization_7
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"shortest_distance":"<500","A":""},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{"shortest_distance":{"logarithmic":true}},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"shortest_distance","edge color":"on shortest
+      path","width":"on shortest path","size":"size"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"PiYG
+      🗘","labelColorMap":"Viridis","edgeColorMap":"PRGn 🗘","sliderColorMap":"Blue
+      to orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1650.0
+  y: 1100.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Derive-edge-attribute_2
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: A.map(_ => 20).getOrElse(5)
+    output: size
+  parametricParameters: {}
+  x: 1400.0
+  y: 1100.0
+- id: Create-example-graph_2
+  inputs: {}
+  operationId: Create example graph
+  parameters: {}
+  parametricParameters: {}
+  x: 350.0
+  y: 1550.0
+- id: Aggregate-on-neighbors_1
+  inputs:
+    graph:
+      boxId: Create-example-graph_2
+      id: graph
+  operationId: Aggregate on neighbors
+  parameters:
+    aggregate_age: average
+    direction: all neighbors
+  parametricParameters: {}
+  x: 550.0
+  y: 1550.0
+- id: Derive-vertex-attribute_3
+  inputs:
+    graph:
+      boxId: Aggregate-on-neighbors_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    defined_attrs: 'false'
+    expr: |-
+      val a = age.get
+      val n = neighborhood_age_average.getOrElse("undefined")
+      f"Age: $a Age average of neighbors: $n"
+    output: label
+  parametricParameters: {}
+  x: 750.0
+  y: 1550.0
+- id: Graph-visualization_8
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_3
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"label"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","edgeStyle":"undirected"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 950.0
+  y: 1550.0
