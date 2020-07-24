@@ -5,8 +5,8 @@
     parameters: >-
       [{"kind":"text","id":"AccessPointCost","defaultValue":"1000","$$hashKey":"object:150214"},{"kind":"text","id":"FiberCostPerMeter","defaultValue":"150","$$hashKey":"object:153402"},{"kind":"text","id":"DiscountRatio","defaultValue":"0.05","$$hashKey":"object:154485"},{"kind":"text","id":"ROIYears","defaultValue":"3","$$hashKey":"object:155013"}]
   parametricParameters: {}
-  x: 0
-  y: 0
+  x: 0.0
+  y: 0.0
 - id: Derive-edge-attribute_1
   inputs:
     graph:
@@ -34,16 +34,16 @@
       r * c
     output: distance
   parametricParameters: {}
-  x: 300
-  y: 300
+  x: 300.0
+  y: 300.0
 - id: input-graph
   inputs: {}
   operationId: Input
   parameters:
     name: graph
   parametricParameters: {}
-  x: 50
-  y: 300
+  x: 50.0
+  y: 300.0
 - id: Find-Steiner-tree_2
   inputs:
     graph:
@@ -54,8 +54,8 @@
     gain: total_discounted_revenue
     root_costs: starting_cost
   parametricParameters: {}
-  x: 1300
-  y: 300
+  x: 1300.0
+  y: 300.0
 - id: Filter-by-attributes_2
   inputs:
     graph:
@@ -65,8 +65,8 @@
   parameters:
     filterva_node: '*'
   parametricParameters: {}
-  x: 1300
-  y: 650
+  x: 1300.0
+  y: 650.0
 - id: Derive-edge-attribute_2
   inputs:
     graph:
@@ -77,8 +77,8 @@
     output: cost
   parametricParameters:
     expr: distance * $FiberCostPerMeter
-  x: 200
-  y: 700
+  x: 200.0
+  y: 700.0
 - id: Derive-vertex-attribute_2
   inputs:
     graph:
@@ -88,9 +88,10 @@
   parameters:
     output: starting_cost
   parametricParameters:
-    expr: if (node_type == "AccessPoint") Some(1.0 * $AccessPointCost) else None
-  x: 800
-  y: 300
+    expr: >-
+      if (node_type == "AccessPoint") Some(1.0 * $AccessPointCost) else None
+  x: 800.0
+  y: 300.0
 - id: Derive-vertex-attribute_6
   inputs:
     graph:
@@ -104,8 +105,8 @@
       (revenue *
         (1 - Math.pow(1 - $DiscountRatio, $ROIYears)) /
         $DiscountRatio)
-  x: 800
-  y: 700
+  x: 800.0
+  y: 700.0
 - id: output-graph
   inputs:
     output:
@@ -115,8 +116,8 @@
   parameters:
     name: graph
   parametricParameters: {}
-  x: 1750
-  y: 650
+  x: 1750.0
+  y: 650.0
 - id: Rename-graph-attributes_1
   inputs:
     graph:
@@ -126,8 +127,8 @@
   parameters:
     change_profit: ProjectNPV
   parametricParameters: {}
-  x: 1550
-  y: 650
+  x: 1550.0
+  y: 650.0
 - id: Comment_1
   inputs: {}
   operationId: Comment
@@ -139,8 +140,8 @@
       of each street segment in meters. We use the
       Haversine formula.
   parametricParameters: {}
-  x: 100
-  y: 150
+  x: 100.0
+  y: 150.0
 - id: Comment_2
   inputs: {}
   operationId: Comment
@@ -156,8 +157,8 @@
       (You can check out the Anchor box of this workspace
       to see all the workspace parameters.)
   parametricParameters: {}
-  x: 650
-  y: 100
+  x: 650.0
+  y: 100.0
 - id: Comment_3
   inputs: {}
   operationId: Comment
@@ -170,8 +171,8 @@
       product of the length and the `FiberCostPerMeter`
       workspace parameter.
   parametricParameters: {}
-  x: 50
-  y: 500
+  x: 50.0
+  y: 500.0
 - id: Comment_4
   inputs: {}
   operationId: Comment
@@ -184,8 +185,8 @@
       known present value formula with the given
       `DiscountRatio` and `ROIYears`.
   parametricParameters: {}
-  x: 600
-  y: 500
+  x: 600.0
+  y: 500.0
 - id: Comment_5
   inputs: {}
   operationId: Comment
@@ -201,8 +202,8 @@
       a dual ascent based branch-and-bound algorithm to find
       the best possible Steiner tree.
   parametricParameters: {}
-  x: 1150
-  y: 150
+  x: 1150.0
+  y: 150.0
 - id: Comment_6
   inputs: {}
   operationId: Comment
@@ -218,5 +219,5 @@
       We then also rename the resulting graph attribute to
       have a more problem specific name.
   parametricParameters: {}
-  x: 1350
-  y: 450
+  x: 1350.0
+  y: 450.0
