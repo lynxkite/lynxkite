@@ -20,7 +20,7 @@
       each edge has a well defined source and\ndestination. In drawing, we use arrows.
       E.g. you would need a directed\ngraph to represent who follows whom on Twitter.\n\nHere
       is now a directed graph. This has four vertices and four edges. Notice\nthat
-      it is absolutely possible that these in an edge from A to B and another,\ndistinct
+      it is absolutely possible that there is an edge from A to B and another,\ndistinct
       one from B to A.\n"},{"box":"Graph-visualization_3","popup":"visualization","title":"Property
       graphs","description":"Property graphs are a straightforward but very important
       generalizations of\ngraphs. In property graphs vertices and edges can have properties,
@@ -29,17 +29,17 @@
       If A follows B then the date when this relationship started would\nbe an example
       of an edge attribute.\n\nSee below our favorite graph enriched with some attributes!
       Now vertices\nhave a name and a gender. The name is shown below as a label while
-      the icon\nrepresents the gender. Edges have a textual description of the relationship,\nand
+      the icon\nrepresents the gender. Edges have a textual description of the relationship,\nan
       edge attribute. This is also shown as edge labels.\n\nYes, as you might have
       suspected all along, I'm using the most\narchaic graph of all, the one mankind
       had to first grapple with: a love\ntriangle.\n"},{"box":"Graph-visualization_4","popup":"visualization","title":"Graph
       indicators","description":"The most straightforward way to make use of graph
       struture is to compute\nsome numbers for the vertices and/or edges using the
-      graph structure and then\nuse these numbers in application.\n\nThe most famous
+      graph structure and then\nuse these numbers in an application.\n\nThe most famous
       example of this is PageRank, the graph algorithm used by\nGoogle to rank pages
       in its search results. In this case, Google takes\nthe directed graph made of
-      web pages (vertices) and links (edges), computes\na number - PageRank - for
-      all the vertices from this strucuture and use this\nnumber as a signal to decide
+      web pages (vertices) and links (edges), computes\na number — PageRank — for
+      all the vertices from this structure and use this\nnumber as a signal to decide
       which pages matching a query are the most\nimportant to show to the user.\n\nPageRank
       actually represents a probability. Say you select a vertex\nrandomly, then do
       a \"walk\" on the graph starting from the selected vertex,\nalways following
@@ -48,7 +48,7 @@
       process. (Well, there is some normalization going on and\nof course I gloss
       over the details, but this is the gist.)\n\nSee below for the PageRank computed
       on our favorite graph!\n\nOther than PageRank, there are a lot of other numbers
-      we can compute on our\ngraph to quantitize the roles of vertices and edges in
+      we can compute on our\ngraph to quantify the roles of vertices and edges in
       a network. See for\nexample Centrality, Dispersion, Betweenness, etc.\n"},{"box":"Graph-visualization_5","popup":"visualization","title":"Graph
       segmentation: cliques","description":"Another way to use graph structure is
       to try to identify interesting\nsets of vertices. The most basic example is
@@ -70,9 +70,9 @@
       notiion. Modular\nclustering tries to find a partition of the graph maximizing
       modularity.\n\nSee below for a simple example!\n"},{"box":"Graph-visualization_7","popup":"visualization","title":"Optimization
       on a graph: shortest path","description":"A graph can also represent certain
-      possibilites, e.g. streets one can take\non a walk, possible partners one migh
-      mary, fiber cable segments one can build,\netc.\n\nGraph optimization is concerned
-      with finding - in some sense - the optimal one\nout of these possibilites.\n\nHere
+      possibilites, e.g. streets one can take\non a walk, possible partners one might
+      marry, fiber cable segments one can build,\netc.\n\nGraph optimization is concerned
+      with finding — in some sense — the optimal one\nout of these possibilites.\n\nHere
       we are, as typical in this primer, demonstrating the simplest and most\ncommon
       graph optimization algorithm: shortest paths.\n\nWe start from a given vertex
       A, we can travel along the directed edges. Each edge has a length. Our task
