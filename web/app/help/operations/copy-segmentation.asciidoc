@@ -3,6 +3,6 @@
 Creates a copy of a segmentation.
 
 ====
-[p-from]#Old name#:: The segmentation to copy.
-[p-to]#New name#:: The name of the copy.
+[p-name]#Old name#:: The segmentation to copy.
+[p-destination]#New name#:: The name of the copy.
 ====
