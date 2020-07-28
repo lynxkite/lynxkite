@@ -59,7 +59,7 @@ def generate_documentation(inpath, outpath):
   with open(outpath, 'w') as fh:
     fh.write(HEADER)
 
-    for path in glob.glob(os.path.join(ASCIIDOC_OPERATIONS_PATH, '*.asciidoc')):
+    for path in sorted(glob.glob(os.path.join(ASCIIDOC_OPERATIONS_PATH, '*.asciidoc'))):
       file_name = os.path.basename(path)
       if file_name in FILES_TO_EXCLUDE:
         continue
