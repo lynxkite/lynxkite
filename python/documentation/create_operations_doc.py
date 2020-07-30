@@ -36,13 +36,15 @@ def generate_function(operation_name, path):
   body = textwrap.indent(re.search(BODY_REGEX, content).groups()[0].strip(), '  ')
   params = re.findall(PARAMS_REGEX, content)
   params = [] if not params else params
+  params = [(name.replace('-', '_'), desc) for name, desc in params]
+  params_str = ', '.join([name for name, desc in params])
 
   params_text = ''
   for name, desc in params:
     params_text += textwrap.indent(f':param {name}: {textwrap.indent(desc.strip(), "  ")}\n', '  ')
   params_text = params_text.rstrip()
   return f'''
-def {operation_name}(*args, **kwargs):
+def {operation_name}({params_str}):
   \'\'\'{body}
 
 {params_text}

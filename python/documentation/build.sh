@@ -4,6 +4,9 @@
 
 cd $(dirname "$0")
 
+# Create an empty file at the beginning
+cp /dev/null ../remote_api/src/lynx/operations.py 
+
 python3 create_operations_doc.py
 make clean html
 
