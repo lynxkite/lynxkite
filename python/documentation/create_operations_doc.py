@@ -1,7 +1,5 @@
 ''' Script for generating Python documentation from the ASCIIDOC documentation.
 
-
-
 Usage: python create_operations_doc.py
 '''
 import glob
@@ -29,9 +27,24 @@ def load_file(path):
     return fh.read()
 
 
+def replace_italic(text):
+  matches = re.findall(r'\_[a-zA-Z0-9]*\_', text)
+  for match in matches:
+    text = text.replace(match, '*' + match[1:-1] + '*')
+  return text
+
+
 def generate_function(operation_name, path):
   ''' Generates the documentation for a given operation. '''
   content = load_file(path)
+
+  # Delete 'include::g' tags
+  content = re.sub(r'include::{g}\[tag=[A-Za-z0-9\-]*\]', '', content)
+  # Replace experimental feature tags.
+  content = re.sub(r'<<experimental.*>>', 'Experimental Feature\n', content)
+  # Add arrow symbols
+  content = re.sub(r'{to}', '→', content)
+  content = re.sub(r'{from}', '←', content)
 
   body = textwrap.indent(re.search(BODY_REGEX, content).groups()[0].strip(), '  ')
   params = re.findall(PARAMS_REGEX, content)
@@ -39,9 +52,12 @@ def generate_function(operation_name, path):
   params = [(name.replace('-', '_'), desc) for name, desc in params]
   params_str = ', '.join([name for name, desc in params])
 
+  body = replace_italic(body)
+
   params_text = ''
   for name, desc in params:
-    params_text += textwrap.indent(f':param {name}: {textwrap.indent(desc.strip(), "  ")}\n', '  ')
+    desc = replace_italic(desc.strip())
+    params_text += textwrap.indent(f':param {name}: {textwrap.indent(desc, "  ")}\n', '  ')
   params_text = params_text.rstrip()
   return f'''
 def {operation_name}({params_str}):
