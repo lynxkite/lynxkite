@@ -36,6 +36,7 @@ import requests
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
 import shutil
+import lynx.operations
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
@@ -60,6 +61,16 @@ def _assert_lk_success(output, box_id, plug):
   if not output.success.enabled:
     msg = f'Output `{plug}` of `{box_id}` has failed: {output.success.disabledReason}'
     raise LynxException(msg)
+
+
+def _add_documentation_to_operation(f: Callable, name: str):
+  '''Sets the documentation on a given operation.'''
+  f.__name__ = name
+
+  if hasattr(lynx.operations, name):
+    f.__doc__ = getattr(lynx.operations, name).__doc__
+  else:
+    f.__doc__ = f'No documentation available for this operation.'
 
 
 def escape(s: Union[str, 'ParametricParameter']) -> Union[str, 'ParametricParameter']:
@@ -403,6 +414,7 @@ class LynxKite:
       raise AttributeError()
     elif name not in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
+    _add_documentation_to_operation(f, name)
     return f
 
   def sql(self, sql: str, *args, **kwargs) -> 'Box':
@@ -869,6 +881,7 @@ class State:
       raise AttributeError()
     elif name not in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
+    _add_documentation_to_operation(f, name)
     return f
 
   def __dir__(self) -> Iterable[str]:
