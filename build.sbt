@@ -127,7 +127,7 @@ def myStage = Command.command("stage") { state =>
   val branch = "git rev-parse --abbrev-ref HEAD".!!
   val modified = if ("git status --porcelain".!!.nonEmpty) "modified" else "mint"
   val lastCommit = "git log -1 --oneline".!!
-  IO.write(new java.io.File("stage/version"), s"Staged at $date by $user from $modified $branch (at $lastCommit)\n")
+  IO.write(new java.io.File("target/universal/stage/version"), s"Staged at $date by $user from $modified $branch (at $lastCommit)\n")
   res
 }
 
