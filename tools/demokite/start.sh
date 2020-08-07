@@ -16,7 +16,6 @@ MACHINE_TYPE=${MACHINE_TYPE:-'n1-standard-8'}
 gcloud compute instances create \
   $INSTANCE \
   --address $INSTANCE \
-  --project 'big-graph-gc1' \
   --boot-disk-size '1TB' \
   --image-project 'ubuntu-os-cloud' \
   --image-family 'ubuntu-1604-lts' \
