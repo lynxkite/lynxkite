@@ -181,6 +181,20 @@ case class IntAttributeToDouble() extends AttributeConverterOp[Int, Double] {
   def convert(rdd: AttributeRDD[Int]): AttributeRDD[Double] = rdd.mapValues(_.toDouble)
 }
 
+object FloatAttributeToDouble extends AttributeConverter[Float, Double] {
+  def newOp = FloatAttributeToDouble()
+}
+case class FloatAttributeToDouble() extends AttributeConverterOp[Float, Double] {
+  def convert(rdd: AttributeRDD[Float]): AttributeRDD[Double] = rdd.mapValues(_.toDouble)
+}
+
+object BigDecimalAttributeToDouble extends AttributeConverter[java.math.BigDecimal, Double] {
+  def newOp = BigDecimalAttributeToDouble()
+}
+case class BigDecimalAttributeToDouble() extends AttributeConverterOp[java.math.BigDecimal, Double] {
+  def convert(rdd: AttributeRDD[java.math.BigDecimal]): AttributeRDD[Double] = rdd.mapValues(_.doubleValue)
+}
+
 object VertexAttributeToDynamicValue extends OpFromJson {
   class Output[T](implicit
       instance: MetaGraphOperationInstance,
