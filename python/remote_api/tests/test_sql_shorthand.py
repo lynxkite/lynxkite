@@ -90,3 +90,33 @@ class TestSQLShorthand(unittest.TestCase):
         'select count(*) as cnt from x', input_names='x').df()
     import pandas as pd
     self.assertTrue(df.equals(pd.DataFrame({'cnt': [4.0]})))
+
+  def test_vertices(self):
+    lk = lynx.kite.LynxKite()
+    g = lk.createExampleGraph()
+    df = g.vertices.df()
+    self.assertTrue(df.shape == (4, 6))
+
+  def test_edges(self):
+    lk = lynx.kite.LynxKite()
+    g = lk.createExampleGraph()
+    df = g.edges.df()
+    self.assertTrue(df.shape == (4, 14))
+
+  def test_graph_attributes(self):
+    lk = lynx.kite.LynxKite()
+    g = lk.createExampleGraph()
+    df = g.graph_attributes.df()
+    self.assertTrue(df.shape == (1, 3))
+
+  def test_edge_attributes(self):
+    lk = lynx.kite.LynxKite()
+    g = lk.createExampleGraph()
+    df = g.edge_attributes.df()
+    self.assertTrue(df.shape == (4, 2))
+
+  def test_segmentations(self):
+    lk = lynx.kite.LynxKite()
+    g = lk.createExampleGraph().findConnectedComponents(name='seg1')
+    df = g.segmentations['seg1'].vertices.df()
+    self.assertTrue(df.shape == (2, 2))
