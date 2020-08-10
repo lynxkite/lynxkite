@@ -538,13 +538,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             "select `!id` from vertices where " + params("vertex_filter"), tables)
           project.vertexAttributes.updateEntityMap(
             project.vertexAttributes.iterator.toMap - "!id")
-          val newVS = {
-            val op = graph_operations.IDTableToVertexSet("!id")
-            op(op.t, vf).result.vs
-          }
           val vertexEmbedding = {
-            val op = graph_operations.EmbeddingByID()
-            op(op.original, project.vertexSet)(op.filtered, newVS).result.identity
+            val op = graph_operations.FilterByTable("!id")
+            op(op.vs, project.vertexSet)(op.t, vf).result.identity
           }
           project.pullBack(vertexEmbedding)
         }
@@ -555,13 +551,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             "select `!id` from edge_attributes where " + params("edge_filter"), tables)
           project.edgeAttributes.updateEntityMap(
             project.edgeAttributes.iterator.toMap - "!id")
-          val newES = {
-            val op = graph_operations.IDTableToVertexSet("!id")
-            op(op.t, vf).result.vs
-          }
           val edgeEmbedding = {
-            val op = graph_operations.EmbeddingByID()
-            op(op.original, project.edgeBundle.idSet)(op.filtered, newES).result.identity
+            val op = graph_operations.FilterByTable("!id")
+            op(op.vs, project.edgeBundle.idSet)(op.t, vf).result.identity
           }
           project.pullBackEdges(edgeEmbedding)
         }
