@@ -508,6 +508,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         Code("vertex_filter", "Vertex filter", language = "sql"),
         Code("edge_filter", "Edge filter", language = "sql"))
     } else {
+      assert(input.isTable, "Input must be a graph or a table.")
       params ++= List(
         Code("filter", "Filter", language = "sql"))
     }
