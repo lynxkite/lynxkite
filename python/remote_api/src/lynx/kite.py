@@ -904,16 +904,15 @@ class State:
     '''Returns the edge attributes as a table.'''
     return self._select_all('edge_attributes')
 
-  @property
-  def segmentations(self):
-    '''Access a given segmentation.
+  def segmentations(self, name: str) -> 'SingleOutputAtomicBox':
+    '''Access a given segmentation by name.
 
     Example usage:
     ```
     graph = lk.createExampleGraph().findConnectedComponents(name='seg1')
-    segmentation = graph.segmentations['seg1']
+    segmentation = graph.segmentations('seg1')
     '''
-    return SegmentationPlaceholder(self)
+    return self.takeSegmentationAsBaseGraph(apply_to_graph='.' + name)
 
   def _select_all(self, table):
     return self.sql(f'select * from `{table}`')
@@ -1012,16 +1011,6 @@ class Placeholder:
 
   def __init__(self, value=None) -> None:
     self.value = value
-
-
-class SegmentationPlaceholder:
-  '''Placeholder for a segmentation.'''
-
-  def __init__(self, state: 'State'):
-    self.state = state
-
-  def __getitem__(self, name):
-    return self.state.takeSegmentationAsBaseGraph(apply_to_graph='.' + name)
 
 
 def _fn_id(fn: Callable):
