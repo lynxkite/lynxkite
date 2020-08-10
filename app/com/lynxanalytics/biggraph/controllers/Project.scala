@@ -687,9 +687,12 @@ sealed trait ProjectEditor {
 
   // Convert attr to a well-supported format.
   private def supportedAttribute(attr: Attribute[_]): Attribute[_] = {
+    import graph_operations._
     if (attr == null) null
     else if (attr.is[Int]) attr.runtimeSafeCast[Int].asDouble
     else if (attr.is[Long]) attr.runtimeSafeCast[Long].asDouble
+    else if (attr.is[Float]) FloatAttributeToDouble.run(attr.runtimeSafeCast[Float])
+    else if (attr.is[java.math.BigDecimal]) BigDecimalAttributeToDouble.run(attr.runtimeSafeCast[java.math.BigDecimal])
     else attr
   }
 
