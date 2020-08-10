@@ -6,8 +6,8 @@ import sys
 
 def main():
   if len(sys.argv) < 2:
-    print 'Usage:'
-    print '  python rmoperation.py <operation save files>'
+    print('Usage:')
+    print('  python rmoperation.py <operation save files>')
     sys.exit(1)
 
   orphans = set()  # GUIDs which cannot be calculated anymore.
@@ -24,14 +24,15 @@ def main():
 
 
 def read(fn):
-  with file(fn) as f:
+  with open(fn) as f:
     return json.load(f)
 
 
 def delete(fn, j):
-  print 'deleting', fn, j['operation']['class']
+  print('deleting', fn, j['operation']['class'])
   os.remove(fn)
   return set(j['outputs'].values())
+
 
 if __name__ == '__main__':
   main()
