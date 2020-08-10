@@ -42,6 +42,8 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark 
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.scala-logging # scala-logging-api_2.11 # 2.1.2 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.scala-logging # scala-logging-slf4j_2.11 # 2.1.2 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.11 # 2.4.3 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.11 # 2.4.3 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0) | org.apache.sshd # sshd-core # 1.2.0 | <notextile></notextile>
 Apache | [Apache License](LICENSE.txt) | org.apache.httpcomponents # httpmime # 4.3.1 | <notextile></notextile>
 Apache | [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.ning # async-http-client # 1.8.14 | <notextile></notextile>
@@ -132,6 +134,7 @@ Apache | [Apache-2.0](http://opensource.org/licenses/Apache-2.0) | graphframes #
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
+Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.6.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.6.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-databind # 2.6.5 | <notextile></notextile>

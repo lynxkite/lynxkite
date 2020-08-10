@@ -2,8 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('WizardCtrl', function (
-    $scope, $routeParams, util, WorkspaceWrapper, $location, $window, $timeout) {
+  .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location, $window, $timeout) {
     const md = window.markdownit();
     const path = $routeParams.name.split('/');
     if (path.includes('In progress wizards')) { // These have a timestamp that we hide.

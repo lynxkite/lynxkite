@@ -17,6 +17,7 @@ rules:
   linebreak-style: [error, unix]
   no-console: [warn]
   no-debugger: [warn]
+  no-unreachable: [warn]
   no-unused-vars: [warn]
   no-multi-spaces: [error]
   no-sequences: [error]

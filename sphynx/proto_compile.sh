@@ -5,20 +5,29 @@
 cd $(dirname $0)
 . sphynx_common.sh
 
+# Check operating system for protobuc and grpc.
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  OS_NAME="osx"
+else  # Assume it's Linux otherwise.
+  OS_NAME="linux"
+fi
+
 # Get protobuf compiler.
 if ! type "protoc" > /dev/null; then
   PROTOC_VERSION="3.10.0"
-  PROTOC_ZIP="protoc-$PROTOC_VERSION-linux-x86_64.zip"
-  wget -nc https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
+  PROTOC_ZIP="protoc-$PROTOC_VERSION-$OS_NAME-x86_64.zip"
+  wget -nv https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
   mkdir -p protoc
   unzip -n $PROTOC_ZIP bin/protoc -d protoc
 fi
 
 # Generate the gRPC Java interfaces.
 GRPC_JAVA_VERSION="1.24.0"
-GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-linux-x86_64.exe
-wget -nc -P .build https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
-chmod +x $REPO/.build/$GRPC_JAVA
+GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-$OS_NAME-x86_64.exe
+if ! -f $REPO/.build/$GRPC_JAVA; then
+  wget -nv -P .build https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
+  chmod +x $REPO/.build/$GRPC_JAVA
+fi
 protoc --plugin=protoc-gen-grpc-java=$REPO/.build/$GRPC_JAVA --grpc-java_out=../app \
 	--proto_path=$PROTO_SOURCE_DIR $PROTO_SOURCE_FILE
 protoc -I=$PROTO_SOURCE_DIR --java_out=../app $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE

@@ -2,11 +2,6 @@
 # Starts up a LynxKite instance which requires authentication on a random port
 # (exported as $HTTPS_PORT/$HTTP_PORT), runs a command, then shuts down LynxKite.
 
-if [ ! -h "$(dirname $0)/../stage" ]; then
-  echo "You must run this script from the source tree, not from inside a stage!"
-  exit 1
-fi
-
 # Make sure Spark is installed.
 $(dirname $0)/install_spark.sh
 
@@ -51,7 +46,7 @@ EOF
 
 # Start backend.
 KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
-KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../stage/bin/lynxkite start
+KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../target/universal/stage/bin/lynxkite start
 KITE_PID=`cat ${PID_FILE}`
 SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
 function kill_backend {

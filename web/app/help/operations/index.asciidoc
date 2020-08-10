@@ -283,6 +283,8 @@ include::discard-vertex-attributes.asciidoc[]
 
 include::embed-vertices.asciidoc[]
 
+include::export-to-avro.asciidoc[]
+
 include::export-to-csv.asciidoc[]
 
 include::export-to-hive.asciidoc[]
@@ -350,6 +352,8 @@ include::graph-visualization.asciidoc[]
 include::grow-segmentation.asciidoc[]
 
 include::hash-vertex-attribute.asciidoc[]
+
+include::import-avro.asciidoc[]
 
 include::import-csv.asciidoc[]
 
