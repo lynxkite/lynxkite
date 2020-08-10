@@ -530,31 +530,31 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       params.validate()
       if (input.isProject) {
         val project = input.project
-        def tables = project.viewer.getProtoTables.toMap
         val before = project.rootEditor.viewer
         if (params("vertex_filter").trim.nonEmpty) {
-          project.vertexAttributes.updateEntityMap(
-            project.vertexAttributes.iterator.toMap + ("!id" -> project.vertexSet.idAttribute))
+          val p = project.viewer.editor // Create a copy.
+          // Must use low-level method to avoid automatic conversion to Double.
+          p.vertexAttributes.updateEntityMap(
+            p.vertexAttributes.iterator.toMap + ("!id" -> p.vertexSet.idAttribute))
           val vf = graph_operations.ExecuteSQL.run(
-            "select `!id` from vertices where " + params("vertex_filter"), tables)
-          project.vertexAttributes.updateEntityMap(
-            project.vertexAttributes.iterator.toMap - "!id")
+            "select `!id` from vertices where " + params("vertex_filter"),
+            p.viewer.getProtoTables.toMap)
           val vertexEmbedding = {
             val op = graph_operations.FilterByTable("!id")
-            op(op.vs, project.vertexSet)(op.t, vf).result.identity
+            op(op.vs, p.vertexSet)(op.t, vf).result.identity
           }
           project.pullBack(vertexEmbedding)
         }
         if (params("edge_filter").trim.nonEmpty) {
-          project.edgeAttributes.updateEntityMap(
-            project.edgeAttributes.iterator.toMap + ("!id" -> project.edgeBundle.idSet.idAttribute))
+          val p = project.viewer.editor
+          p.edgeAttributes.updateEntityMap(
+            p.edgeAttributes.iterator.toMap + ("!id" -> p.edgeBundle.idSet.idAttribute))
           val vf = graph_operations.ExecuteSQL.run(
-            "select `!id` from edge_attributes where " + params("edge_filter"), tables)
-          project.edgeAttributes.updateEntityMap(
-            project.edgeAttributes.iterator.toMap - "!id")
+            "select `!id` from edge_attributes where " + params("edge_filter"),
+            p.viewer.getProtoTables.toMap)
           val edgeEmbedding = {
             val op = graph_operations.FilterByTable("!id")
-            op(op.vs, project.edgeBundle.idSet)(op.t, vf).result.identity
+            op(op.vs, p.edgeBundle.idSet)(op.t, vf).result.identity
           }
           project.pullBackEdges(edgeEmbedding)
         }
