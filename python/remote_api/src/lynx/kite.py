@@ -904,8 +904,8 @@ class State:
     '''Returns the edge attributes as a table.'''
     return self._select_all('edge_attributes')
 
-  def segmentations(self, name: str) -> 'SingleOutputAtomicBox':
-    '''Access a given segmentation by name.
+  def segmentation(self, name: str) -> 'SingleOutputAtomicBox':
+    '''Returns the named segmentation as a base project.
 
     Example usage:
     ```
