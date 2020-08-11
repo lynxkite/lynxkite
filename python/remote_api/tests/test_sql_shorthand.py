@@ -118,5 +118,5 @@ class TestSQLShorthand(unittest.TestCase):
   def test_segmentations(self):
     lk = lynx.kite.LynxKite()
     g = lk.createExampleGraph().findConnectedComponents(name='seg1')
-    df = g.segmentations('seg1').vertices.df()
+    df = g.segmentation('seg1').vertices.df()
     self.assertTrue(df.shape == (2, 2))
