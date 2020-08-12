@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Visualization option to not display edges. Great in large geographic datasets.
+
 ### 4.0.1
 
 - Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))

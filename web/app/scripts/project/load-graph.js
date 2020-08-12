@@ -24,7 +24,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     const q = { vertexSets: [], edgeBundles: [] };
     for (let i = 0; i < sides.length; ++i) {
       const viewData = sides[i];
-      if (viewData.edgeBundle !== undefined) {
+      if (viewData.edgeBundle !== undefined && viewData.edgeStyle !== 'no') {
         const edgeAttrs = [];
         for (const eIndex in viewData.edgeAttrs) {
           if (viewData.edgeAttrs[eIndex]) {
