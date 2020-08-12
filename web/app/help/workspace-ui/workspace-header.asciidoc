@@ -13,30 +13,30 @@ If the workspace is in the Root folder, it will only show the name of the worksp
 Not all the buttons listed here are accessible at all times, please see the details below on when each function is
 available.
 
-+++<label class="btn btn-default"><i class="fa fa-superpowers"></i></label>+++ Save selection as custom box::
++++<label class="btn btn-default"><i class="fas fa-hat-cowboy"></i></label>+++ Save selection as custom box::
 Creates a <<custom-boxes, custom box>> of the selected boxes. Only available if at least one box
 is selected. The custom box will be saved under the specified full path.
 include::../operations/glossary.asciidoc[tag=full-lk-path]
 The list of custom boxes, shown on the UI, is limited to special directories `built-ins`,
 `custom_boxes`, `a/custom_boxes`, `a/b/custom_boxes`,... when we edit the workspace `a/b/.../workspace_name`.
 
-+++<label class="btn btn-default"><i class="fa fa-code"></i></label>+++ Save as Python code::
++++<label class="btn btn-default"><i class="fas fa-code"></i></label>+++ Save as Python code::
 Generates Python API code for the selected boxes. If nothing is selected,
 the whole workspace is used.
 
-+++<label class="btn btn-default"><i class="fa fa-trash-o"></i></label>+++ Delete selected boxes::
++++<label class="btn btn-default"><i class="fas fa-trash"></i></label>+++ Delete selected boxes::
 Removes the selected boxes. Only available if at least one box is selected.
 
-+++<label class="btn btn-default"><i class="fa fa-level-up"></i></label>+++ Dive out of  custom box::
++++<label class="btn btn-default"><i class="fas fa-level-up-alt"></i></label>+++ Dive out of  custom box::
 Closes the custom box workspace and returns to the main workspace. Only available if a custom box workspace is opened.
 
-+++<label class="btn btn-default"><i class="fa fa-level-down"></i></label>+++ Dive into custom box::
++++<label class="btn btn-default"><i class="fas fa-level-down-alt"></i></label>+++ Dive into custom box::
 Opens the selected custom box as a workspace. Only available if a custom box is selected.
 
-+++<label class="btn btn-default"><i class="fa fa-mouse-pointer"></i></label>+++ Select boxes on drag::
++++<label class="btn btn-default"><i class="fas fa-mouse-pointer"></i></label>+++ Select boxes on drag::
 If this mode is enabled, boxes can be selected by dragging a selection rectangle. You can still  pan (move the viewport) by clicking and dragging while holding Shift, or select boxes individually (and add boxes to the selection by holding Ctrl).
 
-+++<label class="btn btn-default"><i class="fa fa-arrows"></i></label>+++ Pan workspace on drag::
++++<label class="btn btn-default"><i class="fas fa-arrows"></i></label>+++ Pan workspace on drag::
 If this mode is enabled, clicking and dragging will move the viewport. Boxes can be selected two ways: individually, when additional  boxes can be added to the selection by holding Ctrl or by dragging a selection rectangle while holding Shift.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-backward"></i></label>+++ Undo::

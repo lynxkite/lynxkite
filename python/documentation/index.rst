@@ -1,11 +1,10 @@
 lynx.kite module reference
 ==========================
 
-.. automodule:: lynx.kite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+.. toctree::
+   :maxdepth 2
+   api
+   operations
 
 Indices and tables:
 

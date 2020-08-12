@@ -12,7 +12,5 @@ include::kerberos.asciidoc[]
 
 include::troubleshooting.asciidoc[]
 
-include::automatic-log-collection.asciidoc[]
-
 include::configuration/index.asciidoc[]
 

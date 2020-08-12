@@ -201,6 +201,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
   register("Import ORC")(new FileWithSchema(_) { val format = "orc" })
   register("Import JSON")(new FileWithSchema(_) { val format = "json" })
+  register("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(

@@ -107,6 +107,12 @@ class ExportImportOperationTest extends OperationsTestBase {
       numberAttr.collect.toSeq.sorted)
   }
 
+  test("Use table as graph with Ints") {
+    val edges = importSeq(Seq("src", "dst"), Seq((1, 2), (2, 3), (3, 1)))
+    val project = edges.box("Use table as graph", Map("src" -> "src", "dst" -> "dst")).project
+    assert(3 == project.edgeBundle.rdd.collect.toSeq.length)
+  }
+
   test("Use table as vertex attributes") {
     val attrs = importSeq(Seq("row_id", "value"), Seq(
       ("Adam", "value1"),

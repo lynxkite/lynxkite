@@ -1,8 +1,8 @@
 <div id="workspace-header" class="flat-toolbar">
   <div class="flat-toolbar-title">
-    <img src="favicon.png"
+    <a href="https://lynxkite.com/"><img src="favicon.png"
          height="50"
-         style="margin: -10px 10px 0 0;">
+         style="margin: -10px 10px 0 0;"></a>
     <span id="workspace-name">
       {{ getLastPart(workspace.name) }}
     </span>
@@ -23,7 +23,7 @@
        ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-superpowers"></i>
+    <i class="fas fa-hat-cowboy"></i>
   </button>
   <button class="btn btn-default"
        id="save-boxes-as-python"
@@ -31,7 +31,7 @@
        ng-disabled="workspace.error"
        drop-tooltip="Save&nbsp;as Python code"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-code"></i>
+    <i class="fas fa-code"></i>
   </button>
   <button class="btn btn-default"
        id="delete-selected-boxes"
@@ -39,7 +39,7 @@
        ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-trash"></i>
+    <i class="fas fa-trash"></i>
   </button>
   <button class="btn btn-default"
        id="dive-up"
@@ -47,7 +47,7 @@
        ng-disabled="workspace.customBoxStack.length === 0 || workspace.error"
        drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1].id }}"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-level-up"></i>
+    <i class="fas fa-level-up-alt"></i>
   </button>
   <button class="btn btn-default"
        id="dive-down"
@@ -57,7 +57,7 @@
        workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes') || workspace.error"
        drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-level-down"></i>
+    <i class="fas fa-level-down-alt"></i>
   </button>
   <button class="btn btn-default"
        id="select-mode-on"
@@ -66,7 +66,7 @@
        drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
        drop-tooltip-placement="bottom"
        ng-disabled="workspace.error">
-    <i class="fa fa-mouse-pointer"></i>
+    <i class="fas fa-mouse-pointer"></i>
   </button>
   <button class="btn btn-default"
        id="pan-mode-on"
@@ -75,7 +75,7 @@
        drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
        drop-tooltip-placement="bottom"
        ng-disabled="workspace.error">
-    <i class="fa fa-arrows"></i>
+    <i class="fas fa-arrows-alt"></i>
   </button>
   <button class="btn btn-default"
        id="undo"
@@ -208,7 +208,7 @@
         <foreignObject
           x="80" y="35" width="400" height="1000"
           ng-if="box.comment"
-          style = "pointer-events: none; opacity:0.95">
+          class="comment-box-text">
           <body xmlns="http://www.w3.org/1999/xhtml">
             <span class="workspace-comment" trusted-html="box.comment"></span>
           </body>

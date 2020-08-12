@@ -14,3 +14,10 @@
   right: 20px;
   z-index: 2; /* The bottom links should not be covered by the spark status indicator. */
 }
+
+.glyphicon-lynxkite {
+  width: 14px;
+  height: 14px;
+  background: url(/favicon.png);
+  background-size: cover;
+}

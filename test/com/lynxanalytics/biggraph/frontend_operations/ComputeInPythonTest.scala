@@ -8,15 +8,15 @@ class ComputeInPythonTest extends OperationsTestBase {
   test("example graph", SphynxOnly) {
     val p = box("Create example graph")
       .box("Compute in Python", Map(
-        "inputs" -> "vs.name, vs.age, es.weight, es.comment, es.src, es.dst, scalars.greeting",
-        "outputs" -> "vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, scalars.hello: str, scalars.average_age: float",
+        "inputs" -> "vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting",
+        "outputs" -> "vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, graph_attributes.hello: str, graph_attributes.average_age: float",
         "code" -> """
 vs['with_title'] = 'The Honorable ' + vs.name
 vs['age_squared'] = vs.age ** 2
 es['score'] = es.weight + es.comment.str.len()
 es['names'] = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
-scalars.hello = scalars.greeting.lower()
-scalars.average_age = vs.age.mean()
+graph_attributes.hello = graph_attributes.greeting.lower()
+graph_attributes.average_age = vs.age.mean()
           """))
       .project
     assert(
@@ -64,9 +64,9 @@ vs['with_title']: str = 'The Honorable ' + vs.name
 vs['age_squared']: float = vs.age ** 2
 es['score']: float = es.weight + es.comment.str.len()
 es['names']: str = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
-scalars.hello: str = scalars.greeting.lower()
-scalars.average_age: float = vs.age.mean()
-          """))
+graph_attributes.hello: str = graph_attributes.greeting.lower()
+graph_attributes.average_age: float = vs.age.mean()
+          """.trim))
       .project
     assert(
       get(p.vertexAttributes("with_title").runtimeSafeCast[String]) ==

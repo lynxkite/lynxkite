@@ -1,8 +1,8 @@
 ### Compute clustering coefficient
 
 Calculates the local
-http://en.wikipedia.org/wiki/Clustering_coefficient[clustering
-coefficient] attribute for every vertex. It quantifies how close the
+http://en.wikipedia.org/wiki/Clustering_coefficient[clustering coefficient]
+attribute for every vertex. It quantifies how close the
 vertex's neighbors are to being a clique. In practice a high (close to
 1.0) clustering coefficient means that the neighbors of a vertex are
 highly interconnected, 0.0 means there are no edges between the

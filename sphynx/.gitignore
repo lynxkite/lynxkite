@@ -1,5 +1,4 @@
 proto/*.pb.go
-protoc/*
 *.zip
-*.exe
 *.pem
+/.build

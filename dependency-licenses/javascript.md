@@ -1,5 +1,7 @@
 ├─ (BSD-2-Clause OR MIT OR Apache-2.0)
 │  └─ rc@1.2.8
+├─ (CC-BY-4.0 AND OFL-1.1 AND MIT)
+│  └─ @fortawesome/fontawesome-free@5.13.1
 ├─ (GPL-2.0 OR MIT)
 │  └─ ua-parser-js@0.7.17
 ├─ (MIT AND Zlib)
@@ -8,8 +10,6 @@
 │  └─ atob@2.1.2
 ├─ (MIT OR GPL-3.0)
 │  └─ jszip@3.2.0
-├─ (OFL-1.1 AND MIT)
-│  └─ font-awesome@4.7.0
 ├─ (WTFPL OR MIT)
 │  └─ path-is-inside@1.0.2
 ├─ Apache-2.0
@@ -22,7 +22,7 @@
 │  ├─ doctrine@3.0.0
 │  ├─ easy-extender@2.3.4
 │  ├─ eazy-logger@3.0.2
-│  ├─ eslint-visitor-keys@1.0.0
+│  ├─ eslint-visitor-keys@1.2.0
 │  ├─ forever-agent@0.6.1
 │  ├─ fuse.js@3.4.4
 │  ├─ oauth-sign@0.9.0
@@ -188,7 +188,7 @@
 │  ├─ acorn@6.1.1
 │  ├─ adm-zip@0.4.13
 │  ├─ after@0.8.2
-│  ├─ agent-base@4.2.1
+│  ├─ agent-base@4.3.0
 │  ├─ ajv@6.10.0
 │  ├─ alter@0.2.0
 │  ├─ angular-cookies@1.7.7
@@ -262,7 +262,7 @@
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
-│  ├─ bootstrap-tourist@0.2.1
+│  ├─ bootstrap-tourist@0.3.2
 │  ├─ bootstrap@3.4.1
 │  ├─ brace-expansion@1.1.11
 │  ├─ braces@1.8.5
@@ -355,14 +355,14 @@
 │  ├─ es5-shim@4.5.12
 │  ├─ es6-iterator@2.0.3
 │  ├─ es6-object-assign@1.1.0
-│  ├─ es6-promise@4.2.6
+│  ├─ es6-promise@4.2.8
 │  ├─ es6-promisify@5.0.0
 │  ├─ es6-shim@0.35.5
 │  ├─ es6-symbol@3.1.1
 │  ├─ es6-weak-map@2.0.2
 │  ├─ escape-html@1.0.3
 │  ├─ escape-string-regexp@1.0.5
-│  ├─ eslint-utils@1.3.1
+│  ├─ eslint-utils@1.4.3
 │  ├─ eslint@5.15.1
 │  ├─ etag@1.8.1
 │  ├─ event-emitter@0.3.5
@@ -474,7 +474,7 @@
 │  ├─ http-response-object@1.1.0
 │  ├─ http-response-object@3.0.1
 │  ├─ http-signature@1.2.0
-│  ├─ https-proxy-agent@2.2.1
+│  ├─ https-proxy-agent@2.2.4
 │  ├─ iconv-lite@0.2.11
 │  ├─ iconv-lite@0.4.23
 │  ├─ iconv-lite@0.4.24
@@ -540,9 +540,9 @@
 │  ├─ jasmine-core@2.8.0
 │  ├─ jasmine@2.8.0
 │  ├─ jasminewd2@2.2.0
-│  ├─ jquery@3.4.1
+│  ├─ jquery@3.5.1
 │  ├─ js-tokens@4.0.0
-│  ├─ js-yaml@3.12.2
+│  ├─ js-yaml@3.13.1
 │  ├─ jsbn@0.1.1
 │  ├─ json-schema-traverse@0.4.1
 │  ├─ json-stable-stringify-without-jsonify@1.0.1
@@ -568,7 +568,7 @@
 │  ├─ load-json-file@1.1.0
 │  ├─ localtunnel@1.9.1
 │  ├─ lodash.isfinite@3.3.2
-│  ├─ lodash@4.17.11
+│  ├─ lodash@4.17.15
 │  ├─ lru-queue@0.1.0
 │  ├─ magic-string@0.22.5
 │  ├─ make-iterator@1.0.1
@@ -593,11 +593,11 @@
 │  ├─ minimist@1.2.0
 │  ├─ minizlib@1.2.1
 │  ├─ mitt@1.1.3
-│  ├─ mixin-deep@1.3.1
+│  ├─ mixin-deep@1.3.2
 │  ├─ mkdirp@0.5.1
 │  ├─ modify-filename@1.1.0
 │  ├─ ms@2.0.0
-│  ├─ ms@2.1.1
+│  ├─ ms@2.1.2
 │  ├─ mute-stdout@1.0.1
 │  ├─ nan@2.12.1
 │  ├─ nanomatch@1.2.13

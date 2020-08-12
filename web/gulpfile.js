@@ -31,6 +31,8 @@ const del = require('del');
 const glob = require('glob');
 const gulp = require('gulp');
 const http = require('https');
+const annotate = require('./basic-annotate.js');
+const filesort = require('./basic-filesort.js');
 const fs = require('fs');
 const httpProxy = require('http-proxy');
 const lazypipe = require('lazypipe');
@@ -77,7 +79,7 @@ function getOrbitalControls(done) {
 // Preprocesses JavaScript files.
 gulp.task('js', gulp.series(getOrbitalControls, function js() {
   return gulp.src('app/scripts/**/*.js')
-    .pipe($.ngAnnotate())
+    .pipe(annotate)
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(browserSync.stream());
 }));
@@ -85,7 +87,7 @@ gulp.task('js', gulp.series(getOrbitalControls, function js() {
 // Preprocesses HTML files.
 gulp.task('html', gulp.series('css', 'js', function html() {
   const css = gulp.src('.tmp/**/*.css', { read: false });
-  const js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
+  const js = gulp.src('.tmp/**/*.js').pipe(filesort());
   return gulp.src('app/index.html')
     .pipe($.inject(css, { ignorePath: '.tmp' }))
     .pipe($.inject(js, { ignorePath: '.tmp' }))
@@ -121,8 +123,8 @@ gulp.task('dist', gulp.series('asciidoctor', 'genTemplates', 'html', function di
     'node_modules/bootstrap/dist/fonts/*',
   ], { base: 'node_modules/bootstrap/dist' });
   const fontAwesomeFonts = gulp.src([
-    'node_modules/font-awesome/fonts/*',
-  ], {base: 'node_modules/font-awesome'});
+    'node_modules/@fortawesome/fontawesome-free/webfonts/*',
+  ], {base: 'node_modules/@fortawesome/fontawesome-free'});
   const typefaces = gulp.src([
     'node_modules/typeface-exo-2/files/*',
   ], {base: 'node_modules/typeface-exo-2'});

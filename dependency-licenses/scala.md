@@ -42,6 +42,8 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark 
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.scala-logging # scala-logging-api_2.11 # 2.1.2 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.scala-logging # scala-logging-slf4j_2.11 # 2.1.2 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.11 # 2.4.3 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.11 # 2.4.3 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0) | org.apache.sshd # sshd-core # 1.2.0 | <notextile></notextile>
 Apache | [Apache License](LICENSE.txt) | org.apache.httpcomponents # httpmime # 4.3.1 | <notextile></notextile>
 Apache | [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.ning # async-http-client # 1.8.14 | <notextile></notextile>
@@ -132,6 +134,7 @@ Apache | [Apache-2.0](http://opensource.org/licenses/Apache-2.0) | graphframes #
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
+Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.6.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.6.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-databind # 2.6.5 | <notextile></notextile>
@@ -149,6 +152,7 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.oauth-client # google-oauth-client # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.oauth-client # google-oauth-client-java6 # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.googlecode.concurrentlinkedhashmap # concurrentlinkedhashmap-lru # 1.4.2 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.hadoop.gplcompression # hadoop-lzo # 0.4.20 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-collections # commons-collections # 3.2.1 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-configuration # commons-configuration # 1.10 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | commons-lang # commons-lang # 2.6 | <notextile></notextile>
@@ -302,6 +306,7 @@ GPL | [GPL2 w/ CPE](http://glassfish.java.net/public/CDDL+GPL_1_1.html) | com.su
 GPL | [GPL2 w/ CPE](http://glassfish.java.net/public/CDDL+GPL_1_1.html) | com.sun.jersey # jersey-servlet # 1.19.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://oss.oracle.com/licenses/CDDL+GPL-1.1) | javax.xml.bind # jaxb-api # 2.3.0 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html) | org.neo4j.3rdparty.javax.ws.rs # jsr311-api # 1.1.2.r612 | <notextile></notextile>
+GPL | [The GNU General Public License, v2 with FOSS exception](null) | mysql # mysql-connector-java # 8.0.20 | <notextile></notextile>
 GPL with Classpath Extension | [CDDL + GPLv2 with classpath exception](https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html) | javax.servlet # javax.servlet-api # 3.1.0 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-classic # 1.1.1 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-core # 1.1.1 | <notextile></notextile>

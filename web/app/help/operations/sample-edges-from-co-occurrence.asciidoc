@@ -5,12 +5,6 @@ if they co-occur in any segments.
 Multiple co-occurrences will have the same chance of being selected
 as single ones. Loop edges are also included with the same probability.
 
-[.gui-only]
---
-There are +++<value ref="scalars['num_total_edges']"></value>+++ edges to sample from
-including parallel edges.
---
-
 ====
 [p-probability]#Vertex pair selection probability#::
 The probability of choosing a vertex pair. The expected value of the number of

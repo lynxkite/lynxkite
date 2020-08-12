@@ -16,7 +16,7 @@
     <div
       ui-ace="{
         mode: 'plain_text',
-        showGutter: false,
+        showGutter: true,
         rendererOptions: {
           fontSize: '16px'
         },
@@ -38,7 +38,7 @@
       <div
         ui-ace="{
           mode: '{{ param.payload.language }}',
-          showGutter: false,
+          showGutter: {{ parameters[param.id].split('\n').length > 5 }},
           rendererOptions: {
             fontSize: '16px'
           },
@@ -113,7 +113,7 @@
         workspace="workspace"
         model="parameters[param.id]"></wizard-steps-parameter>
     </div>
-    <i class="fa fa-dollar parametric-switch"
+    <i class="fas fa-dollar-sign parametric-switch"
       drop-tooltip="Parametric: {{ isParametric(param.id) ? 'yes' : 'no' }}"
       drop-tooltip-position="top center"
       ng-class="{ active: isParametric(param.id) }"
@@ -137,7 +137,7 @@
           ng-model="parameters[paramId]"
           ng-submit="onBlur()">
     </div>
-    <i class="fa fa-remove remove-parameter"
+    <i class="fas fa-times remove-parameter"
       drop-tooltip="Remove unexpected parameter"
       drop-tooltip-position="top center"
       ng-click="removeParameter(paramId)">
@@ -146,6 +146,6 @@
 </div>
 <div class="form-group" ng-repeat="group in groups(meta.parameters)" ng-show="!visibleGroup(group)">
   <a href ng-click="expandGroup(group)">
-    <i class="fa fa-plus-square-o"></i> {{ group }}
+    <i class="fas fa-plus-square"></i> {{ group }}
   </a>
 </div>
