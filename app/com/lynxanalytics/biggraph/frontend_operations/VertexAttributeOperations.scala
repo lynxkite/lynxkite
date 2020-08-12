@@ -262,7 +262,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         Choice("id_column", "ID column",
           options = FEOption.unset +: attributes.vertexAttrList[String]),
         Param("prefix", "Name prefix for the imported vertex attributes"),
-        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.bools))
+        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.boolsDefaultFalse))
       def enabled =
         project.hasVertexSet &&
           FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")

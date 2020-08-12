@@ -204,7 +204,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           options = FEOption.unset +: project.edgeAttrList[String]),
         Choice("id_column", "ID column", options = FEOption.unset +: attributes.vertexAttrList),
         Param("prefix", "Name prefix for the imported edge attributes"),
-        Choice("unique_keys", "Assert unique edge attribute values", options = FEOption.bools))
+        Choice("unique_keys", "Assert unique edge attribute values", options = FEOption.boolsDefaultFalse))
       def enabled =
         project.hasEdgeBundle &&
           FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
