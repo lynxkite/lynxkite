@@ -910,7 +910,7 @@ class State:
     Example usage:
     ```
     graph = lk.createExampleGraph().findConnectedComponents(name='seg1')
-    segmentation = graph.segmentations('seg1')
+    segmentation = graph.segmentation('seg1')
     '''
     return self.takeSegmentationAsBaseGraph(apply_to_graph='.' + name)
 
