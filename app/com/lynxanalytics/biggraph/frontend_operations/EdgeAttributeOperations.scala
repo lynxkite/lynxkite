@@ -196,41 +196,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register(
-    "Use table as edge attributes", List(projectInput, "attributes"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("graph")
-      lazy val attributes = tableLikeInput("attributes").asProject
-      params ++= List(
-        Choice("id_attr", "Edge attribute",
-          options = FEOption.unset +: project.edgeAttrList[String]),
-        Choice("id_column", "ID column", options = FEOption.unset +: attributes.vertexAttrList),
-        Param("prefix", "Name prefix for the imported edge attributes"),
-        Choice("unique_keys", "Assert unique edge attribute values", options = FEOption.boolsDefaultFalse))
-      def enabled =
-        project.hasEdgeBundle &&
-          FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
-      def apply() = {
-        val columnName = params("id_column")
-        assert(columnName != FEOption.unset.id, "The ID column parameter must be set.")
-        val attrName = params("id_attr")
-        assert(attrName != FEOption.unset.id, "The edge attribute parameter must be set.")
-        val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-        val idColumn = attributes.vertexAttributes(columnName).runtimeSafeCast[String]
-        val projectAttrNames = project.edgeAttributeNames
-        val uniqueKeys = params("unique_keys").toBoolean
-        val edges = if (uniqueKeys) {
-          val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-        } else {
-          val op = graph_operations.EdgesFromLookupAttributeMatches()
-          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-        }
-        val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-        for ((name, attr) <- attributes.vertexAttributes) {
-          assert(
-            !projectAttrNames.contains(prefix + name),
-            s"Cannot import column `${prefix + name}`. Attribute already exists.")
-          project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
-        }
-      }
+    "Use table as edge attributes", List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
+      def projectAttributes = project.edgeAttributes
+      def projectIdSet = project.edgeBundle.idSet
     })
 }

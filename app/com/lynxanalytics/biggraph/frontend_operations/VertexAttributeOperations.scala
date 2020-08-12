@@ -7,16 +7,86 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_api.Attribute
-import com.lynxanalytics.biggraph.graph_api.Scalar
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.controllers.OperationParams._
 
+abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: ProjectOperations)
+  extends ProjectOutputOperation(context) {
+  import Operation.Implicits._
+  override lazy val project = projectInput("graph")
+  lazy val table = tableLikeInput("attributes").asProject
+  def projectAttributes: StateMapHolder[Attribute[_]]
+  def projectIdSet: VertexSet
+  def tableAttributes = table.vertexAttributes
+  val projectAttrNames = projectAttributes.iterator.map(_._1).toList.sorted
+
+  params ++= List(
+    Choice("id_attr", "ID attribute",
+      options = FEOption.unset +: FEOption.list(projectAttrNames)),
+    Choice("id_column", "ID column",
+      options = FEOption.unset +: table.vertexAttrList),
+    Param("prefix", "Name prefix for the imported attributes"),
+    Choice("unique_keys", "Assert unique ID attribute values", options = FEOption.boolsDefaultFalse),
+    Choice("if_exists", "What happens if an attribute already exists",
+      options = FEOption.list(
+        "Overwrite from the table", "Keep the graph's version", "Use the table's version",
+        "They must match", "Disallow this")))
+  def enabled =
+    project.hasVertexSet &&
+      FEStatus.assert(projectAttrNames.nonEmpty, "No attributes to use as key.")
+
+  def apply() = {
+    val idAttrName = params("id_attr")
+    val idColumnName = params("id_column")
+    assert(idAttrName != FEOption.unset.id, "The ID attribute parameter must be set.")
+    assert(idColumnName != FEOption.unset.id, "The ID column parameter must be set.")
+    val idAttr = projectAttributes(idAttrName).asString
+    val idColumn = tableAttributes(idColumnName).asString
+    val uniqueKeys = params("unique_keys").toBoolean
+    val edges = if (uniqueKeys) {
+      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+      op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+    } else {
+      val op = graph_operations.EdgesFromLookupAttributeMatches()
+      op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+    }
+    val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+    for ((name, attr) <- tableAttributes) {
+      val tableAttr = attr.pullVia(edges)
+      if (projectAttrNames.contains(prefix + name)) {
+        val graphAttr = projectAttributes(prefix + name)
+        params("if_exists") match {
+          case _ if prefix + name == idAttrName => // Leave the key alone.
+          case "Disallow this" => throw new AssertionError(
+            s"Cannot import column `${prefix + name}`. Attribute already exists.")
+          case "Overwrite from the table" =>
+            assert(
+              tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
+              "$prefix$name in the graph has a different type than in the table.")
+            projectAttributes(prefix + name) = ops.unifyAttribute(tableAttr, graphAttr)
+          case "Keep the graph's version" =>
+          case "Use the table's version" =>
+            projectAttributes(prefix + name) = tableAttr
+          case "They must match" =>
+            projectAttributes(prefix + name) =
+              graph_operations.DeriveScala.deriveAndInferReturnType(
+                """
+                assert(t.isEmpty || t == g, s"ATTR does not match on ${id.get}: $t <> $g")
+                g
+                """.replace("ATTR", name),
+                Seq("g" -> graphAttr, "t" -> tableAttr, "id" -> idAttr),
+                projectIdSet,
+                onlyOnDefinedAttrs = false)
+        }
+      } else projectAttributes(prefix + name) = tableAttr
+    }
+  }
+}
 class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
   import Operation.Implicits._
 
   val category = Categories.VertexAttributeOperations
-
-  import com.lynxanalytics.biggraph.controllers.OperationParams._
 
   register("Add constant vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
@@ -253,69 +323,9 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Use table as vertex attributes", List(projectInput, "attributes"))(new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("graph")
-      lazy val attributes = tableLikeInput("attributes").asProject
-      params ++= List(
-        Choice("id_attr", "Vertex attribute",
-          options = FEOption.unset +: project.vertexAttrList[String]),
-        Choice("id_column", "ID column",
-          options = FEOption.unset +: attributes.vertexAttrList[String]),
-        Param("prefix", "Name prefix for the imported vertex attributes"),
-        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.boolsDefaultFalse),
-        Choice("if_exists", "What happens if an attribute already exists",
-          options = FEOption.list(
-            "Overwrite from the table", "Keep the graph's version", "Use the table's version",
-            "They must match", "Disallow this")))
-      def enabled =
-        project.hasVertexSet &&
-          FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
-      def apply() = {
-        val idAttrName = params("id_attr")
-        val idColumnName = params("id_column")
-        assert(idAttrName != FEOption.unset.id, "The vertex attribute parameter must be set.")
-        assert(idColumnName != FEOption.unset.id, "The ID column parameter must be set.")
-        val idAttr = project.vertexAttributes(idAttrName).runtimeSafeCast[String]
-        val idColumn = attributes.vertexAttributes(idColumnName).runtimeSafeCast[String]
-        val projectAttrNames = project.vertexAttributeNames
-        val uniqueKeys = params("unique_keys").toBoolean
-        val edges = if (uniqueKeys) {
-          val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-        } else {
-          val op = graph_operations.EdgesFromLookupAttributeMatches()
-          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-        }
-        val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-        for ((name, attr) <- attributes.vertexAttributes) {
-          val tableAttr = attr.pullVia(edges)
-          if (projectAttrNames.contains(prefix + name)) {
-            val graphAttr = project.vertexAttributes(prefix + name)
-            params("if_exists") match {
-              case "Disallow this" => throw new AssertionError(
-                s"Cannot import column `${prefix + name}`. Attribute already exists.")
-              case "Overwrite from the table" =>
-                assert(
-                  tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
-                  "$prefix$name in the graph has a different type than in the table.")
-                project.vertexAttributes(prefix + name) = unifyAttribute(tableAttr, graphAttr)
-              case "Keep the graph's version" =>
-              case "Use the table's version" =>
-                project.newVertexAttribute(prefix + name, tableAttr, "imported")
-              case "They must match" =>
-                project.vertexAttributes(prefix + name) =
-                  graph_operations.DeriveScala.deriveAndInferReturnType(
-                    """
-                    assert(t.isEmpty || t == g, s"ATTR does not match on ${id.get}: $t <> $g")
-                    g
-                    """.replace("ATTR", name),
-                    Seq("g" -> graphAttr, "t" -> tableAttr, "id" -> idAttr),
-                    project.vertexSet,
-                    onlyOnDefinedAttrs = false)
-            }
-          } else project.newVertexAttribute(prefix + name, tableAttr, "imported")
-        }
-      }
+    "Use table as vertex attributes", List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
+      def projectAttributes = project.vertexAttributes
+      def projectIdSet = project.vertexSet
     })
 
   register("Bundle vertex attributes into a Vector")(new ProjectTransformation(_) {
