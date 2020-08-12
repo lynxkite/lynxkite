@@ -17,11 +17,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def addSegmentationParameters = params ++= aggregateParams(parent.vertexAttributes)
     def enabled = project.assertSegmentation
     def apply() = {
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           seg.belongsTo,
           AttributeWithLocalAggregator(parent.vertexAttributes(attr), choice))
-        project.newVertexAttribute(s"${attr}_${choice}", result)
+        project.newVertexAttribute(name, result)
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -41,11 +41,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       def apply() = {
         val weightName = params("weight")
         val weight = parent.vertexAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice) <- parseAggregateParams(params)) {
+        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
           val result = aggregateViaConnection(
             seg.belongsTo,
             AttributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
-          project.newVertexAttribute(s"${attr}_${choice}_by_${weightName}", result)
+          project.newVertexAttribute(name, result)
         }
       }
       override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -60,11 +60,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def enabled = project.assertSegmentation
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
         val result = aggregateViaConnection(
           seg.belongsTo.reverse,
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
+        seg.parent.newVertexAttribute(name, result)
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -84,11 +84,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
         val weightName = params("weight")
         val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice) <- parseAggregateParams(params)) {
+        for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
           val result = aggregateViaConnection(
             seg.belongsTo.reverse,
             AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
-          seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
+          seg.parent.newVertexAttribute(name, result)
         }
       }
       override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -103,11 +103,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
         val result = aggregateViaConnection(
           edges,
           AttributeWithLocalAggregator(project.vertexAttributes(attr), choice))
-        project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
+        project.newVertexAttribute(name, result)
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -127,12 +127,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-      for ((name, choice) <- parseAggregateParams(params)) {
-        val attr = project.vertexAttributes(name)
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
         val result = aggregateViaConnection(
           edges,
-          AttributeWithWeightedAggregator(weight, attr, choice))
-        project.newVertexAttribute(s"${prefix}${name}_${choice}_by_${weightName}", result)
+          AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+        project.newVertexAttribute(name, result)
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -147,13 +146,13 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def apply() = {
       val direction = Direction(params("direction"), project.edgeBundle)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
         val result = aggregateFromEdges(
           direction.edgeBundle,
           AttributeWithLocalAggregator(
             direction.pull(project.edgeAttributes(attr)),
             choice))
-        project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
+        project.newVertexAttribute(name, result)
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
@@ -175,14 +174,14 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
         val weightName = params("weight")
         val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice) <- parseAggregateParams(params)) {
+        for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
           val result = aggregateFromEdges(
             direction.edgeBundle,
             AttributeWithWeightedAggregator(
               direction.pull(weight),
               direction.pull(project.edgeAttributes(attr)),
               choice))
-          project.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
+          project.newVertexAttribute(name, result)
         }
       }
       override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)

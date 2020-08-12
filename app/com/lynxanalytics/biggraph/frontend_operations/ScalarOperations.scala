@@ -24,10 +24,9 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     def enabled = project.hasEdgeBundle
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
         val result = aggregate(
           AttributeWithAggregator(project.edgeAttributes(attr), choice))
-        val name = s"${prefix}${attr}_${choice}"
         project.scalars(name) = result
       }
     }
@@ -47,10 +46,9 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
         val result = aggregate(
           AttributeWithWeightedAggregator(weight, project.edgeAttributes(attr), choice))
-        val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
     }
@@ -63,9 +61,8 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     def enabled = project.hasVertexSet
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
         val result = aggregate(AttributeWithAggregator(project.vertexAttributes(attr), choice))
-        val name = s"${prefix}${attr}_${choice}"
         project.scalars(name) = result
       }
     }
@@ -83,10 +80,9 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
         val result = aggregate(
           AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
-        val name = s"${prefix}${attr}_${choice}_by_${weightName}"
         project.scalars(name) = result
       }
     }

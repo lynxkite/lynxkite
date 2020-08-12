@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added an option to disable generated suffixes for aggregated variables.
+
 ### 4.0.1
 
 - Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))
