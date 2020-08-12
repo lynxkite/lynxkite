@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- _"Use table as vertex/edge attributes"_ boxes are more friendly and handle name conflicts better
+  now.
+
 ### 4.0.1
 
 - Fixed issue with interactive tutorials. ([#30](https://github.com/lynxkite/lynxkite/issues/30))

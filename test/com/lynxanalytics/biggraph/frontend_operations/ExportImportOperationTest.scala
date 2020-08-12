@@ -160,6 +160,7 @@ class ExportImportOperationTest extends OperationsTestBase {
         .box("Convert vertex attribute to String", Map(
           "attr" -> "id"))
         .box("Use table as vertex attributes", Map(
+          "if_exists" -> "Disallow this",
           "id_attr" -> "id",
           "id_column" -> "id"), Seq(table))
         .project
@@ -170,6 +171,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     val ex2 = intercept[java.lang.AssertionError] {
       box("Create example graph")
         .box("Use table as edge attributes", Map(
+          "if_exists" -> "Disallow this",
           "id_attr" -> "comment",
           "id_column" -> "new_comment"), Seq(edgeTable))
         .project

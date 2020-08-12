@@ -262,7 +262,11 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         Choice("id_column", "ID column",
           options = FEOption.unset +: attributes.vertexAttrList[String]),
         Param("prefix", "Name prefix for the imported vertex attributes"),
-        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.boolsDefaultFalse))
+        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.boolsDefaultFalse),
+        Choice("if_exists", "What happens if an attribute already exists",
+          options = FEOption.list(
+            "Overwrite from the table", "Keep the graph's version", "Use the table's version",
+            "They must match", "Disallow this")))
       def enabled =
         project.hasVertexSet &&
           FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
@@ -284,10 +288,32 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         }
         val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
         for ((name, attr) <- attributes.vertexAttributes) {
-          assert(
-            !projectAttrNames.contains(prefix + name),
-            s"Cannot import column `${prefix + name}`. Attribute already exists.")
-          project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
+          val tableAttr = attr.pullVia(edges)
+          if (projectAttrNames.contains(prefix + name)) {
+            val graphAttr = project.vertexAttributes(prefix + name)
+            params("if_exists") match {
+              case "Disallow this" => throw new AssertionError(
+                s"Cannot import column `${prefix + name}`. Attribute already exists.")
+              case "Overwrite from the table" =>
+                assert(
+                  tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
+                  "$prefix$name in the graph has a different type than in the table.")
+                project.vertexAttributes(prefix + name) = unifyAttribute(tableAttr, graphAttr)
+              case "Keep the graph's version" =>
+              case "Use the table's version" =>
+                project.newVertexAttribute(prefix + name, tableAttr, "imported")
+              case "They must match" =>
+                project.vertexAttributes(prefix + name) =
+                  graph_operations.DeriveScala.deriveAndInferReturnType(
+                    """
+                    assert(t.isEmpty || t == g, s"ATTR does not match on ${id.get}: $t <> $g")
+                    g
+                    """.replace("ATTR", name),
+                    Seq("g" -> graphAttr, "t" -> tableAttr, "id" -> idAttr),
+                    project.vertexSet,
+                    onlyOnDefinedAttrs = false)
+            }
+          } else project.newVertexAttribute(prefix + name, tableAttr, "imported")
         }
       }
     })
