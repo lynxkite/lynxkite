@@ -166,6 +166,19 @@ The available aggregators are:
  ** `std_deviation` (standard deviation)
  ** `sum`
 
+ * For `Vector[Double]` attributes:
+ ** `concatenate` (the vectors concatenated in arbitrary order)
+ ** `count` (number of cases where the attribute is defined)
+ ** `count_distinct` (the number of distinct values)
+ ** `count_most_common` (the number of occurrences of the most common value)
+ ** `elementwise_average` (a vector of the averages for each element)
+ ** `elementwise_max` (a vector of the maximum for each element)
+ ** `elementwise_min` (a vector of the minimum for each element)
+ ** `elementwise_std_deviation` (a vector of the standard deviation for each element)
+ ** `elementwise_sum` (a vector of the sums for each element)
+ ** `first` (arbitrarily picks a value)
+ ** `most_common`
+
  * For other attributes:
  ** `count` (number of cases where the attribute is defined)
  ** `first` (arbitrarily picks a value)
@@ -193,11 +206,25 @@ The available aggregators are:
  ** `count_distinct` (the number of distinct values)
  ** `count_most_common` (the number of occurrences of the most common value)
  ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
  ** `majority_100` (the value that 100% agree on, or empty string)
  ** `majority_50` (the value that 50% agree on, or empty string)
  ** `most_common`
  ** `set` (all the unique values, as a `Set` attribute)
  ** `vector` (all the values, as a `Vector` attribute)
+
+ * For `Vector[Double]` attributes:
+ ** `concatenate` (the vectors concatenated in arbitrary order)
+ ** `count` (number of cases where the attribute is defined)
+ ** `count_distinct` (the number of distinct values)
+ ** `count_most_common` (the number of occurrences of the most common value)
+ ** `elementwise_average` (a vector of the averages for each element)
+ ** `elementwise_max` (a vector of the maximum for each element)
+ ** `elementwise_min` (a vector of the minimum for each element)
+ ** `elementwise_std_deviation` (a vector of the standard deviation for each element)
+ ** `elementwise_sum` (a vector of the sums for each element)
+ ** `first` (arbitrarily picks a value)
+ ** `most_common`
 
  * For other attributes:
  ** `count_distinct` (the number of distinct values)

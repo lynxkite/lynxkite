@@ -221,9 +221,9 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
             FEOption.list("by_max_weight", "by_min_weight")
           } else {
             FEOption.list(
-              "elementwise_average", "count", "count_distinct", "count_most_common", "first",
-              "elementwise_max", "elementwise_min", "most_common",
-              "elementwise_std_deviation", "elementwise_sum", "concatenate")
+              "concatenate", "count", "count_distinct", "count_most_common", "elementwise_average",
+              "elementwise_max", "elementwise_min", "elementwise_std_deviation", "elementwise_sum",
+              "first", "most_common")
           }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
