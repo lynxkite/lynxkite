@@ -391,6 +391,14 @@ object Aggregator {
   object ElementwiseStdDev extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseStdDev() }
   case class ElementwiseStdDev() extends Elementwise(StdDev())
 
+  object Concatenate extends AggregatorFromJson { def fromJson(j: JsValue) = Concatenate() }
+  case class Concatenate[T]() extends SimpleAggregator[Vector[T], Vector[T]] {
+    def outputTypeTag(inputTypeTag: TypeTag[Vector[T]]) = inputTypeTag
+    def zero = Vector[T]()
+    def merge(a: Vector[T], b: Vector[T]) = a ++ b
+    def combine(a: Vector[T], b: Vector[T]) = a ++ b
+  }
+
   object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights() }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
     def outputTypeTag(inputTypeTag: TypeTag[(Double, T)]) = typeTag[Double]

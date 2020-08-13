@@ -46,26 +46,39 @@ object AttributeWithAggregator {
     attr: Attribute[T], choice: String)(
     implicit
     manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
-
+    def d = attr.runtimeSafeCast[Double]
+    def v = attr.runtimeSafeCast[Vector[Double]]
     choice match {
       case "sum" =>
-        AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Sum())
+        AttributeWithAggregator(d, graph_operations.Aggregator.Sum())
       case "count" => AttributeWithAggregator(attr, graph_operations.Aggregator.Count[T]())
       case "min" =>
-        AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Min())
+        AttributeWithAggregator(d, graph_operations.Aggregator.Min())
       case "max" =>
-        AttributeWithAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Max())
+        AttributeWithAggregator(d, graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
-        attr.runtimeSafeCast[Double], graph_operations.Aggregator.Average())
+        d, graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
       case "std_deviation" => AttributeWithAggregator(
-        attr.runtimeSafeCast[Double], graph_operations.Aggregator.StdDev())
+        d, graph_operations.Aggregator.StdDev())
       case "most_common" =>
         AttributeWithAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "count_most_common" =>
         AttributeWithAggregator(attr, graph_operations.Aggregator.CountMostCommon[T]())
       case "count_distinct" =>
         AttributeWithAggregator(attr, graph_operations.Aggregator.CountDistinct[T]())
+      case "elementwise_sum" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.ElementwiseSum())
+      case "elementwise_min" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.ElementwiseMin())
+      case "elementwise_max" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.ElementwiseMax())
+      case "elementwise_average" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.ElementwiseAverage())
+      case "elementwise_std_deviation" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.ElementwiseStdDev())
+      case "concatenate" =>
+        AttributeWithAggregator(v, graph_operations.Aggregator.Concatenate[Double]())
     }
   }
 }

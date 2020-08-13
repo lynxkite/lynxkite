@@ -29,6 +29,8 @@ class AggregateTest extends FunSuite with TestGraphOp {
       Map(0 -> Vector(88, -55), 2 -> Vector(1, 104), 3 -> Vector(-34, 151)))
     assert(run(Aggregator.ElementwiseStdDev(), example.location).mapValues(v => v.map(_.round)) ==
       Map(0 -> Vector(5, 66), 2 -> Vector(0, 0), 3 -> Vector(0, 0)))
+    assert(run(Aggregator.Concatenate[Double](), example.location).mapValues(v => v.map(_.round)) ==
+      Map(0 -> Vector(41, -74, 48, 19), 2 -> Vector(1, 104), 3 -> Vector(-34, 151)))
     assert(run(Aggregator.AsSet[String](), example.name) ==
       Map(0 -> Set("Adam", "Eve"), 2 -> Set("Bob"), 3 -> Set("Isolated Joe")))
     assert(run(Aggregator.Count[Double](), example.age) ==

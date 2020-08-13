@@ -218,9 +218,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
           }
         } else if (attr.is[Vector[Double]]) {
           if (weighted) {
-            FEOption.list(
-              "weighted_elementwise_average", "by_max_weight", "by_min_weight",
-              "weighted_elementwise_sum")
+            FEOption.list("by_max_weight", "by_min_weight")
           } else {
             FEOption.list(
               "elementwise_average", "count", "count_distinct", "count_most_common", "first",
