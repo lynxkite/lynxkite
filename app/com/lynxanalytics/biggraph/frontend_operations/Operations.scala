@@ -216,6 +216,17 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
               "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
               "vector", "set")
           }
+        } else if (attr.is[Vector[Double]]) {
+          if (weighted) {
+            FEOption.list(
+              "weighted_elementwise_average", "by_max_weight", "by_min_weight",
+              "weighted_elementwise_sum")
+          } else {
+            FEOption.list(
+              "elementwise_average", "count", "count_distinct", "count_most_common", "first",
+              "elementwise_max", "elementwise_min", "most_common",
+              "elementwise_std_deviation", "elementwise_sum", "concatenate")
+          }
         } else {
           if (weighted) { // At the moment all weighted aggregators are global.
             FEOption.list("by_max_weight", "by_min_weight")

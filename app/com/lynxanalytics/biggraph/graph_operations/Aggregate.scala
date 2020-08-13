@@ -271,6 +271,29 @@ trait CompoundDoubleAggregator[From]
   def outputTypeTag(inputTypeTag: TypeTag[From]) = typeTag[Double]
 }
 
+// ElementwiseAggregator executes a given Double aggregator on Vector[Double] attributes,
+// padding them to equal lengths with the configured zero element if needed.
+class Elementwise[Intermediate](val agg: ItemAggregator[Double, Intermediate, Double])
+  extends ItemAggregator[Vector[Double], Vector[Intermediate], Vector[Double]] with Serializable {
+  def zeroElement: Double = 0
+  def zeroIntermediate: Intermediate = agg.zero
+  def zero = Vector[Intermediate]()
+  def merge(a: Vector[Intermediate], b: Vector[Double]) =
+    a.padTo(b.size, zeroIntermediate).zip(b.padTo(a.size, zeroElement)).map {
+      case (a, b) => agg.merge(a, b)
+    }
+  def combine(a: Vector[Intermediate], b: Vector[Intermediate]) =
+    a.padTo(b.size, zeroIntermediate).zip(b.padTo(a.size, zeroIntermediate)).map {
+      case (a, b) => agg.combine(a, b)
+    }
+  def finalize(i: Vector[Intermediate]): Vector[Double] = i.map(agg.finalize(_))
+  def intermediateTypeTag(inputTypeTag: TypeTag[Vector[Double]]): TypeTag[Vector[Intermediate]] = {
+    implicit val tt = agg.intermediateTypeTag(typeTag[Double])
+    TypeTagUtil.vectorTypeTag[Intermediate]
+  }
+  def outputTypeTag(inputTypeTag: TypeTag[Vector[Double]]) = typeTag[Vector[Double]]
+}
+
 object Aggregator {
   // Type aliases for the JSON serialization.
   type AnyAggregator = Aggregator[_, _, _]
@@ -356,6 +379,17 @@ object Aggregator {
       sum / count
     }
   }
+
+  object ElementwiseAverage extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseAverage() }
+  case class ElementwiseAverage() extends Elementwise(Average())
+  object ElementwiseMin extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseMin() }
+  case class ElementwiseMin() extends Elementwise(Min())
+  object ElementwiseMax extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseMax() }
+  case class ElementwiseMax() extends Elementwise(Max())
+  object ElementwiseSum extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseSum() }
+  case class ElementwiseSum() extends Elementwise(Sum())
+  object ElementwiseStdDev extends AggregatorFromJson { def fromJson(j: JsValue) = ElementwiseStdDev() }
+  case class ElementwiseStdDev() extends Elementwise(StdDev())
 
   object SumOfWeights extends AggregatorFromJson { def fromJson(j: JsValue) = SumOfWeights() }
   case class SumOfWeights[T]() extends SimpleAggregator[(Double, T), Double] {
