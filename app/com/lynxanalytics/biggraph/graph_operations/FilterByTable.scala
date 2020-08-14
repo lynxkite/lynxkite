@@ -29,7 +29,7 @@ case class FilterByTable(column: String) extends SparkOperation[Input, Output] {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val ids = inputs.t.data.df.select(column).rdd.map(_.getLong(0))
-    val vs = ids.map((_, ())).sortUnique(partitioner)
+    val vs = ids.map((_, ())).sortUnique(partitioner).sortedJoin(inputs.vs.rdd).mapValues(v => ())
     output(o.vs, vs)
     output(o.identity, vs.mapValuesWithKeys { case (k, _) => Edge(k, k) })
   }
