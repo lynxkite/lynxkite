@@ -36,7 +36,7 @@
    * the bottom may extend beyond the screen. TODO: Any ideas for a fix? */
 }
 .operation-selector .category {
-  padding: 10px;
+  padding: 10px 0;
   text-align: center;
   font: 15px Arial;
   width: 35px;

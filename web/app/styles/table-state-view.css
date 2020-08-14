@@ -1,9 +1,6 @@
-table-state-view {
-  overflow: auto;
-}
-
 table-state-view > div {
   padding-top: 10px;
+  overflow: auto;
 }
 
 input.form-control#sample-rows {
