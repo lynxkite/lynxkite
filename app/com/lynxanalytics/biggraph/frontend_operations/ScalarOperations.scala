@@ -19,12 +19,10 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
   register("Aggregate edge attribute globally")(new ProjectTransformation(_) {
-    params += Param("prefix", "Generated name prefix")
     params ++= aggregateParams(project.edgeAttributes, needsGlobal = true)
     def enabled = project.hasEdgeBundle
     def apply() = {
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
+      for ((attr, choice, name) <- parseAggregateParams(params)) {
         val result = aggregate(
           AttributeWithAggregator(project.edgeAttributes(attr), choice))
         project.scalars(name) = result
@@ -35,7 +33,6 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   register("Weighted aggregate edge attribute globally")(new ProjectTransformation(_) {
     params ++= List(
-      Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = project.edgeAttrList[Double])) ++
       aggregateParams(
         project.edgeAttributes,
@@ -43,10 +40,9 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     def enabled =
       FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No numeric edge attributes")
     def apply() = {
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
-      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
         val result = aggregate(
           AttributeWithWeightedAggregator(weight, project.edgeAttributes(attr), choice))
         project.scalars(name) = result
@@ -56,12 +52,10 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   })
 
   register("Aggregate vertex attribute globally")(new ProjectTransformation(_) {
-    params += Param("prefix", "Generated name prefix")
     params ++= aggregateParams(project.vertexAttributes, needsGlobal = true)
     def enabled = project.hasVertexSet
     def apply() = {
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix)) {
+      for ((attr, choice, name) <- parseAggregateParams(params)) {
         val result = aggregate(AttributeWithAggregator(project.vertexAttributes(attr), choice))
         project.scalars(name) = result
       }
@@ -71,16 +65,14 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   register("Weighted aggregate vertex attribute globally")(new ProjectTransformation(_) {
     params ++= List(
-      Param("prefix", "Generated name prefix"),
       Choice("weight", "Weight", options = project.vertexAttrList[Double])) ++
       aggregateParams(project.vertexAttributes, needsGlobal = true, weighted = true)
     def enabled =
       FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes")
     def apply() = {
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
       val weightName = params("weight")
       val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-      for ((attr, choice, name) <- parseAggregateParams(params, prefix = prefix, weight = weightName)) {
+      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
         val result = aggregate(
           AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
         project.scalars(name) = result

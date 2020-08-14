@@ -178,15 +178,17 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
-  def parseAggregateParams(params: ParameterHolder, prefix: String = "", weight: String = null) = {
+  def parseAggregateParams(params: ParameterHolder, weight: String = null) = {
     val extraSuffix = if (weight == null) "" else s"_by_$weight"
+    val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
     val addSuffix = params("add_suffix") == "yes"
     val aggregate = "aggregate_(.*)".r
     params.toMap.toSeq.collect {
       case (aggregate(attr), choices) if choices.nonEmpty => attr -> choices
     }.flatMap {
       case (attr, choices) =>
-        assert(addSuffix || !choices.contains(","),
+        assert(
+          addSuffix || !choices.contains(","),
           s"Suffixes are necessary when multiple aggregations are configured for $attr.")
         choices.split(",", -1).map {
           c => (attr, c, if (addSuffix) s"$prefix${attr}_$c$extraSuffix" else s"$prefix$attr")
@@ -196,9 +198,11 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   def aggregateParams(
     attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
-    weighted: Boolean = false): List[OperationParameterMeta] = {
+    weighted: Boolean = false,
+    defaultPrefix: String = ""): List[OperationParameterMeta] = {
     val sortedAttrs = attrs.toList.sortBy(_._1)
-    Choice("add_suffix", "Add suffixes to attribute names", options = FEOption.yesno) +:
+    Param("prefix", "Generated name prefix", defaultValue = defaultPrefix) ::
+      Choice("add_suffix", "Add suffixes to attribute names", options = FEOption.yesno) ::
       sortedAttrs.toList.map {
         case (name, attr) =>
           val options = if (attr.is[Double]) {
