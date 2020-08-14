@@ -34,8 +34,8 @@ If the attribute from the table clashes with an existing attribute of the graph,
 you can select how to handle this:
 - **Merge, prefer the table's version**: Where the table defines new values, those will be used.
   Elsewhere the existing values are kept.
-- **Merge, prefer the graph's version**: Where the table defines new values, those will be used.
-  Elsewhere the existing values are kept.
+- **Merge, prefer the graph's version**: Where the vertex attribute is already defined, it is left
+  unchanged. Elsewhere the value from the table is used.
 - **Merge, report error on conflict**: An assertion is made to ensure that the values in the table
   are identical to the values in the graph on vertices where both are defined.
 - **Keep the graph's version**: The data in the table is ignored.
