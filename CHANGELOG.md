@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Visualization option to not display edges. Great in large geographic datasets.
 - _"Use table as vertex/edge attributes"_ boxes are more friendly and handle name conflicts better
   now.
 
