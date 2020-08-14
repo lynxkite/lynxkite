@@ -32,15 +32,14 @@ matching ID column in the table have to be unique in both cases.
 [p-if_exists]#What happens if an attribute already exists#::
 If the attribute from the table clashes with an existing attribute of the graph,
 you can select how to handle this:
-- **Overwrite from the table**: Where the table defines new values, those will be used.
+- **Merge, prefer the table's version**: Where the table defines new values, those will be used.
   Elsewhere the existing values are kept.
+- **Merge, prefer the graph's version**: Where the table defines new values, those will be used.
+  Elsewhere the existing values are kept.
+- **Merge, report error on conflict**: An assertion is made to ensure that the values in the table
+  are identical to the values in the graph for each vertex.
 - **Keep the graph's version**: The data in the table is ignored.
 - **Use the table's version**: The attribute is deleted from the graph and replaced with
   the attribute imported from the table.
-- **They must match**: An assertion is made to ensure that the values in the table
-  are identical to the values in the graph for each vertex.
 - **Disallow this**: A name conflict is treated as an error.
-
-Assert that the vertex attribute values have to be unique if set true. The values of the
-matching ID column in the table have to be unique in both cases.
 ====

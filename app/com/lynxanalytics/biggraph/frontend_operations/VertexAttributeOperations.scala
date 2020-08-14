@@ -29,8 +29,12 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
     Choice("unique_keys", "Assert unique ID attribute values", options = FEOption.boolsDefaultFalse),
     Choice("if_exists", "What happens if an attribute already exists",
       options = FEOption.list(
-        "Overwrite from the table", "Keep the graph's version", "Use the table's version",
-        "They must match", "Disallow this")))
+        "Merge, prefer the table's version",
+        "Merge, prefer the graph's version",
+        "Merge, report error on conflict",
+        "Keep the graph's version",
+        "Use the table's version",
+        "Disallow this")))
   def enabled =
     project.hasVertexSet &&
       FEStatus.assert(projectAttrNames.nonEmpty, "No attributes to use as key.")
@@ -59,19 +63,25 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
           case _ if prefix + name == idAttrName => // Leave the key alone.
           case "Disallow this" => throw new AssertionError(
             s"Cannot import column `${prefix + name}`. Attribute already exists.")
-          case "Overwrite from the table" =>
+          case "Merge, prefer the table's version" =>
             assert(
               tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
               "$prefix$name in the graph has a different type than in the table.")
             projectAttributes(prefix + name) = ops.unifyAttribute(tableAttr, graphAttr)
-          case "Keep the graph's version" =>
+          case "Merge, prefer the graph's version" =>
+            assert(
+              tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
+              "$prefix$name in the graph has a different type than in the table.")
+            projectAttributes(prefix + name) = ops.unifyAttribute(graphAttr, tableAttr)
+          case "Keep the graph's version" => () // Do nothing.
           case "Use the table's version" =>
             projectAttributes(prefix + name) = tableAttr
-          case "They must match" =>
+          case "Merge, report error on conflict" =>
             projectAttributes(prefix + name) =
               graph_operations.DeriveScala.deriveAndInferReturnType(
                 """
-                assert(t.isEmpty || t == g, s"ATTR does not match on ${id.get}: $t <> $g")
+                assert(t.isEmpty || g.isEmpty || t == g,
+                  s"ATTR does not match on ${id.get}: ${t.get} <> ${g.get}")
                 g
                 """.replace("ATTR", name),
                 Seq("g" -> graphAttr, "t" -> tableAttr, "id" -> idAttr),
