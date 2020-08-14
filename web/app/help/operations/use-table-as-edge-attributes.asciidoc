@@ -38,7 +38,7 @@ you can select how to handle this:
 - **Merge, prefer the graph's version**: Where the table defines new values, those will be used.
   Elsewhere the existing values are kept.
 - **Merge, report error on conflict**: An assertion is made to ensure that the values in the table
-  are identical to the values in the graph for each vertex.
+  are identical to the values in the graph on edges where both are defined.
 - **Keep the graph's version**: The data in the table is ignored.
 - **Use the table's version**: The attribute is deleted from the graph and replaced with
   the attribute imported from the table.
