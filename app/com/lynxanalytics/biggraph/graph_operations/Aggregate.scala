@@ -271,21 +271,32 @@ trait CompoundDoubleAggregator[From]
   def outputTypeTag(inputTypeTag: TypeTag[From]) = typeTag[Double]
 }
 
-// ElementwiseAggregator executes a given Double aggregator on Vector[Double] attributes,
-// padding them to equal lengths with the configured zero element if needed.
+// ElementwiseAggregator executes a given Double aggregator on Vector[Double] attributes.
 class Elementwise[Intermediate](val agg: ItemAggregator[Double, Intermediate, Double])
   extends ItemAggregator[Vector[Double], Vector[Intermediate], Vector[Double]] with Serializable {
   def zeroElement: Double = 0
-  def zeroIntermediate: Intermediate = agg.zero
-  def zero = Vector[Intermediate]()
-  def merge(a: Vector[Intermediate], b: Vector[Double]) =
-    a.padTo(b.size, zeroIntermediate).zip(b.padTo(a.size, zeroElement)).map {
-      case (a, b) => agg.merge(a, b)
+  def zero: Vector[Intermediate] = null
+  // Makes the right size intermediate vector or throws an exception.
+  private def sameSize(a: Vector[Intermediate], b: Vector[_]) = {
+    if (a == null) {
+      Vector.fill(b.size)(agg.zero)
+    } else {
+      assert(a.size == b.size, s"Vector size mismatch: $a vs $b")
+      a
     }
-  def combine(a: Vector[Intermediate], b: Vector[Intermediate]) =
-    a.padTo(b.size, zeroIntermediate).zip(b.padTo(a.size, zeroIntermediate)).map {
-      case (a, b) => agg.combine(a, b)
+  }
+  def merge(a: Vector[Intermediate], b: Vector[Double]) = {
+    sameSize(a, b).zip(b).map { case (a, b) => agg.merge(a, b) }
+  }
+  def combine(a: Vector[Intermediate], b: Vector[Intermediate]) = {
+    if (a == null && b == null) {
+      null
+    } else if (b != null) {
+      sameSize(a, b).zip(b).map { case (a, b) => agg.combine(a, b) }
+    } else {
+      a.zip(sameSize(b, a)).map { case (a, b) => agg.combine(a, b) }
     }
+  }
   def finalize(i: Vector[Intermediate]): Vector[Double] = i.map(agg.finalize(_))
   def intermediateTypeTag(inputTypeTag: TypeTag[Vector[Double]]): TypeTag[Vector[Intermediate]] = {
     implicit val tt = agg.intermediateTypeTag(typeTag[Double])
