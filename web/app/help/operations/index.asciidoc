@@ -327,6 +327,8 @@ include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
 
+include::filter-with-sql.asciidoc[]
+
 include::find-connected-components.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
