@@ -7,6 +7,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
 - Added the _"Filter with SQL"_ box as a more flexible alternative to _"Filter by attributes"_.
+- Visualization option to not display edges. Great in large geographic datasets.
+- _"Use table as vertex/edge attributes"_ boxes are more friendly and handle name conflicts better
+  now.
 
 ### 4.0.1
 

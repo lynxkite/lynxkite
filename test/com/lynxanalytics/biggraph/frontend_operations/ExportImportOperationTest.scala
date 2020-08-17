@@ -157,19 +157,19 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     val ex = intercept[java.lang.AssertionError] {
       box("Create example graph")
-        .box("Convert vertex attribute to String", Map(
-          "attr" -> "id"))
         .box("Use table as vertex attributes", Map(
+          "if_exists" -> "Disallow this",
           "id_attr" -> "id",
           "id_column" -> "id"), Seq(table))
         .project
     }
     assert(ex.getMessage.contains(
-      "Cannot import column `id`. Attribute already exists."))
+      "Cannot import column `name`. Attribute already exists."))
 
     val ex2 = intercept[java.lang.AssertionError] {
       box("Create example graph")
         .box("Use table as edge attributes", Map(
+          "if_exists" -> "Disallow this",
           "id_attr" -> "comment",
           "id_column" -> "new_comment"), Seq(edgeTable))
         .project

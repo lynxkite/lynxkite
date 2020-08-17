@@ -884,6 +884,39 @@ class State:
     _add_documentation_to_operation(f, name)
     return f
 
+  @property
+  def vertices(self) -> 'SingleOutputAtomicBox':
+    '''Returns the vertices as a table.'''
+    return self._select_all('vertices')
+
+  @property
+  def edges(self) -> 'SingleOutputAtomicBox':
+    '''Returns the edges as a table.'''
+    return self._select_all('edges')
+
+  @property
+  def graph_attributes(self) -> 'SingleOutputAtomicBox':
+    '''Returns the graph attributes as a table.'''
+    return self._select_all('graph_attributes')
+
+  @property
+  def edge_attributes(self) -> 'SingleOutputAtomicBox':
+    '''Returns the edge attributes as a table.'''
+    return self._select_all('edge_attributes')
+
+  def segmentation(self, name: str) -> 'SingleOutputAtomicBox':
+    '''Returns the named segmentation as a base project.
+
+    Example usage:
+    ```
+    graph = lk.createExampleGraph().findConnectedComponents(name='seg1')
+    segmentation = graph.segmentation('seg1')
+    '''
+    return self.takeSegmentationAsBaseGraph(apply_to_graph='.' + name)
+
+  def _select_all(self, table):
+    return self.sql(f'select * from `{table}`')
+
   def __dir__(self) -> Iterable[str]:
     return itertools.chain(super().__dir__(), self.operation_names())
 
