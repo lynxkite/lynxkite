@@ -178,55 +178,67 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
-  def parseAggregateParams(params: ParameterHolder) = {
+  def parseAggregateParams(params: ParameterHolder, weight: String = null) = {
+    val extraSuffix = if (weight == null) "" else s"_by_$weight"
+    val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+    val addSuffix = params("add_suffix") == "yes"
     val aggregate = "aggregate_(.*)".r
     params.toMap.toSeq.collect {
       case (aggregate(attr), choices) if choices.nonEmpty => attr -> choices
     }.flatMap {
-      case (attr, choices) => choices.split(",", -1).map(attr -> _)
+      case (attr, choices) =>
+        assert(
+          addSuffix || !choices.contains(","),
+          s"Suffixes are necessary when multiple aggregations are configured for $attr.")
+        choices.split(",", -1).map {
+          c => (attr, c, if (addSuffix) s"$prefix${attr}_$c$extraSuffix" else s"$prefix$attr")
+        }
     }
   }
   def aggregateParams(
     attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
-    weighted: Boolean = false): List[OperationParameterMeta] = {
+    weighted: Boolean = false,
+    defaultPrefix: String = ""): List[OperationParameterMeta] = {
     val sortedAttrs = attrs.toList.sortBy(_._1)
-    sortedAttrs.toList.map {
-      case (name, attr) =>
-        val options = if (attr.is[Double]) {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
-          } else if (needsGlobal) {
-            FEOption.list(
-              "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
-              "std_deviation", "sum")
+    Param("prefix", "Generated name prefix", defaultValue = defaultPrefix) ::
+      Choice("add_suffix", "Add suffixes to attribute names", options = FEOption.yesno) ::
+      sortedAttrs.toList.map {
+        case (name, attr) =>
+          val options = if (attr.is[Double]) {
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
+            } else if (needsGlobal) {
+              FEOption.list(
+                "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
+                "std_deviation", "sum")
 
+            } else {
+              FEOption.list(
+                "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
+                "set", "std_deviation", "sum", "vector")
+            }
+          } else if (attr.is[String]) {
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("by_max_weight", "by_min_weight")
+            } else if (needsGlobal) {
+              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+            } else {
+              FEOption.list(
+                "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
+                "vector", "set")
+            }
           } else {
-            FEOption.list(
-              "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
-              "set", "std_deviation", "sum", "vector")
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("by_max_weight", "by_min_weight")
+            } else if (needsGlobal) {
+              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+            } else {
+              FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
+            }
           }
-        } else if (attr.is[String]) {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("by_max_weight", "by_min_weight")
-          } else if (needsGlobal) {
-            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-          } else {
-            FEOption.list(
-              "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
-              "vector", "set")
-          }
-        } else {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("by_max_weight", "by_min_weight")
-          } else if (needsGlobal) {
-            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-          } else {
-            FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
-          }
-        }
-        TagList(s"aggregate_$name", name, options = options)
-    }
+          TagList(s"aggregate_$name", name, options = options)
+      }
   }
 
   // Aggregation parameters which are empty - i.e. no aggregator was defined - should be removed.
@@ -286,8 +298,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     val oldAttrs = project.edgeAttributes.toMap
     project.edgeBundle = newEdges
 
-    for ((attr, choice) <- parseAggregateParams(params)) {
-      project.edgeAttributes(s"${attr}_${choice}") =
+    for ((attr, choice, name) <- parseAggregateParams(params)) {
+      project.edgeAttributes(name) =
         aggregateViaConnection(
           mergedResult.belongsTo,
           AttributeWithLocalAggregator(oldAttrs(attr), choice))
