@@ -1,0 +1,24 @@
+### Filter with SQL
+
+Filters a graph or table with SQL expressions.
+
+This has the same effect as using a SQL box with
+``select * from vertices where <FILTER>`` and ``select * from edge_attributes where <FILTER>``
+and then recombining the tables into a graph. But it is more efficient.
+
+When used with a table input it is identical to a SQL box with
+``select * from input where <FILTER>``. But it saves a bit of typing.
+
+====
+[p-vertex_filter]#Vertex filter#::
+Filter the vertices with this SQL expression when the input is a graph.
+For example you could write ``age > 30 and income < age * 2000``.
+
+[p-edge_filter]#Edge filter#::
+Filter the edges with this SQL expression when the input is a graph.
+For example you could write ``duration > count * 10 or kind like '%_message_%'``.
+
+[p-filter]#Filter#::
+Filter with this SQL expression when the input is a table.
+For example you could write ``age > 30 and income < age * 2000``.
+====
