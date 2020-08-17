@@ -140,6 +140,11 @@ include::{g}[tag=random-seed]
 end::random-attribute[]
 
 tag::weighted-aggregators[]
+[p-add_suffix]#Add suffixes to attribute names#::
+Choose whether to add a suffix to the resulting aggregated variable.
+(e.g. `income_weighted_sum_by_size` vs `income`.)
+A suffix is required when you take multiple aggregations.
+
 The available weighted aggregators are:
 
  * For `number` attributes:
@@ -155,6 +160,11 @@ The available weighted aggregators are:
 end::weighted-aggregators[]
 
 tag::global-aggregators[]
+[p-add_suffix]#Add suffixes to attribute names#::
+Choose whether to add a suffix to the resulting aggregated variable.
+(e.g. `income_average` vs `income`.)
+A suffix is required when you take multiple aggregations.
+
 The available aggregators are:
 
  * For `number` attributes:
@@ -185,6 +195,11 @@ The available aggregators are:
 end::global-aggregators[]
 
 tag::local-aggregators[]
+[p-add_suffix]#Add suffixes to attribute names#::
+Choose whether to add a suffix to the resulting aggregated variable.
+(e.g. `income_median` vs `income`.)
+A suffix is required when you take multiple aggregations.
+
 The available aggregators are:
 
  * For `number` attributes:

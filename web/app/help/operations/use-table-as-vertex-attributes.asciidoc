@@ -28,4 +28,18 @@ accidentally overwriting existing attributes.
 [p-unique_keys]#Assert unique vertex attribute values#::
 Assert that the vertex attribute values have to be unique if set true. The values of the
 matching ID column in the table have to be unique in both cases.
+
+[p-if_exists]#What happens if an attribute already exists#::
+If the attribute from the table clashes with an existing attribute of the graph,
+you can select how to handle this:
+- **Merge, prefer the table's version**: Where the table defines new values, those will be used.
+  Elsewhere the existing values are kept.
+- **Merge, prefer the graph's version**: Where the vertex attribute is already defined, it is left
+  unchanged. Elsewhere the value from the table is used.
+- **Merge, report error on conflict**: An assertion is made to ensure that the values in the table
+  are identical to the values in the graph on vertices where both are defined.
+- **Keep the graph's version**: The data in the table is ignored.
+- **Use the table's version**: The attribute is deleted from the graph and replaced with
+  the attribute imported from the table.
+- **Disallow this**: A name conflict is treated as an error.
 ====
