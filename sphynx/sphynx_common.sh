@@ -1,4 +1,4 @@
-REPO=$(realpath .)
+REPO=$(pwd)
 PROTO_SOURCE_DIR="proto"
 PROTO_SOURCE_FILE="sphynx.proto"
 PATH="${REPO}/protoc/bin:${PATH}"
