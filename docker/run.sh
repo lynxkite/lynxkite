@@ -5,7 +5,6 @@ rm -f root/kite.pid root/sphynx.pid
 
 # Configure kiterc settings.
 cat > /kiterc_overrides <<EOF
-export KITE_INSTANCE="$KITE_INSTANCE"
 export KITE_HTTP_PORT=2200
 export KITE_HTTP_ADDRESS=0.0.0.0
 export KITE_DATA_DIR=file:/data

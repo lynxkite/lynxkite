@@ -299,20 +299,6 @@ stopWatchdog () {
   stopByPIDFile "${WATCHDOG_PID_FILE}" "LynxKite Watchdog"
 }
 
-uploadLogs () {
-  if [ -z ${KITE_INSTANCE} ]; then
-    >&2 echo "KITE_INSTANCE is not set. Cannot upload logs."
-    exit 1
-  fi
-  THIS_DIR="$(dirname "$(readlink -f "$0")")"
-  UPLOADER=${THIS_DIR}/../tools/performance_collection/multi_upload.sh
-  if [ -f "${KITE_PID_FILE}" ]; then
-      ${UPLOADER} ${KITE_HTTP_PORT} ${KITE_LOG_DIR} ${KITE_INSTANCE}
-  else
-      ${UPLOADER} 0                 ${KITE_LOG_DIR} ${KITE_INSTANCE}
-  fi
-}
-
 stopSphynx () {
   PID=$(cat "${SPHYNX_PID_FILE}")
   # Kill child processes.
@@ -375,11 +361,8 @@ case $mode in
     startSphynx
     startKite
   ;;
-  uploadLogs)
-    uploadLogs
-  ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|uploadLogs"
+    >&2 echo "Usage: $0 interactive|start|stop|restart"
     exit 1
   ;;
 esac
