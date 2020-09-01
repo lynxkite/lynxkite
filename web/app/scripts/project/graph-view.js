@@ -1545,7 +1545,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
       let color;
       if (colorKey && edge.attrs[colorKey].defined) {
-        color = (side.edgeAttrs.edgeColor.typeName === 'Double') ?
+        color = (side.edgeAttrs.edgeColor.typeName === 'number') ?
           colorMap[edge.attrs[colorKey].double] : colorMap[edge.attrs[colorKey].string];
       }
       const label = labelKey ? edge.attrs[labelKey].string : undefined;

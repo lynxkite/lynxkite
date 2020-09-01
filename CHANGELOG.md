@@ -12,6 +12,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   now.
 - Added aggregation support for Vector attributes. (Elementwise average, sum, etc.)
 - Added an option to disable generated suffixes for aggregated variables.
+- Fix for edge coloring. ([#84](https://github.com/lynxkite/lynxkite/pull/85))
 
 ### 4.0.1
 
