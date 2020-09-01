@@ -9,5 +9,4 @@ object KiteInstanceInfo {
   } catch {
     case e: java.io.IOException => ""
   }
-  val instanceName = LoggedEnvironment.envOrElse("KITE_INSTANCE", "")
 }

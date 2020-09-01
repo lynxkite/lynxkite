@@ -20,7 +20,6 @@ COPY stage/sphynx/python/install-dependencies.sh /lynxkite/sphynx/python/install
 RUN /lynxkite/tools/install_spark.sh /spark && /lynxkite/sphynx/python/install-dependencies.sh
 
 # The user has to configure these.
-ENV KITE_INSTANCE mini
 ENV KITE_MASTER_MEMORY_MB 1024
 ENV SPHYNX_CACHED_ENTITIES_MAX_MEM_MB 1024
 VOLUME /data
