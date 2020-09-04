@@ -203,12 +203,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Import JSON")(new FileWithSchema(_) { val format = "json" })
   register("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
-  register("Import Delta")(new FileWithSchema(_) {
-    val format = "delta"
-    params ++= List(
-      Param("timestampAsOf", "Data version (as timestamp)"),
-      Param("versionAsOf", "Data version"))
-  })
+  register("Import Delta")(new FileWithSchema(_) { val format = "delta" })
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
