@@ -4,20 +4,7 @@ import lynx.kite
 import os
 from ruamel import yaml
 import sys
-
-
-def str_representer(dumper, s):
-  if '\n' in s:
-    style = '|'
-  elif len(s) > 60:
-    style = '>'
-  else:
-    style = None
-  return dumper.represent_scalar('tag:yaml.org,2002:str', s, style=style)
-
-
-yaml.representer.SafeRepresenter.add_representer(str, str_representer)
-
+from common import ws_name, get_lk
 
 def fix_imports(filename, rewrite):
   wn = ws_name(filename)
@@ -111,19 +98,7 @@ os.chdir(os.path.dirname(__file__))
 if len(sys.argv) != 2:
   usage()
 
-if sys.argv[1] == '--remote':
-  with open(os.path.expanduser('~/secrets/try.lynxkite.com.password')) as f:
-    password = f.read().strip()
-    lk = lynx.kite.LynxKite(
-        address='https://try.lynxkite.com/',
-        username='admin',
-        password=password)
-    lk._login()
-elif sys.argv[1] == '--local':
-  lk = lynx.kite.LynxKite()
-else:
-  usage()
-
+lk = get_lk(sys.argv[1])
 
 to_upload = []
 rewrite = sys.argv[1] == '--remote'
