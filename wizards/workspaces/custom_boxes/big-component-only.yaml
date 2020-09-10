@@ -28,8 +28,8 @@
     aggregate_id: count
     apply_to_graph: .connected_components
   parametricParameters: {}
-  x: 750.0
-  y: 150.0
+  x: 350.0
+  y: 450.0
 - id: output_0
   inputs:
     output:
@@ -39,8 +39,8 @@
   parameters:
     name: output
   parametricParameters: {}
-  x: 1550.0
-  y: 150.0
+  x: 1000.0
+  y: 800.0
 - id: mergeParallelEdges_0
   inputs:
     graph:
@@ -49,8 +49,8 @@
   operationId: Merge parallel edges
   parameters: {}
   parametricParameters: {}
-  x: 1350.0
-  y: 150.0
+  x: 550.0
+  y: 800.0
 - id: findConnectedComponents_0
   inputs:
     graph:
@@ -70,8 +70,8 @@
   parameters:
     filterva_connected_components_id_count: '1'
   parametricParameters: {}
-  x: 950.0
-  y: 150.0
+  x: 550.0
+  y: 450.0
 - id: input_0
   inputs: {}
   operationId: Input
@@ -88,5 +88,32 @@
   operationId: Add reversed edges
   parameters: {}
   parametricParameters: {}
-  x: 1150.0
-  y: 150.0
+  x: 350.0
+  y: 800.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Find connected components, keep only the large one.
+  parametricParameters: {}
+  x: 350.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Keep only vertices that belongs to the only kept connected component.
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Make sure we have simple, symmetric graph. (No parallel edges, there is A->B
+      edge iff there is B->A egde.)
+  parametricParameters: {}
+  x: 350.0
+  y: 700.0
