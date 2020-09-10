@@ -18,7 +18,7 @@
   parameters:
     edge: yes
   parametricParameters: {}
-  x: 1600.0
+  x: 2000.0
   y: 450.0
 - id: sql2_0
   inputs:
@@ -33,7 +33,7 @@
     sql: |
       select `one.graph_attributes`.`!vertex_count` - `two.graph_attributes`.`!vertex_count` as `Vertices Dropped`, `one.graph_attributes`.`!edge_count` - `two.graph_attributes`.`!edge_count` as `Edges Dropped` from `one.graph_attributes` CROSS JOIN `two.graph_attributes`
   parametricParameters: {}
-  x: 1850.0
+  x: 2250.0
   y: 750.0
 - id: graphRejoin_1
   inputs:
@@ -47,25 +47,17 @@
   parameters:
     attrs: infection_day,infected
   parametricParameters: {}
-  x: 2150.0
-  y: 150.0
-- id: importSnapshot_0
-  inputs: {}
-  operationId: Import snapshot
-  parameters:
-    path: PokecGraph
-  parametricParameters: {}
-  x: 150.0
+  x: 2550.0
   y: 150.0
 - id: custom_boxes/big-component-only_0
   inputs:
     input_graph:
-      boxId: importSnapshot_0
-      id: state
+      boxId: Use-table-as-edges_1
+      id: graph
   operationId: custom_boxes/big-component-only
   parameters: {}
   parametricParameters: {}
-  x: 350.0
+  x: 750.0
   y: 150.0
 - id: custom_boxes/simulate_0
   inputs:
@@ -75,7 +67,7 @@
   operationId: custom_boxes/simulate
   parameters: {}
   parametricParameters: {}
-  x: 1950.0
+  x: 2350.0
   y: 450.0
 - id: custom_boxes/evaluate_0
   inputs:
@@ -85,7 +77,7 @@
   operationId: custom_boxes/evaluate
   parameters: {}
   parametricParameters: {}
-  x: 2550.0
+  x: 2950.0
   y: 150.0
 - id: discardEdges_0
   inputs:
@@ -95,7 +87,7 @@
   operationId: Discard edges
   parameters: {}
   parametricParameters: {}
-  x: 1300.0
+  x: 1700.0
   y: 300.0
 - id: custom_boxes/drop-edges_0
   inputs:
@@ -107,7 +99,7 @@
     attribute: random
     number_to_drop: '0'
   parametricParameters: {}
-  x: 1050.0
+  x: 1450.0
   y: 450.0
 - id: custom_boxes/drop-vertices_0
   inputs:
@@ -119,7 +111,7 @@
     attribute: page_rank
     number_to_drop: '2000'
   parametricParameters: {}
-  x: 1050.0
+  x: 1450.0
   y: 300.0
 - id: custom_boxes/compute-metrics-for-filtering_1
   inputs:
@@ -129,7 +121,7 @@
   operationId: custom_boxes/compute-metrics-for-filtering
   parameters: {}
   parametricParameters: {}
-  x: 650.0
+  x: 1050.0
   y: 450.0
 - id: Comment_1
   inputs: {}
@@ -138,8 +130,8 @@
     comment: >-
       Graph preprocessing, restriction to biggest connected component.
   parametricParameters: {}
-  x: 250.0
-  y: 250.0
+  x: 650.0
+  y: 50.0
 - id: Comment_2
   inputs: {}
   operationId: Comment
@@ -147,7 +139,7 @@
     comment: >-
       We compute metrics that will be used to select which edges/vertices to drop.
   parametricParameters: {}
-  x: 550.0
+  x: 950.0
   y: 350.0
 - id: Comment_3
   inputs: {}
@@ -155,7 +147,7 @@
   parameters:
     comment: Drop top vertices according to a metric.
   parametricParameters: {}
-  x: 950.0
+  x: 1350.0
   y: 250.0
 - id: Comment_4
   inputs: {}
@@ -163,7 +155,7 @@
   parameters:
     comment: Drop top edges according to a metric.
   parametricParameters: {}
-  x: 950.0
+  x: 1350.0
   y: 400.0
 - id: Comment_5
   inputs: {}
@@ -173,7 +165,7 @@
       Recombine kept vertices and edges. Of course, this may result in losing more
       edges, we drop all edges with a lost endpoint.
   parametricParameters: {}
-  x: 1500.0
+  x: 1900.0
   y: 350.0
 - id: Comment_6
   inputs: {}
@@ -181,7 +173,7 @@
   parameters:
     comment: Run the viral spread simulation on the remaining graph.
   parametricParameters: {}
-  x: 1850.0
+  x: 2250.0
   y: 550.0
 - id: Comment_7
   inputs: {}
@@ -190,7 +182,7 @@
     comment: >-
       Report the total number of vertices and edges lost from the graph.
   parametricParameters: {}
-  x: 1750.0
+  x: 2150.0
   y: 850.0
 - id: Comment_8
   inputs: {}
@@ -199,7 +191,7 @@
     comment: >-
       Join back the result of the simulation to the original graph.
   parametricParameters: {}
-  x: 2000.0
+  x: 2400.0
   y: 50.0
 - id: Comment_9
   inputs: {}
@@ -207,7 +199,7 @@
   parameters:
     comment: Compute evaluation metrics, chart, visualization.
   parametricParameters: {}
-  x: 2450.0
+  x: 2850.0
   y: 50.0
 - id: Comment_10
   inputs: {}
@@ -226,5 +218,96 @@
       Then come back to this top level workspace using the
       up arrow in the toolbar.
   parametricParameters: {}
-  x: 27.0
-  y: 371.0
+  x: 0.0
+  y: 400.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    columns: Source,Destination
+    filename: UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv
+    imported_table: e4e8cd12-1fab-3a1b-bd5a-8669f7746c7f
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "Source,Destination",
+        "filename" : "UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv
+    imported_table: 0e9bd8ff-eeec-3dd9-841e-dba1fa4fa98a
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_2
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 350.0
+  y: 150.0
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: User_ID
+    dst: Destination
+    src: Source
+  parametricParameters: {}
+  x: 550.0
+  y: 150.0
+- id: Comment_11
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Import the Pokec social network graph.
+  parametricParameters: {}
+  x: 200.0
+  y: 50.0
