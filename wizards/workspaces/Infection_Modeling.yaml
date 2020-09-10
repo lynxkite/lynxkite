@@ -85,7 +85,7 @@
   operationId: custom_boxes/evaluate
   parameters: {}
   parametricParameters: {}
-  x: 2400.0
+  x: 2550.0
   y: 150.0
 - id: discardEdges_0
   inputs:
@@ -131,3 +131,100 @@
   parametricParameters: {}
   x: 650.0
   y: 450.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Graph preprocessing, restriction to biggest connected component.
+  parametricParameters: {}
+  x: 250.0
+  y: 250.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      We compute metrics that will be used to select which edges/vertices to drop.
+  parametricParameters: {}
+  x: 550.0
+  y: 350.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Drop top vertices according to a metric.
+  parametricParameters: {}
+  x: 950.0
+  y: 250.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Drop top edges according to a metric.
+  parametricParameters: {}
+  x: 950.0
+  y: 400.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Recombine kept vertices and edges. Of course, this may result in losing more
+      edges, we drop all edges with a lost endpoint.
+  parametricParameters: {}
+  x: 1500.0
+  y: 350.0
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Run the viral spread simulation on the remaining graph.
+  parametricParameters: {}
+  x: 1850.0
+  y: 550.0
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Report the total number of vertices and edges lost from the graph.
+  parametricParameters: {}
+  x: 1750.0
+  y: 850.0
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Join back the result of the simulation to the original graph.
+  parametricParameters: {}
+  x: 2000.0
+  y: 50.0
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Compute evaluation metrics, chart, visualization.
+  parametricParameters: {}
+  x: 2450.0
+  y: 50.0
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## Introduction
+
+      This workspace is about simulating the spread of a hypothetical virus on a graph of connections. We also test how different intervention strategies - removing certain edges and vertices - affect the resuling epidemic.
+
+      See the wizard mode of this workspace for more background!
+
+      Select any of the hats and click the `Dive into custom box ...` button from the
+      top toolbar (look for a downward pointing arrow) to look into the implementation of that particular high level step.
+
+      Then come back to this top level workspace using the
+      up arrow in the toolbar.
+  parametricParameters: {}
+  x: 27.0
+  y: 371.0
