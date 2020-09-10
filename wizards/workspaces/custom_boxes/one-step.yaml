@@ -21,8 +21,8 @@
     expr: |-
       val today: Option[Double] = if (infected.get > 0) Some($day) else None
       infection_day.orElse(today)
-  x: 1750.0
-  y: 150.0
+  x: 1200.0
+  y: 450.0
 - id: fillVertexAttributesWithConstantDefaultValues_0
   inputs:
     graph:
@@ -32,8 +32,8 @@
   parameters:
     fill_neighborhood_infectious_sum: '0'
   parametricParameters: {}
-  x: 1150.0
-  y: 150.0
+  x: 650.0
+  y: 750.0
 - id: aggregateOnNeighbors_0
   inputs:
     graph:
@@ -44,8 +44,8 @@
     aggregate_infectious: sum
     direction: all neighbors
   parametricParameters: {}
-  x: 950.0
-  y: 150.0
+  x: 350.0
+  y: 750.0
 - id: input_0
   inputs: {}
   operationId: Input
@@ -61,14 +61,13 @@
       id: graph
   operationId: Derive vertex attribute
   parameters:
-    expr: |2-
-
-                 val p = 1.0 - Math.pow(0.9, neighborhood_infectious_sum)
-                 Math.max(infected, if (infection_random < p) 1 else 0)
+    expr: |-
+      val p = 1.0 - Math.pow(0.9, neighborhood_infectious_sum)
+      Math.max(infected, if (infection_random < p) 1 else 0)
     output: infected
   parametricParameters: {}
-  x: 1550.0
-  y: 150.0
+  x: 650.0
+  y: 1050.0
 - id: deriveVertexAttribute_3
   inputs:
     graph:
@@ -79,7 +78,7 @@
     expr: Math.max(cured, if (cured_random < 0.1) infected else 0)
     output: cured
   parametricParameters: {}
-  x: 550.0
+  x: 650.0
   y: 150.0
 - id: deriveVertexAttribute_2
   inputs:
@@ -91,8 +90,8 @@
     expr: infected - cured
     output: infectious
   parametricParameters: {}
-  x: 750.0
-  y: 150.0
+  x: 350.0
+  y: 450.0
 - id: addRandomVertexAttribute_1
   inputs:
     graph:
@@ -117,8 +116,8 @@
     name: infect_random
   parametricParameters:
     seed: ${665544 + seed.toInt}
-  x: 1350.0
-  y: 150.0
+  x: 350.0
+  y: 1050.0
 - id: output_0
   inputs:
     output:
@@ -128,5 +127,50 @@
   parameters:
     name: output
   parametricParameters: {}
-  x: 1950.0
-  y: 150.0
+  x: 1650.0
+  y: 450.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: 10% of the infected get cured!
+  parametricParameters: {}
+  x: 350.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Someone is infectious if infected, but not cured. (No incubation period in this
+      model.)
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      We count the number of infectious neighbors for all vertices.
+  parametricParameters: {}
+  x: 350.0
+  y: 650.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Each infectious connection infects you with 10% probability. These events are
+      considered independent. You are infected if at least one infection happens.
+  parametricParameters: {}
+  x: 350.0
+  y: 900.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: We set infection day for newly infected vertices.
+  parametricParameters: {}
+  x: 1200.0
+  y: 350.0

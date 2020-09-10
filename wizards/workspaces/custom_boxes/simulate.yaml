@@ -254,3 +254,24 @@
   parametricParameters: {}
   x: 2350.0
   y: 150.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      First, we prepare initial values. Some selected randomly for patient zeros.
+      Noone is cured.
+  parametricParameters: {}
+  x: 500.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      Then we just repeat the simulation step (with different random seed!) for all days.
+
+      Unfortunately, no loops available on the LK UI. [Yet!](https://github.com/lynxkite/lynxkite/issues/65)
+  parametricParameters: {}
+  x: 1171.451399895419
+  y: 7.7475039864201705
