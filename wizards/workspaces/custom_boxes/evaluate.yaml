@@ -15,8 +15,8 @@
   parameters:
     name: daily_data
   parametricParameters: {}
-  x: 550.0
-  y: 150.0
+  x: 850.0
+  y: 350.0
 - id: sql1_0
   inputs:
     input:
@@ -37,8 +37,8 @@
   parameters:
     name: daily_plot
   parametricParameters: {}
-  x: 750.0
-  y: 150.0
+  x: 850.0
+  y: 550.0
 - id: output_3
   inputs:
     output:
@@ -48,8 +48,8 @@
   parameters:
     name: total
   parametricParameters: {}
-  x: 550.0
-  y: 350.0
+  x: 850.0
+  y: 150.0
 - id: input_0
   inputs: {}
   operationId: Input
@@ -85,7 +85,7 @@
             .encodeY("count", Quant)
             .mark(Bar)
   parametricParameters: {}
-  x: 550.0
+  x: 600.0
   y: 550.0
 - id: graphVisualization_0
   inputs:
@@ -100,7 +100,7 @@
       to orange"}}
   parametricParameters: {}
   x: 350.0
-  y: 550.0
+  y: 750.0
 - id: output_0
   inputs:
     output:
@@ -110,5 +110,5 @@
   parameters:
     name: graph
   parametricParameters: {}
-  x: 550.0
+  x: 850.0
   y: 750.0
