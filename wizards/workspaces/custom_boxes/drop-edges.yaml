@@ -25,7 +25,7 @@
   parameters: {}
   parametricParameters:
     filterea_edge_ranking: '>=$number_to_drop'
-  x: 950.0
+  x: 1050.0
   y: 150.0
 - id: addRankAttribute_0
   inputs:
@@ -38,8 +38,8 @@
     rankattr: edge_ranking
   parametricParameters:
     keyattr: edge_$attribute
-  x: 550.0
-  y: 150.0
+  x: 500.0
+  y: 400.0
 - id: takeEdgesAsVertices_0
   inputs:
     graph:
@@ -48,8 +48,8 @@
   operationId: Take edges as vertices
   parameters: {}
   parametricParameters: {}
-  x: 350.0
-  y: 150.0
+  x: 250.0
+  y: 400.0
 - id: output_0
   inputs:
     output:
@@ -59,7 +59,7 @@
   parameters:
     name: output
   parametricParameters: {}
-  x: 1150.0
+  x: 1300.0
   y: 150.0
 - id: graphRejoin_0
   inputs:
@@ -74,5 +74,15 @@
     apply_to_target: '!edges'
     attrs: edge_ranking
   parametricParameters: {}
-  x: 750.0
+  x: 850.0
   y: 150.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Ranking operation is only available on vertices. So we turn our edges into vertices,
+      compute the rank and then join the rank attribute back to the original graph.
+  parametricParameters: {}
+  x: 250.0
+  y: 300.0
