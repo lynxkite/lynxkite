@@ -2,7 +2,55 @@
   inputs: {}
   operationId: Anchor
   parameters:
-    parameters: '[]'
+    steps: >-
+      [{"box":"custom_boxes/drop-vertices_0","popup":"parameters","title":"Dropping
+      vertices","description":"This wizard allows you to play around with graph analysis
+      based intervention\nmethods for managing a hypothetical infectious disease spreading
+      on a\nhypothetical network of interpersonal connections.\n\nThe specifics of
+      the spread model considered here has nothing to do with\nCOVID-19. It is made
+      up.\n\nAlso, the graph we are considering is not exactly a real graph of\nphysical
+      connections. We are using friendship data from a Slovekian socail\nmedia from
+      the past, called Pokec.\n\nSo of course, no concrete conclusion or action can
+      be infered from this\nanalysis to the current pandemic. But we believe it is
+      a strong proof of\nconcept: it would be super important to understand better
+      the graph\nstructure of human interactions. Based on that and a strong COVID\ninfection
+      model it seems possible that we can identify critical people or\ncritical connection
+      types which have a strong impact on the progress of the\nepidemic and we can
+      have huge positive impact by isolating critical people\nor removing critical
+      connections.\n\nSo, onto the details. We are considering the following scenario.
+      We have\nan infectious desease that spreads over the edges of our graph. If
+      A and B\nare connected, A is infectious then B will also get the disease with
+      10%\nprobability each day. If one has more infectious connections then\ngetting
+      infected by each of them are considered independent events. A vertex\ngets cured
+      every day with 10% probability.\n\nOur way to change the situation is to remove
+      certain vertices and edges. This\nmodels intervention methods like extra protection
+      for certain individuals or\nprohibiting/discouraging certain kinds of encounters.\n\nWe
+      do this based on some graph metrics. E.g., one of the possible actions is\nto
+      drop the top 2000 vertices from the graph according to their pagerank. The\nsame
+      way, we can drop edges based on some edge metric.\n\nIn this wizard, you can
+      select which metric you want to use to select the\nedges and vertices to drop,
+      and also, specify how many you want to remove.\n\nThen a simulation runs and
+      you can see the impact of your action to the epidemic.\n\nCheck out our blogpost
+      for more details and some example scenarios!\n\nAlright, let's get started!
+      \n\nFirst, in this step, let's decide on the faith of vertices. Select which
+      metric\nyou want to use, then decide how many vertices we should discard!\n"},{"box":"custom_boxes/drop-edges_0","popup":"parameters","title":"Dropping
+      edges","description":"Next, let's discard edges! Again, choose the metric and
+      the number of edges to discard.\n"},{"box":"sql2_0","popup":"table","description":"See
+      below how many edges and vertices were dropped in total!\n\nThese numbers can
+      be seens as some sort of a \"cost\" of your intervention.\n\nThe vertex number
+      is simply what you specified below. The edge number\nis more complex. When you
+      drop a vertex, you automatically also drop\nall its edges, so the number here
+      comes from a combination of your vertex\nand edge actions.\n","title":"How big
+      was your invention?"},{"box":"custom_boxes/evaluate_0","popup":"daily_plot","description":"This
+      may take a few minutes....\n\nOnce the simulation is done, you can see here
+      the timeline of the epidemic:\nthe number of new cases by day.\n","title":"Epidemic
+      timeline"},{"title":"Total infected","description":"This may take a few minutes....\n\nHere
+      is the total number of people infected during our time window.\n","box":"custom_boxes/evaluate_0","popup":"total"},{"title":"Look
+      at a small sample","description":"This may take a few minutes....\n\nIn this
+      graph visualization you can follow how the disease spread in a\nrandomly selected
+      subgraph. Move the slider below to see which people got\nsick until a given
+      day.\n","box":"custom_boxes/evaluate_0","popup":"graph"}]
+    wizard: yes
   parametricParameters: {}
   x: 10.0
   y: 0.0
@@ -226,7 +274,7 @@
   parameters:
     columns: Source,Destination
     filename: UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv
-    imported_table: e4e8cd12-1fab-3a1b-bd5a-8669f7746c7f
+    imported_table: c36a5b43-ed0e-3603-96b6-7f4c57821726
     last_settings: |-
       {
         "sql" : "",
@@ -254,7 +302,7 @@
   operationId: Import CSV
   parameters:
     filename: UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv
-    imported_table: 0e9bd8ff-eeec-3dd9-841e-dba1fa4fa98a
+    imported_table: d9f611a0-c26e-3d97-b865-f5376a9c117a
     last_settings: |-
       {
         "sql" : "",
