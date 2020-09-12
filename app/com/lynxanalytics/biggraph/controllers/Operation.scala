@@ -446,11 +446,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
           projectInput(name)
         case BoxOutputKind.Table =>
           import graph_util.Scripting._
-          val t = tableInput(name).toAttributes
-          val project = new RootProjectEditor(CommonProjectState.emptyState)
-          project.vertexSet = t.ids
-          project.vertexAttributes = t.columns.mapValues(_.entity)
-          project
+          tableInput(name).toProject
       }
     }
 

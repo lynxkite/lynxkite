@@ -7,6 +7,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.controllers
 
 object Scripting {
 
@@ -145,6 +146,13 @@ object Scripting {
       graph_operations.TableToAttributes.run(self)
     def saved =
       graph_operations.SaveTable.run(self)
+    def toProject = {
+      val t = toAttributes
+      val project = new controllers.RootProjectEditor(controllers.CommonProjectState.emptyState)
+      project.vertexSet = t.ids
+      project.vertexAttributes = t.columns.mapValues(_.entity)
+      project
+    }
   }
 
   // Take the union of edge bundles that are parallel, that is that are going between the same
