@@ -50,7 +50,7 @@
     "gulp-touch-cmd": "^0.0.1",
     "gulp-uglify-es": "1.0.4",
     "gulp-useref": "3.1.6",
-    "http-proxy": "1.17.0",
+    "http-proxy": "1.18.1",
     "lazypipe": "1.0.2",
     "merge-stream": "1.0.1",
     "protractor": "^5.4.2",
