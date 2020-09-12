@@ -62,11 +62,9 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Neo4j driver & testing
-  "neo4j-contrib" % "neo4j-spark-connector" % "2.1.0-M4",
-  "org.neo4j.test" % "neo4j-harness" % "3.5.1" % Test classifier "",
-  "org.neo4j" % "neo4j-io" % "3.5.1" % Test classifier "",
-  "org.neo4j" % "neo4j-common" % "3.5.1" % Test classifier "",
-  "com.sun.jersey" % "jersey-core" % "1.19.4" % Test classifier "", // Required to create Neo4j test server
+  // https://github.com/sbt/sbt/issues/3618#issuecomment-454528463
+  "org.neo4j.test" % "neo4j-harness" % "4.1.1" % Test classifier "" exclude("javax.ws.rs", "javax.ws.rs-api"),
+  "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
   "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
     ExclusionRule(organization="org.specs2", name="specs2_2.11")),
   // Required because of Ammonite using a different scalaz version than the Play framework

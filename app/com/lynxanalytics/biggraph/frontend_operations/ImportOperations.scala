@@ -6,26 +6,20 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
+import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
-class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
-  implicit lazy val manager = env.metaGraphManager
+class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.ImportOperations
+  val category = Categories.ImportOperations
 
   override val defaultIcon = "upload"
 
-  def register(id: String)(factory: Context => ImportOperation): Unit = {
-    registerOp(id, defaultIcon, ImportOperations, List(), List("table"), factory)
-  }
-
-  def register(id: String, inputs: List[String], outputs: List[String])(
-    factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, ImportOperations, inputs, outputs, factory)
+  def registerImport(id: String)(factory: Context => ImportOperation): Unit = {
+    registerOp(id, defaultIcon, category, List(), List("table"), factory)
   }
 
   import OperationParams._
@@ -39,7 +33,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     else name.split("/", -1).last
   }
 
-  register("Import CSV")(new ImportOperation(_) {
+  registerImport("Import CSV")(new ImportOperation(_) {
     params ++= List(
       FileParam("filename", "File"),
       Param(
@@ -119,7 +113,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import JDBC")(new ImportOperation(_) {
+  registerImport("Import JDBC")(new ImportOperation(_) {
     params ++= List(
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
@@ -151,27 +145,113 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import Neo4j")(new ImportOperation(_) {
+  register("Import from Neo4j", List(), List("graph"))(new SimpleOperation(_) with Importer {
+    import play.api.libs.json
+    import com.lynxanalytics.biggraph.controllers._
+
     params ++= List(
-      Param("node_label", "Node label"),
-      Param("relationship_type", "Relationship type"),
-      NonNegInt("num_partitions", "Number of partitions", default = 0),
-      Choice("infer", "Infer types", options = FEOption.noyes),
-      Code("sql", "SQL", language = "sql"),
-      Param("imported_columns", "Columns to import"),
-      Param("limit", "Limit"),
+      Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
+      Param("username", "Neo4j username", defaultValue = "neo4j"),
+      Param("password", "Neo4j password", defaultValue = "neo4j"),
+      Param("query", "Cypher query", defaultValue = "MATCH (src)-[rel]->(dst) RETURN src, dst, rel"),
       ImportedTableParam("imported_table"),
       new DummyParam("last_settings", ""))
 
-    def getRawDataFrame(context: spark.sql.SQLContext) = {
-      Neo4jUtil.read(
-        context,
-        params("node_label"),
-        params("relationship_type"),
-        splitParam("imported_columns").toSet,
-        params("infer") == "yes",
-        params("limit"),
-        params("num_partitions").toInt)
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      params.validate()
+      assert(params("imported_table").nonEmpty, "You have to import the data first.")
+      assert(!areSettingsStale, areSettingsStaleReplyMessage)
+      import CommonProjectState._
+      val state = json.Json.parse(params("imported_table")).as[CommonProjectState]
+      val project = new RootProjectEditor(state)
+      Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(project))
+    }
+
+    override def runImport(env: com.lynxanalytics.biggraph.BigGraphEnvironment): ImportResult = {
+      import org.apache.spark.sql.functions._
+      import org.apache.spark.sql.types
+      import com.lynxanalytics.biggraph.graph_util.Scripting._
+      val spark = SQLController.defaultContext()(env.sparkDomain)
+      val project = new RootProjectEditor(CommonProjectState.emptyState)
+      val df = spark.read.format("org.neo4j.spark.DataSource")
+        .option("authentication.type", "basic")
+        .option("authentication.basic.username", params("username"))
+        .option("authentication.basic.password", params("password"))
+        .option("url", params("url"))
+        .option("schema.strategy", "string")
+        .option("query", params("query"))
+        .load
+        .cache
+
+      def getBy(columns: Seq[String], key: String, id: String = null) = {
+        import spark.implicits._
+        val available = columns.filter(df.columns.contains(_))
+        val kinds: Set[String] = available.map { column =>
+          df
+            .select(get_json_object(col(column), "$['" + key + "']"))
+            .dropDuplicates
+            .collect.map(r => r.getString(0)).toSet
+        }.reduce(_ ++ _)
+        kinds.map { k =>
+          val parsed = spark.read.json(
+            available
+              .map { column =>
+                df.filter(get_json_object(col(column), "$['" + key + "']") === k)
+                  .select(col(column)).as[String]
+              }
+              .reduce(_.union(_)))
+          val dedup = if (id != null) parsed.dropDuplicates(id) else parsed
+          graph_operations.ImportDataFrame.run(dedup)
+        }
+      }
+
+      for (table <- getBy(Seq("src", "dst", "node"), "<labels>", "<id>")) {
+        mergeInto(project, table.toProject.viewer)
+      }
+      assert(
+        project.vertexAttributes.contains("<id>"),
+        s"No 'src', 'dst', or 'node' found in query response: ${df.columns}")
+      for (table <- getBy(Seq("rel"), "<rel.type>")) {
+        addEdges(project, table.toProject.viewer)
+      }
+      val state = json.Json.toJson(project.state).toString
+      ImportResult(state, this.settingsString())
+    }
+
+    def addEdges(project: ProjectEditor, edges: ProjectViewer): Unit = {
+      import com.lynxanalytics.biggraph.graph_util.Scripting._
+      val idAttr = project.vertexAttributes("<id>").asString
+      val srcAttr = edges.vertexAttributes("<source.id>").asString
+      val dstAttr = edges.vertexAttributes("<target.id>").asString
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
+        idAttr, idAttr, srcAttr, dstAttr)
+
+      if (project.edgeBundle == null) {
+        project.edgeBundle = imp.edges
+        for ((name, attr) <- edges.vertexAttributes) {
+          project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(imp.embedding)
+        }
+        return
+      }
+      val idUnion = {
+        val op = graph_operations.VertexSetUnion(2)
+        op(op.vss, Seq(project.edgeBundle.idSet, imp.edges.idSet)).result
+      }
+      val ebUnion = {
+        val op = graph_operations.EdgeBundleUnion(2)
+        op(
+          op.ebs, Seq(project.edgeBundle, imp.edges.entity))(
+            op.injections, idUnion.injections.map(_.entity)).result.union
+      }
+      val oldAttrs = project.edgeAttributes.toMap
+      project.edgeBundle = ebUnion
+      project.edgeAttributes = unifyAttributes(
+        oldAttrs.map {
+          case (name, attr) => name -> attr.pullVia(idUnion.injections(0).reverse)
+        },
+        edges.vertexAttributes.map {
+          case (name, attr) => name -> attr.pullVia(idUnion.injections(1).reverse.concat(imp.embedding))
+        })
     }
   })
 
@@ -198,12 +278,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   }
 
-  register("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
-  register("Import ORC")(new FileWithSchema(_) { val format = "orc" })
-  register("Import JSON")(new FileWithSchema(_) { val format = "json" })
-  register("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
+  registerImport("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
+  registerImport("Import ORC")(new FileWithSchema(_) { val format = "orc" })
+  registerImport("Import JSON")(new FileWithSchema(_) { val format = "json" })
+  registerImport("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
-  register("Import from Hive")(new ImportOperation(_) {
+  registerImport("Import from Hive")(new ImportOperation(_) {
     params ++= List(
       Param("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
