@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.BigGraphEnvironment
 import play.api.libs.json
 import org.apache.spark
 
@@ -534,10 +535,11 @@ abstract class TableOutputOperation(context: Operation.Context) extends SmartOpe
   override def apply(): Unit = ???
 }
 
-abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
-  import MetaGraphManager.StringAsUUID
-  protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
+case class ImportResult(guid: String, parameterSettings: String)
+trait Importer {
+  def runImport(env: BigGraphEnvironment): ImportResult
 
+  protected val params: ParameterHolder
   // The set of those parameters that affect the resulting table of the import operation.
   // The last_settings parameter is only used to check if the settings are stale. The
   // imported_table is generated from the other parameters and is populated in the frontend so
@@ -561,7 +563,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     }
   }
 
-  private def areSettingsStale(): Boolean = {
+  protected def areSettingsStale(): Boolean = {
     val lastSettings = getLastSettings
     // For not needing to provide the last_settings parameter for testing we are also allowing it to
     // be empty. This doesn't cause problem in practice since in the getOutputs method we first
@@ -582,6 +584,20 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
         "Please click on the import button to apply the changed settings or reset the changed " +
         "settings to their original values."
     } else { "" }
+  }
+
+}
+
+abstract class ImportOperation(context: Operation.Context)
+  extends TableOutputOperation(context) with Importer {
+  import MetaGraphManager.StringAsUUID
+  protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
+
+  override def runImport(env: BigGraphEnvironment): ImportResult = {
+    val df = getDataFrame(SQLController.defaultContext()(env.sparkDomain))
+    val table = graph_operations.ImportDataFrame.run(df)
+    env.dataManager.compute(table) // Start importing in the background.
+    ImportResult(table.gUID.toString, settingsString())
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
