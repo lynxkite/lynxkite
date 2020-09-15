@@ -99,7 +99,9 @@ libraryDependencies ++= Seq(
   // This indirect dependency of ours is broken on Maven.
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
   // Used for working with AVRO files. 
-  "org.apache.spark" %% "spark-avro" % sparkVersion.value
+  "org.apache.spark" %% "spark-avro" % sparkVersion.value,
+  // Used for working with Delta tables.
+  "io.delta" %% "delta-core" % "0.6.1"
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using

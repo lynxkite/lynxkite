@@ -120,6 +120,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   registerExportToStructuredFile("Export to Parquet")("parquet")
   registerExportToStructuredFile("Export to ORC")("orc")
   registerExportToStructuredFile("Export to AVRO")("avro")
+  registerExportToStructuredFile("Export to Delta")("delta")
 
   def registerExportToStructuredFile(id: String)(fileFormat: String) {
     register(id)(new ExportOperationToFile(_) {
