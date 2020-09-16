@@ -41,7 +41,7 @@
       is simply what you specified below. The edge number\nis more complex. When you
       drop a vertex, you automatically also drop\nall its edges, so the number here
       comes from a combination of your vertex\nand edge actions.\n","title":"How big
-      was your invention?"},{"box":"custom_boxes/infection-modeling/evaluate_0","popup":"daily_plot","description":"This
+      was your intervention?"},{"box":"custom_boxes/infection-modeling/evaluate_0","popup":"daily_plot","description":"This
       may take a few minutes....\n\nOnce the simulation is done, you can see here
       the timeline of the epidemic:\nthe number of new cases by day.\n","title":"Epidemic
       timeline"},{"title":"Total infected","description":"This may take a few minutes....\n\nHere
