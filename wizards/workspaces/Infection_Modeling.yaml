@@ -1,0 +1,361 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    steps: >-
+      [{"box":"custom_boxes/infection-modeling/drop-vertices_0","popup":"parameters","title":"Dropping
+      vertices","description":"This wizard allows you to play around with graph analysis
+      based intervention\nmethods for managing a hypothetical infectious disease spreading
+      on a\nhypothetical network of interpersonal connections.\n\nThe specifics of
+      the spread model considered here has nothing to do with\nCOVID-19. It is made
+      up.\n\nAlso, the graph we are considering is not exactly a real graph of\nphysical
+      connections. We are using friendship data from a Slovekian socail\nmedia from
+      the past, called Pokec.\n\nSo of course, no concrete conclusion or action can
+      be infered from this\nanalysis to the current pandemic. But we believe it is
+      a strong proof of\nconcept: it would be super important to understand better
+      the graph\nstructure of human interactions. Based on that and a strong COVID\ninfection
+      model it seems possible that we can identify critical people or\ncritical connection
+      types which have a strong impact on the progress of the\nepidemic and we can
+      have huge positive impact by isolating critical people\nor removing critical
+      connections.\n\nSo, onto the details. We are considering the following scenario.
+      We have\nan infectious desease that spreads over the edges of our graph. If
+      A and B\nare connected, A is infectious then B will also get the disease with
+      10%\nprobability each day. If one has more infectious connections then\ngetting
+      infected by each of them are considered independent events. A vertex\ngets cured
+      every day with 10% probability.\n\nOur way to change the situation is to remove
+      certain vertices and edges. This\nmodels intervention methods like extra protection
+      for certain individuals or\nprohibiting/discouraging certain kinds of encounters.\n\nWe
+      do this based on some graph metrics. E.g., one of the possible actions is\nto
+      drop the top 2000 vertices from the graph according to their pagerank. The\nsame
+      way, we can drop edges based on some edge metric.\n\nIn this wizard, you can
+      select which metric you want to use to select the\nedges and vertices to drop,
+      and also, specify how many you want to remove.\n\nThen a simulation runs and
+      you can see the impact of your action to the epidemic.\n\nCheck out our blogpost
+      for more details and some example scenarios!\n\nAlright, let's get started!
+      \n\nFirst, in this step, let's decide on the faith of vertices. Select which
+      metric\nyou want to use, then decide how many vertices we should discard!\n"},{"box":"custom_boxes/infection-modeling/drop-edges_0","popup":"parameters","title":"Dropping
+      edges","description":"Next, let's discard edges! Again, choose the metric and
+      the number of edges to discard.\n"},{"box":"sql2_0","popup":"table","description":"See
+      below how many edges and vertices were dropped in total!\n\nThese numbers can
+      be seens as some sort of a \"cost\" of your intervention.\n\nThe vertex number
+      is simply what you specified below. The edge number\nis more complex. When you
+      drop a vertex, you automatically also drop\nall its edges, so the number here
+      comes from a combination of your vertex\nand edge actions.\n","title":"How big
+      was your intervention?"},{"box":"custom_boxes/infection-modeling/evaluate_0","popup":"daily_plot","description":"This
+      may take a few minutes....\n\nOnce the simulation is done, you can see here
+      the timeline of the epidemic:\nthe number of new cases by day.\n","title":"Epidemic
+      timeline"},{"title":"Total infected","description":"This may take a few minutes....\n\nHere
+      is the total number of people infected during our time window.\n","box":"custom_boxes/infection-modeling/evaluate_0","popup":"total"},{"title":"Look
+      at a small sample","description":"This may take a few minutes....\n\nIn this
+      graph visualization you can follow how the disease spread in a\nrandomly selected
+      subgraph. Move the slider below to see which people got\nsick until a given
+      day.\n","box":"custom_boxes/infection-modeling/evaluate_0","popup":"graph"}]
+    wizard: yes
+  parametricParameters: {}
+  x: 10.0
+  y: 0.0
+- id: graphRejoin_0
+  inputs:
+    source:
+      boxId: custom_boxes/infection-modeling/drop-edges_0
+      id: output
+    target:
+      boxId: discardEdges_0
+      id: graph
+  operationId: Graph rejoin
+  parameters:
+    edge: yes
+  parametricParameters: {}
+  x: 2000.0
+  y: 450.0
+- id: sql2_0
+  inputs:
+    one:
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      id: graph
+    two:
+      boxId: graphRejoin_0
+      id: graph
+  operationId: SQL2
+  parameters:
+    sql: |
+      select `one.graph_attributes`.`!vertex_count` - `two.graph_attributes`.`!vertex_count` as `Vertices Dropped`, `one.graph_attributes`.`!edge_count` - `two.graph_attributes`.`!edge_count` as `Edges Dropped` from `one.graph_attributes` CROSS JOIN `two.graph_attributes`
+  parametricParameters: {}
+  x: 2250.0
+  y: 750.0
+- id: graphRejoin_1
+  inputs:
+    source:
+      boxId: custom_boxes/infection-modeling/simulate_0
+      id: output
+    target:
+      boxId: custom_boxes/infection-modeling/big-component-only_0
+      id: output
+  operationId: Graph rejoin
+  parameters:
+    attrs: infection_day,infected
+  parametricParameters: {}
+  x: 2550.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/big-component-only_0
+  inputs:
+    input_graph:
+      boxId: Use-table-as-edges_1
+      id: graph
+  operationId: custom_boxes/infection-modeling/big-component-only
+  parameters: {}
+  parametricParameters: {}
+  x: 750.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/simulate_0
+  inputs:
+    input_graph:
+      boxId: graphRejoin_0
+      id: graph
+  operationId: custom_boxes/infection-modeling/simulate
+  parameters: {}
+  parametricParameters: {}
+  x: 2350.0
+  y: 450.0
+- id: custom_boxes/infection-modeling/evaluate_0
+  inputs:
+    sim_result:
+      boxId: graphRejoin_1
+      id: graph
+  operationId: custom_boxes/infection-modeling/evaluate
+  parameters: {}
+  parametricParameters: {}
+  x: 2950.0
+  y: 150.0
+- id: discardEdges_0
+  inputs:
+    graph:
+      boxId: custom_boxes/infection-modeling/drop-vertices_0
+      id: output
+  operationId: Discard edges
+  parameters: {}
+  parametricParameters: {}
+  x: 1700.0
+  y: 300.0
+- id: custom_boxes/infection-modeling/drop-edges_0
+  inputs:
+    original:
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      id: graph
+  operationId: custom_boxes/infection-modeling/drop-edges
+  parameters:
+    attribute: random
+    number_to_drop: '0'
+  parametricParameters: {}
+  x: 1450.0
+  y: 450.0
+- id: custom_boxes/infection-modeling/drop-vertices_0
+  inputs:
+    original:
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      id: graph
+  operationId: custom_boxes/infection-modeling/drop-vertices
+  parameters:
+    attribute: page_rank
+    number_to_drop: '2000'
+  parametricParameters: {}
+  x: 1450.0
+  y: 300.0
+- id: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+  inputs:
+    graph:
+      boxId: custom_boxes/infection-modeling/big-component-only_0
+      id: output
+  operationId: custom_boxes/infection-modeling/compute-metrics-for-filtering
+  parameters: {}
+  parametricParameters: {}
+  x: 1050.0
+  y: 450.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Graph preprocessing, restriction to biggest connected component.
+  parametricParameters: {}
+  x: 650.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      We compute metrics that will be used to select which edges/vertices to drop.
+  parametricParameters: {}
+  x: 950.0
+  y: 350.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Drop top vertices according to a metric.
+  parametricParameters: {}
+  x: 1350.0
+  y: 250.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Drop top edges according to a metric.
+  parametricParameters: {}
+  x: 1350.0
+  y: 400.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Recombine kept vertices and edges. Of course, this may result in losing more
+      edges, we drop all edges with a lost endpoint.
+  parametricParameters: {}
+  x: 1900.0
+  y: 350.0
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Run the viral spread simulation on the remaining graph.
+  parametricParameters: {}
+  x: 2250.0
+  y: 550.0
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Report the total number of vertices and edges lost from the graph.
+  parametricParameters: {}
+  x: 2150.0
+  y: 850.0
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Join back the result of the simulation to the original graph.
+  parametricParameters: {}
+  x: 2400.0
+  y: 50.0
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Compute evaluation metrics, chart, visualization.
+  parametricParameters: {}
+  x: 2850.0
+  y: 50.0
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      ## Introduction
+
+      This workspace is about simulating the spread of a hypothetical virus on a graph of connections. We also test how different intervention strategies - removing certain edges and vertices - affect the resuling epidemic.
+
+      See the wizard mode of this workspace for more background!
+
+      Select any of the hats and click the `Dive into custom box ...` button from the
+      top toolbar (look for a downward pointing arrow) to look into the implementation of that particular high level step.
+
+      Then come back to this top level workspace using the
+      up arrow in the toolbar.
+  parametricParameters: {}
+  x: 0.0
+  y: 400.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    columns: Source,Destination
+    filename: UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv
+    imported_table: 0e86f869-7db6-3b1b-a9d2-58a6e13bf623
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "Source,Destination",
+        "filename" : "UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: Import-CSV_2
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv
+    imported_table: 7fafeae7-fb92-3c02-b4c8-5fb045ea6974
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "no",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: Use-table-as-vertices_1
+  inputs:
+    table:
+      boxId: Import-CSV_2
+      id: table
+  operationId: Use table as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 350.0
+  y: 150.0
+- id: Use-table-as-edges_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertices_1
+      id: graph
+    table:
+      boxId: Import-CSV_1
+      id: table
+  operationId: Use table as edges
+  parameters:
+    attr: User_ID
+    dst: Destination
+    src: Source
+  parametricParameters: {}
+  x: 550.0
+  y: 150.0
+- id: Comment_11
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Import the Pokec social network graph.
+  parametricParameters: {}
+  x: 200.0
+  y: 50.0

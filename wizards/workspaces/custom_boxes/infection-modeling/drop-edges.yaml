@@ -1,0 +1,88 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: >-
+      [{"id": "attribute", "kind": "edge attribute (number)", "defaultValue": ""},
+      {"id": "number_to_drop", "kind": "text", "defaultValue": "0"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: input_0
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: original
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: filterByAttributes_0
+  inputs:
+    graph:
+      boxId: graphRejoin_0
+      id: graph
+  operationId: Filter by attributes
+  parameters: {}
+  parametricParameters:
+    filterea_edge_ranking: '>=$number_to_drop'
+  x: 1050.0
+  y: 150.0
+- id: addRankAttribute_0
+  inputs:
+    graph:
+      boxId: takeEdgesAsVertices_0
+      id: graph
+  operationId: Add rank attribute
+  parameters:
+    order: descending
+    rankattr: edge_ranking
+  parametricParameters:
+    keyattr: edge_$attribute
+  x: 500.0
+  y: 400.0
+- id: takeEdgesAsVertices_0
+  inputs:
+    graph:
+      boxId: input_0
+      id: input
+  operationId: Take edges as vertices
+  parameters: {}
+  parametricParameters: {}
+  x: 250.0
+  y: 400.0
+- id: output_0
+  inputs:
+    output:
+      boxId: filterByAttributes_0
+      id: graph
+  operationId: Output
+  parameters:
+    name: output
+  parametricParameters: {}
+  x: 1300.0
+  y: 150.0
+- id: graphRejoin_0
+  inputs:
+    source:
+      boxId: addRankAttribute_0
+      id: graph
+    target:
+      boxId: input_0
+      id: input
+  operationId: Graph rejoin
+  parameters:
+    apply_to_target: '!edges'
+    attrs: edge_ranking
+  parametricParameters: {}
+  x: 850.0
+  y: 150.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Ranking operation is only available on vertices. So we turn our edges into vertices,
+      compute the rank and then join the rank attribute back to the original graph.
+  parametricParameters: {}
+  x: 250.0
+  y: 300.0

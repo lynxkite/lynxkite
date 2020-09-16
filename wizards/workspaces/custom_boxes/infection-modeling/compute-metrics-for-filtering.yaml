@@ -1,0 +1,130 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: Created from Infection Modeling
+    parameters: '[]'
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: computePageRank_0
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Compute PageRank
+  parameters:
+    direction: all edges
+  parametricParameters: {}
+  x: 200.0
+  y: 150.0
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0.0
+  y: 150.0
+- id: computeDegree_0
+  inputs:
+    graph:
+      boxId: addRandomVertexAttribute_0
+      id: graph
+  operationId: Compute degree
+  parameters: {}
+  parametricParameters: {}
+  x: 600.0
+  y: 150.0
+- id: addRandomVertexAttribute_0
+  inputs:
+    graph:
+      boxId: computePageRank_0
+      id: graph
+  operationId: Add random vertex attribute
+  parameters:
+    dist: Standard Uniform
+    seed: '42'
+  parametricParameters: {}
+  x: 400.0
+  y: 150.0
+- id: addRandomEdgeAttribute_0
+  inputs:
+    graph:
+      boxId: computeDegree_0
+      id: graph
+  operationId: Add random edge attribute
+  parameters:
+    dist: Standard Uniform
+    seed: '43'
+  parametricParameters: {}
+  x: 800.0
+  y: 150.0
+- id: computeDispersion_0
+  inputs:
+    graph:
+      boxId: addRandomEdgeAttribute_0
+      id: graph
+  operationId: Compute dispersion
+  parameters: {}
+  parametricParameters: {}
+  x: 1000.0
+  y: 150.0
+- id: deriveEdgeAttribute_1
+  inputs:
+    graph:
+      boxId: computeDispersion_0
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    expr: src$degree + dst$degree
+    output: endpoint_degree_sum
+  parametricParameters: {}
+  x: 1250.0
+  y: 150.0
+- id: deriveEdgeAttribute_0
+  inputs:
+    graph:
+      boxId: deriveEdgeAttribute_1
+      id: graph
+  operationId: Derive edge attribute
+  parameters:
+    expr: src$degree * dst$degree
+    output: endpoint_degree_product
+  parametricParameters: {}
+  x: 1550.0
+  y: 150.0
+- id: discardVertexAttributes_0
+  inputs:
+    graph:
+      boxId: deriveEdgeAttribute_0
+      id: graph
+  operationId: Discard vertex attributes
+  parameters:
+    name: >-
+      Age,Gender,Last_Login_Days,Region,Registration_Days,connected_components_id_count
+  parametricParameters: {}
+  x: 1850.0
+  y: 150.0
+- id: discardEdgeAttributes_0
+  inputs:
+    graph:
+      boxId: discardVertexAttributes_0
+      id: graph
+  operationId: Discard edge attributes
+  parameters:
+    name: normalized_dispersion
+  parametricParameters: {}
+  x: 2150.0
+  y: 150.0
+- id: output-graph
+  inputs:
+    output:
+      boxId: discardEdgeAttributes_0
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 2350.0
+  y: 150.0

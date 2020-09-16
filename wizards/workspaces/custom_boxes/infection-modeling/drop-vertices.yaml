@@ -1,0 +1,52 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: >-
+      [{"id": "attribute", "kind": "vertex attribute (number)", "defaultValue": ""},
+      {"id": "number_to_drop", "kind": "text", "defaultValue": "0"}]
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: input_0
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: original
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: filterByAttributes_0
+  inputs:
+    graph:
+      boxId: addRankAttribute_0
+      id: graph
+  operationId: Filter by attributes
+  parameters: {}
+  parametricParameters:
+    filterva_ranking: '>=$number_to_drop'
+  x: 550.0
+  y: 150.0
+- id: addRankAttribute_0
+  inputs:
+    graph:
+      boxId: input_0
+      id: input
+  operationId: Add rank attribute
+  parameters:
+    order: descending
+  parametricParameters:
+    keyattr: $attribute
+  x: 350.0
+  y: 150.0
+- id: output_0
+  inputs:
+    output:
+      boxId: filterByAttributes_0
+      id: graph
+  operationId: Output
+  parameters:
+    name: output
+  parametricParameters: {}
+  x: 750.0
+  y: 150.0

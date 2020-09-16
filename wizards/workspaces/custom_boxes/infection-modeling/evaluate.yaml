@@ -1,0 +1,114 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: '[]'
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: output_1
+  inputs:
+    output:
+      boxId: sql1_1
+      id: table
+  operationId: Output
+  parameters:
+    name: daily_data
+  parametricParameters: {}
+  x: 850.0
+  y: 350.0
+- id: sql1_0
+  inputs:
+    input:
+      boxId: input_0
+      id: input
+  operationId: SQL1
+  parameters:
+    sql: select sum(infected) from vertices
+  parametricParameters: {}
+  x: 350.0
+  y: 150.0
+- id: output_2
+  inputs:
+    output:
+      boxId: customPlot_0
+      id: plot
+  operationId: Output
+  parameters:
+    name: daily_plot
+  parametricParameters: {}
+  x: 850.0
+  y: 550.0
+- id: output_3
+  inputs:
+    output:
+      boxId: sql1_0
+      id: table
+  operationId: Output
+  parameters:
+    name: total
+  parametricParameters: {}
+  x: 850.0
+  y: 150.0
+- id: input_0
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: sim_result
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: sql1_1
+  inputs:
+    input:
+      boxId: input_0
+      id: input
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: |
+      select infection_day, count(User_ID) as count from vertices where infection_day is not null group by infection_day order by infection_day
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: customPlot_0
+  inputs:
+    table:
+      boxId: sql1_1
+      id: table
+  operationId: Custom plot
+  parameters:
+    plot_code: |-
+      Vegas()
+            .withData(table)
+            .encodeX("infection_day", Nom)
+            .encodeY("count", Quant)
+            .mark(Bar)
+  parametricParameters: {}
+  x: 600.0
+  y: 550.0
+- id: graphVisualization_0
+  inputs:
+    graph:
+      boxId: input_0
+      id: input
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"slider":"infection_day"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["127026020011224340","663548610163526017","817735316159868271","971666669170605812","1847406081303664676"],"customVisualizationFilters":true,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","lastCentersRequest":{"count":5,"filters":[{"attributeName":"infection_day","valueSpec":"0"}]},"lastCentersResponse":["127026020011224340","663548610163526017","817735316159868271","971666669170605812","1847406081303664676"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 350.0
+  y: 750.0
+- id: output_0
+  inputs:
+    output:
+      boxId: graphVisualization_0
+      id: visualization
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 850.0
+  y: 750.0

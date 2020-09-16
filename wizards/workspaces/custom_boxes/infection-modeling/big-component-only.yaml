@@ -1,0 +1,119 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: '[]'
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: filterByAttributes_1
+  inputs:
+    graph:
+      boxId: findConnectedComponents_0
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    apply_to_graph: .connected_components
+    filterva_size: '>20000'
+  parametricParameters: {}
+  x: 550.0
+  y: 150.0
+- id: aggregateFromSegmentation_0
+  inputs:
+    graph:
+      boxId: filterByAttributes_1
+      id: graph
+  operationId: Aggregate from segmentation
+  parameters:
+    aggregate_id: count
+    apply_to_graph: .connected_components
+  parametricParameters: {}
+  x: 350.0
+  y: 450.0
+- id: output_0
+  inputs:
+    output:
+      boxId: mergeParallelEdges_0
+      id: graph
+  operationId: Output
+  parameters:
+    name: output
+  parametricParameters: {}
+  x: 1000.0
+  y: 800.0
+- id: mergeParallelEdges_0
+  inputs:
+    graph:
+      boxId: addReversedEdges_0
+      id: graph
+  operationId: Merge parallel edges
+  parameters: {}
+  parametricParameters: {}
+  x: 550.0
+  y: 800.0
+- id: findConnectedComponents_0
+  inputs:
+    graph:
+      boxId: input_0
+      id: input
+  operationId: Find connected components
+  parameters: {}
+  parametricParameters: {}
+  x: 350.0
+  y: 150.0
+- id: filterByAttributes_0
+  inputs:
+    graph:
+      boxId: aggregateFromSegmentation_0
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_connected_components_id_count: '1'
+  parametricParameters: {}
+  x: 550.0
+  y: 450.0
+- id: input_0
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input_graph
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: addReversedEdges_0
+  inputs:
+    graph:
+      boxId: filterByAttributes_0
+      id: graph
+  operationId: Add reversed edges
+  parameters: {}
+  parametricParameters: {}
+  x: 350.0
+  y: 800.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: Find connected components, keep only the large one.
+  parametricParameters: {}
+  x: 350.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Keep only vertices that belongs to the only kept connected component.
+  parametricParameters: {}
+  x: 350.0
+  y: 350.0
+- id: Comment_3
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      Make sure we have simple, symmetric graph. (No parallel edges, there is A->B
+      edge iff there is B->A egde.)
+  parametricParameters: {}
+  x: 350.0
+  y: 700.0

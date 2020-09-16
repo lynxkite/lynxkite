@@ -1,0 +1,277 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    parameters: '[]'
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: custom_boxes/infection-modeling/one-step_7
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_8
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '8'
+    seed: '7'
+  parametricParameters: {}
+  x: 2550.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_14
+  inputs:
+    input_graph:
+      boxId: deriveVertexAttribute_0
+      id: graph
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '1'
+    seed: '0'
+  parametricParameters: {}
+  x: 1150.0
+  y: 150.0
+- id: input_0
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input_graph
+  parametricParameters: {}
+  x: 150.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_6
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_7
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '9'
+    seed: '8'
+  parametricParameters: {}
+  x: 2750.0
+  y: 150.0
+- id: deriveVertexAttribute_0
+  inputs:
+    graph:
+      boxId: addConstantVertexAttribute_0
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: if (infected > 0) Some(0) else None
+    output: infection_day
+  parametricParameters: {}
+  x: 950.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_5
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_6
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '10'
+    seed: '9'
+  parametricParameters: {}
+  x: 2950.0
+  y: 150.0
+- id: addRandomVertexAttribute_0
+  inputs:
+    graph:
+      boxId: input_0
+      id: input
+  operationId: Add random vertex attribute
+  parameters:
+    dist: Standard Uniform
+    name: infection_random
+    seed: '999777'
+  parametricParameters: {}
+  x: 350.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_13
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_14
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '2'
+    seed: '1'
+  parametricParameters: {}
+  x: 1350.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_4
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_5
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '11'
+    seed: '10'
+  parametricParameters: {}
+  x: 3150.0
+  y: 150.0
+- id: deriveVertexAttribute_1
+  inputs:
+    graph:
+      boxId: addRandomVertexAttribute_0
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: if (infection_random < 0.001) 1.0 else 0.0
+    output: infected
+  parametricParameters: {}
+  x: 550.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_3
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_4
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '12'
+    seed: '11'
+  parametricParameters: {}
+  x: 3350.0
+  y: 150.0
+- id: addConstantVertexAttribute_0
+  inputs:
+    graph:
+      boxId: deriveVertexAttribute_1
+      id: graph
+  operationId: Add constant vertex attribute
+  parameters:
+    name: cured
+    value: '0'
+  parametricParameters: {}
+  x: 750.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_2
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_3
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '13'
+    seed: '12'
+  parametricParameters: {}
+  x: 3550.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_12
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_13
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '3'
+    seed: '2'
+  parametricParameters: {}
+  x: 1550.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_1
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_2
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '14'
+    seed: '13'
+  parametricParameters: {}
+  x: 3750.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_11
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_12
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '4'
+    seed: '3'
+  parametricParameters: {}
+  x: 1750.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_0
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_1
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '15'
+    seed: '14'
+  parametricParameters: {}
+  x: 3950.0
+  y: 150.0
+- id: output_0
+  inputs:
+    output:
+      boxId: custom_boxes/infection-modeling/one-step_0
+      id: output
+  operationId: Output
+  parameters:
+    name: output
+  parametricParameters: {}
+  x: 4150.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_10
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_11
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '5'
+    seed: '4'
+  parametricParameters: {}
+  x: 1950.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_9
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_10
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '6'
+    seed: '5'
+  parametricParameters: {}
+  x: 2150.0
+  y: 150.0
+- id: custom_boxes/infection-modeling/one-step_8
+  inputs:
+    input_graph:
+      boxId: custom_boxes/infection-modeling/one-step_9
+      id: output
+  operationId: custom_boxes/infection-modeling/one-step
+  parameters:
+    day: '7'
+    seed: '6'
+  parametricParameters: {}
+  x: 2350.0
+  y: 150.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: >-
+      First, we prepare initial values. Some selected randomly for patient zeros.
+      Noone is cured.
+  parametricParameters: {}
+  x: 500.0
+  y: 50.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      Then we just repeat the simulation step (with different random seed!) for all days.
+
+      Unfortunately, no loops available on the LK UI. [Yet!](https://github.com/lynxkite/lynxkite/issues/65)
+  parametricParameters: {}
+  x: 1171.451399895419
+  y: 7.7475039864201705
