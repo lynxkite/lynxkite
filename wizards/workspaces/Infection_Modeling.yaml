@@ -3,7 +3,7 @@
   operationId: Anchor
   parameters:
     steps: >-
-      [{"box":"custom_boxes/drop-vertices_0","popup":"parameters","title":"Dropping
+      [{"box":"custom_boxes/infection-modeling/drop-vertices_0","popup":"parameters","title":"Dropping
       vertices","description":"This wizard allows you to play around with graph analysis
       based intervention\nmethods for managing a hypothetical infectious disease spreading
       on a\nhypothetical network of interpersonal connections.\n\nThe specifics of
@@ -33,7 +33,7 @@
       you can see the impact of your action to the epidemic.\n\nCheck out our blogpost
       for more details and some example scenarios!\n\nAlright, let's get started!
       \n\nFirst, in this step, let's decide on the faith of vertices. Select which
-      metric\nyou want to use, then decide how many vertices we should discard!\n"},{"box":"custom_boxes/drop-edges_0","popup":"parameters","title":"Dropping
+      metric\nyou want to use, then decide how many vertices we should discard!\n"},{"box":"custom_boxes/infection-modeling/drop-edges_0","popup":"parameters","title":"Dropping
       edges","description":"Next, let's discard edges! Again, choose the metric and
       the number of edges to discard.\n"},{"box":"sql2_0","popup":"table","description":"See
       below how many edges and vertices were dropped in total!\n\nThese numbers can
@@ -41,15 +41,15 @@
       is simply what you specified below. The edge number\nis more complex. When you
       drop a vertex, you automatically also drop\nall its edges, so the number here
       comes from a combination of your vertex\nand edge actions.\n","title":"How big
-      was your invention?"},{"box":"custom_boxes/evaluate_0","popup":"daily_plot","description":"This
+      was your invention?"},{"box":"custom_boxes/infection-modeling/evaluate_0","popup":"daily_plot","description":"This
       may take a few minutes....\n\nOnce the simulation is done, you can see here
       the timeline of the epidemic:\nthe number of new cases by day.\n","title":"Epidemic
       timeline"},{"title":"Total infected","description":"This may take a few minutes....\n\nHere
-      is the total number of people infected during our time window.\n","box":"custom_boxes/evaluate_0","popup":"total"},{"title":"Look
+      is the total number of people infected during our time window.\n","box":"custom_boxes/infection-modeling/evaluate_0","popup":"total"},{"title":"Look
       at a small sample","description":"This may take a few minutes....\n\nIn this
       graph visualization you can follow how the disease spread in a\nrandomly selected
       subgraph. Move the slider below to see which people got\nsick until a given
-      day.\n","box":"custom_boxes/evaluate_0","popup":"graph"}]
+      day.\n","box":"custom_boxes/infection-modeling/evaluate_0","popup":"graph"}]
     wizard: yes
   parametricParameters: {}
   x: 10.0
@@ -57,7 +57,7 @@
 - id: graphRejoin_0
   inputs:
     source:
-      boxId: custom_boxes/drop-edges_0
+      boxId: custom_boxes/infection-modeling/drop-edges_0
       id: output
     target:
       boxId: discardEdges_0
@@ -71,7 +71,7 @@
 - id: sql2_0
   inputs:
     one:
-      boxId: custom_boxes/compute-metrics-for-filtering_1
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
     two:
       boxId: graphRejoin_0
@@ -86,10 +86,10 @@
 - id: graphRejoin_1
   inputs:
     source:
-      boxId: custom_boxes/simulate_0
+      boxId: custom_boxes/infection-modeling/simulate_0
       id: output
     target:
-      boxId: custom_boxes/big-component-only_0
+      boxId: custom_boxes/infection-modeling/big-component-only_0
       id: output
   operationId: Graph rejoin
   parameters:
@@ -97,32 +97,32 @@
   parametricParameters: {}
   x: 2550.0
   y: 150.0
-- id: custom_boxes/big-component-only_0
+- id: custom_boxes/infection-modeling/big-component-only_0
   inputs:
     input_graph:
       boxId: Use-table-as-edges_1
       id: graph
-  operationId: custom_boxes/big-component-only
+  operationId: custom_boxes/infection-modeling/big-component-only
   parameters: {}
   parametricParameters: {}
   x: 750.0
   y: 150.0
-- id: custom_boxes/simulate_0
+- id: custom_boxes/infection-modeling/simulate_0
   inputs:
     input_graph:
       boxId: graphRejoin_0
       id: graph
-  operationId: custom_boxes/simulate
+  operationId: custom_boxes/infection-modeling/simulate
   parameters: {}
   parametricParameters: {}
   x: 2350.0
   y: 450.0
-- id: custom_boxes/evaluate_0
+- id: custom_boxes/infection-modeling/evaluate_0
   inputs:
     sim_result:
       boxId: graphRejoin_1
       id: graph
-  operationId: custom_boxes/evaluate
+  operationId: custom_boxes/infection-modeling/evaluate
   parameters: {}
   parametricParameters: {}
   x: 2950.0
@@ -130,43 +130,43 @@
 - id: discardEdges_0
   inputs:
     graph:
-      boxId: custom_boxes/drop-vertices_0
+      boxId: custom_boxes/infection-modeling/drop-vertices_0
       id: output
   operationId: Discard edges
   parameters: {}
   parametricParameters: {}
   x: 1700.0
   y: 300.0
-- id: custom_boxes/drop-edges_0
+- id: custom_boxes/infection-modeling/drop-edges_0
   inputs:
     original:
-      boxId: custom_boxes/compute-metrics-for-filtering_1
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
-  operationId: custom_boxes/drop-edges
+  operationId: custom_boxes/infection-modeling/drop-edges
   parameters:
     attribute: random
     number_to_drop: '0'
   parametricParameters: {}
   x: 1450.0
   y: 450.0
-- id: custom_boxes/drop-vertices_0
+- id: custom_boxes/infection-modeling/drop-vertices_0
   inputs:
     original:
-      boxId: custom_boxes/compute-metrics-for-filtering_1
+      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
-  operationId: custom_boxes/drop-vertices
+  operationId: custom_boxes/infection-modeling/drop-vertices
   parameters:
     attribute: page_rank
     number_to_drop: '2000'
   parametricParameters: {}
   x: 1450.0
   y: 300.0
-- id: custom_boxes/compute-metrics-for-filtering_1
+- id: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
   inputs:
     graph:
-      boxId: custom_boxes/big-component-only_0
+      boxId: custom_boxes/infection-modeling/big-component-only_0
       id: output
-  operationId: custom_boxes/compute-metrics-for-filtering
+  operationId: custom_boxes/infection-modeling/compute-metrics-for-filtering
   parameters: {}
   parametricParameters: {}
   x: 1050.0
