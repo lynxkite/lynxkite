@@ -274,7 +274,7 @@
   parameters:
     columns: Source,Destination
     filename: UPLOAD$/f317f40169a4158dbd765d9d282a4b0e.demog_edges.csv
-    imported_table: c36a5b43-ed0e-3603-96b6-7f4c57821726
+    imported_table: 0e86f869-7db6-3b1b-a9d2-58a6e13bf623
     last_settings: |-
       {
         "sql" : "",
@@ -302,7 +302,7 @@
   operationId: Import CSV
   parameters:
     filename: UPLOAD$/21844751980e4512d08b30d2ad82c40b.demog_vertices.csv
-    imported_table: d9f611a0-c26e-3d97-b865-f5376a9c117a
+    imported_table: 7fafeae7-fb92-3c02-b4c8-5fb045ea6974
     last_settings: |-
       {
         "sql" : "",
