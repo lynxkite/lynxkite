@@ -359,11 +359,11 @@ include::import-csv.asciidoc[]
 
 include::import-from-hive.asciidoc[]
 
+include::import-from-neo4j.asciidoc[]
+
 include::import-jdbc.asciidoc[]
 
 include::import-json.asciidoc[]
-
-include::import-neo4j.asciidoc[]
 
 include::import-orc.asciidoc[]
 
