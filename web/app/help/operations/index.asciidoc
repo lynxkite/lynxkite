@@ -287,6 +287,8 @@ include::export-to-avro.asciidoc[]
 
 include::export-to-csv.asciidoc[]
 
+include::export-to-delta.asciidoc[]
+
 include::export-to-hive.asciidoc[]
 
 include::export-to-jdbc.asciidoc[]
@@ -356,6 +358,8 @@ include::hash-vertex-attribute.asciidoc[]
 include::import-avro.asciidoc[]
 
 include::import-csv.asciidoc[]
+
+include::import-delta.asciidoc[]
 
 include::import-from-hive.asciidoc[]
 

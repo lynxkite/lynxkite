@@ -103,4 +103,35 @@ class ExportBoxTest extends OperationsTestBase {
 
     exportTarget.delete()
   }
+
+  test("Export to Delta") {
+    val path = "EXPORTTEST$/tmp/exportedDeltaTable"
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
+    val exportResult = importTestFile.box("Export to Delta", Map("path" -> path)).exportResult
+    dataManager.get(exportResult)
+    val importedAgain = importBox("Import Delta", Map(
+      "filename" -> path))
+      .box("Use table as vertices").project
+    checkResult(importedAgain)
+
+    exportTarget.delete()
+  }
+
+  test("Export to Delta and re-import with version") {
+    val path = "EXPORTTEST$/tmp/exportedDeltaTable"
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
+
+    val exportResult = importTestFile.box("Export to Delta", Map("path" -> path)).exportResult
+    dataManager.get(exportResult)
+
+    val importedAgain = importBox("Import Delta", Map(
+      "filename" -> path, "version_as_of" -> "0"))
+      .box("Use table as vertices").project
+    checkResult(importedAgain)
+
+    exportTarget.delete()
+  }
+
 }

@@ -255,6 +255,24 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   registerImport("Import JSON")(new FileWithSchema(_) { val format = "json" })
   registerImport("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
+  registerImport("Import from Delta")(new FileWithSchema(_) {
+    val format = "delta"
+    params ++= List(
+      Param("version_as_of", "versionAsOf"))
+
+    override def getRawDataFrame(context: spark.sql.SQLContext) = {
+      val hadoopFile = graph_util.HadoopFile(params("filename"))
+      hadoopFile.assertReadAllowedFrom(user)
+      FileImportValidator.checkFileHasContents(hadoopFile)
+
+      if (params("version_as_of").isEmpty) {
+        context.read.format(format).load(hadoopFile.resolvedName)
+      } else {
+        context.read.format(format).option("versionAsOf", params("version_as_of")).load(hadoopFile.resolvedName)
+      }
+    }
+  })
+
   registerImport("Import from Hive")(new ImportOperation(_) {
     params ++= List(
       Param("hive_table", "Hive table"),
