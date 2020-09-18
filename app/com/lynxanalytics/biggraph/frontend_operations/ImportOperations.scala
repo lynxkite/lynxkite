@@ -66,7 +66,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         group = "Advanced settings"),
       Param("limit", "Limit", group = "Advanced settings"),
       Code("sql", "SQL", language = "sql", group = "Advanced settings"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     override def summary = {
@@ -124,7 +124,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
@@ -154,7 +154,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
       Param("query", "Cypher query", defaultValue = "MATCH (src)-[rel]->(dst) RETURN src, dst, rel"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -262,7 +262,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     override def summary = {
@@ -289,7 +289,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
