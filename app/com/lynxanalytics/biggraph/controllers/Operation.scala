@@ -531,7 +531,7 @@ abstract class TableOutputOperation(context: Operation.Context) extends SmartOpe
   override def apply(): Unit = ???
 }
 
-case class ImportResult(guid: String, parameterSettings: String)
+case class ImportResult(key: String, parameterSettings: String)
 trait Importer {
   def runImport(env: BigGraphEnvironment): ImportResult
 
