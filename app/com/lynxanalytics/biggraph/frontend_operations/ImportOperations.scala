@@ -153,7 +153,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
-      Param("query", "Cypher query", defaultValue = "MATCH (src)-[rel]->(dst) RETURN src, dst, rel"),
+      Param("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node"),
+      Param("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel"),
       ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
@@ -163,8 +164,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       assert(!areSettingsStale, areSettingsStaleReplyMessage)
       import CommonProjectState._
       val state = json.Json.parse(params("imported_table")).as[CommonProjectState]
-      val project = new RootProjectEditor(state)
-      Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(project))
+      Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(state))
     }
 
     override def runImport(env: com.lynxanalytics.biggraph.BigGraphEnvironment): ImportResult = {
@@ -173,85 +173,40 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       import com.lynxanalytics.biggraph.graph_util.Scripting._
       val spark = SQLController.defaultContext()(env.sparkDomain)
       val project = new RootProjectEditor(CommonProjectState.emptyState)
-      val df = spark.read.format("org.neo4j.spark.DataSource")
-        .option("authentication.type", "basic")
-        .option("authentication.basic.username", params("username"))
-        .option("authentication.basic.password", params("password"))
-        .option("url", params("url"))
-        .option("schema.strategy", "string")
-        .option("query", params("query"))
-        .load
-        .cache
-
-      def getBy(columns: Seq[String], key: String, id: String = null) = {
+      def runQuery(query: String, column: String) = {
         import spark.implicits._
-        val available = columns.filter(df.columns.contains(_))
-        val kinds: Set[String] = available.map { column =>
-          df
-            .select(get_json_object(col(column), "$['" + key + "']"))
-            .dropDuplicates
-            .collect.map(r => r.getString(0)).toSet
-        }.reduce(_ ++ _)
-        kinds.map { k =>
-          val parsed = spark.read.json(
-            available
-              .map { column =>
-                df.filter(get_json_object(col(column), "$['" + key + "']") === k)
-                  .select(col(column)).as[String]
-              }
-              .reduce(_.union(_)))
-          val dedup = if (id != null) parsed.dropDuplicates(id) else parsed
-          graph_operations.ImportDataFrame.run(dedup)
-        }
+        val json = spark.read.format("org.neo4j.spark.DataSource")
+          .option("authentication.type", "basic")
+          .option("authentication.basic.username", params("username"))
+          .option("authentication.basic.password", params("password"))
+          .option("url", params("url"))
+          .option("schema.strategy", "string")
+          .option("query", query)
+          .load
+          .persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK)
+        assert(json.columns.contains(column), s"You must set a query that returns '$column'.")
+        val df = spark.read.json(json.select(col(column)).as[String])
+        val table = graph_operations.ImportDataFrame.run(df)
+        table.toProject.viewer
       }
-
-      for (table <- getBy(Seq("src", "dst", "node"), "<labels>", "<id>")) {
-        mergeInto(project, table.toProject.viewer)
-      }
-      assert(
-        project.vertexAttributes.contains("<id>"),
-        s"No 'src', 'dst', or 'node' found in query response: ${df.columns}")
-      for (table <- getBy(Seq("rel"), "<rel.type>")) {
-        addEdges(project, table.toProject.viewer)
+      // Get vertices.
+      val vs = runQuery(params("vertex_query"), "node")
+      project.vertexSet = vs.vertexSet
+      project.vertexAttributes = vs.vertexAttributes
+      // Get edges.
+      val es = runQuery(params("edge_query"), "rel")
+      import com.lynxanalytics.biggraph.graph_util.Scripting._
+      val idAttr = project.vertexAttributes("<id>").asString
+      val srcAttr = es.vertexAttributes("<source.id>").asString
+      val dstAttr = es.vertexAttributes("<target.id>").asString
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
+        idAttr, idAttr, srcAttr, dstAttr)
+      project.edgeBundle = imp.edges
+      for ((name, attr) <- es.vertexAttributes) {
+        project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(imp.embedding)
       }
       val state = json.Json.toJson(project.state).toString
       ImportResult(state, this.settingsString())
-    }
-
-    def addEdges(project: ProjectEditor, edges: ProjectViewer): Unit = {
-      import com.lynxanalytics.biggraph.graph_util.Scripting._
-      val idAttr = project.vertexAttributes("<id>").asString
-      val srcAttr = edges.vertexAttributes("<source.id>").asString
-      val dstAttr = edges.vertexAttributes("<target.id>").asString
-      val imp = graph_operations.ImportEdgesForExistingVertices.run(
-        idAttr, idAttr, srcAttr, dstAttr)
-
-      if (project.edgeBundle == null) {
-        project.edgeBundle = imp.edges
-        for ((name, attr) <- edges.vertexAttributes) {
-          project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(imp.embedding)
-        }
-        return
-      }
-      val idUnion = {
-        val op = graph_operations.VertexSetUnion(2)
-        op(op.vss, Seq(project.edgeBundle.idSet, imp.edges.idSet)).result
-      }
-      val ebUnion = {
-        val op = graph_operations.EdgeBundleUnion(2)
-        op(
-          op.ebs, Seq(project.edgeBundle, imp.edges.entity))(
-            op.injections, idUnion.injections.map(_.entity)).result.union
-      }
-      val oldAttrs = project.edgeAttributes.toMap
-      project.edgeBundle = ebUnion
-      project.edgeAttributes = unifyAttributes(
-        oldAttrs.map {
-          case (name, attr) => name -> attr.pullVia(idUnion.injections(0).reverse)
-        },
-        edges.vertexAttributes.map {
-          case (name, attr) => name -> attr.pullVia(idUnion.injections(1).reverse.concat(imp.embedding))
-        })
     }
   })
 

@@ -1,0 +1,29 @@
+### Import from Neo4j
+
+Import a graph from the https://neo4j.com/[Neo4j] graph database.
+
+Neo4j does not have a strict schema. Different nodes may have different attributes.
+In LynxKite the list of vertex attributes is defined for the whole graph.
+But each vertex may leave any attribute undefined.
+
+If you import Neo4j nodes that have different attributes, such as movies that have
+a `title` and actors that have a `name`, the resulting graph will have both `title` and
+`name` attributes. `title` will only be defined on movies, `name` will only be defined
+on actors.
+
+The same happens with edges.
+
+====
+[p-url]#Neo4j connection#::
+The connection URI for Neo4j.
+[p-username]#Neo4j username#::
+The username to use for the connection.
+[p-password]#Neo4j password#::
+The password to use for the connection.
+[p-vertex_query]#Vertex query#::
+The Cypher query to run on Neo4j to get the vertices. This query must return a node named `node`.
+The default query imports all the nodes from Neo4j. Leave empty to not import vertex attributes.
+[p-edge_query]#Edge query#::
+The Cypher query to run on Neo4j to get the edges. This query must return a relationship named `rel`.
+The default query imports all the relationships from Neo4j. Leave empty to not import edges.
+====
