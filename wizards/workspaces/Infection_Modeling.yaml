@@ -71,7 +71,8 @@
 - id: sql2_0
   inputs:
     one:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
     two:
       boxId: graphRejoin_0
@@ -140,7 +141,8 @@
 - id: custom_boxes/infection-modeling/drop-edges_0
   inputs:
     original:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
   operationId: custom_boxes/infection-modeling/drop-edges
   parameters:
@@ -152,7 +154,8 @@
 - id: custom_boxes/infection-modeling/drop-vertices_0
   inputs:
     original:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
   operationId: custom_boxes/infection-modeling/drop-vertices
   parameters:
@@ -161,12 +164,14 @@
   parametricParameters: {}
   x: 1450.0
   y: 300.0
-- id: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+- id: >-
+    custom_boxes/infection-modeling/compute-metrics-for-filtering_1
   inputs:
     graph:
       boxId: custom_boxes/infection-modeling/big-component-only_0
       id: output
-  operationId: custom_boxes/infection-modeling/compute-metrics-for-filtering
+  operationId: >-
+    custom_boxes/infection-modeling/compute-metrics-for-filtering
   parameters: {}
   parametricParameters: {}
   x: 1050.0
