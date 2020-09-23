@@ -9,11 +9,11 @@
       on a\nhypothetical network of interpersonal connections.\n\nThe specifics of
       the spread model considered here has nothing to do with\nCOVID-19. It is made
       up.\n\nAlso, the graph we are considering is not exactly a real graph of\nphysical
-      connections. We are using friendship data from a Slovekian socail\nmedia from
-      the past, called Pokec.\n\nSo of course, no concrete conclusion or action can
-      be infered from this\nanalysis to the current pandemic. But we believe it is
-      a strong proof of\nconcept: it would be super important to understand better
-      the graph\nstructure of human interactions. Based on that and a strong COVID\ninfection
+      connections. We are using friendship data from a Slovak social\nmedia from the
+      past, called Pokec.\n\nSo of course, no concrete conclusion or action can be
+      infered from this\nanalysis to the current pandemic. But we believe it is a
+      strong proof of\nconcept: it would be super important to understand better the
+      graph\nstructure of human interactions. Based on that and a strong COVID\ninfection
       model it seems possible that we can identify critical people or\ncritical connection
       types which have a strong impact on the progress of the\nepidemic and we can
       have huge positive impact by isolating critical people\nor removing critical
@@ -30,7 +30,7 @@
       way, we can drop edges based on some edge metric.\n\nIn this wizard, you can
       select which metric you want to use to select the\nedges and vertices to drop,
       and also, specify how many you want to remove.\n\nThen a simulation runs and
-      you can see the impact of your action to the epidemic.\n\nCheck out our blogpost
+      you can see the impact of your action to the epidemic.\n\nCheck out our [blogpost](https://lynxkite.com/2020/09/16/infection-modelling-on-a-graph.html)
       for more details and some example scenarios!\n\nAlright, let's get started!
       \n\nFirst, in this step, let's decide on the faith of vertices. Select which
       metric\nyou want to use, then decide how many vertices we should discard!\n"},{"box":"custom_boxes/infection-modeling/drop-edges_0","popup":"parameters","title":"Dropping
@@ -71,7 +71,8 @@
 - id: sql2_0
   inputs:
     one:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
     two:
       boxId: graphRejoin_0
@@ -140,7 +141,8 @@
 - id: custom_boxes/infection-modeling/drop-edges_0
   inputs:
     original:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
   operationId: custom_boxes/infection-modeling/drop-edges
   parameters:
@@ -152,7 +154,8 @@
 - id: custom_boxes/infection-modeling/drop-vertices_0
   inputs:
     original:
-      boxId: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+      boxId: >-
+        custom_boxes/infection-modeling/compute-metrics-for-filtering_1
       id: graph
   operationId: custom_boxes/infection-modeling/drop-vertices
   parameters:
@@ -161,12 +164,14 @@
   parametricParameters: {}
   x: 1450.0
   y: 300.0
-- id: custom_boxes/infection-modeling/compute-metrics-for-filtering_1
+- id: >-
+    custom_boxes/infection-modeling/compute-metrics-for-filtering_1
   inputs:
     graph:
       boxId: custom_boxes/infection-modeling/big-component-only_0
       id: output
-  operationId: custom_boxes/infection-modeling/compute-metrics-for-filtering
+  operationId: >-
+    custom_boxes/infection-modeling/compute-metrics-for-filtering
   parameters: {}
   parametricParameters: {}
   x: 1050.0
