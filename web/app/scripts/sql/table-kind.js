@@ -6,7 +6,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
     scope: {
       box: '=',
       params: '=',
-      key: '=',
+      guid: '=',
       workspaceReference: '&',
       onBlur: '&',
     },
@@ -20,7 +20,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
           box: box,
           ref: scope.workspaceReference(),
         }).then(function success(response) {
-          scope.key = response.key;
+          scope.guid = response.guid;
           scope.params.last_settings = response.parameterSettings;
           scope.onBlur();
         }).finally(function() {

@@ -113,7 +113,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox, Map())
     val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
-    val guid = response.key
+    val guid = response.guid
     val settings = response.parameterSettings
     box(operationId, parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
   }
