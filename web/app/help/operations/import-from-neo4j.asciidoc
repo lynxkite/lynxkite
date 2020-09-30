@@ -13,6 +13,9 @@ on actors.
 
 The same happens with edges.
 
+If multiple node types have attributes of the same name, those attributes need to have
+the same type. If this is not the case, you can narrow down the query by node label.
+
 ====
 [p-url]#Neo4j connection#::
 The connection URI for Neo4j.
