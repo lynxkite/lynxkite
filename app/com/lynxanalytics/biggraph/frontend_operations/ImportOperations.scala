@@ -198,28 +198,31 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       // Get edges.
       if (params("edge_query").nonEmpty) {
         val df = runQuery(params("edge_query"), "rel")
-        if (params("vertex_query").isEmpty) {
-          // Create vertices from the edge endpoints.
-          val vdf = df.select("`<source.id>`")
-            .union(df.select("`<target.id>`"))
-            .withColumnRenamed("<source.id>", "<id>")
-            .distinct
-          val table = graph_operations.ImportDataFrame.run(vdf)
-          val vs = table.toProject
-          project.vertexSet = vs.vertexSet
-          project.vertexAttributes = vs.viewer.vertexAttributes
-        }
         val table = graph_operations.ImportDataFrame.run(df)
-        val es = table.toProject.viewer
-        val idAttr = project.vertexAttributes("<id>").asString
-        val srcAttr = es.vertexAttributes("<source.id>").asString
-        val dstAttr = es.vertexAttributes("<target.id>").asString
-        val imp = graph_operations.ImportEdgesForExistingVertices.run(
-          idAttr, idAttr, srcAttr, dstAttr)
-        project.edgeBundle = imp.edges
-        for ((name, attr) <- es.vertexAttributes) {
-          // LynxKite attribute names cannot have '.'.
-          project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(imp.embedding)
+        val esp = table.toProject.viewer
+        val srcAttr = esp.vertexAttributes("<source.id>").asString
+        val dstAttr = esp.vertexAttributes("<target.id>").asString
+        if (params("vertex_query").isEmpty) {
+          val es = {
+            val op = graph_operations.VerticesToEdges()
+            op(op.srcAttr, srcAttr)(op.dstAttr, dstAttr).result
+          }
+          project.vertexSet = es.vs
+          project.newVertexAttribute("<id>", es.stringId)
+          project.edgeBundle = es.es
+          for ((name, attr) <- esp.vertexAttributes) {
+            // LynxKite attribute names cannot have '.'.
+            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
+          }
+        } else {
+          val idAttr = project.vertexAttributes("<id>").asString
+          val es = graph_operations.ImportEdgesForExistingVertices.run(
+            idAttr, idAttr, srcAttr, dstAttr)
+          project.edgeBundle = es.edges
+          for ((name, attr) <- esp.vertexAttributes) {
+            // LynxKite attribute names cannot have '.'.
+            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
+          }
         }
       }
       val state = json.Json.toJson(project.state).toString
