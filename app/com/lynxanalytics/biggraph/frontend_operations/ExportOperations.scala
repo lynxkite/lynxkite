@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers._
 
@@ -153,4 +154,54 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
     }
   })
+
+  abstract class Neo4jAttributeExport(context: Operation.Context) extends TriggerableOperation(context) {
+    params ++= List(
+      Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
+      Param("username", "Neo4j username", defaultValue = "neo4j"),
+      Param("password", "Neo4j password", defaultValue = "neo4j"),
+      NonNegInt("version", "Revision ID", default = 1))
+    lazy val project = projectInput("graph")
+    val nodesOrRelationships: String
+    override def enabled = FEStatus.enabled
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+      gdc.getComputeBoxResult(List(exportResult.gUID))
+    }
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      params.validate()
+      Map(context.box.output(
+        context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
+    }
+    def exportResult() = {
+      val keys = splitParam("keys")
+      val attrs = (splitParam("to_export") ++ keys).toSet.toList
+      val t = graph_operations.AttributesToTable.run(attrs.map(a => a -> project.vertexAttributes(a)))
+      //  .map(k => s"$k:$k").mkString(",")
+      assert(keys.nonEmpty, "You have to choose one or more attributes to use as the keys for identifying the nodes in Neo4j.")
+      val op = graph_operations.ExportAttributesToNeo4j(
+        params("url"), params("username"), params("password"), params("labels"), keys, params("version").toInt, nodesOrRelationships)
+      op(op.t, t).result.exportResult
+    }
+  }
+
+  registerOp(
+    "Export vertex attributes to Neo4j", defaultIcon, ExportOperations,
+    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+      import Operation.Implicits._
+      params ++= List(
+        Param("labels", "Node labels", defaultValue = ""),
+        Choice("keys", "Attribute to use as key", options = project.vertexAttrList, multipleChoice = true),
+        Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true))
+      val nodesOrRelationships = "nodes"
+    })
+  registerOp(
+    "Export edge attributes to Neo4j", defaultIcon, ExportOperations,
+    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+      import Operation.Implicits._
+      params ++= List(
+        Param("labels", "Relationship labels", defaultValue = ""),
+        Choice("keys", "Attribute to use as key", options = project.edgeAttrList, multipleChoice = true),
+        Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true))
+      val nodesOrRelationships = "edges"
+    })
 }
