@@ -361,7 +361,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val sql = new SQLController(this, ops)
       val guidFuture = sql.importBox(user, csv, workspaceParams)
       val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
-      val guid = response.guid
+      val guid = response.key
       val settings = response.parameterSettings
       csv.copy(parameters = csv.parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
     }
