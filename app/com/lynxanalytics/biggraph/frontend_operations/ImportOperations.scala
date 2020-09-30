@@ -258,7 +258,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   registerImport("Import JSON")(new FileWithSchema(_) { val format = "json" })
   registerImport("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
-  registerImport("Import from Delta")(new FileWithSchema(_) {
+  registerImport("Import Delta")(new FileWithSchema(_) {
     val format = "delta"
     params ++= List(
       Param("version_as_of", "versionAsOf"))
