@@ -141,6 +141,7 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.11 # 2.3.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-ws_2.11 # 2.3.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.11 # 2.3.7 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.11 # 0.6.1 | <notextile></notextile>
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
@@ -235,11 +236,14 @@ BSD | [BSD 3-Clause](http://www.scala-lang.org/license.html) | org.scala-lang # 
 BSD | [BSD 3-Clause](http://www.scala-lang.org/license.html) | org.scala-lang # scala-reflect # 2.11.8 | <notextile></notextile>
 BSD | [BSD 3-Clause](https://spdx.org/licenses/BSD 3-Clause#licenseText) | org.webjars.bower # vega # 2.6.5 | <notextile></notextile>
 BSD | [BSD 3-Clause](https://spdx.org/licenses/BSD 3-Clause#licenseText) | org.webjars.bower # vega-lite # 1.2.0 | <notextile></notextile>
+BSD | [BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)](http://www.abego-software.de/legal/apl-v10.html) | org.abego.treelayout # org.abego.treelayout.core # 1.0.3 | <notextile></notextile>
 BSD | [BSD 3-clause](http://opensource.org/licenses/BSD-3-Clause) | org.scala-lang.modules # scala-parser-combinators_2.11 # 1.0.4 | <notextile></notextile>
 BSD | [BSD 3-clause](http://opensource.org/licenses/BSD-3-Clause) | org.scala-lang.modules # scala-xml_2.11 # 1.0.6 | <notextile></notextile>
 BSD | [BSD License](http://jdbc.postgresql.org/license.html) | org.postgresql # postgresql # 9.3-1102-jdbc41 | <notextile></notextile>
 BSD | [BSD License](http://www.opensource.org/licenses/bsd-license) | org.webbitserver # webbit # 0.4.14 | <notextile></notextile>
 BSD | [BSD License for HSQL](http://svn.osgeo.org/geotools/trunk/licenses/HSQL.html) | org.geotools # gt-epsg-hsql # 20.0 | <notextile></notextile>
+BSD | [BSD licence](http://antlr.org/license.html) | org.antlr # ST4 # 4.0.8 | <notextile></notextile>
+BSD | [BSD licence](http://antlr.org/license.html) | org.antlr # antlr-runtime # 3.5.2 | <notextile></notextile>
 BSD | [BSD-3-Clause](https://asm.ow2.io/license.html) | org.ow2.asm # asm # 8.0.1 | <notextile></notextile>
 BSD | [BSD-3-Clause](https://asm.ow2.io/license.html) | org.ow2.asm # asm-analysis # 8.0.1 | <notextile></notextile>
 BSD | [BSD-3-Clause](https://asm.ow2.io/license.html) | org.ow2.asm # asm-tree # 8.0.1 | <notextile></notextile>
@@ -254,11 +258,14 @@ BSD | [Modified BSD](http://asm.objectweb.org/license.html) | org.glassfish.jers
 BSD | [New BSD License](http://www.opensource.org/licenses/bsd-license.php) | org.hamcrest # hamcrest-core # 1.3 | <notextile></notextile>
 BSD | [The BSD License](http://www.opensource.org/licenses/bsd-license.php) | jline # jline # 2.14.3 | <notextile></notextile>
 BSD | [The BSD License](http://www.opensource.org/licenses/bsd-license.php) | net.sourceforge.f2j # arpack_combined_all # 0.1 | <notextile></notextile>
+BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4 # 4.7 | <notextile></notextile>
+BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.7 | <notextile></notextile>
 BSD | [Three-clause BSD-style](https://github.com/mpilquist/simulacrum/blob/master/LICENSE) | com.github.mpilquist # simulacrum_2.11 # 0.10.0 | <notextile></notextile>
 BSD | [Three-clause BSD-style](https://github.com/scodec/scodec-bits/blob/master/LICENSE) | org.scodec # scodec-bits_2.11 # 1.0.9 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11-RC1 | <notextile></notextile>
 CC0 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/) | org.reactivestreams # reactive-streams # 1.0.3 | <notextile></notextile>
 CDDL | [COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0](https://glassfish.dev.java.net/public/CDDLv1.0.html) | javax.activation # activation # 1.1.1 | <notextile></notextile>
+GPL | [                 Dual license consisting of the CDDL v1.1 and GPL v2             ](https://glassfish.java.net/public/CDDL+GPL_1_1.html) | org.glassfish # javax.json # 1.0.4 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # annotations # 4.1.1 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # io-test-utils # 4.1.1 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j # 4.1.1 | <notextile></notextile>
@@ -426,6 +433,7 @@ unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locatio
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts-core # 1.16.0 | <notextile></notextile>
 unrecognized | [JDL (Java Distribution License)](https://jai.dev.java.net/jdl-jai.pdf) | javax.media # jai_core # 1.1.3 | <notextile></notextile>
 unrecognized | [The W3C Software License](http://www.w3.org/Consortium/Legal/copyright-software-19980720) | org.w3c.css # sac # 1.3 | <notextile></notextile>
+unrecognized | [Unicode/ICU License](http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE) | com.ibm.icu # icu4j # 58.2 | <notextile></notextile>
 unrecognized | [none specified](none specified) | cglib # cglib-nodep # 2.1_3 | <notextile></notextile>
 unrecognized | [none specified](none specified) | javax.transaction # jta # 1.1 | <notextile></notextile>
 unrecognized | [none specified](none specified) | jgridshift # jgridshift # 1.0 | <notextile></notextile>

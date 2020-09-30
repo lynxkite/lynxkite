@@ -6,6 +6,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Neo4j 4.x support.
+- Revamped Neo4j import. Instead of importing tables, you can now import a whole graph.
+  ([#90](https://github.com/lynxkite/lynxkite/pull/90))
+- AVRO and Delta Lake import and export.
+  ([#63](https://github.com/lynxkite/lynxkite/pull/63), [#86](https://github.com/lynxkite/lynxkite/pull/86))
 - Added the _"Filter with SQL"_ box as a more flexible alternative to _"Filter by attributes"_.
 - Visualization option to not display edges. Great in large geographic datasets.
 - _"Use table as vertex/edge attributes"_ boxes are more friendly and handle name conflicts better
