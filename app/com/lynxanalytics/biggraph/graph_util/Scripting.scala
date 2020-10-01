@@ -72,6 +72,11 @@ object Scripting {
       val op = graph_operations.AddReversedEdges()
       op(op.es, self).result.esPlus
     }
+
+    def srcDstAttribute: Attribute[(ID, ID)] = {
+      val op = graph_operations.EdgeBundleAsAttribute()
+      op(op.edges, self).result.attr
+    }
   }
 
   implicit class RichContainedAttribute[T](
