@@ -435,16 +435,6 @@ object BigGraphSparkContext {
       .set("spark.eventLog.compress", "true")
       // Progress bars are not great in logs.
       .set("spark.ui.showConsoleProgress", "false")
-      // Neo4j
-      .set(
-        "spark.neo4j.bolt.url",
-        LoggedEnvironment.envOrElse("NEO4J_URI", "bolt://localhost:7687"))
-      .set(
-        "spark.neo4j.bolt.password",
-        LoggedEnvironment.envOrElse("NEO4J_PASSWORD", "", true))
-      .set(
-        "spark.neo4j.bolt.user",
-        LoggedEnvironment.envOrElse("NEO4J_USER", "neo4j", true))
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf

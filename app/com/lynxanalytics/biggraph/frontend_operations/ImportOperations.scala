@@ -6,26 +6,20 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
+import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
-class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
-  implicit lazy val manager = env.metaGraphManager
+class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.ImportOperations
+  val category = Categories.ImportOperations
 
   override val defaultIcon = "upload"
 
-  def register(id: String)(factory: Context => ImportOperation): Unit = {
-    registerOp(id, defaultIcon, ImportOperations, List(), List("table"), factory)
-  }
-
-  def register(id: String, inputs: List[String], outputs: List[String])(
-    factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, ImportOperations, inputs, outputs, factory)
+  def registerImport(id: String)(factory: Context => ImportOperation): Unit = {
+    registerOp(id, defaultIcon, category, List(), List("table"), factory)
   }
 
   import OperationParams._
@@ -39,7 +33,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     else name.split("/", -1).last
   }
 
-  register("Import CSV")(new ImportOperation(_) {
+  registerImport("Import CSV")(new ImportOperation(_) {
     params ++= List(
       FileParam("filename", "File"),
       Param(
@@ -72,7 +66,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         group = "Advanced settings"),
       Param("limit", "Limit", group = "Advanced settings"),
       Code("sql", "SQL", language = "sql", group = "Advanced settings"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     override def summary = {
@@ -119,7 +113,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import JDBC")(new ImportOperation(_) {
+  registerImport("Import JDBC")(new ImportOperation(_) {
     params ++= List(
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
@@ -130,7 +124,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
@@ -151,27 +145,88 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import Neo4j")(new ImportOperation(_) {
+  register("Import from Neo4j", List(), List("graph"))(new SimpleOperation(_) with Importer {
+    import play.api.libs.json
+    import com.lynxanalytics.biggraph.controllers._
+
     params ++= List(
-      Param("node_label", "Node label"),
-      Param("relationship_type", "Relationship type"),
-      NonNegInt("num_partitions", "Number of partitions", default = 0),
-      Choice("infer", "Infer types", options = FEOption.noyes),
-      Code("sql", "SQL", language = "sql"),
-      Param("imported_columns", "Columns to import"),
-      Param("limit", "Limit"),
-      ImportedTableParam("imported_table"),
+      Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
+      Param("username", "Neo4j username", defaultValue = "neo4j"),
+      Param("password", "Neo4j password", defaultValue = "neo4j"),
+      Param("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node"),
+      Param("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
-    def getRawDataFrame(context: spark.sql.SQLContext) = {
-      Neo4jUtil.read(
-        context,
-        params("node_label"),
-        params("relationship_type"),
-        splitParam("imported_columns").toSet,
-        params("infer") == "yes",
-        params("limit"),
-        params("num_partitions").toInt)
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      params.validate()
+      assert(params("imported_table").nonEmpty, "You have to import the data first.")
+      assert(!areSettingsStale, areSettingsStaleReplyMessage)
+      import CommonProjectState._
+      val state = json.Json.parse(params("imported_table")).as[CommonProjectState]
+      Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(state))
+    }
+
+    override def runImport(env: com.lynxanalytics.biggraph.BigGraphEnvironment): ImportResult = {
+      import org.apache.spark.sql.functions._
+      import org.apache.spark.sql.types
+      import com.lynxanalytics.biggraph.graph_util.Scripting._
+      val spark = SQLController.defaultContext()(env.sparkDomain)
+      val project = new RootProjectEditor(CommonProjectState.emptyState)
+      def runQuery(query: String, column: String) = {
+        import spark.implicits._
+        val json = spark.read.format("org.neo4j.spark.DataSource")
+          .option("authentication.type", "basic")
+          .option("authentication.basic.username", params("username"))
+          .option("authentication.basic.password", params("password"))
+          .option("url", params("url"))
+          .option("schema.strategy", "string")
+          .option("query", query)
+          .load
+          .persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK)
+        assert(json.columns.contains(column), s"You must set a query that returns '$column'.")
+        spark.read.json(json.select(col(column)).as[String])
+      }
+      // Get vertices.
+      if (params("vertex_query").nonEmpty) {
+        val df = runQuery(params("vertex_query"), "node")
+        val table = graph_operations.ImportDataFrame.run(df)
+        val vs = table.toProject
+        project.vertexSet = vs.vertexSet
+        project.vertexAttributes = vs.viewer.vertexAttributes
+      }
+      // Get edges.
+      if (params("edge_query").nonEmpty) {
+        val df = runQuery(params("edge_query"), "rel")
+        val table = graph_operations.ImportDataFrame.run(df)
+        val esp = table.toProject.viewer
+        val srcAttr = esp.vertexAttributes("<source.id>").asString
+        val dstAttr = esp.vertexAttributes("<target.id>").asString
+        if (params("vertex_query").isEmpty) {
+          val es = {
+            val op = graph_operations.VerticesToEdges()
+            op(op.srcAttr, srcAttr)(op.dstAttr, dstAttr).result
+          }
+          project.vertexSet = es.vs
+          project.newVertexAttribute("<id>", es.stringId)
+          project.edgeBundle = es.es
+          for ((name, attr) <- esp.vertexAttributes) {
+            // LynxKite attribute names cannot have '.'.
+            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
+          }
+        } else {
+          val idAttr = project.vertexAttributes("<id>").asString
+          val es = graph_operations.ImportEdgesForExistingVertices.run(
+            idAttr, idAttr, srcAttr, dstAttr)
+          project.edgeBundle = es.edges
+          for ((name, attr) <- esp.vertexAttributes) {
+            // LynxKite attribute names cannot have '.'.
+            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
+          }
+        }
+      }
+      val state = json.Json.toJson(project.state).toString
+      ImportResult(state, this.settingsString())
     }
   })
 
@@ -182,7 +237,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
 
     override def summary = {
@@ -198,12 +253,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   }
 
-  register("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
-  register("Import ORC")(new FileWithSchema(_) { val format = "orc" })
-  register("Import JSON")(new FileWithSchema(_) { val format = "json" })
-  register("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
+  registerImport("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
+  registerImport("Import ORC")(new FileWithSchema(_) { val format = "orc" })
+  registerImport("Import JSON")(new FileWithSchema(_) { val format = "json" })
+  registerImport("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
 
-  register("Import Delta")(new FileWithSchema(_) {
+  registerImport("Import Delta")(new FileWithSchema(_) {
     val format = "delta"
     params ++= List(
       Param("version_as_of", "versionAsOf"))
@@ -221,13 +276,13 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import from Hive")(new ImportOperation(_) {
+  registerImport("Import from Hive")(new ImportOperation(_) {
     params ++= List(
       Param("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table"),
+      ImportedDataParam(),
       new DummyParam("last_settings", ""))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
