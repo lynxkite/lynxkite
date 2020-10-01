@@ -35,7 +35,7 @@ case class ExportAttributesToNeo4j(
     rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     implicit val sd = rc.sparkDomain
-    val df = inputs.t.df
+    val df = keys.foldLeft(inputs.t.df)((df, key) => df.filter(df(key).isNotNull))
     val keyMatch = keys.map(k => s"`$k`: event.`$k`").mkString(", ")
     val query = s"MERGE (n$labels {$keyMatch}) SET n += event"
     df.write

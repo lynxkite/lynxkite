@@ -190,7 +190,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       import Operation.Implicits._
       params ++= List(
         Param("labels", "Node labels", defaultValue = ""),
-        Choice("keys", "Attribute to use as key", options = project.vertexAttrList, multipleChoice = true),
+        Choice("keys", "Attribute to use as key",
+          // Cannot join on internal ID ("<id>") and stuff like that.
+          options = project.vertexAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
         Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true))
       val nodesOrRelationships = "nodes"
     })
@@ -200,7 +202,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       import Operation.Implicits._
       params ++= List(
         Param("labels", "Relationship labels", defaultValue = ""),
-        Choice("keys", "Attribute to use as key", options = project.edgeAttrList, multipleChoice = true),
+        Choice("keys", "Attribute to use as key",
+          // Cannot join on internal ID ("<id>") and stuff like that.
+          options = project.edgeAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
         Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true))
       val nodesOrRelationships = "edges"
     })
