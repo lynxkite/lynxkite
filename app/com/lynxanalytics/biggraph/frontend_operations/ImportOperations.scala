@@ -167,6 +167,15 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(state))
     }
 
+    def isNameValid(name: String) = {
+      try {
+        SubProject.validateName(name)
+        true
+      } catch {
+        case e: AssertionError => false
+      }
+    }
+
     override def runImport(env: com.lynxanalytics.biggraph.BigGraphEnvironment): ImportResult = {
       import org.apache.spark.sql.functions._
       import org.apache.spark.sql.types
@@ -202,6 +211,16 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         val esp = table.toProject.viewer
         val srcAttr = esp.vertexAttributes("<source.id>").asString
         val dstAttr = esp.vertexAttributes("<target.id>").asString
+        def pullAttributes(embedding: EdgeBundle) = {
+          for ((name, attr) <- esp.vertexAttributes) {
+            // LynxKite attribute names cannot have '.'.
+            val renamed = name.replace(".", "_")
+            // Skip names that have other issues.
+            if (isNameValid(renamed)) {
+              project.edgeAttributes(renamed) = attr.pullVia(embedding)
+            }
+          }
+        }
         if (params("vertex_query").isEmpty) {
           val es = {
             val op = graph_operations.VerticesToEdges()
@@ -210,19 +229,13 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
           project.vertexSet = es.vs
           project.newVertexAttribute("<id>", es.stringId)
           project.edgeBundle = es.es
-          for ((name, attr) <- esp.vertexAttributes) {
-            // LynxKite attribute names cannot have '.'.
-            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
-          }
+          pullAttributes(es.embedding)
         } else {
           val idAttr = project.vertexAttributes("<id>").asString
           val es = graph_operations.ImportEdgesForExistingVertices.run(
             idAttr, idAttr, srcAttr, dstAttr)
           project.edgeBundle = es.edges
-          for ((name, attr) <- esp.vertexAttributes) {
-            // LynxKite attribute names cannot have '.'.
-            project.edgeAttributes(name.replace(".", "_")) = attr.pullVia(es.embedding)
-          }
+          pullAttributes(es.embedding)
         }
       }
       val state = json.Json.toJson(project.state).toString

@@ -1,0 +1,46 @@
+### Export edge attributes to Neo4j
+
+Exports edge attributes from a graph in LynxKite to a
+corresponding graph in https://neo4j.com/[Neo4j].
+
+The relationships in Neo4j are identified by a key property (or properties).
+You must have a corresponding edge attribute in LynxKite by the same name.
+This will be used to find the right relationship to update in Neo4j.
+
+The properties of the Neo4j relationships will be updated with the exported edge attributes
+using a Cypher query like this:
+
+    UNWIND $events as event
+    MATCH ()-[r:TYPE {`key`: event.`key`}]-()
+    SET r += event
+
+In the event of duplicate keys on either end this will update the properties of all the matching
+Neo4j relationships with the values from the last matching LynxKite edge.
+
+====
+
+[p-url]#Neo4j connection#::
+The Neo4j connection string of the form `bolt://localhost:7687`.
+
+[p-username]#Neo4j username#::
+Username for the connection.
+
+[p-password]#Neo4j password#::
+Password for the connection. It will be saved in the workspace and visible to anyone with
+access to the workspace.
+
+[p-version]#Export repetition ID#::
+LynxKite only re-computes outputs if parameters or inputs have changed.
+This is true for exports too. If you want to repeat a previous export, you can increase this
+export repetition ID parameter.
+
+[p-labels]#Relationship type#::
+Makes it possible to restrict the export to one relationship type in Neo4j.
+This is useful to make sure no other relationship type is accidentally affected.
+The format is as in Cypher: `:TYPE`. Leave empty to allow updating any node.
+
+[p-keys]#Attribute(s) to use as key#::
+Select the attribute (or attributes) to identify the Neo4j relationships by.
+The attribute name must match the property name in Neo4j.
+
+====

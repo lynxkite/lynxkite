@@ -95,6 +95,9 @@ libraryDependencies ++= Seq(
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
   // Used for working with AVRO files. 
   "org.apache.spark" %% "spark-avro" % sparkVersion.value,
+  // For Neo4j tests.
+  "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
+  "org.testcontainers" % "neo4j" % "1.14.3" % Test,
   // Used for working with Delta tables.
   "io.delta" %% "delta-core" % "0.6.1"
 )
