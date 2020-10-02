@@ -18,7 +18,7 @@ object ExportAttributesToNeo4j extends OpFromJson {
     (j \ "nodesOrRelationships").as[String])
 }
 
-case class Neo4jConnection(url: String, username: String, password: String) {
+case class Neo4jConnectionParameters(url: String, username: String, password: String) {
   def send(df: spark.sql.DataFrame, query: String) {
     df.write
       .format("org.neo4j.spark.DataSource")
@@ -35,7 +35,7 @@ case class ExportAttributesToNeo4j(
     url: String, username: String, password: String, labels: String, keys: Seq[String],
     version: Long, nodesOrRelationships: String)
   extends SparkOperation[ExportAttributesToNeo4j.Input, ExportAttributesToNeo4j.Output] {
-  val neo = Neo4jConnection(url, username, password)
+  val neo = Neo4jConnectionParameters(url, username, password)
   @transient override lazy val inputs = new ExportAttributesToNeo4j.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new ExportAttributesToNeo4j.Output()(instance)
   override def toJson = Json.obj(
@@ -83,7 +83,7 @@ case class ExportGraphToNeo4j(
     relationshipTypeColumn: String, version: Long)
   extends SparkOperation[ExportGraphToNeo4j.Input, ExportGraphToNeo4j.Output] {
   import ExportGraphToNeo4j._
-  val neo = Neo4jConnection(url, username, password)
+  val neo = Neo4jConnectionParameters(url, username, password)
   @transient override lazy val inputs = new ExportGraphToNeo4j.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new ExportGraphToNeo4j.Output()(instance)
   override def toJson = Json.obj(
