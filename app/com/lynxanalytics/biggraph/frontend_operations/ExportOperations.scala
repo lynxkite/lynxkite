@@ -172,11 +172,11 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Map(context.box.output(
         context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
     }
+    def getAttribute(a: String): com.lynxanalytics.biggraph.graph_api.Attribute[_]
     def exportResult() = {
       val keys = splitParam("keys")
       val attrs = (splitParam("to_export") ++ keys).toSet.toList
-      val t = graph_operations.AttributesToTable.run(
-        attrs.map(a => a -> project.vertexAttributes(a)))
+      val t = graph_operations.AttributesToTable.run(attrs.map(a => a -> getAttribute(a)))
       assert(keys.nonEmpty, "You have to choose one or more attributes to use as the keys for identifying the nodes in Neo4j.")
       val op = graph_operations.ExportAttributesToNeo4j(
         params("url"), params("username"), params("password"), params("labels"), keys,
@@ -196,6 +196,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           options = project.vertexAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
         Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true))
       val nodesOrRelationships = "nodes"
+      def getAttribute(a: String) = project.vertexAttributes(a)
     })
   registerOp(
     "Export edge attributes to Neo4j", defaultIcon, ExportOperations,
@@ -207,7 +208,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           // Cannot join on internal ID ("<id>") and stuff like that.
           options = project.edgeAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
         Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true))
-      val nodesOrRelationships = "edges"
+      val nodesOrRelationships = "relationships"
+      def getAttribute(a: String) = project.edgeAttributes(a)
     })
 
   registerOp(
