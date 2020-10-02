@@ -7,7 +7,15 @@ The relationships in Neo4j are identified by a key property (or properties).
 You must have a corresponding edge attribute in LynxKite by the same name.
 This will be used to find the right relationship to update in Neo4j.
 
-The properties of the Neo4j relationships will be updated with the exported edge attributes.
+The properties of the Neo4j relationships will be updated with the exported edge attributes
+using a Cypher query like this:
+
+    UNWIND $events as event
+    MATCH ()-[r:TYPE {`key`: event.`key`}]-()
+    SET r += event
+
+In the event of duplicate keys on either end this will update the properties of all the matching
+Neo4j relationships with the values from the last matching LynxKite edge.
 
 ====
 

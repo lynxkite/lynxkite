@@ -7,7 +7,15 @@ The nodes in Neo4j are identified by a key property (or properties).
 You must have a corresponding vertex attribute in LynxKite by the same name.
 This will be used to find the right nodes to update in Neo4j.
 
-The properties of the Neo4j nodes will be updated with the exported vertex attributes.
+The properties of the Neo4j nodes will be updated with the exported vertex attributes using
+a Cypher query like this:
+
+    UNWIND $events as event
+    MATCH (n:Label1:Label2 {`key`: event.`key`})
+    SET n += event
+
+In the event of duplicate keys on either end this will update the properties of all the matching
+Neo4j nodes with the values from the last matching LynxKite vertex.
 
 ====
 

@@ -7,6 +7,28 @@ No existing data is modified in Neo4j.
 A `!LynxKite export timestamp` property is added to each new
 node and relationship in Neo4j. This helps clean up the export if needed.
 
+The Cypher query to export nodes is, depending on whether an attribute specifies the node labels:
+
+    UNWIND $events AS event
+    // Without node labels:
+    CREATE (n)
+    SET n += event
+    // With node labels taken from the "label" attribute:
+    CALL apoc.create.node(split(event.`label`, ','), event) YIELD node
+    RETURN 1
+
+The Cypher query to export relationships is, depending on whether an attribute specifies the
+relationship types:
+
+    UNWIND $events AS event
+    MATCH (src {`!LynxKite ID`: event.`!Source LynxKite ID`}), (dst {`!LynxKite ID`: event.`Destination LynxKite ID`})
+    // Without relationship types:
+    CREATE (src)-[r:EDGE]->(dst)
+    SET r += event
+    // With relationship types taken from the "type" attribute:
+    CALL apoc.create.relationship(src, event.`type`, event, dst) YIELD rel
+    RETURN 1
+
 ====
 
 [p-url]#Neo4j connection#::
