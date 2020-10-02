@@ -164,7 +164,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val project = projectInput("graph")
     val nodesOrRelationships: String
     override def enabled = FEStatus.enabled
-    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit] = {
       gdc.getComputeBoxResult(List(exportResult.gUID))
     }
     override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -225,7 +225,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           options = List(FEOption("", "")) ++ project.edgeAttrList[String]))
       lazy val project = projectInput("graph")
       override def enabled = FEStatus.enabled
-      override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+      override def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit] = {
         gdc.getComputeBoxResult(List(exportResult.gUID))
       }
       override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
