@@ -283,6 +283,10 @@ include::discard-vertex-attributes.asciidoc[]
 
 include::embed-vertices.asciidoc[]
 
+include::export-edge-attributes-to-neo4j.asciidoc[]
+
+include::export-graph-to-neo4j.asciidoc[]
+
 include::export-to-avro.asciidoc[]
 
 include::export-to-csv.asciidoc[]
@@ -298,6 +302,8 @@ include::export-to-json.asciidoc[]
 include::export-to-orc.asciidoc[]
 
 include::export-to-parquet.asciidoc[]
+
+include::export-vertex-attributes-to-neo4j.asciidoc[]
 
 include::expose-internal-edge-id.asciidoc[]
 

@@ -1,0 +1,38 @@
+### Export vertex attributes to Neo4j
+
+Exports vertex attributes from a graph in LynxKite to a
+corresponding graph in https://neo4j.com/[Neo4j].
+
+The nodes in Neo4j are identified by a key property (or properties).
+You must have a corresponding vertex attribute in LynxKite by the same name.
+This will be used to find the right nodes to update in Neo4j.
+
+The properties of the Neo4j nodes will be updated with the exported vertex attributes.
+
+====
+
+[p-url]#Neo4j connection#::
+The Neo4j connection string of the form `bolt://localhost:7687`.
+
+[p-username]#Neo4j username#::
+Username for the connection.
+
+[p-password]#Neo4j password#::
+Password for the connection. It will be saved in the workspace and visible to anyone with
+access to the workspace.
+
+[p-version]#Export repetition ID#::
+LynxKite only re-computes outputs if parameters or inputs have changed.
+This is true for exports too. If you want to repeat a previous export, you can increase this
+export repetition ID parameter.
+
+[p-labels]#Node labels#::
+Makes it possible to restrict the export to one label (or combination of labels) in Neo4j.
+This is useful to make sure no other node type is accidentally affected.
+The format is as in Cypher: `:Label1:Label2`. Leave empty to allow updating any node.
+
+[p-keys]#Attribute(s) to use as key#::
+Select the attribute (or attributes) to identify the Neo4j nodes by.
+The attribute name must match the property name in Neo4j.
+
+====

@@ -1,0 +1,37 @@
+### Export graph to Neo4j
+
+Exports a graph from LynxKite to https://neo4j.com/[Neo4j].
+The whole graph will be copied to Neo4j with all attributes.
+No existing data is modified in Neo4j.
+
+A `!LynxKite export timestamp` property is added to each new
+node and relationship in Neo4j. This helps clean up the export if needed.
+
+====
+
+[p-url]#Neo4j connection#::
+The Neo4j connection string of the form `bolt://localhost:7687`.
+
+[p-username]#Neo4j username#::
+Username for the connection.
+
+[p-password]#Neo4j password#::
+Password for the connection. It will be saved in the workspace and visible to anyone with
+access to the workspace.
+
+[p-version]#Export repetition ID#::
+LynxKite only re-computes outputs if parameters or inputs have changed.
+This is true for exports too. If you want to repeat a previous export, you can increase this
+export repetition ID parameter.
+
+[p-node_labels]#Node labels#::
+A string vertex attribute that is a comma-separated list of labels to apply to the newly
+created nodes. Optional. You must have https://neo4j.com/developer/neo4j-apoc/[Neo4j APOC]
+installed on the Neo4j instance to use this.
+
+[p-relationship_type]#Attribute with relationship type#::
+A string edge attribute that specifies the relationship type for each newly created relationship.
+Optional. You must have https://neo4j.com/developer/neo4j-apoc/[Neo4j APOC]
+installed on the Neo4j instance to use this.
+
+====
