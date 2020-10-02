@@ -12,6 +12,7 @@ class Neo4jExportImportTest extends OperationsTestBase {
   val server = new Neo4jContainer()
     .withoutAuthentication
     .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
+    .withEnv("NEO4JLABS_PLUGINS", "[\"apoc\"]")
 
   def exportExampleGraph() = {
     val res = box("Create example graph")
@@ -48,6 +49,22 @@ class Neo4jExportImportTest extends OperationsTestBase {
       get(g.project.vertexAttributes("page_rank")).values.toSet)
     assert(get(p.edgeAttributes("dispersion")).values.toSet ==
       get(g.project.edgeAttributes("dispersion")).values.toSet)
+    server.stop()
+  }
+
+  test("export with labels and types") {
+    server.start()
+    val res = box("Create example graph").box("Export graph to Neo4j", Map(
+      "url" -> server.getBoltUrl,
+      "node_labels" -> "gender", "relationship_type" -> "comment")).exportResult
+    dataManager.get(res)
+    val p = importBox("Import from Neo4j", Map("url" -> server.getBoltUrl)).project
+    assert(
+      get(p.vertexAttributes("<labels>")).values.toList
+        .flatMap(_.asInstanceOf[scala.collection.mutable.WrappedArray[String]]).sorted
+        == Seq("Female", "Male", "Male", "Male"))
+    assert(get(p.edgeAttributes("<rel_type>")).values.toSet
+      == Set("Adam loves Eve", "Bob envies Adam", "Bob loves Eve", "Eve loves Adam"))
     server.stop()
   }
 }
