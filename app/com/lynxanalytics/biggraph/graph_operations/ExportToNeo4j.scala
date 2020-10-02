@@ -1,9 +1,8 @@
+// Backend operations for Neo4j export.
 package com.lynxanalytics.biggraph.graph_operations
-
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import org.apache.spark
-import org.apache.spark.sql.SaveMode
 
 object ExportAttributesToNeo4j extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -18,6 +17,7 @@ object ExportAttributesToNeo4j extends OpFromJson {
     (j \ "nodesOrRelationships").as[String])
 }
 
+// Makes it easy to send a DataFrame to a specified Neo4j instance.
 case class Neo4jConnectionParameters(url: String, username: String, password: String) {
   def send(df: spark.sql.DataFrame, query: String) {
     df.write
@@ -97,14 +97,18 @@ case class ExportGraphToNeo4j(
     rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     val F = spark.sql.functions
-    // Prefix the internal IDs with this operation's GUID so different exports don't collide.
-    val guid = F.lit(this.gUID.toString + "-")
+    // Prefix the internal IDs with the timestamp so different exports don't collide.
+    // Also save the timestamp so the created entities can be easily cleaned up.
+    val timestamp = F.lit(Timestamp.human)
     val vs = inputs.vs.df
-      .withColumn(VID, F.concat(guid, F.col(VID)))
+      .withColumn(VID, F.concat(timestamp, F.lit(" "), F.col(VID)))
+      .withColumn("!LynxKite export timestamp", timestamp)
     val es = inputs.es.df
-      .withColumn(SRCID, F.concat(guid, F.col(SRCDST + "._1")))
-      .withColumn(DSTID, F.concat(guid, F.col(SRCDST + "._2")))
+      .withColumn(SRCID, F.concat(timestamp, F.lit(" "), F.col(SRCDST + "._1")))
+      .withColumn(DSTID, F.concat(timestamp, F.lit(" "), F.col(SRCDST + "._2")))
       .drop(SRCDST)
+      .withColumn("!LynxKite export timestamp", timestamp)
+
     if (nodeLabelsColumn.isEmpty) {
       neo.send(vs, s"""
         CREATE (n)
