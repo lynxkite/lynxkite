@@ -327,7 +327,7 @@ object FrontendJson {
   implicit val wSQLColumn = json.Json.writes[SQLColumn]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
+  implicit val wImportResult = json.Json.writes[ImportResult]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
@@ -449,7 +449,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
 
   def importBox = jsonFuturePost(importBoxExec)
-  def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
+  def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportResult] = {
     val workspaceParams = if (request.ref.nonEmpty) {
       val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref.get)
       wsRef.ws.workspaceExecutionContextParameters(wsRef.params)

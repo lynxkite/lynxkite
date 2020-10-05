@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers._
 
@@ -119,6 +120,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   registerExportToStructuredFile("Export to JSON")("json")
   registerExportToStructuredFile("Export to Parquet")("parquet")
   registerExportToStructuredFile("Export to ORC")("orc")
+  registerExportToStructuredFile("Export to AVRO")("avro")
+  registerExportToStructuredFile("Export to Delta")("delta")
 
   def registerExportToStructuredFile(id: String)(fileFormat: String) {
     register(id)(new ExportOperationToFile(_) {
@@ -151,4 +154,98 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
     }
   })
+
+  abstract class Neo4jAttributeExport(context: Operation.Context) extends TriggerableOperation(context) {
+    params ++= List(
+      Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
+      Param("username", "Neo4j username", defaultValue = "neo4j"),
+      Param("password", "Neo4j password", defaultValue = "neo4j"),
+      NonNegInt("version", "Export repetition ID", default = 1))
+    lazy val project = projectInput("graph")
+    val nodesOrRelationships: String
+    override def enabled = FEStatus.enabled
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit] = {
+      gdc.getComputeBoxResult(List(exportResult.gUID))
+    }
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      params.validate()
+      Map(context.box.output(
+        context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
+    }
+    def getAttribute(a: String): com.lynxanalytics.biggraph.graph_api.Attribute[_]
+    def exportResult() = {
+      val keys = splitParam("keys")
+      val attrs = (splitParam("to_export") ++ keys).toSet.toList
+      val t = graph_operations.AttributesToTable.run(attrs.map(a => a -> getAttribute(a)))
+      assert(keys.nonEmpty, "You have to choose one or more attributes to use as the keys for identifying the nodes in Neo4j.")
+      val op = graph_operations.ExportAttributesToNeo4j(
+        params("url"), params("username"), params("password"), params("labels"), keys,
+        params("version").toInt, nodesOrRelationships)
+      op(op.t, t).result.exportResult
+    }
+  }
+
+  registerOp(
+    "Export vertex attributes to Neo4j", defaultIcon, ExportOperations,
+    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+      import Operation.Implicits._
+      params ++= List(
+        Param("labels", "Node labels", defaultValue = ""),
+        Choice("keys", "Attribute(s) to use as key",
+          // Cannot join on internal ID ("<id>") and stuff like that.
+          options = project.vertexAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
+        Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true))
+      val nodesOrRelationships = "nodes"
+      def getAttribute(a: String) = project.vertexAttributes(a)
+    })
+  registerOp(
+    "Export edge attributes to Neo4j", defaultIcon, ExportOperations,
+    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+      import Operation.Implicits._
+      params ++= List(
+        Param("labels", "Relationship labels", defaultValue = ""),
+        Choice("keys", "Attribute(s) to use as key",
+          // Cannot join on internal ID ("<id>") and stuff like that.
+          options = project.edgeAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
+        Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true))
+      val nodesOrRelationships = "relationships"
+      def getAttribute(a: String) = project.edgeAttributes(a)
+    })
+
+  registerOp(
+    "Export graph to Neo4j", defaultIcon, ExportOperations,
+    List("graph"), List("exported"), new TriggerableOperation(_) {
+      import Operation.Implicits._
+      params ++= List(
+        Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
+        Param("username", "Neo4j username", defaultValue = "neo4j"),
+        Param("password", "Neo4j password", defaultValue = "neo4j"),
+        NonNegInt("version", "Export repetition ID", default = 1),
+        Choice("node_labels", "Attribute with node labels",
+          options = List(FEOption("", "")) ++ project.vertexAttrList[String]),
+        Choice("relationship_type", "Attribute with relationship type",
+          options = List(FEOption("", "")) ++ project.edgeAttrList[String]))
+      lazy val project = projectInput("graph")
+      override def enabled = FEStatus.enabled
+      override def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit] = {
+        gdc.getComputeBoxResult(List(exportResult.gUID))
+      }
+      override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+        params.validate()
+        Map(context.box.output(
+          context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
+      }
+      def exportResult() = {
+        val vsAttr = project.vertexAttributes.toMap +
+          (graph_operations.ExportGraphToNeo4j.VID -> project.vertexSet.idAttribute)
+        val esAttr = project.edgeAttributes.toMap +
+          (graph_operations.ExportGraphToNeo4j.SRCDST -> project.edgeBundle.srcDstAttribute)
+        val vs = graph_operations.AttributesToTable.run(vsAttr)
+        val es = graph_operations.AttributesToTable.run(esAttr)
+        val op = graph_operations.ExportGraphToNeo4j(
+          params("url"), params("username"), params("password"), params("node_labels"),
+          params("relationship_type"), params("version").toInt)
+        op(op.vs, vs)(op.es, es).result.exportResult
+      }
+    })
 }

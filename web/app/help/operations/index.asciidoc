@@ -283,7 +283,15 @@ include::discard-vertex-attributes.asciidoc[]
 
 include::embed-vertices.asciidoc[]
 
+include::export-edge-attributes-to-neo4j.asciidoc[]
+
+include::export-graph-to-neo4j.asciidoc[]
+
+include::export-to-avro.asciidoc[]
+
 include::export-to-csv.asciidoc[]
+
+include::export-to-delta.asciidoc[]
 
 include::export-to-hive.asciidoc[]
 
@@ -294,6 +302,8 @@ include::export-to-json.asciidoc[]
 include::export-to-orc.asciidoc[]
 
 include::export-to-parquet.asciidoc[]
+
+include::export-vertex-attributes-to-neo4j.asciidoc[]
 
 include::expose-internal-edge-id.asciidoc[]
 
@@ -325,6 +335,8 @@ include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
 
+include::filter-with-sql.asciidoc[]
+
 include::find-connected-components.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
@@ -349,15 +361,19 @@ include::grow-segmentation.asciidoc[]
 
 include::hash-vertex-attribute.asciidoc[]
 
+include::import-avro.asciidoc[]
+
 include::import-csv.asciidoc[]
 
+include::import-delta.asciidoc[]
+
 include::import-from-hive.asciidoc[]
+
+include::import-from-neo4j.asciidoc[]
 
 include::import-jdbc.asciidoc[]
 
 include::import-json.asciidoc[]
-
-include::import-neo4j.asciidoc[]
 
 include::import-orc.asciidoc[]
 

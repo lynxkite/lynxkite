@@ -5,9 +5,9 @@ Changes the name of a segmentation.
 This operation is more easily accessed from the segmentation's dropdown menu in the graph state view.
 
 ====
-[p-from]#Old name#::
+[p-before]#Old name#::
 The segmentation to rename.
 
-[p-to]#New name#::
+[p-after]#New name#::
 The new name.
 ====

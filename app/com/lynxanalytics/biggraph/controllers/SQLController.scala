@@ -15,8 +15,6 @@ import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
-case class ImportBoxResponse(guid: String, parameterSettings: String)
-
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
   def name: String
@@ -144,16 +142,11 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
+  def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportResult] {
     val op = ops.opForBox(
       user, box, inputs = Map[String, BoxOutputState](),
-      workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
-    val parameterSettings = op.settingsString()
-    val df = op.getDataFrame(SQLController.defaultContext())
-    val table = ImportDataFrame.run(df)
-    dataManager.compute(table) // Start importing in the background.
-    val guid = table.gUID.toString
-    ImportBoxResponse(guid, parameterSettings)
+      workspaceParameters = workspaceParameters).asInstanceOf[Importer]
+    op.runImport(env)
   }
 
   def getTableBrowserNodesForBox(workspaceController: WorkspaceController)(
@@ -408,7 +401,7 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  private def defaultContext()(implicit sparkDomain: SparkDomain): SQLContext = {
+  def defaultContext()(implicit sparkDomain: SparkDomain): SQLContext = {
     sparkDomain.newSQLContext()
   }
 
