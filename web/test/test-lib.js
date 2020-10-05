@@ -818,7 +818,7 @@ TableBrowser.prototype = {
 
   toggleNode: function(posList) {
     const li = this.getNode(posList);
-    li.$(li.locator().value + ' > span').click();
+    li.$('.glyphicon').click();
   },
 
   getColumn: function(tablePos, columnPos) {

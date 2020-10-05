@@ -16,7 +16,7 @@
     <div
       ui-ace="{
         mode: 'plain_text',
-        showGutter: false,
+        showGutter: true,
         rendererOptions: {
           fontSize: '16px'
         },
@@ -38,7 +38,7 @@
       <div
         ui-ace="{
           mode: '{{ param.payload.language }}',
-          showGutter: false,
+          showGutter: {{ parameters[param.id].split('\n').length > 5 }},
           rendererOptions: {
             fontSize: '16px'
           },

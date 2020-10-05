@@ -105,11 +105,11 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
           op.dstMapping, m.belongsTo)(
             op.edges, oldBelongsTo).result.induced
       }
-      for ((attr, choice) <- parseAggregateParams(params)) {
+      for ((attr, choice, name) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
           m.belongsTo,
           AttributeWithLocalAggregator(oldVAttrs(attr), choice))
-        project.newVertexAttribute(s"${attr}_${choice}", result)
+        project.newVertexAttribute(name, result)
       }
       // Automatically keep the key attribute.
       project.vertexAttributes(key) = aggregateViaConnection(

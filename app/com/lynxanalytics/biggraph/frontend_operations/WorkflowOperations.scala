@@ -306,91 +306,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     lazy val other = projectInput("b")
     def enabled = project.hasVertexSet && other.hasVertexSet
 
-    def checkTypeCollision(other: ProjectViewer) = {
-      val commonAttributeNames =
-        project.vertexAttributes.keySet & other.vertexAttributes.keySet
-
-      for (name <- commonAttributeNames) {
-        val a1 = project.vertexAttributes(name)
-        val a2 = other.vertexAttributes(name)
-        assert(
-          a1.typeTag.tpe =:= a2.typeTag.tpe,
-          s"Attribute '$name' has conflicting types in the two projects: " +
-            s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
-      }
-
-    }
     def apply(): Unit = {
-      checkTypeCollision(other.viewer)
-      val vsUnion = {
-        val op = graph_operations.VertexSetUnion(2)
-        op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
-      }
-
-      val newVertexAttributes = unifyAttributes(
-        project.vertexAttributes
-          .map {
-            case (name, attr) =>
-              name -> attr.pullVia(vsUnion.injections(0).reverse)
-          },
-        other.vertexAttributes
-          .map {
-            case (name, attr) =>
-              name -> attr.pullVia(vsUnion.injections(1).reverse)
-          })
-      val ebInduced = Option(project.edgeBundle).map { eb =>
-        val op = graph_operations.InducedEdgeBundle()
-        val mapping = vsUnion.injections(0)
-        op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, project.edgeBundle).result
-      }
-      val otherEbInduced = Option(other.edgeBundle).map { eb =>
-        val op = graph_operations.InducedEdgeBundle()
-        val mapping = vsUnion.injections(1)
-        op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, other.edgeBundle).result
-      }
-
-      val (newEdgeBundle, myEbInjection, otherEbInjection): (EdgeBundle, EdgeBundle, EdgeBundle) =
-        if (ebInduced.isDefined && !otherEbInduced.isDefined) {
-          (ebInduced.get.induced, ebInduced.get.embedding, null)
-        } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
-          (otherEbInduced.get.induced, null, otherEbInduced.get.embedding)
-        } else if (ebInduced.isDefined && otherEbInduced.isDefined) {
-          val idUnion = {
-            val op = graph_operations.VertexSetUnion(2)
-            op(
-              op.vss,
-              Seq(ebInduced.get.induced.idSet, otherEbInduced.get.induced.idSet))
-              .result
-          }
-          val ebUnion = {
-            val op = graph_operations.EdgeBundleUnion(2)
-            op(
-              op.ebs, Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
-                op.injections, idUnion.injections.map(_.entity)).result.union
-          }
-          (
-            ebUnion,
-            idUnion.injections(0).reverse.concat(ebInduced.get.embedding),
-            idUnion.injections(1).reverse.concat(otherEbInduced.get.embedding))
-        } else {
-          (null, null, null)
-        }
-      val newEdgeAttributes = unifyAttributes(
-        project.edgeAttributes
-          .map {
-            case (name, attr) => name -> attr.pullVia(myEbInjection)
-          },
-        other.edgeAttributes
-          .map {
-            case (name, attr) => name -> attr.pullVia(otherEbInjection)
-          })
-
-      project.vertexSet = vsUnion.union
-      for ((name, attr) <- newVertexAttributes) {
-        project.newVertexAttribute(name, attr) // Clear notes.
-      }
-      project.edgeBundle = newEdgeBundle
-      project.edgeAttributes = newEdgeAttributes
+      mergeInto(project, other.viewer)
     }
   })
 
@@ -500,6 +417,76 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
+
+  registerOp("Filter with SQL", "filter", category, List("input"), List("output"), new SmartOperation(_) {
+    private val input = context.inputs("input")
+    if (input.isProject) {
+      params ++= List(
+        Code("vertex_filter", "Vertex filter", language = "sql"),
+        Code("edge_filter", "Edge filter", language = "sql"))
+    } else {
+      assert(input.isTable, "Input must be a graph or a table.")
+      params ++= List(
+        Code("filter", "Filter", language = "sql"))
+    }
+    override def summary = {
+      if (input.isProject) {
+        val vf = params("vertex_filter").trim
+        val ef = params("edge_filter").trim
+        if (vf.isEmpty && ef.isEmpty) "Filter with SQL"
+        else if (vf.nonEmpty && ef.nonEmpty) s"Filter to $vf; $ef"
+        else s"Filter to $vf$ef"
+      } else {
+        val f = params("filter").trim
+        if (f.isEmpty) "Filter with SQL"
+        else s"Filter to $f"
+      }
+    }
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      if (input.isProject) {
+        val project = input.project
+        val before = project.rootEditor.viewer
+        if (params("vertex_filter").trim.nonEmpty) {
+          val p = project.viewer.editor // Create a copy.
+          // Must use low-level method to avoid automatic conversion to Double.
+          p.vertexAttributes.updateEntityMap(
+            p.vertexAttributes.iterator.toMap + ("!id" -> p.vertexSet.idAttribute))
+          val vf = graph_operations.ExecuteSQL.run(
+            "select `!id` from vertices where " + params("vertex_filter"),
+            p.viewer.getProtoTables.toMap)
+          val vertexEmbedding = {
+            val op = graph_operations.FilterByTable("!id")
+            op(op.vs, p.vertexSet)(op.t, vf).result.identity
+          }
+          project.pullBack(vertexEmbedding)
+        }
+        if (params("edge_filter").trim.nonEmpty) {
+          val p = project.viewer.editor
+          p.edgeAttributes.updateEntityMap(
+            p.edgeAttributes.iterator.toMap + ("!id" -> p.edgeBundle.idSet.idAttribute))
+          val vf = graph_operations.ExecuteSQL.run(
+            "select `!id` from edge_attributes where " + params("edge_filter"),
+            p.viewer.getProtoTables.toMap)
+          val edgeEmbedding = {
+            val op = graph_operations.FilterByTable("!id")
+            op(op.vs, p.edgeBundle.idSet)(op.t, vf).result.identity
+          }
+          project.pullBackEdges(edgeEmbedding)
+        }
+        updateDeltas(project.rootEditor, before)
+        Map(context.box.output("output") -> BoxOutputState.from(project))
+      } else {
+        assert(input.isTable, "Input must be a graph or a table.")
+        Map(context.box.output("output") -> BoxOutputState.from(
+          if (params("filter").trim.isEmpty) input.table
+          else graph_operations.ExecuteSQL.run(
+            "select * from input where " + params("filter"), Map("input" -> ProtoTable(input.table)))))
+      }
+    }
+    def apply(): Unit = ???
+  })
 
   registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
     def paramNames = tableInput("input").schema.fieldNames

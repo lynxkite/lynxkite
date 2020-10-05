@@ -118,7 +118,7 @@ installation directory LynxKite is using to the `hive-site.xml` file.
 E.g. depending on your Hadoop distribution, something like this would do:
 
 ```
-ln -s /etc/hive/conf/hive-site.xml ~/spark-<version>/conf/
+ln -s /etc/hive/conf/hive-site.xml ~/spark/spark-<version>/conf/
 ```
 
 #### Getting authorization to read the metadata of a table

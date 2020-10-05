@@ -41,7 +41,7 @@
     <h1>
       <input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)" autocomplete="off">
     </h1>
-    <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter)"
+    <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter).slice(0, 20)"
         op="op"
         name="op.operationId"
         ondrag="localOndrag(op, $event)"

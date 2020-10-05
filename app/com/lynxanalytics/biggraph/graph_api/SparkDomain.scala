@@ -437,7 +437,7 @@ class SparkDomain(
                     (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
                   case source: UnorderedSphynxLocalDisk =>
                     val fname = s"${srcPath}/serialized_data"
-                    Source.fromFile(fname).getLines.mkString
+                    Source.fromFile(fname, "utf-8").getLines.mkString
                 }
                 val value = format.reads(json.Json.parse(jsonString)).get
                 new ScalarData(s, value)

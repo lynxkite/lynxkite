@@ -45,8 +45,8 @@ object OperationParams {
     }
   }
 
-  case class ImportedTableParam(
-      id: String) extends OperationParameterMeta {
+  case class ImportedDataParam() extends OperationParameterMeta {
+    val id = "imported_table" // Supports other types now, but we kept the ID for compatibility.
     val title = ""
     val kind = "imported-table"
     val options = List()

@@ -26,7 +26,7 @@ HERE=`pwd`
 KITEPORT=33087
 
 cat <<EOF > kiterc
-export SPARK_HOME=$HOME/spark-\${SPARK_VERSION}
+export SPARK_HOME=$HOME/spark/spark-\${SPARK_VERSION}
 export SPARK_MASTER=local
 export KITE_META_DIR=${HERE}/meta
 export KITE_DATA_DIR=file:${HERE}/data

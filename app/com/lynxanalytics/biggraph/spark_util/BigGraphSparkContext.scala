@@ -292,6 +292,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.math.Numeric$DoubleIsFractional$])
     kryo.register(classOf[org.apache.spark.sql.types.DoubleType$$anon$1])
     kryo.register(classOf[Array[java.lang.Double]])
+    kryo.register(classOf[org.apache.spark.sql.types.DecimalType])
+    kryo.register(classOf[org.apache.spark.sql.types.Decimal$DecimalAsIfIntegral$])
+    kryo.register(classOf[org.apache.spark.sql.types.Decimal$DecimalIsFractional$])
+    kryo.register(scala.collection.mutable.ListBuffer().getClass)
+    kryo.register(classOf[org.apache.spark.sql.delta.actions.AddFile])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
@@ -430,16 +435,6 @@ object BigGraphSparkContext {
       .set("spark.eventLog.compress", "true")
       // Progress bars are not great in logs.
       .set("spark.ui.showConsoleProgress", "false")
-      // Neo4j
-      .set(
-        "spark.neo4j.bolt.url",
-        LoggedEnvironment.envOrElse("NEO4J_URI", "bolt://localhost:7687"))
-      .set(
-        "spark.neo4j.bolt.password",
-        LoggedEnvironment.envOrElse("NEO4J_PASSWORD", "", true))
-      .set(
-        "spark.neo4j.bolt.user",
-        LoggedEnvironment.envOrElse("NEO4J_USER", "neo4j", true))
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf

@@ -178,55 +178,76 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       throw new AssertionError(s"Unexpected type (${attr.typeTag}) on $attr")
   }
 
-  def parseAggregateParams(params: ParameterHolder) = {
+  def parseAggregateParams(params: ParameterHolder, weight: String = null) = {
+    val extraSuffix = if (weight == null) "" else s"_by_$weight"
+    val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+    val addSuffix = params("add_suffix") == "yes"
     val aggregate = "aggregate_(.*)".r
     params.toMap.toSeq.collect {
       case (aggregate(attr), choices) if choices.nonEmpty => attr -> choices
     }.flatMap {
-      case (attr, choices) => choices.split(",", -1).map(attr -> _)
+      case (attr, choices) =>
+        assert(
+          addSuffix || !choices.contains(","),
+          s"Suffixes are necessary when multiple aggregations are configured for $attr.")
+        choices.split(",", -1).map {
+          c => (attr, c, if (addSuffix) s"$prefix${attr}_$c$extraSuffix" else s"$prefix$attr")
+        }
     }
   }
   def aggregateParams(
     attrs: Iterable[(String, Attribute[_])],
     needsGlobal: Boolean = false,
-    weighted: Boolean = false): List[OperationParameterMeta] = {
+    weighted: Boolean = false,
+    defaultPrefix: String = ""): List[OperationParameterMeta] = {
     val sortedAttrs = attrs.toList.sortBy(_._1)
-    sortedAttrs.toList.map {
-      case (name, attr) =>
-        val options = if (attr.is[Double]) {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
-          } else if (needsGlobal) {
-            FEOption.list(
-              "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
-              "std_deviation", "sum")
+    Param("prefix", "Generated name prefix", defaultValue = defaultPrefix) ::
+      Choice("add_suffix", "Add suffixes to attribute names", options = FEOption.yesno) ::
+      sortedAttrs.toList.map {
+        case (name, attr) =>
+          val options = if (attr.is[Double]) {
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
+            } else if (needsGlobal) {
+              FEOption.list(
+                "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
+                "std_deviation", "sum")
 
+            } else {
+              FEOption.list(
+                "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
+                "set", "std_deviation", "sum", "vector")
+            }
+          } else if (attr.is[String]) {
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("by_max_weight", "by_min_weight")
+            } else if (needsGlobal) {
+              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+            } else {
+              FEOption.list(
+                "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
+                "vector", "set")
+            }
+          } else if (attr.is[Vector[Double]]) {
+            if (weighted) {
+              FEOption.list("by_max_weight", "by_min_weight")
+            } else {
+              FEOption.list(
+                "concatenate", "count", "count_distinct", "count_most_common", "elementwise_average",
+                "elementwise_max", "elementwise_min", "elementwise_std_deviation", "elementwise_sum",
+                "first", "most_common")
+            }
           } else {
-            FEOption.list(
-              "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
-              "set", "std_deviation", "sum", "vector")
+            if (weighted) { // At the moment all weighted aggregators are global.
+              FEOption.list("by_max_weight", "by_min_weight")
+            } else if (needsGlobal) {
+              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+            } else {
+              FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
+            }
           }
-        } else if (attr.is[String]) {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("by_max_weight", "by_min_weight")
-          } else if (needsGlobal) {
-            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-          } else {
-            FEOption.list(
-              "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
-              "vector", "set")
-          }
-        } else {
-          if (weighted) { // At the moment all weighted aggregators are global.
-            FEOption.list("by_max_weight", "by_min_weight")
-          } else if (needsGlobal) {
-            FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-          } else {
-            FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
-          }
-        }
-        TagList(s"aggregate_$name", name, options = options)
-    }
+          TagList(s"aggregate_$name", name, options = options)
+      }
   }
 
   // Aggregation parameters which are empty - i.e. no aggregator was defined - should be removed.
@@ -286,8 +307,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     val oldAttrs = project.edgeAttributes.toMap
     project.edgeBundle = newEdges
 
-    for ((attr, choice) <- parseAggregateParams(params)) {
-      project.edgeAttributes(s"${attr}_${choice}") =
+    for ((attr, choice, name) <- parseAggregateParams(params)) {
+      project.edgeAttributes(name) =
         aggregateViaConnection(
           mergedResult.belongsTo,
           AttributeWithLocalAggregator(oldAttrs(attr), choice))
@@ -393,6 +414,100 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   def newScalar(data: String): Scalar[String] = {
     val op = graph_operations.CreateStringScalar(data)
     op.result.created
+  }
+
+  def checkTypeCollision(project: ProjectEditor, other: ProjectViewer) = {
+    val commonAttributeNames =
+      project.vertexAttributes.keySet & other.vertexAttributes.keySet
+    for (name <- commonAttributeNames) {
+      val a1 = project.vertexAttributes(name)
+      val a2 = other.vertexAttributes(name)
+      assert(
+        a1.typeTag.tpe =:= a2.typeTag.tpe,
+        s"Attribute '$name' has conflicting types in the two projects: " +
+          s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
+    }
+  }
+
+  def mergeInto(project: ProjectEditor, other: ProjectViewer): Unit = {
+    if (project.vertexSet == null) {
+      project.vertexSet = other.vertexSet
+      project.vertexAttributes = other.vertexAttributes
+      project.edgeBundle = other.edgeBundle
+      project.edgeAttributes = other.edgeAttributes
+      return
+    }
+
+    checkTypeCollision(project, other)
+    val vsUnion = {
+      val op = graph_operations.VertexSetUnion(2)
+      op(op.vss, Seq(project.vertexSet, other.vertexSet)).result
+    }
+
+    val newVertexAttributes = unifyAttributes(
+      project.vertexAttributes
+        .map {
+          case (name, attr) =>
+            name -> attr.pullVia(vsUnion.injections(0).reverse)
+        },
+      other.vertexAttributes
+        .map {
+          case (name, attr) =>
+            name -> attr.pullVia(vsUnion.injections(1).reverse)
+        })
+    val ebInduced = Option(project.edgeBundle).map { eb =>
+      val op = graph_operations.InducedEdgeBundle()
+      val mapping = vsUnion.injections(0)
+      op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, project.edgeBundle).result
+    }
+    val otherEbInduced = Option(other.edgeBundle).map { eb =>
+      val op = graph_operations.InducedEdgeBundle()
+      val mapping = vsUnion.injections(1)
+      op(op.srcMapping, mapping)(op.dstMapping, mapping)(op.edges, other.edgeBundle).result
+    }
+
+    val (newEdgeBundle, myEbInjection, otherEbInjection): (EdgeBundle, EdgeBundle, EdgeBundle) =
+      if (ebInduced.isDefined && !otherEbInduced.isDefined) {
+        (ebInduced.get.induced, ebInduced.get.embedding, null)
+      } else if (!ebInduced.isDefined && otherEbInduced.isDefined) {
+        (otherEbInduced.get.induced, null, otherEbInduced.get.embedding)
+      } else if (ebInduced.isDefined && otherEbInduced.isDefined) {
+        val idUnion = {
+          val op = graph_operations.VertexSetUnion(2)
+          op(
+            op.vss,
+            Seq(ebInduced.get.induced.idSet, otherEbInduced.get.induced.idSet))
+            .result
+        }
+        val ebUnion = {
+          val op = graph_operations.EdgeBundleUnion(2)
+          op(
+            op.ebs, Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
+              op.injections, idUnion.injections.map(_.entity)).result.union
+        }
+        (
+          ebUnion,
+          idUnion.injections(0).reverse.concat(ebInduced.get.embedding),
+          idUnion.injections(1).reverse.concat(otherEbInduced.get.embedding))
+      } else {
+        (null, null, null)
+      }
+    val newEdgeAttributes = unifyAttributes(
+      project.edgeAttributes
+        .map {
+          case (name, attr) => name -> attr.pullVia(myEbInjection)
+        },
+      other.edgeAttributes
+        .map {
+          case (name, attr) => name -> attr.pullVia(otherEbInjection)
+        })
+
+    project.vertexSet = vsUnion.union
+    for ((name, attr) <- newVertexAttributes) {
+      project.newVertexAttribute(name, attr) // Clear notes.
+    }
+    project.edgeBundle = newEdgeBundle
+    project.edgeAttributes = newEdgeAttributes
   }
 }
 

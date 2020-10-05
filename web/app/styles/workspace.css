@@ -307,3 +307,11 @@ op-editor > :first-child {
   border: 0;
   background: white;
 }
+
+.comment-box-text {
+  pointer-events: none;
+}
+
+.comment-box-text a {
+  pointer-events: auto;
+}

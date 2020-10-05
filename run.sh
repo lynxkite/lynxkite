@@ -4,4 +4,4 @@ cd $(dirname $0)
 
 make backend
 tools/install_spark.sh
-stage/bin/lynxkite "$@" interactive
+target/universal/stage/bin/lynxkite "$@" interactive

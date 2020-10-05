@@ -44,7 +44,6 @@
 │  ├─ escodegen@1.9.1
 │  ├─ eslint-scope@4.0.2
 │  ├─ espree@5.0.1
-│  ├─ esprima@2.7.3
 │  ├─ esprima@3.1.3
 │  ├─ esprima@4.0.1
 │  ├─ esrecurse@4.2.1
@@ -100,7 +99,6 @@
 ├─ CC-BY-4.0
 │  └─ caniuse-lite@1.0.30000943
 ├─ CC0-1.0
-│  ├─ gulp-ng-annotate@2.1.0
 │  └─ spdx-license-ids@3.0.3
 ├─ ISC
 │  ├─ abbrev@1.1.1
@@ -183,14 +181,12 @@
 │  ├─ @types/selenium-webdriver@3.0.15
 │  ├─ accepts@1.3.5
 │  ├─ acorn-jsx@5.0.1
-│  ├─ acorn@2.6.4
-│  ├─ acorn@5.7.3
+│  ├─ acorn@5.7.4
 │  ├─ acorn@6.1.1
 │  ├─ adm-zip@0.4.13
 │  ├─ after@0.8.2
 │  ├─ agent-base@4.3.0
 │  ├─ ajv@6.10.0
-│  ├─ alter@0.2.0
 │  ├─ angular-cookies@1.7.7
 │  ├─ angular-hotkeys@1.7.0
 │  ├─ angular-mocks@1.7.7
@@ -273,7 +269,6 @@
 │  ├─ buffer-equal@0.0.1
 │  ├─ buffer-equal@1.0.0
 │  ├─ buffer-from@1.1.1
-│  ├─ bufferstreams@1.1.3
 │  ├─ bytes@3.0.0
 │  ├─ cache-base@1.0.1
 │  ├─ callsites@3.0.0
@@ -303,7 +298,6 @@
 │  ├─ concat-stream@1.6.2
 │  ├─ connect-history-api-fallback@1.6.0
 │  ├─ connect@3.6.6
-│  ├─ convert-source-map@1.1.3
 │  ├─ convert-source-map@1.6.0
 │  ├─ cookie@0.3.1
 │  ├─ copy-descriptor@0.1.1
@@ -369,7 +363,7 @@
 │  ├─ event-stream@3.3.4
 │  ├─ event-stream@4.0.1
 │  ├─ eventemitter3@1.2.0
-│  ├─ eventemitter3@3.1.0
+│  ├─ eventemitter3@4.0.7
 │  ├─ exit@0.1.2
 │  ├─ expand-brackets@0.1.5
 │  ├─ expand-brackets@2.1.4
@@ -434,7 +428,6 @@
 │  ├─ glogg@1.0.2
 │  ├─ good-listener@1.2.2
 │  ├─ group-array@0.3.3
-│  ├─ gulp-angular-filesort@1.2.1
 │  ├─ gulp-autoprefixer@6.0.0
 │  ├─ gulp-cli@2.0.1
 │  ├─ gulp-concat@2.6.1
@@ -470,7 +463,7 @@
 │  ├─ http-basic@7.0.0
 │  ├─ http-errors@1.6.3
 │  ├─ http-proxy@1.15.2
-│  ├─ http-proxy@1.17.0
+│  ├─ http-proxy@1.18.1
 │  ├─ http-response-object@1.1.0
 │  ├─ http-response-object@3.0.1
 │  ├─ http-signature@1.2.0
@@ -568,7 +561,7 @@
 │  ├─ load-json-file@1.1.0
 │  ├─ localtunnel@1.9.1
 │  ├─ lodash.isfinite@3.3.2
-│  ├─ lodash@4.17.15
+│  ├─ lodash@4.17.19
 │  ├─ lru-queue@0.1.0
 │  ├─ magic-string@0.22.5
 │  ├─ make-iterator@1.0.1
@@ -581,7 +574,6 @@
 │  ├─ mdurl@1.0.1
 │  ├─ merge-source-map@1.0.4
 │  ├─ merge-stream@1.0.1
-│  ├─ merge@1.2.1
 │  ├─ micromatch@2.3.11
 │  ├─ micromatch@3.1.10
 │  ├─ mime-db@1.38.0
@@ -605,8 +597,6 @@
 │  ├─ needle@2.2.4
 │  ├─ negotiator@0.6.1
 │  ├─ next-tick@1.0.0
-│  ├─ ng-annotate@1.2.2
-│  ├─ ng-dependencies@0.8.1
 │  ├─ nice-try@1.0.5
 │  ├─ node-releases@1.1.10
 │  ├─ normalize-path@2.1.1
@@ -636,8 +626,6 @@
 │  ├─ optimist@0.3.7
 │  ├─ optimist@0.6.1
 │  ├─ optionator@0.8.2
-│  ├─ ordered-ast-traverse@1.1.1
-│  ├─ ordered-esprima-props@1.1.0
 │  ├─ ordered-read-streams@1.0.1
 │  ├─ os-homedir@1.0.2
 │  ├─ os-locale@1.4.0
@@ -741,8 +729,6 @@
 │  ├─ shallow-copy@0.0.1
 │  ├─ shebang-command@1.2.0
 │  ├─ shebang-regex@1.0.0
-│  ├─ simple-fmt@0.1.0
-│  ├─ simple-is@0.2.0
 │  ├─ slice-ansi@2.1.0
 │  ├─ snapdragon-node@2.1.1
 │  ├─ snapdragon-util@3.0.1
@@ -766,7 +752,6 @@
 │  ├─ split@0.3.3
 │  ├─ split@1.0.1
 │  ├─ sshpk@1.16.1
-│  ├─ stable@0.1.8
 │  ├─ stack-trace@0.0.10
 │  ├─ static-eval@2.0.2
 │  ├─ static-extend@0.1.2
@@ -785,8 +770,6 @@
 │  ├─ string-width@1.0.2
 │  ├─ string-width@2.1.1
 │  ├─ string-width@3.1.0
-│  ├─ stringmap@0.2.2
-│  ├─ stringset@0.2.1
 │  ├─ strip-ansi@3.0.1
 │  ├─ strip-ansi@4.0.0
 │  ├─ strip-ansi@5.1.0
@@ -826,8 +809,7 @@
 │  ├─ to-regex-range@2.1.1
 │  ├─ to-regex@3.0.2
 │  ├─ to-through@2.0.0
-│  ├─ toposort@1.0.7
-│  ├─ tryor@0.1.2
+│  ├─ toposort@2.0.2
 │  ├─ type-check@0.3.2
 │  ├─ typedarray@0.0.6
 │  ├─ typeface-exo-2@0.0.72
