@@ -1,0 +1,23 @@
+%module networkit
+
+%{
+/*
+#include "example.h"
+*/
+#include <networkit/centrality/Betweenness.hpp>
+#include <networkit/generators/BarabasiAlbertGenerator.hpp>
+using namespace NetworKit;
+%}
+
+/*
+%include "example.h"
+*/
+#define final
+class Graph;
+%include <stdint.i>
+%include "include/networkit/Globals.hpp"
+%include "include/networkit/base/Algorithm.hpp"
+%include "include/networkit/centrality/Centrality.hpp"
+%include "include/networkit/centrality/Betweenness.hpp"
+%include "include/networkit/generators/StaticGraphGenerator.hpp"
+%include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
