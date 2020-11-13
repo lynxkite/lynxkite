@@ -1,17 +1,15 @@
+// "go build" will generate and compile wrappers based on this file.
 %module networkit
 
+// This part is C++ that is added to the wrapper code.
 %{
-/*
-#include "example.h"
-*/
 #include <networkit/centrality/Betweenness.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
+#include <networkit/graph/GraphBuilder.hpp>
 using namespace NetworKit;
 %}
 
-/*
-%include "example.h"
-*/
+// This part defines the interfaces to wrap. Mostly by pulling in the C++ headers.
 #define final
 class Graph;
 %include <stdint.i>
@@ -21,3 +19,4 @@ class Graph;
 %include "include/networkit/centrality/Betweenness.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
+%include "include/networkit/graph/GraphBuilder.hpp"
