@@ -7,16 +7,18 @@
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
+#include "additions.h"
 using namespace NetworKit;
 %}
 
 // This part defines the interfaces to wrap. Mostly by pulling in the C++ headers.
 #define final
 class Graph;
+%include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>
 namespace std {
-  %template(Uint64Vector) vector<unsigned long long>;
+  %template(IdVector) vector<unsigned long long>;
   %template(DoubleVector) vector<double>;
 }
 %include "include/networkit/Globals.hpp"
