@@ -5,6 +5,7 @@
 %{
 #include <networkit/centrality/Betweenness.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
+#include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
 using namespace NetworKit;
 %}
@@ -13,8 +14,14 @@ using namespace NetworKit;
 #define final
 class Graph;
 %include <stdint.i>
+%include <std_vector.i>
+namespace std {
+  %template(Uint64Vector) vector<unsigned long long>;
+  %template(DoubleVector) vector<double>;
+}
 %include "include/networkit/Globals.hpp"
 %include "include/networkit/base/Algorithm.hpp"
+%ignore ranking;
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"

@@ -4,11 +4,13 @@ import (
 	"testing"
 )
 
-type SphynxId uint32
-type EdgeBundle struct {
-	Src         []SphynxId
-	Dst         []SphynxId
-	EdgeMapping []int64
+func ExampleGraph() Graph {
+	eb := EdgeBundle{[]SphynxId{0, 1, 2, 3, 4}, []SphynxId{1, 2, 3, 4, 1}, nil}
+	builder := NewGraphBuilder(uint64(5))
+	for i := range eb.Src {
+		builder.AddHalfEdge(uint64(eb.Src[i]), uint64(eb.Dst[i]))
+	}
+	return builder.ToGraph(true)
 }
 
 func TestBasicOps(t *testing.T) {
@@ -22,16 +24,25 @@ func TestBasicOps(t *testing.T) {
 }
 
 func TestGraphToNetworKit(t *testing.T) {
-	sphynxEB := EdgeBundle{[]SphynxId{0, 1, 2, 3, 4}, []SphynxId{1, 2, 3, 4, 1}, nil}
-	builder := NewGraphBuilder(uint64(5))
-	for i := range sphynxEB.Src {
-		builder.AddHalfEdge(uint64(sphynxEB.Src[i]), uint64(sphynxEB.Dst[i]))
-	}
-	g := builder.ToGraph(true)
-	b := NewBetweenness(g)
+	b := NewBetweenness(ExampleGraph())
 	b.Run()
 	if b.Maximum() != 6 {
 		t.Errorf("Max betweenness is %v, expected 6.", b.Maximum())
 	}
+}
 
+func TestNewVertexAttribute(t *testing.T) {
+	b := NewBetweenness(ExampleGraph())
+	b.Run()
+	s := ToSlice(b.Scores())
+	expected := []float64{0, 7, 2, 1, 2}
+	if len(s) != len(expected) {
+		t.Errorf("Result is %v, expected %v.", s, expected)
+	}
+	for i := range s {
+		if s[i] != expected[i] {
+			t.Errorf("Result is %v, expected %v.", s, expected)
+			break
+		}
+	}
 }
