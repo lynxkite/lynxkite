@@ -50,6 +50,13 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         default = 10, group = "Advanced settings"),
       NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
     def enabled = project.hasEdgeBundle
+    override def summary = {
+      val variant = params("algorithm") match {
+        case "Lin" => "Lin"
+        case x => x.toLowerCase
+      }
+      s"Compute $variant centrality"
+    }
     def apply() = {
       val name = params("name")
       val algorithm = params("algorithm")
