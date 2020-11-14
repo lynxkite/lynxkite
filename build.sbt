@@ -169,7 +169,8 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
+  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx",
+  file("sphynx/.build/libnetworkit.so") -> "sphynx/libnetworkit.so")
 
 sourceDirectory in Assets := new File("web/dist")
 

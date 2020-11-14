@@ -42,12 +42,13 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   register("Compute centrality")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
       Choice("algorithm", "Centrality type",
-        options = FEOption.list("Harmonic", "Lin", "Average distance")),
-      NonNegInt("bits", "Precision", default = 8),
+        options = FEOption.list("Harmonic", "Lin", "Average distance", "Betweenness")),
       Choice("direction", "Direction",
-        options = Direction.attrOptionsWithDefault("outgoing edges")))
+        options = Direction.attrOptionsWithDefault("outgoing edges")),
+      NonNegInt("maxDiameter", "Maximal diameter to check",
+        default = 10, group = "Advanced settings"),
+      NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
@@ -56,10 +57,15 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val es = Direction(
         params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
-      val op = graph_operations.HyperBallCentrality(
-        params("maxDiameter").toInt, algorithm, params("bits").toInt)
-      project.newVertexAttribute(
-        name, op(op.es, es).result.centrality, algorithm + help)
+      val centrality: Attribute[Double] = algorithm match {
+        case "Betweenness" =>
+          graph_operations.NetworKitComputeAttribute.run(es, Map("op" -> "betweenness"))
+        case _ =>
+          val op = graph_operations.HyperBallCentrality(
+            params("maxDiameter").toInt, algorithm, params("bits").toInt)
+          op(op.es, es).result.centrality
+      }
+      project.newVertexAttribute(name, centrality, algorithm + help)
     }
   })
 

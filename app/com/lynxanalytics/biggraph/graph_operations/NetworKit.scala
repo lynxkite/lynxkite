@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 object NetworKitComputeAttribute extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitComputeAttribute(j.as[json.JsObject])
-  def run(vs: VertexSet, es: EdgeBundle, options: Map[String, Any])(
+  def run(es: EdgeBundle, options: Map[String, Any])(
     implicit
     m: MetaGraphManager): Attribute[Double] = {
     val j = json.JsObject(options.mapValues {
@@ -18,7 +18,7 @@ object NetworKitComputeAttribute extends OpFromJson {
     }.toSeq)
     val op = NetworKitComputeAttribute(j.as[json.JsObject])
     import Scripting._
-    op(op.vs, vs)(op.es, es).result.attr
+    op(op.es, es).result.attr
   }
 }
 case class NetworKitComputeAttribute(j: json.JsObject)
