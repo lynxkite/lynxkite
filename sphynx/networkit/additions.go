@@ -38,15 +38,15 @@ func ToNetworKit(vs VertexSet, es EdgeBundle) Graph {
 }
 
 func ToSphynx(g Graph) (vs VertexSet, es EdgeBundle) {
-	el := GraphToEdgeList(g)
 	vs = VertexSet{}
-	vs.MappingToUnordered = make([]int64, el.GetN())
+	vs.MappingToUnordered = make([]int64, g.NumberOfNodes())
 	for i := range vs.MappingToUnordered {
 		vs.MappingToUnordered[i] = int64(i)
 	}
 	es = EdgeBundle{}
-	es.Src = ToIdSlice(el.GetSrc())
-	es.Dst = ToIdSlice(el.GetDst())
+	es.Src = make([]SphynxId, g.NumberOfEdges())
+	es.Dst = make([]SphynxId, g.NumberOfEdges())
+	GraphToEdgeList(g, es.Src, es.Dst)
 	es.EdgeMapping = make([]int64, len(es.Src))
 	for i := range es.EdgeMapping {
 		es.EdgeMapping[i] = int64(i)

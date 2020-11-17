@@ -6,14 +6,11 @@
 
 using namespace NetworKit;
 
-EdgeList graphToEdgeList(Graph& g) {
-  EdgeList el;
-  el.n = g.numberOfNodes();
-  el.src.reserve(g.numberOfEdges());
-  el.dst.reserve(g.numberOfEdges());
+void graphToEdgeList(Graph& g, SphynxId* src, SphynxId* dst) {
+  int i = 0;
   g.forEdges([&](const node u, const node v) {
-      el.src.push_back(u);
-      el.dst.push_back(v);
+      src[i] = u;
+      dst[i] = v;
+      i += 1;
   });
-  return el;
 }

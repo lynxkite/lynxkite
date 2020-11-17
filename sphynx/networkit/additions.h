@@ -3,9 +3,5 @@
 #include <networkit/Globals.hpp>
 #include <networkit/graph/Graph.hpp>
 
-struct EdgeList {
-  NetworKit::count n;
-  std::vector<unsigned long long> src, dst;
-};
-
-EdgeList graphToEdgeList(NetworKit::Graph& g);
+typedef uint32_t SphynxId;
+void graphToEdgeList(NetworKit::Graph& g, SphynxId* src, SphynxId* dst);

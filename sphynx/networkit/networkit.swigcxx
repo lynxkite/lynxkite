@@ -13,7 +13,17 @@ using namespace NetworKit;
 
 // This part defines the interfaces to wrap. Mostly by pulling in the C++ headers.
 #define final
-class Graph;
+%include "include/networkit/Globals.hpp"
+typedef uint64_t count;
+class Graph {
+public:
+  count numberOfNodes() const noexcept;
+  count numberOfEdges() const noexcept;
+};
+%typemap(gotype) (SphynxId *) %{[]SphynxId%}
+%typemap(in) (SphynxId *) {
+   $1 = ($1_ltype)$input.array;
+}
 %include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>
@@ -21,7 +31,6 @@ namespace std {
   %template(IdVector) vector<unsigned long long>;
   %template(DoubleVector) vector<double>;
 }
-%include "include/networkit/Globals.hpp"
 %include "include/networkit/base/Algorithm.hpp"
 %ignore ranking;
 %include "include/networkit/centrality/Centrality.hpp"
