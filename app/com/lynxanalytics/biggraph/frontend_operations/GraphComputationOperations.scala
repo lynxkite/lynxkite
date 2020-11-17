@@ -66,7 +66,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         project.edgeBundle, reversed = true).edgeBundle
       val centrality: Attribute[Double] = algorithm match {
         case "Betweenness" =>
-          graph_operations.NetworKitComputeAttribute.run(es, Map("op" -> "betweenness"))
+          graph_operations.NetworKitComputeAttribute.run("betweenness", es)
         case _ =>
           val op = graph_operations.HyperBallCentrality(
             params("maxDiameter").toInt, algorithm, params("bits").toInt)

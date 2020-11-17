@@ -7,8 +7,9 @@ import play.api.libs.json
 import com.lynxanalytics.biggraph.graph_api._
 
 object NetworKitComputeAttribute extends OpFromJson {
-  def fromJson(j: json.JsValue) = NetworKitComputeAttribute(j.as[json.JsObject])
-  def run(es: EdgeBundle, options: Map[String, Any])(
+  def fromJson(j: json.JsValue) = NetworKitComputeAttribute(
+    (j \ "op").as[String], (j \ "options").as[json.JsObject])
+  def run(name: String, es: EdgeBundle, options: Map[String, Any] = Map())(
     implicit
     m: MetaGraphManager): Attribute[Double] = {
     val j = json.JsObject(options.mapValues {
@@ -16,17 +17,17 @@ object NetworKitComputeAttribute extends OpFromJson {
       case v: Int => json.Json.toJson(v)
       case v: Double => json.Json.toJson(v)
     }.toSeq)
-    val op = NetworKitComputeAttribute(j.as[json.JsObject])
+    val op = NetworKitComputeAttribute(name, j)
     import Scripting._
     op(op.es, es).result.attr
   }
 }
-case class NetworKitComputeAttribute(j: json.JsObject)
+case class NetworKitComputeAttribute(op: String, options: json.JsObject)
   extends TypedMetaGraphOp[GraphInput, AttributeOutput[Double]] {
   @transient override lazy val inputs = new GraphInput()
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     new AttributeOutput[Double](inputs.vs.entity)
   }
-  override def toJson = j
+  override def toJson = json.Json.obj("op" -> op, "options" -> options)
 }
