@@ -1,0 +1,805 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters: {}
+  parametricParameters: {}
+  x: 0.0
+  y: 0.0
+- id: Import-CSV_1
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/e97f9ff0ac350e3f70b55a2ef0b036a8.SANDP500.csv
+    imported_table: 04de066c-a2c9-3ebf-8229-e0ff20dd1851
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/e97f9ff0ac350e3f70b55a2ef0b036a8.SANDP500.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 300.0
+  y: 850.0
+- id: Create-graph-in-Python_1
+  inputs: {}
+  operationId: Create graph in Python
+  parameters:
+    code: |-
+      try:
+        dfsp500 = pd.read_csv('http://storage.googleapis.com/lynxkite_public_data/SNP500StockData.csv')
+      except:
+        # This is only for try.lynxkite.com as
+        # there is no internet accesss for LynxKite there.
+        dfsp500 = pd.read_csv('/lynxkite/sphynx/python/69de6c22018feb6fe2b2f1007162ff46.SNP500StockData.csv')
+
+      dfsp500 = dfsp500.drop_duplicates( keep='last')
+      dfsp500.set_index(['Day','Symbol'],inplace=True)
+      dfsp500=dfsp500.unstack()['Price']
+      dfsp500.reset_index(inplace=True)
+      dfsp500.fillna(method='bfill',inplace=True)
+      df_price = dfsp500
+      df_price.fillna(method='ffill',inplace=True)
+      for key in df_price.columns:
+          if key in ['Day', 'Symbol']:
+              continue
+          try:
+              df_price[key] = np.log(df_price[key]) - np.log(df_price[key].shift(1))
+          except:
+              print (key)
+      df_price.set_index('Day',inplace=True)
+      d = df_price.corr(method='pearson').to_dict()
+
+      tickers = list(df_price.columns)
+      to_idx = dict((b, a) for a, b in enumerate(tickers))
+
+      def gen():
+          for s1,others in d.items():
+              for s2 in others:
+                  if (s1 != s2) and others[s2]>0.7:
+                      yield to_idx[s1], to_idx[s2], others[s2]
+
+      froms, tos, corrs = zip(*gen())
+
+      vs = pd.DataFrame({
+        'ticker': tickers,
+      })
+      es = pd.DataFrame({
+        'src': froms,
+        'dst': tos,
+        'corr': corrs,
+      })
+    outputs: 'vs.ticker: str, es.corr: float'
+  parametricParameters: {}
+  x: 300.0
+  y: 550.0
+- id: Use-table-as-vertex-attributes_1
+  inputs:
+    attributes:
+      boxId: Import-CSV_1
+      id: table
+    graph:
+      boxId: Create-graph-in-Python_1
+      id: graph
+  operationId: Use table as vertex attributes
+  parameters:
+    id_attr: ticker
+    id_column: Symbol
+  parametricParameters: {}
+  x: 850.0
+  y: 850.0
+- id: Graph-visualization_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"Sector","label":"Name"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["225","395","372"],"lastCentersRequest":{"count":1,"filters":[{"attributeName":"Symbol","valueSpec":"ROK"}]},"customVisualizationFilters":true,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 850.0
+  y: 550.0
+- id: Compute-PageRank_1
+  inputs:
+    graph:
+      boxId: Compute-degree_2
+      id: graph
+  operationId: Compute PageRank
+  parameters: {}
+  parametricParameters: {}
+  x: 1300.0
+  y: 850.0
+- id: Compute-clustering-coefficient_1
+  inputs:
+    graph:
+      boxId: Compute-PageRank_1
+      id: graph
+  operationId: Compute clustering coefficient
+  parameters: {}
+  parametricParameters: {}
+  x: 1450.0
+  y: 850.0
+- id: Compute-centrality_1
+  inputs:
+    graph:
+      boxId: Compute-clustering-coefficient_1
+      id: graph
+  operationId: Compute centrality
+  parameters: {}
+  parametricParameters: {}
+  x: 1600.0
+  y: 850.0
+- id: Graph-visualization_2
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"Sector","label":"Name","size":"page_rank"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["225","395","372"],"lastCentersRequest":{"count":1,"filters":[{"attributeName":"Symbol","valueSpec":"ROK"}]},"customVisualizationFilters":true,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1900.0
+  y: 400.0
+- id: Graph-visualization_3
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"page_rank":">2.5"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"Name","color":"Sector"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 2150.0
+  y: 800.0
+- id: Graph-visualization_5
+  inputs:
+    graph:
+      boxId: Compute-degree_2
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"degree":">0"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"Sector"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1300.0
+  y: 550.0
+- id: Graph-visualization_4
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"bucketed","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":10,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"x":"centrality","y":"degree"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"}}
+  parametricParameters: {}
+  x: 1900.0
+  y: 1200.0
+- id: SQL1_1
+  inputs:
+    input:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: |
+      select * from vertices order by page_rank desc
+  parametricParameters: {}
+  x: 1900.0
+  y: 800.0
+- id: Merge-vertices-by-attribute_1
+  inputs:
+    graph:
+      boxId: Weighted-aggregate-to-segmentation_1
+      id: graph
+  operationId: Merge vertices by attribute
+  parameters:
+    aggregate_Symbol: count
+    aggregate_centrality: average
+    aggregate_clustering_coefficient: average
+    aggregate_degree: average
+    aggregate_page_rank: average
+    key: Sector
+  parametricParameters: {}
+  x: 3750.0
+  y: 850.0
+- id: Find-modular-clustering_1
+  inputs:
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Find modular clustering
+  parameters:
+    weights: corr
+  parametricParameters: {}
+  x: 2500.0
+  y: 850.0
+- id: Filter-by-attributes_2
+  inputs:
+    graph:
+      boxId: Find-modular-clustering_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    apply_to_graph: .modular_clusters
+    filterva_size: '>4'
+  parametricParameters: {}
+  x: 2750.0
+  y: 850.0
+- id: Copy-edges-to-segmentation_1
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_2
+      id: graph
+  operationId: Copy edges to segmentation
+  parameters:
+    apply_to_graph: .modular_clusters
+  parametricParameters: {}
+  x: 3000.0
+  y: 850.0
+- id: Weighted-aggregate-to-segmentation_1
+  inputs:
+    graph:
+      boxId: Copy-edges-to-segmentation_1
+      id: graph
+  operationId: Weighted aggregate to segmentation
+  parameters:
+    aggregate_Name: by_max_weight
+    apply_to_graph: .modular_clusters
+    weight: page_rank
+  parametricParameters: {}
+  x: 3350.0
+  y: 850.0
+- id: Graph-visualization_7
+  inputs:
+    graph:
+      boxId: Merge-vertices-by-attribute_1
+      id: graph
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"Sector","label":"Sector","size":"Symbol_count"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange"},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"size","label":"Name_by_max_weight_by_page_rank"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"vertexColorMap":"Viridis","labelColorMap":"Viridis","edgeColorMap":"Viridis","sliderColorMap":"Blue
+      to orange","projectPath":".modular_clusters","graphMode":"sampled"}}
+  parametricParameters: {}
+  x: 4050.0
+  y: 850.0
+- id: SQL1_2
+  inputs:
+    input:
+      boxId: Import-CSV_3
+      id: table
+  operationId: SQL1
+  parameters:
+    sql: |
+      select *, 100 * (price2 - price1)  / price1 as delta1, 100 * (price3 - price2)/price2 as delta2 from
+        ((select Symbol, Price as price1 from input where Day="20170710")
+        inner join
+        (select Symbol, Price as price2 from input where Day="20170711") using (Symbol))
+        inner join
+        (select Symbol, Price as price3 from input where Day="20170712")
+        using (Symbol)
+  parametricParameters: {}
+  x: 500.0
+  y: 1500.0
+- id: Import-CSV_3
+  inputs: {}
+  operationId: Import CSV
+  parameters:
+    filename: UPLOAD$/69de6c22018feb6fe2b2f1007162ff46.SNP500StockData.csv
+    imported_table: 0548ff7c-28cb-33aa-8af6-714a412225ca
+    infer: yes
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/69de6c22018feb6fe2b2f1007162ff46.SNP500StockData.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  parametricParameters: {}
+  x: 250.0
+  y: 1500.0
+- id: Use-table-as-vertex-attributes_2
+  inputs:
+    attributes:
+      boxId: SQL1_2
+      id: table
+    graph:
+      boxId: Compute-centrality_1
+      id: graph
+  operationId: Use table as vertex attributes
+  parameters:
+    id_attr: Symbol
+    id_column: Symbol
+  parametricParameters: {}
+  x: 750.0
+  y: 1500.0
+- id: Aggregate-vertex-attribute-globally_1
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_2
+      id: graph
+  operationId: Aggregate vertex attribute globally
+  parameters:
+    aggregate_delta2: average
+  parametricParameters: {}
+  x: 1250.0
+  y: 1500.0
+- id: Derive-vertex-attribute_1
+  inputs:
+    graph:
+      boxId: Aggregate-vertex-attribute-globally_1
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: delta2 - delta2_average
+    output: delta2
+  parametricParameters: {}
+  x: 1500.0
+  y: 1500.0
+- id: Filter-by-attributes_3
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_1
+      id: graph
+  operationId: Filter by attributes
+  parameters:
+    filterva_degree: '>0'
+    filterva_delta2: '[-5,5]'
+  parametricParameters: {}
+  x: 1750.0
+  y: 1500.0
+- id: Derive-vertex-attribute_2
+  inputs:
+    graph:
+      boxId: Filter-by-attributes_3
+      id: graph
+  operationId: Derive vertex attribute
+  parameters:
+    expr: if (delta2 > 0) 1.0 else 0.0
+    output: goes_up
+  parametricParameters: {}
+  x: 2000.0
+  y: 1500.0
+- id: Split-to-train-and-test-set_1
+  inputs:
+    graph:
+      boxId: Derive-vertex-attribute_2
+      id: graph
+  operationId: Split to train and test set
+  parameters:
+    seed: '1167456501'
+    source: goes_up
+    test_set_ratio: '0.25'
+  parametricParameters: {}
+  x: 2450.0
+  y: 1500.0
+- id: SQL1_3
+  inputs:
+    input:
+      boxId: Classify-with-model_1
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select 1 - avg(abs(prediction - goes_up_test)) as accuracy from vertices
+  parametricParameters: {}
+  x: 3700.0
+  y: 2000.0
+- id: Classify-with-model_1
+  inputs:
+    graph:
+      boxId: Train-a-logistic-regression-model_1
+      id: graph
+  operationId: Classify with model
+  parameters: {}
+  parametricParameters: {}
+  x: 3500.0
+  y: 2000.0
+- id: Train-a-logistic-regression-model_1
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Train a logistic regression model
+  parameters:
+    features: centrality,clustering_coefficient,degree,delta1,page_rank
+    label: goes_up_train
+  parametricParameters: {}
+  x: 3300.0
+  y: 2000.0
+- id: Train-a-logistic-regression-model_2
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Train a logistic regression model
+  parameters:
+    features: delta1
+    label: goes_up_train
+  parametricParameters: {}
+  x: 3300.0
+  y: 1400.0
+- id: Classify-with-model_2
+  inputs:
+    graph:
+      boxId: Train-a-logistic-regression-model_2
+      id: graph
+  operationId: Classify with model
+  parameters: {}
+  parametricParameters: {}
+  x: 3500.0
+  y: 1400.0
+- id: SQL1_4
+  inputs:
+    input:
+      boxId: Classify-with-model_2
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select 1 - avg(abs(prediction - goes_up_test)) as accuracy from vertices
+  parametricParameters: {}
+  x: 3700.0
+  y: 1400.0
+- id: Train-a-decision-tree-classification-model_1
+  inputs:
+    graph:
+      boxId: Split-to-train-and-test-set_1
+      id: graph
+  operationId: Train a decision tree classification model
+  parameters:
+    features: centrality,clustering_coefficient,degree,delta1,page_rank
+    label: goes_up_train
+  parametricParameters: {}
+  x: 3300.0
+  y: 2350.0
+- id: SQL1_5
+  inputs:
+    input:
+      boxId: Classify-with-model_3
+      id: graph
+  operationId: SQL1
+  parameters:
+    sql: |
+      select 1 - avg(abs(prediction - goes_up_test)) as accuracy from vertices
+  parametricParameters: {}
+  x: 3700.0
+  y: 2350.0
+- id: Classify-with-model_3
+  inputs:
+    graph:
+      boxId: Train-a-decision-tree-classification-model_1
+      id: graph
+  operationId: Classify with model
+  parameters: {}
+  parametricParameters: {}
+  x: 3500.0
+  y: 2350.0
+- id: Comment_1
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 2. Stock meta
+
+      Here we import a simple metadata table, containing name
+      and industry for ticker symbols.
+
+      You can find this data
+      [here](https://storage.googleapis.com/lynxkite_public_data/SANDP500.csv).
+
+      If you copy this workspace to your instance, you need to reimport
+      this file.
+  parametricParameters: {}
+  x: 200.0
+  y: 650.0
+- id: Comment_2
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 0. Introduction
+
+      In this workspace, we are going to demonstrate the creation of a stock price correlation
+      graph in LynxKite as well as some interesting analysis on it.
+  parametricParameters: {}
+  x: 200.0
+  y: 50.0
+- id: Comment_4
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 1. Graph creation
+
+      We use the flexibility of the `Create grap in Python` box to load the stock
+      price history data and compute the correlation of different stock. Then we emit an
+      edge for pairs where the correlation is above a threshold.
+
+      Check out the code in this box for more details!
+
+      The code is a vastly simplified version of [Karthick Venkatesan](https://github.com/karvenka)'s work
+      [here](https://github.com/karvenka/netsci-project).
+  parametricParameters: {}
+  x: 200.0
+  y: 300.0
+- id: Comment_5
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 3. A small sample visualized
+
+      Let's take a look at the resulting graph! We are just showing
+      the neighborhood of three related tickers, Rockwell, Honeywell and PPG Industries.
+  parametricParameters: {}
+  x: 750.0
+  y: 300.0
+- id: Comment_6
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 5. Computing centrality measures
+
+      Once we have the graph, we can very easily compute a host
+      of graph metrics. Here we chose to look at some centrality metrics.
+  parametricParameters: {}
+  x: 1250.0
+  y: 650.0
+- id: Comment_7
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      # 6. Looking at pagerank
+
+      Let's take another look at our previous sample, but this
+      time we also visualize pagerank as the size of the vertices.
+  parametricParameters: {}
+  x: 1800.0
+  y: 250.0
+- id: Comment_8
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 4. All non-isolated tickers
+
+      As this is a fairly small graph it makes sense to visualize
+      it in full. It's still too big to make out individual tickers,
+      so we removed labels, but we kept coloring by industry.
+
+      It is interesting to observe how well the graph structure
+      correlates with the industry classes.
+
+      We only show non-isolated tickers. Those are the ones
+      with degree > 0.
+  parametricParameters: {}
+  x: 1200.0
+  y: 250.0
+- id: Compute-degree_2
+  inputs:
+    graph:
+      boxId: Use-table-as-vertex-attributes_1
+      id: graph
+  operationId: Compute degree
+  parameters: {}
+  parametricParameters: {}
+  x: 1100.0
+  y: 850.0
+- id: Comment_9
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 7. Largest pagerank tickers
+
+      So which tickers have the largest pagerank? How do they connect
+      to each other?
+
+      First, using an SQL box, we simply list tickers ordered by pagerank.
+
+      Then, we visualize all tickers that have pagerank >2.5.
+  parametricParameters: {}
+  x: 1800.0
+  y: 550.0
+- id: Comment_10
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 8. Bucketed view by centrality and degree
+
+      In this visualization we group vertices based on their
+      centrality and degree. We can see the size of each group
+      and how they are related to each other.
+
+      One can discover two big components of this graph on this
+      visualization as well.
+  parametricParameters: {}
+  x: 1800.0
+  y: 950.0
+- id: Comment_11
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 9. Clustering based on graph structure
+
+      Next up, we are asking LynxKite to create clusters
+      based on connections alone: trying to make sure that most of the
+      edges go within cluster and only few goes across.
+
+      We only keep clusters with more than 4 vertices. And we
+      also create edges among the clusters: two clusters are
+      connected with as many edges as many connections are there
+      among their members.
+  parametricParameters: {}
+  x: 2550.0
+  y: 550.0
+- id: Comment_12
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 11. Merging industries, visualizing
+
+      To be able to see correlation of modular clusters with industries
+      we merge the vertices of the graph by industry. All vertices
+      belonging to a single industry becomes a single vertex.
+
+      Once that's done, we can visualize industries (left side)
+      and modular clusters (right side) along each other.
+  parametricParameters: {}
+  x: 3700.0
+  y: 550.0
+- id: Comment_13
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 10. Cluster labels
+
+      To give a bit of meaning to the modular clusters found
+      we label each with the name of it's highest pagerank member.
+  parametricParameters: {}
+  x: 3200.0
+  y: 700.0
+- id: Comment_14
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 12. Gearing up for price prediction!
+
+      We are going to try to predict stock price movements next.
+
+      As a
+      preparation, we extract from the
+      [historic price table](https://storage.googleapis.com/lynxkite_public_data/SNP500StockData.csv)
+      (the same used to create our graph) the prices
+      for three consecutive days in July, 2017.
+      We also compute the price changes between day1 and day2 (as delta1)
+      and also between day2 and day3 (as delta2).
+      (Look at the SQL for details!)
+
+      Then we merge these values onto our graph.
+  parametricParameters: {}
+  x: 300.0
+  y: 1200.0
+- id: Comment_15
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 13. Target feature
+
+      We want to predict which stock prices move below or above
+      average market movement.
+
+      For this, we subtract the average movement from delta2,
+      thus making it 0 on average. Then we remove big outliers
+      and then define our target feature, goes_up. It is 1.0
+      for stocks that increased in value above average, 0 otherwise.
+  parametricParameters: {}
+  x: 1400.0
+  y: 1250.0
+- id: Comment_16
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: '# 14. Split train and test sets'
+  parametricParameters: {}
+  x: 2300.0
+  y: 1350.0
+- id: Comment_17
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 15. Logistic regression based on past
+
+      First, we try to use delta1 to predict goes_up. Can
+      yesterday's price movement predict whether a stock will
+      perform above average today?
+
+      Well, the answer is no, our model has a 51% coin-toss accuracy.
+  parametricParameters: {}
+  x: 3250.0
+  y: 1150.0
+- id: Comment_18
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |
+      # 16. Logistic regression based on past and centrality measures
+
+      Next, we also add our centrality measures as features.
+
+      Surprisingly, this performs very well, we achieve 67% accuracy
+      which is very good for this task!
+
+      Imagine you have an oracle to tell you which stock moves up with 67% probability!
+
+      But well, this is not exactly the case here. We do use today's data
+      to train a model for today.
+
+      Still, it is remarkable that the model seems to be able to
+      distill a pattern on centrality, telling which stocks are moving up on this specific day!
+  parametricParameters: {}
+  x: 3250.0
+  y: 1550.0
+- id: Comment_19
+  inputs: {}
+  operationId: Comment
+  parameters:
+    comment: |-
+      # 17. Enters decision tree
+
+      Finally, we use a decision tree instead of a logistic
+      regression. This way we end up with even better results,
+      we solve the problem with 72% accuracy!
+  parametricParameters: {}
+  x: 3250.0
+  y: 2150.0
