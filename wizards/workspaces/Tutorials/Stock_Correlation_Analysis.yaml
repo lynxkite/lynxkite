@@ -552,7 +552,7 @@
     comment: |-
       # 1. Graph creation
 
-      We use the flexibility of the `Create grap in Python` box to load the stock
+      We use the flexibility of the `Create graph in Python` box to load the stock
       price history data and compute the correlation of different stock. Then we emit an
       edge for pairs where the correlation is above a threshold.
 
@@ -592,7 +592,7 @@
   operationId: Comment
   parameters:
     comment: |
-      # 6. Looking at pagerank
+      # 6. Looking at PageRank
 
       Let's take another look at our previous sample, but this
       time we also visualize pagerank as the size of the vertices.
