@@ -17,10 +17,51 @@ func init() {
 			}
 			var result networkit.DoubleVector
 			switch ea.GetStringParam("op") {
-			case "betweenness":
-				b := networkit.NewBetweenness(g)
-				b.Run()
-				result = b.Scores()
+			case "ApproxCloseness":
+				c := networkit.NewApproxCloseness(g)
+				defer networkit.DeleteApproxCloseness(c)
+				c.Run()
+				result = c.Scores()
+			case "Betweenness":
+				c := networkit.NewBetweenness(g)
+				defer networkit.DeleteBetweenness(c)
+				c.Run()
+				result = c.Scores()
+			case "EigenvectorCentrality":
+				c := networkit.NewEigenvectorCentrality(g)
+				defer networkit.DeleteEigenvectorCentrality(c)
+				c.Run()
+				result = c.Scores()
+			case "EstimateBetweenness":
+				c := networkit.NewEstimateBetweenness(g)
+				defer networkit.DeleteEstimateBetweenness(c)
+				c.Run()
+				result = c.Scores()
+			case "HarmonicCloseness":
+				c := networkit.NewHarmonicCloseness(g)
+				defer networkit.DeleteHarmonicCloseness(c)
+				c.Run()
+				result = c.Scores()
+			case "KatzCentrality":
+				c := networkit.NewKatzCentrality(g)
+				defer networkit.DeleteKatzCentrality(c)
+				c.Run()
+				result = c.Scores()
+			case "KPathCentrality":
+				c := networkit.NewKPathCentrality(g)
+				defer networkit.DeleteKPathCentrality(c)
+				c.Run()
+				result = c.Scores()
+			case "LaplacianCentrality":
+				c := networkit.NewLaplacianCentrality(g)
+				defer networkit.DeleteLaplacianCentrality(c)
+				c.Run()
+				result = c.Scores()
+			case "Sfigality":
+				c := networkit.NewSfigality(g)
+				defer networkit.DeleteSfigality(c)
+				c.Run()
+				result = c.Scores()
 			}
 			attr.Values = ToDoubleSlice(result)
 			for i := range attr.Defined {

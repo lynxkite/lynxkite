@@ -43,20 +43,21 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     params ++= List(
       Param("name", "Attribute name", defaultValue = "centrality"),
       Choice("algorithm", "Centrality type",
-        options = FEOption.list("Harmonic", "Lin", "Average distance", "Betweenness")),
+        options = FEOption.list(Seq(
+          // Implemented on Spark.
+          "Harmonic", "Lin", "Average distance",
+          // From NetworKit.
+          // TODO: These two don't work. "No match for overloaded function call"
+          // "Closeness (approximate)", "Betweenness (estimate)",
+          "Betweenness", "Eigenvector", "Harmonic Closeness", "Katz",
+          "K-Path", "Laplacian", "Sfigality").sorted.toList)),
       Choice("direction", "Direction",
         options = Direction.attrOptionsWithDefault("outgoing edges")),
       NonNegInt("maxDiameter", "Maximal diameter to check",
         default = 10, group = "Advanced settings"),
       NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
     def enabled = project.hasEdgeBundle
-    override def summary = {
-      val variant = params("algorithm") match {
-        case "Lin" => "Lin"
-        case x => x.toLowerCase
-      }
-      s"Compute $variant centrality"
-    }
+    override def summary = s"Compute ${params("algorithm")} centrality"
     def apply() = {
       val name = params("name")
       val algorithm = params("algorithm")
@@ -64,9 +65,17 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val es = Direction(
         params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
+      def nk(algo: String) = graph_operations.NetworKitComputeAttribute.run(algo, es)
       val centrality: Attribute[Double] = algorithm match {
-        case "Betweenness" =>
-          graph_operations.NetworKitComputeAttribute.run("betweenness", es)
+        case "Closeness (approximate)" => nk("ApproxCloseness")
+        case "Betweenness" => nk("Betweenness")
+        case "Eigenvector" => nk("EigenvectorCentrality")
+        case "Betweenness (estimate)" => nk("EstimateBetweenness")
+        case "Harmonic Closeness" => nk("HarmonicCloseness")
+        case "Katz" => nk("KatzCentrality")
+        case "K-Path" => nk("KPathCentrality")
+        case "Laplacian" => nk("LaplacianCentrality")
+        case "Sfigality" => nk("Sfigality")
         case _ =>
           val op = graph_operations.HyperBallCentrality(
             params("maxDiameter").toInt, algorithm, params("bits").toInt)

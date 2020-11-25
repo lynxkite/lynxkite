@@ -13,8 +13,10 @@ func ExampleGraph() networkit.Graph {
 
 func TestBasicOps(t *testing.T) {
 	c := networkit.NewBarabasiAlbertGenerator(uint64(10), uint64(50))
+	defer networkit.DeleteBarabasiAlbertGenerator(c)
 	g := c.Generate()
 	b := networkit.NewBetweenness(g)
+	defer networkit.DeleteBetweenness(b)
 	b.Run()
 	if b.Maximum() != 1176 {
 		t.Errorf("Max betweenness is %v, expected 1176.", b.Maximum())
@@ -23,6 +25,7 @@ func TestBasicOps(t *testing.T) {
 
 func TestGraphToNetworKit(t *testing.T) {
 	b := networkit.NewBetweenness(ExampleGraph())
+	defer networkit.DeleteBetweenness(b)
 	b.Run()
 	if b.Maximum() != 6 {
 		t.Errorf("Max betweenness is %v, expected 6.", b.Maximum())
@@ -31,6 +34,7 @@ func TestGraphToNetworKit(t *testing.T) {
 
 func TestNewVertexAttribute(t *testing.T) {
 	b := networkit.NewBetweenness(ExampleGraph())
+	defer networkit.DeleteBetweenness(b)
 	b.Run()
 	s := ToDoubleSlice(b.Scores())
 	expected := []float64{0, 7, 2, 1, 2}
@@ -47,6 +51,7 @@ func TestNewVertexAttribute(t *testing.T) {
 
 func TestGraphToSphynx(t *testing.T) {
 	c := networkit.NewBarabasiAlbertGenerator(uint64(2), uint64(5))
+	defer networkit.DeleteBarabasiAlbertGenerator(c)
 	vs, es := ToSphynx(c.Generate())
 	if len(vs.MappingToUnordered) != 5 {
 		t.Errorf("Vertex set is %v, expected 5.", vs.MappingToUnordered)

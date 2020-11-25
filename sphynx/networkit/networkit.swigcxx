@@ -3,7 +3,15 @@
 
 // This part is C++ that is added to the wrapper code.
 %{
+#include <networkit/centrality/ApproxCloseness.hpp>
 #include <networkit/centrality/Betweenness.hpp>
+#include <networkit/centrality/EigenvectorCentrality.hpp>
+#include <networkit/centrality/EstimateBetweenness.hpp>
+#include <networkit/centrality/HarmonicCloseness.hpp>
+#include <networkit/centrality/KatzCentrality.hpp>
+#include <networkit/centrality/KPathCentrality.hpp>
+#include <networkit/centrality/LaplacianCentrality.hpp>
+#include <networkit/centrality/Sfigality.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
@@ -34,7 +42,15 @@ namespace std {
 %include "include/networkit/base/Algorithm.hpp"
 %ignore ranking;
 %include "include/networkit/centrality/Centrality.hpp"
+%include "include/networkit/centrality/ApproxCloseness.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
+%include "include/networkit/centrality/EigenvectorCentrality.hpp"
+%include "include/networkit/centrality/EstimateBetweenness.hpp"
+%include "include/networkit/centrality/HarmonicCloseness.hpp"
+%include "include/networkit/centrality/KatzCentrality.hpp"
+%include "include/networkit/centrality/KPathCentrality.hpp"
+%include "include/networkit/centrality/LaplacianCentrality.hpp"
+%include "include/networkit/centrality/Sfigality.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
 %include "include/networkit/graph/GraphBuilder.hpp"
