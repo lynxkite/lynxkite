@@ -20,7 +20,7 @@ public:
   count numberOfNodes() const noexcept;
   count numberOfEdges() const noexcept;
 };
-%typemap(gotype) (SphynxId *) %{[]SphynxId%}
+%typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
    $1 = ($1_ltype)$input.array;
 }
