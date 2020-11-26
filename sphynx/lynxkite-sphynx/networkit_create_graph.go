@@ -10,22 +10,36 @@ func init() {
 	operationRepository["NetworKitCreateGraph"] = Operation{
 		execute: func(ea *EntityAccessor) error {
 			options := ea.GetMapParam("options")
-			opt64 := func(k string) uint64 {
+			getOpt := func(k string) interface{} {
 				o := options[k]
 				if o == nil {
 					panic(fmt.Sprintf("%#v not found in %#v", k, options))
 				}
-				return uint64(o.(float64))
+				return o
+			}
+			double := func(k string) float64 {
+				return getOpt(k).(float64)
+			}
+			count := func(k string) uint64 {
+				return uint64(double(k))
 			}
 			var result networkit.Graph
-			networkit.SetSeed(opt64("seed"), true)
+			networkit.SetSeed(count("seed"), true)
 			switch ea.GetStringParam("op") {
 			case "BarabasiAlbertGenerator":
 				g := networkit.NewBarabasiAlbertGenerator(
-					opt64("attachments_per_node"),
-					opt64("size"),
-					opt64("connected_at_start"))
+					count("attachments_per_node"),
+					count("size"),
+					count("connected_at_start"))
 				defer networkit.DeleteBarabasiAlbertGenerator(g)
+				result = g.Generate()
+			case "ClusteredRandomGraphGenerator":
+				g := networkit.NewClusteredRandomGraphGenerator(
+					count("size"),
+					count("clusters"),
+					double("probability_in"),
+					double("probability_out"))
+				defer networkit.DeleteClusteredRandomGraphGenerator(g)
 				result = g.Generate()
 			}
 			vs, es := ToSphynx(result)

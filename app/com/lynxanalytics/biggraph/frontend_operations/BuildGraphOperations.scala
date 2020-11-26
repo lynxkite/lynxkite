@@ -138,6 +138,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       def enabled = FEStatus.enabled
       def apply() = {
         val optValues: Map[String, Any] = params.getMetaMap.mapValues {
+          case p: NonNegDouble => params(p.id).toDouble
           case p: NonNegInt => params(p.id).toLong
           case p: RandomSeed => params(p.id).toLong
         }
@@ -150,6 +151,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   registerNKRandomGraph("Create Barabasi-Albert graph", "BarabasiAlbertGenerator", Seq(
     NonNegInt("attachments_per_node", "Attachments per node", default = 1),
     NonNegInt("connected_at_start", "Nodes connected at the start", default = 0)))
+  registerNKRandomGraph("Create clustered random graph", "ClusteredRandomGraphGenerator", Seq(
+    NonNegInt("clusters", "Number of clusters", default = 10),
+    NonNegDouble("probability_in", "Intra-cluster edge probability", defaultValue = "0.6"),
+    NonNegDouble("probability_out", "Inter-cluster edge probability", defaultValue = "0.01")))
 
   register(
     "Predict edges with hyperbolic positions",
