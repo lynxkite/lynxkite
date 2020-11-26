@@ -6,19 +6,25 @@ package com.lynxanalytics.biggraph.graph_operations
 import play.api.libs.json
 import com.lynxanalytics.biggraph.graph_api._
 
+object NetworKitCommon {
+  def toJson(m: Map[String, Any]) = {
+    json.JsObject(m.mapValues {
+      case v: String => json.Json.toJson(v)
+      case v: Int => json.Json.toJson(v)
+      case v: Long => json.Json.toJson(v)
+      case v: Double => json.Json.toJson(v)
+      case v: Boolean => json.Json.toJson(v)
+    }.toSeq)
+  }
+}
+
 object NetworKitComputeAttribute extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitComputeAttribute(
     (j \ "op").as[String], (j \ "options").as[json.JsObject])
   def run(name: String, es: EdgeBundle, options: Map[String, Any] = Map())(
     implicit
     m: MetaGraphManager): Attribute[Double] = {
-    val j = json.JsObject(options.mapValues {
-      case v: String => json.Json.toJson(v)
-      case v: Int => json.Json.toJson(v)
-      case v: Double => json.Json.toJson(v)
-      case v: Boolean => json.Json.toJson(v)
-    }.toSeq)
-    val op = NetworKitComputeAttribute(name, j)
+    val op = NetworKitComputeAttribute(name, NetworKitCommon.toJson(options))
     import Scripting._
     op(op.es, es).result.attr
   }
@@ -30,5 +36,27 @@ case class NetworKitComputeAttribute(op: String, options: json.JsObject)
     implicit val i = instance
     new AttributeOutput[Double](inputs.vs.entity)
   }
+  override def toJson = json.Json.obj("op" -> op, "options" -> options)
+}
+
+object NetworKitCreateGraph extends OpFromJson {
+  def fromJson(j: json.JsValue) = NetworKitCreateGraph(
+    (j \ "op").as[String], (j \ "options").as[json.JsObject])
+  def run(name: String, options: Map[String, Any] = Map())(
+    implicit
+    m: MetaGraphManager): Output = {
+    val op = NetworKitCreateGraph(name, NetworKitCommon.toJson(options))
+    import Scripting._
+    op().result
+  }
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+  }
+}
+case class NetworKitCreateGraph(op: String, options: json.JsObject)
+  extends TypedMetaGraphOp[NoInput, NetworKitCreateGraph.Output] {
+  @transient override lazy val inputs = new NoInput()
+  def outputMeta(instance: MetaGraphOperationInstance) = new NetworKitCreateGraph.Output()(instance)
   override def toJson = json.Json.obj("op" -> op, "options" -> options)
 }

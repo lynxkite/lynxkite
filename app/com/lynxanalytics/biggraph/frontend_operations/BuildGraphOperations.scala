@@ -129,6 +129,28 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  def registerNKRandomGraph(name: String, className: String, options: Seq[OperationParameterMeta]) = {
+    registerProjectCreatingOp(name)(new ProjectOutputOperation(_) {
+      params += NonNegInt("size", "Vertex set size", default = 100)
+      params ++= options
+      params += RandomSeed("seed", "Random seed", context.box)
+      override def summary = s"$name with ${params("size")} vertices"
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val optValues: Map[String, Any] = params.getMetaMap.mapValues {
+          case p: NonNegInt => params(p.id).toLong
+          case p: RandomSeed => params(p.id).toLong
+        }
+        val result = graph_operations.NetworKitCreateGraph.run(className, optValues)
+        project.vertexSet = result.vs
+        project.edgeBundle = result.es
+      }
+    })
+  }
+  registerNKRandomGraph("Create Barabasi-Albert graph", "BarabasiAlbertGenerator", Seq(
+    NonNegInt("attachments_per_node", "Attachments per node", default = 1),
+    NonNegInt("connected_at_start", "Nodes connected at the start", default = 0)))
+
   register(
     "Predict edges with hyperbolic positions",
     List(projectInput))(new ProjectTransformation(_) {

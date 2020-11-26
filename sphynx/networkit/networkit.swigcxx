@@ -16,6 +16,7 @@
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
+#include <networkit/auxiliary/Random.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -63,3 +64,4 @@ namespace std {
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
 %include "include/networkit/graph/GraphBuilder.hpp"
+%include "include/networkit/auxiliary/Random.hpp"

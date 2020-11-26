@@ -93,7 +93,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       // A directed graph just gets turned into an undirected graph.
       // We can skip that and just build an undirected graph.
       val core = graph_operations.NetworKitComputeAttribute.run(
-        "CoreDecomposition", es, Map("directed" -> false))
+        "CoreDecomposition", project.edgeBundle, Map("directed" -> false))
       project.newVertexAttribute(name, core, help)
     }
   })
