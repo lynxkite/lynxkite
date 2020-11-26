@@ -106,6 +106,14 @@ func init() {
 					true) // allow self-loops
 				defer networkit.DeleteErdosRenyiGenerator(g)
 				result = g.Generate()
+			case "HyperbolicGenerator":
+				g := networkit.NewHyperbolicGenerator(
+					count("size"),
+					double("avg_degree"),
+					double("exponent"),
+					double("temperature"))
+				defer networkit.DeleteHyperbolicGenerator(g)
+				result = g.Generate()
 			}
 			vs, es := ToSphynx(result)
 			ea.output("vs", vs)

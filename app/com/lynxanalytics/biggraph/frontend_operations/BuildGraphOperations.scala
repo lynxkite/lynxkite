@@ -164,6 +164,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   registerNKRandomGraph("Create Erdős–Rényi graph", "ErdosRenyiGenerator", Seq(
     NonNegInt("clusters", "Number of clusters", default = 10),
     NonNegDouble("probability", "Intra-cluster edge probability", defaultValue = "0.01")))
+  registerNKRandomGraph("Create hyperbolic random graph", "HyperbolicGenerator", Seq(
+    NonNegDouble("avg_degree", "Average degree", defaultValue = "4.5"),
+    NonNegDouble("exponent", "Power-law exponent", defaultValue = "3.0"),
+    NonNegDouble("temperature", "Temperature", defaultValue = "0.0")))
 
   register(
     "Predict edges with hyperbolic positions",
