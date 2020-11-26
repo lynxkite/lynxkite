@@ -85,6 +85,19 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Find k-core decomposition")(new ProjectTransformation(_) {
+    params ++= List(Param("name", "Attribute name", defaultValue = "core"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      // A directed graph just gets turned into an undirected graph.
+      // We can skip that and just build an undirected graph.
+      val core = graph_operations.NetworKitComputeAttribute.run(
+        "CoreDecomposition", es, Map("directed" -> false))
+      project.newVertexAttribute(name, core, help)
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle

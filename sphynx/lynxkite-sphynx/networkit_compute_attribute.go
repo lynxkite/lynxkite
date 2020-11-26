@@ -10,7 +10,9 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
-			g := ToNetworKit(vs, es)
+			options := ea.GetMapParam("options")
+			// The caller can set "directed" to false to create an undirected graph.
+			g := ToNetworKit(vs, es, options["directed"] != false)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),
 				Defined: make([]bool, len(vs.MappingToUnordered)),
@@ -25,6 +27,12 @@ func init() {
 			case "Betweenness":
 				c := networkit.NewBetweenness(g)
 				defer networkit.DeleteBetweenness(c)
+				c.Run()
+				result = c.Scores()
+			case "CoreDecomposition":
+				g.RemoveSelfLoops()
+				c := networkit.NewCoreDecomposition(g)
+				defer networkit.DeleteCoreDecomposition(c)
 				c.Run()
 				result = c.Scores()
 			case "EigenvectorCentrality":

@@ -83,6 +83,10 @@ func (ea *EntityAccessor) GetStringParam(name string) string {
 	return ea.opInst.Operation.Data[name].(string)
 }
 
+func (ea *EntityAccessor) GetMapParam(name string) map[string]interface{} {
+	return ea.opInst.Operation.Data[name].(map[string]interface{})
+}
+
 func (ea *EntityAccessor) GetStringVectorParam(name string) []string {
 	interfaceSlice := ea.opInst.Operation.Data[name].([]interface{})
 	stringSlice := make([]string, len(interfaceSlice))

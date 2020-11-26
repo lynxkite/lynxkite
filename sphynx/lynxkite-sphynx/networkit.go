@@ -22,8 +22,8 @@ func ToIdSlice(v networkit.IdVector) []SphynxId {
 	return s
 }
 
-func ToNetworKit(vs *VertexSet, es *EdgeBundle) networkit.Graph {
-	builder := networkit.NewGraphBuilder(uint64(len(vs.MappingToUnordered)))
+func ToNetworKit(vs *VertexSet, es *EdgeBundle, directed bool) networkit.Graph {
+	builder := networkit.NewGraphBuilder(uint64(len(vs.MappingToUnordered)), false, directed)
 	defer networkit.DeleteGraphBuilder(builder)
 	for i := range es.Src {
 		builder.AddHalfEdge(uint64(es.Src[i]), uint64(es.Dst[i]))

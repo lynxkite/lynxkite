@@ -5,6 +5,7 @@
 %{
 #include <networkit/centrality/ApproxCloseness.hpp>
 #include <networkit/centrality/Betweenness.hpp>
+#include <networkit/centrality/CoreDecomposition.hpp>
 #include <networkit/centrality/EigenvectorCentrality.hpp>
 #include <networkit/centrality/EstimateBetweenness.hpp>
 #include <networkit/centrality/HarmonicCloseness.hpp>
@@ -23,10 +24,17 @@ using namespace NetworKit;
 #define final
 %include "include/networkit/Globals.hpp"
 typedef uint64_t count;
+typedef uint64_t node;
 class Graph {
 public:
   count numberOfNodes() const noexcept;
   count numberOfEdges() const noexcept;
+  bool isDirected() const noexcept;
+  count degree(node v) const;
+  count degreeIn(node v) const;
+  count degreeOut(node v) const;
+  void removeSelfLoops();
+  void removeMultiEdges();
 };
 %typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
@@ -44,6 +52,7 @@ namespace std {
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/ApproxCloseness.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
+%include "include/networkit/centrality/CoreDecomposition.hpp"
 %include "include/networkit/centrality/EigenvectorCentrality.hpp"
 %include "include/networkit/centrality/EstimateBetweenness.hpp"
 %include "include/networkit/centrality/HarmonicCloseness.hpp"

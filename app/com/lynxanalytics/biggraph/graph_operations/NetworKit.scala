@@ -16,6 +16,7 @@ object NetworKitComputeAttribute extends OpFromJson {
       case v: String => json.Json.toJson(v)
       case v: Int => json.Json.toJson(v)
       case v: Double => json.Json.toJson(v)
+      case v: Boolean => json.Json.toJson(v)
     }.toSeq)
     val op = NetworKitComputeAttribute(name, j)
     import Scripting._
