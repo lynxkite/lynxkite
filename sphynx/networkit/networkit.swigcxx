@@ -14,7 +14,20 @@
 #include <networkit/centrality/LaplacianCentrality.hpp>
 #include <networkit/centrality/Sfigality.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
+#include <networkit/generators/ChungLuGenerator.hpp>
 #include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
+#include <networkit/generators/DorogovtsevMendesGenerator.hpp>
+#include <networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp>
+#include <networkit/generators/ErdosRenyiGenerator.hpp>
+#include <networkit/generators/HavelHakimiGenerator.hpp>
+#include <networkit/generators/HyperbolicGenerator.hpp>
+#include <networkit/generators/LFRGenerator.hpp>
+#include <networkit/generators/MocnikGenerator.hpp>
+#include <networkit/generators/PubWebGenerator.hpp>
+#include <networkit/generators/RegularRingLatticeGenerator.hpp>
+#include <networkit/generators/RmatGenerator.hpp>
+#include <networkit/generators/StochasticBlockmodel.hpp>
+#include <networkit/generators/WattsStrogatzGenerator.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
 #include <networkit/auxiliary/Random.hpp>
@@ -40,17 +53,26 @@ public:
 };
 %typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
-   $1 = ($1_ltype)$input.array;
+  $1 = ($1_ltype)$input.array;
+}
+%exception {
+  try {
+    $action;
+  } catch (std::exception &e) {
+    _swig_gopanic(e.what());
+  }
 }
 %include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>
 namespace std {
-  %template(IdVector) vector<unsigned long long>;
+  %template(Uint64Vector) vector<unsigned long long>;
   %template(DoubleVector) vector<double>;
 }
 %include "include/networkit/base/Algorithm.hpp"
 %ignore ranking;
+%ignore getMoveGraph;
+%ignore getMovePartition;
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/ApproxCloseness.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
@@ -63,7 +85,21 @@ namespace std {
 %include "include/networkit/centrality/LaplacianCentrality.hpp"
 %include "include/networkit/centrality/Sfigality.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
+%include "include/networkit/generators/StaticDegreeSequenceGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
+%include "include/networkit/generators/ChungLuGenerator.hpp"
 %include "include/networkit/generators/ClusteredRandomGraphGenerator.hpp"
+%include "include/networkit/generators/DorogovtsevMendesGenerator.hpp"
+%include "include/networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp"
+%include "include/networkit/generators/ErdosRenyiGenerator.hpp"
+%include "include/networkit/generators/HavelHakimiGenerator.hpp"
+%include "include/networkit/generators/HyperbolicGenerator.hpp"
+%include "include/networkit/generators/LFRGenerator.hpp"
+%include "include/networkit/generators/MocnikGenerator.hpp"
+%include "include/networkit/generators/PubWebGenerator.hpp"
+%include "include/networkit/generators/RegularRingLatticeGenerator.hpp"
+%include "include/networkit/generators/RmatGenerator.hpp"
+%include "include/networkit/generators/StochasticBlockmodel.hpp"
+%include "include/networkit/generators/WattsStrogatzGenerator.hpp"
 %include "include/networkit/graph/GraphBuilder.hpp"
 %include "include/networkit/auxiliary/Random.hpp"

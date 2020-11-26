@@ -14,7 +14,7 @@ func ToDoubleSlice(v networkit.DoubleVector) []float64 {
 	return s
 }
 
-func ToIdSlice(v networkit.IdVector) []SphynxId {
+func ToIdSlice(v networkit.Uint64Vector) []SphynxId {
 	s := make([]SphynxId, v.Size())
 	for i := range s {
 		s[i] = SphynxId(v.Get(i))

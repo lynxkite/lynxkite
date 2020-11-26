@@ -141,6 +141,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           case p: NonNegDouble => params(p.id).toDouble
           case p: NonNegInt => params(p.id).toLong
           case p: RandomSeed => params(p.id).toLong
+          case p => params(p.id)
         }
         val result = graph_operations.NetworKitCreateGraph.run(className, optValues)
         project.vertexSet = result.vs
@@ -151,10 +152,18 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   registerNKRandomGraph("Create Barabasi-Albert graph", "BarabasiAlbertGenerator", Seq(
     NonNegInt("attachments_per_node", "Attachments per node", default = 1),
     NonNegInt("connected_at_start", "Nodes connected at the start", default = 0)))
+  registerNKRandomGraph("Create random graph with certain degrees", "StaticDegreeSequenceGenerator", Seq(
+    Param("degrees", "List of vertex degrees", defaultValue = "1, 2, 3, 4"),
+    Choice("algorithm", "Algorithm",
+      options = FEOption.list("Chung–Lu", "Edge switching Markov chain", "Haveli–Hakimi"))))
   registerNKRandomGraph("Create clustered random graph", "ClusteredRandomGraphGenerator", Seq(
     NonNegInt("clusters", "Number of clusters", default = 10),
     NonNegDouble("probability_in", "Intra-cluster edge probability", defaultValue = "0.6"),
     NonNegDouble("probability_out", "Inter-cluster edge probability", defaultValue = "0.01")))
+  registerNKRandomGraph("Create Dorogovtsev–Mendes random graph", "DorogovtsevMendesGenerator", Seq())
+  registerNKRandomGraph("Create Erdős–Rényi graph", "ErdosRenyiGenerator", Seq(
+    NonNegInt("clusters", "Number of clusters", default = 10),
+    NonNegDouble("probability", "Intra-cluster edge probability", defaultValue = "0.01")))
 
   register(
     "Predict edges with hyperbolic positions",
