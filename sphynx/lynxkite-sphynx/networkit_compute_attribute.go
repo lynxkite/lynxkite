@@ -2,6 +2,8 @@
 package main
 
 import (
+	"math"
+
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -11,6 +13,11 @@ func init() {
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
 			options := ea.GetMapParam("options")
+			seed := uint64(1)
+			if s, exists := options["seed"]; exists {
+				seed = uint64(s.(float64))
+			}
+			networkit.SetSeed(seed, true)
 			// The caller can set "directed" to false to create an undirected graph.
 			g := ToNetworKit(vs, es, options["directed"] != false)
 			attr := &DoubleAttribute{
@@ -73,7 +80,7 @@ func init() {
 			}
 			attr.Values = ToDoubleSlice(result)
 			for i := range attr.Defined {
-				attr.Defined[i] = true
+				attr.Defined[i] = !math.IsNaN(attr.Values[i])
 			}
 			ea.output("attr", attr)
 			return nil

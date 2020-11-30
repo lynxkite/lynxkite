@@ -6,6 +6,37 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class NetworKitTest extends OperationsTestBase {
+  test("Find k-core decomposition") {
+    val g = box("Create example graph").box("Find k-core decomposition").project
+    assert(get(g.vertexAttributes("core")) == Map(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 0.0))
+  }
+
+  test("Compute centrality") {
+    for (
+      (algorithm, expected) <- Seq(
+        "Harmonic" -> Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0),
+        "Lin" -> Map(0 -> 4.5, 1 -> 4.5, 2 -> 1.0, 3 -> 1.0),
+        "Average distance" -> Map(0 -> 1.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0),
+        "Betweenness" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0),
+        "Eigenvector" -> Map(0 -> 0.7, 1 -> 0.7, 2 -> 0.0, 3 -> 0.0),
+        "Harmonic Closeness" -> Map(0 -> 0.33, 1 -> 0.33, 2 -> 0.66, 3 -> 0.0),
+        "Katz" -> Map(0 -> 0.5, 1 -> 0.5, 2 -> 0.49, 3 -> 0.49),
+        "K-Path" -> Map(0 -> 3.84, 1 -> 4.48, 2 -> 0.0, 3 -> 0.0),
+        "Laplacian" -> Map(0 -> 4.0, 1 -> 4.0, 2 -> 10.0, 3 -> 0.0),
+        "Sfigality" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0))
+    ) {
+      println(algorithm)
+      val g = box("Create example graph").box("Compute centrality", Map("algorithm" -> algorithm)).project
+      val centrality = get(g.vertexAttributes("centrality").runtimeSafeCast[Double])
+      assert(centrality.size == expected.size, s"-- in $algorithm")
+      for ((k, v) <- centrality) {
+        assert(
+          Math.abs(v - expected(k.toInt)) < 0.01,
+          s"-- $algorithm returned $centrality instead of $expected")
+      }
+    }
+  }
+
   test("Create Barabasi–Albert graph") {
     val g = box("Create Barabasi–Albert graph", Map("seed" -> "1")).project
     assert(g.vertexSet.countScalar.value == 100)
