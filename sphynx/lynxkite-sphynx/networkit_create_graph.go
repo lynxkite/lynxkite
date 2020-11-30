@@ -46,7 +46,7 @@ func init() {
 				return nums
 			}
 			// The caller has to call DeleteUint64Vector.
-			degreeSequence := func(k string) networkit.Uint64Vector {
+			degreeVector := func(k string) networkit.Uint64Vector {
 				nums := numbers(k)
 				cv := networkit.NewUint64Vector()
 				size := int(count("size"))
@@ -69,7 +69,7 @@ func init() {
 				defer networkit.DeleteBarabasiAlbertGenerator(g)
 				result = g.Generate()
 			case "StaticDegreeSequenceGenerator":
-				degs := degreeSequence("degrees")
+				degs := degreeVector("degrees")
 				defer networkit.DeleteUint64Vector(degs)
 				switch getOpt("algorithm").(string) {
 				case "Chung–Lu":
@@ -113,6 +113,28 @@ func init() {
 					double("exponent"),
 					double("temperature"))
 				defer networkit.DeleteHyperbolicGenerator(g)
+				result = g.Generate()
+			case "LFRGenerator":
+				g := networkit.NewLFRGenerator(count("size"))
+				defer networkit.DeleteLFRGenerator(g)
+				g.GeneratePowerlawDegreeSequence(
+					count("avg_degree"), count("max_degree"), -double("degree_exponent"))
+				g.GeneratePowerlawCommunitySizeSequence(
+					count("min_community"), count("max_community"), -double("community_exponent"))
+				g.SetMuWithBinomialDistribution(double("avg_mixing"))
+				result = g.Generate()
+			case "MocnikGenerator":
+				g := networkit.NewMocnikGenerator(
+					count("dimension"), count("size"), double("density"))
+				defer networkit.DeleteMocnikGenerator(g)
+				result = g.Generate()
+			case "PubWebGenerator":
+				g := networkit.NewPubWebGenerator(
+					count("size"),
+					count("dense_areas"),
+					double("neighborhood_radius"),
+					count("max_degree"))
+				defer networkit.DeletePubWebGenerator(g)
 				result = g.Generate()
 			}
 			vs, es := ToSphynx(result)

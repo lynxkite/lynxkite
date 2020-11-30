@@ -168,6 +168,23 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     NonNegDouble("avg_degree", "Average degree", defaultValue = "4.5"),
     NonNegDouble("exponent", "Power-law exponent", defaultValue = "3.0"),
     NonNegDouble("temperature", "Temperature", defaultValue = "0.0")))
+  registerNKRandomGraph("Create LFR random graph", "LFRGenerator", Seq(
+    NonNegInt("avg_degree", "Average degree", default = 3),
+    NonNegInt("max_degree", "Maximum degree", default = 10),
+    NonNegDouble("degree_exponent", "Degree power law falloff", defaultValue = "2.5"),
+    NonNegInt("min_community", "Smallest community size", default = 5),
+    NonNegInt("max_community", "Largest community size", default = 30),
+    NonNegDouble("community_exponent", "Community size power law falloff", defaultValue = "1.5"),
+    NonNegDouble("avg_mixing", "Expected fraction of external neighbors", defaultValue = "0.2")))
+  registerNKRandomGraph("Create Mocnik random graph", "MocnikGenerator", Seq(
+    NonNegInt("dimension", "Dimension of space", default = 2),
+    NonNegDouble("density", "Density of graph", defaultValue = "2.5")))
+  registerNKRandomGraph("Create P2P random graph", "PubWebGenerator", Seq(
+    NonNegInt("dense_areas", "Number of dense areas", default = 10),
+    NonNegInt("max_degree", "Maximum degree", default = 10),
+    NonNegDouble("neighborhood_radius", "Neighborhood radius", defaultValue = "0.2")))
+  // TODO: The P2P graph is created from a 2D embedding. We could expose the coordinates.
+  // Some other generators could expose the ground-truth communities.
 
   register(
     "Predict edges with hyperbolic positions",
