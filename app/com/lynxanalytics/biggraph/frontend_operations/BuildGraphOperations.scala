@@ -149,7 +149,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       }
     })
   }
-  registerNKRandomGraph("Create Barabasi-Albert graph", "BarabasiAlbertGenerator", Seq(
+  registerNKRandomGraph("Create Barabasi–Albert graph", "BarabasiAlbertGenerator", Seq(
     NonNegInt("attachments_per_node", "Attachments per node", default = 1),
     NonNegInt("connected_at_start", "Nodes connected at the start", default = 0)))
   registerNKRandomGraph("Create random graph with certain degrees", "StaticDegreeSequenceGenerator", Seq(
