@@ -49,8 +49,10 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
           // From NetworKit.
           // TODO: These two don't work. "No match for overloaded function call"
           // "Closeness (approximate)", "Betweenness (estimate)",
+          // TODO: Laplacian is meant to be used with weights.
+          // "Laplacian",
           "Betweenness", "Eigenvector", "Harmonic Closeness", "Katz",
-          "K-Path", "Laplacian", "Sfigality").sorted.toList)),
+          "K-Path", "Sfigality").sorted.toList)),
       Choice("direction", "Direction",
         options = Direction.attrOptionsWithDefault("outgoing edges")),
       NonNegInt("maxDiameter", "Maximal diameter to check",

@@ -22,7 +22,6 @@ class NetworKitTest extends OperationsTestBase {
         "Harmonic Closeness" -> Map(0 -> 0.33, 1 -> 0.33, 2 -> 0.66, 3 -> 0.0),
         "Katz" -> Map(0 -> 0.5, 1 -> 0.5, 2 -> 0.49, 3 -> 0.49),
         "K-Path" -> Map(0 -> 3.84, 1 -> 4.48, 2 -> 0.0, 3 -> 0.0),
-        "Laplacian" -> Map(0 -> 4.0, 1 -> 4.0, 2 -> 10.0, 3 -> 0.0),
         "Sfigality" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0))
     ) {
       println(algorithm)
