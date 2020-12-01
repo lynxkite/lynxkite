@@ -30,7 +30,7 @@ if $WITH_SPHYNX; then
   -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
   -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=localhost"
   cd sphynx
-  .build/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR &
+  LD_LIBRARY_PATH=.build .build/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR &
   cd -
   $(dirname $0)/tools/wait_for_port.sh $SPHYNX_PORT
   echo "Sphynx running on port $SPHYNX_PORT"
