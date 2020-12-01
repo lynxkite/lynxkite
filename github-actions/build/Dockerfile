@@ -23,7 +23,7 @@ RUN \
 # Install packages.
 RUN \
   apt-get update && \
-  apt-get install -y build-essential coreutils default-libmysqlclient-dev git nodejs rsync sbt xvfb && \
+  apt-get install -y build-essential cmake coreutils default-libmysqlclient-dev git nodejs rsync sbt xvfb && \
   npm install -g yarn gulp
 
 # Google Chrome for frontend testing.
