@@ -4,7 +4,9 @@
 if ! pip list | grep torch-geometric | grep 1.4.2; then
   # Conda update had to be added because otherwise Conda would downgrade Node.js
   # to version 6 and cause failures later on.
-  conda update -yn base conda pip
+  conda update -yn base conda
+  # torch-scatter==2.0.4+cpu fails to install with pip 20.3.
+  conda install -y pip==20.2.4
   conda install -y pyarrow
   conda install -y pytorch=1.4.0 torchvision cpuonly -c pytorch
   yes | pip install --no-cache-dir torch-scatter==2.0.4+cpu -f https://pytorch-geometric.com/whl/torch-1.4.0.html
