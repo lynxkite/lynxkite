@@ -131,7 +131,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   def registerNKRandomGraph(name: String, className: String, options: Seq[OperationParameterMeta]) = {
     registerProjectCreatingOp(name)(new ProjectOutputOperation(_) {
-      params += NonNegInt("size", "Vertex set size", default = 100)
+      params += NonNegInt("size", "Number of vertices", default = 100)
       params ++= options
       params += RandomSeed("seed", "Random seed", context.box)
       override def summary = s"$name with ${params("size")} vertices"
@@ -149,10 +149,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       }
     })
   }
-  registerNKRandomGraph("Create Barabasi–Albert graph", "BarabasiAlbertGenerator", Seq(
-    NonNegInt("attachments_per_node", "Attachments per node", default = 1),
-    NonNegInt("connected_at_start", "Nodes connected at the start", default = 0)))
-  registerNKRandomGraph("Create random graph with certain degrees", "StaticDegreeSequenceGenerator", Seq(
+  registerNKRandomGraph("Create Barabási–Albert graph", "BarabasiAlbertGenerator", Seq(
+    NonNegInt("attachments_per_vertex", "Attachments per vertex", default = 1),
+    NonNegInt("connected_at_start", "vertices connected at the start", default = 0)))
+  registerNKRandomGraph("Create a graph with certain degrees", "StaticDegreeSequenceGenerator", Seq(
     Param("degrees", "List of vertex degrees", defaultValue = "1, 2, 3, 4"),
     Choice("algorithm", "Algorithm",
       options = FEOption.list("Chung–Lu", "Edge switching Markov chain", "Haveli–Hakimi"))))
@@ -162,8 +162,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     NonNegDouble("probability_out", "Inter-cluster edge probability", defaultValue = "0.01")))
   registerNKRandomGraph("Create Dorogovtsev–Mendes random graph", "DorogovtsevMendesGenerator", Seq())
   registerNKRandomGraph("Create Erdős–Rényi graph", "ErdosRenyiGenerator", Seq(
-    NonNegInt("clusters", "Number of clusters", default = 10),
-    NonNegDouble("probability", "Intra-cluster edge probability", defaultValue = "0.01")))
+    NonNegDouble("probability", "Edge probability", defaultValue = "0.01")))
   registerNKRandomGraph("Create hyperbolic random graph", "HyperbolicGenerator", Seq(
     NonNegDouble("avg_degree", "Average degree", defaultValue = "4.5"),
     NonNegDouble("exponent", "Power-law exponent", defaultValue = "3.0"),
@@ -171,11 +170,11 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   registerNKRandomGraph("Create LFR random graph", "LFRGenerator", Seq(
     NonNegInt("avg_degree", "Average degree", default = 3),
     NonNegInt("max_degree", "Maximum degree", default = 10),
-    NonNegDouble("degree_exponent", "Degree power law falloff", defaultValue = "2.5"),
+    NonNegDouble("degree_exponent", "Degree power-law exponent", defaultValue = "2.5"),
     NonNegInt("min_community", "Smallest community size", default = 5),
     NonNegInt("max_community", "Largest community size", default = 30),
-    NonNegDouble("community_exponent", "Community size power law falloff", defaultValue = "1.5"),
-    NonNegDouble("avg_mixing", "Expected fraction of external neighbors", defaultValue = "0.2")))
+    NonNegDouble("community_exponent", "Community size power-law exponent", defaultValue = "1.5"),
+    NonNegDouble("avg_mixing", "Fraction of external neighbors", defaultValue = "0.2")))
   registerNKRandomGraph("Create Mocnik random graph", "MocnikGenerator", Seq(
     NonNegInt("dimension", "Dimension of space", default = 2),
     NonNegDouble("density", "Density of graph", defaultValue = "2.5")))

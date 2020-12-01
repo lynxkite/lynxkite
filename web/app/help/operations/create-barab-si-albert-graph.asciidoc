@@ -1,0 +1,25 @@
+[[create-barab-si-albert-graph]]
+### Create Barabási–Albert graph
+
+Creates a random graph using the https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model[Barabási–Albert model].
+The vertices are created one by one and connected to a set number of randomly chosen
+previously created vertices. This ensures a skewed degree distribution with "older" vertices
+tending to have a higher degree.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1BarabasiAlbertGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-attachments_per_vertex]#Attachments per vertex#::
+As each vertex is added, it will be connected to this many existing vertices.
+
+[p-connected_at_start]#Nodes connected at the start#::
+This many vertices will be connected in a circle at the start of the algorithm.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

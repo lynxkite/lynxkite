@@ -1,0 +1,27 @@
+### Create clustered random graph
+
+Creates a random graph with a given number of clusters.
+It randomly places each vertex into one of the clusters then adds an edge for each
+vertex pair with the given probabilities.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1ClusteredRandomGraphGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-clusters]#Number of clusters#::
+The created graph will have this many clusters.
+Each vertex will be randomly placed into one of the clusters with equal probability.
+
+[p-probability_in]#Intra-cluster edge probability#::
+The probablity for adding an edge between two vertices if they are in the same cluster.
+
+[p-probability_out]#Inter-cluster edge probability#::
+The probablity for adding an edge between two vertices if they are in different clusters.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

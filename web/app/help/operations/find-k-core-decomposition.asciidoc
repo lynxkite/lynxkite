@@ -1,0 +1,16 @@
+### Find k-core decomposition
+
+If we deleted all parts of a graph outside of the __k__-core, all vertices would
+still have a degree of at least _k_. More visually, the 0-core is the whole graph.
+If we discard the isolated vertices we get the 1-core. If we repeatedly discard
+all degree-1 vertices, we get the 2-core. And so on.
+
+Read more on https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)#k-Cores[Wikipedia].
+
+This operation outputs the number of the highest core that each vertex belongs to
+as a vertex attribute.
+
+====
+[p-name]#Attribute name#::
+The new attribute will be created under this name.
+====

@@ -36,28 +36,28 @@ class NetworKitTest extends OperationsTestBase {
     }
   }
 
-  test("Create Barabasi–Albert graph") {
-    val g = box("Create Barabasi–Albert graph", Map("seed" -> "1")).project
+  test("Create Barabási–Albert graph") {
+    val g = box("Create Barabási–Albert graph", Map("seed" -> "1")).project
     assert(g.vertexSet.countScalar.value == 100)
     assert(g.edgeBundle.countScalar.value == 100)
   }
-  test("Create random graph with certain degrees / Chung–Lu") {
+  test("Create a graph with certain degrees / Chung–Lu") {
     val g = box(
-      "Create random graph with certain degrees",
+      "Create a graph with certain degrees",
       Map("seed" -> "1", "algorithm" -> "Chung–Lu")).project
     assert(g.vertexSet.countScalar.value == 100)
     assert(g.edgeBundle.countScalar.value == 110)
   }
-  test("Create random graph with certain degrees / Edge switching Markov chain") {
+  test("Create a graph with certain degrees / Edge switching Markov chain") {
     val g = box(
-      "Create random graph with certain degrees",
+      "Create a graph with certain degrees",
       Map("seed" -> "1", "algorithm" -> "Edge switching Markov chain")).project
     assert(g.vertexSet.countScalar.value == 100)
     assert(g.edgeBundle.countScalar.value == 125)
   }
-  test("Create random graph with certain degrees / Haveli–Hakimi") {
+  test("Create a graph with certain degrees / Haveli–Hakimi") {
     val g = box(
-      "Create random graph with certain degrees",
+      "Create a graph with certain degrees",
       Map("seed" -> "1", "algorithm" -> "Haveli–Hakimi")).project
     assert(g.vertexSet.countScalar.value == 100)
     assert(g.edgeBundle.countScalar.value == 125)

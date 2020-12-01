@@ -63,7 +63,7 @@ func init() {
 			switch ea.GetStringParam("op") {
 			case "BarabasiAlbertGenerator":
 				g := networkit.NewBarabasiAlbertGenerator(
-					count("attachments_per_node"),
+					count("attachments_per_vertex"),
 					count("size"),
 					count("connected_at_start"))
 				defer networkit.DeleteBarabasiAlbertGenerator(g)
@@ -77,11 +77,11 @@ func init() {
 					defer networkit.DeleteChungLuGenerator(g)
 					result = g.Generate()
 				case "Edge switching Markov chain":
-					g := networkit.NewEdgeSwitchingMarkovChainGenerator(degs)
+					g := networkit.NewEdgeSwitchingMarkovChainGenerator(degs, true)
 					defer networkit.DeleteEdgeSwitchingMarkovChainGenerator(g)
 					result = g.Generate()
 				case "Haveli–Hakimi":
-					g := networkit.NewHavelHakimiGenerator(degs)
+					g := networkit.NewHavelHakimiGenerator(degs, true)
 					defer networkit.DeleteHavelHakimiGenerator(g)
 					result = g.Generate()
 				}
