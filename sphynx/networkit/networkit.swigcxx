@@ -30,6 +30,7 @@
 #include <networkit/generators/WattsStrogatzGenerator.hpp>
 #include <networkit/graph/Graph.hpp>
 #include <networkit/graph/GraphBuilder.hpp>
+#include <networkit/auxiliary/Parallelism.hpp>
 #include <networkit/auxiliary/Random.hpp>
 #include "additions.h"
 using namespace NetworKit;
@@ -102,4 +103,5 @@ namespace std {
 %include "include/networkit/generators/StochasticBlockmodel.hpp"
 %include "include/networkit/generators/WattsStrogatzGenerator.hpp"
 %include "include/networkit/graph/GraphBuilder.hpp"
+%include "include/networkit/auxiliary/Parallelism.hpp"
 %include "include/networkit/auxiliary/Random.hpp"

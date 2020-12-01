@@ -75,7 +75,7 @@ class NetworKitTest extends OperationsTestBase {
   test("Create Erdős–Rényi graph") {
     val g = box("Create Erdős–Rényi graph", Map("seed" -> "1")).project
     assert(g.vertexSet.countScalar.value == 100)
-    assert(g.edgeBundle.countScalar.value == 98)
+    assert(g.edgeBundle.countScalar.value == 91)
   }
   test("Create hyperbolic random graph") {
     val g = box("Create hyperbolic random graph", Map("seed" -> "1")).project

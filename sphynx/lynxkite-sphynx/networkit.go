@@ -2,8 +2,9 @@
 package main
 
 import (
-	"github.com/lynxkite/lynxkite/sphynx/networkit"
 	"unsafe"
+
+	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
 func ToDoubleSlice(v networkit.DoubleVector) []float64 {

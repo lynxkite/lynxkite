@@ -60,6 +60,7 @@ func init() {
 
 			var result networkit.Graph
 			networkit.SetSeed(count("seed"), true)
+			networkit.SetThreadsFromEnv()
 			switch ea.GetStringParam("op") {
 			case "BarabasiAlbertGenerator":
 				g := networkit.NewBarabasiAlbertGenerator(

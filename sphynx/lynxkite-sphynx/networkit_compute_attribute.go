@@ -18,6 +18,7 @@ func init() {
 				seed = uint64(s.(float64))
 			}
 			networkit.SetSeed(seed, true)
+			networkit.SetThreadsFromEnv()
 			// The caller can set "directed" to false to create an undirected graph.
 			g := ToNetworKit(vs, es, options["directed"] != false)
 			attr := &DoubleAttribute{

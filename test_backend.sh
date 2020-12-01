@@ -21,6 +21,9 @@ if $WITH_SPHYNX; then
   export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
   export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
   export KITE_ALLOW_PYTHON=yes
+  # Some randomization gives different results depending on the
+  # thread count. Fix it for the unit tests.
+  export NETWORKIT_THREADS=4
   if [ -f $SPHYNX_PID_FILE ]; then
     kill `cat $SPHYNX_PID_FILE` || true
   fi
