@@ -103,15 +103,20 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   register("Place vertices with PivotMDS")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "position"),
-      NonNegInt("pivots", "Pivots", default = 3),
-      NonNegInt("dimensions", "Dimensions", default = 2))
+      NonNegInt("pivots", "Pivots", default = 100),
+      NonNegInt("dimensions", "Dimensions", default = 2),
+      Choice("length", "Edge length",
+        options = FEOption.unset +: project.edgeAttrList[Double]))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
+      val weight =
+        if (params("length") == FEOption.unset.id) None
+        else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
       val positions = graph_operations.NetworKitComputeVectorAttribute.run(
         "PivotMDS", project.edgeBundle, Map(
           "dimensions" -> params("dimensions").toInt,
-          "pivots" -> params("pivots").toInt))
+          "pivots" -> params("pivots").toInt), weight)
       project.newVertexAttribute(name, positions, help)
     }
   })

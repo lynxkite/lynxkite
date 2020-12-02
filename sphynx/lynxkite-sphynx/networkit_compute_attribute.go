@@ -12,6 +12,7 @@ func init() {
 		execute: func(ea *EntityAccessor) error {
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
+			weight := ea.getDoubleAttributeOpt("weight")
 			options := ea.GetMapParam("options")
 			seed := uint64(1)
 			if s, exists := options["seed"]; exists {
@@ -20,7 +21,7 @@ func init() {
 			networkit.SetSeed(seed, true)
 			networkit.SetThreadsFromEnv()
 			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, options["directed"] != false)
+			g := ToNetworKit(vs, es, weight, options["directed"] != false)
 			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),

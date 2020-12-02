@@ -7,11 +7,15 @@ import (
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
-func ToNetworKit(vs *VertexSet, es *EdgeBundle, directed bool) networkit.Graph {
-	builder := networkit.NewGraphBuilder(uint64(len(vs.MappingToUnordered)), false, directed)
+func ToNetworKit(vs *VertexSet, es *EdgeBundle, weight *DoubleAttribute, directed bool) networkit.Graph {
+	builder := networkit.NewGraphBuilder(uint64(len(vs.MappingToUnordered)), weight != nil, directed)
 	defer networkit.DeleteGraphBuilder(builder)
 	for i := range es.Src {
-		builder.AddHalfEdge(uint64(es.Src[i]), uint64(es.Dst[i]))
+		w := 1.0
+		if weight != nil && weight.Defined[i] {
+			w = weight.Values[i]
+		}
+		builder.AddHalfEdge(uint64(es.Src[i]), uint64(es.Dst[i]), w)
 	}
 	return builder.ToGraph(true)
 }

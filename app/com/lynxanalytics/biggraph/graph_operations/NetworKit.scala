@@ -16,48 +16,67 @@ object NetworKitCommon {
       case v: Boolean => json.Json.toJson(v)
     }.toSeq)
   }
+  class WeightedGraphInput(weighted: Boolean) extends MagicInputSignature {
+    val vs = vertexSet
+    val es = edgeBundle(vs, vs)
+    val weight = if (weighted) edgeAttribute[Double](es) else null
+  }
 }
 
 object NetworKitComputeAttribute extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitComputeAttribute(
-    (j \ "op").as[String], (j \ "options").as[json.JsObject])
-  def run(name: String, es: EdgeBundle, options: Map[String, Any] = Map())(
+    (j \ "op").as[String], (j \ "weighted").as[Boolean], (j \ "options").as[json.JsObject])
+  def run(
+    name: String,
+    es: EdgeBundle,
+    options: Map[String, Any] = Map(),
+    weight: Option[Attribute[Double]] = None)(
     implicit
     m: MetaGraphManager): Attribute[Double] = {
-    val op = NetworKitComputeAttribute(name, NetworKitCommon.toJson(options))
+    val op = NetworKitComputeAttribute(name, weight.isDefined, NetworKitCommon.toJson(options))
     import Scripting._
-    op(op.es, es).result.attr
+    weight match {
+      case Some(weight) => op(op.es, es)(op.weight, weight).result.attr
+      case None => op(op.es, es).result.attr
+    }
   }
 }
-case class NetworKitComputeAttribute(op: String, options: json.JsObject)
-  extends TypedMetaGraphOp[GraphInput, AttributeOutput[Double]] {
-  @transient override lazy val inputs = new GraphInput()
+case class NetworKitComputeAttribute(op: String, weighted: Boolean, options: json.JsObject)
+  extends TypedMetaGraphOp[NetworKitCommon.WeightedGraphInput, AttributeOutput[Double]] {
+  @transient override lazy val inputs = new NetworKitCommon.WeightedGraphInput(weighted)
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     new AttributeOutput[Double](inputs.vs.entity)
   }
-  override def toJson = json.Json.obj("op" -> op, "options" -> options)
+  override def toJson = json.Json.obj("op" -> op, "weighted" -> weighted, "options" -> options)
 }
 
 object NetworKitComputeVectorAttribute extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitComputeVectorAttribute(
-    (j \ "op").as[String], (j \ "options").as[json.JsObject])
-  def run(name: String, es: EdgeBundle, options: Map[String, Any] = Map())(
+    (j \ "op").as[String], (j \ "weighted").as[Boolean], (j \ "options").as[json.JsObject])
+  def run(
+    name: String,
+    es: EdgeBundle,
+    options: Map[String, Any] = Map(),
+    weight: Option[Attribute[Double]] = None)(
     implicit
     m: MetaGraphManager): Attribute[Vector[Double]] = {
-    val op = NetworKitComputeVectorAttribute(name, NetworKitCommon.toJson(options))
+    val op = NetworKitComputeVectorAttribute(name, weight.isDefined, NetworKitCommon.toJson(options))
     import Scripting._
-    op(op.es, es).result.attr
+    weight match {
+      case Some(weight) => op(op.es, es)(op.weight, weight).result.attr
+      case None => op(op.es, es).result.attr
+    }
   }
 }
-case class NetworKitComputeVectorAttribute(op: String, options: json.JsObject)
-  extends TypedMetaGraphOp[GraphInput, AttributeOutput[Vector[Double]]] {
-  @transient override lazy val inputs = new GraphInput()
+case class NetworKitComputeVectorAttribute(op: String, weighted: Boolean, options: json.JsObject)
+  extends TypedMetaGraphOp[NetworKitCommon.WeightedGraphInput, AttributeOutput[Vector[Double]]] {
+  @transient override lazy val inputs = new NetworKitCommon.WeightedGraphInput(weighted)
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     new AttributeOutput[Vector[Double]](inputs.vs.entity)
   }
-  override def toJson = json.Json.obj("op" -> op, "options" -> options)
+  override def toJson = json.Json.obj("op" -> op, "weighted" -> weighted, "options" -> options)
 }
 
 object NetworKitCreateGraph extends OpFromJson {
