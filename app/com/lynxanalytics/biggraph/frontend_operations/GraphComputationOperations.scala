@@ -100,6 +100,22 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Place vertices with PivotMDS")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Attribute name", defaultValue = "position"),
+      NonNegInt("pivots", "Pivots", default = 3),
+      NonNegInt("dimensions", "Dimensions", default = 2))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      val positions = graph_operations.NetworKitComputeVectorAttribute.run(
+        "PivotMDS", project.edgeBundle, Map(
+          "dimensions" -> params("dimensions").toInt,
+          "pivots" -> params("pivots").toInt))
+      project.newVertexAttribute(name, positions, help)
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle

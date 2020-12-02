@@ -7,22 +7,6 @@ import (
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
-func ToDoubleSlice(v networkit.DoubleVector) []float64 {
-	s := make([]float64, v.Size())
-	for i := range s {
-		s[i] = v.Get(i)
-	}
-	return s
-}
-
-func ToIdSlice(v networkit.Uint64Vector) []SphynxId {
-	s := make([]SphynxId, v.Size())
-	for i := range s {
-		s[i] = SphynxId(v.Get(i))
-	}
-	return s
-}
-
 func ToNetworKit(vs *VertexSet, es *EdgeBundle, directed bool) networkit.Graph {
 	builder := networkit.NewGraphBuilder(uint64(len(vs.MappingToUnordered)), false, directed)
 	defer networkit.DeleteGraphBuilder(builder)

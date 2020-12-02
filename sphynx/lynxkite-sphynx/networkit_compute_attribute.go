@@ -21,11 +21,13 @@ func init() {
 			networkit.SetThreadsFromEnv()
 			// The caller can set "directed" to false to create an undirected graph.
 			g := ToNetworKit(vs, es, options["directed"] != false)
+			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),
 				Defined: make([]bool, len(vs.MappingToUnordered)),
 			}
 			var result networkit.DoubleVector
+			defer networkit.DeleteDoubleVector(result)
 			switch ea.GetStringParam("op") {
 			case "ApproxCloseness":
 				c := networkit.NewApproxCloseness(g)
@@ -79,8 +81,8 @@ func init() {
 				c.Run()
 				result = c.Scores()
 			}
-			attr.Values = ToDoubleSlice(result)
 			for i := range attr.Defined {
+				attr.Values[i] = result.Get(i)
 				attr.Defined[i] = !math.IsNaN(attr.Values[i])
 			}
 			ea.output("attr", attr)

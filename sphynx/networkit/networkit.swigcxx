@@ -32,6 +32,8 @@
 #include <networkit/graph/GraphBuilder.hpp>
 #include <networkit/auxiliary/Parallelism.hpp>
 #include <networkit/auxiliary/Random.hpp>
+#include <networkit/viz/MaxentStress.hpp>
+#include <networkit/viz/PivotMDS.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -52,10 +54,12 @@ public:
   void removeSelfLoops();
   void removeMultiEdges();
 };
+// Allow passing in a Go slice for SphynxId * in our utility code.
 %typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
   $1 = ($1_ltype)$input.array;
 }
+// Turn C++ exceptions into Go panics.
 %exception {
   try {
     $action;
@@ -63,17 +67,24 @@ public:
     _swig_gopanic(e.what());
   }
 }
+
 %include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>
-namespace std {
-  %template(Uint64Vector) vector<unsigned long long>;
-  %template(DoubleVector) vector<double>;
-}
+template <class T = double, size_t Dimensions = 0> class Point {
+public:
+  T at(uint64_t i) const;
+};
+%template(Uint64Vector) std::vector<unsigned long long>;
+%template(DoubleVector) std::vector<double>;
+%template(DoublePoint) Point<double>;
+%template(PointVector) std::vector<Point<double>>;
 %include "include/networkit/base/Algorithm.hpp"
 %ignore ranking;
 %ignore getMoveGraph;
 %ignore getMovePartition;
+%ignore ResultStats;
+
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/ApproxCloseness.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
@@ -105,3 +116,7 @@ namespace std {
 %include "include/networkit/graph/GraphBuilder.hpp"
 %include "include/networkit/auxiliary/Parallelism.hpp"
 %include "include/networkit/auxiliary/Random.hpp"
+%include "include/networkit/viz/GraphLayoutAlgorithm.hpp"
+%template(GraphLayoutAlgorithmDouble) NetworKit::GraphLayoutAlgorithm<double>;
+%include "include/networkit/viz/MaxentStress.hpp"
+%include "include/networkit/viz/PivotMDS.hpp"

@@ -39,6 +39,27 @@ case class NetworKitComputeAttribute(op: String, options: json.JsObject)
   override def toJson = json.Json.obj("op" -> op, "options" -> options)
 }
 
+object NetworKitComputeVectorAttribute extends OpFromJson {
+  def fromJson(j: json.JsValue) = NetworKitComputeVectorAttribute(
+    (j \ "op").as[String], (j \ "options").as[json.JsObject])
+  def run(name: String, es: EdgeBundle, options: Map[String, Any] = Map())(
+    implicit
+    m: MetaGraphManager): Attribute[Vector[Double]] = {
+    val op = NetworKitComputeVectorAttribute(name, NetworKitCommon.toJson(options))
+    import Scripting._
+    op(op.es, es).result.attr
+  }
+}
+case class NetworKitComputeVectorAttribute(op: String, options: json.JsObject)
+  extends TypedMetaGraphOp[GraphInput, AttributeOutput[Vector[Double]]] {
+  @transient override lazy val inputs = new GraphInput()
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    new AttributeOutput[Vector[Double]](inputs.vs.entity)
+  }
+  override def toJson = json.Json.obj("op" -> op, "options" -> options)
+}
+
 object NetworKitCreateGraph extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitCreateGraph(
     (j \ "op").as[String], (j \ "options").as[json.JsObject])
