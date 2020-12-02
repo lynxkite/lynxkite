@@ -42,13 +42,24 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   register("Compute centrality")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
       Choice("algorithm", "Centrality type",
-        options = FEOption.list("Harmonic", "Lin", "Average distance")),
-      NonNegInt("bits", "Precision", default = 8),
+        options = FEOption.list(Seq(
+          // Implemented on Spark.
+          "Harmonic", "Lin", "Average distance",
+          // From NetworKit.
+          // TODO: These two don't work. "No match for overloaded function call"
+          // "Closeness (approximate)", "Betweenness (estimate)",
+          // TODO: Laplacian is meant to be used with weights.
+          // "Laplacian",
+          "Betweenness", "Eigenvector", "Harmonic Closeness", "Katz",
+          "K-Path", "Sfigality").sorted.toList)),
       Choice("direction", "Direction",
-        options = Direction.attrOptionsWithDefault("outgoing edges")))
+        options = Direction.attrOptionsWithDefault("outgoing edges")),
+      NonNegInt("maxDiameter", "Maximal diameter to check",
+        default = 10, group = "Advanced settings"),
+      NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
     def enabled = project.hasEdgeBundle
+    override def summary = s"Compute ${params("algorithm")} centrality"
     def apply() = {
       val name = params("name")
       val algorithm = params("algorithm")
@@ -56,10 +67,36 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val es = Direction(
         params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
-      val op = graph_operations.HyperBallCentrality(
-        params("maxDiameter").toInt, algorithm, params("bits").toInt)
-      project.newVertexAttribute(
-        name, op(op.es, es).result.centrality, algorithm + help)
+      def nk(algo: String) = graph_operations.NetworKitComputeAttribute.run(algo, es)
+      val centrality: Attribute[Double] = algorithm match {
+        case "Closeness (approximate)" => nk("ApproxCloseness")
+        case "Betweenness" => nk("Betweenness")
+        case "Eigenvector" => nk("EigenvectorCentrality")
+        case "Betweenness (estimate)" => nk("EstimateBetweenness")
+        case "Harmonic Closeness" => nk("HarmonicCloseness")
+        case "Katz" => nk("KatzCentrality")
+        case "K-Path" => nk("KPathCentrality")
+        case "Laplacian" => nk("LaplacianCentrality")
+        case "Sfigality" => nk("Sfigality")
+        case _ =>
+          val op = graph_operations.HyperBallCentrality(
+            params("maxDiameter").toInt, algorithm, params("bits").toInt)
+          op(op.es, es).result.centrality
+      }
+      project.newVertexAttribute(name, centrality, algorithm + help)
+    }
+  })
+
+  register("Find k-core decomposition")(new ProjectTransformation(_) {
+    params ++= List(Param("name", "Attribute name", defaultValue = "core"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      // A directed graph just gets turned into an undirected graph.
+      // We can skip that and just build an undirected graph.
+      val core = graph_operations.NetworKitComputeAttribute.run(
+        "CoreDecomposition", project.edgeBundle, Map("directed" -> false))
+      project.newVertexAttribute(name, core, help)
     }
   })
 

@@ -1,0 +1,33 @@
+### Create P2P random graph
+
+Creates a random graph using the model described in http://parco.iti.kit.edu/henningm/data/distribClust.pdf[A distributed diffusive heuristic for clustering a virtual P2P supercomputer] by Gehweiler et al.
+
+The vertices are randomly placed in a 2-dimensional unit square with a torus topology.
+Vertices within a set radius are connected when permitted by the maximum degree constraint.
+
+Some dense circular areas within the unit suqare are picked at the beginning
+and these are populated first. Any remaining vertices are then placed uniformly.
+This leads to a clustering effect that models the internal networks of companies
+and institutions as observed in real peer-to-peer network topologies.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PubWebGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-dense_areas]#Number of dense areas#::
+How many dense areas to pick. These will vary in size and will be populated first.
+
+[p-max_degree]#Maximum degree#::
+Each vertex will be connected to at most this many neighbors.
+
+[p-neighborhood_radius]#Neighborhood radius#::
+The model works by placing points on the unit square. Points within this radius
+will be connected to each other.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

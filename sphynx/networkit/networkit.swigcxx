@@ -1,0 +1,107 @@
+// "go build" will generate and compile wrappers based on this file.
+%module networkit
+
+// This part is C++ that is added to the wrapper code.
+%{
+#include <networkit/centrality/ApproxCloseness.hpp>
+#include <networkit/centrality/Betweenness.hpp>
+#include <networkit/centrality/CoreDecomposition.hpp>
+#include <networkit/centrality/EigenvectorCentrality.hpp>
+#include <networkit/centrality/EstimateBetweenness.hpp>
+#include <networkit/centrality/HarmonicCloseness.hpp>
+#include <networkit/centrality/KatzCentrality.hpp>
+#include <networkit/centrality/KPathCentrality.hpp>
+#include <networkit/centrality/LaplacianCentrality.hpp>
+#include <networkit/centrality/Sfigality.hpp>
+#include <networkit/generators/BarabasiAlbertGenerator.hpp>
+#include <networkit/generators/ChungLuGenerator.hpp>
+#include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
+#include <networkit/generators/DorogovtsevMendesGenerator.hpp>
+#include <networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp>
+#include <networkit/generators/ErdosRenyiGenerator.hpp>
+#include <networkit/generators/HavelHakimiGenerator.hpp>
+#include <networkit/generators/HyperbolicGenerator.hpp>
+#include <networkit/generators/LFRGenerator.hpp>
+#include <networkit/generators/MocnikGenerator.hpp>
+#include <networkit/generators/PubWebGenerator.hpp>
+#include <networkit/generators/RegularRingLatticeGenerator.hpp>
+#include <networkit/generators/RmatGenerator.hpp>
+#include <networkit/generators/StochasticBlockmodel.hpp>
+#include <networkit/generators/WattsStrogatzGenerator.hpp>
+#include <networkit/graph/Graph.hpp>
+#include <networkit/graph/GraphBuilder.hpp>
+#include <networkit/auxiliary/Parallelism.hpp>
+#include <networkit/auxiliary/Random.hpp>
+#include "additions.h"
+using namespace NetworKit;
+%}
+
+// This part defines the interfaces to wrap. Mostly by pulling in the C++ headers.
+#define final
+%include "include/networkit/Globals.hpp"
+typedef uint64_t count;
+typedef uint64_t node;
+class Graph {
+public:
+  count numberOfNodes() const noexcept;
+  count numberOfEdges() const noexcept;
+  bool isDirected() const noexcept;
+  count degree(node v) const;
+  count degreeIn(node v) const;
+  count degreeOut(node v) const;
+  void removeSelfLoops();
+  void removeMultiEdges();
+};
+%typemap(gotype) (SphynxId *) %{[]uint32%}
+%typemap(in) (SphynxId *) {
+  $1 = ($1_ltype)$input.array;
+}
+%exception {
+  try {
+    $action;
+  } catch (std::exception &e) {
+    _swig_gopanic(e.what());
+  }
+}
+%include "additions.h"
+%include <stdint.i>
+%include <std_vector.i>
+namespace std {
+  %template(Uint64Vector) vector<unsigned long long>;
+  %template(DoubleVector) vector<double>;
+}
+%include "include/networkit/base/Algorithm.hpp"
+%ignore ranking;
+%ignore getMoveGraph;
+%ignore getMovePartition;
+%include "include/networkit/centrality/Centrality.hpp"
+%include "include/networkit/centrality/ApproxCloseness.hpp"
+%include "include/networkit/centrality/Betweenness.hpp"
+%include "include/networkit/centrality/CoreDecomposition.hpp"
+%include "include/networkit/centrality/EigenvectorCentrality.hpp"
+%include "include/networkit/centrality/EstimateBetweenness.hpp"
+%include "include/networkit/centrality/HarmonicCloseness.hpp"
+%include "include/networkit/centrality/KatzCentrality.hpp"
+%include "include/networkit/centrality/KPathCentrality.hpp"
+%include "include/networkit/centrality/LaplacianCentrality.hpp"
+%include "include/networkit/centrality/Sfigality.hpp"
+%include "include/networkit/generators/StaticGraphGenerator.hpp"
+%include "include/networkit/generators/StaticDegreeSequenceGenerator.hpp"
+%include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
+%include "include/networkit/generators/ChungLuGenerator.hpp"
+%include "include/networkit/generators/ClusteredRandomGraphGenerator.hpp"
+%include "include/networkit/generators/DorogovtsevMendesGenerator.hpp"
+%include "include/networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp"
+%include "include/networkit/generators/ErdosRenyiGenerator.hpp"
+%include "include/networkit/generators/HavelHakimiGenerator.hpp"
+%include "include/networkit/generators/HyperbolicGenerator.hpp"
+%include "include/networkit/generators/LFRGenerator.hpp"
+%include "include/networkit/generators/MocnikGenerator.hpp"
+%include "include/networkit/generators/PubWebGenerator.hpp"
+%include "include/networkit/generators/RegularRingLatticeGenerator.hpp"
+%include "include/networkit/generators/RmatGenerator.hpp"
+%include "include/networkit/generators/StochasticBlockmodel.hpp"
+%include "include/networkit/generators/WattsStrogatzGenerator.hpp"
+%include "include/networkit/graph/GraphBuilder.hpp"
+%include "include/networkit/auxiliary/Parallelism.hpp"
+%include "include/networkit/auxiliary/Random.hpp"

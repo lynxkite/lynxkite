@@ -40,6 +40,8 @@ Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0) | org.
 Apache | [Apache License](LICENSE.txt) | org.apache.httpcomponents # httpmime # 4.3.1 | <notextile></notextile>
 Apache | [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.ning # async-http-client # 1.8.14 | <notextile></notextile>
 Apache | [Apache License Version 2.0](LICENSE.txt) | org.yaml # snakeyaml # 1.15 | <notextile></notextile>
+Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
+Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna-platform # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.7.0 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.github.javaparser # javaparser-core # 3.2.5 | <notextile></notextile>
@@ -48,6 +50,8 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # util # 1.6.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # util-hadoop # 1.6.1-hadoop2 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.jamesmurty.utils # java-xmlbuilder # 1.1 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-common # 2.0.4 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-native-common # 2.0.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe # config # 1.2.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.akka # akka-actor_2.11 # 2.3.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.akka # akka-slf4j_2.11 # 2.3.4 | <notextile></notextile>
@@ -66,6 +70,7 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-transport # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | it.unimi.dsi # fastutil # 6.5.7 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.sourceforge.htmlunit # htmlunit # 2.13 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-compress # 1.20 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-lang3 # 3.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.hadoop # hadoop-aws # 2.7.3 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpclient # 4.5.1 | <notextile></notextile>
@@ -128,6 +133,7 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.codehaus.jackson # jackson-mapper-asl # 1.9.13 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-core # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-ddense # 0.34 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.jetbrains # annotations # 19.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-android-driver # 2.39.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-api # 2.39.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-chrome-driver # 2.39.0 | <notextile></notextile>
@@ -199,6 +205,7 @@ BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-
 BSD | [Three-clause BSD-style](https://github.com/mpilquist/simulacrum/blob/master/LICENSE) | com.github.mpilquist # simulacrum_2.11 # 0.10.0 | <notextile></notextile>
 BSD | [Three-clause BSD-style](https://github.com/scodec/scodec-bits/blob/master/LICENSE) | org.scodec # scodec-bits_2.11 # 1.0.9 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11-RC1 | <notextile></notextile>
+CC0 | [CC0 1.0 Universal License](http://creativecommons.org/publicdomain/zero/1.0/) | org.scijava # native-lib-loader # 2.0.2 | <notextile></notextile>
 CDDL | [COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0](https://glassfish.dev.java.net/public/CDDLv1.0.html) | javax.activation # activation # 1.1.1 | <notextile></notextile>
 GPL | [                 Dual license consisting of the CDDL v1.1 and GPL v2             ](https://glassfish.java.net/public/CDDL+GPL_1_1.html) | org.glassfish # javax.json # 1.0.4 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.ws.rs # jakarta.ws.rs-api # 2.1.6 | <notextile></notextile>
@@ -207,7 +214,6 @@ LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licen
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-core # 1.1.1 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/lgpl.txt) | net.sourceforge.cssparser # cssparser # 0.9.11 | <notextile></notextile>
 LGPL | [LGPL](http://www.gnu.org/licenses/lgpl.txt) | com.github.fommil # jniloader # 1.1 | <notextile></notextile>
-LGPL | [LGPL, version 2.1](http://creativecommons.org/licenses/LGPL/2.1/) | net.java.dev.jna # jna # 3.4.0 | <notextile></notextile>
 LGPL | [LGPL, version 2.1](http://creativecommons.org/licenses/LGPL/2.1/) | net.java.dev.jna # platform # 3.4.0 | <notextile></notextile>
 LGPL | [Lesser General Public License (LGPL)](http://www.gnu.org/copyleft/lesser.txt) | org.geotools # gt-api # 20.0 | <notextile></notextile>
 LGPL | [Lesser General Public License (LGPL)](http://www.gnu.org/copyleft/lesser.txt) | org.geotools # gt-data # 20.0 | <notextile></notextile>
@@ -221,11 +227,16 @@ MIT | [MIT](http://opensource.org/licenses/MIT) | com.github.julien-truffaut # m
 MIT | [MIT](http://www.opensource.org/licenses/mit-license.html) | com.lihaoyi # fansi_2.11 # 0.2.4 | <notextile></notextile>
 MIT | [MIT](http://www.opensource.org/licenses/mit-license.html) | com.lihaoyi # pprint_2.11 # 0.5.2 | <notextile></notextile>
 MIT | [MIT](http://www.opensource.org/licenses/mit-license.html) | com.lihaoyi # sourcecode_2.11 # 0.1.4 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth # tcp-unix-socket-proxy # 1.0.2 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth.duct-tape # duct-tape # 1.0.8 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth.visible-assertions # visible-assertions # 2.1.2 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.scalaz.stream # scalaz-stream_2.11 # 0.8 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.spire-math # jawn-parser_2.11 # 0.10.4 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.spire-math # kind-projector_2.11 # 0.7.1 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.spire-math # spire-macros_2.11 # 0.13.0 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.spire-math # spire_2.11 # 0.13.0 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # neo4j # 1.14.3 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # testcontainers # 1.14.3 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.typelevel # cats-core_2.11 # 0.9.0 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.typelevel # cats-kernel_2.11 # 0.9.0 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.typelevel # cats-macros_2.11 # 0.9.0 | <notextile></notextile>
@@ -235,6 +246,7 @@ MIT | [MIT License](http://objenesis.googlecode.com/svn/docs/license.html) | org
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # jcl-over-slf4j # 1.7.6 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # jul-to-slf4j # 1.7.6 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # slf4j-api # 1.7.16 | <notextile></notextile>
+MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # slf4j-api # 1.7.30 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/MIT) | org.vegas-viz # vegas-macros_2.11 # 0.3.9 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/MIT) | org.vegas-viz # vegas-spark_2.11 # 0.3.9 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/MIT) | org.vegas-viz # vegas_2.11 # 0.3.9 | <notextile></notextile>

@@ -1,0 +1,49 @@
+### Create LFR random graph
+
+LFR stands for Lancichinetti, Fortunato, and Radicchi, the authors of
+https://arxiv.org/abs/0805.4770[Benchmark graphs for testing community detection algorithms]
+and https://arxiv.org/abs/0904.3940[Benchmarks for testing community detection algorithms on directed and weighted graphs with overlapping communities]
+upon which this generator is based.
+
+The LFR random graph features overlapping communities.
+Each vertex is randomized into multiple communities while
+ensuring a desired power-law community size distribution.
+Then edges within communities are generated to match the
+desired power-law vertex degree distribution.
+Finally edges are swapped around to create cross-community
+connections.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1LFRGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-avg_degree]#Average degree#::
+The expected value of the desired vertex degree distribution.
+
+[p-max_degree]#Maximum degree#::
+The maximum of the desired vertex degree distribution.
+
+[p-degree_exponent]#Degree power-law exponent#::
+The power-law exponent of the desired vertex degree distribution.
+A higher number means a more skewed distribution.
+
+[p-min_community]#Smallest community size#::
+The minimum of the desired community size distribution.
+
+[p-max_community]#Largest community size#::
+The maximum of the desired community size distribution.
+
+[p-community_exponent]#Community size power-law exponent#::
+The power-law exponent of the desired community size distribution.
+A higher number means a more skewed distribution.
+
+[p-avg_mixing]#Fraction of external neighbors#::
+What ratio of the neighbors of each vertex should on average be of other communities.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

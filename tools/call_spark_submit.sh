@@ -307,7 +307,7 @@ stopSphynx () {
 }
 
 startSphynxForever () {
-  until ./lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
+  until LD_LIBRARY_PATH=. ./lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
   do
     >&2 echo "Sphynx crashed with exit code $?. Restarting..."
     sleep 10

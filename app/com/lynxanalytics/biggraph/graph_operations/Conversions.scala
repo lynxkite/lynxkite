@@ -91,10 +91,6 @@ object DynamicValue {
   }
 }
 
-class AttributeOutput[T: TypeTag](vs: VertexSet)(implicit instance: MetaGraphOperationInstance)
-  extends MagicOutput(instance) {
-  val attr = vertexAttribute[T](vs)
-}
 trait AttributeConverter[From, To] extends OpFromJson {
   def newOp: AttributeConverterOp[From, To]
   def run(attr: Attribute[From])(implicit manager: MetaGraphManager): Attribute[To] = {

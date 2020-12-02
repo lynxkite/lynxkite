@@ -100,7 +100,8 @@ object OperationParams {
     }
   }
 
-  case class NonNegInt(id: String, title: String, default: Int)
+  case class NonNegInt(
+      id: String, title: String, default: Int, override val group: String = "")
     extends OperationParameterMeta {
     val kind = "default"
     val defaultValue = default.toString

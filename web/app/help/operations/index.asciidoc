@@ -243,13 +243,31 @@ include::copy-vertex-attributes-to-segmentation.asciidoc[]
 
 include::correlate-two-attributes.asciidoc[]
 
+include::create-a-graph-with-certain-degrees.asciidoc[]
+
+include::create-barab-si-albert-graph.asciidoc[]
+
+include::create-clustered-random-graph.asciidoc[]
+
+include::create-dorogovtsev-mendes-random-graph.asciidoc[]
+
 include::create-edges-from-co-occurrence.asciidoc[]
 
 include::create-edges-from-set-overlaps.asciidoc[]
 
+include::create-erd-s-r-nyi-graph.asciidoc[]
+
 include::create-example-graph.asciidoc[]
 
 include::create-graph-in-python.asciidoc[]
+
+include::create-hyperbolic-random-graph.asciidoc[]
+
+include::create-lfr-random-graph.asciidoc[]
+
+include::create-mocnik-random-graph.asciidoc[]
+
+include::create-p2p-random-graph.asciidoc[]
 
 include::create-random-edges.asciidoc[]
 
@@ -340,6 +358,8 @@ include::filter-with-sql.asciidoc[]
 include::find-connected-components.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
+
+include::find-k-core-decomposition.asciidoc[]
 
 include::find-maximal-cliques.asciidoc[]
 
