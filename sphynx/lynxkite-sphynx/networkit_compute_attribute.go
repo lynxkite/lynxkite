@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
@@ -9,7 +10,12 @@ import (
 
 func init() {
 	operationRepository["NetworKitComputeAttribute"] = Operation{
-		execute: func(ea *EntityAccessor) error {
+		execute: func(ea *EntityAccessor) (err error) {
+			defer func() {
+				if e := recover(); e != nil {
+					err = fmt.Errorf("%v", e)
+				}
+			}()
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
 			weight := ea.getDoubleAttributeOpt("weight")

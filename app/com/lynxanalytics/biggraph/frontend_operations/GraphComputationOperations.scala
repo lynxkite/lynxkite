@@ -100,23 +100,36 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
-  register("Place vertices with PivotMDS")(new ProjectTransformation(_) {
+  register("Place vertices")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "Attribute name", defaultValue = "position"),
-      NonNegInt("pivots", "Pivots", default = 100),
+      Param("name", "New attribute name", defaultValue = "position"),
       NonNegInt("dimensions", "Dimensions", default = 2),
       Choice("length", "Edge length",
-        options = FEOption.unset +: project.edgeAttrList[Double]))
+        options = FEOption.unset +: project.edgeAttrList[Double]),
+      Choice("algorithm", "Layout algorithm",
+        options = FEOption.list("PivotMDS", "Maxent-Stress")),
+      NonNegInt("pivots", "Pivots", default = 100, group = "PivotMDS options"),
+      NonNegInt("radius", "Neighborhood radius", default = 1, group = "Maxent-Stress options"),
+      NonNegDouble("tolerance", "Solver tolerance", defaultValue = "0.1", group = "Maxent-Stress options"))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
       val weight =
         if (params("length") == FEOption.unset.id) None
         else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
-      val positions = graph_operations.NetworKitComputeVectorAttribute.run(
-        "PivotMDS", project.edgeBundle, Map(
-          "dimensions" -> params("dimensions").toInt,
-          "pivots" -> params("pivots").toInt), weight)
+      val positions = params("algorithm") match {
+        case "PivotMDS" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "PivotMDS", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "pivots" -> params("pivots").toInt), weight)
+        case "Maxent-Stress" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "MaxentStress", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "radius" -> params("radius").toInt,
+            "tolerance" -> params("tolerance").toDouble), weight)
+      }
       project.newVertexAttribute(name, positions, help)
     }
   })
