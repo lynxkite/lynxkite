@@ -100,3 +100,36 @@ case class NetworKitCreateGraph(op: String, options: json.JsObject)
   def outputMeta(instance: MetaGraphOperationInstance) = new NetworKitCreateGraph.Output()(instance)
   override def toJson = json.Json.obj("op" -> op, "options" -> options)
 }
+
+object NetworKitCommunityDetection extends OpFromJson {
+  def fromJson(j: json.JsValue) = NetworKitCommunityDetection(
+    (j \ "op").as[String], (j \ "weighted").as[Boolean], (j \ "options").as[json.JsObject])
+  def run(
+    name: String,
+    es: EdgeBundle,
+    options: Map[String, Any] = Map(),
+    weight: Option[Attribute[Double]] = None)(
+    implicit
+    m: MetaGraphManager): Output = {
+    val op = NetworKitCommunityDetection(name, weight.isDefined, NetworKitCommon.toJson(options))
+    import Scripting._
+    weight match {
+      case Some(weight) => op(op.es, es)(op.weight, weight).result
+      case None => op(op.es, es).result
+    }
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: NetworKitCommon.WeightedGraphInput) extends MagicOutput(instance) {
+    val partitions = vertexSet
+    val belongsTo = edgeBundle(
+      inputs.vs.entity, partitions, properties = EdgeBundleProperties.partialFunction)
+  }
+}
+case class NetworKitCommunityDetection(op: String, weighted: Boolean, options: json.JsObject)
+  extends TypedMetaGraphOp[NetworKitCommon.WeightedGraphInput, NetworKitCommunityDetection.Output] {
+  @transient override lazy val inputs = new NetworKitCommon.WeightedGraphInput(weighted)
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new NetworKitCommunityDetection.Output()(instance, inputs)
+  override def toJson = json.Json.obj("op" -> op, "weighted" -> weighted, "options" -> options)
+}

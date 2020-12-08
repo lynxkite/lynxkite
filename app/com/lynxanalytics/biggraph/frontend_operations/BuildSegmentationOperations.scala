@@ -669,4 +669,29 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       segmentation.vertexAttributes("size") = toDouble(cells.segmentSize)
     }
   })
+
+  def registerNKCommunityDetection(name: String, className: String, options: Seq[OperationParameterMeta]) = {
+    register(name)(new ProjectTransformation(_) {
+      params += Param("name", "Save segmentation as", defaultValue = "communities")
+      params ++= options
+      def enabled = project.hasEdgeBundle
+      def apply() = {
+        val optValues: Map[String, Any] = params.getMetaMap.mapValues {
+          case p: NonNegDouble => params(p.id).toDouble
+          case p: NonNegInt => params(p.id).toLong
+          case p => params(p.id)
+        }
+        val seg = graph_operations.NetworKitCommunityDetection.run(
+          className, project.edgeBundle, optValues + ("directed" -> false))
+        val result = project.segmentation(params("name"))
+        result.setVertexSet(seg.partitions, idAttr = "id")
+        result.belongsTo = seg.belongsTo
+        result.notes = summary
+        result.newVertexAttribute("size", computeSegmentSizes(result))
+      }
+    })
+  }
+
+  registerNKCommunityDetection("Find communities with the Louvain Method", "PLM", Seq(
+    NonNegDouble("gamma", "Gamma (modularity)", defaultValue = "1.0")))
 }

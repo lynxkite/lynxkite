@@ -34,6 +34,9 @@
 #include <networkit/auxiliary/Random.hpp>
 #include <networkit/viz/MaxentStress.hpp>
 #include <networkit/viz/PivotMDS.hpp>
+#include <networkit/structures/Partition.hpp>
+#include <networkit/community/CommunityDetectionAlgorithm.hpp>
+#include <networkit/community/PLM.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -54,6 +57,14 @@ public:
   void removeSelfLoops();
   void removeMultiEdges();
 };
+
+class Partition {
+public:
+  count numberOfElements() const;
+  count numberOfSubsets() const;
+  std::vector<uint64_t> getVector() const;
+};
+
 // Allow passing in a Go slice for SphynxId * in our utility code.
 %typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
@@ -84,6 +95,8 @@ public:
 %ignore getMoveGraph;
 %ignore getMovePartition;
 %ignore ResultStats;
+%ignore coarsen;
+%ignore getTiming;
 
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/ApproxCloseness.hpp"
@@ -120,3 +133,5 @@ public:
 %template(GraphLayoutAlgorithmDouble) NetworKit::GraphLayoutAlgorithm<double>;
 %include "include/networkit/viz/MaxentStress.hpp"
 %include "include/networkit/viz/PivotMDS.hpp"
+%include "include/networkit/community/CommunityDetectionAlgorithm.hpp"
+%include "include/networkit/community/PLM.hpp"
