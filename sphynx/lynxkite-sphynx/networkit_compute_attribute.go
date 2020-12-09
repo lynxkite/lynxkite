@@ -34,7 +34,6 @@ func init() {
 				Defined: make([]bool, len(vs.MappingToUnordered)),
 			}
 			var result networkit.DoubleVector
-			defer networkit.DeleteDoubleVector(result)
 			switch ea.GetStringParam("op") {
 			case "ApproxCloseness":
 				c := networkit.NewApproxCloseness(g)
