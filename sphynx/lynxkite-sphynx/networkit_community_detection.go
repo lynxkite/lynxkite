@@ -13,7 +13,6 @@ func init() {
 			defer func() {
 				if e := recover(); e != nil {
 					err = fmt.Errorf("%v", e)
-					panic(e)
 				}
 			}()
 			vs := ea.getVertexSet("vs")
@@ -31,17 +30,31 @@ func init() {
 			defer networkit.DeleteGraph(g)
 			var p networkit.Partition
 			switch ea.GetStringParam("op") {
+			case "LPDegreeOrdered":
+				c := networkit.NewLPDegreeOrdered(g)
+				defer networkit.DeleteLPDegreeOrdered(c)
+				c.Run()
+				p = c.GetPartition()
 			case "PLM":
 				c := networkit.NewPLM(g, false, o.Double("gamma"))
 				defer networkit.DeletePLM(c)
 				c.Run()
 				p = c.GetPartition()
-				defer networkit.DeletePartition(p)
+			case "PLP":
+				c := networkit.NewPLP(g)
+				defer networkit.DeletePLP(c)
+				c.Run()
+				p = c.GetPartition()
 			}
+			defer networkit.DeletePartition(p)
 			vs = &VertexSet{}
 			vs.MappingToUnordered = make([]int64, p.NumberOfSubsets())
+			vs.MappingToOrdered = make(map[int64]SphynxId)
+			ss := p.GetSubsetIdsVector()
+			defer networkit.DeleteUint64Vector(ss)
 			for i := range vs.MappingToUnordered {
-				vs.MappingToUnordered[i] = int64(i)
+				vs.MappingToUnordered[i] = int64(ss.Get(i))
+				vs.MappingToOrdered[int64(ss.Get(i))] = SphynxId(i)
 			}
 			es = &EdgeBundle{}
 			es.EdgeMapping = make([]int64, p.NumberOfElements())
@@ -52,7 +65,7 @@ func init() {
 			for i := range es.EdgeMapping {
 				es.EdgeMapping[i] = int64(i)
 				es.Src[i] = SphynxId(i)
-				es.Dst[i] = SphynxId(v.Get(i))
+				es.Dst[i] = SphynxId(vs.MappingToOrdered[int64(v.Get(i))])
 			}
 			ea.output("partitions", vs)
 			ea.output("belongsTo", es)

@@ -36,7 +36,9 @@
 #include <networkit/viz/PivotMDS.hpp>
 #include <networkit/structures/Partition.hpp>
 #include <networkit/community/CommunityDetectionAlgorithm.hpp>
+#include <networkit/community/LPDegreeOrdered.hpp>
 #include <networkit/community/PLM.hpp>
+#include <networkit/community/PLP.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -63,6 +65,15 @@ public:
   count numberOfElements() const;
   count numberOfSubsets() const;
   std::vector<uint64_t> getVector() const;
+  %extend {
+    // There's no pre-defined wrapper (std_set.i) for std::set.
+    // So we just convert it to a std::vector in C++.
+    std::vector<uint64_t> getSubsetIdsVector() const {
+      std::set<uint64_t> ss = self->getSubsetIds();
+      std::vector<uint64_t> v(ss.begin(), ss.end());
+      return v;
+    }
+  }
 };
 
 // Allow passing in a Go slice for SphynxId * in our utility code.
@@ -134,4 +145,6 @@ public:
 %include "include/networkit/viz/MaxentStress.hpp"
 %include "include/networkit/viz/PivotMDS.hpp"
 %include "include/networkit/community/CommunityDetectionAlgorithm.hpp"
+%include "include/networkit/community/LPDegreeOrdered.hpp"
 %include "include/networkit/community/PLM.hpp"
+%include "include/networkit/community/PLP.hpp"
