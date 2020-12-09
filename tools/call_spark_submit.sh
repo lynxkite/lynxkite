@@ -31,6 +31,9 @@ export KITE_LOG_DIR=${log_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   >&2 echo "Loading configuration from: ${KITE_SITE_CONFIG}"
   VAR_FILE_NAME="/tmp/kite_$(randomString)_saved_env"
+
+  # We save the environment and restore after sourcing the .kiterc file.
+  # This way environment variables override settings in the .kiterc file.
   export -p > ${VAR_FILE_NAME}
   source ${KITE_SITE_CONFIG}
   source ${VAR_FILE_NAME}

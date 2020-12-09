@@ -57,6 +57,7 @@ To build LynxKite you will need:
 - Python 3.7+ with [Conda](https://docs.conda.io/en/latest/miniconda.html)
 - Go 1.14+
 - Swig 4.0+
+- cmake 3.5+
 
 Before the first build:
 

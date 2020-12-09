@@ -1,5 +1,12 @@
-
 # This file contains various configurations used when launching a LynxKite instance.
+
+# This is just a template - you need to copy to ~/.kiterc and modify as you
+# see fit. (The location ~/.kiterc can be overriden via $KITE_SITE_CONFIG.)
+
+# Environment variables set when launching LynxKite take precedence over
+# settings here! In other words, if a variable is set here as well as in
+# the launch environment than the one from the environment will be used by
+# LynxKite.
 
 # Specify the directory containing your Spark installation.
 export SPARK_HOME=$HOME/spark/spark-${SPARK_VERSION}
