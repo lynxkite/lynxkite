@@ -36,7 +36,7 @@ func init() {
 				c.Run()
 				p = c.GetPartition()
 			case "PLM":
-				c := networkit.NewPLM(g, false, o.Double("gamma"))
+				c := networkit.NewPLM(g, false, o.Double("resolution"))
 				defer networkit.DeletePLM(c)
 				c.Run()
 				p = c.GetPartition()

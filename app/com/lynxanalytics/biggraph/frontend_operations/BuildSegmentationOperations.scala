@@ -670,15 +670,21 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Find communities with the Louvain Method")(new ProjectTransformation(_) {
+  register("Find communities with the Louvain method")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save segmentation as", defaultValue = "communities"),
-      NonNegDouble("gamma", "Gamma (modularity)", defaultValue = "1.0"))
+      Choice("weight", "Weight attribute", options =
+        FEOption.noWeight +: project.edgeAttrList[Double]),
+      NonNegDouble("resolution", "Resolution", defaultValue = "1.0"))
     def enabled = project.hasEdgeBundle
     def apply() = {
+      val weight =
+        if (param("weight") == FEOption.noWeight.id) None
+        else Some(project.edgeAttributes(param("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
         "PLM", project.edgeBundle,
-        Map("gamma" -> params("gamma").toDouble, "directed" -> false))
+        Map("resolution" -> params("resolution").toDouble, "directed" -> false),
+        weight)
       val result = project.segmentation(params("name"))
       result.setVertexSet(seg.partitions, idAttr = "id")
       result.belongsTo = seg.belongsTo
@@ -690,6 +696,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Find communities with label propagation")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save segmentation as", defaultValue = "communities"),
+      Choice("weight", "Weight attribute", options =
+        FEOption.noWeight +: project.edgeAttrList[Double]),
       Choice("variant", "Variant", options = FEOption.list("classic", "degree-ordered")))
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -697,8 +705,11 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         case "classic" => "PLP"
         case "degree-ordered" => "LPDegreeOrdered"
       }
+      val weight =
+        if (param("weight") == FEOption.noWeight.id) None
+        else Some(project.edgeAttributes(param("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
-        op, project.edgeBundle, Map("directed" -> false))
+        op, project.edgeBundle, Map("directed" -> false), weight)
       val result = project.segmentation(params("name"))
       result.setVertexSet(seg.partitions, idAttr = "id")
       result.belongsTo = seg.belongsTo

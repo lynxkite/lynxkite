@@ -100,12 +100,12 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
-  register("Place vertices")(new ProjectTransformation(_) {
+  register("Place vertices with edge lengths")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "New attribute name", defaultValue = "position"),
       NonNegInt("dimensions", "Dimensions", default = 2),
       Choice("length", "Edge length",
-        options = FEOption.unset +: project.edgeAttrList[Double]),
+        options = FEOption.list("Unit length") +: project.edgeAttrList[Double]),
       Choice("algorithm", "Layout algorithm",
         options = FEOption.list("PivotMDS", "Maxent-Stress")),
       NonNegInt("pivots", "Pivots", default = 100, group = "PivotMDS options"),
@@ -115,7 +115,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     def apply() = {
       val name = params("name")
       val weight =
-        if (params("length") == FEOption.unset.id) None
+        if (params("length") == "Unit length") None
         else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
       val positions = params("algorithm") match {
         case "PivotMDS" => graph_operations.NetworKitComputeVectorAttribute.run(
