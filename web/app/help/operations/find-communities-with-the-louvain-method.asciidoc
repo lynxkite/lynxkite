@@ -1,0 +1,30 @@
+### Find communities with the Louvain method
+
+Uses the https://en.wikipedia.org/wiki/Louvain_method[Louvain method] to identify
+communities in the graph. The communities are represented as a segmentation on
+the graph.
+
+The Louvain method is a greedy optimization toward maximal _modularity_.
+High modularity means many edges within communities and few edges between communities.
+Specifically we compare the edge counts to what we would expect if the clusters
+were chosen at random.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PLM.html[NetworKit] implementation.
+
+====
+[p-name]#Save segmentation as#::
+The name of the newly created segmentation.
+
+[p-weight]#Weight attribute#::
+Edges can be weighted to contribute more or less to modularity.
+
+[p-resolution]#Resolution#::
+A lower resolution will result in bigger communities.
++
+Also known as the 𝛾 parameter, the expected edge probabilities in the modularity
+calculation are multiplied by this number.
++
+For details of the physical basis of this parameter see
+https://arxiv.org/abs/cond-mat/0603718[Statistical Mechanics of Community Detection]
+by Joerg Reichardt and Stefan Bornholdt.
+====

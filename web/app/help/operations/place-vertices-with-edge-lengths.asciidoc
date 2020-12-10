@@ -1,0 +1,48 @@
+### Place vertices with edge lengths
+
+These methods create a graph layout as a new ``Vector[number]`` vertex attribute
+where the edges have given lengths.
+
+Uses the NetworKit implementations for
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PivotMDS.html[PivotMDS] and
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1MaxentStress.html[MaxentStress].
+
+====
+[p-name]#New attribute name#::
+The position attribute will be saved under this name.
+
+[p-dimensions]#Dimensions#::
+The dimensions of the space where the vertices are placed.
+The created ``Vector``s will be this long.
+
+[p-length]#Edge length#::
+This edge attribute can specify the length that each edge should be.
+
+[p-algorithm]#Layout algorithm#::
+The algorithms offered are:
+- **Pivot MDS** picks a number of pivot vertices (spread out as much as possible) and
+  finds a solution that puts all other vertices the right distance from the pivots
+  through an iterative matrix eigendecomposition method.
+  +
+  See https://kops.uni-konstanz.de/bitstream/handle/123456789/5741/bp_empmdsld_06.pdf[Eigensolver Methods for Progressive Multidimensional Scaling of Large Data]
+  by Ulrik Brandes and Christian Pich for the detailed definition and analysis.
+- **Maxent-Stress** is recommended when there are many different ways to
+  satisfy the edge length constraints. (Such as in graphs with low degrees or in
+  high-dimensional spaces.) It picks from the large solution space by
+  maximizing the solution's entropy.
+  +
+  See http://yifanhu.net/PUB/maxent.pdf[A Maxent-Stress Model for Graph Layout]
+  by Gansner et al for the detailed definition and analysis.
+
+[p-pivots]#Pivots#::
+The number of pivots to choose for Pivot MDS.
+More pivots result in a more accurate layout and a longer computation time.
+
+[p-radius]#Neighborhood radius#::
+Maxent-Stress applies the stress model between vertices within this many
+hops from each other.
+
+[p-tolerance]#Solver tolerance#::
+Maxent-Stress uses an algebraic solver to optimize the vertex positions.
+This parameter allows tuning the solver to provide faster but less accurate solutions.
+====
