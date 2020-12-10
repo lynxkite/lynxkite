@@ -13,6 +13,10 @@
 #include <networkit/centrality/KPathCentrality.hpp>
 #include <networkit/centrality/LaplacianCentrality.hpp>
 #include <networkit/centrality/Sfigality.hpp>
+#include <networkit/correlation/Assortativity.hpp>
+#include <networkit/distance/Diameter.hpp>
+#include <networkit/distance/EffectiveDiameter.hpp>
+#include <networkit/distance/EffectiveDiameterApproximation.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
 #include <networkit/generators/ChungLuGenerator.hpp>
 #include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
@@ -120,6 +124,10 @@ public:
 %include "include/networkit/centrality/KPathCentrality.hpp"
 %include "include/networkit/centrality/LaplacianCentrality.hpp"
 %include "include/networkit/centrality/Sfigality.hpp"
+%include "include/networkit/correlation/Assortativity.hpp"
+%include "include/networkit/distance/Diameter.hpp"
+%include "include/networkit/distance/EffectiveDiameter.hpp"
+%include "include/networkit/distance/EffectiveDiameterApproximation.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
 %include "include/networkit/generators/StaticDegreeSequenceGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"

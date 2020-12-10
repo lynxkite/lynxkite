@@ -139,6 +139,48 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Compute diameter")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "diameter"),
+      NonNegDouble("max_error", "Maximum relative error", defaultValue = "0.1"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val maxError = params("max_error").toDouble
+      val result = graph_operations.NetworKitComputeScalar.run(
+        "Diameter", project.edgeBundle, Map("directed" -> false, "max_error" -> maxError))
+      val name = params("name")
+      if (maxError == 0) {
+        project.newScalar(name, result.scalar1)
+      } else {
+        project.newScalar(name + "_lower", result.scalar1)
+        project.newScalar(name + "_upper", result.scalar2)
+      }
+    }
+  })
+
+  register("Compute effective diameter")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "effective diameter"),
+      NonNegDouble("ratio", "Ratio to cover", defaultValue = "0.9"),
+      Choice("algorithm", "Algorithm", options = FEOption.list("estimate", "exact")),
+      NonNegInt("bits", "Extra bits", default = 7, group = "Esimation settings"),
+      NonNegInt("approximations", "Number of parallel approximations", default = 64,
+        group = "Esimation settings"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val opts = Map("directed" -> false, "ratio" -> params("ratio").toDouble)
+      val result = params("algorithm") match {
+        case "exact" => graph_operations.NetworKitComputeScalar.run(
+          "EffectiveDiameter", project.edgeBundle, opts)
+        case "estimate" => graph_operations.NetworKitComputeScalar.run(
+          "EffectiveDiameterApproximation", project.edgeBundle, opts ++ Map(
+            "bits" -> params("bits").toInt,
+            "approximations" -> params("approximations").toInt))
+      }
+      project.newScalar(params("name"), result.scalar1)
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle
