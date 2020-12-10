@@ -679,11 +679,12 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     def enabled = project.hasEdgeBundle
     def apply() = {
       val weight =
-        if (param("weight") == FEOption.noWeight.id) None
-        else Some(project.edgeAttributes(param("weight")).runtimeSafeCast[Double])
+        if (params("weight") == FEOption.noWeight.id) None
+        else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
-        "PLM", project.edgeBundle,
-        Map("resolution" -> params("resolution").toDouble, "directed" -> false),
+        "PLM", project.edgeBundle, Map(
+          "resolution" -> params("resolution").toDouble,
+          "directed" -> false),
         weight)
       val result = project.segmentation(params("name"))
       result.setVertexSet(seg.partitions, idAttr = "id")
@@ -706,8 +707,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         case "degree-ordered" => "LPDegreeOrdered"
       }
       val weight =
-        if (param("weight") == FEOption.noWeight.id) None
-        else Some(project.edgeAttributes(param("weight")).runtimeSafeCast[Double])
+        if (params("weight") == FEOption.noWeight.id) None
+        else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
         op, project.edgeBundle, Map("directed" -> false), weight)
       val result = project.segmentation(params("name"))

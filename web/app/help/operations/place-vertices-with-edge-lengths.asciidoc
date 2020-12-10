@@ -31,6 +31,8 @@ The algorithms offered are:
   high-dimensional spaces.) It picks from the large solution space by
   maximizing the solution's entropy.
   +
+  Cannot handle disconnected graphs.
+  +
   See http://yifanhu.net/PUB/maxent.pdf[A Maxent-Stress Model for Graph Layout]
   by Gansner et al for the detailed definition and analysis.
 

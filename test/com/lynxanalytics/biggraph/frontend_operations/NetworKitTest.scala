@@ -97,4 +97,57 @@ class NetworKitTest extends OperationsTestBase {
     assert(g.vertexSet.countScalar.value == 100)
     assert(g.edgeBundle.countScalar.value == 324)
   }
+
+  test("Find communities with label propagation", com.lynxanalytics.biggraph.SphynxOnly) {
+    for (variant <- Seq("classic", "degree-ordered")) {
+      println(variant)
+      val g = box("Create example graph")
+        .box("Find communities with label propagation", Map("variant" -> variant))
+        .box(
+          "Aggregate from segmentation",
+          Map("apply_to_graph" -> ".communities", "aggregate_id" -> "first"))
+        .project
+      val m = get(g.vertexAttributes("communities_id_first").runtimeSafeCast[String])
+      assert(m.keySet == Set(0, 1, 2, 3), s"-- in $variant")
+      // The clusters are non-deterministic even with a fixed random seed.
+    }
+  }
+
+  test("Find communities with the Louvain method", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Find communities with the Louvain method", Map("resolution" -> "1.5"))
+      .box(
+        "Aggregate from segmentation",
+        Map("apply_to_graph" -> ".communities", "aggregate_id" -> "first"))
+      .project
+    val m = get(g.vertexAttributes("communities_id_first").runtimeSafeCast[String])
+    assert(m.keySet == Set(0, 1, 2, 3))
+    // The clusters are non-deterministic even with a fixed random seed.
+  }
+
+  test("Place vertices with edge lengths", com.lynxanalytics.biggraph.SphynxOnly) {
+    for (
+      (algorithm, expected) <- Seq(
+        "Pivot MDS" ->
+          Map(0 -> Vector(-0.27, -0.77), 1 -> Vector(0.8, 0.15), 2 -> Vector(-0.53, 0.62)),
+        "Maxent-Stress" ->
+          Map(0 -> Vector(-0.03, 0.5), 1 -> Vector(-0.55, -0.3), 2 -> Vector(0.58, -0.2)))
+    ) {
+      println(algorithm)
+      val g = box("Create example graph")
+        .box("Compute degree")
+        .box("Filter by attributes", Map("filterva_degree" -> ">0"))
+        .box("Place vertices with edge lengths", Map("algorithm" -> algorithm))
+        .project
+      val p = get(g.vertexAttributes("position").runtimeSafeCast[Vector[Double]])
+      assert(p.size == expected.size, s"-- in $algorithm")
+      for ((k, v) <- p) {
+        for ((a, e) <- v.zip(expected(k.toInt))) {
+          assert(
+            Math.abs(a - e) < 0.01,
+            s"-- $algorithm returned $p instead of $expected")
+        }
+      }
+    }
+  }
 }

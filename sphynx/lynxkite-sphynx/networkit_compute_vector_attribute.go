@@ -46,7 +46,11 @@ func init() {
 			switch ea.GetStringParam("op") {
 			case "PivotMDS":
 				dim := o.Count("dimensions")
-				c := networkit.NewPivotMDS(g, dim, o.Count("pivots"))
+				pivots := o.Count("pivots")
+				if pivots > uint64(len(vs.MappingToUnordered)) {
+					pivots = uint64(len(vs.MappingToUnordered))
+				}
+				c := networkit.NewPivotMDS(g, dim, pivots)
 				defer networkit.DeletePivotMDS(c)
 				c.Run()
 				points := c.GetCoordinates()

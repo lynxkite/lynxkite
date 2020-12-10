@@ -105,10 +105,10 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       Param("name", "New attribute name", defaultValue = "position"),
       NonNegInt("dimensions", "Dimensions", default = 2),
       Choice("length", "Edge length",
-        options = FEOption.list("Unit length") +: project.edgeAttrList[Double]),
+        options = FEOption.list("Unit length") ++ project.edgeAttrList[Double]),
       Choice("algorithm", "Layout algorithm",
-        options = FEOption.list("PivotMDS", "Maxent-Stress")),
-      NonNegInt("pivots", "Pivots", default = 100, group = "PivotMDS options"),
+        options = FEOption.list("Pivot MDS", "Maxent-Stress")),
+      NonNegInt("pivots", "Pivots", default = 100, group = "Pivot MDS options"),
       NonNegInt("radius", "Neighborhood radius", default = 1, group = "Maxent-Stress options"),
       NonNegDouble("tolerance", "Solver tolerance", defaultValue = "0.1", group = "Maxent-Stress options"))
     def enabled = project.hasEdgeBundle
@@ -118,7 +118,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         if (params("length") == "Unit length") None
         else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
       val positions = params("algorithm") match {
-        case "PivotMDS" => graph_operations.NetworKitComputeVectorAttribute.run(
+        case "Pivot MDS" => graph_operations.NetworKitComputeVectorAttribute.run(
           "PivotMDS", project.edgeBundle, Map(
             "directed" -> false,
             "dimensions" -> params("dimensions").toInt,
