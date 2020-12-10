@@ -19,15 +19,15 @@ func init() {
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
 			weight := ea.getDoubleAttributeOpt("weight")
-			options := ea.GetMapParam("options")
+			o := &NetworKitOptions{ea.GetMapParam("options")}
 			seed := uint64(1)
-			if s, exists := options["seed"]; exists {
+			if s, exists := o.Options["seed"]; exists {
 				seed = uint64(s.(float64))
 			}
 			networkit.SetSeed(seed, true)
 			networkit.SetThreadsFromEnv()
 			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, options["directed"] != false)
+			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
 			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),
@@ -36,7 +36,11 @@ func init() {
 			var result networkit.DoubleVector
 			switch ea.GetStringParam("op") {
 			case "ApproxCloseness":
-				c := networkit.NewApproxCloseness(g)
+				samples := o.Count("samples")
+				if samples > uint64(len(vs.MappingToUnordered)) {
+					samples = uint64(len(vs.MappingToUnordered))
+				}
+				c := networkit.NewApproxCloseness(g, samples)
 				defer networkit.DeleteApproxCloseness(c)
 				c.Run()
 				result = c.Scores()
@@ -57,7 +61,11 @@ func init() {
 				c.Run()
 				result = c.Scores()
 			case "EstimateBetweenness":
-				c := networkit.NewEstimateBetweenness(g)
+				samples := o.Count("samples")
+				if samples > uint64(len(vs.MappingToUnordered)) {
+					samples = uint64(len(vs.MappingToUnordered))
+				}
+				c := networkit.NewEstimateBetweenness(g, samples)
 				defer networkit.DeleteEstimateBetweenness(c)
 				c.Run()
 				result = c.Scores()

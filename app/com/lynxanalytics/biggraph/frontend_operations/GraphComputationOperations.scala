@@ -47,14 +47,15 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
           // Implemented on Spark.
           "Harmonic", "Lin", "Average distance",
           // From NetworKit.
-          // TODO: These two don't work. "No match for overloaded function call"
-          // "Closeness (approximate)", "Betweenness (estimate)",
-          // TODO: Laplacian is meant to be used with weights.
-          // "Laplacian",
+          "Closeness (estimate)", "Betweenness (estimate)", "Laplacian",
           "Betweenness", "Eigenvector", "Harmonic Closeness", "Katz",
           "K-Path", "Sfigality").sorted.toList)),
       Choice("direction", "Direction",
         options = Direction.attrOptionsWithDefault("outgoing edges")),
+      Choice("weight", "Edge weight",
+        options = FEOption.list("No weighting") ++ project.edgeAttrList[Double]),
+      NonNegInt("samples", "Sample size",
+        default = 1000, group = "Advanced settings"),
       NonNegInt("maxDiameter", "Maximal diameter to check",
         default = 10, group = "Advanced settings"),
       NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
@@ -67,9 +68,13 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val es = Direction(
         params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
-      def nk(algo: String) = graph_operations.NetworKitComputeAttribute.run(algo, es)
+      val weight =
+        if (params("weight") == "No weighting") None
+        else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
+      def nk(algo: String) = graph_operations.NetworKitComputeAttribute.run(
+        algo, es, Map("samples" -> params("samples").toInt), weight)
       val centrality: Attribute[Double] = algorithm match {
-        case "Closeness (approximate)" => nk("ApproxCloseness")
+        case "Closeness (estimate)" => nk("ApproxCloseness")
         case "Betweenness" => nk("Betweenness")
         case "Eigenvector" => nk("EigenvectorCentrality")
         case "Betweenness (estimate)" => nk("EstimateBetweenness")

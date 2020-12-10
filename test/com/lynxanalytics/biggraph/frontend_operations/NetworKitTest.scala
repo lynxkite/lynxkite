@@ -14,10 +14,13 @@ class NetworKitTest extends OperationsTestBase {
   test("Compute centrality", com.lynxanalytics.biggraph.SphynxOnly) {
     for (
       (algorithm, expected) <- Seq(
+        "Closeness (estimate)" -> Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 0.0),
         "Harmonic" -> Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0),
+        "Laplacian" -> Map(0 -> 4.0, 1 -> 4.0, 2 -> 10.0, 3 -> 0.0),
         "Lin" -> Map(0 -> 4.5, 1 -> 4.5, 2 -> 1.0, 3 -> 1.0),
         "Average distance" -> Map(0 -> 1.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0),
         "Betweenness" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0),
+        "Betweenness (estimate)" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0),
         "Eigenvector" -> Map(0 -> 0.7, 1 -> 0.7, 2 -> 0.0, 3 -> 0.0),
         "Harmonic Closeness" -> Map(0 -> 0.33, 1 -> 0.33, 2 -> 0.66, 3 -> 0.0),
         "Katz" -> Map(0 -> 0.5, 1 -> 0.5, 2 -> 0.49, 3 -> 0.49),
