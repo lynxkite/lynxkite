@@ -3,7 +3,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"runtime/debug"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
@@ -14,6 +16,7 @@ func init() {
 			defer func() {
 				if e := recover(); e != nil {
 					err = fmt.Errorf("%v", e)
+					log.Printf("%v\n%v", e, string(debug.Stack()))
 				}
 			}()
 			vs := ea.getVertexSet("vs")

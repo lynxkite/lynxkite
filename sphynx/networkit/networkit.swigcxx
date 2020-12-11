@@ -43,6 +43,7 @@
 #include <networkit/community/LPDegreeOrdered.hpp>
 #include <networkit/community/PLM.hpp>
 #include <networkit/community/PLP.hpp>
+#include <networkit/sparsification/ForestFireScore.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -62,6 +63,7 @@ public:
   count degreeOut(node v) const;
   void removeSelfLoops();
   void removeMultiEdges();
+  void indexEdges(bool force = false);
 };
 
 class Partition {
@@ -156,3 +158,6 @@ public:
 %include "include/networkit/community/LPDegreeOrdered.hpp"
 %include "include/networkit/community/PLM.hpp"
 %include "include/networkit/community/PLP.hpp"
+%include "include/networkit/edgescores/EdgeScore.hpp"
+%template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
+%include "include/networkit/sparsification/ForestFireScore.hpp"

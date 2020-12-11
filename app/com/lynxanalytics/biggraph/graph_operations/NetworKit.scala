@@ -57,6 +57,43 @@ case class NetworKitComputeDoubleAttribute(
     "op" -> op, "hasWeight" -> hasWeight, "hasAttribute" -> hasAttribute, "options" -> options)
 }
 
+object NetworKitComputeDoubleEdgeAttribute extends OpFromJson {
+  def fromJson(j: json.JsValue) = NetworKitComputeDoubleEdgeAttribute(
+    (j \ "op").as[String], (j \ "hasWeight").as[Boolean],
+    (j \ "hasAttribute").as[Boolean], (j \ "options").as[json.JsObject])
+  def run(
+    name: String,
+    es: EdgeBundle,
+    options: Map[String, Any] = Map(),
+    weight: Option[Attribute[Double]] = None,
+    attribute: Option[Attribute[Double]] = None)(
+    implicit
+    m: MetaGraphManager): Attribute[Double] = {
+    val op = NetworKitComputeDoubleEdgeAttribute(
+      name, weight.isDefined, attribute.isDefined, NetworKitCommon.toJson(options))
+    import Scripting._
+    var builder = op(op.es, es)
+    if (weight.isDefined) { builder = builder(op.weight, weight.get) }
+    if (attribute.isDefined) { builder = builder(op.attr, attribute.get) }
+    builder.result.attr
+  }
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: NetworKitCommon.GraphInput) extends MagicOutput(instance) {
+    val attr = edgeAttribute[Double](inputs.es.entity)
+  }
+}
+case class NetworKitComputeDoubleEdgeAttribute(
+    op: String, hasWeight: Boolean, hasAttribute: Boolean, options: json.JsObject)
+  extends TypedMetaGraphOp[NetworKitCommon.GraphInput, NetworKitComputeDoubleEdgeAttribute.Output] {
+  @transient override lazy val inputs = new NetworKitCommon.GraphInput(hasWeight, hasAttribute)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    new NetworKitComputeDoubleEdgeAttribute.Output()(instance, inputs)
+  }
+  override def toJson = json.Json.obj(
+    "op" -> op, "hasWeight" -> hasWeight, "hasAttribute" -> hasAttribute, "options" -> options)
+}
+
 object NetworKitComputeVectorAttribute extends OpFromJson {
   def fromJson(j: json.JsValue) = NetworKitComputeVectorAttribute(
     (j \ "op").as[String], (j \ "hasWeight").as[Boolean],
