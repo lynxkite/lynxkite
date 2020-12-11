@@ -1,7 +1,7 @@
 ### Place vertices with edge lengths
 
 These methods create a graph layout as a new ``Vector[number]`` vertex attribute
-where the edges have given lengths.
+where the edges have the given lengths, or as close to those as possible.
 
 Uses the NetworKit implementations for
 https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PivotMDS.html[PivotMDS] and
