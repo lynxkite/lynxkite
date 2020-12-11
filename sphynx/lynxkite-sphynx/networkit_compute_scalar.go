@@ -59,7 +59,7 @@ func init() {
 				c.Run()
 				scalar1 = c.GetEffectiveDiameter()
 			case "Assortativity":
-				vec := networkit.NewDoubleVector(len(attr.Values))
+				vec := networkit.NewDoubleVector(int64(len(attr.Values)))
 				defer networkit.DeleteDoubleVector(vec)
 				for i, v := range attr.Values {
 					vec.Set(i, v)

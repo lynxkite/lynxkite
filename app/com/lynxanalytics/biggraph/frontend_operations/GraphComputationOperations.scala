@@ -181,6 +181,23 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Compute assortativity")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "assortativity"),
+      Choice("attr", "Attribute",
+        options = FEOption.unset +: project.vertexAttrList[Double]))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val attrName = params("attr")
+      if (attrName != FEOption.unset.id) {
+        val result = graph_operations.NetworKitComputeScalar.run(
+          "Assortativity", project.edgeBundle, Map(), None,
+          Some(project.vertexAttributes(attrName).runtimeSafeCast[Double]))
+        project.newScalar(params("name"), result.scalar1)
+      }
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle
