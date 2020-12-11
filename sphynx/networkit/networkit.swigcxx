@@ -32,6 +32,13 @@
 #include <networkit/graph/GraphBuilder.hpp>
 #include <networkit/auxiliary/Parallelism.hpp>
 #include <networkit/auxiliary/Random.hpp>
+#include <networkit/viz/MaxentStress.hpp>
+#include <networkit/viz/PivotMDS.hpp>
+#include <networkit/structures/Partition.hpp>
+#include <networkit/community/CommunityDetectionAlgorithm.hpp>
+#include <networkit/community/LPDegreeOrdered.hpp>
+#include <networkit/community/PLM.hpp>
+#include <networkit/community/PLP.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -52,10 +59,29 @@ public:
   void removeSelfLoops();
   void removeMultiEdges();
 };
+
+class Partition {
+public:
+  count numberOfElements() const;
+  count numberOfSubsets() const;
+  std::vector<uint64_t> getVector() const;
+  %extend {
+    // There's no pre-defined wrapper (std_set.i) for std::set.
+    // So we just convert it to a std::vector in C++.
+    std::vector<uint64_t> getSubsetIdsVector() const {
+      std::set<uint64_t> ss = self->getSubsetIds();
+      std::vector<uint64_t> v(ss.begin(), ss.end());
+      return v;
+    }
+  }
+};
+
+// Allow passing in a Go slice for SphynxId * in our utility code.
 %typemap(gotype) (SphynxId *) %{[]uint32%}
 %typemap(in) (SphynxId *) {
   $1 = ($1_ltype)$input.array;
 }
+// Turn C++ exceptions into Go panics.
 %exception {
   try {
     $action;
@@ -63,17 +89,26 @@ public:
     _swig_gopanic(e.what());
   }
 }
+
 %include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>
-namespace std {
-  %template(Uint64Vector) vector<unsigned long long>;
-  %template(DoubleVector) vector<double>;
-}
+template <class T = double, size_t Dimensions = 0> class Point {
+public:
+  T at(uint64_t i) const;
+};
+%template(Uint64Vector) std::vector<unsigned long long>;
+%template(DoubleVector) std::vector<double>;
+%template(DoublePoint) Point<double>;
+%template(PointVector) std::vector<Point<double>>;
 %include "include/networkit/base/Algorithm.hpp"
 %ignore ranking;
 %ignore getMoveGraph;
 %ignore getMovePartition;
+%ignore ResultStats;
+%ignore coarsen;
+%ignore getTiming;
+
 %include "include/networkit/centrality/Centrality.hpp"
 %include "include/networkit/centrality/ApproxCloseness.hpp"
 %include "include/networkit/centrality/Betweenness.hpp"
@@ -105,3 +140,11 @@ namespace std {
 %include "include/networkit/graph/GraphBuilder.hpp"
 %include "include/networkit/auxiliary/Parallelism.hpp"
 %include "include/networkit/auxiliary/Random.hpp"
+%include "include/networkit/viz/GraphLayoutAlgorithm.hpp"
+%template(GraphLayoutAlgorithmDouble) NetworKit::GraphLayoutAlgorithm<double>;
+%include "include/networkit/viz/MaxentStress.hpp"
+%include "include/networkit/viz/PivotMDS.hpp"
+%include "include/networkit/community/CommunityDetectionAlgorithm.hpp"
+%include "include/networkit/community/LPDegreeOrdered.hpp"
+%include "include/networkit/community/PLM.hpp"
+%include "include/networkit/community/PLP.hpp"

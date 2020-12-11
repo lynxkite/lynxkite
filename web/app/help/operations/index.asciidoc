@@ -355,6 +355,10 @@ include::filter-by-attributes.asciidoc[]
 
 include::filter-with-sql.asciidoc[]
 
+include::find-communities-with-label-propagation.asciidoc[]
+
+include::find-communities-with-the-louvain-method.asciidoc[]
+
 include::find-connected-components.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
@@ -430,6 +434,8 @@ include::merge-vertices-by-attribute.asciidoc[]
 include::one-hot-encode-attribute.asciidoc[]
 
 include::output.asciidoc[]
+
+include::place-vertices-with-edge-lengths.asciidoc[]
 
 include::predict-edges-with-hyperbolic-positions.asciidoc[]
 

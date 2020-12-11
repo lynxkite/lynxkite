@@ -1,0 +1,29 @@
+### Find communities with label propagation
+
+Uses the https://en.wikipedia.org/wiki/Label_propagation_algorithm[label propagation algorithm]
+to identify communities in the graph. The communities are represented as a segmentation on
+the graph.
+
+Label propagation starts with assigning a unique label to each vertex.
+Then each vertex takes on the most common label in their neighborhood.
+This step is repeated until the labels stabilize.
+
+Uses the NetworKit implementations of
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PLP.html[PLP] and
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1LPDegreeOrdered.html[LPDegreeOrdered].
+
+====
+[p-name]#Save segmentation as#::
+The name of the newly created segmentation.
+
+[p-weight]#Weight attribute#::
+The neighboring labels are weighted with the edge weight. A bigger weight
+results in that neighbor having a bigger influence in the label update step.
+
+[p-variant]#Variant#::
+The results of label propagation depend greatly on the order of the updates.
+The available options are:
+- **classic:** An efficient method that uses an arbitrary ordering and parallel updates.
+- **degree-ordered:** A more predictable method that performs the updates in increasing
+  order of degree.
+====

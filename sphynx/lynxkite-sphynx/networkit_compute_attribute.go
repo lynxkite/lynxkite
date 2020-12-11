@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
@@ -9,9 +10,15 @@ import (
 
 func init() {
 	operationRepository["NetworKitComputeAttribute"] = Operation{
-		execute: func(ea *EntityAccessor) error {
+		execute: func(ea *EntityAccessor) (err error) {
+			defer func() {
+				if e := recover(); e != nil {
+					err = fmt.Errorf("%v", e)
+				}
+			}()
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
+			weight := ea.getDoubleAttributeOpt("weight")
 			options := ea.GetMapParam("options")
 			seed := uint64(1)
 			if s, exists := options["seed"]; exists {
@@ -20,7 +27,8 @@ func init() {
 			networkit.SetSeed(seed, true)
 			networkit.SetThreadsFromEnv()
 			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, options["directed"] != false)
+			g := ToNetworKit(vs, es, weight, options["directed"] != false)
+			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),
 				Defined: make([]bool, len(vs.MappingToUnordered)),
@@ -79,8 +87,8 @@ func init() {
 				c.Run()
 				result = c.Scores()
 			}
-			attr.Values = ToDoubleSlice(result)
 			for i := range attr.Defined {
+				attr.Values[i] = result.Get(i)
 				attr.Defined[i] = !math.IsNaN(attr.Values[i])
 			}
 			ea.output("attr", attr)

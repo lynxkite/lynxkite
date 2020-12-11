@@ -5,4 +5,4 @@
 
 cd $(dirname $0)
 ./proto_compile.sh
-./sphynx_compile.sh
+./sphynx_compile.sh "$@"

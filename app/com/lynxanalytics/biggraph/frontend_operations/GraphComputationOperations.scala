@@ -100,6 +100,40 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Place vertices with edge lengths")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "New attribute name", defaultValue = "position"),
+      NonNegInt("dimensions", "Dimensions", default = 2),
+      Choice("length", "Edge length",
+        options = FEOption.list("Unit length") ++ project.edgeAttrList[Double]),
+      Choice("algorithm", "Layout algorithm",
+        options = FEOption.list("Pivot MDS", "Maxent-Stress")),
+      NonNegInt("pivots", "Pivots", default = 100, group = "Pivot MDS options"),
+      NonNegInt("radius", "Neighborhood radius", default = 1, group = "Maxent-Stress options"),
+      NonNegDouble("tolerance", "Solver tolerance", defaultValue = "0.1", group = "Maxent-Stress options"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      val weight =
+        if (params("length") == "Unit length") None
+        else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
+      val positions = params("algorithm") match {
+        case "Pivot MDS" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "PivotMDS", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "pivots" -> params("pivots").toInt), weight)
+        case "Maxent-Stress" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "MaxentStress", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "radius" -> params("radius").toInt,
+            "tolerance" -> params("tolerance").toDouble), weight)
+      }
+      project.newVertexAttribute(name, positions, help)
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle

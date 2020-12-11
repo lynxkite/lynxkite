@@ -112,7 +112,7 @@ object OperationParams {
     }
   }
 
-  case class NonNegDouble(id: String, title: String, defaultValue: String = "")
+  case class NonNegDouble(id: String, title: String, defaultValue: String = "", override val group: String = "")
     extends OperationParameterMeta {
     val kind = "default"
     val options = List()

@@ -55,6 +55,16 @@ func (ea *EntityAccessor) getDoubleAttribute(name string) *DoubleAttribute {
 	return ea.inputs[name].(*DoubleAttribute)
 }
 
+// May return nil.
+func (ea *EntityAccessor) getDoubleAttributeOpt(name string) *DoubleAttribute {
+	_, exists := ea.inputs[name]
+	if exists {
+		return ea.getDoubleAttribute(name)
+	} else {
+		return nil
+	}
+}
+
 func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
 	return ea.inputs[name].(*StringAttribute)
 }
