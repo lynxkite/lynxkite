@@ -184,11 +184,11 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   register("Compute assortativity")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save as", defaultValue = "assortativity"),
-      Choice("attr", "Attribute",
+      Choice("attribute", "Attribute",
         options = FEOption.unset +: project.vertexAttrList[Double]))
     def enabled = project.hasEdgeBundle
     def apply() = {
-      val attrName = params("attr")
+      val attrName = params("attribute")
       if (attrName != FEOption.unset.id) {
         val result = graph_operations.NetworKitComputeScalar.run(
           "Assortativity", project.edgeBundle, Map(), None,

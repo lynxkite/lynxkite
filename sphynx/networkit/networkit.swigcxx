@@ -53,6 +53,7 @@ using namespace NetworKit;
 %include "include/networkit/Globals.hpp"
 typedef uint64_t count;
 typedef uint64_t node;
+typedef uint64_t edgeid;
 class Graph {
 public:
   count numberOfNodes() const noexcept;
@@ -64,6 +65,7 @@ public:
   void removeSelfLoops();
   void removeMultiEdges();
   void indexEdges(bool force = false);
+  edgeid edgeId(node u, node v) const;
 };
 
 class Partition {

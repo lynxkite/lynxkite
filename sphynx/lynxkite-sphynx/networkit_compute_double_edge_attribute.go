@@ -33,10 +33,6 @@ func init() {
 			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
 			defer networkit.DeleteGraph(g)
 			g.IndexEdges()
-			attr := &DoubleAttribute{
-				Values:  make([]float64, len(vs.MappingToUnordered)),
-				Defined: make([]bool, len(vs.MappingToUnordered)),
-			}
 			var result networkit.DoubleVector
 			switch ea.GetStringParam("op") {
 			case "ForestFireScore":
@@ -46,8 +42,15 @@ func init() {
 				c.Run()
 				result = c.Scores()
 			}
-			for i := range attr.Defined {
-				attr.Values[i] = result.Get(i)
+			attr := &DoubleAttribute{
+				Values:  make([]float64, len(es.Src)),
+				Defined: make([]bool, len(es.Src)),
+			}
+			for i := range attr.Values {
+				// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
+				// TODO: Can we do better than mapping the results back by src/dst?
+				id := g.EdgeId(uint64(es.Src[i]), uint64(es.Dst[i]))
+				attr.Values[i] = result.Get(int(id))
 				attr.Defined[i] = !math.IsNaN(attr.Values[i])
 			}
 			return ea.output("attr", attr)

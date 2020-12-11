@@ -205,13 +205,14 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= List(
       Param("name", "Save as", defaultValue = "forest fire score"),
       NonNegDouble("spread_prob", "Probability of fire spreading", defaultValue = "0.99"),
-      NonNegDouble("burn_ratio", "Target burn ratio", defaultValue = "10"),
+      NonNegDouble("burn_ratio", "Portion of edges to burn", defaultValue = "10"),
       RandomSeed("seed", "Random seed", context.box))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
       val attr = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
         "ForestFireScore", project.edgeBundle, Map(
+          "directed" -> false,
           "seed" -> params("seed").toLong,
           "spread_prob" -> params("spread_prob").toDouble,
           "burn_ratio" -> params("burn_ratio").toDouble))

@@ -153,4 +153,42 @@ class NetworKitTest extends OperationsTestBase {
       }
     }
   }
+
+  test("Score edges with the forest fire model", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Score edges with the forest fire model", Map("seed" -> "1"))
+      .project
+    val p = get(g.edgeAttributes("forest fire score").runtimeSafeCast[Double])
+    assert(p.size == 4)
+    // Even with a seed it's not deterministic.
+    for (v <- p.values) {
+      assert(v >= 0 && v <= 1)
+    }
+  }
+
+  test("Compute diameter", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+    val exact = g.box("Compute diameter", Map("max_error" -> "0")).project
+    assert(1 == get(exact.scalars("diameter").runtimeSafeCast[Double]))
+    val estimate = g.box("Compute diameter", Map("max_error" -> "0.1")).project
+    assert(1 == get(estimate.scalars("diameter_lower").runtimeSafeCast[Double]))
+    assert(1 == get(estimate.scalars("diameter_upper").runtimeSafeCast[Double]))
+  }
+
+  test("Compute effective diameter", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Compute degree")
+      .box("Filter by attributes", Map("filterva_degree" -> ">0"))
+    val exact = g.box("Compute effective diameter", Map("algorithm" -> "exact")).project
+    assert(1 == get(exact.scalars("effective diameter").runtimeSafeCast[Double]))
+    val estimate = g.box("Compute effective diameter", Map("algorithm" -> "estimate")).project
+    assert(1 == get(estimate.scalars("effective diameter").runtimeSafeCast[Double]))
+  }
+
+  test("Compute assortativity", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Compute assortativity", Map("attribute" -> "age"))
+      .project
+    assert(Math.abs(-0.033 - get(g.scalars("assortativity").runtimeSafeCast[Double])) < 0.01)
+  }
 }
