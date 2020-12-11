@@ -71,7 +71,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val weight =
         if (params("weight") == "No weighting") None
         else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
-      def nk(algo: String) = graph_operations.NetworKitComputeAttribute.run(
+      def nk(algo: String) = graph_operations.NetworKitComputeDoubleAttribute.run(
         algo, es, Map("samples" -> params("samples").toInt), weight)
       val centrality: Attribute[Double] = algorithm match {
         case "Closeness (estimate)" => nk("ApproxCloseness")
@@ -99,7 +99,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val name = params("name")
       // A directed graph just gets turned into an undirected graph.
       // We can skip that and just build an undirected graph.
-      val core = graph_operations.NetworKitComputeAttribute.run(
+      val core = graph_operations.NetworKitComputeDoubleAttribute.run(
         "CoreDecomposition", project.edgeBundle, Map("directed" -> false))
       project.newVertexAttribute(name, core, help)
     }

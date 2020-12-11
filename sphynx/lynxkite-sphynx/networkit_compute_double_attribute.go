@@ -1,4 +1,4 @@
-// All NetworKit ops that compute a vertex attribute on a graph.
+// All NetworKit ops that compute a Double vertex attribute on a graph.
 package main
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	operationRepository["NetworKitComputeAttribute"] = Operation{
+	operationRepository["NetworKitComputeDoubleAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
 			defer func() {
 				if e := recover(); e != nil {
