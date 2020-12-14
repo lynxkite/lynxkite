@@ -272,7 +272,7 @@ angular.module('biggraph').directive('entrySelector',
         };
 
         scope.pathElements = function() {
-          return scope.path.split('/');
+          return scope.path ? scope.path.split('/') : [];
         };
 
         scope.isWorkspace = function(object) {
