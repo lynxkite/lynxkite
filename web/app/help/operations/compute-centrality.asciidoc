@@ -10,58 +10,58 @@ The new attribute will be created under this name.
 
 [p-algorithm]#The centrality algorithm to use#::
 - **Average distance**
-  (or https://en.wikipedia.org/wiki/Centrality#Closeness_centrality[closeness centrality])
-  of the vertex A is the sum of the shortest paths to A divided by the size of its coreachable set.
+(or https://en.wikipedia.org/wiki/Centrality#Closeness_centrality[closeness centrality])
+of the vertex A is the sum of the shortest paths to A divided by the size of its coreachable set.
 - The https://en.wikipedia.org/wiki/Betweenness_centrality[**betweenness centrality**]
-  is the number of shortest paths that pass through the vertex.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Betweenness.html[NetworKit] implementation.
+is the number of shortest paths that pass through the vertex.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Betweenness.html[NetworKit] implementation.
 - Estimated https://en.wikipedia.org/wiki/Betweenness_centrality[**betweenness centrality**]
-  is based on shortest paths between a samples of vertices.
-  (Configured with the "sample size" parameter in the advanced options.)
-  +
-  See https://dl.acm.org/doi/10.5555/2791204.2791213[Better approximation of betweenness centrality]
-  by Geisberger et al for details of this estimation method.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EstimateBetweenness.html[NetworKit] implementation.
+is based on shortest paths between a samples of vertices.
+(Configured with the "sample size" parameter in the advanced options.)
++
+See https://dl.acm.org/doi/10.5555/2791204.2791213[Better approximation of betweenness centrality]
+by Geisberger et al for details of this estimation method.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EstimateBetweenness.html[NetworKit] implementation.
 - Estimated https://en.wikipedia.org/wiki/Centrality#Closeness_centrality[closeness centrality])
-  is based on shortest paths between a samples of vertices.
-  (Configured with the "sample size" parameter in the advanced options.)
-  See https://arxiv.org/abs/1409.0035[Computing Classic Closeness Centrality, at Scale]
-  by Cohen et al for details of this estimation method.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1ApproxCloseness.html[NetworKit] implementation.
+is based on shortest paths between a samples of vertices.
+(Configured with the "sample size" parameter in the advanced options.)
+See https://arxiv.org/abs/1409.0035[Computing Classic Closeness Centrality, at Scale]
+by Cohen et al for details of this estimation method.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1ApproxCloseness.html[NetworKit] implementation.
 - The https://en.wikipedia.org/wiki/Eigenvector_centrality[**eigenvector centrality**]
-  is the non-negative eigenvector of the adjacency matrix.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EigenvectorCentrality.html[NetworKit] implementation.
+is the non-negative eigenvector of the adjacency matrix.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EigenvectorCentrality.html[NetworKit] implementation.
 - The https://en.wikipedia.org/wiki/Centrality#Harmonic_centrality[**harmonic centrality**]
-  of the vertex A is the sum of the reciprocals of all shortest paths to A.
+of the vertex A is the sum of the reciprocals of all shortest paths to A.
 - The https://en.wikipedia.org/wiki/Closeness_centrality#In_disconnected_graphs[**harmonic closeness centrality**]
-  is the sum of the closeness (1 / distance) to all other vertices in the graph.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1HarmonicCloseness.html[NetworKit] implementation.
+is the sum of the closeness (1 / distance) to all other vertices in the graph.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1HarmonicCloseness.html[NetworKit] implementation.
 - The https://www.researchgate.net/publication/228989783_K-Path_Centrality_A_New_Centrality_Measure_in_Social_Networks[**k-path centrality**]
-  is a fast approximation of the betweenness centrality.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KPathCentrality.html[NetworKit] implementation.
+is a fast approximation of the betweenness centrality.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KPathCentrality.html[NetworKit] implementation.
 - The https://en.wikipedia.org/wiki/Katz_centrality[**Katz centrality**]
-  is based on the total number of walks between vertices.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KatzCentrality.html[NetworKit] implementation.
+is based on the total number of walks between vertices.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KatzCentrality.html[NetworKit] implementation.
 - https://www.centiserver.org/?q1=centrality&q2=Lin_Centrality[**Lin's centrality**]
-  of the vertex A is the square of the size of its coreachable set divided by
-  the sum of the shortest paths to A.
+of the vertex A is the square of the size of its coreachable set divided by
+the sum of the shortest paths to A.
 - **Laplacian centrality** in a weighted graph is defined based on Laplacian energy.
-  It reflects how much the Laplacian energy of the graph would drop if we deleted a vertex.
-  +
-  See _Laplacian centrality: A new centrality measure for weighted networks_ by Qi et al
-  for the precise definition and analysis.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1LaplacianCentrality.html[NetworKit] implementation.
+It reflects how much the Laplacian energy of the graph would drop if we deleted a vertex.
++
+See _Laplacian centrality: A new centrality measure for weighted networks_ by Qi et al
+for the precise definition and analysis.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1LaplacianCentrality.html[NetworKit] implementation.
 - **Sfigality** is the ratio of neighbors that have a higher degree.
-  +
-  Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Sfigality.html[NetworKit] implementation.
++
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Sfigality.html[NetworKit] implementation.
 
 [p-direction]#Direction#::
  - `incoming edges`: Calculating paths _from_ vertices.
