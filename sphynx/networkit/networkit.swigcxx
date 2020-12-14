@@ -44,6 +44,7 @@
 #include <networkit/community/PLM.hpp>
 #include <networkit/community/PLP.hpp>
 #include <networkit/sparsification/ForestFireScore.hpp>
+#include <networkit/graph/RandomMaximumSpanningForest.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -114,6 +115,7 @@ public:
 };
 %template(Uint64Vector) std::vector<unsigned long long>;
 %template(DoubleVector) std::vector<double>;
+%template(BoolVector) std::vector<bool>;
 %template(DoublePoint) Point<double>;
 %template(PointVector) std::vector<Point<double>>;
 %include "include/networkit/base/Algorithm.hpp"
@@ -170,3 +172,4 @@ public:
 %include "include/networkit/edgescores/EdgeScore.hpp"
 %template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
 %include "include/networkit/sparsification/ForestFireScore.hpp"
+%include "include/networkit/graph/RandomMaximumSpanningForest.hpp"

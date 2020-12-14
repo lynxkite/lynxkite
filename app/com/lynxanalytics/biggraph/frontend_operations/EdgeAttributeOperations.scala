@@ -203,7 +203,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register("Score edges with the forest fire model")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "Save as", defaultValue = "forest fire score"),
+      Param("name", "Save as", defaultValue = "forest_fire_score"),
       NonNegDouble("spread_prob", "Probability of fire spreading", defaultValue = "0.99"),
       NonNegDouble("burn_ratio", "Portion of edges to burn", defaultValue = "10"),
       RandomSeed("seed", "Random seed", context.box))

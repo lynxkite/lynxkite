@@ -219,8 +219,6 @@ include::compute-inputs.asciidoc[]
 
 include::compute-pagerank.asciidoc[]
 
-include::compute-score-edges-with-the-forest-fire-model.asciidoc[]
-
 include::connect-vertices-on-attribute.asciidoc[]
 
 include::convert-edge-attribute-to-double.asciidoc[]
@@ -376,6 +374,8 @@ include::find-k-core-decomposition.asciidoc[]
 include::find-maximal-cliques.asciidoc[]
 
 include::find-modular-clustering.asciidoc[]
+
+include::find-optimal-spanning-tree.asciidoc[]
 
 include::find-steiner-tree.asciidoc[]
 

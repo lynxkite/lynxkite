@@ -41,6 +41,20 @@ func init() {
 				defer networkit.DeleteForestFireScore(c)
 				c.Run()
 				result = c.Scores()
+			case "RandomMaximumSpanningForest":
+				c := networkit.NewRandomMaximumSpanningForest(g)
+				defer networkit.DeleteRandomMaximumSpanningForest(c)
+				c.Run()
+				bools := c.GetAttribute(true)
+				defer networkit.DeleteBoolVector(bools)
+				result = networkit.NewDoubleVector(int64(len(es.Src)))
+				for i := range es.Src {
+					if bools.Get(i) {
+						result.Set(i, 1.0)
+					} else {
+						result.Set(i, 0.0)
+					}
+				}
 			}
 			// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
 			// We build a map to match them up by the src/dst vertex IDs.

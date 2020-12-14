@@ -198,6 +198,30 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Find optimal spanning tree")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "in_tree"),
+      Choice("weight", "Edge weight",
+        options = FEOption.list("Unit weight") ++ project.edgeAttrList[Double]),
+      Choice("optimize", "Optimize for",
+        options = FEOption.list("Maximal weight", "Minimal weight")),
+      RandomSeed("seed", "Random seed", context.box))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val weightName = params("weight")
+      val weight = if (weightName == "Unit weight") {
+        project.edgeBundle.const(1.0)
+      } else {
+        project.edgeAttributes(weightName).runtimeSafeCast[Double]
+      }
+      val attr = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
+        "RandomMaximumSpanningForest", project.edgeBundle, Map("seed" -> params("seed").toLong),
+        Some(if (params("optimize") == "Maximal weight") weight
+        else graph_operations.DeriveScala.negative(weight)))
+      project.edgeAttributes(params("name")) = attr
+    }
+  })
+
   register("Compute clustering coefficient")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "clustering_coefficient")
     def enabled = project.hasEdgeBundle

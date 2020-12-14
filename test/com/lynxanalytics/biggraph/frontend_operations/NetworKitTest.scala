@@ -158,18 +158,6 @@ class NetworKitTest extends OperationsTestBase {
     }
   }
 
-  test("Score edges with the forest fire model", com.lynxanalytics.biggraph.SphynxOnly) {
-    val g = box("Create example graph")
-      .box("Score edges with the forest fire model", Map("seed" -> "1"))
-      .project
-    val p = get(g.edgeAttributes("forest fire score").runtimeSafeCast[Double])
-    assert(p.size == 4)
-    // Even with a seed it's not deterministic.
-    for (v <- p.values) {
-      assert(v >= 0 && v <= 1)
-    }
-  }
-
   test("Compute diameter", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph")
     val exact = g.box("Compute diameter", Map("max_error" -> "0")).project
@@ -196,13 +184,22 @@ class NetworKitTest extends OperationsTestBase {
     assert(Math.abs(-0.033 - get(g.scalars("assortativity").runtimeSafeCast[Double])) < 0.01)
   }
 
-  test("Edge scoring", com.lynxanalytics.biggraph.SphynxOnly) {
+  test("Score edges with the forest fire model", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph")
       // It's not deterministic, but with a large enough ratio it's reliable enough.
       .box("Score edges with the forest fire model", Map("burn_ratio" -> "1000000"))
       .project
-    val score = get(g.edgeAttributes("forest fire score").runtimeSafeCast[Double])
+    val score = get(g.edgeAttributes("forest_fire_score").runtimeSafeCast[Double])
     val expected = Map(0 -> 1.0, 1 -> 0.33, 2 -> 0.57, 3 -> 0.57)
+    assertMatch(score, expected)
+  }
+
+  test("Find optimal spanning tree", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Find optimal spanning tree", Map("optimize" -> "Minimal weight"))
+      .project
+    val score = get(g.edgeAttributes("in_tree").runtimeSafeCast[Double])
+    val expected = Map(0 -> 1.0, 1 -> 0.0, 2 -> 0.0, 3 -> 1.0)
     assertMatch(score, expected)
   }
 }
