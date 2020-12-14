@@ -9,7 +9,7 @@ import (
 func ExampleGraph() networkit.Graph {
 	vs := VertexSet{MappingToUnordered: []int64{0, 1, 2, 3, 4}}
 	es := EdgeBundle{Src: []SphynxId{0, 1, 2, 3, 4}, Dst: []SphynxId{1, 2, 3, 4, 1}}
-	return ToNetworKit(&vs, &es, true)
+	return ToNetworKit(&vs, &es, nil, true)
 }
 
 func TestBasicOps(t *testing.T) {
@@ -37,7 +37,13 @@ func TestNewVertexAttribute(t *testing.T) {
 	b := networkit.NewBetweenness(ExampleGraph())
 	defer networkit.DeleteBetweenness(b)
 	b.Run()
-	s := ToDoubleSlice(b.Scores())
+	v := b.Scores()
+	// TODO: Understand why this delete fails. Do we leak this vector?
+	// defer networkit.DeleteDoubleVector(v)
+	s := make([]float64, v.Size())
+	for i := range s {
+		s[i] = v.Get(i)
+	}
 	expected := []float64{0, 6, 5, 4, 3}
 	if len(s) != len(expected) {
 		t.Errorf("Result is %v, expected %v.", s, expected)

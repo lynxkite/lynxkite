@@ -193,15 +193,21 @@ include::comment.asciidoc[]
 
 include::compare-segmentation-edges.asciidoc[]
 
+include::compute-assortativity.asciidoc[]
+
 include::compute-centrality.asciidoc[]
 
 include::compute-clustering-coefficient.asciidoc[]
 
 include::compute-degree.asciidoc[]
 
+include::compute-diameter.asciidoc[]
+
 include::compute-dispersion.asciidoc[]
 
 include::compute-distance-via-shortest-path.asciidoc[]
+
+include::compute-effective-diameter.asciidoc[]
 
 include::compute-embeddedness.asciidoc[]
 
@@ -369,6 +375,8 @@ include::find-maximal-cliques.asciidoc[]
 
 include::find-modular-clustering.asciidoc[]
 
+include::find-optimal-spanning-tree.asciidoc[]
+
 include::find-steiner-tree.asciidoc[]
 
 include::find-triangles.asciidoc[]
@@ -468,6 +476,8 @@ include::sample-edges-from-co-occurrence.asciidoc[]
 include::sample-graph-by-random-walks.asciidoc[]
 
 include::save-to-snapshot.asciidoc[]
+
+include::score-edges-with-the-forest-fire-model.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 

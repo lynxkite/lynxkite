@@ -35,6 +35,14 @@ func (ea *EntityAccessor) output(name string, entity Entity) error {
 	return nil
 }
 
+func (ea *EntityAccessor) outputScalar(name string, value interface{}) error {
+	s, err := ScalarFrom(value)
+	if err != nil {
+		return err
+	}
+	return ea.output(name, &s)
+}
+
 func (ea *EntityAccessor) getOutput(name string) Entity {
 	guid := ea.opInst.Outputs[name]
 	return ea.outputs[guid]

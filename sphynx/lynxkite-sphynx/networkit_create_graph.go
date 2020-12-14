@@ -3,6 +3,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -61,6 +63,7 @@ func init() {
 			defer func() {
 				if e := recover(); e != nil {
 					err = fmt.Errorf("%v", e)
+					log.Printf("%v\n%v", e, string(debug.Stack()))
 				}
 			}()
 			o := &NetworKitOptions{ea.GetMapParam("options")}

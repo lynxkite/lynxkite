@@ -6,6 +6,16 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- 33 algorithms from [NetworKit](https://networkit.github.io/) have been integrated
+  into LynxKite. They include new centrality measures, random graph generators,
+  community detection methods, graph metrics (diameter, effective diameter, assortativity),
+  optimal spanning trees and more.
+  ([#102](https://github.com/lynxkite/lynxkite/pull/102),
+  ([#106](https://github.com/lynxkite/lynxkite/pull/106),
+  ([#111](https://github.com/lynxkite/lynxkite/pull/111))
+- Environment variables can be used to override `.kiterc` settings.
+  ([#110](https://github.com/lynxkite/lynxkite/pull/110))
+
 ### 4.1.0
 
 - Neo4j 4.x support.

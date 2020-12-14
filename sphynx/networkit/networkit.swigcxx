@@ -13,6 +13,10 @@
 #include <networkit/centrality/KPathCentrality.hpp>
 #include <networkit/centrality/LaplacianCentrality.hpp>
 #include <networkit/centrality/Sfigality.hpp>
+#include <networkit/correlation/Assortativity.hpp>
+#include <networkit/distance/Diameter.hpp>
+#include <networkit/distance/EffectiveDiameter.hpp>
+#include <networkit/distance/EffectiveDiameterApproximation.hpp>
 #include <networkit/generators/BarabasiAlbertGenerator.hpp>
 #include <networkit/generators/ChungLuGenerator.hpp>
 #include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
@@ -39,6 +43,8 @@
 #include <networkit/community/LPDegreeOrdered.hpp>
 #include <networkit/community/PLM.hpp>
 #include <networkit/community/PLP.hpp>
+#include <networkit/sparsification/ForestFireScore.hpp>
+#include <networkit/graph/RandomMaximumSpanningForest.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -48,6 +54,7 @@ using namespace NetworKit;
 %include "include/networkit/Globals.hpp"
 typedef uint64_t count;
 typedef uint64_t node;
+typedef uint64_t edgeid;
 class Graph {
 public:
   count numberOfNodes() const noexcept;
@@ -58,6 +65,15 @@ public:
   count degreeOut(node v) const;
   void removeSelfLoops();
   void removeMultiEdges();
+  void indexEdges(bool force = false);
+  edgeid edgeId(node u, node v) const;
+  node getIthNeighbor(node u, uint64_t i) const;
+  %extend {
+    // The original is templated and private.
+    edgeid getOutEdgeId(node u, uint64_t i) const {
+      return self->getIthNeighborWithId(u, i).second;
+    }
+  }
 };
 
 class Partition {
@@ -99,6 +115,7 @@ public:
 };
 %template(Uint64Vector) std::vector<unsigned long long>;
 %template(DoubleVector) std::vector<double>;
+%template(BoolVector) std::vector<bool>;
 %template(DoublePoint) Point<double>;
 %template(PointVector) std::vector<Point<double>>;
 %include "include/networkit/base/Algorithm.hpp"
@@ -120,6 +137,10 @@ public:
 %include "include/networkit/centrality/KPathCentrality.hpp"
 %include "include/networkit/centrality/LaplacianCentrality.hpp"
 %include "include/networkit/centrality/Sfigality.hpp"
+%include "include/networkit/correlation/Assortativity.hpp"
+%include "include/networkit/distance/Diameter.hpp"
+%include "include/networkit/distance/EffectiveDiameter.hpp"
+%include "include/networkit/distance/EffectiveDiameterApproximation.hpp"
 %include "include/networkit/generators/StaticGraphGenerator.hpp"
 %include "include/networkit/generators/StaticDegreeSequenceGenerator.hpp"
 %include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
@@ -148,3 +169,7 @@ public:
 %include "include/networkit/community/LPDegreeOrdered.hpp"
 %include "include/networkit/community/PLM.hpp"
 %include "include/networkit/community/PLP.hpp"
+%include "include/networkit/edgescores/EdgeScore.hpp"
+%template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
+%include "include/networkit/sparsification/ForestFireScore.hpp"
+%include "include/networkit/graph/RandomMaximumSpanningForest.hpp"

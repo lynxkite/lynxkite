@@ -1,0 +1,40 @@
+### Compute effective diameter
+
+The effective diameter is a distance within which a given portion
+of vertices can be found from each other.
+
+For example, at most
+https://en.wikipedia.org/wiki/Six_degrees_of_separation[six degrees of separation]
+are between most people on Earth. There may be hermits and lost tribes
+that would push the true diameter above 6, but they are a minority. If we ignore 1%
+of the population and find that the remaining 99% have a true diameter of 6,
+we can say that the graph has an _effective_ diameter of 6.
+
+Uses the
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EffectiveDiameter.html[exact]
+and
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EffectiveDiameterApproximation.html[estimated]
+NetworKit implementations.
+
+====
+[p-name]#Save as#::
+The new graph attribute will be created under this name.
+
+[p-ratio]#Ratio to cover#::
+The fraction of the vertices to keep.
+
+[p-algorithm]#Algorithm#::
+Whether to compute the effective diameter exactly (slower) or approximately (faster).
+
+[p-bits]#Extra bits#::
+For estimating the effective diameter the
+http://www.cs.cmu.edu/~christos/PUBLICATIONS/kdd02-anf.pdf[ANF] algorithm uses a
+vector of bits. Increasing the size of this bit vector can increase accuracy at the
+cost of more memory usage.
+
+[p-approximations]#Number of parallel approximations#::
+For estimating the effective diameter the
+http://www.cs.cmu.edu/~christos/PUBLICATIONS/kdd02-anf.pdf[ANF] algorithm uses multiple
+approximations. Increasing their number will increase accuracy at the cost of a
+longer run time.
+====

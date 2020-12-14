@@ -6,6 +6,15 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class NetworKitTest extends OperationsTestBase {
+  def assertMatch(result: Map[Long, Double], expected: Map[Int, Double], msg: String = "") = {
+    assert(result.size == expected.size, msg)
+    for ((k, v) <- result) {
+      assert(
+        Math.abs(v - expected(k.toInt)) < 0.01,
+        s"$msg returned $result instead of $expected")
+    }
+  }
+
   test("Find k-core decomposition", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph").box("Find k-core decomposition").project
     assert(get(g.vertexAttributes("core")) == Map(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 0.0))
@@ -14,10 +23,13 @@ class NetworKitTest extends OperationsTestBase {
   test("Compute centrality", com.lynxanalytics.biggraph.SphynxOnly) {
     for (
       (algorithm, expected) <- Seq(
+        "Closeness (estimate)" -> Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 0.0),
         "Harmonic" -> Map(0 -> 2.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0),
+        "Laplacian" -> Map(0 -> 4.0, 1 -> 4.0, 2 -> 10.0, 3 -> 0.0),
         "Lin" -> Map(0 -> 4.5, 1 -> 4.5, 2 -> 1.0, 3 -> 1.0),
         "Average distance" -> Map(0 -> 1.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0),
         "Betweenness" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0),
+        "Betweenness (estimate)" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0),
         "Eigenvector" -> Map(0 -> 0.7, 1 -> 0.7, 2 -> 0.0, 3 -> 0.0),
         "Harmonic Closeness" -> Map(0 -> 0.33, 1 -> 0.33, 2 -> 0.66, 3 -> 0.0),
         "Katz" -> Map(0 -> 0.5, 1 -> 0.5, 2 -> 0.49, 3 -> 0.49),
@@ -27,12 +39,7 @@ class NetworKitTest extends OperationsTestBase {
       println(algorithm)
       val g = box("Create example graph").box("Compute centrality", Map("algorithm" -> algorithm)).project
       val centrality = get(g.vertexAttributes("centrality").runtimeSafeCast[Double])
-      assert(centrality.size == expected.size, s"-- in $algorithm")
-      for ((k, v) <- centrality) {
-        assert(
-          Math.abs(v - expected(k.toInt)) < 0.01,
-          s"-- $algorithm returned $centrality instead of $expected")
-      }
+      assertMatch(centrality, expected, s"-- in $algorithm")
     }
   }
 
@@ -149,5 +156,50 @@ class NetworKitTest extends OperationsTestBase {
         }
       }
     }
+  }
+
+  test("Compute diameter", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+    val exact = g.box("Compute diameter", Map("max_error" -> "0")).project
+    assert(1 == get(exact.scalars("diameter").runtimeSafeCast[Double]))
+    val estimate = g.box("Compute diameter", Map("max_error" -> "0.1")).project
+    assert(1 == get(estimate.scalars("diameter_lower").runtimeSafeCast[Double]))
+    assert(1 == get(estimate.scalars("diameter_upper").runtimeSafeCast[Double]))
+  }
+
+  test("Compute effective diameter", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Compute degree")
+      .box("Filter by attributes", Map("filterva_degree" -> ">0"))
+    val exact = g.box("Compute effective diameter", Map("algorithm" -> "exact")).project
+    assert(1 == get(exact.scalars("effective diameter").runtimeSafeCast[Double]))
+    val estimate = g.box("Compute effective diameter", Map("algorithm" -> "estimate")).project
+    assert(1 == get(estimate.scalars("effective diameter").runtimeSafeCast[Double]))
+  }
+
+  test("Compute assortativity", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Compute assortativity", Map("attribute" -> "age"))
+      .project
+    assert(Math.abs(-0.033 - get(g.scalars("assortativity").runtimeSafeCast[Double])) < 0.01)
+  }
+
+  test("Score edges with the forest fire model", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      // It's not deterministic, but with a large enough ratio it's reliable enough.
+      .box("Score edges with the forest fire model", Map("burn_ratio" -> "1000000"))
+      .project
+    val score = get(g.edgeAttributes("forest_fire_score").runtimeSafeCast[Double])
+    val expected = Map(0 -> 1.0, 1 -> 0.33, 2 -> 0.57, 3 -> 0.57)
+    assertMatch(score, expected)
+  }
+
+  test("Find optimal spanning tree", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Find optimal spanning tree", Map("optimize" -> "Minimal weight"))
+      .project
+    val score = get(g.edgeAttributes("in_tree").runtimeSafeCast[Double])
+    val expected = Map(0 -> 1.0, 1 -> 0.0, 2 -> 0.0, 3 -> 1.0)
+    assertMatch(score, expected)
   }
 }
