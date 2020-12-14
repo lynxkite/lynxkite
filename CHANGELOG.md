@@ -11,8 +11,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   community detection methods, graph metrics (diameter, effective diameter, assortativity),
   optimal spanning trees and more.
   ([#102](https://github.com/lynxkite/lynxkite/pull/102),
-  ([#106](https://github.com/lynxkite/lynxkite/pull/106),
-  ([#111](https://github.com/lynxkite/lynxkite/pull/111))
+  [#106](https://github.com/lynxkite/lynxkite/pull/106),
+  [#111](https://github.com/lynxkite/lynxkite/pull/111))
 - Environment variables can be used to override `.kiterc` settings.
   ([#110](https://github.com/lynxkite/lynxkite/pull/110))
 
