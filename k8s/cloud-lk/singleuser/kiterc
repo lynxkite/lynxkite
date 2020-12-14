@@ -1,6 +1,6 @@
 export SPARK_VERSION=$(cat /tmp/build/stage/conf/SPARK_VERSION)
 export KITE_TAGLINE="Your very own demo instance"
-export SPARK_HOME=/tmp/spark-$SPARK_VERSION
+export SPARK_HOME=/tmp/spark/spark-$SPARK_VERSION
 export SPARK_MASTER=local
 export KITE_META_DIR=$HOME/.kite4/meta
 export KITE_DATA_DIR=file:$HOME/.kite4/data

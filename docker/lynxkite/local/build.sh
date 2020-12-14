@@ -3,7 +3,7 @@
 
 cd $(dirname $0)
 
-VERSION=4.0.1
+VERSION=4.1.0
 rm -rf stage
 cp -R lynxkite-enterprise-$VERSION ./stage
 docker build -t lynx/kite_local:latest .
