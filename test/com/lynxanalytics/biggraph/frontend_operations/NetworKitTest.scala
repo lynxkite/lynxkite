@@ -6,6 +6,15 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class NetworKitTest extends OperationsTestBase {
+  def assertMatch(result: Map[Long, Double], expected: Map[Int, Double], msg: String = "") = {
+    assert(result.size == expected.size, msg)
+    for ((k, v) <- result) {
+      assert(
+        Math.abs(v - expected(k.toInt)) < 0.01,
+        s"$msg returned $result instead of $expected")
+    }
+  }
+
   test("Find k-core decomposition", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph").box("Find k-core decomposition").project
     assert(get(g.vertexAttributes("core")) == Map(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 0.0))
@@ -30,12 +39,7 @@ class NetworKitTest extends OperationsTestBase {
       println(algorithm)
       val g = box("Create example graph").box("Compute centrality", Map("algorithm" -> algorithm)).project
       val centrality = get(g.vertexAttributes("centrality").runtimeSafeCast[Double])
-      assert(centrality.size == expected.size, s"-- in $algorithm")
-      for ((k, v) <- centrality) {
-        assert(
-          Math.abs(v - expected(k.toInt)) < 0.01,
-          s"-- $algorithm returned $centrality instead of $expected")
-      }
+      assertMatch(centrality, expected, s"-- in $algorithm")
     }
   }
 
@@ -190,5 +194,15 @@ class NetworKitTest extends OperationsTestBase {
       .box("Compute assortativity", Map("attribute" -> "age"))
       .project
     assert(Math.abs(-0.033 - get(g.scalars("assortativity").runtimeSafeCast[Double])) < 0.01)
+  }
+
+  test("Edge scoring", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      // It's not deterministic, but with a large enough ratio it's reliable enough.
+      .box("Score edges with the forest fire model", Map("burn_ratio" -> "1000000"))
+      .project
+    val score = get(g.edgeAttributes("forest fire score").runtimeSafeCast[Double])
+    val expected = Map(0 -> 1.0, 1 -> 0.33, 2 -> 0.57, 3 -> 0.57)
+    assertMatch(score, expected)
   }
 }

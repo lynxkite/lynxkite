@@ -66,6 +66,13 @@ public:
   void removeMultiEdges();
   void indexEdges(bool force = false);
   edgeid edgeId(node u, node v) const;
+  node getIthNeighbor(node u, uint64_t i) const;
+  %extend {
+    // The original is templated and private.
+    edgeid getOutEdgeId(node u, uint64_t i) const {
+      return self->getIthNeighborWithId(u, i).second;
+    }
+  }
 };
 
 class Partition {

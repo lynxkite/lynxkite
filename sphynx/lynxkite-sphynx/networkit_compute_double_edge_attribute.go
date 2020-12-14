@@ -42,14 +42,25 @@ func init() {
 				c.Run()
 				result = c.Scores()
 			}
+			// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
+			// We build a map to match them up by the src/dst vertex IDs.
+			type SrcDst struct {
+				src SphynxId
+				dst SphynxId
+			}
+			sdToKN := make(map[SrcDst]uint64)
+			for src := range vs.MappingToUnordered {
+				for deg, i := g.Degree(uint64(src)), uint64(0); i < deg; i += 1 {
+					dst := g.GetIthNeighbor(uint64(src), i)
+					sdToKN[SrcDst{SphynxId(src), SphynxId(dst)}] = g.GetOutEdgeId(uint64(src), i)
+				}
+			}
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(es.Src)),
 				Defined: make([]bool, len(es.Src)),
 			}
-			for i := range attr.Values {
-				// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
-				// TODO: Can we do better than mapping the results back by src/dst?
-				id := g.EdgeId(uint64(es.Src[i]), uint64(es.Dst[i]))
+			for i := range es.Src {
+				id := sdToKN[SrcDst{es.Src[i], es.Dst[i]}]
 				attr.Values[i] = result.Get(int(id))
 				attr.Defined[i] = !math.IsNaN(attr.Values[i])
 			}
