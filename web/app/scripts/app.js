@@ -84,6 +84,7 @@ angular.module('biggraph').factory('$exceptionHandler', function($log, $injector
     $injector.get('util').post('/ajax/jsError', {
       url: window.location.href,
       stack: error.stack || '',
+      reportErrors: false,
     });
   };
 });
