@@ -8,6 +8,7 @@ copy that template to your home directory with name `.kiterc` and edit the setti
 The settings are documented inside the template file and in the <<kiterc-file>> section. This
 information is also available in the template file as comments.
 
+[[config-with-env-vars]]
 ### Using environment variables
 
 Configuration options can also be set using environment
