@@ -3,6 +3,9 @@
 
 This file contains various configurations used when launching a LynxKite instance.
 
+Settings in this file can be overriden using environment variables.
+[[dont-put-in-template]]See section <<config-with-env-vars>> for more details.
+
 Specify the directory containing your Spark installation.
 ```
 export SPARK_HOME=$HOME/spark/spark-${SPARK_VERSION}
