@@ -20,6 +20,9 @@ mkdir -p ${log_dir}
 tools_dir=${stage_dir}/tools
 popd > /dev/null
 
+randomString () {
+  python3 -c "import os;print(os.urandom(16).hex())"
+}
 
 export SPARK_VERSION=`cat ${conf_dir}/SPARK_VERSION`
 export KITE_DEPLOYMENT_CONFIG_DIR=${conf_dir}
@@ -27,22 +30,19 @@ export KITE_STAGE_DIR=${stage_dir}
 export KITE_LOG_DIR=${log_dir}
 if [ -f ${KITE_SITE_CONFIG} ]; then
   >&2 echo "Loading configuration from: ${KITE_SITE_CONFIG}"
+  VAR_FILE_NAME="/tmp/kite_$(randomString)_saved_env"
+
+  # We save the environment and restore after sourcing the .kiterc file.
+  # This way environment variables override settings in the .kiterc file.
+  export -p > ${VAR_FILE_NAME}
   source ${KITE_SITE_CONFIG}
+  source ${VAR_FILE_NAME}
 else
   >&2 echo "Warning, no LynxKite Site Config found at: ${KITE_SITE_CONFIG}"
   >&2 echo "Default location is $HOME/.kiterc, but you can override via the environment variable:"
   >&2 echo "KITE_SITE_CONFIG"
   >&2 echo "You can find an example config file at ${conf_dir}/kiterc_template"
 fi
-
-if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
-  >&2 echo "Loading configuration overrides from: ${KITE_SITE_CONFIG_OVERRIDES}"
-  source ${KITE_SITE_CONFIG_OVERRIDES}
-fi
-
-randomString () {
-  python3 -c "import os;print(os.urandom(16).hex())"
-}
 
 if [ -n "$KITE_APPLICATION_SECRET" ]; then
   if [ "$KITE_APPLICATION_SECRET" == "<random>" ]; then
@@ -307,7 +307,7 @@ stopSphynx () {
 }
 
 startSphynxForever () {
-  until ./lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
+  until LD_LIBRARY_PATH=. ./lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR
   do
     >&2 echo "Sphynx crashed with exit code $?. Restarting..."
     sleep 10
