@@ -18,7 +18,7 @@ export KITE_USERS_FILE=${KITE_USERS_FILE:-/auth/kite_users}
 export KITE_APPLICATION_SECRET=${KITE_APPLICATION_SECRET:-'<random>'}
 export KITE_HTTPS_PORT=${KITE_HTTPS_PORT:-2201}
 export KITE_HTTPS_KEYSTORE=${KITE_HTTPS_KEYSTORE:-/auth/tomcat.keystore}
-export KITE_HTTPS_KEYSTORE_PWD=${KITE_HTTPS_KEYSTORE_PWD:-\$(cat /auth/keystore-password)}
+export KITE_HTTPS_KEYSTORE_PWD=${KITE_HTTPS_KEYSTORE_PWD:-$(cat /auth/keystore-password)}
 export KITE_HTTP_ADDRESS=${KITE_HTTP_ADDRESS:-0.0.0.0}
 
 export KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-/lynxkite/conf/kiterc_template}
