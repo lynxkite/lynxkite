@@ -44,7 +44,6 @@
   background: #001424; /* Brand color. */
 }
 .operation-selector .category.active {
-  padding-left: 9px;
   border-left: 1px solid transparent;
 }
 .operation-selector .categories.uneditable {
