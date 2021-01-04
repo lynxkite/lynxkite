@@ -27,7 +27,7 @@ export HTTPS_PORT=$[ 9200 + RANDOM % 100 ]
 export SPHYNX_PORT=$[ 9300 + RANDOM % 100 ]
 PID_FILE=${TMP}/pid
 SPHYNX_PID_FILE=${TMP}/sphynx_pid
-cat > "$TMP/overrides"  <<EOF
+
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
 export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
@@ -42,11 +42,11 @@ export KITE_PID_FILE=$PID_FILE
 export SPHYNX_PID_FILE=$SPHYNX_PID_FILE
 export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 export KITE_HTTPS_KEYSTORE_PWD=keystore-password
-EOF
+
 
 # Start backend.
 KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
-KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../target/universal/stage/bin/lynxkite start
+$(dirname $0)/../target/universal/stage/bin/lynxkite start
 KITE_PID=`cat ${PID_FILE}`
 SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
 function kill_backend {

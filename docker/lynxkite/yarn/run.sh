@@ -4,26 +4,16 @@
 rm -f root/kite.pid root/sphynx.pid
 
 # Configure kiterc settings.
-cat > /kiterc_overrides <<EOF
-export KITE_INSTANCE="$KITE_INSTANCE"
-export KITE_HTTP_PORT=2200
-export KITE_DATA_DIR=$KITE_DATA_DIR
-export KITE_EPHEMERAL_DATA_DIR=$KITE_EPHEMERAL_DATA_DIR
-export EXECUTOR_MEMORY=$EXECUTOR_MEMORY
-export NUM_EXECUTORS=$NUM_EXECUTORS
-export NUM_CORES_PER_EXECUTOR=$NUM_CORES_PER_EXECUTOR
-export KITE_MASTER_MEMORY_MB=$KITE_MASTER_MEMORY_MB
+export KITE_HTTP_PORT=${KITE_HTTP_PORT:-2200}
 export SPARK_MASTER=yarn
 export SPARK_HOME=/spark
-export YARN_CONF_DIR=/hadoop_conf
-export KITE_META_DIR=/metadata
-export KITE_EXTRA_JARS=/extra_jars/*
-export KITE_PREFIX_DEFINITIONS=/prefix_definitions.txt
-export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=1200
-export KITE_HTTP_ADDRESS=0.0.0.0
-EOF
+export YARN_CONF_DIR=${YARN_CONF_DIR:-/hadoop_conf}
+export KITE_META_DIR=${KITE_META_DIR:-/metadata}
+export KITE_EXTRA_JARS=${KITE_EXTRA_JARS:-/extra_jars/*}
+export KITE_PREFIX_DEFINITIONS=${KITE_PREFIX_DEFINITIONS:-/prefix_definitions.txt}
+export KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS=${KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS:-1200}
+export KITE_HTTP_ADDRESS=${KITE_HTTP_ADDRESS:-0.0.0.0}
 
-export KITE_SITE_CONFIG=/lynxkite/conf/kiterc_template
-export KITE_SITE_CONFIG_OVERRIDES=/kiterc_overrides
+export KITE_SITE_CONFIG=${KITE_SITE_CONFIG:-/lynxkite/conf/kiterc_template}
 
 exec lynxkite/bin/lynxkite -Dlogger.resource=logger-docker.xml "$@"
