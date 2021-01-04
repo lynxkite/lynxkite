@@ -20,6 +20,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new ScalarOperations(env),
     new VertexAttributeOperations(env),
     new EdgeAttributeOperations(env),
+    new SegmentationAttributeOperations(env),
     new AttributePropagationOperations(env),
     new GraphComputationOperations(env),
     new MachineLearningOperations(env),
@@ -48,7 +49,7 @@ object Categories {
   val BuildSegmentationOperations =
     Category("Build segmentation", "green", icon = "th-large", index = idx)
   val UseSegmentationOperations =
-    Category("Use segmentation", "orange", icon = "th-large", index = idx)
+    Category("Use segmentation", "blue", icon = "th-large", index = idx)
   val StructureOperations =
     Category("Structure", "orange", icon = "asterisk", index = idx)
   val ScalarOperations =
@@ -57,6 +58,8 @@ object Categories {
     Category("Vertex attributes", "orange", icon = "dot-circle", index = idx)
   val EdgeAttributeOperations =
     Category("Edge attributes", "orange", icon = "share-alt", index = idx)
+  val SegmentationAttributeOperations =
+    Category("Segmentation attributes", "orange", icon = "th-large", index = idx)
   val AttributePropagationOperations =
     Category("Attribute propagation", "orange", icon = "podcast", index = idx)
   val GraphComputationOperations =

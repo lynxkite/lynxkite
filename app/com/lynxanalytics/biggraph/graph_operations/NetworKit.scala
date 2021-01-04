@@ -223,3 +223,46 @@ case class NetworKitComputeScalar(
   override def toJson = json.Json.obj(
     "op" -> op, "hasWeight" -> hasWeight, "hasAttribute" -> hasAttribute, "options" -> options)
 }
+
+object NetworKitComputeSegmentAttribute extends OpFromJson {
+  class Input(hasWeight: Boolean, hasAttribute: Boolean) extends MagicInputSignature {
+    val vs = vertexSet
+    val segments = vertexSet
+    val es = edgeBundle(vs, vs)
+    val belongsTo = edgeBundle(vs, segments)
+    val weight = if (hasWeight) edgeAttribute[Double](es) else null
+    val attr = if (hasAttribute) vertexAttribute[Double](vs) else null
+  }
+  def fromJson(j: json.JsValue) = NetworKitComputeSegmentAttribute(
+    (j \ "op").as[String], (j \ "hasWeight").as[Boolean],
+    (j \ "hasAttribute").as[Boolean], (j \ "options").as[json.JsObject])
+  // Returns an attribute for the segments.
+  def run(
+    name: String,
+    es: EdgeBundle,
+    belongsTo: EdgeBundle,
+    options: Map[String, Any] = Map(),
+    weight: Option[Attribute[Double]] = None,
+    attribute: Option[Attribute[Double]] = None)(
+    implicit
+    m: MetaGraphManager): Attribute[Double] = {
+    val op = NetworKitComputeSegmentAttribute(
+      name, weight.isDefined, attribute.isDefined, NetworKitCommon.toJson(options))
+    import Scripting._
+    var builder = op(op.es, es)(op.belongsTo, belongsTo)
+    if (weight.isDefined) { builder = builder(op.weight, weight.get) }
+    if (attribute.isDefined) { builder = builder(op.attr, attribute.get) }
+    builder.result.attr
+  }
+}
+case class NetworKitComputeSegmentAttribute(
+    op: String, hasWeight: Boolean, hasAttribute: Boolean, options: json.JsObject)
+  extends TypedMetaGraphOp[NetworKitComputeSegmentAttribute.Input, AttributeOutput[Double]] {
+  @transient override lazy val inputs = new NetworKitComputeSegmentAttribute.Input(hasWeight, hasAttribute)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    new AttributeOutput[Double](inputs.segments.entity)
+  }
+  override def toJson = json.Json.obj(
+    "op" -> op, "hasWeight" -> hasWeight, "hasAttribute" -> hasAttribute, "options" -> options)
+}

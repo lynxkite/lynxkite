@@ -45,6 +45,10 @@
 #include <networkit/community/PLP.hpp>
 #include <networkit/sparsification/ForestFireScore.hpp>
 #include <networkit/graph/RandomMaximumSpanningForest.hpp>
+#include <networkit/community/LocalCommunityEvaluation.hpp>
+#include <networkit/community/LocalCoverEvaluation.hpp>
+#include <networkit/community/LocalPartitionEvaluation.hpp>
+#include <networkit/community/StablePartitionNodes.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -78,6 +82,9 @@ public:
 
 class Partition {
 public:
+  Partition(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
   count numberOfElements() const;
   count numberOfSubsets() const;
   std::vector<uint64_t> getVector() const;
@@ -173,3 +180,18 @@ public:
 %template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
 %include "include/networkit/sparsification/ForestFireScore.hpp"
 %include "include/networkit/graph/RandomMaximumSpanningForest.hpp"
+%include "include/networkit/community/LocalCommunityEvaluation.hpp"
+%include "include/networkit/community/LocalCoverEvaluation.hpp"
+%include "include/networkit/community/LocalPartitionEvaluation.hpp"
+
+namespace NetworKit {
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalPartitionEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalPartitionEvaluation {
+  public:
+    NAME(const Graph &g, const Partition &p);
+  };
+%enddef
+LocalPartitionEvaluationSubclass(StablePartitionNodes);
+}
