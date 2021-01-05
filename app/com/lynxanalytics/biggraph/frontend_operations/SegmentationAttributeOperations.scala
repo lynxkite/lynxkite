@@ -21,12 +21,20 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     def defaultName: String
     def nkClass: String
     def directed = true
-    def addSegmentationParameters = params ++= List(
-      Param("name", "Save as", defaultValue = defaultName))
+    def canBeWeighted = false
+    def addSegmentationParameters = {
+      params += Param("name", "Save as", defaultValue = defaultName)
+      if (canBeWeighted) {
+        params += Choice("weight", "Edge weight",
+          options = FEOption.list("Unit weight") ++ parent.edgeAttrList[Double])
+      }
+    }
     def enabled = project.assertSegmentation && parent.hasEdgeBundle
     def apply() = {
+      val weight = if (!canBeWeighted || params("weight") == "Unit weight") None
+      else Some(parent.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       val attr = graph_operations.NetworKitComputeSegmentAttribute.run(
-        nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed))
+        nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
       project.vertexAttributes(params("name")) = attr
     }
   }
@@ -47,10 +55,12 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
   register("Compute segment conductance")(new NetworKitOp(_) {
     override def defaultName = "conductance"
     override def nkClass = "IsolatedInterpartitionConductance"
+    override def canBeWeighted = true
   })
   register("Compute segment expansion")(new NetworKitOp(_) {
     override def defaultName = "expansion"
     override def nkClass = "IsolatedInterpartitionExpansion"
+    override def canBeWeighted = true
   })
   register("Compute segment fragmentation")(new NetworKitOp(_) {
     override def defaultName = "fragmentation"

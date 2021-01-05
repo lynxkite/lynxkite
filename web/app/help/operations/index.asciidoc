@@ -211,6 +211,8 @@ include::compute-effective-diameter.asciidoc[]
 
 include::compute-embeddedness.asciidoc[]
 
+include::compute-hub-dominance.asciidoc[]
+
 include::compute-hyperbolic-edge-probability.asciidoc[]
 
 include::compute-in-python.asciidoc[]
@@ -218,6 +220,16 @@ include::compute-in-python.asciidoc[]
 include::compute-inputs.asciidoc[]
 
 include::compute-pagerank.asciidoc[]
+
+include::compute-segment-conductance.asciidoc[]
+
+include::compute-segment-density.asciidoc[]
+
+include::compute-segment-expansion.asciidoc[]
+
+include::compute-segment-fragmentation.asciidoc[]
+
+include::compute-segment-stability.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]
 
