@@ -56,7 +56,55 @@ func init() {
 				}
 				return p
 			}
+
+			// The caller has to call networkit.DeleteCover.
+			cover := func() networkit.Cover {
+				p := networkit.NewCover(uint64(len(vs.MappingToUnordered)))
+				p.SetUpperBound(uint64(len(seg.MappingToUnordered)))
+				log.Printf("counts: %v %v %v", len(vs.MappingToUnordered), len(seg.MappingToUnordered))
+				for i := range belongsTo.EdgeMapping {
+					log.Printf("%v %v %v", i, belongsTo.Dst[i], belongsTo.Src[i])
+					p.AddToSubset(uint64(belongsTo.Dst[i]), uint64(belongsTo.Src[i]))
+				}
+				return p
+			}
+
 			switch ea.GetStringParam("op") {
+			case "CoverHubDominance":
+				p := cover()
+				defer networkit.DeleteCover(p)
+				c := networkit.NewCoverHubDominance(g, p)
+				defer networkit.DeleteCoverHubDominance(c)
+				c.Run()
+				copyResults(c)
+			case "IntrapartitionDensity":
+				p := partition()
+				defer networkit.DeletePartition(p)
+				c := networkit.NewIntrapartitionDensity(g, p)
+				defer networkit.DeleteIntrapartitionDensity(c)
+				c.Run()
+				copyResults(c)
+			case "PartitionFragmentation":
+				p := partition()
+				defer networkit.DeletePartition(p)
+				c := networkit.NewPartitionFragmentation(g, p)
+				defer networkit.DeletePartitionFragmentation(c)
+				c.Run()
+				copyResults(c)
+			case "IsolatedInterpartitionConductance":
+				p := partition()
+				defer networkit.DeletePartition(p)
+				c := networkit.NewIsolatedInterpartitionConductance(g, p)
+				defer networkit.DeleteIsolatedInterpartitionConductance(c)
+				c.Run()
+				copyResults(c)
+			case "IsolatedInterpartitionExpansion":
+				p := partition()
+				defer networkit.DeletePartition(p)
+				c := networkit.NewIsolatedInterpartitionExpansion(g, p)
+				defer networkit.DeleteIsolatedInterpartitionExpansion(c)
+				c.Run()
+				copyResults(c)
 			case "StablePartitionNodes":
 				p := partition()
 				defer networkit.DeletePartition(p)

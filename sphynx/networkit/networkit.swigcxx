@@ -48,6 +48,11 @@
 #include <networkit/community/LocalCommunityEvaluation.hpp>
 #include <networkit/community/LocalCoverEvaluation.hpp>
 #include <networkit/community/LocalPartitionEvaluation.hpp>
+#include <networkit/community/CoverHubDominance.hpp>
+#include <networkit/community/IntrapartitionDensity.hpp>
+#include <networkit/community/IsolatedInterpartitionConductance.hpp>
+#include <networkit/community/IsolatedInterpartitionExpansion.hpp>
+#include <networkit/community/PartitionFragmentation.hpp>
 #include <networkit/community/StablePartitionNodes.hpp>
 #include "additions.h"
 using namespace NetworKit;
@@ -97,6 +102,13 @@ public:
       return v;
     }
   }
+};
+
+class Cover {
+public:
+  Cover(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
 };
 
 // Allow passing in a Go slice for SphynxId * in our utility code.
@@ -186,6 +198,16 @@ public:
 
 namespace NetworKit {
 // Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalCoverEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalCoverEvaluation {
+  public:
+    NAME(const Graph &g, const Cover &p);
+  };
+%enddef
+LocalCoverEvaluationSubclass(CoverHubDominance);
+
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
 %define LocalPartitionEvaluationSubclass(NAME)
   %feature("notabstract") NAME;
   class NAME : public LocalPartitionEvaluation {
@@ -193,5 +215,9 @@ namespace NetworKit {
     NAME(const Graph &g, const Partition &p);
   };
 %enddef
+LocalPartitionEvaluationSubclass(IntrapartitionDensity);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionConductance);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionExpansion);
+LocalPartitionEvaluationSubclass(PartitionFragmentation);
 LocalPartitionEvaluationSubclass(StablePartitionNodes);
 }

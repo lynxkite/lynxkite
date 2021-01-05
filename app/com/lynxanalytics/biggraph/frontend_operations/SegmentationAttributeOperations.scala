@@ -17,14 +17,44 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Compute segment stability")(new ProjectTransformation(_) with SegOp {
+  abstract class NetworKitOp(ctx: Context) extends ProjectTransformation(ctx) with SegOp {
+    def defaultName: String
+    def nkClass: String
+    def directed = true
     def addSegmentationParameters = params ++= List(
-      Param("name", "Save as", defaultValue = "stability"))
+      Param("name", "Save as", defaultValue = defaultName))
     def enabled = project.assertSegmentation && parent.hasEdgeBundle
     def apply() = {
       val attr = graph_operations.NetworKitComputeSegmentAttribute.run(
-        "StablePartitionNodes", parent.edgeBundle, seg.belongsTo)
+        nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed))
       project.vertexAttributes(params("name")) = attr
     }
+  }
+
+  register("Compute segment stability")(new NetworKitOp(_) {
+    override def defaultName = "stability"
+    override def nkClass = "StablePartitionNodes"
+  })
+  register("Compute hub dominance")(new NetworKitOp(_) {
+    override def defaultName = "hub_dominance"
+    override def nkClass = "CoverHubDominance"
+    // TODO: We could use PartitionHubDominance when the segments are not overlapping.
+  })
+  register("Compute segment density")(new NetworKitOp(_) {
+    override def defaultName = "density"
+    override def nkClass = "IntrapartitionDensity"
+  })
+  register("Compute segment conductance")(new NetworKitOp(_) {
+    override def defaultName = "conductance"
+    override def nkClass = "IsolatedInterpartitionConductance"
+  })
+  register("Compute segment expansion")(new NetworKitOp(_) {
+    override def defaultName = "expansion"
+    override def nkClass = "IsolatedInterpartitionExpansion"
+  })
+  register("Compute segment fragmentation")(new NetworKitOp(_) {
+    override def defaultName = "fragmentation"
+    override def nkClass = "PartitionFragmentation"
+    override def directed = false
   })
 }
