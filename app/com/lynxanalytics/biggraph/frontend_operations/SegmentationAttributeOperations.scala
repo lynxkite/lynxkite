@@ -22,6 +22,7 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     def nkClass: String
     def directed = true
     def canBeWeighted = false
+    def outputType = "attribute"
     def addSegmentationParameters = {
       params += Param("name", "Save as", defaultValue = defaultName)
       if (canBeWeighted) {
@@ -33,9 +34,16 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     def apply() = {
       val weight = if (!canBeWeighted || params("weight") == "Unit weight") None
       else Some(parent.edgeAttributes(params("weight")).runtimeSafeCast[Double])
-      val attr = graph_operations.NetworKitComputeSegmentAttribute.run(
-        nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
-      project.vertexAttributes(params("name")) = attr
+      outputType match {
+        case "scalar" =>
+          val scalar = graph_operations.NetworKitComputeSegmentationScalar.run(
+            nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
+          project.scalars(params("name")) = scalar
+        case "attribute" =>
+          val attr = graph_operations.NetworKitComputeSegmentAttribute.run(
+            nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
+          project.vertexAttributes(params("name")) = attr
+      }
     }
   }
 
@@ -66,5 +74,11 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def defaultName = "fragmentation"
     override def nkClass = "PartitionFragmentation"
     override def directed = false
+  })
+
+  register("Compute coverage of segmentation")(new NetworKitOp(_) {
+    override def outputType = "scalar"
+    override def defaultName = "coverage"
+    override def nkClass = "Coverage"
   })
 }

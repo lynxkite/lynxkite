@@ -33,3 +33,8 @@ class AttributeOutput[T: TypeTag](vs: VertexSet)(implicit instance: MetaGraphOpe
   extends MagicOutput(instance) {
   val attr = vertexAttribute[T](vs)
 }
+
+class ScalarOutput[T: TypeTag](implicit instance: MetaGraphOperationInstance)
+  extends MagicOutput(instance) {
+  val sc = scalar[T]
+}
