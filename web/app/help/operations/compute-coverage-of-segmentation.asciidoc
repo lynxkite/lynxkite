@@ -1,0 +1,15 @@
+### Compute coverage of segmentation
+
+Computes a scalar for a non-overlapping segmentation.
+Coverage is the fraction of edges that connect vertices within the same segment.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Coverage.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+
+[p-weight]#Edge weight#::
+An edge attribute can be used to weight the edges in the coverage computation.
+====

@@ -199,6 +199,8 @@ include::compute-centrality.asciidoc[]
 
 include::compute-clustering-coefficient.asciidoc[]
 
+include::compute-coverage-of-segmentation.asciidoc[]
+
 include::compute-degree.asciidoc[]
 
 include::compute-diameter.asciidoc[]
@@ -207,9 +209,13 @@ include::compute-dispersion.asciidoc[]
 
 include::compute-distance-via-shortest-path.asciidoc[]
 
+include::compute-edge-cut-of-segmentation.asciidoc[]
+
 include::compute-effective-diameter.asciidoc[]
 
 include::compute-embeddedness.asciidoc[]
+
+include::compute-hub-dominance-of-segmentation.asciidoc[]
 
 include::compute-hub-dominance.asciidoc[]
 
@@ -218,6 +224,8 @@ include::compute-hyperbolic-edge-probability.asciidoc[]
 include::compute-in-python.asciidoc[]
 
 include::compute-inputs.asciidoc[]
+
+include::compute-modularity-of-segmentation.asciidoc[]
 
 include::compute-pagerank.asciidoc[]
 

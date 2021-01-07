@@ -6,12 +6,13 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class NetworKitTest extends OperationsTestBase {
+  def assertMatch1(result: Double, expected: Double, msg: String = "") = {
+    assert(Math.abs(result - expected) < 0.01, s"$msg ($result != $expected)")
+  }
   def assertMatch(result: Map[Long, Double], expected: Map[Int, Double], msg: String = "") = {
     assert(result.size == expected.size, msg)
     for ((k, v) <- result) {
-      assert(
-        Math.abs(v - expected(k.toInt)) < 0.01,
-        s"$msg returned $result instead of $expected")
+      assertMatch1(v, expected(k.toInt), s"$msg returned $result instead of $expected")
     }
   }
 
@@ -201,5 +202,43 @@ class NetworKitTest extends OperationsTestBase {
     val score = get(g.edgeAttributes("in_tree").runtimeSafeCast[Double])
     val expected = Map(0 -> 1.0, 1 -> 0.0, 2 -> 0.0, 3 -> 1.0)
     assertMatch(score, expected)
+  }
+
+  test("Segment attributes", com.lynxanalytics.biggraph.SphynxOnly) {
+    for (
+      (name, attr, expected) <- Seq(
+        ("Compute hub dominance", "hub_dominance", Map(0 -> 1.0, 1 -> 0.71, 2 -> 1.0)),
+        ("Compute segment conductance", "conductance", Map(0 -> 1.06, 1 -> 1.0, 2 -> 1.0)),
+        ("Compute segment density", "density", Map(0 -> 1.32, 1 -> 0.82, 2 -> 1.33)),
+        ("Compute segment expansion", "expansion", Map(0 -> 28.0, 1 -> 15.0, 2 -> 19.0)),
+        ("Compute segment fragmentation", "fragmentation", Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0)),
+        ("Compute segment stability", "stability", Map(0 -> 1.0, 1 -> 0.88, 2 -> 0.5)))
+    ) {
+      println(name)
+      val g = box("Create Mocnik random graph", Map("size" -> "20", "seed" -> "4"))
+        .box("Find communities with the Louvain method")
+        .box(name, Map("apply_to_graph" -> ".communities"))
+        .project
+      val a = get(g.segmentation("communities").vertexAttributes(attr).runtimeSafeCast[Double])
+      assertMatch(a, expected, s"-- in $name")
+    }
+  }
+
+  test("Segmentation metrics", com.lynxanalytics.biggraph.SphynxOnly) {
+    for (
+      (name, scalar, expected) <- Seq(
+        ("Compute hub dominance of segmentation", "hub_dominance", 0.9),
+        ("Compute edge cut of segmentation", "edge_cut", 31.0),
+        ("Compute coverage of segmentation", "coverage", 0.69),
+        ("Compute modularity of segmentation", "modularity", 0.59))
+    ) {
+      println(name)
+      val g = box("Create Mocnik random graph", Map("size" -> "20", "seed" -> "4"))
+        .box("Find communities with the Louvain method")
+        .box(name, Map("apply_to_graph" -> ".communities"))
+        .project
+      val s = get(g.segmentation("communities").scalars(scalar).runtimeSafeCast[Double])
+      assertMatch1(s, expected, s"-- in $name")
+    }
   }
 }

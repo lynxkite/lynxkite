@@ -80,11 +80,13 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def outputType = "scalar"
     override def defaultName = "coverage"
     override def nkClass = "Coverage"
+    override def canBeWeighted = true
   })
   register("Compute edge cut of segmentation")(new NetworKitOp(_) {
     override def outputType = "scalar"
     override def defaultName = "edge_cut"
     override def nkClass = "EdgeCut"
+    override def canBeWeighted = true
   })
   register("Compute hub dominance of segmentation")(new NetworKitOp(_) {
     override def outputType = "scalar"
@@ -95,5 +97,6 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def outputType = "scalar"
     override def defaultName = "modularity"
     override def nkClass = "Modularity"
+    override def canBeWeighted = true
   })
 }
