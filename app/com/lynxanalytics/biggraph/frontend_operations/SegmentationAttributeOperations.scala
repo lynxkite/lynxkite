@@ -23,6 +23,7 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     def directed = true
     def canBeWeighted = false
     def outputType = "attribute"
+    def allowOverlap = false
     def addSegmentationParameters = {
       params += Param("name", "Save as", defaultValue = defaultName)
       if (canBeWeighted) {
@@ -32,6 +33,9 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     }
     def enabled = project.assertSegmentation && parent.hasEdgeBundle
     def apply() = {
+      assert(
+        allowOverlap || seg.belongsTo.properties.isFunction,
+        s"Only non-overlapping segmentations are supported.")
       val weight = if (!canBeWeighted || params("weight") == "Unit weight") None
       else Some(parent.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       outputType match {
@@ -55,6 +59,7 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def defaultName = "hub_dominance"
     override def nkClass = "CoverHubDominance"
     // TODO: We could use PartitionHubDominance when the segments are not overlapping.
+    override def allowOverlap = true
   })
   register("Compute segment density")(new NetworKitOp(_) {
     override def defaultName = "density"
