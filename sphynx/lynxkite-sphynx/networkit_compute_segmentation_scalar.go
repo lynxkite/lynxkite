@@ -18,11 +18,21 @@ func init() {
 			var scalar float64
 			switch h.Op {
 			case "Coverage":
-				p := h.GetPartition()
-				defer networkit.DeletePartition(p)
 				c := networkit.NewCoverage()
 				defer networkit.DeleteCoverage(c)
-				scalar = c.GetQuality(p, h.GetGraph())
+				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
+			case "EdgeCut":
+				c := networkit.NewEdgeCut()
+				defer networkit.DeleteEdgeCut(c)
+				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
+			case "HubDominance":
+				c := networkit.NewHubDominance()
+				defer networkit.DeleteHubDominance(c)
+				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
+			case "Modularity":
+				c := networkit.NewModularity()
+				defer networkit.DeleteModularity(c)
+				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
 			}
 			return ea.outputScalar("sc", scalar)
 		},

@@ -156,9 +156,7 @@ func (self *NetworKitHelper) GetPartition() networkit.Partition {
 	belongsTo := self.ea.getEdgeBundle("belongsTo")
 	p := networkit.NewPartition(uint64(len(vs.MappingToUnordered)))
 	p.SetUpperBound(uint64(len(seg.MappingToUnordered)))
-	log.Printf("counts: %v %v %v", len(vs.MappingToUnordered), len(seg.MappingToUnordered))
 	for i := range belongsTo.EdgeMapping {
-		log.Printf("%v %v %v", i, belongsTo.Dst[i], belongsTo.Src[i])
 		p.AddToSubset(uint64(belongsTo.Dst[i]), uint64(belongsTo.Src[i]))
 	}
 	self.partition = p
@@ -174,9 +172,7 @@ func (self *NetworKitHelper) GetCover() networkit.Cover {
 	belongsTo := self.ea.getEdgeBundle("belongsTo")
 	p := networkit.NewCover(uint64(len(vs.MappingToUnordered)))
 	p.SetUpperBound(uint64(len(seg.MappingToUnordered)))
-	log.Printf("counts: %v %v %v", len(vs.MappingToUnordered), len(seg.MappingToUnordered))
 	for i := range belongsTo.EdgeMapping {
-		log.Printf("%v %v %v", i, belongsTo.Dst[i], belongsTo.Src[i])
 		p.AddToSubset(uint64(belongsTo.Dst[i]), uint64(belongsTo.Src[i]))
 	}
 	self.cover = p

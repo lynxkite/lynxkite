@@ -81,4 +81,19 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def defaultName = "coverage"
     override def nkClass = "Coverage"
   })
+  register("Compute edge cut of segmentation")(new NetworKitOp(_) {
+    override def outputType = "scalar"
+    override def defaultName = "edge_cut"
+    override def nkClass = "EdgeCut"
+  })
+  register("Compute hub dominance of segmentation")(new NetworKitOp(_) {
+    override def outputType = "scalar"
+    override def defaultName = "hub_dominance"
+    override def nkClass = "HubDominance"
+  })
+  register("Compute modularity of segmentation")(new NetworKitOp(_) {
+    override def outputType = "scalar"
+    override def defaultName = "modularity"
+    override def nkClass = "Modularity"
+  })
 }

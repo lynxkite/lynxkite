@@ -55,6 +55,9 @@
 #include <networkit/community/PartitionFragmentation.hpp>
 #include <networkit/community/StablePartitionNodes.hpp>
 #include <networkit/community/Coverage.hpp>
+#include <networkit/community/EdgeCut.hpp>
+#include <networkit/community/HubDominance.hpp>
+#include <networkit/community/Modularity.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -198,6 +201,9 @@ public:
 %include "include/networkit/community/LocalPartitionEvaluation.hpp"
 %include "include/networkit/community/QualityMeasure.hpp"
 %include "include/networkit/community/Coverage.hpp"
+%include "include/networkit/community/EdgeCut.hpp"
+%include "include/networkit/community/HubDominance.hpp"
+%include "include/networkit/community/Modularity.hpp"
 
 namespace NetworKit {
 // Manually define constructors instead of inheriting them, so SWIG can understand it.
