@@ -25,10 +25,6 @@ func init() {
 				c := networkit.NewEdgeCut()
 				defer networkit.DeleteEdgeCut(c)
 				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
-			case "HubDominance":
-				c := networkit.NewHubDominance()
-				defer networkit.DeleteHubDominance(c)
-				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
 			case "Modularity":
 				c := networkit.NewModularity()
 				defer networkit.DeleteModularity(c)

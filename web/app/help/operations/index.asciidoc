@@ -215,8 +215,6 @@ include::compute-effective-diameter.asciidoc[]
 
 include::compute-embeddedness.asciidoc[]
 
-include::compute-hub-dominance-of-segmentation.asciidoc[]
-
 include::compute-hub-dominance.asciidoc[]
 
 include::compute-hyperbolic-edge-probability.asciidoc[]
