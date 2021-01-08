@@ -2,10 +2,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"runtime/debug"
-
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -23,30 +19,21 @@ func PointsToAttribute(dim int, points networkit.PointVector, attr *DoubleVector
 func init() {
 	operationRepository["NetworKitComputeVectorAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
+			h := NewNetworKitHelper(ea)
+			o := h.Options
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
+			g := h.GetGraph()
 			vs := ea.getVertexSet("vs")
-			es := ea.getEdgeBundle("es")
-			weight := ea.getDoubleAttributeOpt("weight")
-			o := &NetworKitOptions{ea.GetMapParam("options")}
-			seed := uint64(1)
-			if s, exists := o.Options["seed"]; exists {
-				seed = uint64(s.(float64))
-			}
-			networkit.SetSeed(seed, true)
-			networkit.SetThreadsFromEnv()
-			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
-			defer networkit.DeleteGraph(g)
 			attr := &DoubleVectorAttribute{
 				Values:  make([]DoubleVectorAttributeValue, len(vs.MappingToUnordered)),
 				Defined: make([]bool, len(vs.MappingToUnordered)),
 			}
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "PivotMDS":
 				dim := o.Count("dimensions")
 				pivots := o.Count("pivots")

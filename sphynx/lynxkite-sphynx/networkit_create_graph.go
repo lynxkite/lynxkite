@@ -2,75 +2,22 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"runtime/debug"
-	"strconv"
-	"strings"
-
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
-
-type NetworKitOptions struct {
-	Options map[string]interface{}
-}
-
-func (self *NetworKitOptions) Get(k string) interface{} {
-	o := self.Options[k]
-	if o == nil {
-		panic(fmt.Sprintf("%#v not found in %#v", k, self.Options))
-	}
-	return o
-}
-
-func (self *NetworKitOptions) Double(k string) float64 {
-	return self.Get(k).(float64)
-}
-func (self *NetworKitOptions) Count(k string) uint64 {
-	return uint64(self.Double(k))
-}
-func (self *NetworKitOptions) Numbers(k string) []uint64 {
-	raw := self.Get(k).(string)
-	split := strings.Split(raw, ",")
-	nums := make([]uint64, len(split))
-	var err error
-	for i, v := range split {
-		nums[i], err = strconv.ParseUint(strings.Trim(v, " "), 10, 64)
-		if err != nil {
-			panic(fmt.Sprintf("Could not parse %#v: %v", raw, err))
-		}
-	}
-	return nums
-}
-
-// The caller has to call DeleteUint64Vector.
-func (self *NetworKitOptions) DegreeVector(k string) networkit.Uint64Vector {
-	nums := self.Numbers(k)
-	cv := networkit.NewUint64Vector()
-	size := int(self.Count("size"))
-	// Instead of requiring the user to type "1,2,3" hundreds of times,
-	// we repeat the sequence to reach the target count ("size").
-	for i := 0; i < size; i += 1 {
-		cv.Add(nums[i%len(nums)])
-	}
-	return cv
-}
 
 func init() {
 	operationRepository["NetworKitCreateGraph"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
-			// Convert NetworKit exceptions to errors.
+			h := NewNetworKitHelper(ea)
+			o := h.Options
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
-			o := &NetworKitOptions{ea.GetMapParam("options")}
 			var result networkit.Graph
-			networkit.SetSeed(o.Count("seed"), true)
-			networkit.SetThreadsFromEnv()
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "BarabasiAlbertGenerator":
 				g := networkit.NewBarabasiAlbertGenerator(
 					o.Count("attachments_per_vertex"),
@@ -147,7 +94,7 @@ func init() {
 				defer networkit.DeletePubWebGenerator(g)
 				result = g.Generate()
 			}
-			vs, es := ToSphynx(result)
+			vs, es := h.ToSphynx(result)
 			ea.output("vs", vs)
 			ea.output("es", es)
 			return nil

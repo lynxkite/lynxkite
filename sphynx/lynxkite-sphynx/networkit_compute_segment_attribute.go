@@ -2,10 +2,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"math"
-	"runtime/debug"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
@@ -13,27 +10,15 @@ import (
 func init() {
 	operationRepository["NetworKitComputeSegmentAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
+			h := NewNetworKitHelper(ea)
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
-			vs := ea.getVertexSet("vs")
-			es := ea.getEdgeBundle("es")
+			g := h.GetGraph()
 			seg := ea.getVertexSet("segments")
-			belongsTo := ea.getEdgeBundle("belongsTo")
-			weight := ea.getDoubleAttributeOpt("weight")
-			o := &NetworKitOptions{ea.GetMapParam("options")}
-			seed := uint64(1)
-			if s, exists := o.Options["seed"]; exists {
-				seed = uint64(s.(float64))
-			}
-			networkit.SetSeed(seed, true)
-			networkit.SetThreadsFromEnv()
-			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
-			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(seg.MappingToUnordered)),
 				Defined: make([]bool, len(seg.MappingToUnordered)),
@@ -45,70 +30,34 @@ func init() {
 				}
 			}
 
-			// The caller has to call networkit.DeletePartition.
-			partition := func() networkit.Partition {
-				p := networkit.NewPartition(uint64(len(vs.MappingToUnordered)))
-				p.SetUpperBound(uint64(len(seg.MappingToUnordered)))
-				log.Printf("counts: %v %v %v", len(vs.MappingToUnordered), len(seg.MappingToUnordered))
-				for i := range belongsTo.EdgeMapping {
-					log.Printf("%v %v %v", i, belongsTo.Dst[i], belongsTo.Src[i])
-					p.AddToSubset(uint64(belongsTo.Dst[i]), uint64(belongsTo.Src[i]))
-				}
-				return p
-			}
-
-			// The caller has to call networkit.DeleteCover.
-			cover := func() networkit.Cover {
-				p := networkit.NewCover(uint64(len(vs.MappingToUnordered)))
-				p.SetUpperBound(uint64(len(seg.MappingToUnordered)))
-				log.Printf("counts: %v %v %v", len(vs.MappingToUnordered), len(seg.MappingToUnordered))
-				for i := range belongsTo.EdgeMapping {
-					log.Printf("%v %v %v", i, belongsTo.Dst[i], belongsTo.Src[i])
-					p.AddToSubset(uint64(belongsTo.Dst[i]), uint64(belongsTo.Src[i]))
-				}
-				return p
-			}
-
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "CoverHubDominance":
-				p := cover()
-				defer networkit.DeleteCover(p)
-				c := networkit.NewCoverHubDominance(g, p)
+				c := networkit.NewCoverHubDominance(g, h.GetCover())
 				defer networkit.DeleteCoverHubDominance(c)
 				c.Run()
 				copyResults(c)
 			case "IntrapartitionDensity":
-				p := partition()
-				defer networkit.DeletePartition(p)
-				c := networkit.NewIntrapartitionDensity(g, p)
+				c := networkit.NewIntrapartitionDensity(g, h.GetPartition())
 				defer networkit.DeleteIntrapartitionDensity(c)
 				c.Run()
 				copyResults(c)
 			case "PartitionFragmentation":
-				p := partition()
-				defer networkit.DeletePartition(p)
-				c := networkit.NewPartitionFragmentation(g, p)
+				c := networkit.NewPartitionFragmentation(g, h.GetPartition())
 				defer networkit.DeletePartitionFragmentation(c)
 				c.Run()
 				copyResults(c)
 			case "IsolatedInterpartitionConductance":
-				p := partition()
-				defer networkit.DeletePartition(p)
-				c := networkit.NewIsolatedInterpartitionConductance(g, p)
+				c := networkit.NewIsolatedInterpartitionConductance(g, h.GetPartition())
 				defer networkit.DeleteIsolatedInterpartitionConductance(c)
 				c.Run()
 				copyResults(c)
 			case "IsolatedInterpartitionExpansion":
-				p := partition()
-				defer networkit.DeletePartition(p)
-				c := networkit.NewIsolatedInterpartitionExpansion(g, p)
+				c := networkit.NewIsolatedInterpartitionExpansion(g, h.GetPartition())
 				defer networkit.DeleteIsolatedInterpartitionExpansion(c)
 				c.Run()
 				copyResults(c)
 			case "StablePartitionNodes":
-				p := partition()
-				defer networkit.DeletePartition(p)
-				c := networkit.NewStablePartitionNodes(g, p)
+				c := networkit.NewStablePartitionNodes(g, h.GetPartition())
 				defer networkit.DeleteStablePartitionNodes(c)
 				c.Run()
 				copyResults(c)

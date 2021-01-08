@@ -2,39 +2,25 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"runtime/debug"
-
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
 func init() {
 	operationRepository["NetworKitComputeScalar"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
+			h := NewNetworKitHelper(ea)
+			o := h.Options
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
-			vs := ea.getVertexSet("vs")
-			es := ea.getEdgeBundle("es")
-			weight := ea.getDoubleAttributeOpt("weight")
+			g := h.GetGraph()
 			attr := ea.getDoubleAttributeOpt("attr")
-			o := &NetworKitOptions{ea.GetMapParam("options")}
-			seed := uint64(1)
-			if s, exists := o.Options["seed"]; exists {
-				seed = uint64(s.(float64))
-			}
-			networkit.SetSeed(seed, true)
-			networkit.SetThreadsFromEnv()
-			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
-			defer networkit.DeleteGraph(g)
 			scalar1 := 0.0
 			scalar2 := 0.0
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "Diameter":
 				maxError := o.Double("max_error")
 				var c networkit.Diameter

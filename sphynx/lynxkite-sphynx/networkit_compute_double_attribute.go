@@ -2,10 +2,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"math"
-	"runtime/debug"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
@@ -13,31 +10,22 @@ import (
 func init() {
 	operationRepository["NetworKitComputeDoubleAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
+			h := NewNetworKitHelper(ea)
+			o := h.Options
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
+			g := h.GetGraph()
 			vs := ea.getVertexSet("vs")
-			es := ea.getEdgeBundle("es")
-			weight := ea.getDoubleAttributeOpt("weight")
-			o := &NetworKitOptions{ea.GetMapParam("options")}
-			seed := uint64(1)
-			if s, exists := o.Options["seed"]; exists {
-				seed = uint64(s.(float64))
-			}
-			networkit.SetSeed(seed, true)
-			networkit.SetThreadsFromEnv()
-			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
-			defer networkit.DeleteGraph(g)
 			attr := &DoubleAttribute{
 				Values:  make([]float64, len(vs.MappingToUnordered)),
 				Defined: make([]bool, len(vs.MappingToUnordered)),
 			}
 			var result networkit.DoubleVector
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "ApproxCloseness":
 				samples := o.Count("samples")
 				if samples > uint64(len(vs.MappingToUnordered)) {
