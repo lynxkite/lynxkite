@@ -13,6 +13,10 @@ The output of the operation is a vertex and an edge attribute which describes wh
 step that ended at the given vertex / traversed the given edge. The attributes are not defined on
 vertices that were never reached or edges that were never traversed.
 
+Use the <<Filter by attributes>> box to discard the part of the graph outside of the sample.
+Applying the `*` filter for `first_reached` will discard the vertices where the attribute is
+undefined.
+
 If the resulting sample is still too large, it can be quickly reduced by keeping only the low index
 nodes and edges. Obtaining a sample with exactly `n` vertices is also possible with the
 following procedure.

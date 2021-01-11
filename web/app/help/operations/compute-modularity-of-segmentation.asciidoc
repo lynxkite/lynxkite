@@ -1,7 +1,7 @@
 ### Compute modularity of segmentation
 
 Computes a scalar for a non-overlapping segmentation.
-If the vertices in this segmentation were connected randomly,
+If the vertices were connected randomly while preserving the degrees,
 a certain fraction of all edges would fall within each segment.
 We subtract this from the observed fraction of edges that fall within
 the segments. Modularity is the total observed difference.
