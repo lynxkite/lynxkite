@@ -227,10 +227,9 @@ class NetworKitTest extends OperationsTestBase {
   test("Segmentation metrics", com.lynxanalytics.biggraph.SphynxOnly) {
     for (
       (name, scalar, expected) <- Seq(
-        ("Compute hub dominance of segmentation", "hub_dominance", 0.9),
         ("Compute edge cut of segmentation", "edge_cut", 31.0),
         ("Compute coverage of segmentation", "coverage", 0.69),
-        ("Compute modularity of segmentation", "modularity", 0.59))
+        ("Compute modularity of segmentation", "modularity", 0.3))
     ) {
       println(name)
       val g = box("Create Mocnik random graph", Map("size" -> "20", "seed" -> "4"))
