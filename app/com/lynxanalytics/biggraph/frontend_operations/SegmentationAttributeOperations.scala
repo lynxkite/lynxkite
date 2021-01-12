@@ -98,5 +98,6 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     override def defaultName = "modularity"
     override def nkClass = "Modularity"
     override def canBeWeighted = true
+    override def directed = false
   })
 }
