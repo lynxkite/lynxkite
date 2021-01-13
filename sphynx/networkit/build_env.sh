@@ -3,10 +3,10 @@
 
 if [[ ! -e ~/networkit ]]; then
   pushd ~
+  # Temporarily using a fork for some fixes, but eventually should be:
   # git clone https://github.com/networkit/networkit.git --branch 7.1 --single-branch --depth 1
-  # "master" works with our SWIG but 7.1 doesn't. Hopefully the next release version will be
-  # fine. (I suspect the deprecated TLX headers.)
-  git clone https://github.com/networkit/networkit.git && cd networkit && git checkout 74205d400b119e67d2aaf6c7f67199aa67dba737 && cd ..
+  NK_VERSION=67eab6048fdb6bb61dec4be3add68fef1968e582
+  git clone https://github.com/darabos/networkit.git && cd networkit && git checkout $NK_VERSION && cd ..
   mkdir networkit/build
   cd networkit/build
   git submodule update --init

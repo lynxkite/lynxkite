@@ -2,10 +2,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"math"
-	"runtime/debug"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
@@ -13,28 +10,20 @@ import (
 func init() {
 	operationRepository["NetworKitComputeDoubleEdgeAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) (err error) {
+			h := NewNetworKitHelper(ea)
+			o := h.Options
 			defer func() {
-				if e := recover(); e != nil {
-					err = fmt.Errorf("%v", e)
-					log.Printf("%v\n%v", e, string(debug.Stack()))
+				e := h.Cleanup()
+				if err == nil {
+					err = e
 				}
 			}()
 			vs := ea.getVertexSet("vs")
 			es := ea.getEdgeBundle("es")
-			weight := ea.getDoubleAttributeOpt("weight")
-			o := &NetworKitOptions{ea.GetMapParam("options")}
-			seed := uint64(1)
-			if s, exists := o.Options["seed"]; exists {
-				seed = uint64(s.(float64))
-			}
-			networkit.SetSeed(seed, true)
-			networkit.SetThreadsFromEnv()
-			// The caller can set "directed" to false to create an undirected graph.
-			g := ToNetworKit(vs, es, weight, o.Options["directed"] != false)
-			defer networkit.DeleteGraph(g)
+			g := h.GetGraph()
 			g.IndexEdges()
 			var result networkit.DoubleVector
-			switch ea.GetStringParam("op") {
+			switch h.Op {
 			case "ForestFireScore":
 				c := networkit.NewForestFireScore(
 					g, o.Double("spread_prob"), o.Double("burn_ratio"))

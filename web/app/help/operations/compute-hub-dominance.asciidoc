@@ -1,0 +1,21 @@
+### Compute hub dominance
+
+Computes the hub dominance metric for each segment in a segmentation.
+The hub dominance of a segment is the highest internal degree in the segment
+divided by the highest _possible_ internal degree. (The segment size minus one.)
+
+If a segment has a vertex that is connected to all other vertices in that segment
+then its hub dominance will be 1. This metric is useful for comparing the structures
+that make up the different segments in a segmentation.
+
+For further analysis and theory see
+https://arxiv.org/abs/1005.4376[Characterizing the community structure of complex networks]
+by Lancichinetti et al.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1CoverHubDominance.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+====

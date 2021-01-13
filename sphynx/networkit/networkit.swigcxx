@@ -45,6 +45,18 @@
 #include <networkit/community/PLP.hpp>
 #include <networkit/sparsification/ForestFireScore.hpp>
 #include <networkit/graph/RandomMaximumSpanningForest.hpp>
+#include <networkit/community/LocalCommunityEvaluation.hpp>
+#include <networkit/community/LocalCoverEvaluation.hpp>
+#include <networkit/community/LocalPartitionEvaluation.hpp>
+#include <networkit/community/CoverHubDominance.hpp>
+#include <networkit/community/IntrapartitionDensity.hpp>
+#include <networkit/community/IsolatedInterpartitionConductance.hpp>
+#include <networkit/community/IsolatedInterpartitionExpansion.hpp>
+#include <networkit/community/PartitionFragmentation.hpp>
+#include <networkit/community/StablePartitionNodes.hpp>
+#include <networkit/community/Coverage.hpp>
+#include <networkit/community/EdgeCut.hpp>
+#include <networkit/community/Modularity.hpp>
 #include "additions.h"
 using namespace NetworKit;
 %}
@@ -78,6 +90,9 @@ public:
 
 class Partition {
 public:
+  Partition(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
   count numberOfElements() const;
   count numberOfSubsets() const;
   std::vector<uint64_t> getVector() const;
@@ -90,6 +105,13 @@ public:
       return v;
     }
   }
+};
+
+class Cover {
+public:
+  Cover(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
 };
 
 // Allow passing in a Go slice for SphynxId * in our utility code.
@@ -173,3 +195,36 @@ public:
 %template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
 %include "include/networkit/sparsification/ForestFireScore.hpp"
 %include "include/networkit/graph/RandomMaximumSpanningForest.hpp"
+%include "include/networkit/community/LocalCommunityEvaluation.hpp"
+%include "include/networkit/community/LocalCoverEvaluation.hpp"
+%include "include/networkit/community/LocalPartitionEvaluation.hpp"
+%include "include/networkit/community/QualityMeasure.hpp"
+%include "include/networkit/community/Coverage.hpp"
+%include "include/networkit/community/EdgeCut.hpp"
+%include "include/networkit/community/Modularity.hpp"
+
+namespace NetworKit {
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalCoverEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalCoverEvaluation {
+  public:
+    NAME(const Graph &g, const Cover &p);
+  };
+%enddef
+LocalCoverEvaluationSubclass(CoverHubDominance);
+
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalPartitionEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalPartitionEvaluation {
+  public:
+    NAME(const Graph &g, const Partition &p);
+  };
+%enddef
+LocalPartitionEvaluationSubclass(IntrapartitionDensity);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionConductance);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionExpansion);
+LocalPartitionEvaluationSubclass(PartitionFragmentation);
+LocalPartitionEvaluationSubclass(StablePartitionNodes);
+}

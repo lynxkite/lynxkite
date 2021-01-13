@@ -455,6 +455,11 @@ case class VertexSetAsScalar()
 }
 
 object EdgeBundleAsScalar extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val es = edgeBundle(src, dst)
+  }
   class Output(
       implicit
       instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
@@ -462,9 +467,9 @@ object EdgeBundleAsScalar extends OpFromJson {
   }
   def fromJson(j: JsValue) = EdgeBundleAsScalar()
 }
-case class EdgeBundleAsScalar() extends ScalaOperation[GraphInput, EdgeBundleAsScalar.Output] {
+case class EdgeBundleAsScalar() extends ScalaOperation[EdgeBundleAsScalar.Input, EdgeBundleAsScalar.Output] {
   import EdgeBundleAsScalar._
-  @transient override lazy val inputs = new GraphInput
+  @transient override lazy val inputs = new EdgeBundleAsScalar.Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = Json.obj()
   def execute(input: Map[Symbol, Any], output: collection.mutable.Map[Symbol, Any]) = {

@@ -29,7 +29,6 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
       }
     def enabled = project.assertSegmentation && project.hasEdgeBundle
     def apply() = {
-      val seg = project.asSegmentation
       val reverseBelongsTo = seg.belongsTo.reverse
       val induction = {
         val op = graph_operations.InducedEdgeBundle()
@@ -126,14 +125,13 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
       params += Choice("direction", "Direction", options = Direction.neighborOptions)
 
     def apply() = {
-      val segmentation = project.asSegmentation
       val direction = Direction(params("direction"), parent.edgeBundle, reversed = true)
 
       val op = graph_operations.GrowSegmentation()
-      segmentation.belongsTo = op(
+      seg.belongsTo = op(
         op.vsG, parent.vertexSet)(
           op.esG, direction.edgeBundle)(
-            op.esGS, segmentation.belongsTo).result.esGS
+            op.esGS, seg.belongsTo).result.esGS
     }
   })
 

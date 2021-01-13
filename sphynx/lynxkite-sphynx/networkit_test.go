@@ -9,7 +9,7 @@ import (
 func ExampleGraph() networkit.Graph {
 	vs := VertexSet{MappingToUnordered: []int64{0, 1, 2, 3, 4}}
 	es := EdgeBundle{Src: []SphynxId{0, 1, 2, 3, 4}, Dst: []SphynxId{1, 2, 3, 4, 1}}
-	return ToNetworKit(&vs, &es, nil, true)
+	return toNetworKit(&vs, &es, nil, true)
 }
 
 func TestBasicOps(t *testing.T) {

@@ -1,0 +1,25 @@
+### Compute modularity of segmentation
+
+Computes a scalar for a non-overlapping segmentation.
+If the vertices were connected randomly while preserving the degrees,
+a certain fraction of all edges would fall within each segment.
+We subtract this from the observed fraction of edges that fall within
+the segments. Modularity is the total observed difference.
+
+A modularity of 0 means the relationship between internal edges and
+external edges is consistent with randomly selected edges or segments.
+A positive modularity means more internal edges than would be expected
+by chance. A negative modularity means less internal edges than would
+be expected by chance.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Modularity.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+
+[p-weight]#Edge weight#::
+An edge attribute can be used to weight the edges instead of just looking at
+edge counts.
+====
