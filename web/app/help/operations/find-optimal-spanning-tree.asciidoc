@@ -11,8 +11,9 @@ implementation.
 
 ====
 [p-name]#Save as#::
-The new edge attribute will be created under this name. Edges that make up the
-tree are marked by 1 and the edges that are not part of the tree are marked by 0.
+The new edge attribute will be created under this name.
+Its value will be 1 for the edges that make up the tree
+and undefined for the edges that are not part of the tree.
 
 [p-weight]#Edge weight#::
 Choose a numerical attribute that represents the cost or value of the edges.

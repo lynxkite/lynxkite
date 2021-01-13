@@ -52,7 +52,7 @@ func init() {
 					if bools.Get(i) {
 						result.Set(i, 1.0)
 					} else {
-						result.Set(i, 0.0)
+						result.Set(i, math.NaN())
 					}
 				}
 			}

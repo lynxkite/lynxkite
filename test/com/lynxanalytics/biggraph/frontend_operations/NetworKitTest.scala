@@ -199,7 +199,7 @@ class NetworKitTest extends OperationsTestBase {
       .box("Find optimal spanning tree", Map("optimize" -> "Minimal weight"))
       .project
     val score = get(g.edgeAttributes("in_tree").runtimeSafeCast[Double])
-    val expected = Map(0 -> 1.0, 1 -> 0.0, 2 -> 0.0, 3 -> 1.0)
+    val expected = Map(0 -> 1.0, 3 -> 1.0)
     assertMatch(score, expected)
   }
 }
