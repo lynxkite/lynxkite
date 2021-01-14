@@ -477,5 +477,11 @@ angular.module('biggraph')
       });
     };
 
+    util.collectUsage = localStorage.getItem('allow data collection') === 'true';
+    util.allowDataCollection = function(allow) {
+      util.collectUsage = allow;
+      localStorage.setItem('allow data collection', allow ? 'true' : 'false');
+    };
+
     return util;
   });
