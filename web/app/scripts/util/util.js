@@ -128,13 +128,23 @@ angular.module('biggraph')
     // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
     // $config describes the original request config.
     function toResource(promise) {
+      const sendTime = new Date();
+      function collect(response, successful) {
+        const url = response.config && response.config.url;
+        const duration = new Date() - sendTime;
+        if (url) {
+          util.logUsage('request', { url, successful, duration });
+        }
+      }
       const resource = promise.then(
         function onSuccess(response) {
+          collect(response);
           angular.extend(resource, response.data);
           resource.$resolved = true;
           return response.data;
         },
         function onError(failure) {
+          collect(failure);
           resource.$resolved = true;
           resource.$statusCode = failure.status;
           resource.$error = util.responseToErrorMessage(failure);
@@ -482,6 +492,23 @@ angular.module('biggraph')
       util.collectUsage = allow;
       localStorage.setItem('allow data collection', allow ? 'true' : 'false');
     };
+
+    const usageLog = [];
+    let submitUsageLogTimeout;
+    util.logUsage = function(kind, details) {
+      if (!util.collectUsage) {
+        return;
+      }
+      usageLog.push([kind, details]);
+      if (!submitUsageLogTimeout) {
+        submitUsageLogTimeout = setTimeout(submitUsageLog, 60000);
+      }
+    };
+    function submitUsageLog() {
+      console.log('would submit', usageLog);
+      usageLog.length = 0;
+      submitUsageLogTimeout = undefined;
+    }
 
     return util;
   });
