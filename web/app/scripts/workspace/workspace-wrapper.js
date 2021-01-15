@@ -237,6 +237,7 @@ angular.module('biggraph')
         if (!opts.willSaveLater) {
           this.saveWorkspace();
         }
+        util.logUsage('box added', { operationId });
         return box;
       },
 

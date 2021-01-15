@@ -132,7 +132,7 @@ angular.module('biggraph')
       function collect(response, successful) {
         const url = response.config && response.config.url;
         const duration = new Date() - sendTime;
-        if (url) {
+        if (url && !url.includes('ajax/long-poll') && !url.includes('ajax/jsError')) {
           util.logUsage('request', { url, successful, duration });
         }
       }
@@ -311,7 +311,7 @@ angular.module('biggraph')
         }
       },
 
-      // Gets the value of the scalar. If the value (or an error message is embdedded
+      // Gets the value of the scalar. If the value (or an error message) is embdedded
       // in the scalar, then just takes it. Otherwise it fetches it from the server.
       // The return value is an object containing a 'value' property and a '$abandon'
       // function.
@@ -430,6 +430,18 @@ angular.module('biggraph')
           console.error('Unknown computation state for scalar in ', scalar);
         }
 
+        if (scalar && (scalar.title === '!vertex_count' || scalar.title === '!edge_count')) {
+          // Async function to handle both promises and ready values.
+          (async function() {
+            const v = (await scalarValue.value).string;
+            if (v) {
+              util.logUsage('scalar', {
+                name: scalar.title,
+                rounded: parseInt(v.slice(0, 2).padEnd(v.length, '0')),
+              });
+            }
+          })();
+        }
         return scalarValue;
       },
 
@@ -479,7 +491,6 @@ angular.module('biggraph')
     // Call before $location change to avoid a controller reload.
     // Source: https://github.com/angular/angular.js/issues/1699
     util.skipReload = function() {
-      console.log('skipReload');
       const lastRoute = $route.current;
       const un = $rootScope.$on('$locationChangeSuccess', () => {
         $route.current = lastRoute;
@@ -487,6 +498,16 @@ angular.module('biggraph')
       });
     };
 
+    function randomId() {
+      const arr = new Uint8Array(20);
+      window.crypto.getRandomValues(arr);
+      return Array.from(arr, c => c.toString(16)).join('');
+    }
+    let dataCollectionId = localStorage.getItem('data collection id');
+    if (!dataCollectionId) {
+      dataCollectionId = randomId();
+      localStorage.setItem('data collection id', dataCollectionId);
+    }
     util.collectUsage = localStorage.getItem('allow data collection') === 'true';
     util.allowDataCollection = function(allow) {
       util.collectUsage = allow;
@@ -499,13 +520,23 @@ angular.module('biggraph')
       if (!util.collectUsage) {
         return;
       }
-      usageLog.push([kind, details]);
+      console.log(kind, details);
+      // Usage events are collected in "usageLog" and sent to the server at most once a minute.
+      const time = new Date().toISOString();
+      usageLog.push({ time, kind, details });
       if (!submitUsageLogTimeout) {
-        submitUsageLogTimeout = setTimeout(submitUsageLog, 60000);
+        submitUsageLogTimeout = setTimeout(submitUsageLog, 6000);
       }
     };
     function submitUsageLog() {
-      console.log('would submit', usageLog);
+      const data = {
+        id: dataCollectionId,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        version: util.globals && util.globals.version,
+        browser: navigator.userAgent,
+        events: usageLog,
+      };
+      console.log('would submit', data);
       usageLog.length = 0;
       submitUsageLogTimeout = undefined;
     }
