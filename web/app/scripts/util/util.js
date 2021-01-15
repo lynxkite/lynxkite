@@ -129,11 +129,11 @@ angular.module('biggraph')
     // $config describes the original request config.
     function toResource(promise) {
       const sendTime = new Date();
-      function collect(response, successful) {
+      function collect(response, error) {
         const url = response.config && response.config.url;
         const duration = new Date() - sendTime;
         if (url && !url.includes('ajax/long-poll') && !url.includes('ajax/jsError')) {
-          util.logUsage('request', { url, successful, duration });
+          util.logUsage('request', { url, error, duration });
         }
       }
       const resource = promise.then(
@@ -144,10 +144,10 @@ angular.module('biggraph')
           return response.data;
         },
         function onError(failure) {
-          collect(failure);
           resource.$resolved = true;
           resource.$statusCode = failure.status;
           resource.$error = util.responseToErrorMessage(failure);
+          collect(failure, resource.$error);
           return $q.reject(failure);
         });
       resource.$resolved = false;
@@ -175,11 +175,10 @@ angular.module('biggraph')
           dst[key] = src[key];
           delete src[key];
         } else if (! (key in dst)) {
-        /* eslint-disable no-console */
+          /* eslint-disable no-console */
           console.error('Key "' + key + '" is not present in either dictionary!');
         }
       },
-
 
       // Json GET with caching and parameter wrapping.
       get: function(url, params) { return getResource(url, params, { cache: true }); },
@@ -520,25 +519,49 @@ angular.module('biggraph')
       if (!util.collectUsage) {
         return;
       }
-      console.log(kind, details);
       // Usage events are collected in "usageLog" and sent to the server at most once a minute.
-      const time = new Date().toISOString();
-      usageLog.push({ time, kind, details });
-      if (!submitUsageLogTimeout) {
-        submitUsageLogTimeout = setTimeout(submitUsageLog, 6000);
-      }
-    };
-    function submitUsageLog() {
-      const data = {
+      usageLog.push({
         id: dataCollectionId,
         tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
         version: util.globals && util.globals.version,
         browser: navigator.userAgent,
-        events: usageLog,
-      };
-      console.log('would submit', data);
-      usageLog.length = 0;
+        time: new Date().toISOString(),
+        kind, ...details,
+      });
+      if (!submitUsageLogTimeout) {
+        submitUsageLogTimeout = setTimeout(submitUsageLog, 60000);
+      }
+    };
+    let analytics;
+    function submitUsageLog() {
       submitUsageLogTimeout = undefined;
+      if (!analytics) {
+        // Shared. All LynxKite instances collect stats here.
+        const firebaseConfig = {
+          apiKey: 'AIzaSyDWY_jW9nPFJP1Iwexa9jf3foRgK51OTXM',
+          authDomain: 'external-lynxkite.firebaseapp.com',
+          projectId: 'external-lynxkite',
+          storageBucket: 'external-lynxkite.appspot.com',
+          messagingSenderId: '422846954881',
+          appId: '1:422846954881:web:53c06b4ed052166db7bc80',
+          measurementId: 'G-5NDZSKY669',
+        };
+        /* global firebase */
+        firebase.initializeApp(firebaseConfig);
+        analytics = firebase.analytics();
+      }
+      /* eslint-disable no-console */
+      console.log('Submitting anonymous usage data...');
+      for (const e of usageLog.slice(0, 100)) { // Log no more than 100 events.
+        // Firestore does not accept undefined values.
+        for (const k in e) {
+          if (e[k] === undefined) {
+            delete e[k];
+          }
+        }
+        analytics.logEvent('usage_' + e.kind, e);
+      }
+      usageLog.length = 0;
     }
 
     return util;
