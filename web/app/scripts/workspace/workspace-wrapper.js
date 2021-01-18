@@ -237,7 +237,11 @@ angular.module('biggraph')
         if (!opts.willSaveLater) {
           this.saveWorkspace();
         }
-        util.logUsage('box added', { operationId });
+        const meta = this._boxCatalogMap[operationId];
+        if (meta && meta.categoryId !== 'Custom boxes') {
+          // Collect usage statistics for standard boxes.
+          util.logUsage('box added', { operationId });
+        }
         return box;
       },
 
