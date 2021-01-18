@@ -335,7 +335,7 @@ angular.module('biggraph').directive('entrySelector',
                   type="checkbox" id="allow-data-collection" ${util.collectUsage ? 'checked' : ''}
                   onchange="dataCollectionCheckboxChanged(this);">
                   Share anonymous usage statistics</label>
-                <p><a href="https://lynxkite.com/anonymous-data-collection">What do we collect?</a>
+                <p><a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>
                   `;
                 },
                 animation: false,
