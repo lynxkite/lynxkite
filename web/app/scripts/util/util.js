@@ -129,11 +129,17 @@ angular.module('biggraph')
     // $config describes the original request config.
     function toResource(promise) {
       const sendTime = new Date();
+      // Collect statistics about backend requests.
       function collect(response, error) {
         const url = response.config && response.config.url;
-        const duration = new Date() - sendTime;
         if (url && !url.includes('ajax/long-poll') && !url.includes('ajax/jsError')) {
-          util.logUsage('request', { url, error, duration });
+          util.logUsage('request', {
+            url,
+            // The start of the error so we can see what kind of exception this is,
+            // but won't accidentally capture data.
+            error: error && error.toString().slice(0, 30),
+            duration: new Date() - sendTime,
+          });
         }
       }
       const resource = promise.then(
@@ -310,7 +316,7 @@ angular.module('biggraph')
         }
       },
 
-      // Gets the value of the scalar. If the value (or an error message) is embdedded
+      // Gets the value of the scalar. If the value (or an error message) is embedded
       // in the scalar, then just takes it. Otherwise it fetches it from the server.
       // The return value is an object containing a 'value' property and a '$abandon'
       // function.
@@ -434,6 +440,7 @@ angular.module('biggraph')
           (async function() {
             const v = (await scalarValue.value).string;
             if (v) {
+              // Collect approximate graph sizes.
               util.logUsage('scalar', {
                 name: scalar.title,
                 rounded: parseInt(v.slice(0, 2).padEnd(v.length, '0')),
@@ -515,6 +522,7 @@ angular.module('biggraph')
 
     const usageLog = [];
     let submitUsageLogTimeout;
+    // Saves an event to send as usage statistics, if the user has opted in.
     util.logUsage = function(kind, details) {
       if (!util.collectUsage) {
         return;
