@@ -326,7 +326,9 @@ angular.module('biggraph').directive('entrySelector',
             steps: [
               {
                 orphan: true,
-                content: () => `
+                content: () => {
+                  dataCollectionCheckboxChecked = util.collectUsage;
+                  return `
                 <p><b>Welcome to LynxKite!</b>
                 <p>This seems to be your first visit. I can quickly show you how to get started.
                 <p><label><input
@@ -334,7 +336,8 @@ angular.module('biggraph').directive('entrySelector',
                   onchange="dataCollectionCheckboxChanged(this);">
                   Share anonymous usage statistics</label>
                 <p><a href="https://lynxkite.com/anonymous-data-collection">What do we collect?</a>
-                `,
+                  `;
+                },
                 animation: false,
               }, {
                 placement: 'top',
@@ -369,12 +372,15 @@ angular.module('biggraph').directive('entrySelector',
               },
             ],
             onNext: function(tour) {
-              if (tour.getCurrentStepIndex() === 0 && dataCollectionCheckboxState !== 'unchanged') {
-                util.allowDataCollection(dataCollectionCheckboxState === 'allow');
+              if (tour.getCurrentStepIndex() === 0) {
+                util.allowDataCollection(dataCollectionCheckboxChecked);
               }
             },
-            onEnd: function() {
+            onEnd: function(tour) {
               localStorage.setItem('entry-selector tutorial done', 'true');
+              if (tour.getCurrentStepIndex() === 0) {
+                util.allowDataCollection(dataCollectionCheckboxChecked);
+              }
             },
             onShown: function() {
               if (scope.tutorial.getCurrentStepIndex() === scope.tutorial.getStepCount() - 1) {
@@ -396,8 +402,8 @@ angular.module('biggraph').directive('entrySelector',
   });
 
 // We store this in a global variable because the checkbox is outside of Angular.
-let dataCollectionCheckboxState = 'unchanged';
+let dataCollectionCheckboxChecked;
 /* eslint-disable no-unused-vars */ // This is used by the tutorial.
 function dataCollectionCheckboxChanged(e) {
-  dataCollectionCheckboxState = e.checked ? 'allow' : 'disallow';
+  dataCollectionCheckboxChecked = e.checked;
 }
