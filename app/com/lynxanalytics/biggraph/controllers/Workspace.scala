@@ -53,7 +53,8 @@ case class Workspace(
   def workspaceExecutionContextParameters(workspaceParameters: Map[String, String]) = {
     val pm = parametersMeta
     val defaultParameters = pm.map(p => p.id -> p.defaultValue).toMap
-    val unrecognized = workspaceParameters.keySet -- pm.map(_.id).toSet
+    val hiddenParameters = Set("workspaceName")
+    val unrecognized = workspaceParameters.keySet -- pm.map(_.id).toSet -- hiddenParameters
     assert(unrecognized.isEmpty, s"Unrecognized parameter: ${unrecognized.mkString(", ")}")
     defaultParameters ++ workspaceParameters
   }
