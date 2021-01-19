@@ -538,6 +538,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
       case None =>
         log.info("PERF Huge edge set mode for request: " + request)
+        assert(request.attrs.isEmpty, "The view is too large for edge attributes.")
         val edgeFilters = request.filters.map(_.toFilteredAttribute)
         val filtered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters, edgeFilters)
 
