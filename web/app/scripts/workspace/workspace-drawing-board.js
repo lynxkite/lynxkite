@@ -684,25 +684,35 @@ angular.module('biggraph').directive(
             op = 'Import ORC';
           }
           const box = scope.workspace.addBox(op, event, { willSaveLater: true });
+          box.parameters.filename = 'uploading...';
           if (op === 'Import CSV') {
             box.parameters.infer = 'yes';
           }
-          uploadFile(file).then(function(filename) {
-            box.parameters.filename = filename;
+          uploadFile(file, function(percent) {
+            const b = scope.workspace.boxMap[box.id];
+            scope.$apply(() => {
+              b.summary = `Uploading... (${percent}%)`;
+            });
+          }).then(function(filename) {
+            const b = scope.workspace.boxMap[box.id].instance;
+            b.parameters.filename = filename;
             return util.post('/ajax/importBox', {
-              box: box,
+              box: b,
               ref: scope.workspace.ref(),
             });
           }).then(function(response) {
-            box.parameters.imported_table = response.guid;
-            box.parameters.last_settings = response.parameterSettings;
+            const b = scope.workspace.boxMap[box.id].instance;
+            b.parameters.imported_table = response.guid;
+            b.parameters.last_settings = response.parameterSettings;
             scope.workspace.saveWorkspace();
-          }).catch(function() {
+          }).catch(function(err) {
+            /* eslint-disable no-console */
+            console.error('failed to upload', file, err);
             scope.workspace.deleteBoxes([box.id]);
           });
         });
 
-        function uploadFile(file) {
+        function uploadFile(file, progressCallback) {
           const defer = $q.defer();
           const xhr = new XMLHttpRequest();
           xhr.open('POST', 'ajax/upload');
@@ -718,6 +728,12 @@ angular.module('biggraph').directive(
               });
             }
           };
+          xhr.upload.addEventListener('progress', function(e) {
+            if (progressCallback && e.lengthComputable) {
+              const percentage = Math.round((e.loaded * 100) / e.total);
+              progressCallback(percentage);
+            }
+          });
           const fd = new FormData();
           fd.append('file', file);
           xhr.send(fd);
