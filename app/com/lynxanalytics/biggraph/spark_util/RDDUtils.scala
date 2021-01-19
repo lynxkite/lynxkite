@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_api.io.RatioSorter
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.ShuffledRDD
@@ -55,7 +56,7 @@ class IDBuckets[T](
   }
 }
 object IDBuckets {
-  val MaxSampleSize = 50
+  val MaxSampleSize = LoggedEnvironment.envOrElse("KITE_MAX_BUCKET_SAMPLE_SIZE", "1000").toInt
 }
 
 // An Ordering defined on pairs of type (T, Long) which we consider as
