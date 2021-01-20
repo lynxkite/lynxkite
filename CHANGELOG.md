@@ -15,6 +15,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   [#111](https://github.com/lynxkite/lynxkite/pull/111))
 - Environment variables can be used to override `.kiterc` settings.
   ([#110](https://github.com/lynxkite/lynxkite/pull/110))
+- Added a built-in for parametric parameters (`workspaceName`) that can be used to
+  force recomputation in wizards. ([#131](https://github.com/lynxkite/lynxkite/pull/131))
 
 ### 4.1.0
 
