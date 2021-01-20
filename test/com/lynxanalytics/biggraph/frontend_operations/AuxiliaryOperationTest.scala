@@ -53,5 +53,49 @@ class AuxiliaryOperationTest extends OperationsTestBase {
       .values.collect().toSeq
     assert(fiftyFives == Seq(55.0, 55.0, 55.0, 55.0))
   }
+
+  test("Parametric parameters built-ins: vertexAttributes") {
+    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+      select ${vertexAttributes.map(a => "'" + a.typeName + "' as " + a.name).mkString(",")}
+      """))
+      .table.df
+    val res = Map(df.columns.zip(df.collect.head.toSeq): _*)
+    assert(res == Map(
+      "age" -> "Double",
+      "gender" -> "String",
+      "id" -> "String",
+      "income" -> "Double",
+      "location" -> "Vector[Double]",
+      "name" -> "String"))
+  }
+
+  test("Parametric parameters built-ins: edgeAttributes") {
+    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+      select ${edgeAttributes.map(a => "'" + a.typeName + "' as " + a.name).mkString(",")}
+      """))
+      .table.df
+    val res = Map(df.columns.zip(df.collect.head.toSeq): _*)
+    assert(res == Map("comment" -> "String", "weight" -> "Double"))
+  }
+
+  test("Parametric parameters built-ins: graphAttributes") {
+    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+      select ${graphAttributes.map(a => "'" + a.typeName + "' as `" + a.name + "`").mkString(",")}
+      """))
+      .table.df
+    val res = Map(df.columns.zip(df.collect.head.toSeq): _*)
+    assert(res == Map(
+      "!edge_count" -> "Long",
+      "!vertex_count" -> "Long",
+      "greeting" -> "String"))
+  }
+
+  test("Parametric parameters built-ins: workspaceName") {
+    val name = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+      select '${workspaceName}' as x
+      """))
+      .table.df.collect.head(0)
+    assert(name == "test workspace")
+  }
 }
 
