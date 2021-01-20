@@ -13,6 +13,8 @@ angular.module('biggraph').directive('topAlerts', function(util) {
           details: msg.details,
           time: new Date(),
         });
+        // Avoid huge stack of errors. Only keep last 3.
+        scope.alerts = scope.alerts.slice(-3);
       });
       scope.$on('clear topAlerts', function() {
         scope.alerts = [];
