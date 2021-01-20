@@ -239,11 +239,11 @@ include::compute-segment-stability.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]
 
-include::convert-edge-attribute-to-double.asciidoc[]
+include::convert-edge-attribute-to-number.asciidoc[]
 
 include::convert-edge-attribute-to-string.asciidoc[]
 
-include::convert-vertex-attribute-to-double.asciidoc[]
+include::convert-vertex-attribute-to-number.asciidoc[]
 
 include::convert-vertex-attribute-to-string.asciidoc[]
 
