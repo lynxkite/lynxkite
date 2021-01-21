@@ -18,8 +18,12 @@ import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.plans.logical.Filter
 import org.apache.spark.sql.catalyst.plans.logical.Join
-
 import org.apache.spark.sql.types
+
+class ProtoLocalRelation(val proto: ProtoTable, fields: Seq[types.StructField])
+  extends LocalRelation(fields.map {
+    f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
+  })
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
 // operations like ExecuteSQL.
@@ -38,11 +42,7 @@ trait ProtoTable {
     // unique to the ProtoTable. This breaks a couple of things down the line, so we have to strip
     // it out when this relation is used anywhere else, which might not be trivial.
     val fields = schema.fields.map(f => f.withComment(s"$this"))
-    if (fields.nonEmpty) {
-      LocalRelation(fields.head, fields.tail: _*)
-    } else {
-      LocalRelation()
-    }
+    new ProtoLocalRelation(this, fields)
   }
 }
 
@@ -59,7 +59,12 @@ object ProtoTable {
     plan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // Match tables to ProtoTables based on the comment added in ProtoTable.relation
-    val protoStrings = getLeaves(plan).flatMap(_.output.map(_.metadata.getString("comment")))
+    val leaves = getLeaves(plan)
+    val emptyTableNames = leaves.filter(_.output.isEmpty).collect {
+      case r: ProtoLocalRelation => protoTables.find(_._2 == r.proto)
+    }.flatten.map(_._1)
+    assert(emptyTableNames.isEmpty, s"${emptyTableNames.mkString(", ")} has no columns")
+    val protoStrings = leaves.flatMap(_.output.map(_.metadata.getString("comment")))
     val fields = getRequiredFields(plan).map(f => (f.name, f.metadata))
     val selectedTables = protoTables.filter(k => protoStrings.contains(k._2.toString)).mapValues {
       f =>
