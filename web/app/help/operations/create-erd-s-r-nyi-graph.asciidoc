@@ -1,0 +1,21 @@
+[[create-erd-s-r-nyi-graph]]
+### Create Erdős–Rényi graph
+
+Creates a random graph using the https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model[Erdős–Rényi model].
+In this model each pair of vertices is connected independently with the same probability.
+It creates a very uniform graph with no tendency to skewed degree distributions or clustering.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1ErdosRenyiGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-probability]#Edge probability#::
+Each pair of vertices is connected with this probability.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

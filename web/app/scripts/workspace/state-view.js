@@ -39,6 +39,8 @@ angular.module('biggraph')
                   scope.instruments = instruments.slice();
                   scope.lastState = res.states[res.states.length - 1];
                 }
+              }).catch(function(err) {
+                util.ajaxError(err);
               });
               lastJson = json;
             }

@@ -1,0 +1,32 @@
+### Create a graph with certain degrees
+
+Creates a graph in which the distribution of vertex degrees is as specified.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1StaticDegreeSequenceGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-degrees]#List of vertex degrees#::
+The algorithm will try to ensure that an equal number of vertices will
+have each of the listed degrees. For example, generating 30 vertices with a degree list
+of "1, 1, 5" will result in 20 vertices having degree 1 and 10 vertices having degree 5.
+
+[p-algorithm]#Algorithm#::
+The algorithm to use.
+- **Chung–Lu:** An extension of the Erdős–Rényi random graph model
+  with edge probabilities dependent on vertex "weights".
+  See http://aric.hagberg.org/papers/miller-2011-efficient.pdf[Efficient Generation of Networks with Given Expected Degrees].
+- **https://en.wikipedia.org/wiki/Havel%E2%80%93Hakimi_algorithm[Haveli–Hakimi]:**
+  A deterministic algorithm where the vertex to have the highest degree _k_ is connected to 
+  the _k_ next highest degree vertices. This is repeated until there is nothing left to connect.
+- **Edge switching Markov chain:** Starts from a Haveli–Hakimi graph and switches around
+  the edges randomly while maintaining the degree distribution. This leads to an approximately
+  uniform distribution across all graphs with the given degree distribution.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

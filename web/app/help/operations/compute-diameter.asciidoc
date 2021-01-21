@@ -1,0 +1,20 @@
+### Compute diameter
+
+The diameter of a graph is the maximal shortest-distance path length
+between two vertices. All vertex pairs are at most this far from each
+other.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Diameter.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+The new graph attribute will be created under this name.
+
+[p-max_error]#Maximum relative error#::
+Set to 0 to get the exact diameter. This may require a lot of computation, however.
++
+Set to a value greater than 0 to use a faster computation that gives lower and
+upper bounds on the diameter. With 0.1 maximum relative error, for example, the
+upper bound will be no more than 10% greater than the true diameter.
+====

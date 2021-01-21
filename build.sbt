@@ -112,7 +112,6 @@ dependencyClasspath in Compile ++= sparkJars(sparkVersion.value)
 dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
-  "Twitter Repository" at "https://maven.twttr.com",
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
   "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/",
   "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven")
@@ -166,7 +165,8 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
+  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx",
+  file("sphynx/.build/libnetworkit.so") -> "sphynx/libnetworkit.so")
 
 sourceDirectory in Assets := new File("web/dist")
 

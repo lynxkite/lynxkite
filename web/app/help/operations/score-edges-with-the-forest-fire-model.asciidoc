@@ -1,0 +1,48 @@
+### Score edges with the forest fire model
+
+Produces an edge attribute that reflects the importance of each edge in
+the spread of information or other communicable effects across the network.
+
+A simple summary of the algorithm would be:
+
+1. Pick a random vertex. The fire starts here.
+2. With probability _p_ jump to step 4.
+3. Set a neighbor on fire and mark the edge as burnt. Jump to step 2.
+4. This vertex has burnt out. Pick another vertex that is on fire and jump to step 2.
+
+These steps are repeated until the total number of edges burnt reaches the
+desired multiple of the total edge count.
+The score for each edge is proportional to the number of simulations
+in which it was burnt. It is normalized to have a maximum of 1.
+
+The forest fire model was introduced in
+http://www.cs.cmu.edu/~jure/pubs/powergrowth-tkdd.pdf[Graph Evolution: Densification and Shrinking Diameters]
+by Leskovec et al.
+
+Uses the
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1ForestFireScore.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+The new graph attribute will be created under this name.
+
+[p-spread_prob]#Probability of fire spreading#::
+The probability that a vertex on fire will light another neighbor on fire.
+This would be _1 − p_ in the simple summary in the operation's description.
+
+[p-burn_ratio]#Portion of edges to burn#::
+The simulations are repeated until the total number of edges burnt
+reaches the total number of edges in the graph multiplied by this factor.
++
+Increase to make sure all edges receive a non-zero score.
+This will also increase the run time.
+
+[p-seed]#Random seed#::
+The seed used for picking where the fires start, which way they spread,
+and when they stop spreading.
++
+Due to parallelization the algorithm may give different results even with the same seed.
++
+include::{g}[tag=random-seed]
+====

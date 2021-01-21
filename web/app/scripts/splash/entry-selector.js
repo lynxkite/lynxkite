@@ -272,7 +272,7 @@ angular.module('biggraph').directive('entrySelector',
         };
 
         scope.pathElements = function() {
-          return scope.path.split('/');
+          return scope.path ? scope.path.split('/') : [];
         };
 
         scope.isWorkspace = function(object) {
@@ -310,7 +310,9 @@ angular.module('biggraph').directive('entrySelector',
             util.user.then(showTutorial);
             return;
           }
-          if (util.user.wizardOnly || localStorage.getItem('entry-selector tutorial done')) {
+          if (util.user.wizardOnly
+            || localStorage.getItem('entry-selector tutorial done')
+            && localStorage.getItem('allow data collection')) {
             return;
           }
           /* global Tour */
@@ -320,22 +322,55 @@ angular.module('biggraph').directive('entrySelector',
             storage: null,
             backdrop: true,
             showProgressBar: false,
+            sanitizeFunction: x => x,
             steps: [
               {
                 orphan: true,
-                content: `
+                animation: false,
+                content: () => {
+                  if (util.globals.dataCollectionMode === 'optional') {
+                    dataCollectionCheckboxChecked = util.collectUsage;
+                    return `
                 <p><b>Welcome to LynxKite!</b>
                 <p>This seems to be your first visit. I can quickly show you how to get started.
-                `,
-                animation: false,
+                <p><label><input
+                  type="checkbox" id="allow-data-collection" ${util.collectUsage ? 'checked' : ''}
+                  onchange="dataCollectionCheckboxChanged(this);">
+                  Share anonymous usage statistics</label>
+                <p><a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>
+                    `;
+                  } else if (util.globals.dataCollectionMode === 'always') {
+                    return `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                <p>The LynxKite team collects anonymous usage statistics when you use this instance.
+                (<a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>)
+                    `;
+                  } else {
+                    return `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                    `;
+                  }
+                },
               }, {
                 placement: 'top',
                 element: '.user-menu-dropup',
-                content: `
+                animation: false,
+                content: () => {
+                  if (util.globals.dataCollectionMode === 'optional') {
+                    return `
                 <p>If you wish to see this tutorial again, you can find it in the
                 hamburger menu.
-                `,
-                animation: false,
+                <p>Use it if you change your mind about providing anonymous usage data.
+                    ` + (util.collectUsage ? ' (Thank you for signing up!)' : '');
+                  } else {
+                    return `
+                <p>If you wish to see this tutorial again, you can find it in the
+                hamburger menu.
+                    `;
+                  }
+                },
               }, {
                 placement: 'top',
                 element: '#directory-browser',
@@ -359,8 +394,16 @@ angular.module('biggraph').directive('entrySelector',
                 animation: false,
               },
             ],
-            onEnd: function() {
+            onNext: function(tour) {
+              if (tour.getCurrentStepIndex() === 0) {
+                util.allowDataCollection(dataCollectionCheckboxChecked);
+              }
+            },
+            onEnd: function(tour) {
               localStorage.setItem('entry-selector tutorial done', 'true');
+              if (tour.getCurrentStepIndex() === 0) {
+                util.allowDataCollection(dataCollectionCheckboxChecked);
+              }
             },
             onShown: function() {
               if (scope.tutorial.getCurrentStepIndex() === scope.tutorial.getStepCount() - 1) {
@@ -380,3 +423,10 @@ angular.module('biggraph').directive('entrySelector',
       },
     };
   });
+
+// We store this in a global variable because the checkbox is outside of Angular.
+let dataCollectionCheckboxChecked;
+/* eslint-disable no-unused-vars */ // This is used by the tutorial.
+function dataCollectionCheckboxChanged(e) {
+  dataCollectionCheckboxChecked = e.checked;
+}

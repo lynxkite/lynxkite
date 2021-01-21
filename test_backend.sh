@@ -21,6 +21,9 @@ if $WITH_SPHYNX; then
   export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
   export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
   export KITE_ALLOW_PYTHON=yes
+  # Some randomization gives different results depending on the
+  # thread count. Fix it for the unit tests.
+  export NETWORKIT_THREADS=4
   if [ -f $SPHYNX_PID_FILE ]; then
     kill `cat $SPHYNX_PID_FILE` || true
   fi
@@ -30,7 +33,7 @@ if $WITH_SPHYNX; then
   -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
   -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=localhost"
   cd sphynx
-  .build/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR &
+  LD_LIBRARY_PATH=.build .build/lynxkite-sphynx -keydir=$SPHYNX_CERT_DIR &
   cd -
   $(dirname $0)/tools/wait_for_port.sh $SPHYNX_PORT
   echo "Sphynx running on port $SPHYNX_PORT"

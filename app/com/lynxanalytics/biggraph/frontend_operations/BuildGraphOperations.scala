@@ -129,6 +129,62 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  def registerNKRandomGraph(name: String, className: String, options: Seq[OperationParameterMeta]) = {
+    registerProjectCreatingOp(name)(new ProjectOutputOperation(_) {
+      params += NonNegInt("size", "Number of vertices", default = 100)
+      params ++= options
+      params += RandomSeed("seed", "Random seed", context.box)
+      override def summary = s"$name with ${params("size")} vertices"
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val optValues: Map[String, Any] = params.getMetaMap.mapValues {
+          case p: NonNegDouble => params(p.id).toDouble
+          case p: NonNegInt => params(p.id).toLong
+          case p: RandomSeed => params(p.id).toLong
+          case p => params(p.id)
+        }
+        val result = graph_operations.NetworKitCreateGraph.run(className, optValues)
+        project.vertexSet = result.vs
+        project.edgeBundle = result.es
+      }
+    })
+  }
+  registerNKRandomGraph("Create Barabási–Albert graph", "BarabasiAlbertGenerator", Seq(
+    NonNegInt("attachments_per_vertex", "Attachments per vertex", default = 1),
+    NonNegInt("connected_at_start", "vertices connected at the start", default = 0)))
+  registerNKRandomGraph("Create a graph with certain degrees", "StaticDegreeSequenceGenerator", Seq(
+    Param("degrees", "List of vertex degrees", defaultValue = "1, 2, 3, 4"),
+    Choice("algorithm", "Algorithm",
+      options = FEOption.list("Chung–Lu", "Edge switching Markov chain", "Haveli–Hakimi"))))
+  registerNKRandomGraph("Create clustered random graph", "ClusteredRandomGraphGenerator", Seq(
+    NonNegInt("clusters", "Number of clusters", default = 10),
+    NonNegDouble("probability_in", "Intra-cluster edge probability", defaultValue = "0.6"),
+    NonNegDouble("probability_out", "Inter-cluster edge probability", defaultValue = "0.01")))
+  registerNKRandomGraph("Create Dorogovtsev–Mendes random graph", "DorogovtsevMendesGenerator", Seq())
+  registerNKRandomGraph("Create Erdős–Rényi graph", "ErdosRenyiGenerator", Seq(
+    NonNegDouble("probability", "Edge probability", defaultValue = "0.01")))
+  registerNKRandomGraph("Create hyperbolic random graph", "HyperbolicGenerator", Seq(
+    NonNegDouble("avg_degree", "Average degree", defaultValue = "4.5"),
+    NonNegDouble("exponent", "Power-law exponent", defaultValue = "3.0"),
+    NonNegDouble("temperature", "Temperature", defaultValue = "0.0")))
+  registerNKRandomGraph("Create LFR random graph", "LFRGenerator", Seq(
+    NonNegInt("avg_degree", "Average degree", default = 3),
+    NonNegInt("max_degree", "Maximum degree", default = 10),
+    NonNegDouble("degree_exponent", "Degree power-law exponent", defaultValue = "2.5"),
+    NonNegInt("min_community", "Smallest community size", default = 5),
+    NonNegInt("max_community", "Largest community size", default = 30),
+    NonNegDouble("community_exponent", "Community size power-law exponent", defaultValue = "1.5"),
+    NonNegDouble("avg_mixing", "Fraction of external neighbors", defaultValue = "0.2")))
+  registerNKRandomGraph("Create Mocnik random graph", "MocnikGenerator", Seq(
+    NonNegInt("dimension", "Dimension of space", default = 2),
+    NonNegDouble("density", "Density of graph", defaultValue = "2.5")))
+  registerNKRandomGraph("Create P2P random graph", "PubWebGenerator", Seq(
+    NonNegInt("dense_areas", "Number of dense areas", default = 10),
+    NonNegInt("max_degree", "Maximum degree", default = 10),
+    NonNegDouble("neighborhood_radius", "Neighborhood radius", defaultValue = "0.2")))
+  // TODO: The P2P graph is created from a 2D embedding. We could expose the coordinates.
+  // Some other generators could expose the ground-truth communities.
+
   register(
     "Predict edges with hyperbolic positions",
     List(projectInput))(new ProjectTransformation(_) {

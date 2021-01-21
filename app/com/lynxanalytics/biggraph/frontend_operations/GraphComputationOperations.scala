@@ -42,13 +42,25 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   register("Compute centrality")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "centrality"),
-      NonNegInt("maxDiameter", "Maximal diameter to check", default = 10),
       Choice("algorithm", "Centrality type",
-        options = FEOption.list("Harmonic", "Lin", "Average distance")),
-      NonNegInt("bits", "Precision", default = 8),
+        options = FEOption.list(Seq(
+          // Implemented on Spark.
+          "Harmonic", "Lin", "Average distance",
+          // From NetworKit.
+          "Closeness (estimate)", "Betweenness (estimate)", "Laplacian",
+          "Betweenness", "Eigenvector", "Harmonic Closeness", "Katz",
+          "K-Path", "Sfigality").sorted.toList)),
       Choice("direction", "Direction",
-        options = Direction.attrOptionsWithDefault("outgoing edges")))
+        options = Direction.attrOptionsWithDefault("outgoing edges")),
+      Choice("weight", "Edge weight",
+        options = FEOption.list("No weighting") ++ project.edgeAttrList[Double]),
+      NonNegInt("samples", "Sample size",
+        default = 1000, group = "Advanced settings"),
+      NonNegInt("maxDiameter", "Maximal diameter to check",
+        default = 10, group = "Advanced settings"),
+      NonNegInt("bits", "Precision", default = 8, group = "Advanced settings"))
     def enabled = project.hasEdgeBundle
+    override def summary = s"Compute ${params("algorithm")} centrality"
     def apply() = {
       val name = params("name")
       val algorithm = params("algorithm")
@@ -56,10 +68,157 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val es = Direction(
         params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
-      val op = graph_operations.HyperBallCentrality(
-        params("maxDiameter").toInt, algorithm, params("bits").toInt)
-      project.newVertexAttribute(
-        name, op(op.es, es).result.centrality, algorithm + help)
+      val weight =
+        if (params("weight") == "No weighting") None
+        else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
+      def nk(algo: String) = graph_operations.NetworKitComputeDoubleAttribute.run(
+        algo, es, Map("samples" -> params("samples").toInt), weight)
+      val centrality: Attribute[Double] = algorithm match {
+        case "Closeness (estimate)" => nk("ApproxCloseness")
+        case "Betweenness" => nk("Betweenness")
+        case "Eigenvector" => nk("EigenvectorCentrality")
+        case "Betweenness (estimate)" => nk("EstimateBetweenness")
+        case "Harmonic Closeness" => nk("HarmonicCloseness")
+        case "Katz" => nk("KatzCentrality")
+        case "K-Path" => nk("KPathCentrality")
+        case "Laplacian" => nk("LaplacianCentrality")
+        case "Sfigality" => nk("Sfigality")
+        case _ =>
+          val op = graph_operations.HyperBallCentrality(
+            params("maxDiameter").toInt, algorithm, params("bits").toInt)
+          op(op.es, es).result.centrality
+      }
+      project.newVertexAttribute(name, centrality, algorithm + help)
+    }
+  })
+
+  register("Find k-core decomposition")(new ProjectTransformation(_) {
+    params ++= List(Param("name", "Attribute name", defaultValue = "core"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      // A directed graph just gets turned into an undirected graph.
+      // We can skip that and just build an undirected graph.
+      val core = graph_operations.NetworKitComputeDoubleAttribute.run(
+        "CoreDecomposition", project.edgeBundle, Map("directed" -> false))
+      project.newVertexAttribute(name, core, help)
+    }
+  })
+
+  register("Place vertices with edge lengths")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "New attribute name", defaultValue = "position"),
+      NonNegInt("dimensions", "Dimensions", default = 2),
+      Choice("length", "Edge length",
+        options = FEOption.list("Unit length") ++ project.edgeAttrList[Double]),
+      Choice("algorithm", "Layout algorithm",
+        options = FEOption.list("Pivot MDS", "Maxent-Stress")),
+      NonNegInt("pivots", "Pivots", default = 100, group = "Pivot MDS options"),
+      NonNegInt("radius", "Neighborhood radius", default = 1, group = "Maxent-Stress options"),
+      NonNegDouble("tolerance", "Solver tolerance", defaultValue = "0.1", group = "Maxent-Stress options"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      val weight =
+        if (params("length") == "Unit length") None
+        else Some(project.edgeAttributes(params("length")).runtimeSafeCast[Double])
+      val positions = params("algorithm") match {
+        case "Pivot MDS" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "PivotMDS", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "pivots" -> params("pivots").toInt), weight)
+        case "Maxent-Stress" => graph_operations.NetworKitComputeVectorAttribute.run(
+          "MaxentStress", project.edgeBundle, Map(
+            "directed" -> false,
+            "dimensions" -> params("dimensions").toInt,
+            "radius" -> params("radius").toInt,
+            "tolerance" -> params("tolerance").toDouble), weight)
+      }
+      project.newVertexAttribute(name, positions, help)
+    }
+  })
+
+  register("Compute diameter")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "diameter"),
+      NonNegDouble("max_error", "Maximum relative error", defaultValue = "0.1"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val maxError = params("max_error").toDouble
+      val result = graph_operations.NetworKitComputeScalar.run(
+        "Diameter", project.edgeBundle, Map("directed" -> false, "max_error" -> maxError))
+      val name = params("name")
+      if (maxError == 0) {
+        project.newScalar(name, result.scalar1)
+      } else {
+        project.newScalar(name + "_lower", result.scalar1)
+        project.newScalar(name + "_upper", result.scalar2)
+      }
+    }
+  })
+
+  register("Compute effective diameter")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "effective diameter"),
+      NonNegDouble("ratio", "Ratio to cover", defaultValue = "0.9"),
+      Choice("algorithm", "Algorithm", options = FEOption.list("estimate", "exact")),
+      NonNegInt("bits", "Extra bits", default = 7, group = "Esimation settings"),
+      NonNegInt("approximations", "Number of parallel approximations", default = 64,
+        group = "Esimation settings"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val opts = Map("directed" -> false, "ratio" -> params("ratio").toDouble)
+      val result = params("algorithm") match {
+        case "exact" => graph_operations.NetworKitComputeScalar.run(
+          "EffectiveDiameter", project.edgeBundle, opts)
+        case "estimate" => graph_operations.NetworKitComputeScalar.run(
+          "EffectiveDiameterApproximation", project.edgeBundle, opts ++ Map(
+            "bits" -> params("bits").toInt,
+            "approximations" -> params("approximations").toInt))
+      }
+      project.newScalar(params("name"), result.scalar1)
+    }
+  })
+
+  register("Compute assortativity")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "assortativity"),
+      Choice("attribute", "Attribute",
+        options = FEOption.unset +: project.vertexAttrList[Double]))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val attrName = params("attribute")
+      if (attrName != FEOption.unset.id) {
+        val result = graph_operations.NetworKitComputeScalar.run(
+          "Assortativity", project.edgeBundle, Map(), None,
+          Some(project.vertexAttributes(attrName).runtimeSafeCast[Double]))
+        project.newScalar(params("name"), result.scalar1)
+      }
+    }
+  })
+
+  register("Find optimal spanning tree")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "in_tree"),
+      Choice("weight", "Edge weight",
+        options = FEOption.list("Unit weight") ++ project.edgeAttrList[Double]),
+      Choice("optimize", "Optimize for",
+        options = FEOption.list("Maximal weight", "Minimal weight")),
+      RandomSeed("seed", "Random seed", context.box))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val weightName = params("weight")
+      val weight = if (weightName == "Unit weight") {
+        project.edgeBundle.const(1.0)
+      } else {
+        project.edgeAttributes(weightName).runtimeSafeCast[Double]
+      }
+      val attr = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
+        "RandomMaximumSpanningForest", project.edgeBundle, Map("seed" -> params("seed").toLong),
+        Some(if (params("optimize") == "Maximal weight") weight
+        else graph_operations.DeriveScala.negative(weight)))
+      project.edgeAttributes(params("name")) = attr
     }
   })
 

@@ -164,6 +164,7 @@ case class GlobalSettings(
     workspaceParameterKinds: List[String],
     version: String,
     graphrayEnabled: Boolean,
+    dataCollectionMode: String,
     defaultUIStatus: UIStatus)
 
 object AssertNotRunningAndRegisterRunning {
@@ -549,6 +550,7 @@ object ProductionJsonServer extends JsonServer {
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version,
       graphrayEnabled = graphrayEnabled,
+      dataCollectionMode = LoggedEnvironment.envOrElse("KITE_DATA_COLLECTION", "optional"),
       defaultUIStatus = UIStatus.default)
   }
 

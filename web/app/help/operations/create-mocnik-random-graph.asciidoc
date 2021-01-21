@@ -1,0 +1,25 @@
+### Create Mocnik random graph
+
+Creates a random graph as described in
+https://www.mocnik-science.net/publications/2015c%20-%20Franz-Benjamin%20Mocnik%20-%20Modelling%20Spatial%20Structures.pdf[Modelling Spatial Structures] by Mocnik et al.
+The model is based on randomly placing the vertices in Euclidean space
+and generating edges with a higher probability for pairs of vertices
+that are closer together.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1MocnikGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-dimension]#Dimension of space#::
+The vertices are placed randomly in a space with this many dimensions.
+
+[p-density]#Density of graph#::
+The desired ratio of edges to nodes.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

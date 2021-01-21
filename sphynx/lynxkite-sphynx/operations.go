@@ -35,6 +35,14 @@ func (ea *EntityAccessor) output(name string, entity Entity) error {
 	return nil
 }
 
+func (ea *EntityAccessor) outputScalar(name string, value interface{}) error {
+	s, err := ScalarFrom(value)
+	if err != nil {
+		return err
+	}
+	return ea.output(name, &s)
+}
+
 func (ea *EntityAccessor) getOutput(name string) Entity {
 	guid := ea.opInst.Outputs[name]
 	return ea.outputs[guid]
@@ -53,6 +61,16 @@ func (ea *EntityAccessor) getScalar(name string) *Scalar {
 
 func (ea *EntityAccessor) getDoubleAttribute(name string) *DoubleAttribute {
 	return ea.inputs[name].(*DoubleAttribute)
+}
+
+// May return nil.
+func (ea *EntityAccessor) getDoubleAttributeOpt(name string) *DoubleAttribute {
+	_, exists := ea.inputs[name]
+	if exists {
+		return ea.getDoubleAttribute(name)
+	} else {
+		return nil
+	}
 }
 
 func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
@@ -77,6 +95,14 @@ func (ea *EntityAccessor) GetFloatParam(name string) float64 {
 
 func (ea *EntityAccessor) GetBoolParam(name string) bool {
 	return ea.opInst.Operation.Data[name].(bool)
+}
+
+func (ea *EntityAccessor) GetStringParam(name string) string {
+	return ea.opInst.Operation.Data[name].(string)
+}
+
+func (ea *EntityAccessor) GetMapParam(name string) map[string]interface{} {
+	return ea.opInst.Operation.Data[name].(map[string]interface{})
 }
 
 func (ea *EntityAccessor) GetStringVectorParam(name string) []string {

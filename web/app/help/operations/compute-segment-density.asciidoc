@@ -1,0 +1,13 @@
+### Compute segment density
+
+Computes the density of each segment in a non-overlapping segmentation.
+The density of a segment is the number of internal edges divided by the
+number of possible internal edges.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1IntrapartitionDensity.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+====

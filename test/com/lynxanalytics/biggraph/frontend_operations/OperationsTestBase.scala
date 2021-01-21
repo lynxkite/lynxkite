@@ -56,7 +56,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     def meta = ops.getBoxMetadata(operationId)
 
-    def ctx = workspace.context(user, ops, Map())
+    def ctx = workspace.context(user, ops, Map("workspaceName" -> "test workspace"))
 
     lazy val project: RootProjectEditor =
       ctx.allStates(realBox.output("graph")).project
