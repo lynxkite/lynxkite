@@ -79,7 +79,7 @@ function getOrbitalControls(done) {
 // Preprocesses JavaScript files.
 gulp.task('js', gulp.series(getOrbitalControls, function js() {
   return gulp.src('app/scripts/**/*.js')
-    .pipe(annotate)
+    .pipe(annotate())
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(browserSync.stream());
 }));
@@ -158,7 +158,7 @@ gulp.task('quick', gulp.series('eslint', 'html', 'asciidoctor'));
 // overlays the frontend files in .tmp, and watches the source files. Whenever you edit a source
 // file, the right build task is run, and the browser automatically reloads the page. The proxy then
 // serves the modified files. Very good for development.
-gulp.task('serve', gulp.series('quick', function serve() {
+gulp.task('serve', gulp.series('quick', async function serve() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
   const proxy = httpProxy.createProxyServer({ secure: false });
@@ -188,7 +188,7 @@ gulp.task('serve', gulp.series('quick', function serve() {
       });
   });
   gulp.watch('app/styles/*.css', gulp.series('css'));
-  gulp.watch('app/scripts/**/*.js', gulp.series('eslint', 'js'));
+  gulp.watch('app/scripts/**/*.js', gulp.parallel('eslint', 'js'));
   gulp.watch('app/**/*.html', gulp.series('html'));
   gulp.watch('app/**/*.asciidoc', gulp.series('asciidoctor', 'genTemplates'));
 }));
