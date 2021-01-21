@@ -200,9 +200,9 @@ export KITE_EXTRA_JARS=
 # delete data files. It can be integer or double value.
 # export KITE_CLEANER_MIN_AGE_DAYS=14
 
-# The ecosystem docker image comes with JupyterLab, which can be used to run
-# LK Python API code. The default port of JupyterLab is 8888, but it can be changed.
-# export KITE_JUPYTER_PORT=9999
+# Anonymous data collection is opt-in by default. This setting can be used to force it on
+# or off on an instance. Accepted values are: optional, always, never
+# export KITE_DATA_COLLECTION=optional
 
 # Specify where Sphynx (the single-node server) is running and where the certificate can be found.
 # If any of these is unset, no Sphynx server is assumed.

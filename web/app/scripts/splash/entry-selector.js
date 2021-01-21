@@ -326,9 +326,11 @@ angular.module('biggraph').directive('entrySelector',
             steps: [
               {
                 orphan: true,
+                animation: false,
                 content: () => {
-                  dataCollectionCheckboxChecked = util.collectUsage;
-                  return `
+                  if (util.globals.dataCollectionMode === 'optional') {
+                    dataCollectionCheckboxChecked = util.collectUsage;
+                    return `
                 <p><b>Welcome to LynxKite!</b>
                 <p>This seems to be your first visit. I can quickly show you how to get started.
                 <p><label><input
@@ -336,18 +338,39 @@ angular.module('biggraph').directive('entrySelector',
                   onchange="dataCollectionCheckboxChanged(this);">
                   Share anonymous usage statistics</label>
                 <p><a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>
-                  `;
+                    `;
+                  } else if (util.globals.dataCollectionMode === 'always') {
+                    return `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                <p>The LynxKite team collects anonymous usage statistics when you use this instance.
+                (<a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>)
+                    `;
+                  } else {
+                    return `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                    `;
+                  }
                 },
-                animation: false,
               }, {
                 placement: 'top',
                 element: '.user-menu-dropup',
-                content: () => `
+                animation: false,
+                content: () => {
+                  if (util.globals.dataCollectionMode === 'optional') {
+                    return `
                 <p>If you wish to see this tutorial again, you can find it in the
                 hamburger menu.
                 <p>Use it if you change your mind about providing anonymous usage data.
-                ` + (util.collectUsage ? ' (Thank you for signing up!)' : ''),
-                animation: false,
+                    ` + (util.collectUsage ? ' (Thank you for signing up!)' : '');
+                  } else {
+                    return `
+                <p>If you wish to see this tutorial again, you can find it in the
+                hamburger menu.
+                    `;
+                  }
+                },
               }, {
                 placement: 'top',
                 element: '#directory-browser',
