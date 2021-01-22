@@ -177,8 +177,9 @@ class Op:
       os.chdir('/')
       self.datadir = '/data'
     else:  # Parent. Wait for child and finish the work.
-      _, error = os.waitpid(pid, 0)
-      if error:
+      _, error_and_reason = os.waitpid(pid, 0)
+      if error_and_reason:
+        error = error_and_reason // 256
         sys.exit(error)
       for m in mounts:
         subprocess.run(['umount', '-f', m], check=True)
