@@ -7,7 +7,8 @@ cd $(dirname $0)
 
 mkdir -p ../stage/sphynx/
 rm ../stage/sphynx/lynxkite-sphynx || true
-go build -o ../stage/sphynx/lynxkite-sphynx $GO_PKG/lynxkite-sphynx
+./sphynx_compile.sh
+cp .build/lynxkite-sphynx ../stage/sphynx/lynxkite-sphynx
 
 pkill lynxkite-sphynx
 # Sphynx restarts automatically.

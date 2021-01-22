@@ -1,0 +1,230 @@
+// "go build" will generate and compile wrappers based on this file.
+%module networkit
+
+// This part is C++ that is added to the wrapper code.
+%{
+#include <networkit/centrality/ApproxCloseness.hpp>
+#include <networkit/centrality/Betweenness.hpp>
+#include <networkit/centrality/CoreDecomposition.hpp>
+#include <networkit/centrality/EigenvectorCentrality.hpp>
+#include <networkit/centrality/EstimateBetweenness.hpp>
+#include <networkit/centrality/HarmonicCloseness.hpp>
+#include <networkit/centrality/KatzCentrality.hpp>
+#include <networkit/centrality/KPathCentrality.hpp>
+#include <networkit/centrality/LaplacianCentrality.hpp>
+#include <networkit/centrality/Sfigality.hpp>
+#include <networkit/correlation/Assortativity.hpp>
+#include <networkit/distance/Diameter.hpp>
+#include <networkit/distance/EffectiveDiameter.hpp>
+#include <networkit/distance/EffectiveDiameterApproximation.hpp>
+#include <networkit/generators/BarabasiAlbertGenerator.hpp>
+#include <networkit/generators/ChungLuGenerator.hpp>
+#include <networkit/generators/ClusteredRandomGraphGenerator.hpp>
+#include <networkit/generators/DorogovtsevMendesGenerator.hpp>
+#include <networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp>
+#include <networkit/generators/ErdosRenyiGenerator.hpp>
+#include <networkit/generators/HavelHakimiGenerator.hpp>
+#include <networkit/generators/HyperbolicGenerator.hpp>
+#include <networkit/generators/LFRGenerator.hpp>
+#include <networkit/generators/MocnikGenerator.hpp>
+#include <networkit/generators/PubWebGenerator.hpp>
+#include <networkit/generators/RegularRingLatticeGenerator.hpp>
+#include <networkit/generators/RmatGenerator.hpp>
+#include <networkit/generators/StochasticBlockmodel.hpp>
+#include <networkit/generators/WattsStrogatzGenerator.hpp>
+#include <networkit/graph/Graph.hpp>
+#include <networkit/graph/GraphBuilder.hpp>
+#include <networkit/auxiliary/Parallelism.hpp>
+#include <networkit/auxiliary/Random.hpp>
+#include <networkit/viz/MaxentStress.hpp>
+#include <networkit/viz/PivotMDS.hpp>
+#include <networkit/structures/Partition.hpp>
+#include <networkit/community/CommunityDetectionAlgorithm.hpp>
+#include <networkit/community/LPDegreeOrdered.hpp>
+#include <networkit/community/PLM.hpp>
+#include <networkit/community/PLP.hpp>
+#include <networkit/sparsification/ForestFireScore.hpp>
+#include <networkit/graph/RandomMaximumSpanningForest.hpp>
+#include <networkit/community/LocalCommunityEvaluation.hpp>
+#include <networkit/community/LocalCoverEvaluation.hpp>
+#include <networkit/community/LocalPartitionEvaluation.hpp>
+#include <networkit/community/CoverHubDominance.hpp>
+#include <networkit/community/IntrapartitionDensity.hpp>
+#include <networkit/community/IsolatedInterpartitionConductance.hpp>
+#include <networkit/community/IsolatedInterpartitionExpansion.hpp>
+#include <networkit/community/PartitionFragmentation.hpp>
+#include <networkit/community/StablePartitionNodes.hpp>
+#include <networkit/community/Coverage.hpp>
+#include <networkit/community/EdgeCut.hpp>
+#include <networkit/community/Modularity.hpp>
+#include "additions.h"
+using namespace NetworKit;
+%}
+
+// This part defines the interfaces to wrap. Mostly by pulling in the C++ headers.
+#define final
+%include "include/networkit/Globals.hpp"
+typedef uint64_t count;
+typedef uint64_t node;
+typedef uint64_t edgeid;
+class Graph {
+public:
+  count numberOfNodes() const noexcept;
+  count numberOfEdges() const noexcept;
+  bool isDirected() const noexcept;
+  count degree(node v) const;
+  count degreeIn(node v) const;
+  count degreeOut(node v) const;
+  void removeSelfLoops();
+  void removeMultiEdges();
+  void indexEdges(bool force = false);
+  edgeid edgeId(node u, node v) const;
+  node getIthNeighbor(node u, uint64_t i) const;
+  %extend {
+    // The original is templated and private.
+    edgeid getOutEdgeId(node u, uint64_t i) const {
+      return self->getIthNeighborWithId(u, i).second;
+    }
+  }
+};
+
+class Partition {
+public:
+  Partition(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
+  count numberOfElements() const;
+  count numberOfSubsets() const;
+  std::vector<uint64_t> getVector() const;
+  %extend {
+    // There's no pre-defined wrapper (std_set.i) for std::set.
+    // So we just convert it to a std::vector in C++.
+    std::vector<uint64_t> getSubsetIdsVector() const {
+      std::set<uint64_t> ss = self->getSubsetIds();
+      std::vector<uint64_t> v(ss.begin(), ss.end());
+      return v;
+    }
+  }
+};
+
+class Cover {
+public:
+  Cover(uint64_t z);
+  void addToSubset(uint64_t s, uint64_t e);
+  void setUpperBound(uint64_t upper);
+};
+
+// Allow passing in a Go slice for SphynxId * in our utility code.
+%typemap(gotype) (SphynxId *) %{[]uint32%}
+%typemap(in) (SphynxId *) {
+  $1 = ($1_ltype)$input.array;
+}
+// Turn C++ exceptions into Go panics.
+%exception {
+  try {
+    $action;
+  } catch (std::exception &e) {
+    _swig_gopanic(e.what());
+  }
+}
+
+%include "additions.h"
+%include <stdint.i>
+%include <std_vector.i>
+template <class T = double, size_t Dimensions = 0> class Point {
+public:
+  T at(uint64_t i) const;
+};
+%template(Uint64Vector) std::vector<unsigned long long>;
+%template(DoubleVector) std::vector<double>;
+%template(BoolVector) std::vector<bool>;
+%template(DoublePoint) Point<double>;
+%template(PointVector) std::vector<Point<double>>;
+%include "include/networkit/base/Algorithm.hpp"
+%ignore ranking;
+%ignore getMoveGraph;
+%ignore getMovePartition;
+%ignore ResultStats;
+%ignore coarsen;
+%ignore getTiming;
+
+%include "include/networkit/centrality/Centrality.hpp"
+%include "include/networkit/centrality/ApproxCloseness.hpp"
+%include "include/networkit/centrality/Betweenness.hpp"
+%include "include/networkit/centrality/CoreDecomposition.hpp"
+%include "include/networkit/centrality/EigenvectorCentrality.hpp"
+%include "include/networkit/centrality/EstimateBetweenness.hpp"
+%include "include/networkit/centrality/HarmonicCloseness.hpp"
+%include "include/networkit/centrality/KatzCentrality.hpp"
+%include "include/networkit/centrality/KPathCentrality.hpp"
+%include "include/networkit/centrality/LaplacianCentrality.hpp"
+%include "include/networkit/centrality/Sfigality.hpp"
+%include "include/networkit/correlation/Assortativity.hpp"
+%include "include/networkit/distance/Diameter.hpp"
+%include "include/networkit/distance/EffectiveDiameter.hpp"
+%include "include/networkit/distance/EffectiveDiameterApproximation.hpp"
+%include "include/networkit/generators/StaticGraphGenerator.hpp"
+%include "include/networkit/generators/StaticDegreeSequenceGenerator.hpp"
+%include "include/networkit/generators/BarabasiAlbertGenerator.hpp"
+%include "include/networkit/generators/ChungLuGenerator.hpp"
+%include "include/networkit/generators/ClusteredRandomGraphGenerator.hpp"
+%include "include/networkit/generators/DorogovtsevMendesGenerator.hpp"
+%include "include/networkit/generators/EdgeSwitchingMarkovChainGenerator.hpp"
+%include "include/networkit/generators/ErdosRenyiGenerator.hpp"
+%include "include/networkit/generators/HavelHakimiGenerator.hpp"
+%include "include/networkit/generators/HyperbolicGenerator.hpp"
+%include "include/networkit/generators/LFRGenerator.hpp"
+%include "include/networkit/generators/MocnikGenerator.hpp"
+%include "include/networkit/generators/PubWebGenerator.hpp"
+%include "include/networkit/generators/RegularRingLatticeGenerator.hpp"
+%include "include/networkit/generators/RmatGenerator.hpp"
+%include "include/networkit/generators/StochasticBlockmodel.hpp"
+%include "include/networkit/generators/WattsStrogatzGenerator.hpp"
+%include "include/networkit/graph/GraphBuilder.hpp"
+%include "include/networkit/auxiliary/Parallelism.hpp"
+%include "include/networkit/auxiliary/Random.hpp"
+%include "include/networkit/viz/GraphLayoutAlgorithm.hpp"
+%template(GraphLayoutAlgorithmDouble) NetworKit::GraphLayoutAlgorithm<double>;
+%include "include/networkit/viz/MaxentStress.hpp"
+%include "include/networkit/viz/PivotMDS.hpp"
+%include "include/networkit/community/CommunityDetectionAlgorithm.hpp"
+%include "include/networkit/community/LPDegreeOrdered.hpp"
+%include "include/networkit/community/PLM.hpp"
+%include "include/networkit/community/PLP.hpp"
+%include "include/networkit/edgescores/EdgeScore.hpp"
+%template(DoubleEdgeScore) NetworKit::EdgeScore<double>;
+%include "include/networkit/sparsification/ForestFireScore.hpp"
+%include "include/networkit/graph/RandomMaximumSpanningForest.hpp"
+%include "include/networkit/community/LocalCommunityEvaluation.hpp"
+%include "include/networkit/community/LocalCoverEvaluation.hpp"
+%include "include/networkit/community/LocalPartitionEvaluation.hpp"
+%include "include/networkit/community/QualityMeasure.hpp"
+%include "include/networkit/community/Coverage.hpp"
+%include "include/networkit/community/EdgeCut.hpp"
+%include "include/networkit/community/Modularity.hpp"
+
+namespace NetworKit {
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalCoverEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalCoverEvaluation {
+  public:
+    NAME(const Graph &g, const Cover &p);
+  };
+%enddef
+LocalCoverEvaluationSubclass(CoverHubDominance);
+
+// Manually define constructors instead of inheriting them, so SWIG can understand it.
+%define LocalPartitionEvaluationSubclass(NAME)
+  %feature("notabstract") NAME;
+  class NAME : public LocalPartitionEvaluation {
+  public:
+    NAME(const Graph &g, const Partition &p);
+  };
+%enddef
+LocalPartitionEvaluationSubclass(IntrapartitionDensity);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionConductance);
+LocalPartitionEvaluationSubclass(IsolatedInterpartitionExpansion);
+LocalPartitionEvaluationSubclass(PartitionFragmentation);
+LocalPartitionEvaluationSubclass(StablePartitionNodes);
+}

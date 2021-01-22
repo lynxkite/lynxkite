@@ -20,7 +20,6 @@
 }
 @media (min-width: 1400px) {
   .big-brand #tagline {
-    margin-top: -20px;
     font-size: 18px;
   }
 }

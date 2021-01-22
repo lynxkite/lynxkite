@@ -1,0 +1,29 @@
+### Find optimal spanning tree
+
+Finds the https://en.wikipedia.org/wiki/Minimum_spanning_tree[minimum (or maximum) spanning tree]
+in a graph. The edges marked by the emitted edge attribute (``in_tree`` by default)
+form a tree for each component in the graph. This tree will have the lowest
+(or highest) possible total edge weight.
+
+Uses the
+https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1RandomMaximumSpanningForest.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+The new edge attribute will be created under this name.
+Its value will be 1 for the edges that make up the tree
+and undefined for the edges that are not part of the tree.
+
+[p-weight]#Edge weight#::
+Choose a numerical attribute that represents the cost or value of the edges.
+With unit weights the result is just a random tree for each component.
+
+[p-optimize]#Optimize for#::
+Whether to find the tree with the lowest or highest possible total edge weight.
+
+[p-seed]#Random seed#::
+When multiple trees have the optimal weight, one is chosen at random.
++
+include::{g}[tag=random-seed]
+====

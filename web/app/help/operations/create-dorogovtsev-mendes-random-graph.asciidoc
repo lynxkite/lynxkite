@@ -1,0 +1,19 @@
+[[create-dorogovtsev-mendes-random-graph]]
+### Create Dorogovtsev–Mendes random graph
+
+Creates a planar random graph with a power-law distribution. Starts with a triangle and in each
+step adds a new node that is connected to the two endpoints of a randomly selected edge.
+
+See https://arxiv.org/abs/cond-mat/0206467[Modern architecture of random graphs: Constructions and correlations] by Dorogovtsev et al.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1DorogovtsevMendesGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====

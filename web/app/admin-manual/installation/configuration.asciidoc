@@ -8,6 +8,15 @@ copy that template to your home directory with name `.kiterc` and edit the setti
 The settings are documented inside the template file and in the <<kiterc-file>> section. This
 information is also available in the template file as comments.
 
+[[config-with-env-vars]]
+### Using environment variables
+
+Configuration options can also be set using environment
+variables. This also works when running via the standard docker image.
+
+If an option is set both in an environment var and in .kiterc then the
+environment variable's value takes precedence.
+
 [[configure-directories]]
 ### Configure directories
 

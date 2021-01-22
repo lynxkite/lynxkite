@@ -1,6 +1,8 @@
 
 # This file contains various configurations used when launching a LynxKite instance.
 
+# Settings in this file can be overriden using environment variables.
+
 # Specify the directory containing your Spark installation.
 export SPARK_HOME=$HOME/spark/spark-${SPARK_VERSION}
 
@@ -233,6 +235,10 @@ export KITE_EXTRA_JARS=
 # Specify the length of the protected time period in days, while the cleaner does not
 # delete data files. It can be integer or double value.
 # export KITE_CLEANER_MIN_AGE_DAYS=14
+
+# Anonymous data collection is opt-in by default. This setting can be used to force it on
+# or off on an instance. Accepted values are: optional, always, never
+# export KITE_DATA_COLLECTION=optional
 
 # Specify where Sphynx (the single-node server) is running and where the certificate can be found.
 # If any of these is unset, no Sphynx server is assumed.

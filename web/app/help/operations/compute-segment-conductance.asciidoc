@@ -1,0 +1,25 @@
+### Compute segment conductance
+
+Computes the conductance of each segment in a non-overlapping segmentation.
+The conductance of a segment is the number of edges going between the segment
+and the rest of the graph divided by sum of the degrees in the segment or the rest
+of the graph (whichever is smaller).
+
+A high conductance value indicates a segment that is strongly connected to the rest
+of the graph. A value over 0.5 means more edges going out of the segment than
+edges inside it.
+
+See https://arxiv.org/abs/1112.2143[Experiments on Density-Constrained Graph Clustering]
+by Görke et al for details and analysis.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1IsolatedInterpartitionConductance.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+
+[p-weight]#Edge weight#::
+The definition can be rephrased to apply to weighted graphs. In this case
+the total weight of the cut is compared to the weighted degrees.
+====

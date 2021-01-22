@@ -193,17 +193,29 @@ include::comment.asciidoc[]
 
 include::compare-segmentation-edges.asciidoc[]
 
+include::compute-assortativity.asciidoc[]
+
 include::compute-centrality.asciidoc[]
 
 include::compute-clustering-coefficient.asciidoc[]
 
+include::compute-coverage-of-segmentation.asciidoc[]
+
 include::compute-degree.asciidoc[]
+
+include::compute-diameter.asciidoc[]
 
 include::compute-dispersion.asciidoc[]
 
 include::compute-distance-via-shortest-path.asciidoc[]
 
+include::compute-edge-cut-of-segmentation.asciidoc[]
+
+include::compute-effective-diameter.asciidoc[]
+
 include::compute-embeddedness.asciidoc[]
+
+include::compute-hub-dominance.asciidoc[]
 
 include::compute-hyperbolic-edge-probability.asciidoc[]
 
@@ -211,15 +223,27 @@ include::compute-in-python.asciidoc[]
 
 include::compute-inputs.asciidoc[]
 
+include::compute-modularity-of-segmentation.asciidoc[]
+
 include::compute-pagerank.asciidoc[]
+
+include::compute-segment-conductance.asciidoc[]
+
+include::compute-segment-density.asciidoc[]
+
+include::compute-segment-expansion.asciidoc[]
+
+include::compute-segment-fragmentation.asciidoc[]
+
+include::compute-segment-stability.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]
 
-include::convert-edge-attribute-to-double.asciidoc[]
+include::convert-edge-attribute-to-number.asciidoc[]
 
 include::convert-edge-attribute-to-string.asciidoc[]
 
-include::convert-vertex-attribute-to-double.asciidoc[]
+include::convert-vertex-attribute-to-number.asciidoc[]
 
 include::convert-vertex-attribute-to-string.asciidoc[]
 
@@ -243,13 +267,31 @@ include::copy-vertex-attributes-to-segmentation.asciidoc[]
 
 include::correlate-two-attributes.asciidoc[]
 
+include::create-a-graph-with-certain-degrees.asciidoc[]
+
+include::create-barab-si-albert-graph.asciidoc[]
+
+include::create-clustered-random-graph.asciidoc[]
+
+include::create-dorogovtsev-mendes-random-graph.asciidoc[]
+
 include::create-edges-from-co-occurrence.asciidoc[]
 
 include::create-edges-from-set-overlaps.asciidoc[]
 
+include::create-erd-s-r-nyi-graph.asciidoc[]
+
 include::create-example-graph.asciidoc[]
 
 include::create-graph-in-python.asciidoc[]
+
+include::create-hyperbolic-random-graph.asciidoc[]
+
+include::create-lfr-random-graph.asciidoc[]
+
+include::create-mocnik-random-graph.asciidoc[]
+
+include::create-p2p-random-graph.asciidoc[]
 
 include::create-random-edges.asciidoc[]
 
@@ -337,13 +379,21 @@ include::filter-by-attributes.asciidoc[]
 
 include::filter-with-sql.asciidoc[]
 
+include::find-communities-with-label-propagation.asciidoc[]
+
+include::find-communities-with-the-louvain-method.asciidoc[]
+
 include::find-connected-components.asciidoc[]
 
 include::find-infocom-communities.asciidoc[]
 
+include::find-k-core-decomposition.asciidoc[]
+
 include::find-maximal-cliques.asciidoc[]
 
 include::find-modular-clustering.asciidoc[]
+
+include::find-optimal-spanning-tree.asciidoc[]
 
 include::find-steiner-tree.asciidoc[]
 
@@ -411,6 +461,8 @@ include::one-hot-encode-attribute.asciidoc[]
 
 include::output.asciidoc[]
 
+include::place-vertices-with-edge-lengths.asciidoc[]
+
 include::predict-edges-with-hyperbolic-positions.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
@@ -442,6 +494,8 @@ include::sample-edges-from-co-occurrence.asciidoc[]
 include::sample-graph-by-random-walks.asciidoc[]
 
 include::save-to-snapshot.asciidoc[]
+
+include::score-edges-with-the-forest-fire-model.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 

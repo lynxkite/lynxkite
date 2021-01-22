@@ -1,0 +1,18 @@
+### Compute segment stability
+
+Computes the stability of each segment in a non-overlapping segmentation.
+A vertex is considered stable if it has more neighbors inside the
+segment than outside. The stability of a segment is the fraction of
+its vertices that are stable.
+
+A high stability value (close to 1) indicates a segment where vertices are
+more connected internally than externally. A stability lower than 0.5 means
+that the majority of neighbors are external for more than half of the vertices.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1StablePartitionNodes.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+====

@@ -1,6 +1,7 @@
 // Common operation input/output signatures.
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 
 class VertexAttributeInput[T] extends MagicInputSignature {
@@ -27,3 +28,13 @@ class Segmentation(
 }
 
 class NoInput extends MagicInputSignature {}
+
+class AttributeOutput[T: TypeTag](vs: VertexSet)(implicit instance: MetaGraphOperationInstance)
+  extends MagicOutput(instance) {
+  val attr = vertexAttribute[T](vs)
+}
+
+class ScalarOutput[T: TypeTag](implicit instance: MetaGraphOperationInstance)
+  extends MagicOutput(instance) {
+  val sc = scalar[T]
+}

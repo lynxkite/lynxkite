@@ -1,0 +1,17 @@
+### Compute segment fragmentation
+
+Computes the fragmentation of each segment in a non-overlapping segmentation.
+The fragmentation of a segment is one minus the ratio of the size of its largest
+component and the whole segment.
+
+A segment that is entirely connected will have a fragmentation of zero.
+If the fragmentation approaches one, it will be made up of smaller and
+smaller components.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PartitionFragmentation.html[NetworKit]
+implementation.
+
+====
+[p-name]#Save as#::
+This box creates a new vertex attribute on the segmentation by this name.
+====

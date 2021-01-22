@@ -56,6 +56,8 @@ To build LynxKite you will need:
 - Java 8 and [SBT](https://www.scala-sbt.org/)
 - Python 3.7+ with [Conda](https://docs.conda.io/en/latest/miniconda.html)
 - Go 1.14+
+- Swig 4.0+
+- cmake 3.5+
 
 Before the first build:
 
@@ -67,7 +69,7 @@ Before the first build:
 We use `make` for building the whole project.
 
     make
-    stage/bin/lynxkite interactive
+    target/universal/stage/bin/lynxkite interactive
 
 
 ## Tests

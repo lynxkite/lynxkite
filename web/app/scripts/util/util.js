@@ -145,8 +145,23 @@ angular.module('biggraph')
     // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
     // $config describes the original request config.
     function toResource(promise) {
+      const sendTime = new Date();
+      // Collect statistics about backend requests.
+      function collect(response, error) {
+        const url = response.config && response.config.url;
+        if (url && !url.includes('ajax/long-poll') && !url.includes('ajax/jsError')) {
+          util.logUsage('request', {
+            url,
+            // The start of the error so we can see what kind of exception this is,
+            // but won't accidentally capture data.
+            error: error && error.toString().slice(0, 30),
+            duration: new Date() - sendTime,
+          });
+        }
+      }
       const resource = promise.then(
         function onSuccess(response) {
+          collect(response);
           angular.extend(resource, response.data);
           resource.$resolved = true;
           return response.data;
@@ -160,6 +175,7 @@ angular.module('biggraph')
           } else {
             resource.$error = util.responseToErrorMessage(failure);
           }
+          collect(failure, resource.$error);
           return $q.reject(failure);
         });
       resource.$resolved = false;
@@ -187,11 +203,10 @@ angular.module('biggraph')
           dst[key] = src[key];
           delete src[key];
         } else if (! (key in dst)) {
-        /* eslint-disable no-console */
+          /* eslint-disable no-console */
           console.error('Key "' + key + '" is not present in either dictionary!');
         }
       },
-
 
       // Json GET with caching and parameter wrapping.
       get: function(url, params) { return getResource(url, params, { cache: true }); },
@@ -323,7 +338,7 @@ angular.module('biggraph')
         }
       },
 
-      // Gets the value of the scalar. If the value (or an error message is embdedded
+      // Gets the value of the scalar. If the value (or an error message) is embedded
       // in the scalar, then just takes it. Otherwise it fetches it from the server.
       // The return value is an object containing a 'value' property and a '$abandon'
       // function.
@@ -442,6 +457,19 @@ angular.module('biggraph')
           console.error('Unknown computation state for scalar in ', scalar);
         }
 
+        if (scalar && (scalar.title === '!vertex_count' || scalar.title === '!edge_count')) {
+          // Async function to handle both promises and ready values.
+          (async function() {
+            const v = (await scalarValue.value).string;
+            if (v) {
+              // Collect approximate graph sizes.
+              util.logUsage('scalar', {
+                name: scalar.title,
+                rounded: parseInt(v.slice(0, 2).padEnd(v.length, '0')),
+              });
+            }
+          })();
+        }
         return scalarValue;
       },
 
@@ -491,13 +519,87 @@ angular.module('biggraph')
     // Call before $location change to avoid a controller reload.
     // Source: https://github.com/angular/angular.js/issues/1699
     util.skipReload = function() {
-      console.log('skipReload');
       const lastRoute = $route.current;
       const un = $rootScope.$on('$locationChangeSuccess', () => {
         $route.current = lastRoute;
         un();
       });
     };
+
+    function randomId() {
+      const arr = new Uint8Array(20);
+      window.crypto.getRandomValues(arr);
+      return Array.from(arr, c => c.toString(16)).join('');
+    }
+    let dataCollectionId = localStorage.getItem('data collection id');
+    if (!dataCollectionId) {
+      dataCollectionId = randomId();
+      localStorage.setItem('data collection id', dataCollectionId);
+    }
+    util.collectUsage = localStorage.getItem('allow data collection') === 'true';
+    util.allowDataCollection = function(allow) {
+      util.collectUsage = allow;
+      localStorage.setItem('allow data collection', allow ? 'true' : 'false');
+    };
+    util.globals.then(() => {
+      if (util.globals.dataCollectionMode === 'always') {
+        util.allowDataCollection(true);
+      } else if (util.globals.dataCollectionMode === 'never') {
+        util.allowDataCollection(false);
+      }
+    });
+
+    const usageLog = [];
+    let submitUsageLogTimeout;
+    // Saves an event to send as usage statistics, if the user has opted in.
+    util.logUsage = function(kind, details) {
+      if (!util.collectUsage) {
+        return;
+      }
+      // Usage events are collected in "usageLog" and sent to the server at most once a minute.
+      usageLog.push({
+        id: dataCollectionId,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        version: util.globals && util.globals.version,
+        browser: navigator.userAgent,
+        time: new Date().toISOString(),
+        kind, ...details,
+      });
+      if (!submitUsageLogTimeout) {
+        submitUsageLogTimeout = setTimeout(submitUsageLog, 60000);
+      }
+    };
+    let analytics;
+    function submitUsageLog() {
+      submitUsageLogTimeout = undefined;
+      if (!analytics) {
+        // Shared. All LynxKite instances collect stats here.
+        const firebaseConfig = {
+          apiKey: 'AIzaSyDWY_jW9nPFJP1Iwexa9jf3foRgK51OTXM',
+          authDomain: 'external-lynxkite.firebaseapp.com',
+          projectId: 'external-lynxkite',
+          storageBucket: 'external-lynxkite.appspot.com',
+          messagingSenderId: '422846954881',
+          appId: '1:422846954881:web:53c06b4ed052166db7bc80',
+          measurementId: 'G-5NDZSKY669',
+        };
+        /* global firebase */
+        firebase.initializeApp(firebaseConfig);
+        analytics = firebase.analytics();
+      }
+      /* eslint-disable no-console */
+      console.log('Submitting anonymous usage data...');
+      for (const e of usageLog.slice(0, 100)) { // Log no more than 100 events.
+        // Firestore does not accept undefined values.
+        for (const k in e) {
+          if (e[k] === undefined) {
+            delete e[k];
+          }
+        }
+        analytics.logEvent('usage_' + e.kind, e);
+      }
+      usageLog.length = 0;
+    }
 
     return util;
   });

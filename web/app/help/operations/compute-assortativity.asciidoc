@@ -1,0 +1,15 @@
+### Compute assortativity
+
+Assortativity is the correlation in the values of an attribute
+along the edges of the graph. A high assortativity means connected vertices
+often have similar attribute values.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1Assortativity.html[NetworKit] implementation.
+
+====
+[p-name]#Save as#::
+The new graph attribute will be created under this name.
+
+[p-attr]#Attribute#::
+The attribute in which you are interested in correlations along the edges.
+====

@@ -344,10 +344,14 @@ class LynxKite:
     self._import_box_names: List[str] = [
         'importCSV', 'importJDBC', 'importJSON',
         'importORC', 'importParquet', 'importFromHive',
-        'importNeo4j']
+        'importAVRO', 'importDelta',
+        'importFromNeo4j']
     self._export_box_names: List[str] = [
         'exportToCSV', 'exportToJSON', 'exportToParquet',
-        'exportToJDBC', 'exportToORC', 'exportToHive']
+        'exportToJDBC', 'exportToORC', 'exportToHive',
+        'exportToAVRO', 'exportToDelta',
+        'exportVertexAttributesToNeo4j', 'exportEdgeAttributesToNeo4j',
+        'exportGraphToNeo4j']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:

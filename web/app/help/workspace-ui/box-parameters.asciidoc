@@ -48,6 +48,42 @@ http://docs.scala-lang.org/overviews/core/string-interpolation.html[Scala string
 This means that Scala expressions can be embedded in these parameters. For example, you could write
 `accounts-${date.toInt + 1}.csv`.
 
+#### Built-ins in parametric parameters
+
+Besides the workspace parameters, a few built-in values are also accessible
+in parametric parameters to help implement flexible solutions.
+
+`vertexAttributes`, `edgeAttributes`, and `graphAttributes` are lists of objects
+with `name` and `typeName` properties corresponding to the attributes found on the graph
+inputs of the box. They could be used, for example, to convert all string attributes to
+numbers with a <<convert-vertex-attribute-to-number>> box. Manually selecting the
+attributes only works for a fixed input. But all inputs can be covered with a parametric
+parameter:
+
+```
+${
+  vertexAttributes
+    .filter(_.typeName == "String")
+    .map(_.name)
+    .mkString(",")
+}
+```
+
+`workspaceName` is only available in a top-level workspace, and not inside custom boxes.
+It holds the name of the workspace as a string. One use case for this is in
+<<authoring-wizards, wizards>>. Opening a wizard will create a copy of it, which will have
+a new, unique workspace name. Using this workspace name in a parametric parameter can
+ensure that the parameter has a unique value. For example, if your <<Create graph in Python>>
+box uses randomness or an external data source, you can force its re-evaluation by
+making the code a parametric parameter and including the workspace name in a comment.
+
+```
+# $workspaceName
+import random
+...
+```
+
+
 ### Unexpected parameters
 
 Unexpected parameters are parameters that have been set at some point on the box, but are no longer

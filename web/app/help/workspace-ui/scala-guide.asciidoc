@@ -55,4 +55,4 @@ the following.
 
 Values of other types need to be manually converted before returning from the Scala script.
 For input types, you can use, for example, either of
-<<convert-vertex-attribute-to-string>> or <<convert-vertex-attribute-to-double>>.
+<<convert-vertex-attribute-to-string>> or <<convert-vertex-attribute-to-number>>.

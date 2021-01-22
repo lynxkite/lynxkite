@@ -1,0 +1,47 @@
+### Create hyperbolic random graph
+
+Creates a random graph based on randomly placed points on the hyperbolic plane.
+The points corresponding to vertices are placed on a disk.
+If two points are closer than a threshold (by the hyperbolic distance metric),
+an edge will be created between those two vertices.
+
+The motivation for this is to reflect popularity (how close the point is to the center)
+and interest (in which direction the point lies). This leads to realistic clustering
+properties in the generated random graph.
+
+The radius of the disk and the neighborhood radius can be chosen to ensure a
+desired average and power-law exponent for the degree distribution.
+
+Instead of a strict neighborhood radius, within which edges are always created and
+outside of which they never are, we can also consider probabilistic
+edge generation. In this case the shorter the distance between two points, the
+more likely that an edge should be generated.
+
+The temperature parameter is defined in a way that makes the strict neighborhood
+radius case an edge case (T=0) and we can smoothly increase the influence of
+randomness by increasing the temperature.
+
+See https://arxiv.org/abs/1006.5169[Hyperbolic Geometry of Complex Networks]
+by Krioukov et al for more details.
+
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1HyperbolicGenerator.html[NetworKit] implementation.
+
+====
+[p-size]#Number of vertices#::
+The created graph will have this many vertices.
+
+[p-avg_degree]#Average degree#::
+The expected value of the degree distribution.
+
+[p-exponent]#Power-law exponent#::
+The exponent of the degree distribution.
+
+[p-temperature]#Temperature#::
+When zero, vertices are connected if they lie within a fixed threshold on the hyperbolic disk.
+Larger values add randomness while trying to preserve the degree distribution.
+
+[p-seed]#Seed#::
+The random seed.
++
+include::{g}[tag=random-seed]
+====
