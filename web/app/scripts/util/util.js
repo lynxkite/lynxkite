@@ -519,6 +519,13 @@ angular.module('biggraph')
       util.collectUsage = allow;
       localStorage.setItem('allow data collection', allow ? 'true' : 'false');
     };
+    util.globals.then(() => {
+      if (util.globals.dataCollectionMode === 'always') {
+        util.allowDataCollection(true);
+      } else if (util.globals.dataCollectionMode === 'never') {
+        util.allowDataCollection(false);
+      }
+    });
 
     const usageLog = [];
     let submitUsageLogTimeout;
