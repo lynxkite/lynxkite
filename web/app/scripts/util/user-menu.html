@@ -21,6 +21,16 @@
           <i class="glyphicon glyphicon-comment"></i> tutorial
         </a>
       </li>
+      <li ng-if="anonymousUsageStats === 'enabled'">
+        <a href ng-click="tutorial()">
+          <i class="glyphicon glyphicon-ok"></i> reporting usage stats
+        </a>
+      </li>
+      <li ng-if="anonymousUsageStats === 'disabled'">
+        <a href ng-click="tutorial()">
+          <i class="glyphicon glyphicon-remove"></i> not reporting usage
+        </a>
+      </li>
       <li ng-if="util.user.isAdmin">
         <a href="#/admin-manual" target="_blank">
           <i class="glyphicon glyphicon-book"></i> admin manual

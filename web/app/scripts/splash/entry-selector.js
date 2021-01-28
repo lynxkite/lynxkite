@@ -397,13 +397,13 @@ angular.module('biggraph').directive('entrySelector',
             ],
             onNext: function(tour) {
               if (tour.getCurrentStepIndex() === 0) {
-                util.allowDataCollection(dataCollectionCheckboxChecked);
+                scope.$apply(() => util.allowDataCollection(dataCollectionCheckboxChecked));
               }
             },
             onEnd: function(tour) {
               localStorage.setItem('entry-selector tutorial done', 'true');
               if (tour.getCurrentStepIndex() === 0) {
-                util.allowDataCollection(dataCollectionCheckboxChecked);
+                scope.$apply(() => util.allowDataCollection(dataCollectionCheckboxChecked));
               }
             },
             onShown: function() {
