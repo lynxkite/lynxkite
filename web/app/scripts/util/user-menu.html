@@ -24,17 +24,17 @@
           <i class="glyphicon glyphicon-question-sign"></i> help
         </a>
       </li>
-      <li>
+      <li ng-if="!util.user.wizardOnly">
         <a href ng-click="tutorial()">
           <i class="glyphicon glyphicon-comment"></i> tutorial
         </a>
       </li>
-      <li ng-if="anonymousUsageStats === 'enabled'">
+      <li ng-if="!util.user.wizardOnly && anonymousUsageStats === 'enabled'">
         <a href ng-click="tutorial()">
           <i class="glyphicon glyphicon-ok"></i> reporting usage stats
         </a>
       </li>
-      <li ng-if="anonymousUsageStats === 'disabled'">
+      <li ng-if="!util.user.wizardOnly && anonymousUsageStats === 'disabled'">
         <a href ng-click="tutorial()">
           <i class="glyphicon glyphicon-remove"></i> not reporting usage
         </a>
@@ -78,7 +78,7 @@
         </a>
       </li>
       <li>
-        <a href ng-if="util.globals.hasAuth" ng-click="logout()">
+        <a href ng-if="util.globals.hasAuth && util.user.auth !== 'none'" ng-click="logout()">
           <i class="glyphicon glyphicon-log-out"></i> log out
       </li>
       <li>
