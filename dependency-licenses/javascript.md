@@ -1,18 +1,54 @@
 ├─ (BSD-2-Clause OR MIT OR Apache-2.0)
 │  └─ rc@1.2.8
+├─ (BSD-3-Clause OR GPL-2.0)
+│  └─ node-forge@0.10.0
 ├─ (CC-BY-4.0 AND OFL-1.1 AND MIT)
 │  └─ @fortawesome/fontawesome-free@5.13.1
 ├─ (GPL-2.0 OR MIT)
 │  └─ ua-parser-js@0.7.17
 ├─ (MIT AND Zlib)
 │  └─ pako@1.0.10
+├─ (MIT or Apache-2.0)
+│  └─ dom-storage@2.1.0
 ├─ (MIT OR Apache-2.0)
 │  └─ atob@2.1.2
 ├─ (MIT OR GPL-3.0)
 │  └─ jszip@3.2.0
 ├─ (WTFPL OR MIT)
 │  └─ path-is-inside@1.0.2
+├─ 0BSD
+│  └─ tslib@1.14.1
 ├─ Apache-2.0
+│  ├─ @firebase/analytics-types@0.4.0
+│  ├─ @firebase/analytics@0.6.2
+│  ├─ @firebase/app-types@0.6.1
+│  ├─ @firebase/app@0.6.13
+│  ├─ @firebase/auth-interop-types@0.1.5
+│  ├─ @firebase/auth-types@0.10.1
+│  ├─ @firebase/auth@0.16.1
+│  ├─ @firebase/component@0.1.21
+│  ├─ @firebase/database-types@0.6.1
+│  ├─ @firebase/database@0.8.3
+│  ├─ @firebase/firestore-types@2.1.0
+│  ├─ @firebase/firestore@2.1.2
+│  ├─ @firebase/functions-types@0.4.0
+│  ├─ @firebase/functions@0.6.1
+│  ├─ @firebase/installations-types@0.3.4
+│  ├─ @firebase/installations@0.4.19
+│  ├─ @firebase/logger@0.2.6
+│  ├─ @firebase/messaging-types@0.5.0
+│  ├─ @firebase/messaging@0.7.3
+│  ├─ @firebase/performance-types@0.0.13
+│  ├─ @firebase/performance@0.4.5
+│  ├─ @firebase/polyfill@0.3.36
+│  ├─ @firebase/remote-config-types@0.1.9
+│  ├─ @firebase/remote-config@0.1.30
+│  ├─ @firebase/storage-types@0.3.13
+│  ├─ @firebase/storage@0.4.2
+│  ├─ @firebase/util@0.3.4
+│  ├─ @firebase/webchannel-wrapper@0.4.1
+│  ├─ @grpc/grpc-js@1.2.3
+│  ├─ @grpc/proto-loader@0.5.5
 │  ├─ aws-sign2@0.7.0
 │  ├─ browser-sync-ui@2.26.2
 │  ├─ browser-sync@2.26.3
@@ -22,9 +58,17 @@
 │  ├─ doctrine@3.0.0
 │  ├─ easy-extender@2.3.4
 │  ├─ eazy-logger@3.0.2
+│  ├─ ecdsa-sig-formatter@1.0.11
 │  ├─ eslint-visitor-keys@1.2.0
+│  ├─ fast-text-encoding@1.0.3
+│  ├─ faye-websocket@0.11.3
+│  ├─ firebase@8.2.3
 │  ├─ forever-agent@0.6.1
 │  ├─ fuse.js@3.4.4
+│  ├─ gaxios@4.1.0
+│  ├─ gcp-metadata@4.2.1
+│  ├─ google-auth-library@6.1.4
+│  ├─ long@4.0.0
 │  ├─ oauth-sign@0.9.0
 │  ├─ pause-stream@0.0.11
 │  ├─ request@2.88.0
@@ -35,7 +79,9 @@
 │  ├─ spdx-correct@3.1.0
 │  ├─ tslib@1.9.3
 │  ├─ tunnel-agent@0.6.0
-│  └─ validate-npm-package-license@3.0.4
+│  ├─ validate-npm-package-license@3.0.4
+│  ├─ websocket-driver@0.7.4
+│  └─ websocket-extensions@0.1.4
 ├─ Apache*
 │  └─ chroma-js@2.0.3
 ├─ BSD-2-Clause
@@ -53,8 +99,19 @@
 │  ├─ terser@3.17.0
 │  └─ uri-js@4.2.2
 ├─ BSD-3-Clause
+│  ├─ @protobufjs/aspromise@1.1.2
+│  ├─ @protobufjs/base64@1.1.2
+│  ├─ @protobufjs/codegen@2.0.4
+│  ├─ @protobufjs/eventemitter@1.1.0
+│  ├─ @protobufjs/fetch@1.1.0
+│  ├─ @protobufjs/float@1.0.2
+│  ├─ @protobufjs/inquire@1.1.0
+│  ├─ @protobufjs/path@1.1.2
+│  ├─ @protobufjs/pool@1.1.0
+│  ├─ @protobufjs/utf8@1.1.0
 │  ├─ ace-builds@1.2.5
 │  ├─ bcrypt-pbkdf@1.0.2
+│  ├─ buffer-equal-constant-time@1.0.1
 │  ├─ d3-cloud@1.2.5
 │  ├─ d3-dispatch@1.0.5
 │  ├─ d3-dsv@0.1.14
@@ -71,6 +128,7 @@
 │  ├─ fork-stream@0.0.4
 │  ├─ node-pre-gyp@0.10.3
 │  ├─ parse-cache-control@1.0.1
+│  ├─ protobufjs@6.10.2
 │  ├─ qs@6.2.3
 │  ├─ qs@6.5.2
 │  ├─ qs@6.6.0
@@ -129,13 +187,15 @@
 │  ├─ har-schema@2.0.0
 │  ├─ has-unicode@2.0.1
 │  ├─ hosted-git-info@2.7.1
+│  ├─ idb@3.0.2
 │  ├─ ignore-walk@3.0.1
 │  ├─ inflight@1.0.6
 │  ├─ inherits@2.0.3
-│  ├─ ini@1.3.5
+│  ├─ ini@1.3.7
 │  ├─ is-number-like@1.0.8
 │  ├─ isexe@2.0.0
 │  ├─ json-stringify-safe@5.0.1
+│  ├─ lru-cache@6.0.0
 │  ├─ memoizee@0.4.14
 │  ├─ minimatch@3.0.4
 │  ├─ minipass@2.3.5
@@ -151,6 +211,7 @@
 │  ├─ rimraf@2.6.3
 │  ├─ sax@1.2.4
 │  ├─ semver@5.6.0
+│  ├─ semver@6.3.0
 │  ├─ server-destroy@1.0.1
 │  ├─ set-blocking@2.0.0
 │  ├─ setprototypeof@1.1.0
@@ -164,6 +225,7 @@
 │  ├─ wrappy@1.0.2
 │  ├─ y18n@3.2.1
 │  ├─ yallist@3.0.3
+│  ├─ yallist@4.0.0
 │  ├─ yargs-parser@4.2.1
 │  └─ yargs-parser@5.0.0
 ├─ MIT
@@ -173,12 +235,16 @@
 │  ├─ @gulp-sourcemaps/map-sources@1.0.0
 │  ├─ @types/concat-stream@1.6.0
 │  ├─ @types/form-data@0.0.33
+│  ├─ @types/long@4.0.1
 │  ├─ @types/node@11.11.0
+│  ├─ @types/node@12.19.14
+│  ├─ @types/node@13.13.40
 │  ├─ @types/node@8.10.43
 │  ├─ @types/node@9.6.45
 │  ├─ @types/q@0.0.32
 │  ├─ @types/qs@6.5.2
 │  ├─ @types/selenium-webdriver@3.0.15
+│  ├─ abort-controller@3.0.0
 │  ├─ accepts@1.3.5
 │  ├─ acorn-jsx@5.0.1
 │  ├─ acorn@5.7.4
@@ -186,6 +252,7 @@
 │  ├─ adm-zip@0.4.13
 │  ├─ after@0.8.2
 │  ├─ agent-base@4.3.0
+│  ├─ agent-base@6.0.2
 │  ├─ ajv@6.10.0
 │  ├─ angular-cookies@1.7.7
 │  ├─ angular-hotkeys@1.7.0
@@ -231,6 +298,7 @@
 │  ├─ array-unique@0.3.2
 │  ├─ arraybuffer.slice@0.0.7
 │  ├─ arrify@1.0.1
+│  ├─ arrify@2.0.1
 │  ├─ asap@2.0.6
 │  ├─ asciidoctor.js@1.5.9
 │  ├─ asn1@0.2.4
@@ -252,9 +320,11 @@
 │  ├─ balanced-match@1.0.0
 │  ├─ base@0.11.2
 │  ├─ base64-arraybuffer@0.1.5
+│  ├─ base64-js@1.5.1
 │  ├─ base64id@1.0.0
 │  ├─ batch@0.6.1
 │  ├─ better-assert@1.0.2
+│  ├─ bignumber.js@9.0.1
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
@@ -302,6 +372,7 @@
 │  ├─ cookie@0.3.1
 │  ├─ copy-descriptor@0.1.1
 │  ├─ copy-props@2.0.4
+│  ├─ core-js@3.6.5
 │  ├─ core-util-is@1.0.2
 │  ├─ cross-spawn@6.0.5
 │  ├─ css@2.2.4
@@ -312,6 +383,7 @@
 │  ├─ debug@3.1.0
 │  ├─ debug@3.2.6
 │  ├─ debug@4.1.1
+│  ├─ debug@4.3.1
 │  ├─ decamelize@1.2.0
 │  ├─ decode-uri-component@0.2.0
 │  ├─ deep-extend@0.6.0
@@ -362,6 +434,7 @@
 │  ├─ event-emitter@0.3.5
 │  ├─ event-stream@3.3.4
 │  ├─ event-stream@4.0.1
+│  ├─ event-target-shim@5.0.1
 │  ├─ eventemitter3@1.2.0
 │  ├─ eventemitter3@4.0.7
 │  ├─ exit@0.1.2
@@ -427,7 +500,9 @@
 │  ├─ globby@6.1.0
 │  ├─ glogg@1.0.2
 │  ├─ good-listener@1.2.2
+│  ├─ google-p12-pem@3.0.3
 │  ├─ group-array@0.3.3
+│  ├─ gtoken@5.2.0
 │  ├─ gulp-autoprefixer@6.0.0
 │  ├─ gulp-cli@2.0.1
 │  ├─ gulp-concat@2.6.1
@@ -462,12 +537,14 @@
 │  ├─ http-basic@2.5.1
 │  ├─ http-basic@7.0.0
 │  ├─ http-errors@1.6.3
+│  ├─ http-parser-js@0.5.3
 │  ├─ http-proxy@1.15.2
 │  ├─ http-proxy@1.18.1
 │  ├─ http-response-object@1.1.0
 │  ├─ http-response-object@3.0.1
 │  ├─ http-signature@1.2.0
 │  ├─ https-proxy-agent@2.2.4
+│  ├─ https-proxy-agent@5.0.0
 │  ├─ iconv-lite@0.2.11
 │  ├─ iconv-lite@0.4.23
 │  ├─ iconv-lite@0.4.24
@@ -517,6 +594,7 @@
 │  ├─ is-promise@2.1.0
 │  ├─ is-relative-url@1.0.0
 │  ├─ is-relative@1.0.0
+│  ├─ is-stream@2.0.0
 │  ├─ is-typedarray@1.0.0
 │  ├─ is-unc-path@1.0.0
 │  ├─ is-utf8@0.2.1
@@ -537,12 +615,15 @@
 │  ├─ js-tokens@4.0.0
 │  ├─ js-yaml@3.13.1
 │  ├─ jsbn@0.1.1
+│  ├─ json-bigint@1.0.0
 │  ├─ json-schema-traverse@0.4.1
 │  ├─ json-stable-stringify-without-jsonify@1.0.1
 │  ├─ json-stable-stringify@1.0.1
 │  ├─ jsonfile@3.0.1
 │  ├─ jsprim@1.4.1
 │  ├─ just-debounce@1.0.0
+│  ├─ jwa@2.0.0
+│  ├─ jws@4.0.0
 │  ├─ kind-of@1.1.0
 │  ├─ kind-of@3.2.2
 │  ├─ kind-of@4.0.0
@@ -560,6 +641,7 @@
 │  ├─ linkify-it@2.1.0
 │  ├─ load-json-file@1.1.0
 │  ├─ localtunnel@1.9.1
+│  ├─ lodash.camelcase@4.3.0
 │  ├─ lodash.isfinite@3.3.2
 │  ├─ lodash@4.17.19
 │  ├─ lru-queue@0.1.0
@@ -579,6 +661,7 @@
 │  ├─ mime-db@1.38.0
 │  ├─ mime-types@2.1.22
 │  ├─ mime@1.4.1
+│  ├─ mime@2.4.7
 │  ├─ mimic-fn@1.2.0
 │  ├─ minimist@0.0.10
 │  ├─ minimist@0.0.8
@@ -598,6 +681,7 @@
 │  ├─ negotiator@0.6.1
 │  ├─ next-tick@1.0.0
 │  ├─ nice-try@1.0.5
+│  ├─ node-fetch@2.6.1
 │  ├─ node-releases@1.1.10
 │  ├─ normalize-path@2.1.1
 │  ├─ normalize-path@3.0.0
@@ -670,6 +754,7 @@
 │  ├─ process-nextick-args@2.0.0
 │  ├─ progress@2.0.3
 │  ├─ promise-polyfill@6.1.0
+│  ├─ promise-polyfill@8.1.3
 │  ├─ promise@7.3.1
 │  ├─ promise@8.0.2
 │  ├─ protractor@5.4.2
@@ -715,6 +800,7 @@
 │  ├─ run-async@2.3.0
 │  ├─ run-sequence@2.2.1
 │  ├─ safe-buffer@5.1.2
+│  ├─ safe-buffer@5.2.1
 │  ├─ safe-regex@1.1.0
 │  ├─ safer-buffer@2.1.2
 │  ├─ saucelabs@1.5.0
@@ -841,6 +927,7 @@
 │  ├─ vlq@0.2.3
 │  ├─ webdriver-js-extender@2.1.0
 │  ├─ webdriver-manager@12.1.1
+│  ├─ whatwg-fetch@2.0.4
 │  ├─ window-size@0.1.4
 │  ├─ window-size@0.2.0
 │  ├─ wordwrap@0.0.3
