@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 4.2.0
+
 - 42 algorithms from [NetworKit](https://networkit.github.io/) have been integrated
   into LynxKite. They include new centrality measures, random graph generators,
   community detection methods, graph metrics (diameter, effective diameter, assortativity),

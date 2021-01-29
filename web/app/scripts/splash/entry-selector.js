@@ -329,12 +329,13 @@ angular.module('biggraph').directive('entrySelector',
                 animation: false,
                 content: () => {
                   if (util.globals.dataCollectionMode === 'optional') {
-                    dataCollectionCheckboxChecked = util.collectUsage;
+                    dataCollectionCheckboxChecked =
+                      util.collectUsage || !localStorage.getItem('allow data collection');
                     return `
                 <p><b>Welcome to LynxKite!</b>
                 <p>This seems to be your first visit. I can quickly show you how to get started.
                 <p><label><input
-                  type="checkbox" id="allow-data-collection" ${util.collectUsage ? 'checked' : ''}
+                  type="checkbox" id="allow-data-collection" ${dataCollectionCheckboxChecked ? 'checked' : ''}
                   onchange="dataCollectionCheckboxChanged(this);">
                   Share anonymous usage statistics</label>
                 <p><a href="https://lynxkite.com/anonymous-usage-statistics">What do we collect?</a>
@@ -396,13 +397,13 @@ angular.module('biggraph').directive('entrySelector',
             ],
             onNext: function(tour) {
               if (tour.getCurrentStepIndex() === 0) {
-                util.allowDataCollection(dataCollectionCheckboxChecked);
+                scope.$apply(() => util.allowDataCollection(dataCollectionCheckboxChecked));
               }
             },
             onEnd: function(tour) {
               localStorage.setItem('entry-selector tutorial done', 'true');
               if (tour.getCurrentStepIndex() === 0) {
-                util.allowDataCollection(dataCollectionCheckboxChecked);
+                scope.$apply(() => util.allowDataCollection(dataCollectionCheckboxChecked));
               }
             },
             onShown: function() {
