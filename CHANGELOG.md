@@ -12,7 +12,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   optimal spanning trees and more.
   ([#102](https://github.com/lynxkite/lynxkite/pull/102),
   [#106](https://github.com/lynxkite/lynxkite/pull/106),
-  [#111](https://github.com/lynxkite/lynxkite/pull/111)),
+  [#111](https://github.com/lynxkite/lynxkite/pull/111),
   [#123](https://github.com/lynxkite/lynxkite/pull/123))
 - Users can now opt in to sharing anonymous usage statistics with the LynxKite team.
   ([#128](https://github.com/lynxkite/lynxkite/pull/128))
