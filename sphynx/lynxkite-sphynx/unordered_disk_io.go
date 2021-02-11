@@ -32,6 +32,12 @@ func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 func sortIds(ids []int64) {
 	sort.Sort(Int64Slice(ids))
 }
+func assertSorted(ids []int64) {
+	if !sort.IsSorted(Int64Slice(ids)) {
+		// The previous loglines will point out which entity this is.
+		panic("These IDs are not sorted.")
+	}
+}
 
 type Int64Slice []int64
 

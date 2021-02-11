@@ -55,6 +55,7 @@ var vertexSetSchema = arrow.NewSchema(
 	}, nil)
 
 func (v *VertexSet) toOrderedRows() array.Record {
+	assertSorted(v.MappingToUnordered)
 	b := array.NewInt64Builder(arrowAllocator)
 	defer b.Release()
 	b.AppendValues(v.MappingToUnordered, nil)
@@ -69,6 +70,8 @@ func (v *VertexSet) readFromOrdered(rec array.Record) error {
 	for i, d := range data {
 		v.MappingToUnordered[i] = d
 	}
+	// For backward compatibility.
+	sortIds(v.MappingToUnordered)
 	return nil
 }
 
