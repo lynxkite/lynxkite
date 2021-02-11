@@ -71,11 +71,16 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 	}
 
 	firstEmbedding = NewEdgeBundle(len(allHaveIt), len(allHaveIt))
-	mapping := vs0.GetMappingToOrdered()
-	for idx, id := range allHaveIt {
-		firstEmbedding.Src[idx] = SphynxId(idx)
-		firstEmbedding.Dst[idx] = mapping[id]
-		firstEmbedding.EdgeMapping[idx] = id
+	for j, k := 0, 0; j < len(mergeVertices) && k < len(allHaveIt); {
+		if mergeVertices[j].id == allHaveIt[k] {
+			firstEmbedding.Src[k] = SphynxId(k)
+			firstEmbedding.Dst[k] = SphynxId(j)
+			firstEmbedding.EdgeMapping[k] = allHaveIt[k]
+			j++
+			k++
+		} else {
+			j++
+		}
 	}
 	return
 }
