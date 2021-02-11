@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
-	"sync"
 )
 
 type Server struct {
@@ -42,21 +41,8 @@ func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
 }
 
 type VertexSet struct {
-	sync.Mutex
+	// This slice contains the Spark IDs in ascending order.
 	MappingToUnordered []int64
-	MappingToOrdered   map[int64]SphynxId
-}
-
-func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
-	vs.Lock()
-	defer vs.Unlock()
-	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]SphynxId, len(vs.MappingToUnordered))
-		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = SphynxId(i)
-		}
-	}
-	return vs.MappingToOrdered
 }
 
 // A scalar is stored as its JSON encoding. If you need the real value, unmarshal it for yourself.

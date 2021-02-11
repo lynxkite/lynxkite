@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -26,6 +27,40 @@ func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 	default:
 		return AttributeToUnorderedRows(e, vs1)
 	}
+}
+
+func sortIds(ids []int64) {
+	sort.Sort(Int64Slice(ids))
+}
+
+type Int64Slice []int64
+
+func (a Int64Slice) Len() int {
+	return len(a)
+}
+func (a Int64Slice) Less(i, j int) bool {
+	return a[i] < a[j]
+}
+func (a Int64Slice) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+type unorderedEdgesSorter struct {
+	rows []UnorderedEdgeRow
+	less func(i, j int) bool
+}
+
+func (self unorderedEdgesSorter) Len() int {
+	return len(self.rows)
+}
+func (self unorderedEdgesSorter) Swap(i, j int) {
+	self.rows[i], self.rows[j] = self.rows[j], self.rows[i]
+}
+func (self unorderedEdgesSorter) Less(i, j int) bool {
+	return self.less(i, j)
+}
+func sortEdgeRows(rows []UnorderedEdgeRow, less func(i, j int) bool) {
+	sort.Sort(unorderedEdgesSorter{rows, less})
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
@@ -148,14 +183,12 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		mappingToUnordered := make([]int64, numRows)
-		mappingToOrdered := make(map[int64]SphynxId)
 		for i, v := range rows {
 			mappingToUnordered[i] = v.Id
-			mappingToOrdered[v.Id] = SphynxId(i)
 		}
+		sortIds(mappingToUnordered)
 		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
-			MappingToOrdered:   mappingToOrdered,
 		}
 	case *EdgeBundle:
 		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
@@ -167,7 +200,6 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, err
 		}
 		rows := make([]UnorderedEdgeRow, 0)
-		numRows := 0
 		for _, fr := range fileReaders {
 			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), numGoRoutines)
 			if err != nil {
@@ -175,28 +207,41 @@ func (s *Server) ReadFromUnorderedDisk(
 			}
 			partialNumRows := int(pr.GetNumRows())
 			partialRows := make([]UnorderedEdgeRow, partialNumRows)
-			numRows = numRows + partialNumRows
 			if err := pr.Read(&partialRows); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file of EdgeBundle: %v", err)
 			}
 			pr.ReadStop()
 			rows = append(rows, partialRows...)
 		}
-		edgeMapping := make([]int64, numRows)
-		src := make([]SphynxId, numRows)
-		dst := make([]SphynxId, numRows)
-		mappingToOrdered1 := vs1.GetMappingToOrdered()
-		mappingToOrdered2 := vs2.GetMappingToOrdered()
+		// Translate Src to ordered IDs.
+		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Src < rows[j].Src })
+		for i, j := 0, 0; i < len(vs1.MappingToUnordered) && j < len(rows); {
+			if vs1.MappingToUnordered[i] == rows[j].Src {
+				rows[j].Src = int64(i)
+				j++
+			} else {
+				i++
+			}
+		}
+		// Translate Dst to ordered IDs.
+		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Dst < rows[j].Dst })
+		for i, j := 0, 0; i < len(vs2.MappingToUnordered) && j < len(rows); {
+			if vs2.MappingToUnordered[i] == rows[j].Dst {
+				rows[j].Dst = int64(i)
+				j++
+			} else {
+				i++
+			}
+		}
+		// Store the results ordered by edge ID.
+		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Id < rows[j].Id })
+		es := NewEdgeBundle(len(rows), len(rows))
 		for i, row := range rows {
-			edgeMapping[i] = row.Id
-			src[i] = mappingToOrdered1[row.Src]
-			dst[i] = mappingToOrdered2[row.Dst]
+			es.EdgeMapping[i] = row.Id
+			es.Src[i] = SphynxId(row.Src)
+			es.Dst[i] = SphynxId(row.Dst)
 		}
-		entity = &EdgeBundle{
-			Src:         src,
-			Dst:         dst,
-			EdgeMapping: edgeMapping,
-		}
+		entity = es
 	case TabularEntity:
 		vs, err := s.getVertexSet(GUID(in.Vsguid1))
 		if err != nil {
@@ -207,8 +252,6 @@ func (s *Server) ReadFromUnorderedDisk(
 		rowSliceType := reflect.SliceOf(rowType)
 		rowsPointer := reflect.New(rowSliceType)
 		rows := rowsPointer.Elem()
-
-		numRows := 0
 		for _, fr := range fileReaders {
 			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), numGoRoutines)
 			if err != nil {
@@ -218,7 +261,6 @@ func (s *Server) ReadFromUnorderedDisk(
 			partialRowsPointer := reflect.New(rowSliceType)
 			partialRows := partialRowsPointer.Elem()
 			partialRows.Set(reflect.MakeSlice(rowSliceType, partialNumRows, partialNumRows))
-			numRows = partialNumRows + numRows
 			if err := pr.Read(partialRowsPointer.Interface()); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file of %v: %v", reflect.TypeOf(e), err)
 			}
@@ -232,13 +274,17 @@ func (s *Server) ReadFromUnorderedDisk(
 		defined := attr.Elem().FieldByName("Defined")
 		idIndex := fieldIndex(rowType, "Id")
 		valueIndex := fieldIndex(rowType, "Value")
-		mappingToOrdered := vs.GetMappingToOrdered()
 		true := reflect.ValueOf(true)
-		for i := 0; i < numRows; i++ {
-			row := rows.Index(i)
-			orderedId := mappingToOrdered[row.Field(idIndex).Int()]
-			values.Index(int(orderedId)).Set(row.Field(valueIndex))
-			defined.Index(int(orderedId)).Set(true)
+		sort.Slice(rows.Interface(), func(i, j int) bool {
+			return rows.Index(i).Field(idIndex).Int() < rows.Index(j).Field(idIndex).Int()
+		})
+		for i, j := 0, 0; i < len(vs.MappingToUnordered) && j < rows.Len(); i++ {
+			row := rows.Index(j)
+			if vs.MappingToUnordered[i] == row.Field(idIndex).Int() {
+				values.Index(i).Set(row.Field(valueIndex))
+				defined.Index(i).Set(true)
+				j++
+			}
 		}
 	case *Scalar:
 		sc, err := readScalar(dirName)
