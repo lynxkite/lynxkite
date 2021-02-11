@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -108,12 +109,12 @@ func (entityCache *EntityCache) maybeGarbageCollect() {
 
 	for i := 0; i < len(evictionCandidates) && memEvicted < howMuchMemoryToRecycle; i++ {
 		guid := evictionCandidates[i].guid
-		fmt.Printf("Evicting: %v\n", evictionCandidates[i])
+		log.Printf("Evicting: %v\n", evictionCandidates[i])
 		delete(entityCache.cache, guid)
 		memEvicted += evictionCandidates[i].memUsage
 		itemsEvicted++
 	}
-	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
+	log.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
 		itemsEvicted, len(evictionCandidates), memEvicted, (ourTimestamp()-start)/1000000)
 	entityCache.totalMemUsage -= memEvicted
 }
