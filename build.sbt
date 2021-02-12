@@ -94,8 +94,8 @@ libraryDependencies ++= Seq(
   // Used for working with AVRO files. 
   "org.apache.spark" %% "spark-avro" % sparkVersion.value,
   // For Neo4j tests.
-  "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
-  "org.testcontainers" % "neo4j" % "1.14.3" % Test,
+  "org.testcontainers" % "testcontainers" % "1.15.2" % Test,
+  "org.testcontainers" % "neo4j" % "1.15.2" % Test,
   // Used for working with Delta tables.
   "io.delta" %% "delta-core" % "0.6.1"
 )
