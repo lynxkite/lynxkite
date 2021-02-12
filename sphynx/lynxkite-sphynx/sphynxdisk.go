@@ -160,7 +160,7 @@ func (s *Server) WriteToOrderedDisk(
 
 	e, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("entity", guid)
 	}
 
 	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {

@@ -78,6 +78,13 @@ func (entityCache *EntityCache) Set(guid GUID, entity Entity) {
 	// But we do not want to update the timestamp for those.
 }
 
+func NotInCacheError(kind string, guid GUID) error {
+	// If we drop something from the cache it will be reloaded before the next use.
+	// The exception is when we drop it right after loading it. This generally means
+	// the cache is too small.
+	return fmt.Errorf("Could not fit %v %v into memory. Increase SPHYNX_CACHED_ENTITIES_MAX_MEM_MB?")
+}
+
 type entityEvictionItem struct {
 	guid      GUID
 	timestamp int64

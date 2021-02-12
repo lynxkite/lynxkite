@@ -74,7 +74,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	guid := GUID(in.Guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("entity", guid)
 	}
 	log.Printf("Writing %v %v to unordered disk.", entity.typeName(), guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)

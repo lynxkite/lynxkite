@@ -118,7 +118,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	log.Printf("Received GetScalar request with GUID %v.", guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("scalar", guid)
 	}
 
 	switch scalar := entity.(type) {
@@ -139,7 +139,7 @@ func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemory
 func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("vertex set", guid)
 	}
 	switch vs := entity.(type) {
 	case *VertexSet:
