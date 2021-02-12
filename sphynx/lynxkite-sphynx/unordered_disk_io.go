@@ -76,7 +76,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	if !exists {
 		return nil, fmt.Errorf("Guid %v is missing", guid)
 	}
-	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
+	log.Printf("Writing %v %v to unordered disk.", entity.typeName(), guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)
@@ -134,7 +134,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
-	log.Printf("Reindexing entity with guid %v to use Sphynx IDs.", in.Guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
@@ -166,6 +165,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			in.Type = attributeType + in.Type
 		}
 	}
+	log.Printf("Reading %v %v from unordered disk.", in.Type, in.Guid)
 	entity, err := createEntity(in.Type)
 	if err != nil {
 		return nil, err

@@ -62,6 +62,7 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
+	log.Printf("Computing %v.", shortOpName(opInst))
 	switch in.Domain {
 	case "SphynxMemory":
 		op, exists := operationRepository[shortOpName(opInst)]
