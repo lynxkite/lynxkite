@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
+	"sort"
 )
 
 type Server struct {
@@ -38,6 +39,21 @@ func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
 		Dst:         make([]SphynxId, size, maxSize),
 		EdgeMapping: make([]int64, size, maxSize),
 	}
+}
+
+func (self *EdgeBundle) Len() int {
+	return len(self.EdgeMapping)
+}
+func (self *EdgeBundle) Swap(i, j int) {
+	self.Src[i], self.Src[j] = self.Src[j], self.Src[i]
+	self.Dst[i], self.Dst[j] = self.Dst[j], self.Dst[i]
+	self.EdgeMapping[i], self.EdgeMapping[j] = self.EdgeMapping[j], self.EdgeMapping[i]
+}
+func (self *EdgeBundle) Less(i, j int) bool {
+	return self.EdgeMapping[i] < self.EdgeMapping[j]
+}
+func (self *EdgeBundle) Sort() {
+	sort.Sort(self)
 }
 
 type VertexSet struct {
