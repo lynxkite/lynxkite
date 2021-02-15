@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strings"
 )
@@ -186,6 +188,12 @@ func main() {
 	port := os.Getenv("SPHYNX_PORT")
 	if port == "" {
 		log.Fatalf("Please set SPHYNX_PORT.")
+	}
+	debugPort := os.Getenv("SPHYNX_DEBUG_PORT")
+	if debugPort != "" {
+		go func() error {
+			return http.ListenAndServe(fmt.Sprintf(":%s", debugPort), nil)
+		}()
 	}
 	keydir := flag.String(
 		"keydir", "", "directory of cert.pem and private-key.pem files (for encryption)")
