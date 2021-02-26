@@ -12,10 +12,7 @@ hub:
       admin_users:
       - andras.nemeth@lynxanalytics.com
       - daniel.darabos@lynxanalytics.com
-      - fai@lynxanalytics.com
       - gabor.krivachy@lynxanalytics.com
-      - gabor.olah@lynxanalytics.com
-      - hanna.gabor@lynxanalytics.com
   extraEnv:
     JUPYTER_ENABLE_LAB: 'yes'
   extraConfig: |
