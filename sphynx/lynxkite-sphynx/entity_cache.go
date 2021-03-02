@@ -84,7 +84,7 @@ func NotInCacheError(kind string, guid GUID) error {
 	// If we drop something from the cache it will be reloaded before the next use.
 	// The exception is when we drop it right after loading it. This generally means
 	// the cache is too small.
-	return fmt.Errorf("Could not fit %v %v into memory. Increase SPHYNX_CACHED_ENTITIES_MAX_MEM_MB?")
+	return fmt.Errorf("Could not fit %v %v into memory. Increase SPHYNX_CACHED_ENTITIES_MAX_MEM_MB?", kind, guid)
 }
 
 type entityEvictionItem struct {
