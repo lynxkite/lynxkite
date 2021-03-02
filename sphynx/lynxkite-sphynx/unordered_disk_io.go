@@ -70,7 +70,6 @@ func sortEdgeRows(rows []UnorderedEdgeRow, less func(i, j int) bool) {
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
-	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
@@ -88,7 +87,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	}
 	switch e := entity.(type) {
 	case TabularEntity:
-		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), numGoRoutines)
+		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), int64(sphynxThreads))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
@@ -133,7 +132,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
-	const numGoRoutines int64 = 4
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
@@ -175,7 +173,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		rows := make([]UnorderedVertexRow, 0)
 		numRows := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
@@ -207,7 +205,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		}
 		rows := make([]UnorderedEdgeRow, 0)
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
@@ -259,7 +257,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		rowsPointer := reflect.New(rowSliceType)
 		rows := rowsPointer.Elem()
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}

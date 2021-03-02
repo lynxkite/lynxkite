@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -34,6 +35,7 @@ type cacheEntry struct {
 }
 
 var cachedEntitiesMaxMem = getNumericEnv("SPHYNX_CACHED_ENTITIES_MAX_MEM_MB", 1*1024) * 1024 * 1024
+var sphynxThreads = getNumericEnv("SPHYNX_THREADS", runtime.NumCPU())
 
 func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	ts := ourTimestamp()
