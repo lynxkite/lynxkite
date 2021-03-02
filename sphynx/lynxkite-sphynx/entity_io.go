@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/jfcg/sorty"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -71,7 +72,7 @@ func (v *VertexSet) readFromOrdered(rec array.Record) error {
 		v.MappingToUnordered[i] = d
 	}
 	// For backward compatibility.
-	sortIds(v.MappingToUnordered)
+	sorty.SortI8(v.MappingToUnordered)
 	return nil
 }
 

@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jfcg/sorty"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
@@ -14,7 +15,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"sort"
 	"strings"
 )
 
@@ -29,44 +29,27 @@ func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 	}
 }
 
-func sortIds(ids []int64) {
-	sort.Sort(Int64Slice(ids))
-}
 func assertSorted(ids []int64) {
-	if !sort.IsSorted(Int64Slice(ids)) {
+	if sorty.IsSortedI8(ids) != 0 {
 		// The previous loglines will point out which entity this is.
 		panic("These IDs are not sorted.")
 	}
 }
 
-type Int64Slice []int64
-
-func (a Int64Slice) Len() int {
-	return len(a)
-}
-func (a Int64Slice) Less(i, j int) bool {
-	return a[i] < a[j]
-}
-func (a Int64Slice) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-type unorderedEdgesSorter struct {
-	rows []UnorderedEdgeRow
-	less func(i, j int) bool
-}
-
-func (self unorderedEdgesSorter) Len() int {
-	return len(self.rows)
-}
-func (self unorderedEdgesSorter) Swap(i, j int) {
-	self.rows[i], self.rows[j] = self.rows[j], self.rows[i]
-}
-func (self unorderedEdgesSorter) Less(i, j int) bool {
-	return self.less(i, j)
-}
-func sortEdgeRows(rows []UnorderedEdgeRow, less func(i, j int) bool) {
-	sort.Sort(unorderedEdgesSorter{rows, less})
+// Useful if you want to sort something by keys without messing with it.
+func sortedPermutation(ids []int64) []int {
+	permutation := make([]int, len(ids), len(ids))
+	for i := range permutation {
+		permutation[i] = i
+	}
+	sorty.Sort(len(ids), func(i, k, r, s int) bool {
+		if ids[permutation[i]] < ids[permutation[k]] {
+			permutation[r], permutation[s] = permutation[s], permutation[r]
+			return true
+		}
+		return false
+	})
+	return permutation
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
@@ -132,6 +115,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
+	sorty.Mxg = uint32(sphynxThreads)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
@@ -190,7 +174,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		for i, v := range rows {
 			mappingToUnordered[i] = v.Id
 		}
-		sortIds(mappingToUnordered)
+		sorty.SortI8(mappingToUnordered)
 		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
 		}
@@ -218,7 +202,15 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		// Translate Src to ordered IDs.
-		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Src < rows[j].Src })
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Src < rows[k].Src {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
 		for i, j := 0, 0; i < len(vs1.MappingToUnordered) && j < len(rows); {
 			if vs1.MappingToUnordered[i] == rows[j].Src {
 				rows[j].Src = int64(i)
@@ -227,8 +219,15 @@ func (s *Server) ReadFromUnorderedDisk(
 				i++
 			}
 		}
-		// Translate Dst to ordered IDs.
-		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Dst < rows[j].Dst })
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Dst < rows[k].Dst {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
 		for i, j := 0, 0; i < len(vs2.MappingToUnordered) && j < len(rows); {
 			if vs2.MappingToUnordered[i] == rows[j].Dst {
 				rows[j].Dst = int64(i)
@@ -238,7 +237,15 @@ func (s *Server) ReadFromUnorderedDisk(
 			}
 		}
 		// Store the results ordered by edge ID.
-		sortEdgeRows(rows, func(i, j int) bool { return rows[i].Id < rows[j].Id })
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Id < rows[k].Id {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
 		es := NewEdgeBundle(len(rows), len(rows))
 		for i, row := range rows {
 			es.EdgeMapping[i] = row.Id
@@ -278,15 +285,17 @@ func (s *Server) ReadFromUnorderedDisk(
 		defined := attr.Elem().FieldByName("Defined")
 		idIndex := fieldIndex(rowType, "Id")
 		valueIndex := fieldIndex(rowType, "Value")
-		true := reflect.ValueOf(true)
-		sort.Slice(rows.Interface(), func(i, j int) bool {
-			return rows.Index(i).Field(idIndex).Int() < rows.Index(j).Field(idIndex).Int()
-		})
-		for i, j := 0, 0; i < len(vs.MappingToUnordered) && j < rows.Len(); i++ {
-			row := rows.Index(j)
-			if vs.MappingToUnordered[i] == row.Field(idIndex).Int() {
+		trueValue := reflect.ValueOf(true)
+		ids := make([]int64, rows.Len(), rows.Len())
+		for i := range ids {
+			ids[i] = rows.Index(i).Field(idIndex).Int()
+		}
+		permutation := sortedPermutation(ids)
+		for i, j := 0, 0; i < len(vs.MappingToUnordered) && j < len(permutation); i++ {
+			row := rows.Index(permutation[j])
+			if vs.MappingToUnordered[i] == ids[permutation[j]] {
 				values.Index(i).Set(row.Field(valueIndex))
-				defined.Index(i).Set(true)
+				defined.Index(i).Set(trueValue)
 				j++
 			}
 		}
