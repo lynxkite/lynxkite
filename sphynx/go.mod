@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/apache/arrow/go/arrow v0.0.0-20200701075601-f25a014ab157
 	github.com/golang/protobuf v1.4.2
+	github.com/jfcg/sorty v1.0.12
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/juju/testing v0.0.0-20200608005635-e4eedbc6f7aa // indirect
 	github.com/xitongsys/parquet-go v1.5.2

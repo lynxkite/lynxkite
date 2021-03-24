@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jfcg/sorty"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
@@ -28,14 +29,36 @@ func toUnorderedRows(e TabularEntity, vs1 *VertexSet, vs2 *VertexSet) []interfac
 	}
 }
 
+func assertSorted(ids []int64) {
+	if sorty.IsSortedI8(ids) != 0 {
+		// The previous loglines will point out which entity this is.
+		panic("These IDs are not sorted.")
+	}
+}
+
+// Useful if you want to sort something by keys without messing with it.
+func sortedPermutation(ids []int64) []int {
+	permutation := make([]int, len(ids), len(ids))
+	for i := range permutation {
+		permutation[i] = i
+	}
+	sorty.Sort(len(ids), func(i, k, r, s int) bool {
+		if ids[permutation[i]] < ids[permutation[k]] {
+			permutation[r], permutation[s] = permutation[s], permutation[r]
+			return true
+		}
+		return false
+	})
+	return permutation
+}
+
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
-	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("entity", guid)
 	}
-	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
+	log.Printf("Writing %v %v to unordered disk.", entity.typeName(), guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)
@@ -47,7 +70,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	}
 	switch e := entity.(type) {
 	case TabularEntity:
-		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), numGoRoutines)
+		pw, err := writer.NewParquetWriter(fw, e.unorderedRow(), int64(sphynxThreads))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
@@ -92,8 +115,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
-	const numGoRoutines int64 = 4
-	log.Printf("Reindexing entity with guid %v to use Sphynx IDs.", in.Guid)
+	sorty.Mxg = uint32(sphynxThreads)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
@@ -125,6 +147,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			in.Type = attributeType + in.Type
 		}
 	}
+	log.Printf("Reading %v %v from unordered disk.", in.Type, in.Guid)
 	entity, err := createEntity(in.Type)
 	if err != nil {
 		return nil, err
@@ -134,7 +157,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		rows := make([]UnorderedVertexRow, 0)
 		numRows := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
@@ -148,14 +171,12 @@ func (s *Server) ReadFromUnorderedDisk(
 			rows = append(rows, partialRows...)
 		}
 		mappingToUnordered := make([]int64, numRows)
-		mappingToOrdered := make(map[int64]SphynxId)
 		for i, v := range rows {
 			mappingToUnordered[i] = v.Id
-			mappingToOrdered[v.Id] = SphynxId(i)
 		}
+		sorty.SortI8(mappingToUnordered)
 		entity = &VertexSet{
 			MappingToUnordered: mappingToUnordered,
-			MappingToOrdered:   mappingToOrdered,
 		}
 	case *EdgeBundle:
 		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
@@ -167,36 +188,71 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, err
 		}
 		rows := make([]UnorderedEdgeRow, 0)
-		numRows := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, new(UnorderedEdgeRow), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumRows := int(pr.GetNumRows())
 			partialRows := make([]UnorderedEdgeRow, partialNumRows)
-			numRows = numRows + partialNumRows
 			if err := pr.Read(&partialRows); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file of EdgeBundle: %v", err)
 			}
 			pr.ReadStop()
 			rows = append(rows, partialRows...)
 		}
-		edgeMapping := make([]int64, numRows)
-		src := make([]SphynxId, numRows)
-		dst := make([]SphynxId, numRows)
-		mappingToOrdered1 := vs1.GetMappingToOrdered()
-		mappingToOrdered2 := vs2.GetMappingToOrdered()
+		// Translate Src to ordered IDs.
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Src < rows[k].Src {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
+		for i, j := 0, 0; i < len(vs1.MappingToUnordered) && j < len(rows); {
+			if vs1.MappingToUnordered[i] == rows[j].Src {
+				rows[j].Src = int64(i)
+				j++
+			} else {
+				i++
+			}
+		}
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Dst < rows[k].Dst {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
+		for i, j := 0, 0; i < len(vs2.MappingToUnordered) && j < len(rows); {
+			if vs2.MappingToUnordered[i] == rows[j].Dst {
+				rows[j].Dst = int64(i)
+				j++
+			} else {
+				i++
+			}
+		}
+		// Store the results ordered by edge ID.
+		sorty.Sort(len(rows), func(i, k, r, s int) bool {
+			if rows[i].Id < rows[k].Id {
+				if r != s {
+					rows[r], rows[s] = rows[s], rows[r]
+				}
+				return true
+			}
+			return false
+		})
+		es := NewEdgeBundle(len(rows), len(rows))
 		for i, row := range rows {
-			edgeMapping[i] = row.Id
-			src[i] = mappingToOrdered1[row.Src]
-			dst[i] = mappingToOrdered2[row.Dst]
+			es.EdgeMapping[i] = row.Id
+			es.Src[i] = SphynxId(row.Src)
+			es.Dst[i] = SphynxId(row.Dst)
 		}
-		entity = &EdgeBundle{
-			Src:         src,
-			Dst:         dst,
-			EdgeMapping: edgeMapping,
-		}
+		entity = es
 	case TabularEntity:
 		vs, err := s.getVertexSet(GUID(in.Vsguid1))
 		if err != nil {
@@ -207,10 +263,8 @@ func (s *Server) ReadFromUnorderedDisk(
 		rowSliceType := reflect.SliceOf(rowType)
 		rowsPointer := reflect.New(rowSliceType)
 		rows := rowsPointer.Elem()
-
-		numRows := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, e.unorderedRow(), int64(sphynxThreads))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
@@ -218,7 +272,6 @@ func (s *Server) ReadFromUnorderedDisk(
 			partialRowsPointer := reflect.New(rowSliceType)
 			partialRows := partialRowsPointer.Elem()
 			partialRows.Set(reflect.MakeSlice(rowSliceType, partialNumRows, partialNumRows))
-			numRows = partialNumRows + numRows
 			if err := pr.Read(partialRowsPointer.Interface()); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file of %v: %v", reflect.TypeOf(e), err)
 			}
@@ -232,13 +285,19 @@ func (s *Server) ReadFromUnorderedDisk(
 		defined := attr.Elem().FieldByName("Defined")
 		idIndex := fieldIndex(rowType, "Id")
 		valueIndex := fieldIndex(rowType, "Value")
-		mappingToOrdered := vs.GetMappingToOrdered()
-		true := reflect.ValueOf(true)
-		for i := 0; i < numRows; i++ {
-			row := rows.Index(i)
-			orderedId := mappingToOrdered[row.Field(idIndex).Int()]
-			values.Index(int(orderedId)).Set(row.Field(valueIndex))
-			defined.Index(int(orderedId)).Set(true)
+		trueValue := reflect.ValueOf(true)
+		ids := make([]int64, rows.Len(), rows.Len())
+		for i := range ids {
+			ids[i] = rows.Index(i).Field(idIndex).Int()
+		}
+		permutation := sortedPermutation(ids)
+		for i, j := 0, 0; i < len(vs.MappingToUnordered) && j < len(permutation); i++ {
+			row := rows.Index(permutation[j])
+			if vs.MappingToUnordered[i] == ids[permutation[j]] {
+				values.Index(i).Set(row.Field(valueIndex))
+				defined.Index(i).Set(trueValue)
+				j++
+			}
 		}
 	case *Scalar:
 		sc, err := readScalar(dirName)
