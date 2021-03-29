@@ -26,7 +26,7 @@ sources in doc in Compile := List()  // Disable doc generation.
 
 publishArtifact in packageSrc := false  // Don't package source.
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.13"
 
 val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
 
@@ -35,20 +35,8 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 libraryDependencies ++= Seq(
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
-  // These jackson deps are needed to resolve some jackson version conflict by forcing to use 2.6.5
-  "com.fasterxml.jackson.core" % "jackson-core" % "2.6.5",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.5",
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5",
-  // This one is just for reading YAML.
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.5",
-  // The below dep is needed to avoid jar version conflict when running in Amazon EMR.
-  // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
-  // This way we get s3 consistent view support.)
-  "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "org.apache.commons" % "commons-lang3" % "3.5",
-  "org.apache.commons" % "commons-math3" % "3.4.1",  // Match Spark 2.2.0.
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
-  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+  "org.scalatest" %% "scalatest" % "3.2.5" % "test",
   // For accessing S3 fs from local instance.
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
     // But we still want to take Hadoop from Spark.
@@ -56,32 +44,17 @@ libraryDependencies ++= Seq(
   "net.java.dev.jets3t" % "jets3t" % "0.9.4",
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
-  "com.clearspring.analytics" % "stream" % "2.7.0",
+  "com.clearspring.analytics" % "stream" % "2.9.6",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "8.0.20",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
-  "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
-    ExclusionRule(organization="org.specs2", name="specs2_2.11")),
-  // Required because of Ammonite using a different scalaz version than the Play framework
-  "org.specs2" %% "specs2-junit" % "3.7",
-  // For SPARK-10306.
-  "org.scala-lang" % "scala-library" % "2.11.8",
-  // Fast linear algebra.
-  "org.scalanlp" %% "breeze" % "0.13.1",
-  "org.scalanlp" %% "breeze-natives" % "0.13.1",
-  // This is a dependency of Spark. Needed here explicitly
-  // so that SetupMetricsSingleton compiles.
-  "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   // The Google Cloud Storage connector for Spark and Hive
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
   "org.geotools" % "gt-shapefile" % "20.0",
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
-  // Plot drawing
-  "org.vegas-viz" %% "vegas" % "0.3.9",
-  "org.vegas-viz" %% "vegas-spark" % "0.3.9",
   // Generate java from proto files. Used by Sphynx.
   "io.grpc" % "grpc-protobuf" % "1.24.0",
   "io.grpc" % "grpc-stub" % "1.24.0",
@@ -97,7 +70,9 @@ libraryDependencies ++= Seq(
   "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
   "org.testcontainers" % "neo4j" % "1.14.3" % Test,
   // Used for working with Delta tables.
-  "io.delta" %% "delta-core" % "0.6.1"
+  "io.delta" %% "delta-core" % "0.6.1",
+  // All kinds of parsing, e.g. filters.
+  "com.lihaoyi" %% "fastparse" % "1.0.0"
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
@@ -115,14 +90,14 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 resolvers ++= Seq(
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
   "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/",
-  "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven")
+  "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
   import sys.process._
   val res = Project.extract(state).runTask(com.typesafe.sbt.packager.Keys.stage, state)._1
   val date = java.util.Calendar.getInstance.getTime
-  val user = util.Properties.userName
+  val user = System.getProperty("user.name")
   val branch = "git rev-parse --abbrev-ref HEAD".!!
   val modified = if ("git status --porcelain".!!.nonEmpty) "modified" else "mint"
   val lastCommit = "git log -1 --oneline".!!
@@ -138,9 +113,8 @@ testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "logs/sbttest.out", "
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
 
-inConfig(Benchmark)(Defaults.testTasks) ++ Seq(
-  testOptions in Benchmark := Seq(Tests.Argument("-n", "Benchmark"))
-)
+testOptions in Benchmark := Seq(Tests.Argument("-n", "Benchmark"))
+Global / excludeLintKeys += testOptions in Benchmark
 
 lazy val root = project.in(file("."))
   .enablePlugins(PlayScala)

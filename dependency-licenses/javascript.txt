@@ -13835,11 +13835,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -----
 
-The following software may be included in this product: three. A copy of the source code may be downloaded from https://github.com/mrdoob/three.js.git. This software contains the following license and notice below:
+The following software may be included in this product: three. A copy of the source code may be downloaded from https://github.com/mrdoob/three.js. This software contains the following license and notice below:
 
 The MIT License
 
-Copyright © 2010-2019 three.js authors
+Copyright © 2010-2021 three.js authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
