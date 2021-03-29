@@ -56,6 +56,8 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 		}
 	case "OrderedSphynxDisk":
 		_, exists = diskOperationRepository[shortOpName(opInst)]
+	case "UnorderedSphynxDisk":
+		_, exists = unorderedOperationRepository[shortOpName(opInst)]
 	}
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
@@ -105,6 +107,15 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
 		}
 		err := op.execute(s.dataDir, &opInst)
+		if err != nil {
+			return nil, err
+		}
+	case "UnorderedSphynxDisk":
+		op, exists := unorderedOperationRepository[shortOpName(opInst)]
+		if !exists {
+			return nil, fmt.Errorf("Can't compute %v in %v", opInst, in.Domain)
+		}
+		err := op.execute(s.unorderedDataDir, &opInst)
 		if err != nil {
 			return nil, err
 		}

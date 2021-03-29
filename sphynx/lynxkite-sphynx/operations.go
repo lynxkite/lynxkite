@@ -160,3 +160,4 @@ type DiskOperation struct {
 
 var operationRepository = map[string]Operation{}
 var diskOperationRepository = map[string]DiskOperation{}
+var unorderedOperationRepository = map[string]DiskOperation{}

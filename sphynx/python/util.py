@@ -139,6 +139,14 @@ class Op:
     torch.save(model, path + '/model.pt')
     self.output_scalar(name, description)
 
+  def input_table(self, name):
+    '''Reads the input table as a Pandas DataFrame.'''
+    return pd.read_parquet(self.datadir + '/' + self.inputs[name])
+
+  def output_table(self, name, df):
+    '''Writes a Pandas DataFrame as a table.'''
+    return df.to_parquet(self.datadir + '/' + self.outputs[name])
+
   def run_in_chroot(self):
     '''Runs this operation in a chroot environment.
 

@@ -529,29 +529,57 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Compute in Python")(new ProjectTransformation(_) {
-    params ++= List(
-      Param("inputs", "Inputs", defaultValue = "<infer from code>"),
-      Param("outputs", "Outputs", defaultValue = "<infer from code>"),
-      Code("code", "Python code", language = "python"))
-    def enabled = FEStatus.enabled
-    private def pythonInputs = {
-      if (params("inputs") == "<infer from code>") PythonUtilities.inferInputs(params("code"))
-      else splitParam("inputs")
-    }
-    private def pythonOutputs = {
-      if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
-      else splitParam("outputs")
-    }
-    override def summary = {
-      val outputs = pythonOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
-      if (outputs.isEmpty) "Compute in Python"
-      else s"Compute $outputs in Python"
-    }
-    def apply() = {
-      PythonUtilities.assertAllowed()
-      PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
-    }
-  })
+  registerOp(
+    "Compute in Python", defaultIcon, category, List("graph"), List("graph"),
+    new SmartOperation(_) {
+      params ++= List(
+        Param("inputs", "Inputs", defaultValue = "<infer from code>"),
+        Param("outputs", "Outputs", defaultValue = "<infer from code>"),
+        Code("code", "Python code", language = "python"))
+      val input = context.inputs("graph")
+      private def pythonInputs = {
+        if (params("inputs") == "<infer from code>")
+          PythonUtilities.inferInputs(params("code"), input.kind)
+        else splitParam("inputs")
+      }
+      private def pythonOutputs = {
+        if (params("outputs") == "<infer from code>")
+          PythonUtilities.inferOutputs(params("code"), input.kind)
+        else splitParam("outputs")
+      }
+      override def summary = {
+        val outputs = pythonOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
+        if (outputs.isEmpty) "Compute in Python"
+        else s"Compute $outputs in Python"
+      }
 
+      override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+        params.validate()
+        PythonUtilities.assertAllowed()
+        input.kind match {
+          case BoxOutputKind.Project =>
+            val project = projectInput("graph")
+            PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
+            Map(context.box.output("graph") -> BoxOutputState.from(project))
+          case BoxOutputKind.Table =>
+            // We named the input and output before adding table support.
+            // It's bad naming here, but lets us keep compatibility.
+            val table = tableInput("graph")
+            val outputs: Seq[String] = if (params("outputs") == "<infer from code>")
+              table.schema.fields.map { f =>
+                s"df.${f.name}: " + (f.dataType match {
+                  case org.apache.spark.sql.types.StringType => "str"
+                  case org.apache.spark.sql.types.LongType => "int"
+                  case _ => "float"
+                })
+              } ++ pythonOutputs
+            else pythonOutputs
+            val result = PythonUtilities.deriveTable(params("code"), table, outputs)
+            Map(context.box.output("graph") -> BoxOutputState.from(result))
+        }
+      }
+      // Unused because we are overriding getOutputs.
+      protected def apply(): Unit = ???
+      protected def enabled: com.lynxanalytics.biggraph.controllers.FEStatus = ???
+    })
 }

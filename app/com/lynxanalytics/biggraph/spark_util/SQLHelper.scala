@@ -55,21 +55,17 @@ object SQLHelper {
   }
 
   def dataFrameSchema(columns: Iterable[(String, Attribute[_])]): types.StructType = {
-    val fields = columns.map {
-      case (name, attr) =>
-        types.StructField(
-          name = name,
-          dataType = typeTagToDataType(attr.typeTag))
-    }
-    types.StructType(fields.toSeq)
+    dataFrameSchemaForTypes(columns.map { case (k, v) => k -> v.typeTag })
   }
 
   def dataFrameSchemaScalar(columns: Iterable[(String, Scalar[_])]): types.StructType = {
+    dataFrameSchemaForTypes(columns.map { case (k, v) => k -> v.typeTag })
+  }
+
+  def dataFrameSchemaForTypes(columns: Iterable[(String, TypeTag[_])]): types.StructType = {
     val fields = columns.map {
-      case (name, scalar) =>
-        types.StructField(
-          name = name,
-          dataType = typeTagToDataType(scalar.typeTag))
+      case (name, tpe) =>
+        types.StructField(name = name, dataType = typeTagToDataType(tpe))
     }
     types.StructType(fields.toSeq)
   }
