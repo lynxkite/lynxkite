@@ -1,6 +1,7 @@
 .operation-selector {
   margin-left: -35px;
-  float: left;
+  position: absolute;
+  right: 0;
 }
 
 .operation-selector .box {
