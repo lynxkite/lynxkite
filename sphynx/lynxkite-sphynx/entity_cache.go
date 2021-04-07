@@ -4,7 +4,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -33,6 +35,7 @@ type cacheEntry struct {
 }
 
 var cachedEntitiesMaxMem = getNumericEnv("SPHYNX_CACHED_ENTITIES_MAX_MEM_MB", 1*1024) * 1024 * 1024
+var sphynxThreads = getNumericEnv("SPHYNX_THREADS", runtime.NumCPU())
 
 func (entityCache *EntityCache) Get(guid GUID) (Entity, bool) {
 	ts := ourTimestamp()
@@ -77,6 +80,13 @@ func (entityCache *EntityCache) Set(guid GUID, entity Entity) {
 	// But we do not want to update the timestamp for those.
 }
 
+func NotInCacheError(kind string, guid GUID) error {
+	// If we drop something from the cache it will be reloaded before the next use.
+	// The exception is when we drop it right after loading it. This generally means
+	// the cache is too small.
+	return fmt.Errorf("Could not fit %v %v into memory. Increase SPHYNX_CACHED_ENTITIES_MAX_MEM_MB?", kind, guid)
+}
+
 type entityEvictionItem struct {
 	guid      GUID
 	timestamp int64
@@ -108,12 +118,12 @@ func (entityCache *EntityCache) maybeGarbageCollect() {
 
 	for i := 0; i < len(evictionCandidates) && memEvicted < howMuchMemoryToRecycle; i++ {
 		guid := evictionCandidates[i].guid
-		fmt.Printf("Evicting: %v\n", evictionCandidates[i])
+		log.Printf("Evicting: %v\n", evictionCandidates[i])
 		delete(entityCache.cache, guid)
 		memEvicted += evictionCandidates[i].memUsage
 		itemsEvicted++
 	}
-	fmt.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
+	log.Printf("Evicted %d entities (out of %d), estimated size: %d time: %d\n",
 		itemsEvicted, len(evictionCandidates), memEvicted, (ourTimestamp()-start)/1000000)
 	entityCache.totalMemUsage -= memEvicted
 }

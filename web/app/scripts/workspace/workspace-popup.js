@@ -4,10 +4,10 @@
 // It can contain either a box editor or a state viewer.
 
 angular.module('biggraph')
-  .directive('popup', function() {
+  .directive('workspacePopup', function() {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/popup.html',
+      templateUrl: 'scripts/workspace/workspace-popup.html',
       scope: {
         popupModel: '=',
         workspace: '=',

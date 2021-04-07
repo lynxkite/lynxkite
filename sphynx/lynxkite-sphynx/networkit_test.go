@@ -56,30 +56,6 @@ func TestNewVertexAttribute(t *testing.T) {
 	}
 }
 
-func TestGraphToSphynx(t *testing.T) {
-	c := networkit.NewBarabasiAlbertGenerator(uint64(2), uint64(5))
-	defer networkit.DeleteBarabasiAlbertGenerator(c)
-	g := c.Generate()
-	defer networkit.DeleteGraph(g)
-	vs, es := ToSphynx(g)
-	if len(vs.MappingToUnordered) != 5 {
-		t.Errorf("Vertex set is %v, expected 5.", vs.MappingToUnordered)
-	}
-	expectedSrc := []SphynxId{1, 1, 2, 2, 3, 3, 4, 4}
-	if len(es.Src) != len(expectedSrc) {
-		t.Errorf("Source list is %v, expected %v.", es.Src, expectedSrc)
-	}
-	if len(es.Dst) != len(expectedSrc) {
-		t.Errorf("Destination list is %v, expected length %v.", es.Dst, len(expectedSrc))
-	}
-	for i := range es.Src {
-		if es.Src[i] != expectedSrc[i] {
-			t.Errorf("Source list is %v, expected %v.", es.Src, expectedSrc)
-			break
-		}
-	}
-}
-
 func TestVectorVector(t *testing.T) {
 	c := networkit.NewBarabasiAlbertGenerator(uint64(3), uint64(10))
 	defer networkit.DeleteBarabasiAlbertGenerator(c)
@@ -93,7 +69,7 @@ func TestVectorVector(t *testing.T) {
 	for i := 0; i < int(points.Size()); i += 1 {
 		x := points.Get(i).At(0)
 		y := points.Get(i).At(1)
-		if x < -2 || x > 2 || x == 0 || y < -2 || y > 2 || y == 0 {
+		if x < -3 || x > 3 || x == 0 || y < -3 || y > 3 || y == 0 {
 			t.Errorf("Unexpected coordinates: %v %v", x, y)
 		}
 	}
