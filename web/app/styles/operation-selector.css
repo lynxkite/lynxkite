@@ -8,12 +8,12 @@
   background: #001424; /* Brand color. */
   position: absolute;
   right: 35px;
-  top: 60px; /* The workspace header, on a good day. */
+  top: 0;
   padding: 0;
-  max-width: 40%; /* Avoid very long lines and very sparse forms. */
+  max-width: 40vw; /* Avoid very long lines and very sparse forms. */
+  min-width: 400px;
   margin-bottom: 20px;
   max-height: 90%;
-  margin-left: 35px;
   overflow-y: auto;
   z-index: 4; /* This has to be over the state view and the box editor panels. */
 }
