@@ -231,6 +231,8 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
   }
 }
 
+trait UnorderedSphynxOperation
+
 class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dataDir: String)
   extends UnorderedSphynxDisk(host, port, certDir) {
 
@@ -239,8 +241,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
-    // Temporary hack.
-    instance.operation.getClass.getName.endsWith("DeriveTablePython")
+    instance.operation.isInstanceOf[UnorderedSphynxOperation]
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {

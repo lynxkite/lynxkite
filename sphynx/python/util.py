@@ -145,7 +145,11 @@ class Op:
 
   def output_table(self, name, df):
     '''Writes a Pandas DataFrame as a table.'''
-    return df.to_parquet(self.datadir + '/' + self.outputs[name])
+    path = self.datadir + '/' + self.outputs[name]
+    os.makedirs(path, exist_ok=True)
+    df.to_parquet(path + '/data.parquet')
+    with open(path + '/_SUCCESS', 'w') as f:
+      pass
 
   def run_in_chroot(self):
     '''Runs this operation in a chroot environment.

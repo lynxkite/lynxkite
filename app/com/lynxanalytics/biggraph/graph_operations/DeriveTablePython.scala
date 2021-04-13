@@ -25,7 +25,8 @@ object DeriveTablePython extends OpFromJson {
 
 import DeriveTablePython._
 case class DeriveTablePython private[graph_operations] (
-    code: String, outputFields: List[Field]) extends TypedMetaGraphOp[Input, Output] {
+    code: String, outputFields: List[Field]) extends TypedMetaGraphOp[Input, Output]
+  with UnorderedSphynxOperation {
   override def toJson = Json.obj(
     "code" -> code,
     "outputFields" -> outputFields)
