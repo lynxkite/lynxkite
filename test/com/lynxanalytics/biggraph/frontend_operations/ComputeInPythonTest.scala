@@ -97,7 +97,8 @@ df['age_2']: float = df.age ** 2
       // A second box to test that tables created in Python can also be used in Python.
       .box("Compute in Python", Map(
         "inputs" -> "<infer from code>",
-        "outputs" -> "<infer from code>",
+        // Let's also test that a different order of columns is not a problem.
+        "outputs" -> "df.age_4: float, df.name: str",
         "code" -> """
 df['age_4']: float = df.age_2 ** 2
           """))
@@ -105,9 +106,9 @@ df['age_4']: float = df.age_2 ** 2
       .table
     val data = t.df.collect.toList.map(_.toSeq.toList)
     assert(data == List(
-      List("Adam", 20.0, 400.0, 160000.0),
-      List("Eve", 18.0, 324.0, 104976.0),
-      List("Bob", 50.0, 2500.0, 6250000.0),
-      List("Isolated Joe", 2.0, 4.0, 16.0)))
+      List(160000.0, "Adam"),
+      List(104976.0, "Eve"),
+      List(6250000.0, "Bob"),
+      List(16.0, "Isolated Joe")))
   }
 }

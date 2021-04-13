@@ -27,4 +27,5 @@ except BaseException:
 
 # Write outputs.
 for name in op.outputs:
-  op.output_table(name, globals()[name])
+  cols = [col['name'] for col in op.params['outputFields'] if col['parent'] == name]
+  op.output_table(name, globals()[name][cols])
