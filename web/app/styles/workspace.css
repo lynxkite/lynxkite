@@ -7,10 +7,14 @@
 #workspace-header {
   background: #002a4c; /* Brand color. */
   color: white;
-  min-height: 60px;
+  height: 60px;
+  flex-wrap: nowrap;
 }
 #workspace-header .flat-toolbar-title {
   padding: 5px 10px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 span#workspace-name {

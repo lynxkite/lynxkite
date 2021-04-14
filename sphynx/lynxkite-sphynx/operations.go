@@ -19,7 +19,7 @@ func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity
 	for name, guid := range opInst.Inputs {
 		entity, exists := server.entityCache.Get(guid)
 		if !exists {
-			return nil, fmt.Errorf("Guid %v is missing", guid)
+			return nil, NotInCacheError("input", guid)
 		}
 		inputs[name] = entity
 	}

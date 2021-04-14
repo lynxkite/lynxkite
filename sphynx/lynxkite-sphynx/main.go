@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strings"
 )
@@ -62,6 +64,7 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
+	log.Printf("Computing %v.", shortOpName(opInst))
 	switch in.Domain {
 	case "SphynxMemory":
 		op, exists := operationRepository[shortOpName(opInst)]
@@ -117,7 +120,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	log.Printf("Received GetScalar request with GUID %v.", guid)
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("scalar", guid)
 	}
 
 	switch scalar := entity.(type) {
@@ -138,7 +141,7 @@ func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemory
 func (s *Server) getVertexSet(guid GUID) (*VertexSet, error) {
 	entity, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("vertex set", guid)
 	}
 	switch vs := entity.(type) {
 	case *VertexSet:
@@ -185,6 +188,12 @@ func main() {
 	port := os.Getenv("SPHYNX_PORT")
 	if port == "" {
 		log.Fatalf("Please set SPHYNX_PORT.")
+	}
+	debugPort := os.Getenv("SPHYNX_DEBUG_PORT")
+	if debugPort != "" {
+		go func() error {
+			return http.ListenAndServe(fmt.Sprintf(":%s", debugPort), nil)
+		}()
 	}
 	keydir := flag.String(
 		"keydir", "", "directory of cert.pem and private-key.pem files (for encryption)")
