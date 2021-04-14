@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
-	"sync"
+	"sort"
 )
 
 type Server struct {
@@ -41,22 +41,24 @@ func NewEdgeBundle(size int, maxSize int) *EdgeBundle {
 	}
 }
 
-type VertexSet struct {
-	sync.Mutex
-	MappingToUnordered []int64
-	MappingToOrdered   map[int64]SphynxId
+func (self *EdgeBundle) Len() int {
+	return len(self.EdgeMapping)
+}
+func (self *EdgeBundle) Swap(i, j int) {
+	self.Src[i], self.Src[j] = self.Src[j], self.Src[i]
+	self.Dst[i], self.Dst[j] = self.Dst[j], self.Dst[i]
+	self.EdgeMapping[i], self.EdgeMapping[j] = self.EdgeMapping[j], self.EdgeMapping[i]
+}
+func (self *EdgeBundle) Less(i, j int) bool {
+	return self.EdgeMapping[i] < self.EdgeMapping[j]
+}
+func (self *EdgeBundle) Sort() {
+	sort.Sort(self)
 }
 
-func (vs *VertexSet) GetMappingToOrdered() map[int64]SphynxId {
-	vs.Lock()
-	defer vs.Unlock()
-	if vs.MappingToOrdered == nil {
-		vs.MappingToOrdered = make(map[int64]SphynxId, len(vs.MappingToUnordered))
-		for i, j := range vs.MappingToUnordered {
-			vs.MappingToOrdered[j] = SphynxId(i)
-		}
-	}
-	return vs.MappingToOrdered
+type VertexSet struct {
+	// This slice contains the Spark IDs in ascending order.
+	MappingToUnordered []int64
 }
 
 // A scalar is stored as its JSON encoding. If you need the real value, unmarshal it for yourself.

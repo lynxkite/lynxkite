@@ -38,8 +38,8 @@ func createEntity(typeName string) (Entity, error) {
 }
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
-	log.Printf("saveToOrderedDisk guid %v", guid)
 	typeName := e.typeName()
+	log.Printf("Writing %v %v to ordered disk.", typeName, guid)
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	typeFName := fmt.Sprintf("%v/type_name", dirName)
@@ -96,7 +96,6 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 }
 
 func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
-	log.Printf("loadFromOrderedDisk: %v", guid)
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	typeFName := fmt.Sprintf("%v/type_name", dirName)
 	typeData, err := ioutil.ReadFile(typeFName)
@@ -104,6 +103,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 		return nil, fmt.Errorf("Failed to read type of %v: %v", dirName, err)
 	}
 	typeName := string(typeData)
+	log.Printf("Reading %v %v from ordered disk.", typeName, guid)
 	e, err := createEntity(typeName)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (s *Server) WriteToOrderedDisk(
 
 	e, exists := s.entityCache.Get(guid)
 	if !exists {
-		return nil, fmt.Errorf("Guid %v is missing", guid)
+		return nil, NotInCacheError("entity", guid)
 	}
 
 	if err := saveToOrderedDisk(e, s.dataDir, guid); err != nil {

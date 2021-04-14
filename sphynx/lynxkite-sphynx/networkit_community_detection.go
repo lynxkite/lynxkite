@@ -38,12 +38,12 @@ func init() {
 			defer networkit.DeletePartition(p)
 			vs := &VertexSet{}
 			vs.MappingToUnordered = make([]int64, p.NumberOfSubsets())
-			vs.MappingToOrdered = make(map[int64]SphynxId)
+			mappingToOrdered := make(map[int64]SphynxId)
 			ss := p.GetSubsetIdsVector()
 			defer networkit.DeleteUint64Vector(ss)
 			for i := range vs.MappingToUnordered {
 				vs.MappingToUnordered[i] = int64(ss.Get(i))
-				vs.MappingToOrdered[int64(ss.Get(i))] = SphynxId(i)
+				mappingToOrdered[int64(ss.Get(i))] = SphynxId(i)
 			}
 			es := &EdgeBundle{}
 			es.EdgeMapping = make([]int64, p.NumberOfElements())
@@ -54,7 +54,7 @@ func init() {
 			for i := range es.EdgeMapping {
 				es.EdgeMapping[i] = int64(i)
 				es.Src[i] = SphynxId(i)
-				es.Dst[i] = SphynxId(vs.MappingToOrdered[int64(v.Get(i))])
+				es.Dst[i] = SphynxId(mappingToOrdered[int64(v.Get(i))])
 			}
 			ea.output("partitions", vs)
 			ea.output("belongsTo", es)

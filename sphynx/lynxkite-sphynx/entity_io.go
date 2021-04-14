@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/jfcg/sorty"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -55,6 +56,7 @@ var vertexSetSchema = arrow.NewSchema(
 	}, nil)
 
 func (v *VertexSet) toOrderedRows() array.Record {
+	assertSorted(v.MappingToUnordered)
 	b := array.NewInt64Builder(arrowAllocator)
 	defer b.Release()
 	b.AppendValues(v.MappingToUnordered, nil)
@@ -69,6 +71,8 @@ func (v *VertexSet) readFromOrdered(rec array.Record) error {
 	for i, d := range data {
 		v.MappingToUnordered[i] = d
 	}
+	// For backward compatibility.
+	sorty.SortI8(v.MappingToUnordered)
 	return nil
 }
 
