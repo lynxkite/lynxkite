@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 4.2.1
+
 - Fix for Chrome 90. [#162](https://github.com/lynxkite/lynxkite/pull/162)
 - Fixed a few other UI bugs. [#164](https://github.com/lynxkite/lynxkite/pull/164)
 - Reduced memory use in Sphynx. [#141](https://github.com/lynxkite/lynxkite/pull/141)
