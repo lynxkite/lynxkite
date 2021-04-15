@@ -5,7 +5,6 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.Crypto
-import play.api.libs.ws.WS
 import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
@@ -189,10 +188,10 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
     implicit val app = play.api.Play.current
     val idToken = (request.body \ "id_token").as[String]
-    val tokeninfo: concurrent.Future[play.api.libs.json.JsValue] =
-      WS.url("https://www.googleapis.com/oauth2/v3/tokeninfo")
-        .withQueryString("id_token" -> idToken)
-        .get().map(_.json)
+    val tokeninfo: concurrent.Future[play.api.libs.json.JsValue] = concurrent.Future {
+      scalaj.http.Http("https://www.googleapis.com/oauth2/v3/tokeninfo")
+        .param("id_token", idToken).asString.body
+    }.map(json.Json.parse(_))
     tokeninfo.map { ti =>
       val email = (ti \ "email").as[String]
       log.info(s"User login attempt by $email.")
