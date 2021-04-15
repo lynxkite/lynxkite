@@ -1,5 +1,5 @@
 # Single-machine LynxKite image.
-FROM openjdk:11
+FROM openjdk:8-jre
 
 # Add system dependencies.
 RUN \
