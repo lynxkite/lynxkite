@@ -4,9 +4,11 @@ user root
 # Install stable dependencies.
 run \
   apt-get update && \
-  apt-get install -y busybox openjdk-8-jre nginx gettext-base && \
+  apt-get install -y busybox openjdk-8-jre nginx gettext-base curl && \
   busybox --install && \
-  npm install -g typescript && \
+  (curl -fsSL https://deb.nodesource.com/setup_14.x | bash -) && \
+  apt-get install -y nodejs && \
+  npm install -g typescript npx && \
   jupyter labextension install @jupyterlab/hub-extension && \
   pip install pycrypto ruamel.yaml
 
