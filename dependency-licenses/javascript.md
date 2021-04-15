@@ -223,7 +223,7 @@
 │  ├─ which@1.3.1
 │  ├─ wide-align@1.1.3
 │  ├─ wrappy@1.0.2
-│  ├─ y18n@3.2.1
+│  ├─ y18n@3.2.2
 │  ├─ yallist@3.0.3
 │  ├─ yallist@4.0.0
 │  ├─ yargs-parser@4.2.1
@@ -880,7 +880,7 @@
 │  ├─ tfunk@3.1.0
 │  ├─ then-request@2.2.0
 │  ├─ then-request@6.0.0
-│  ├─ three@0.102.1
+│  ├─ three@0.125.0
 │  ├─ through@2.3.8
 │  ├─ through2-filter@3.0.0
 │  ├─ through2@2.0.5

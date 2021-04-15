@@ -1,5 +1,5 @@
 # Single-machine LynxKite image.
-FROM openjdk:8-jre
+FROM openjdk:11
 
 # Add system dependencies.
 RUN \
@@ -9,8 +9,7 @@ RUN \
   rm -rf /var/lib/apt/lists/* && \
   wget -nv 'https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh' -O conda.sh && \
   bash conda.sh -b -p /opt/conda && \
-  rm conda.sh && \
-  ln -s /opt/conda/bin/pip /opt/conda/bin/pip3
+  rm conda.sh
 ENV PATH /opt/conda/bin:$PATH
 
 # Install dependencies early so they are in a low layer.
