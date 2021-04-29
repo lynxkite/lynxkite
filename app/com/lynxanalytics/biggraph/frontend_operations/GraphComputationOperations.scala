@@ -92,6 +92,21 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Compute spanning edge centrality")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Attribute name", defaultValue = "centrality"),
+      Param("tolerance", "Tolerance of estimation", defaultValue = "0.1"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      assert(name.nonEmpty, "Please set an attribute name.")
+      val centrality = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
+        "SpanningEdgeCentrality", project.edgeBundle,
+        Map("tolerance" -> params("tolerance").toDouble))
+      project.newEdgeAttribute(name, centrality, help)
+    }
+  })
+
   register("Find k-core decomposition")(new ProjectTransformation(_) {
     params ++= List(Param("name", "Attribute name", defaultValue = "core"))
     def enabled = project.hasEdgeBundle

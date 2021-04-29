@@ -44,6 +44,11 @@ func init() {
 						result.Set(i, math.NaN())
 					}
 				}
+			case "SpanningEdgeCentrality":
+				c := networkit.NewSpanningEdgeCentrality(g, o.Double("tolerance"))
+				defer networkit.DeleteSpanningEdgeCentrality(c)
+				c.Run()
+				result = c.Scores()
 			}
 			// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
 			// We build a map to match them up by the src/dst vertex IDs.

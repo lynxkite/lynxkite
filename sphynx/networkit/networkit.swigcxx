@@ -13,6 +13,7 @@
 #include <networkit/centrality/KPathCentrality.hpp>
 #include <networkit/centrality/LaplacianCentrality.hpp>
 #include <networkit/centrality/Sfigality.hpp>
+#include <networkit/centrality/SpanningEdgeCentrality.hpp>
 #include <networkit/correlation/Assortativity.hpp>
 #include <networkit/distance/Diameter.hpp>
 #include <networkit/distance/EffectiveDiameter.hpp>
@@ -159,6 +160,7 @@ public:
 %include "include/networkit/centrality/KPathCentrality.hpp"
 %include "include/networkit/centrality/LaplacianCentrality.hpp"
 %include "include/networkit/centrality/Sfigality.hpp"
+%include "include/networkit/centrality/SpanningEdgeCentrality.hpp"
 %include "include/networkit/correlation/Assortativity.hpp"
 %include "include/networkit/distance/Diameter.hpp"
 %include "include/networkit/distance/EffectiveDiameter.hpp"
