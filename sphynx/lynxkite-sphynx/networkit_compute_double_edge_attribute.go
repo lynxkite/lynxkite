@@ -47,7 +47,11 @@ func init() {
 			case "SpanningEdgeCentrality":
 				c := networkit.NewSpanningEdgeCentrality(g, o.Double("tolerance"))
 				defer networkit.DeleteSpanningEdgeCentrality(c)
-				c.Run()
+				if o.Double("tolerance") == 0 {
+					c.Run()
+				} else {
+					c.RunApproximation()
+				}
 				result = c.Scores()
 			}
 			// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
