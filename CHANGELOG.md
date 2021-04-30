@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 4.2.2
+
 - Fix for attributes becoming undefined. [#176](https://github.com/lynxkite/lynxkite/pull/176)
 
 ### 4.2.1
