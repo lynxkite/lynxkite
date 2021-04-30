@@ -44,7 +44,9 @@ func sortedPermutation(ids []int64) []int {
 	}
 	sorty.Sort(len(ids), func(i, k, r, s int) bool {
 		if ids[permutation[i]] < ids[permutation[k]] {
-			permutation[r], permutation[s] = permutation[s], permutation[r]
+			if r != s {
+				permutation[r], permutation[s] = permutation[s], permutation[r]
+			}
 			return true
 		}
 		return false
