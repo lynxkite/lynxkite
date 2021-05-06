@@ -40,7 +40,7 @@ case class SplitVertices() extends SparkOperation[VertexAttributeInput[Double], 
     val repetitionAttr = inputs.attr.rdd
 
     val requestedNumberOfVerticesWithIndex =
-      repetitionAttr.flatMapValues { numRepetitions => (0.0 until numRepetitions by 1.0) }
+      repetitionAttr.flatMapValues { numRepetitions => (0L until numRepetitions.toLong).map(_.toDouble) }
 
     val partitioner = rc.partitionerForNRows(repetitionAttr.values.sum.toLong)
 
