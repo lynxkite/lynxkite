@@ -34,6 +34,7 @@ object TypeTagToFormat {
 
   def optionToFormat[T](t: TypeTag[T]): json.Format[Option[T]] = {
     implicit val innerFormat = typeTagToFormat(t)
+    implicit val optionReads = new OptionReads[T]
     implicitly[json.Format[Option[T]]]
   }
 
@@ -41,6 +42,12 @@ object TypeTagToFormat {
     implicit val innerFormat1 = typeTagToFormat(a)
     implicit val innerFormat2 = typeTagToFormat(b)
     new PairFormat[A, B]
+  }
+
+  class OptionReads[T: json.Format] extends json.Format[Option[T]] {
+    def reads(j: json.JsValue): json.JsSuccess[Option[T]] = {
+      json.JsSuccess(j.asOpt[T])
+    }
   }
 
   class PairFormat[A: json.Format, B: json.Format] extends json.Format[(A, B)] {
@@ -91,7 +98,7 @@ object TypeTagToFormat {
       val counts = mutable.Map[T, Long]().withDefaultValue(0) ++ immutableCounts
       val bucket = new IDBuckets[T](counts)
       (j \ "sample") match {
-        case JsArray(_) =>
+        case json.JsDefined(JsArray(_)) =>
           val immutableSample = (j \ "sample").as[Map[ID, T]]
           bucket.sample = mutable.Map[ID, T]() ++ immutableSample
         case _ => bucket.sample = null

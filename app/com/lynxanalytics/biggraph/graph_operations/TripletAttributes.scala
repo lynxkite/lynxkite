@@ -240,7 +240,7 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
   }
   def fromJson(j: JsValue) = EdgesForVerticesFromEdgesAndNeighbors(
     (j \ "srcIdSet").as[Set[ID]],
-    (j \ "dstIdSet").as[Option[Set[ID]]],
+    (j \ "dstIdSet").asOpt[Set[ID]],
     (j \ "maxNumEdges").as[Int])
 }
 case class EdgesForVerticesFromEdgesAndNeighbors(
