@@ -30,7 +30,9 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
-      body = akka.stream.scaladsl.StreamConverters.fromInputStream(stream))
+      body = play.api.http.HttpEntity.Streamed(
+        akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
+        Some(length), None))
   }
 
   // Downloads all the files in directory concatenated into one.
@@ -51,7 +53,9 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=${request.name}")),
-      body = akka.stream.scaladsl.StreamConverters.fromInputStream(stream))
+      body = play.api.http.HttpEntity.Streamed(
+        akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
+        Some(length), None))
   }
 }
 

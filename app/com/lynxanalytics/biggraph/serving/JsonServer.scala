@@ -6,7 +6,6 @@ import java.io.{ File, FileOutputStream }
 import play.api.libs.json
 import play.api.mvc
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -23,10 +22,9 @@ import play.api.mvc.ResponseHeader
 
 abstract class JsonServer @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes)
-  extends mvc.Controller {
-  def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration)
+  extends mvc.BaseController {
+  def productionMode = cfg.get[String]("application.secret").nonEmpty
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
@@ -42,7 +40,7 @@ abstract class JsonServer @javax.inject.Inject() (
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
-    mvc.Action.async(parser) { request =>
+    Action.async(parser) { request =>
       getUser(request, withAuth) match {
         case Some(user) => handler(user, request)
         case None => Future.successful(Unauthorized)
@@ -138,7 +136,7 @@ abstract class JsonServer @javax.inject.Inject() (
     }
   }
 
-  def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
+  def healthCheck(checkHealthy: () => Unit) = Action { request =>
     log.info(s"${request.remoteAddress} GET ${request.path}")
     checkHealthy()
     Ok("Server healthy")
@@ -340,7 +338,10 @@ object FrontendJson {
 
 }
 
-object ProductionJsonServer extends JsonServer {
+class ProductionJsonServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration)
+  extends JsonServer {
   import FrontendJson._
   import WorkspaceJsonFormatters._
 
@@ -349,9 +350,7 @@ object ProductionJsonServer extends JsonServer {
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
-      val upload: mvc.MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile] =
-        request.body.file("file").get
-      try {
+      request.body.file("file").map { upload =>
         val size = upload.ref.file.length
         log.info(s"upload: $user ${upload.filename} ($size bytes)")
         val dataRepo = BigGraphProductionEnvironment.sparkDomain.repositoryPath
@@ -374,7 +373,7 @@ object ProductionJsonServer extends JsonServer {
           assert(success, s"Failed to rename $tmpFile to $finalFile.")
         }
         Ok(finalFile.symbolicName)
-      } finally upload.ref.clean() // Delete temporary file.
+      }.get
     }
   }
 
@@ -384,7 +383,7 @@ object ProductionJsonServer extends JsonServer {
     (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
   }
 
-  def jsError = mvc.Action(parse.json) { request =>
+  def jsError = Action(parse.json) { request =>
     val url = (request.body \ "url").as[String]
     val stack = (request.body \ "stack").as[String]
     log.info(s"JS error at $url:\n$stack")
@@ -467,9 +466,7 @@ object ProductionJsonServer extends JsonServer {
     action(parse.anyContent) { (user, request) =>
       assert(user.isAdmin, "Thread dump is restricted to administrator users.")
       log.info(s"GET ${request.path}")
-      val header = ResponseHeader(OK)
-      val output = ThreadDumper.get()
-      mvc.Result(header, output)
+      Ok(ThreadDumper.get)
     }
   }
 
@@ -529,7 +526,7 @@ object ProductionJsonServer extends JsonServer {
     val output = new java.io.ByteArrayOutputStream()
     ("python3 -m graphray" #< config #> output).! == 0
   }
-  def graphray = mvc.Action { request: Request[AnyContent] =>
+  def graphray = Action { request: Request[AnyContent] =>
     getUser(request) match {
       case None => Unauthorized
       case Some(user) =>

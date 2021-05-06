@@ -15,7 +15,8 @@ import scala.reflect.ClassTag
 // must have a companion object that extends FromJson[T].
 object TypedJson {
   // Re-creates the object from a TypedJson format.
-  def read[T](j: json.JsReadable): T = {
+  def read[T](jr: json.JsReadable): T = {
+    val j = jr.as[json.JsObject]
     try {
       (j \ "class").as[String] match {
         case "Long" => (j \ "data").as[Long].asInstanceOf[T]
@@ -27,7 +28,7 @@ object TypedJson {
           val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
           val des = obj.asInstanceOf[FromJson[T]]
           // Ask the companion object to parse the data.
-          des.fromJson(j \ "data")
+          des.fromJson((j \ "data").get)
       }
     } catch {
       // Include more details in the exception.
@@ -88,7 +89,8 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
     }
   }
 
-  def fromJson(j: json.JsReadable): T = {
+  def fromJson(jr: json.JsReadable): T = {
+    val j = jr.as[json.JsObject]
     (j \ paramName).asOpt[T].getOrElse(defaultValue)
   }
 }
@@ -115,7 +117,8 @@ object SerializableType {
       result
     }
   }
-  def fromJson(j: json.JsReadable): SerializableType[_] = {
+  def fromJson(jr: json.JsReadable): SerializableType[_] = {
+    val j = jr.as[json.JsObject]
     TypeParser.parse((j \ "typename").as[String])
   }
 

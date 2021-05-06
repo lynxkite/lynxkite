@@ -616,7 +616,7 @@ case class MetaDataSet(
     }.toMap
   override def toJson = {
     import play.api.libs.json.{ JsObject, JsString }
-    new JsObject(asStringMap.mapValues(JsString(_)).toSeq)
+    new JsObject(asStringMap.mapValues(JsString(_)))
   }
 
   def apply(name: Symbol) = all(name)

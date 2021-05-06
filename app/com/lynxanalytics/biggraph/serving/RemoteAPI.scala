@@ -57,9 +57,13 @@ object RemoteAPIProtocol {
   implicit val rSetExecutorsRequest = json.Json.reads[SetExecutorsRequest]
 }
 
-object RemoteAPIServer extends JsonServer {
+class RemoteAPIServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    pjs: ProductionJsonServer)
+  extends JsonServer {
   import RemoteAPIProtocol._
-  val c = new RemoteAPIController(BigGraphProductionEnvironment)
+  val c = new RemoteAPIController(BigGraphProductionEnvironment, pjs)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getParquetMetadata = jsonPost(c.getParquetMetadata)
@@ -71,7 +75,7 @@ object RemoteAPIServer extends JsonServer {
   def setExecutors = jsonPost(c.setExecutors)
 }
 
-class RemoteAPIController(env: BigGraphEnvironment) {
+class RemoteAPIController(env: BigGraphEnvironment, pjs: ProductionJsonServer) {
 
   import RemoteAPIProtocol._
 
@@ -166,7 +170,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def cleanFileSystem(user: User, request: Empty) = {
-    val cleanerController = ProductionJsonServer.cleanerController
+    val cleanerController = pjs.cleanerController
     cleanerController.moveAllToCleanerTrash(user)
     cleanerController.emptyCleanerTrash(user, request)
   }

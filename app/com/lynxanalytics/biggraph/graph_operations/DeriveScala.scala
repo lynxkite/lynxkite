@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.sandbox.ScalaScript
 
 import org.apache.spark
+import play.api.libs.json
 
 object DeriveScala extends OpFromJson {
   val persistParameter = NewParameter("persist", true)
@@ -106,7 +107,7 @@ object DeriveScala extends OpFromJson {
         op.scalars, scalars.map(_._2)).result.attr.runtimeSafeCast[T]
   }
 
-  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+  def fromJson(j: json.JsValue): TypedMetaGraphOp.Type = {
     implicit val tt = SerializableType.fromJson(j \ "type").typeTag
     DeriveScala(
       (j \ "expr").as[String],
@@ -116,13 +117,12 @@ object DeriveScala extends OpFromJson {
       persistParameter.fromJson(j))
   }
 
-  import play.api.libs.json.Json
   def paramsToJson(paramTypes: Seq[(String, SerializableType[_])]) = {
-    paramTypes.map { case (n, t) => Json.obj("name" -> n, "type" -> t.toJson) }
+    paramTypes.map { case (n, t) => json.Json.obj("name" -> n, "type" -> t.toJson) }
   }
 
-  def jsonToParams(j: JsValue) = {
-    j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type") }
+  def jsonToParams(j: json.JsLookupResult) = {
+    j.as[List[json.JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type") }
   }
 
   def checkInputTypes(paramTypes: Map[String, TypeTag[_]], expr: String): Unit = {
@@ -151,7 +151,7 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
   def st = SerializableType(tt)
   implicit def ct = RuntimeSafeCastable.classTagFromTypeTag(tt)
 
-  override def toJson = Json.obj(
+  override def toJson = json.Json.obj(
     "type" -> st.toJson,
     "expr" -> expr,
     "attrNames" -> DeriveScala.paramsToJson(attrParams),

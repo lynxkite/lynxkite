@@ -137,7 +137,6 @@ object TypeTagToFormat {
   }
 
   def typeTagToFormat[T](tag: TypeTag[T]): json.Format[T] = {
-
     val t = tag.tpe
     val fmt = {
       if (TypeTagUtil.isType[String](t)) implicitly[json.Format[String]]

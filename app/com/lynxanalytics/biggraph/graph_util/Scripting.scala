@@ -206,8 +206,8 @@ object Scripting {
       val all = first +: others
       // We sort these to make sure that the we get the same union vertex set if we start from
       // the same component vertex sets. (E.g. A U B is the same as B U A.)
-      val srcs = all.map(_.srcVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
-      val dsts = all.map(_.dstVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
+      val srcs = (all.map(_.srcVertexSet).toSet.toSeq: Seq[VertexSet]).sortBy(_.gUID)
+      val dsts = (all.map(_.dstVertexSet).toSet.toSeq: Seq[VertexSet]).sortBy(_.gUID)
 
       val induceSrc = (srcs.size > 1)
       val induceDst = (dsts.size > 1)
