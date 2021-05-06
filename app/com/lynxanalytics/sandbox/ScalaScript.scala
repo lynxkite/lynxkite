@@ -16,7 +16,7 @@ import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.reflect.runtime.universe._
-import scala.tools.nsc.interpreter.IMain
+import scala.tools.nsc.interpreter.Scripted
 import scala.util.DynamicVariable
 
 // For describing project structure in parametric parameters.
@@ -97,14 +97,14 @@ class ScalaScriptSecurityManager extends SecurityManager {
 }
 
 object ScalaScript {
-  private def createEngine(): IMain = {
-    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
-    e.settings.usejavacp.value = true
-    e.settings.embeddedDefaults[ScalaScriptSecurityManager]
+  private def createEngine(): Scripted = {
+    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[Scripted]
+    e.intp.settings.usejavacp.value = true
+    e.intp.settings.embeddedDefaults[ScalaScriptSecurityManager]
     e
   }
 
-  private var engine: IMain = null
+  private var engine: Scripted = null
 
   private val evaluatorCache = new SoftHashMap[String, Evaluator]()
   def run(
@@ -294,7 +294,7 @@ object ScalaScript {
   }
 
   private def withContextClassLoader[T](func: => T): T = synchronized {
-    // IMAIN.compile changes the class loader and does not restore it.
+    // Scripted.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     if (engine == null) engine = createEngine()
     val cl = Thread.currentThread().getContextClassLoader
@@ -320,7 +320,7 @@ object ScalaScript {
     import scala.reflect.internal.util.NoFile
     withContextClassLoader {
       val script = ScriptSourceFile(NoFile, code.toArray)
-      val global = engine.global
+      val global = engine.intp.global
       val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
       ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
         .filter(i => i.isTerm)

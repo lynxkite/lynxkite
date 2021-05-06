@@ -37,6 +37,7 @@ libraryDependencies ++= Seq(
   filters, // Play library for compressing HTTP responses.
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.5" % "test",
+  "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   // For accessing S3 fs from local instance.
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
     // But we still want to take Hadoop from Spark.
