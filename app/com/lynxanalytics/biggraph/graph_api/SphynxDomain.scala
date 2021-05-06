@@ -9,7 +9,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import java.nio.file.{ Paths, Files }
 import java.io.{ SequenceInputStream, File, FileInputStream }
-import scala.collection.JavaConversions.asJavaEnumeration
 import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util.HadoopFile

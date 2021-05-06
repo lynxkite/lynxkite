@@ -22,7 +22,8 @@ import play.api.mvc.ResponseHeader
 
 abstract class JsonServer @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration)
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    val controllerComponents: mvc.ControllerComponents)
   extends mvc.BaseController {
   def productionMode = cfg.get[String]("application.secret").nonEmpty
 
@@ -340,7 +341,8 @@ object FrontendJson {
 
 class ProductionJsonServer @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration)
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    cc: mvc.ControllerComponents)
   extends JsonServer {
   import FrontendJson._
   import WorkspaceJsonFormatters._
@@ -351,15 +353,14 @@ class ProductionJsonServer @javax.inject.Inject() (
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
       request.body.file("file").map { upload =>
-        val size = upload.ref.file.length
-        log.info(s"upload: $user ${upload.filename} ($size bytes)")
+        log.info(s"upload: $user ${upload.filename} (${upload.fileSize} bytes)")
         val dataRepo = BigGraphProductionEnvironment.sparkDomain.repositoryPath
         val baseName = upload.filename.replace(" ", "_")
         val tmpName = s"$baseName.$Timestamp"
         val tmpFile = dataRepo / "tmp" / tmpName
         val md = java.security.MessageDigest.getInstance("MD5");
         val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
-        try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
+        try java.nio.file.Files.copy(upload.ref.path, stream)
         finally stream.close()
         val digest = md.digest().map("%02x".format(_)).mkString
         val finalName = s"$digest.$baseName"

@@ -5,8 +5,7 @@ import java.io.File
 import org.geotools.data.FileDataStoreFinder
 import org.geotools.data.simple.SimpleFeatureIterator
 import org.opengis.feature.simple.SimpleFeature
-
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object Shapefile {
   // This class makes it possible to use scalaic tools on SimpleFeatureIterators automatically
@@ -25,7 +24,7 @@ case class Shapefile(filename: String) {
   // TODO(gsvigruha): Shapefiles come with a default, often complex geometry attribute. Maybe remove
   // that default geometry attribute from here and only keep simple ones (strings, numbers).
   val attrNames =
-    dataStore.getSchema().getAttributeDescriptors().map(attr => attr.getLocalName()).toIndexedSeq
+    dataStore.getSchema.getAttributeDescriptors.asScala.map(attr => attr.getLocalName()).toIndexedSeq
   val iterator = dataStore.getFeatureSource.getFeatures().features()
 
   def assertHasAttributeName(name: String): Unit = {

@@ -141,7 +141,7 @@ object FEFilters {
     val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
 
     val ws = P(" ".rep())
-    val notWs = P(CharPred(c => c != " ").rep())
+    val notWs = P(CharPred(c => c != ' ').rep())
     val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
   }
 

@@ -17,6 +17,7 @@ import org.opengis.geometry.BoundingBox
 import org.apache.spark
 
 import scala.collection.immutable.Seq
+import scala.collection.JavaConverters._
 
 object SegmentByGeographicalProximity extends OpFromJson {
   class Input(val attrNames: Seq[String]) extends MagicInputSignature {

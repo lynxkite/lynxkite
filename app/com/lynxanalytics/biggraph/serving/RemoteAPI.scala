@@ -60,7 +60,7 @@ object RemoteAPIProtocol {
 class RemoteAPIServer @javax.inject.Inject() (
     implicit
     ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
-    pjs: ProductionJsonServer)
+    cc: play.api.mvc.ControllerComponents, pjs: ProductionJsonServer)
   extends JsonServer {
   import RemoteAPIProtocol._
   val c = new RemoteAPIController(BigGraphProductionEnvironment, pjs)

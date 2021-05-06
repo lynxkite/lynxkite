@@ -3,7 +3,10 @@ package com.lynxanalytics.biggraph.serving
 
 import play.api.mvc._
 
-class Assets @javax.inject.Inject() (implicit ec: concurrent.ExecutionContext, assets: controllers.Assets)
+class Assets @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, assets: controllers.Assets,
+    val controllerComponents: ControllerComponents)
   extends BaseController {
   def at(path: String, file: String): Action[AnyContent] = {
     val action = assets.at(path, file)

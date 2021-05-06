@@ -44,7 +44,7 @@ object TypeTagToFormat {
     new PairFormat[A, B]
   }
 
-  class OptionReads[T: json.Format] extends json.Format[Option[T]] {
+  class OptionReads[T: json.Format] extends json.Reads[Option[T]] {
     def reads(j: json.JsValue): json.JsSuccess[Option[T]] = {
       json.JsSuccess(j.asOpt[T])
     }
