@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Fix for attributes becoming undefined. [#176](https://github.com/lynxkite/lynxkite/pull/176)
+
 ### 4.2.1
 
 - Fix for Chrome 90. [#162](https://github.com/lynxkite/lynxkite/pull/162)
