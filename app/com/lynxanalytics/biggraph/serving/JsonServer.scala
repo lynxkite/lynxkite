@@ -20,9 +20,11 @@ import org.apache.spark.sql.types.{ StructField, StructType }
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
 import play.api.mvc.ResponseHeader
-import play.api.libs.iteratee.Enumerator
 
-abstract class JsonServer extends mvc.Controller {
+abstract class JsonServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes)
+  extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
   def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
 
@@ -466,8 +468,8 @@ object ProductionJsonServer extends JsonServer {
       assert(user.isAdmin, "Thread dump is restricted to administrator users.")
       log.info(s"GET ${request.path}")
       val header = ResponseHeader(OK)
-      val output = ThreadDumper.get().getBytes("utf-8")
-      mvc.Result(header, Enumerator(output))
+      val output = ThreadDumper.get()
+      mvc.Result(header, output)
     }
   }
 

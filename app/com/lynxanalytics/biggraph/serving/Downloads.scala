@@ -4,7 +4,6 @@ package com.lynxanalytics.biggraph.serving
 import java.io._
 import scala.collection.JavaConversions._
 import play.api.mvc
-import play.api.libs.concurrent.Execution.Implicits._
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -31,7 +30,7 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream))
+      body = akka.stream.scaladsl.StreamConverters.fromInputStream(stream))
   }
 
   // Downloads all the files in directory concatenated into one.
@@ -52,7 +51,7 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=${request.name}")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream))
+      body = akka.stream.scaladsl.StreamConverters.fromInputStream(stream))
   }
 }
 

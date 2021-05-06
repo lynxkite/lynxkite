@@ -24,7 +24,10 @@ object LogController {
   def getLogDir: File =
     new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"))
 }
-class LogController @javax.inject.Inject() (implicit ec: concurrent.ExecutionContext) extends play.api.http.HeaderNames {
+class LogController @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes)
+  extends play.api.http.HeaderNames {
 
   val dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
