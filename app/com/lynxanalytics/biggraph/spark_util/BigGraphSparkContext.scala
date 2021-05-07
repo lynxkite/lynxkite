@@ -421,9 +421,6 @@ object BigGraphSparkContext {
       .set(
         "spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-      .set(
-        "spark.akka.threads",
-        LoggedEnvironment.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.
       .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
@@ -444,10 +441,6 @@ object BigGraphSparkContext {
       .set(
         "spark.executor.cores",
         LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
-      // We need a higher akka.frameSize (the Spark default is 10) as when the number of
-      // partitions gets into the hundreds of thousands the map output statuses exceed this limit.
-      .setIfMissing(
-        "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
       // Configure Spark event logging:
       .set(
