@@ -22,7 +22,7 @@ angular.module('biggraph').directive('entrySelector',
           }
           // We don't need a reload for directory navigation, but we track the path in the URL.
           const url = '/dir/' + p;
-          if (url !== $location.url()) {
+          if (url !== decodeURIComponent($location.url())) {
             util.skipReload();
             $location.url(url);
           }

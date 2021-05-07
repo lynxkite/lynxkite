@@ -74,8 +74,8 @@ libraryDependencies ++= Seq(
   // This can be removed when the line above works.
   "org.neo4j.driver" % "neo4j-java-driver" % "4.2.5",
   // For Neo4j tests.
-  "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
-  "org.testcontainers" % "neo4j" % "1.14.3" % Test,
+  "org.testcontainers" % "testcontainers" % "1.15.2" % Test,
+  "org.testcontainers" % "neo4j" % "1.15.2" % Test,
   // Used for working with Delta tables.
   "io.delta" %% "delta-core" % "0.6.1",
   // All kinds of parsing, e.g. filters.

@@ -4,49 +4,21 @@ package main
 
 import (
 	"fmt"
-	"sort"
-	"sync"
 )
 
 type MergeVertexEntry struct {
 	id    int64
 	count int
 }
-type MergeVertexEntrySlice []MergeVertexEntry
-
-func (a MergeVertexEntrySlice) Len() int {
-	return len(a)
-}
-func (a MergeVertexEntrySlice) Less(i, j int) bool {
-	return a[i].id < a[j].id
-}
-func (a MergeVertexEntrySlice) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-type Int64Slice []int64
-
-func (a Int64Slice) Len() int {
-	return len(a)
-}
-func (a Int64Slice) Less(i, j int) bool {
-	return a[i] < a[j]
-}
-func (a Int64Slice) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
 
 func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, firstEmbedding *EdgeBundle) {
-	mergeVertices := make(MergeVertexEntrySlice, len(vertexSets[0].MappingToUnordered))
+	mergeVertices := make([]MergeVertexEntry, len(vertexSets[0].MappingToUnordered))
 	vs0 := vertexSets[0]
 	for idx, id := range vs0.MappingToUnordered {
 		mergeVertices[idx].id = id
 	}
-	sort.Sort(mergeVertices)
 	for i := 1; i < len(vertexSets); i++ {
-		w := make([]int64, len(vertexSets[i].MappingToUnordered))
-		copy(w, vertexSets[i].MappingToUnordered)
-		sort.Sort(Int64Slice(w))
+		w := vertexSets[i].MappingToUnordered
 		for j, k := 0, 0; j < len(mergeVertices) && k < len(w); {
 			if mergeVertices[j].id == w[k] {
 				mergeVertices[j].count++
@@ -66,16 +38,20 @@ func doVertexSetIntersection(vertexSets []*VertexSet) (intersection *VertexSet, 
 		}
 	}
 	intersection = &VertexSet{
-		Mutex:              sync.Mutex{},
 		MappingToUnordered: allHaveIt,
 	}
 
 	firstEmbedding = NewEdgeBundle(len(allHaveIt), len(allHaveIt))
-	mapping := vs0.GetMappingToOrdered()
-	for idx, id := range allHaveIt {
-		firstEmbedding.Src[idx] = SphynxId(idx)
-		firstEmbedding.Dst[idx] = mapping[id]
-		firstEmbedding.EdgeMapping[idx] = id
+	for j, k := 0, 0; j < len(mergeVertices) && k < len(allHaveIt); {
+		if mergeVertices[j].id == allHaveIt[k] {
+			firstEmbedding.Src[k] = SphynxId(k)
+			firstEmbedding.Dst[k] = SphynxId(j)
+			firstEmbedding.EdgeMapping[k] = allHaveIt[k]
+			j++
+			k++
+		} else {
+			j++
+		}
 	}
 	return
 }

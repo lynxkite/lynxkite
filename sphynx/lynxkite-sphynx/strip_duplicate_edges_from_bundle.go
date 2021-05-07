@@ -25,6 +25,7 @@ func doStripDuplicateEdgesFromBundle(es *EdgeBundle) *EdgeBundle {
 		uniqueBundle.EdgeMapping[i] = id
 		i++
 	}
+	uniqueBundle.Sort()
 	return uniqueBundle
 }
 

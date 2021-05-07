@@ -4,7 +4,6 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"sync"
 )
 
 type filterType struct {
@@ -151,9 +150,7 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 	identity *EdgeBundle) {
 
 	fvs = &VertexSet{
-		Mutex:              sync.Mutex{},
 		MappingToUnordered: make([]int64, 0, len(vs.MappingToUnordered)),
-		MappingToOrdered:   nil,
 	}
 	identity = NewEdgeBundle(0, len(vs.MappingToUnordered))
 	switch a := attr.(type) {

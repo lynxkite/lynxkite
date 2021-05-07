@@ -20,7 +20,6 @@ Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.1.1 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.1.1 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
-Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna-platform # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.9.6 | <notextile></notextile>
@@ -30,8 +29,6 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # util-hadoop # 1.6.1-hadoop2 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.guava # guava # 28.2-jre | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.jamesmurty.utils # java-xmlbuilder # 1.1 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-common # 2.0.4 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-native-common # 2.0.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.15 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-io # commons-io # 2.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-net # commons-net # 3.6 | <notextile></notextile>
@@ -117,6 +114,9 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.module # jackson-module-parameter-names # 2.10.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.module # jackson-module-paranamer # 2.10.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.module # jackson-module-scala_2.12 # 2.10.5 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.github.docker-java # docker-java-api # 3.2.7 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.github.docker-java # docker-java-transport # 3.2.7 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.github.docker-java # docker-java-transport-zerodep # 3.2.7 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.api-client # google-api-client # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.api-client # google-api-client-jackson2 # 1.20.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.api-client # google-api-client-java6 # 1.20.0 | <notextile></notextile>
@@ -140,7 +140,6 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.codehaus.jackson # jackson-mapper-asl # 1.9.13 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-core # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-ddense # 0.34 | <notextile></notextile>
-Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.jetbrains # annotations # 19.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.lz4 # lz4-java # 1.7.1 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # htmlunit-driver # 2.36.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-api # 3.141.59 | <notextile></notextile>
@@ -189,7 +188,6 @@ BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4 
 BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.7 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11 | <notextile></notextile>
 CC0 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/) | org.reactivestreams # reactive-streams # 1.0.3 | <notextile></notextile>
-CC0 | [CC0 1.0 Universal License](http://creativecommons.org/publicdomain/zero/1.0/) | org.scijava # native-lib-loader # 2.0.2 | <notextile></notextile>
 CDDL | [COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0](https://glassfish.dev.java.net/public/CDDLv1.0.html) | javax.activation # activation # 1.1.1 | <notextile></notextile>
 GPL | [                 Dual license consisting of the CDDL v1.1 and GPL v2             ](https://glassfish.java.net/public/CDDL+GPL_1_1.html) | org.glassfish # javax.json # 1.0.4 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.transaction # jakarta.transaction-api # 1.3.3 | <notextile></notextile>
@@ -205,11 +203,10 @@ LGPL | [Lesser General Public License (LGPL)](http://www.gnu.org/copyleft/lesser
 LGPL | [Lesser General Public License (LGPL)](http://www.gnu.org/copyleft/lesser.txt) | org.geotools # gt-referencing # 20.0 | <notextile></notextile>
 LGPL | [Lesser General Public License (LGPL)](http://www.gnu.org/copyleft/lesser.txt) | org.geotools # gt-shapefile # 20.0 | <notextile></notextile>
 MIT | [MIT](http://www.opensource.org/licenses/mit-license.html) | com.lihaoyi # sourcecode_2.12 # 0.1.4 | <notextile></notextile>
-MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth # tcp-unix-socket-proxy # 1.0.2 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth.duct-tape # duct-tape # 1.0.8 | <notextile></notextile>
 MIT | [MIT](http://opensource.org/licenses/MIT) | org.rnorth.visible-assertions # visible-assertions # 2.1.2 | <notextile></notextile>
-MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # neo4j # 1.14.3 | <notextile></notextile>
-MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # testcontainers # 1.14.3 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # neo4j # 1.15.2 | <notextile></notextile>
+MIT | [MIT](http://opensource.org/licenses/MIT) | org.testcontainers # testcontainers # 1.15.2 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.brotli # dec # 0.1.2 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # jul-to-slf4j # 1.7.30 | <notextile></notextile>
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # slf4j-api # 1.7.30 | <notextile></notextile>
