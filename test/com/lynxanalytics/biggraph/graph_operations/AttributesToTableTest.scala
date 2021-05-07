@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import java.sql
 import org.apache.commons.lang.ClassUtils
 import org.apache.spark
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.runtime.universe.typeTag
 
@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
-class AttributesToTableTest extends FunSuite with TestGraphOp {
+class AttributesToTableTest extends AnyFunSuite with TestGraphOp {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
     row.toSeq.map {
       case r: spark.sql.Row => toSeq(r)

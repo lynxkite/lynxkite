@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 
-class RegressionTest extends FunSuite with TestGraphOp {
+class RegressionTest extends AnyFunSuite with TestGraphOp {
   def predict(method: String, label: Attribute[Double], features: Seq[Attribute[Double]]) = {
     val op = Regression(method, features.size)
     val prediction = op(op.features, features)(op.label, label).result.prediction

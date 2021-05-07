@@ -1,6 +1,6 @@
 package com.lynxanalytics.sandbox
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import java.security.AccessControlException
 
 import com.lynxanalytics.biggraph.graph_api.TestGraphOp
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
 
 import scala.reflect.runtime.universe._
 
-class ScalaScriptTest extends FunSuite with TestGraphOp {
+class ScalaScriptTest extends AnyFunSuite with TestGraphOp {
 
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"

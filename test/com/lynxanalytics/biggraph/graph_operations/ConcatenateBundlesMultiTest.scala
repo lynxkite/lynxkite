@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.implicitConversions
 
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
+class ConcatenateBundlesMultiTest extends AnyFunSuite with TestGraphOp {
   def concatEdges(abSeq: Seq[(Int, Int)], bcSeq: Seq[(Int, Int)]): Seq[(Int, Int)] = {
     val abES = abSeq.map { case (a, b) => a.toLong -> b.toLong }
     val bcES = bcSeq.map { case (a, b) => a.toLong -> b.toLong }

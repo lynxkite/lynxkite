@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.controllers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
+class WorkspaceTest extends AnyFunSuite with graph_api.TestGraphOp {
   val controller = new WorkspaceController(this)
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)

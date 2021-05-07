@@ -3,11 +3,11 @@ package com.lynxanalytics.biggraph.graph_api
 import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 
-class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
+class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager
 

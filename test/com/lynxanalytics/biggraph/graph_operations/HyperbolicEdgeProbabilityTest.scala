@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.math
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
+class HyperbolicEdgeProbabilityTest extends AnyFunSuite with TestGraphOp {
   test("radial connections with high probability") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2, 3), 1 -> Seq(0),
       2 -> Seq(0), 3 -> Seq(0), 4 -> Seq()))().result

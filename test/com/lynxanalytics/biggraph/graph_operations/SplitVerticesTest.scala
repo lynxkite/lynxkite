@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_operations.DoubleAttributeToLong._
 
-class SplitVerticesTest extends FunSuite with TestGraphOp {
+class SplitVerticesTest extends AnyFunSuite with TestGraphOp {
 
   test("example graph") {
     val g = ExampleGraph()().result

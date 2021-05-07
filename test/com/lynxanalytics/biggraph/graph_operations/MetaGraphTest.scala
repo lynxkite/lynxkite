@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class MetaGraphTest extends FunSuite with TestGraphOp {
+class MetaGraphTest extends AnyFunSuite with TestGraphOp {
   test("metagraph gives the right vertices") {
     val g = ExampleGraph()().result
     val op = OutDegree()

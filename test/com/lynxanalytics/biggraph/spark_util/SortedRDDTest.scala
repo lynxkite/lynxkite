@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.Partitioner
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.Timed
 
 import scala.reflect.ClassTag
 
-class SortedRDDTest extends FunSuite with TestSparkContext {
+class SortedRDDTest extends AnyFunSuite with TestSparkContext {
   import Implicits._
 
   test("join without intersection") {

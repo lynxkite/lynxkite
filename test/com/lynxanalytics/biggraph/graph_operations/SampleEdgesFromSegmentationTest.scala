@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.spark
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
+class SampleEdgesFromSegmentationTest extends AnyFunSuite with TestGraphOp {
 
   def createColocationLikeSetup(numEvents: Int, numPersons: Int): (VertexSet, EdgeBundle) = {
     val vs1 = CreateVertexSet(numEvents).result.vs

@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class BucketingTest extends FunSuite with TestGraphOp {
+class BucketingTest extends AnyFunSuite with TestGraphOp {
   test("example graph by gender") {
     val g = ExampleGraph()().result
     val bucketing = {

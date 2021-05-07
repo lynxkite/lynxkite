@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.implicitConversions
 
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class FingerprintingTest extends FunSuite with TestGraphOp {
+class FingerprintingTest extends AnyFunSuite with TestGraphOp {
   test("two easy pairs") {
     val f = new Fingerprint(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),
@@ -68,7 +68,7 @@ class FingerprintingTest extends FunSuite with TestGraphOp {
   }
 }
 
-class FingerprintingCandidatesTest extends FunSuite with TestGraphOp {
+class FingerprintingCandidatesTest extends AnyFunSuite with TestGraphOp {
   test("two pairs") {
     assert(candidates(
       Map(10 -> Seq(1, 2, 3), 11 -> Seq(4, 5, 6)),

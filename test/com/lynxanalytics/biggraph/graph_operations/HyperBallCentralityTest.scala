@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 // The algorithm gives an approximation. Asserting on exact centrality
 // values works only for small graphs.
-class HyperBallCentralityTest extends FunSuite with TestGraphOp {
+class HyperBallCentralityTest extends AnyFunSuite with TestGraphOp {
   test("corner cases - Harmonic") {
     val op = HyperBallCentrality(5, "Harmonic", 8)
 

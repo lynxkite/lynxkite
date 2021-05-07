@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.Random
 import scala.language.implicitConversions
@@ -33,7 +33,7 @@ object ConnectedComponentsTest {
     }
   }
 }
-class ConnectedComponentsTest extends FunSuite with TestGraphOp {
+class ConnectedComponentsTest extends AnyFunSuite with TestGraphOp {
   import ConnectedComponentsTest._
 
   // Creates the graph specified by `nodes` and applies ConnectedComponents to it.

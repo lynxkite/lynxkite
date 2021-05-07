@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class RemoveNonSymmetricEdgesTest extends FunSuite with TestGraphOp {
+class RemoveNonSymmetricEdgesTest extends AnyFunSuite with TestGraphOp {
   test("Enhanced example graph") {
     val g = EnhancedExampleGraph()().result
     val op = RemoveNonSymmetricEdges()

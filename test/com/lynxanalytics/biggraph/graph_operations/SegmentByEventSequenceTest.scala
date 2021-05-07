@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 import SegmentByEventSequence._
 
-class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
+class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
   test("ContinuousEventCrosser.groupEventsByLocation") {
     val events = Seq(
       Event(1.0, 1L), Event(1.1, 2L),

@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import scala.collection.mutable
 import scala.util.Random
 
-class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
+class EnumerateTrianglesTest extends AnyFunSuite with TestGraphOp {
   test("no triangles 1") {
     val g = SmallTestGraph(Map(
       0 -> Seq(0, 0, 1, 1, 2),

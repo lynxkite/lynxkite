@@ -3,11 +3,11 @@ package com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.{ DynamicValue, GT, VertexAttributeFilter }
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.reflect.runtime.universe._
 
-class TypeTagToFormatTest extends FunSuite {
+class TypeTagToFormatTest extends AnyFunSuite {
 
   def testTag[T: TypeTag](value: T): Unit = {
     val typeTag = implicitly[TypeTag[T]]
@@ -96,7 +96,8 @@ class TypeTagToFormatTest extends FunSuite {
     nullSampleBucket.add(1L, (1, 1))
     testTag(nullSampleBucket)
 
-    val bucket = new IDBuckets(nullSampleBucket.counts)
+    val bucket = new IDBuckets[(Int, Int)]
+    bucket.absorb(nullSampleBucket)
     bucket.add(0L, (0, 1))
     testTag(bucket)
   }
