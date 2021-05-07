@@ -25,7 +25,7 @@ abstract class JsonServer @javax.inject.Inject() (
     ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
     val controllerComponents: mvc.ControllerComponents)
   extends mvc.BaseController {
-  def productionMode = cfg.get[String]("application.secret").nonEmpty
+  def productionMode = cfg.get[String]("play.http.secret.key").nonEmpty
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
@@ -339,6 +339,7 @@ object FrontendJson {
 
 }
 
+@javax.inject.Singleton
 class ProductionJsonServer @javax.inject.Inject() (
     implicit
     ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,

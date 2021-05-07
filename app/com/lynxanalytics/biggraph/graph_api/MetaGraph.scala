@@ -194,7 +194,7 @@ trait FieldNaming {
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
     val fields = mirror.symbol.toType.members.collect {
-      case m: MethodSymbol if (m.isGetter && m.isPublic) => m
+      case m: MethodSymbol if (m.isGetter && m.isPublic && !m.isLazy) => m
     }
     for (m <- fields) {
       res.put(mirror.reflectField(m).get, Symbol(m.name.toString))

@@ -21,6 +21,7 @@ Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) |
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.1.1 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna-platform # 5.5.0 | <notextile></notextile>
+Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.9.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # gcs-connector # 1.6.1-hadoop2 | <notextile></notextile>
@@ -31,16 +32,11 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.jamesmurty.utils # java-xmlbuilder # 1.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-common # 2.0.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.kohlschutter.junixsocket # junixsocket-native-common # 2.0.4 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # play-ahc-ws-standalone_2.12 # 2.1.2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # play-ws-standalone-json_2.12 # 2.1.2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # play-ws-standalone-xml_2.12 # 2.1.2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # play-ws-standalone_2.12 # 2.1.2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # shaded-asynchttpclient # 2.1.2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.typesafe.play # shaded-oauth # 2.1.2 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.15 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-io # commons-io # 2.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-net # commons-net # 3.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.jsonwebtoken # jjwt # 0.9.1 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-all # 4.1.51.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-buffer # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-http # 4.1.38.Final | <notextile></notextile>
@@ -53,7 +49,6 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-tcnative-boringssl-static # 2.0.26.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-transport # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | it.unimi.dsi # fastutil # 8.1.1 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | javax.cache # cache-api # 1.1.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | joda-time # joda-time # 2.10.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.sourceforge.htmlunit # htmlunit # 2.36.0 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.sourceforge.htmlunit # htmlunit-cssparser # 1.5.0 | <notextile></notextile>
@@ -90,9 +85,7 @@ Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.ty
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-slf4j_2.12 # 2.6.10 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-stream_2.12 # 2.6.10 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # build-link # 2.8.7 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # cachecontrol_2.12 # 2.0.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # filters-helpers_2.12 # 2.8.7 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-ahc-ws_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-akka-http-server_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-exceptions # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-functional_2.12 # 2.8.1 | <notextile></notextile>
@@ -102,7 +95,6 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-server_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-streams_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.7 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-ws_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 0.6.1 | <notextile></notextile>

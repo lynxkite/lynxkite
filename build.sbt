@@ -34,8 +34,9 @@ sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
 libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
-  ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
+  // Play and Spark depend on different Netty versions. We help them decide here.
+  "io.netty" % "netty-all" % "4.1.51.Final",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.5" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
@@ -68,6 +69,10 @@ libraryDependencies ++= Seq(
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
   // Used for working with AVRO files. 
   "org.apache.spark" %% "spark-avro" % sparkVersion.value,
+  // For Neo4j import/export. Doesn't work, see https://github.com/neo4j-contrib/neo4j-spark-connector/issues/339.
+  //"neo4j-contrib" %% "neo4j-connector-apache-spark" % "4.0.1_for_spark_3",
+  // This can be removed when the line above works.
+  "org.neo4j.driver" % "neo4j-java-driver" % "4.2.5",
   // For Neo4j tests.
   "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
   "org.testcontainers" % "neo4j" % "1.14.3" % Test,

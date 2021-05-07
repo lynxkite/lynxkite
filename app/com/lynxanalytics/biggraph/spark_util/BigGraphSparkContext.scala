@@ -56,6 +56,14 @@ class DeadClass35
 class DeadClass36
 class DeadClass37
 class DeadClass38
+class DeadClass39
+class DeadClass40
+class DeadClass41
+class DeadClass42
+class DeadClass43
+class DeadClass44
+class DeadClass45
+class DeadClass46
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -219,7 +227,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[java.sql.Timestamp])
     kryo.register(classOf[DeadClass11])
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
-    kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
+    kryo.register(classOf[DeadClass39])
     kryo.register(classOf[DeadClass14])
     kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
     kryo.register(classOf[DeadClass15])
@@ -274,17 +282,17 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.ml.param.IntParam])
     kryo.register(classOf[org.apache.spark.ml.param.LongParam])
     kryo.register(classOf[org.apache.spark.ml.param.StringArrayParam])
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$alwaysTrue$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$gtEq$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$inRange$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval$$anonfun$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.tree.TreeRegressorParams$$anonfun$3"))
+    kryo.register(classOf[DeadClass40])
+    kryo.register(classOf[DeadClass41])
+    kryo.register(classOf[DeadClass42])
+    kryo.register(classOf[DeadClass43])
+    kryo.register(classOf[DeadClass44])
     kryo.register(classOf[org.apache.spark.ml.tree.LeafNode])
     kryo.register(classOf[org.apache.spark.ml.tree.InternalNode])
     kryo.register(classOf[DeadClass12])
     kryo.register(classOf[org.apache.spark.ml.regression.GBTRegressionModel])
-    kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams$$anonfun$10"))
-    kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.CachedBatch"))
+    kryo.register(classOf[DeadClass45])
+    kryo.register(classOf[DeadClass46])
     kryo.register(Class.forName("org.apache.spark.broadcast.TorrentBroadcast"))
     kryo.register(classOf[DeadClass30])
     kryo.register(classOf[DeadClass13])

@@ -21,6 +21,7 @@ class ErrorHandler extends http.HttpErrorHandler {
     else escape(error)
   }
   def onClientError(request: RequestHeader, statusCode: Int, error: String): Future[Result] = {
+    log.error(error)
     if (statusCode == play.api.http.Status.NOT_FOUND) {
       Future.successful(NotFound(escapeIfNeeded(request.toString, request.headers)))
     } else {
@@ -38,6 +39,7 @@ class ErrorHandler extends http.HttpErrorHandler {
   }
 
   def onServerError(request: RequestHeader, throwable: Throwable): Future[Result] = {
+    log.error("server error", throwable)
     Future.successful {
       getResult(throwable) match {
         case Some(status) => status
