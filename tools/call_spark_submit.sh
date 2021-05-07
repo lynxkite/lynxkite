@@ -77,7 +77,7 @@ addJPropIfNonEmpty http.address "${KITE_HTTP_ADDRESS}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
 addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
 addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
-addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
+addJPropIfNonEmpty play.http.secret.key "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty authentication.google.clientId "${KITE_GOOGLE_CLIENT_ID}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
@@ -193,7 +193,7 @@ if [ -n "${KITE_EXTRA_JARS}" ]; then
 fi
 
 
-className="play.core.server.NettyServer"
+className="play.core.server.ProdServerStart"
 
 
 final_java_opts="${final_java_opts} -Xss${DRIVER_THREAD_STACK_SIZE}"

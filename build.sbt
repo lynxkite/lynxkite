@@ -33,6 +33,7 @@ val sparkVersion = SettingKey[String]("spark-version", "The version of Spark use
 sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
 
 libraryDependencies ++= Seq(
+  guice, // Dependency injection for Play.
   ws, // Play library for making HTTP requests.
   filters, // Play library for compressing HTTP responses.
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
