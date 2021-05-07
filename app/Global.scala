@@ -21,7 +21,6 @@ class ErrorHandler extends http.HttpErrorHandler {
     else escape(error)
   }
   def onClientError(request: RequestHeader, statusCode: Int, error: String): Future[Result] = {
-    log.error(error)
     if (statusCode == play.api.http.Status.NOT_FOUND) {
       Future.successful(NotFound(escapeIfNeeded(request.toString, request.headers)))
     } else {
