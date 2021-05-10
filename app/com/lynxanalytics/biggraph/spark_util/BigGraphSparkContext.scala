@@ -328,6 +328,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(scala.collection.mutable.ListBuffer().getClass)
     kryo.register(classOf[org.apache.spark.sql.delta.actions.AddFile])
 
+    kryo.register(classOf[org.apache.spark.sql.catalyst.InternalRow])
+    kryo.register(Class.forName("org.apache.spark.util.collection.OpenHashMap$mcD$sp"))
+    kryo.register(Class.forName("scala.reflect.ManifestFactory$LongManifest"))
+    kryo.register(Class.forName("scala.reflect.ClassTag$GenericClassTag"))
+
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
