@@ -34,7 +34,9 @@ object UDF {
   private type Counts = Map[String, Long]
   val mostCommon = new org.apache.spark.sql.expressions.Aggregator[String, Counts, String] {
     def zero = Map[String, Long]()
-    def reduce(map: Counts, key: String): Counts = map + (key -> (map.getOrElse(key, 0L) + 1L))
+    def reduce(map: Counts, key: String): Counts =
+      if (key == null) map
+      else map + (key -> (map.getOrElse(key, 0L) + 1L))
     def merge(map1: Counts, map2: Counts): Counts =
       (map1.keySet ++ map2.keySet).toSeq.map(k => k -> (map1.getOrElse(k, 0L) + map2.getOrElse(k, 0L))).toMap
     def finish(map: Counts): String = if (!map.isEmpty) map.maxBy(_.swap)._1 else null
