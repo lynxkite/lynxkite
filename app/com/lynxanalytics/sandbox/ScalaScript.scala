@@ -69,6 +69,10 @@ class ScalaScriptSecurityManager extends SecurityManager {
               super.checkPermission(permission)
             }
           case _: java.lang.reflect.ReflectPermission =>
+          case p: java.lang.RuntimePermission =>
+            if (!(p.getName == "accessDeclaredMembers" || p.getName == "setContextClassLoader")) {
+              super.checkPermission(p)
+            }
           case _ =>
             super.checkPermission(permission)
         }
@@ -136,7 +140,7 @@ object ScalaScript {
     // we convert the DataFrame before passing it to Vegas
     val data = dfToSeq(df)
     val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
-    withContextClassLoader {
+    withEngine {
       engine.put("table: Seq[Map[String, Any]]", data)
       val fullCode = s"""
       import vegas._
@@ -145,7 +149,7 @@ object ScalaScript {
       }
       plot.toJson.toString
       """
-      val compiledCode = compile(fullCode)
+      val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
         ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
@@ -190,8 +194,8 @@ object ScalaScript {
     $func
     typeTagOf(eval _)
     """
-    withContextClassLoader {
-      val compiledCode = compile(fullCode)
+    withEngine {
+      val compiledCode = engine.compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
@@ -211,32 +215,6 @@ object ScalaScript {
       $code
     }
     """
-  }
-
-  private class CompileReturnedNullError() extends RuntimeException
-  // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
-  // error message in case of a compilation error.
-  private def compile(fullCode: String) = {
-    // The Scala compiler doesn't include the compilation error message, but prints it to the
-    // console, so we need to capture the console.
-    val os = new java.io.ByteArrayOutputStream
-    try {
-      Console.withOut(os) {
-        val script = engine.compile(fullCode)
-        // See #7227
-        // We re-create the engine if engine.compile() returns a null
-        if (script == null) {
-          engine = null
-          throw new CompileReturnedNullError()
-        }
-        script
-      }
-    } catch {
-      case _: javax.script.ScriptException =>
-        throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
-      case _: CompileReturnedNullError =>
-        throw new javax.script.ScriptException("Compile error")
-    }
   }
 
   // A wrapper class to call the compiled function with the parameter Map.
@@ -283,8 +261,8 @@ object ScalaScript {
       }
       evalWrapper _
       """
-      withContextClassLoader {
-        val compiledCode = compile(fullCode)
+      withEngine {
+        val compiledCode = engine.compile(fullCode)
         val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval()
         }
@@ -293,15 +271,12 @@ object ScalaScript {
     })
   }
 
-  private def withContextClassLoader[T](func: => T): T = synchronized {
-    // Scripted.compile changes the class loader and does not restore it.
-    // https://issues.scala-lang.org/browse/SI-8521
-    if (engine == null) engine = createEngine()
-    val cl = Thread.currentThread().getContextClassLoader
+  private def withEngine[T](func: => T): T = synchronized {
+    engine = createEngine()
     try {
       func
     } finally {
-      Thread.currentThread().setContextClassLoader(cl)
+      engine = null
     }
   }
 
@@ -318,7 +293,7 @@ object ScalaScript {
   def findVariables(code: String): Set[String] = {
     import scala.reflect.internal.util.ScriptSourceFile
     import scala.reflect.internal.util.NoFile
-    withContextClassLoader {
+    withEngine {
       val script = ScriptSourceFile(NoFile, code.toArray)
       val global = engine.intp.global
       val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
