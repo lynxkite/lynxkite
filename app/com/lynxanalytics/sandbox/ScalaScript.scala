@@ -135,28 +135,7 @@ object ScalaScript {
 
   def runVegas(
     code: String,
-    df: DataFrame): String = synchronized {
-    // To avoid the need of spark packages in the script
-    // we convert the DataFrame before passing it to Vegas
-    val data = dfToSeq(df)
-    val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
-    withEngine {
-      engine.put("table: Seq[Map[String, Any]]", data)
-      val fullCode = s"""
-      import vegas._
-      val plot = {
-        $code
-      }
-      plot.toJson.toString
-      """
-      val compiledCode = engine.compile(fullCode)
-      withTimeout(timeoutInSeconds) {
-        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval().toString
-        }
-      }
-    }
-  }
+    df: DataFrame): String = "TODO"
 
   // A wrapper class representing the type signature of a Scala expression.
   import scala.language.existentials
@@ -195,7 +174,7 @@ object ScalaScript {
     typeTagOf(eval _)
     """
     withEngine {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
@@ -215,6 +194,25 @@ object ScalaScript {
       $code
     }
     """
+  }
+
+  // Compiles the code and makes error messages prettier.
+  private def compile(code: String) = {
+    try {
+      engine.compile("// CODE START\n" + code)
+    } catch {
+      case e: ScriptException =>
+        // The exception includes the whole code (including internal details)
+        // and does not highlight the line with the error. We reformat it here.
+        val msg = e.getMessage
+        val withoutCode = msg.replaceAll("(?s)\\s*// CODE START.*", "")
+        val codeLines = e.getFileName.split("\n", -1)
+        throw new Exception(Seq(
+          withoutCode,
+          codeLines(e.getLineNumber - 11),
+          " " * (e.getColumnNumber - 1) + "^\n"
+        ).mkString("\n"))
+    }
   }
 
   // A wrapper class to call the compiled function with the parameter Map.
@@ -262,7 +260,7 @@ object ScalaScript {
       evalWrapper _
       """
       withEngine {
-        val compiledCode = engine.compile(fullCode)
+        val compiledCode = compile(fullCode)
         val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval()
         }

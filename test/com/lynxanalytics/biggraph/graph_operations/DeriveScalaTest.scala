@@ -137,7 +137,7 @@ class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    val e = intercept[javax.script.ScriptException] {
+    val e = intercept[Exception] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity),
@@ -145,9 +145,9 @@ class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
         onlyOnDefinedAttrs = false)
     }
     assert(e.getMessage ==
-      """<console>:18: error: value * is not a member of Option[Double]
-             income * 10.0
-                    ^
+      """value * is not a member of Option[Double] in
+      income * 10.0
+             ^
 """)
   }
 
@@ -164,7 +164,7 @@ class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    val e = intercept[javax.script.ScriptException] {
+    val e = intercept[Exception] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity, "age" -> g.age.entity),
@@ -172,11 +172,11 @@ class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
         onlyOnDefinedAttrs = false)
     }
     assert(e.getMessage ==
-      """<console>:18: error: type mismatch;
+      """type mismatch;
  found   : Option[Double]
- required: String
-             income + age
-                      ^
+ required: String in
+      income + age
+               ^
 """)
   }
 
