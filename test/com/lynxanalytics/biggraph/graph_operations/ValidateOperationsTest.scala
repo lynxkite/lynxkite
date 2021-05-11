@@ -68,7 +68,7 @@ class ValidateOperationsTest extends AnyFunSuite with TestGraphOp {
     val e = intercept[java.lang.AssertionError] {
       op(op.es1, s1.es1)(op.vertexAttr, s2.vertexAttr)
     }
-    assert(e.getMessage.contains("Collision: ArrayBuffer('vs)"), e)
+    assert(e.getMessage.contains("Collision: Vector('vs)"), e)
   }
   test("edgeAttr is for a different edge bundle") {
     val e = intercept[java.lang.AssertionError] {
@@ -90,6 +90,6 @@ class ValidateOperationsTest extends AnyFunSuite with TestGraphOp {
     val e = intercept[java.lang.AssertionError] {
       op(op.es2, s1.es1) // idSet requirement is not met.
     }
-    assert(e.getMessage.contains("Collision: ArrayBuffer('vs)"), e)
+    assert(e.getMessage.contains("Collision: Vector('vs)"), e)
   }
 }

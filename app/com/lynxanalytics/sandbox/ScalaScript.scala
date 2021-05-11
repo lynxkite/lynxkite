@@ -133,10 +133,6 @@ object ScalaScript {
     }.toSeq
   }
 
-  def runVegas(
-    code: String,
-    df: DataFrame): String = "TODO"
-
   // A wrapper class representing the type signature of a Scala expression.
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
