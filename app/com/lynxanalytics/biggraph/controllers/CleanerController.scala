@@ -161,7 +161,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     states.flatMap {
       case t if t.isTable => Some(t.table)
       case p if p.isProject => p.project.viewer.allEntities
-      case p if p.isPlot => Some(p.plot)
+      case p if p.isPlot => Some(BoxOutputState.tableOfPlot(p.plot))
       case v if v.isVisualization => v.visualization.project.viewer.allEntities
       case e if e.isExportResult => Some(e.exportResult)
       case _ => None

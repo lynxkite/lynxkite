@@ -12,40 +12,24 @@ angular.module('biggraph')
         popupModel: '=',
       },
       link: function(scope, element) {
-        scope.updatePlotSpec = function () {
-          scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
-        };
-
-        scope.embedPlot = function () {
-          scope.updatePlotSpec();
+        function embedPlot() {
           const plotElement = element.find('#plot-div')[0];
-          /* global vg */
-          vg.embed(plotElement, scope.embedSpec, function() {});
-        };
+          if (scope.plotJSON === undefined || plotElement === undefined) {
+            return;
+          }
+          /* global vega, vegaEmbed */
+          vegaEmbed(plotElement, scope.plotJSON, {
+            loader: vega.loader({ http: { headers: { 'X-Requested-With': 'XMLHttpRequest' } } }),
+          });
+        }
 
         scope.$watch('stateId', function(newValue, oldValue, scope) {
-          scope.embedSpec = {
-            mode: 'vega-lite',
-            actions: false,
-            renderer: 'svg',
-          };
-
-          scope.plot = util.get('/ajax/getPlotOutput', {
+          scope.plotJSON = util.get('/ajax/getPlotOutput', {
             id: scope.stateId
           });
-          scope.plot.then(
-            function() {
-              scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
-            }, function() {}
-          );
         });
 
-        scope.$watch('plotJSON', function() {
-          if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
-            scope.embedPlot();
-          }
-        }, true);
-
+        scope.$watch('plotJSON', embedPlot, true);
       },
     };
   });

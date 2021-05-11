@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.controllers.BoxOutputState
 import org.apache.spark
 
 class GraphMetricsTest extends OperationsTestBase {
@@ -57,13 +58,13 @@ class GraphMetricsTest extends OperationsTestBase {
   }
 
   test("graph metrics works (Output: Degree Distribution)") {
-    // If the plot creation fails, the test throws an exception here
-    val plot = plotBox.output("Degree Distribution").plot.value
+    val table = BoxOutputState.tableOfPlot(plotBox.output("Degree Distribution").plot)
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq())
   }
 
   test("graph metrics works (Output: Component Distribution)") {
-    // If the plot creation fails, the test throws an exception here
-    val plot = plotBox.output("Component Distribution").plot.value
+    val table = BoxOutputState.tableOfPlot(plotBox.output("Component Distribution").plot)
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq())
   }
 
 }

@@ -327,8 +327,8 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
-  def plot(plot: graph_api.Scalar[String]) = {
-    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
+  def plot(plot: json.JsValue) = {
+    BoxOutputState(BoxOutputKind.Plot, Some(plot))
   }
 
   def from(
@@ -354,6 +354,15 @@ object BoxOutputState {
         "uiStatus" -> v.uiStatus,
         "graph" -> json.Json.toJson(v.project.rootState))))
   }
+
+  def guidOfPlot(plot: json.JsValue): java.util.UUID = {
+    val url = (plot \ "data" \ "url").as[String]
+    val guid = url.replaceAll(".*(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{8}).*", "$1")
+    guid.asUUID
+  }
+
+  def tableOfPlot(plot: json.JsValue)(implicit manager: graph_api.MetaGraphManager): graph_api.Table =
+    manager.table(guidOfPlot(plot))
 }
 
 case class BoxOutputState(
@@ -389,10 +398,10 @@ case class BoxOutputState(
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
-  def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+  def plot: json.JsValue = {
     success.check()
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
-    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+    state.get
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
@@ -417,7 +426,7 @@ case class BoxOutputState(
     kind match {
       case BoxOutputKind.Project => BoxOutputState.from(projectState.mapGuids(change))
       case BoxOutputKind.Table => defaultGuidMapper(change)
-      case BoxOutputKind.Plot => defaultGuidMapper(change)
+      case BoxOutputKind.Plot => plotGuidMapper(change)
       case BoxOutputKind.ExportResult => defaultGuidMapper(change)
       case BoxOutputKind.Visualization => this // Contains no GUIDs.
       case BoxOutputKind.Error => this // Has no state: thus, no GUIDs either.
@@ -432,12 +441,16 @@ case class BoxOutputState(
     this.copy(state = Some(newState))
   }
 
+  private def plotGuidMapper(change: java.util.UUID => java.util.UUID): BoxOutputState = ???
+  // TODO: replace the data URL.
+
   // A GUID that depends on the state contents.
   lazy val gUID: java.util.UUID = {
     kind match {
       case BoxOutputKind.Project => projectState.gUID
       case BoxOutputKind.Visualization => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
       case BoxOutputKind.Error => java.util.UUID.nameUUIDFromBytes(success.disabledReason.getBytes)
+      case BoxOutputKind.Plot => BoxOutputState.guidOfPlot(this.plot)
       case _ => (state.get \ "guid").as[String].asUUID
     }
   }

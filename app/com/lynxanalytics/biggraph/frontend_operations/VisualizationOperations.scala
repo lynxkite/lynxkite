@@ -70,7 +70,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def apply() = ???
 
-    protected def makeOutput(plotResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+    protected def makeOutput(plotResult: json.JsValue): Map[BoxOutput, BoxOutputState] = {
       Map(context.box.output(
         context.meta.outputs(0)) -> BoxOutputState.plot(plotResult))
     }
@@ -93,13 +93,26 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
       "plot_code",
       "Plot code",
       language = "scala",
-      defaultValue =
-        s"""Vegas()\n  .withData(table)\n  .encodeX("$bestX", Nom)\n  .encodeY("$bestY", Quant)\n  .mark(Bar)""")
+      defaultValue = s"""
+{
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "$bestX",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "$bestY",
+      "type": "quantitative"
+    }
+  }
+}
+        """.trim)
 
     def plotResult() = {
-      val plotCode = params("plot_code")
-      val op = graph_operations.CreatePlot(plotCode)
-      op(op.t, table).result.plot
+      val j = json.Json.parse(params("plot_code")).as[json.JsObject]
+      val tableURL = "/ajax/getTableOutput?q=%7B%22id%22:%22" + table.gUID.toString + "%22,%22sampleRows%22:10%7D"
+      j ++ json.Json.obj("data" -> json.Json.obj("url" -> tableURL))
     }
   }
 }
