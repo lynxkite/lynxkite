@@ -210,8 +210,7 @@ object ScalaScript {
         throw new Exception(Seq(
           withoutCode,
           codeLines(e.getLineNumber - 11),
-          " " * (e.getColumnNumber - 1) + "^\n"
-        ).mkString("\n"))
+          " " * (e.getColumnNumber - 1) + "^\n").mkString("\n"))
     }
   }
 
