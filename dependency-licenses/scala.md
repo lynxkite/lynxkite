@@ -94,13 +94,14 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.7 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.0 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 0.6.1 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 0.8.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-compiler # 2.12.13 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-library # 2.12.13 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-reflect # 2.12.13 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-java8-compat_2.12 # 0.9.1 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-parser-combinators_2.12 # 1.1.2 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-xml_2.12 # 1.2.0 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-xml_2.12 # 1.3.0 | <notextile></notextile>
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
@@ -151,22 +152,22 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xalan # xalan # 2.7.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xerces # xercesImpl # 2.12.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xml-apis # xml-apis # 1.4.01 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalactic # scalactic_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-compatible # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-core_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-diagrams_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-featurespec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-flatspec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-freespec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-funspec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-funsuite_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-matchers-core_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-mustmatchers_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-propspec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-refspec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-shouldmatchers_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-wordspec_2.12 # 3.2.5 | <notextile></notextile>
-Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest_2.12 # 3.2.5 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalactic # scalactic_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-compatible # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-core_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-diagrams_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-featurespec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-flatspec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-freespec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-funspec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-funsuite_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-matchers-core_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-mustmatchers_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-propspec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-refspec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-shouldmatchers_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-wordspec_2.12 # 3.2.7 | <notextile></notextile>
+Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest_2.12 # 3.2.7 | <notextile></notextile>
 BSD | [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.9.2 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | com.thoughtworks.paranamer # paranamer # 2.8 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | javax.measure # unit-api # 1.0 | <notextile></notextile>

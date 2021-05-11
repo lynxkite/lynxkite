@@ -329,6 +329,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.delta.actions.AddFile])
 
     kryo.register(classOf[java.lang.invoke.SerializedLambda])
+    kryo.register(classOf[scala.collection.immutable.List[_]])
     kryo.register(Class.forName("scala.Enumeration$Val"))
     kryo.register(classOf[org.apache.spark.sql.catalyst.InternalRow])
     kryo.register(classOf[org.apache.spark.util.collection.OpenHashSet[_]])
@@ -367,8 +368,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.tree.HasVarianceImpurity"))
     kryo.register(Class.forName("org.apache.spark.ml.tree.TreeEnsembleParams"))
     kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams"))
+    kryo.register(Class.forName("org.apache.spark.sql.types.BooleanType$"))
     kryo.register(Class.forName("org.apache.spark.sql.types.Decimal$DecimalAsIfIntegral$"))
     kryo.register(Class.forName("org.apache.spark.sql.types.Decimal$DecimalIsFractional$"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.datasources.v2.DataWritingSparkTaskResult"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.DefaultCachedBatch"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

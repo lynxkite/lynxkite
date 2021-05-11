@@ -27,6 +27,7 @@ case class Neo4jConnectionParameters(url: String, username: String, password: St
       .option("authentication.basic.password", password)
       .option("url", url)
       .option("query", query)
+      .mode(spark.sql.SaveMode.Append)
       .save()
   }
 }
