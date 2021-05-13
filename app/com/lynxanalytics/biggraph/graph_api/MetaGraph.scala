@@ -22,6 +22,24 @@ import scala.collection.immutable.SortedMap
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import org.apache.spark
 
+object MetaGraphUtil {
+  val oldPrefix = "ACED00057372000C7363616C612E53796D626F6C292AC645426F2F4B"
+    .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
+  val newPrefix = "ACED00057372000C7363616C612E53796D626F6C5F4785C13785FF06"
+    .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
+  def makeGUID(a: Array[Byte]): UUID = {
+    // Symbol's serialized form changed from Scala 2.11 to Scala 2.12.
+    // To avoid new GUIDs for every entity when upgrading from LynxKite 4.2,
+    // we patch the byte array to the old form. This is never deserialized anyway.
+    if (a.slice(0, newPrefix.length).toList == newPrefix) {
+      for (i <- 0 until newPrefix.length) {
+        a(i) = oldPrefix(i)
+      }
+    }
+    UUID.nameUUIDFromBytes(a)
+  }
+}
+
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
@@ -33,7 +51,7 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.writeObject(source.gUID)
     objectStream.writeObject(this.getClass.toString)
     objectStream.close()
-    UUID.nameUUIDFromBytes(buffer.toByteArray)
+    MetaGraphUtil.makeGUID(buffer.toByteArray)
   }
   override def toString = s"$gUID (${name.name} of $source)"
   lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
