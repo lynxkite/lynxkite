@@ -9,6 +9,8 @@ import org.apache.spark.ml
 import org.apache.spark.storage.StorageLevel
 
 object LogisticRegressionModelTrainer extends OpFromJson {
+  val elasticNetParamParameter = NewParameter("elasticNetParam", 0.0)
+  val regParamParameter = NewParameter("regParam", 0.0)
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until numFeatures).map {
@@ -24,7 +26,9 @@ object LogisticRegressionModelTrainer extends OpFromJson {
   def fromJson(j: JsValue) = LogisticRegressionModelTrainer(
     (j \ "maxIter").as[Int],
     (j \ "labelName").as[String],
-    (j \ "featureNames").as[List[String]])
+    (j \ "featureNames").as[List[String]],
+    elasticNetParamParameter.fromJson(j),
+    regParamParameter.fromJson(j))
 
   // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
   // values to coefficient standard errors. See more information at http://www.real-statistics.com/
@@ -70,7 +74,9 @@ import LogisticRegressionModelTrainer._
 case class LogisticRegressionModelTrainer(
     maxIter: Int,
     labelName: String,
-    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
+    featureNames: List[String],
+    elasticNetParam: Double,
+    regParam: Double) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   override val isBinary = true
   override val generatesProbability = true
@@ -82,7 +88,9 @@ case class LogisticRegressionModelTrainer(
   override def toJson = Json.obj(
     "maxIter" -> maxIter,
     "labelName" -> labelName,
-    "featureNames" -> featureNames)
+    "featureNames" -> featureNames) ++
+    elasticNetParamParameter.toJson(elasticNetParam) ++
+    regParamParameter.toJson(regParam)
 
   def execute(
     inputDatas: DataSet,
@@ -103,6 +111,8 @@ case class LogisticRegressionModelTrainer(
     val logisticRegression = new ml.classification.LogisticRegression()
       .setMaxIter(maxIter)
       .setTol(0)
+      .setElasticNetParam(elasticNetParam)
+      .setRegParam(regParam)
       .setRawPredictionCol("rawClassification")
       .setPredictionCol("classification")
       .setProbabilityCol("probability")
@@ -118,8 +128,6 @@ case class LogisticRegressionModelTrainer(
       rowNames = Array("pseudo R-squared:", "threshold:", "F-score:"),
       columnData = Array(Array(mcfaddenR2, threshold, fMeasure)))
     val statistics = coefficientsTable + table
-    // "%18s".format("threshold: ") +
-    // f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
@@ -145,7 +153,7 @@ case class LogisticRegressionModelTrainer(
     val numData = predictions.count.toInt
     val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
     if (labelSum == 0.0 || labelSum == numData) {
-      0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
+      0.0 // In the extreme cases, all coefficients equal to 0 and R2 equals 0.
     } else {
       // The log likelihood of logistic regression is calculated according to the equation:
       // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).

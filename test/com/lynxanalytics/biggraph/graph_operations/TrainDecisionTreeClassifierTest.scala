@@ -17,7 +17,7 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
+    assert(s == """DecisionTreeClassificationModel: depth=3, numNodes=7, numClasses=3, numFeatures=2
   If (rain <= 0.5)
    If (temperature <= 27.5)
     If (temperature <= -12.5)
@@ -73,7 +73,7 @@ END AS length of the walk""")
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeClassificationModel of depth 2 with 5 nodes
+    assert(s == """DecisionTreeClassificationModel: depth=2, numNodes=5, numClasses=3, numFeatures=2
   If (rain <= 0.5)
    If (temperature in {0.0,1.0})
     Predict: 1.0

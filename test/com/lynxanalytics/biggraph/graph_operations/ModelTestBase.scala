@@ -41,7 +41,7 @@ class ModelTestBase extends AnyFunSuite with TestGraphOp {
         val op = LogisticRegressionModelTrainer(
           maxIter = 20,
           labelName,
-          featureNames)
+          featureNames, 0.0, 0.0)
         op(op.features, features)(op.label, l).result.model
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(
