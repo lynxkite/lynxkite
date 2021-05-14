@@ -12,6 +12,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   by directly writing JSON instead of going through the Vegas Scala DSL.
 - Logistic regression models can now be configured to use elastic net regularization.
 
+### 4.2.2
+
+- Fix for attributes becoming undefined. [#176](https://github.com/lynxkite/lynxkite/pull/176)
+
 ### 4.2.1
 
 - Fix for Chrome 90. [#162](https://github.com/lynxkite/lynxkite/pull/162)
