@@ -59,12 +59,14 @@ class GraphMetricsTest extends OperationsTestBase {
 
   test("graph metrics works (Output: Degree Distribution)") {
     val table = BoxOutputState.tableOfPlot(plotBox.output("Degree Distribution").plot)
-    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq())
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq(3.0, 1.99), Seq(2.0, 0.99), Seq(0.0, 0.99)))
   }
 
   test("graph metrics works (Output: Component Distribution)") {
     val table = BoxOutputState.tableOfPlot(plotBox.output("Component Distribution").plot)
-    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq())
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq(3.0, 0.99), Seq(1.0, 0.99)))
   }
 
 }

@@ -34,11 +34,19 @@ boxes:
   parameters: {}
   parametricParameters:
     plot_code: |
-      Vegas("Line chart")
-      .withData(table)
-      .encodeX("$X", Nominal)
-      .encodeY("$Y", Quantitative)
-      .mark(Line)
+      {
+        "mark": "line",
+        "encoding": {
+          "x": {
+            "field": "$X",
+            "type": "nominal"
+          },
+          "y": {
+            "field": "$Y",
+            "type": "quantitative"
+          }
+        }
+      }
   x: 650.0
   y: 200.0
 - id: Output_1
