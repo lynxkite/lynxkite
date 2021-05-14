@@ -77,6 +77,16 @@ object Scripting {
       val op = graph_operations.EdgeBundleAsAttribute()
       op(op.edges, self).result.attr
     }
+
+    def srcAttribute: Attribute[ID] = {
+      val op = graph_operations.EdgeBundleAsAttribute()
+      op(op.edges, self).result.srcAttr
+    }
+
+    def dstAttribute: Attribute[ID] = {
+      val op = graph_operations.EdgeBundleAsAttribute()
+      op(op.edges, self).result.dstAttr
+    }
   }
 
   implicit class RichContainedAttribute[T](

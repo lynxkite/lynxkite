@@ -331,6 +331,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[java.lang.invoke.SerializedLambda])
     kryo.register(classOf[scala.collection.immutable.List[_]])
     kryo.register(Class.forName("scala.Enumeration$Val"))
+    kryo.register(Class.forName("scala.collection.mutable.WrappedArray$ofRef"))
     kryo.register(classOf[org.apache.spark.sql.catalyst.InternalRow])
     kryo.register(classOf[org.apache.spark.util.collection.OpenHashSet[_]])
     kryo.register(Class.forName("org.apache.spark.util.collection.OpenHashSet$DoubleHasher"))

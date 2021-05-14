@@ -105,9 +105,8 @@ case class ExportGraphToNeo4j(
       .withColumn(VID, F.concat(timestamp, F.lit(" "), F.col(VID)))
       .withColumn("!LynxKite export timestamp", timestamp)
     val es = inputs.es.df
-      .withColumn(SRCID, F.concat(timestamp, F.lit(" "), F.col(SRCDST + "._1")))
-      .withColumn(DSTID, F.concat(timestamp, F.lit(" "), F.col(SRCDST + "._2")))
-      .drop(SRCDST)
+      .withColumn(SRCID, F.concat(timestamp, F.lit(" "), F.col(SRCID)))
+      .withColumn(DSTID, F.concat(timestamp, F.lit(" "), F.col(DSTID)))
       .withColumn("!LynxKite export timestamp", timestamp)
 
     if (nodeLabelsColumn.isEmpty) {

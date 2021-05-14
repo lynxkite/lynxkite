@@ -14,6 +14,8 @@ object EdgeBundleAsAttribute extends OpFromJson {
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val attr = edgeAttribute[(ID, ID)](inputs.edges.entity)
+    val srcAttr = edgeAttribute[ID](inputs.edges.entity)
+    val dstAttr = edgeAttribute[ID](inputs.edges.entity)
   }
   def fromJson(j: JsValue) = EdgeBundleAsAttribute()
 }
@@ -31,5 +33,7 @@ case class EdgeBundleAsAttribute() extends SparkOperation[Input, Output] {
     rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     output(o.attr, inputs.edges.rdd.mapValues(edge => (edge.src, edge.dst)))
+    output(o.srcAttr, inputs.edges.rdd.mapValues(edge => edge.src))
+    output(o.dstAttr, inputs.edges.rdd.mapValues(edge => edge.dst))
   }
 }

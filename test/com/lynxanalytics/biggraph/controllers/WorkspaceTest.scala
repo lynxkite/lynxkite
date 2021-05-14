@@ -501,7 +501,7 @@ class WorkspaceTest extends AnyFunSuite with graph_api.TestGraphOp {
       assert(op.parameters.map(_.id) == Seq("apply_to_graph"))
       // The error is reported by marking the operation as disabled.
       // Also the output carries an error.
-      assert(op.status.disabledReason.contains("x is not a value"))
+      assert(op.status.disabledReason.contains("not found: value x"))
       assert(project.isError)
     }
   }
