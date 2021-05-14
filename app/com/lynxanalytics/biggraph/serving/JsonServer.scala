@@ -87,7 +87,7 @@ abstract class JsonServer @javax.inject.Inject() (
     }
   }
 
-  private def parseJson[T: json.Reads](user: User, request: mvc.Request[mvc.AnyContent]): T = {
+  def parseJson[T: json.Reads](user: User, request: mvc.Request[mvc.AnyContent]): T = {
     // We do our own simple parsing instead of using request.getQueryString due to #2507.
     val qs = request.rawQueryString
     assert(qs.startsWith("q="), "Missing query parameter: q")
@@ -382,6 +382,13 @@ class ProductionJsonServer @javax.inject.Inject() (
 
   def downloadFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
+  }
+
+  def downloadCSV = action(parse.anyContent) { (user: User, r: mvc.Request[mvc.AnyContent]) =>
+    val request = parseJson[GetTableOutputRequest](user, r)
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.downloadCSV(table, request.sampleRows)
   }
 
   def jsError = Action(parse.json) { request =>

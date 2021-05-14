@@ -91,8 +91,8 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     params += Code(
       "plot_code",
-      "Plot code",
-      language = "scala",
+      "Plot specification",
+      language = "json",
       defaultValue = s"""
 {
   "mark": "bar",
@@ -111,8 +111,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def plotResult() = {
       val j = json.Json.parse(params("plot_code")).as[json.JsObject]
-      val tableURL = "/ajax/getTableOutput?q=%7B%22id%22:%22" + table.gUID.toString + "%22,%22sampleRows%22:10%7D"
-      j ++ json.Json.obj("data" -> json.Json.obj("url" -> tableURL))
+      val limit = 10000
+      val tableURL = s"/downloadCSV?q=%7B%22id%22:%22${table.gUID.toString}%22,%22sampleRows%22:$limit%7D"
+      j ++ json.Json.obj("data" -> json.Json.obj(
+        "url" -> tableURL, "format" -> json.Json.obj("type" -> "csv")))
     }
   }
 }

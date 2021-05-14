@@ -355,14 +355,14 @@ object BoxOutputState {
         "graph" -> json.Json.toJson(v.project.rootState))))
   }
 
-  def guidOfPlot(plot: json.JsValue): java.util.UUID = {
+  def guidOfTableInPlot(plot: json.JsValue): java.util.UUID = {
     val url = (plot \ "data" \ "url").as[String]
-    val guid = url.replaceAll(".*(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{8}).*", "$1")
+    val guid = url.replaceAll(".*(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}).*", "$1")
     guid.asUUID
   }
 
   def tableOfPlot(plot: json.JsValue)(implicit manager: graph_api.MetaGraphManager): graph_api.Table =
-    manager.table(guidOfPlot(plot))
+    manager.table(guidOfTableInPlot(plot))
 }
 
 case class BoxOutputState(
@@ -450,7 +450,7 @@ case class BoxOutputState(
       case BoxOutputKind.Project => projectState.gUID
       case BoxOutputKind.Visualization => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
       case BoxOutputKind.Error => java.util.UUID.nameUUIDFromBytes(success.disabledReason.getBytes)
-      case BoxOutputKind.Plot => BoxOutputState.guidOfPlot(this.plot)
+      case BoxOutputKind.Plot => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
       case _ => (state.get \ "guid").as[String].asUUID
     }
   }
