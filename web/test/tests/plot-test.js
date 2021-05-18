@@ -36,7 +36,7 @@ module.exports = function(fw) {
         name: 'Custom plot',
         x: 200, y: 200 });
       lib.workspace.connectBoxes('ib0', 'table', 'plot1', 'table');
-      const plotCode = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
+      const plotCode = fs.readFileSync(__dirname + '/data/plot_code.json', 'utf8');
       const boxEditor = lib.workspace.openBoxEditor('plot1');
       boxEditor.populateOperation({
         'plot_code': plotCode,
@@ -44,7 +44,7 @@ module.exports = function(fw) {
       boxEditor.close();
       const plotState = lib.workspace.openStateView('plot1', 'plot');
       const plot = plotState.plot;
-      plot.expectBarHeightsToBe(['97', '191', '149', '316']);
+      plot.expectBarHeightsToBe([56, 110, 86, 182]);
     },
     function() {
     }

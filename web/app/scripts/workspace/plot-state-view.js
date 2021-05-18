@@ -3,7 +3,7 @@
 // Viewer of a plot state.
 
 angular.module('biggraph')
-  .directive('plotStateView', function(util) {
+  .directive('plotStateView', function(environment, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/plot-state-view.html',
@@ -19,6 +19,7 @@ angular.module('biggraph')
           }
           /* global vega, vegaEmbed */
           vegaEmbed(plotElement, scope.plotJSON, {
+            ...environment.vegaConfig,
             loader: vega.loader({ http: { headers: { 'X-Requested-With': 'XMLHttpRequest' } } }),
           });
         }
