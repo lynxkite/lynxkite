@@ -403,23 +403,24 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
       saveMode = "overwrite",
       forDownload = false)
     val export: Scalar[String] = op(op.t, table).result.exportResult
-    dataManager.get(export)
-    val f = HadoopFile(path)
-    assert((f / "_SUCCESS").exists, s"$path/_SUCCESS does not exist.")
-    val files = (f / "part-*").list.sortBy(_.symbolicName)
-    val length = files.map(_.length).sum
-    log.info(s"downloading $length bytes: $files")
-    val streams = files.iterator.map(_.open)
-    val iter = new com.lynxanalytics.biggraph.serving.HeaderSkippingStreamIterator(path, streams)
-    import scala.collection.JavaConverters._
-    val stream = new java.io.SequenceInputStream(iter.asJavaEnumeration)
-    play.api.mvc.Result(
-      header = play.api.mvc.ResponseHeader(200, Map(
-        CONTENT_LENGTH -> length.toString,
-        CONTENT_DISPOSITION -> s"attachment; filename=table-${Timestamp.human}.csv")),
-      body = play.api.http.HttpEntity.Streamed(
-        akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
-        Some(length), None))
+    dataManager.getFuture(export).map { _ =>
+      val f = HadoopFile(path)
+      assert((f / "_SUCCESS").exists, s"$path/_SUCCESS does not exist.")
+      val files = (f / "part-*").list.sortBy(_.symbolicName)
+      val length = files.map(_.length).sum
+      log.info(s"downloading $length bytes: $files")
+      val streams = files.iterator.map(_.open)
+      val iter = new com.lynxanalytics.biggraph.serving.HeaderSkippingStreamIterator(path, streams)
+      import scala.collection.JavaConverters._
+      val stream = new java.io.SequenceInputStream(iter.asJavaEnumeration)
+      play.api.mvc.Result(
+        header = play.api.mvc.ResponseHeader(200, Map(
+          CONTENT_LENGTH -> length.toString,
+          CONTENT_DISPOSITION -> s"attachment; filename=table-${Timestamp.human}.csv")),
+        body = play.api.http.HttpEntity.Streamed(
+          akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
+          Some(length), None))
+    }.future
   }
 }
 object SQLController {
