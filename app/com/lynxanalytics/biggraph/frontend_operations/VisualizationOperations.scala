@@ -70,7 +70,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def apply() = ???
 
-    protected def makeOutput(plotResult: json.JsValue): Map[BoxOutput, BoxOutputState] = {
+    protected def makeOutput(plotResult: json.JsObject): Map[BoxOutput, BoxOutputState] = {
       Map(context.box.output(
         context.meta.outputs(0)) -> BoxOutputState.plot(plotResult))
     }

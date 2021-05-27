@@ -260,7 +260,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val entities: List[MetaGraphEntity] = state.kind match {
           case BoxOutputKind.Project => state.project.viewer.allEntities
           case BoxOutputKind.Table => List(state.table)
-          case BoxOutputKind.Plot => List(BoxOutputState.tableOfPlot(state.plot))
+          case BoxOutputKind.Plot => BoxOutputState.tablesOfPlot(state.plot).toList
           case BoxOutputKind.ExportResult => List(state.exportResult)
           case BoxOutputKind.Visualization =>
             visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++

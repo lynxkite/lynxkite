@@ -327,7 +327,7 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
-  def plot(plot: json.JsValue) = {
+  def plot(plot: json.JsObject) = {
     BoxOutputState(BoxOutputKind.Plot, Some(plot))
   }
 
@@ -355,14 +355,24 @@ object BoxOutputState {
         "graph" -> json.Json.toJson(v.project.rootState))))
   }
 
-  def guidOfTableInPlot(plot: json.JsValue): java.util.UUID = {
-    val url = (plot \ "data" \ "url").as[String]
-    val guid = url.replaceAll(".*(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}).*", "$1")
-    guid.asUUID
+  val GUIDRE = raw"\w{8}-\w{4}-\w{4}-\w{4}-\w{12}".r
+  // This is currently expected to return just one GUID. Or zero if
+  // the plot uses some other data source. We use a Seq instead of an
+  // Option just in case we add support for multiple tables in the future.
+  def guidOfTablesInPlot(plot: json.JsObject): Seq[java.util.UUID] = {
+    try {
+      val url = (plot \ "data" \ "url").as[String]
+      GUIDRE.findAllMatchIn(url).toSeq.map(_.matched.asUUID)
+    } catch {
+      case _: json.JsResultException => Seq()
+    }
   }
 
-  def tableOfPlot(plot: json.JsValue)(implicit manager: graph_api.MetaGraphManager): graph_api.Table =
-    manager.table(guidOfTableInPlot(plot))
+  def tablesOfPlot(plot: json.JsObject)(
+    implicit
+    manager: graph_api.MetaGraphManager): Seq[graph_api.Table] = {
+    guidOfTablesInPlot(plot).map(manager.table(_))
+  }
 }
 
 case class BoxOutputState(
@@ -398,10 +408,10 @@ case class BoxOutputState(
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
-  def plot: json.JsValue = {
+  def plot: json.JsObject = {
     success.check()
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
-    state.get
+    state.get.as[json.JsObject]
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
@@ -441,8 +451,19 @@ case class BoxOutputState(
     this.copy(state = Some(newState))
   }
 
-  private def plotGuidMapper(change: java.util.UUID => java.util.UUID): BoxOutputState = ???
-  // TODO: replace the data URL.
+  private def plotGuidMapper(change: java.util.UUID => java.util.UUID): BoxOutputState = {
+    var newState = BoxOutputState.guidOfTablesInPlot(plot).foldLeft(plot) { (plot, oldGuid) =>
+      val newGuid = change(oldGuid)
+      (plot \ "data" \ "url").asOpt[String] match {
+        case Some(oldUrl) =>
+          val oldData = (plot \ "data").as[json.JsObject]
+          val newUrl = oldUrl.replace(oldGuid.toString, newGuid.toString)
+          plot ++ json.Json.obj("data" -> (oldData ++ json.Json.obj("url" -> newUrl)))
+        case None => plot
+      }
+    }
+    this.copy(state = Some(newState))
+  }
 
   // A GUID that depends on the state contents.
   lazy val gUID: java.util.UUID = {
