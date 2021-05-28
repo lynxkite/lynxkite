@@ -70,9 +70,7 @@ libraryDependencies ++= Seq(
   // Used for working with AVRO files. 
   "org.apache.spark" %% "spark-avro" % sparkVersion.value,
   // For Neo4j import/export. Doesn't work, see https://github.com/neo4j-contrib/neo4j-spark-connector/issues/339.
-  //"neo4j-contrib" %% "neo4j-connector-apache-spark" % "4.0.1_for_spark_3",
-  // This can be removed when the line above works.
-  "org.neo4j.driver" % "neo4j-java-driver" % "4.2.5",
+  "org.neo4j" %% "neo4j-connector-apache-spark" % "4.0.2_for_spark_3",
   // For Neo4j tests.
   "org.testcontainers" % "testcontainers" % "1.15.2" % Test,
   "org.testcontainers" % "neo4j" % "1.15.2" % Test,
