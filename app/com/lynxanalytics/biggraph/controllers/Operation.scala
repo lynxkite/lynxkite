@@ -707,6 +707,8 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
         List(exportResultInput(inputName).gUID)
       case BoxOutputKind.Visualization =>
         visualizationInput(inputName).allEntityGUIDs
+      case BoxOutputKind.Plot =>
+        BoxOutputState.guidOfTablesInPlot(input.plot).toList
       case _ => throw new AssertionError(
         s"Cannot use '${input.kind}' as input.")
     }
