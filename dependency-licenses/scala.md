@@ -105,6 +105,7 @@ Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-l
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
+Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.10.5 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.10.5 | <notextile></notextile>
@@ -142,6 +143,9 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-core # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-ddense # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.lz4 # lz4-java # 1.7.1 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12 # 4.0.2_for_spark_3 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12_common # 4.0.2 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-cypher-dsl # 2020.1.4 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # htmlunit-driver # 2.36.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-api # 3.141.59 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-firefox-driver # 3.141.59 | <notextile></notextile>
@@ -227,5 +231,6 @@ unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locatio
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts-core # 1.16.0 | <notextile></notextile>
 unrecognized | [JDL (Java Distribution License)](https://jai.dev.java.net/jdl-jai.pdf) | javax.media # jai_core # 1.1.3 | <notextile></notextile>
 unrecognized | [Unicode/ICU License](http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE) | com.ibm.icu # icu4j # 58.2 | <notextile></notextile>
+unrecognized | [Unknown License](http://asm.ow2.org/license.html) | org.apache.xbean # xbean-asm6-shaded # 4.10 | <notextile></notextile>
 unrecognized | [none specified](none specified) | jgridshift # jgridshift # 1.0 | <notextile></notextile>
 
