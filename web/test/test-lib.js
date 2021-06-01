@@ -1292,10 +1292,10 @@ testLib = {
   },
 
   sendKeysToACE: function(e, keys) {
-    const aceContent = e.$('div.ace_content');
+    const aceScroller = e.$('div.ace_scroller');
     const aceInput = e.$('textarea.ace_text-input');
     // The double click on the text area focuses it properly.
-    browser.actions().doubleClick(aceContent).perform();
+    browser.actions().doubleClick(aceScroller).perform();
     aceInput.sendKeys(testLib.selectAllKey + keys);
   },
 
