@@ -14,8 +14,6 @@ object EdgeBundleAsAttribute extends OpFromJson {
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val attr = edgeAttribute[(ID, ID)](inputs.edges.entity)
-    val srcAttr = edgeAttribute[ID](inputs.edges.entity)
-    val dstAttr = edgeAttribute[ID](inputs.edges.entity)
   }
   def fromJson(j: JsValue) = EdgeBundleAsAttribute()
 }
@@ -33,7 +31,37 @@ case class EdgeBundleAsAttribute() extends SparkOperation[Input, Output] {
     rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     output(o.attr, inputs.edges.rdd.mapValues(edge => (edge.src, edge.dst)))
-    output(o.srcAttr, inputs.edges.rdd.mapValues(edge => edge.src))
-    output(o.dstAttr, inputs.edges.rdd.mapValues(edge => edge.dst))
+  }
+}
+
+// A variant where you get separate src/dst attributes.
+object EdgeBundleAsTwoAttributes extends OpFromJson {
+  class Input extends MagicInputSignature {
+    val src = vertexSet
+    val dst = vertexSet
+    val edges = edgeBundle(src, dst)
+  }
+  class Output(
+      implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
+    val src = edgeAttribute[ID](inputs.edges.entity)
+    val dst = edgeAttribute[ID](inputs.edges.entity)
+  }
+  def fromJson(j: JsValue) = EdgeBundleAsTwoAttributes()
+}
+case class EdgeBundleAsTwoAttributes()
+  extends SparkOperation[EdgeBundleAsTwoAttributes.Input, EdgeBundleAsTwoAttributes.Output] {
+  @transient override lazy val inputs = new EdgeBundleAsTwoAttributes.Input()
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new EdgeBundleAsTwoAttributes.Output()(instance, inputs)
+  def execute(
+    inputDatas: DataSet,
+    o: EdgeBundleAsTwoAttributes.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
+    implicit val ds = inputDatas
+    output(o.src, inputs.edges.rdd.mapValues(edge => edge.src))
+    output(o.dst, inputs.edges.rdd.mapValues(edge => edge.dst))
   }
 }

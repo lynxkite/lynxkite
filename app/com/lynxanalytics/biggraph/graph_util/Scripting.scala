@@ -79,13 +79,13 @@ object Scripting {
     }
 
     def srcAttribute: Attribute[ID] = {
-      val op = graph_operations.EdgeBundleAsAttribute()
-      op(op.edges, self).result.srcAttr
+      val op = graph_operations.EdgeBundleAsTwoAttributes()
+      op(op.edges, self).result.src
     }
 
     def dstAttribute: Attribute[ID] = {
-      val op = graph_operations.EdgeBundleAsAttribute()
-      op(op.edges, self).result.dstAttr
+      val op = graph_operations.EdgeBundleAsTwoAttributes()
+      op(op.edges, self).result.dst
     }
   }
 
