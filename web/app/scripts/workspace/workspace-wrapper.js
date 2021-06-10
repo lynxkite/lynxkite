@@ -142,11 +142,10 @@ angular.module('biggraph')
         this.isWizard = anchor.instance.parameters.wizard === 'yes';
         if (this.isWizard) {
           const steps = JSON.parse(anchor.instance.parameters.steps || '[]');
+          const stepsByBox = Object.fromEntries(steps.map(s => [s.box, s]));
           for (const box of this.boxes) {
-            for (const step of steps) {
-              if (step.box === box.instance.id) {
-                box.inWizard = true;
-              }
+            if (stepsByBox[box.instance.id]) {
+              box.inWizard = true;
             }
           }
         }
