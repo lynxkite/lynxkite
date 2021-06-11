@@ -3,9 +3,9 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class LookupRegionTest extends FunSuite with TestGraphOp {
+class LookupRegionTest extends AnyFunSuite with TestGraphOp {
   test("find timezones for the ExampleGraph") {
     val shapePath = getClass.getResource("/graph_operations/FindRegionTest/earth.shp").getPath
     val ex = ExampleGraph()().result

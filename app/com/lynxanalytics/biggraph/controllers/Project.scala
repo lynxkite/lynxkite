@@ -88,9 +88,10 @@ object CommonProjectState {
   // We need to define this manually because of the cyclic reference.
   implicit val fSegmentationState = new json.Format[SegmentationState] {
     def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
+      import MetaGraphManager.StringAsUUID
       json.JsSuccess(SegmentationState(
         jsonToCommonProjectState(j \ "state"),
-        (j \ "belongsToGUID").as[Option[UUID]]))
+        (j \ "belongsToGUID").asOpt[String].map(_.asUUID)))
     }
     def writes(o: SegmentationState): json.JsValue =
       Json.obj(
@@ -99,7 +100,7 @@ object CommonProjectState {
   }
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
-  private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
+  private def jsonToCommonProjectState(j: json.JsReadable): CommonProjectState =
     j.as[CommonProjectState]
 }
 

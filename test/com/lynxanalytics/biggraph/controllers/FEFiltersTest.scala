@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations._
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
-class FEFiltersTest extends FunSuite with TestGraphOp {
+class FEFiltersTest extends AnyFunSuite with TestGraphOp {
   implicit val d = SerializableType.double
   implicit val i = SerializableType.int
   implicit val s = SerializableType.string

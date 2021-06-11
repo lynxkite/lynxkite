@@ -85,7 +85,7 @@ case class TrainDecisionTreeRegressor(
     model.save(file.resolvedName)
     val treeDescription = (0 until featureNames.length).foldLeft { model.toDebugString } {
       (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
-    }.replaceFirst("[(]uid=.*[)] ", "")
+    }.replaceFirst("uid=\\w*, ", "")
     val prediction = model.transform(labeledFeaturesDF)
     val evaluation = Seq("rmse", "mse", "r2", "mae").map { metric =>
       val evaluator = new ml.evaluation.RegressionEvaluator()

@@ -13,7 +13,7 @@ class TrainDecisionTreeRegressorTest extends ModelTestBase {
       attrs = trainingData.attrs,
       graph(trainingData.vertexNumber))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeRegressionModel of depth 3 with 7 nodes
+    assert(s == """DecisionTreeRegressionModel: depth=3, numNodes=7, numFeatures=2
   If (rain <= 0.5)
    If (temperature <= 27.5)
     If (temperature <= -12.5)

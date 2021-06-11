@@ -106,7 +106,7 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     model.save(file.resolvedName)
     val treeDescription = (0 until featureNames.length).foldLeft { model.toDebugString } {
       (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
-    }.replaceFirst("[(]uid=.*[)] ", "")
+    }.replaceFirst("uid=\\w*, ", "")
     val prediction = model.transform(labeledFeaturesDF)
     val evaluator = new ml.evaluation.MulticlassClassificationEvaluator()
       .setLabelCol("label")

@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -133,7 +134,7 @@ case class TableBrowserNodeForBoxRequest(
     operationRequest: GetOperationMetaRequest,
     path: String)
 
-class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
+class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) extends play.api.http.HeaderNames {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
   implicit val sparkDomain = env.sparkDomain
@@ -381,6 +382,45 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       forDownload = false)
     val exported = op(op.t, table).result.exportResult
     dataManager.get(exported)
+  }
+
+  def downloadCSV(table: Table, sampleRows: Int) = {
+    log.info(s"downloadCSV: ${table} ${sampleRows}")
+    val path = s"DATA$$/exports/${table.gUID}"
+    val op = com.lynxanalytics.biggraph.graph_operations.ExportTableToCSV(
+      path = path,
+      header = true,
+      delimiter = ",",
+      quote = "\"",
+      quoteAll = false,
+      escape = "\\",
+      nullValue = "",
+      dateFormat = "yyyy-MM-dd",
+      timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+      dropLeadingWhiteSpace = false,
+      dropTrailingWhiteSpace = false,
+      version = 0,
+      saveMode = "overwrite",
+      forDownload = false)
+    val export: Scalar[String] = op(op.t, table).result.exportResult
+    dataManager.getFuture(export).map { _ =>
+      val f = HadoopFile(path)
+      assert((f / "_SUCCESS").exists, s"$path/_SUCCESS does not exist.")
+      val files = (f / "part-*").list.sortBy(_.symbolicName)
+      val length = files.map(_.length).sum
+      log.info(s"downloading $length bytes: $files")
+      val streams = files.iterator.map(_.open)
+      val iter = new com.lynxanalytics.biggraph.serving.HeaderSkippingStreamIterator(path, streams)
+      import scala.collection.JavaConverters._
+      val stream = new java.io.SequenceInputStream(iter.asJavaEnumeration)
+      play.api.mvc.Result(
+        header = play.api.mvc.ResponseHeader(200, Map(
+          CONTENT_LENGTH -> length.toString,
+          CONTENT_DISPOSITION -> s"attachment; filename=table-${Timestamp.human}.csv")),
+        body = play.api.http.HttpEntity.Streamed(
+          akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
+          Some(length), None))
+    }.future
   }
 }
 object SQLController {

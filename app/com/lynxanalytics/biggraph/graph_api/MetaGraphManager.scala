@@ -318,7 +318,7 @@ object BuiltIns {
       val files = opdir.listFiles.sortBy(_.getName)
       files.map { f =>
         try {
-          f.getName() -> json.Yaml.parseJsValue(FileUtils.readFileToString(f, "utf8"))
+          f.getName() -> Yaml.parseJsValue(FileUtils.readFileToString(f, "utf8"))
         } catch {
           case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
         }

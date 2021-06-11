@@ -4,7 +4,6 @@ package com.lynxanalytics.biggraph.graph_util
 import com.esotericsoftware.kryo
 import org.apache.hadoop
 import org.apache.spark
-import org.apache.spark.deploy.SparkHadoopUtil
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -68,7 +67,7 @@ object HadoopFile {
     new HadoopFile(prefixSymbol, normalizedRelativePath)
   }
 
-  lazy val defaultFs = hadoop.fs.FileSystem.get(SparkHadoopUtil.get.conf)
+  lazy val defaultFs = hadoop.fs.FileSystem.get(spark.SparkHacks.conf)
   private val s3nWithCredentialsPattern = "(s3[na]?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
@@ -108,7 +107,7 @@ class HadoopFile private (
   override def toString = symbolicName
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
-    val conf = SparkHadoopUtil.get.conf
+    val conf = spark.SparkHacks.conf
     conf.set(s"fs.${uri.getScheme}.impl.disable.cache", "true")
     if (hasCredentials) {
       scheme match {

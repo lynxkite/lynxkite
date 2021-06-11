@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class SetOverlapTest extends FunSuite with TestGraphOp {
+class SetOverlapTest extends AnyFunSuite with TestGraphOp {
   // Creates the graph specified by `nodes` and applies SetOverlap to it.
   // Returns the resulting edges in an easy-to-use format.
   def getOverlaps(nodes: Seq[(Seq[Int], Int)], minOverlap: Int): Map[(Int, Int), Double] = {

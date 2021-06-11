@@ -16,6 +16,7 @@ module.exports = {
         })
         .service('environment', function() {
           this.protractor = true;
+          this.vegaConfig = { renderer: 'svg' };
         });
       document.body.className += ' notransition'; // Disable CSS transitions.
     });

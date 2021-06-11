@@ -22,7 +22,7 @@ case class UnresolvedColumnException(message: String, trace: Throwable)
 
 object ExecuteSQL extends OpFromJson {
   private lazy val sqlConf = new spark.sql.internal.SQLConf()
-  private lazy val parser = new SparkSqlParser(sqlConf)
+  private lazy val parser = new SparkSqlParser
   private lazy val catalog = {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.catalog._
@@ -47,7 +47,7 @@ object ExecuteSQL extends OpFromJson {
     sqlQuery: String,
     protoTables: Map[String, ProtoTable]): LogicalPlan = {
     import spark.sql.catalyst.analysis._
-    val analyzer = new Analyzer(catalog, sqlConf)
+    val analyzer = new Analyzer(catalog)
     val parsedPlan = parser.parsePlan(sqlQuery)
     synchronized {
       for ((name, table) <- protoTables) {

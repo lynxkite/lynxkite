@@ -6,7 +6,6 @@ import java.io.{ File, FileOutputStream }
 import play.api.libs.json
 import play.api.mvc
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -20,11 +19,13 @@ import org.apache.spark.sql.types.{ StructField, StructType }
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
 import play.api.mvc.ResponseHeader
-import play.api.libs.iteratee.Enumerator
 
-abstract class JsonServer extends mvc.Controller {
-  def testMode = play.api.Play.maybeApplication == None
-  def productionMode = !testMode && play.api.Play.current.configuration.getString("application.secret").nonEmpty
+abstract class JsonServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    val controllerComponents: mvc.ControllerComponents)
+  extends mvc.BaseController {
+  def productionMode = cfg.get[String]("play.http.secret.key").nonEmpty
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
@@ -40,7 +41,7 @@ abstract class JsonServer extends mvc.Controller {
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     handler: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
-    mvc.Action.async(parser) { request =>
+    Action.async(parser) { request =>
       getUser(request, withAuth) match {
         case Some(user) => handler(user, request)
         case None => Future.successful(Unauthorized)
@@ -86,7 +87,7 @@ abstract class JsonServer extends mvc.Controller {
     }
   }
 
-  private def parseJson[T: json.Reads](user: User, request: mvc.Request[mvc.AnyContent]): T = {
+  def parseJson[T: json.Reads](user: User, request: mvc.Request[mvc.AnyContent]): T = {
     // We do our own simple parsing instead of using request.getQueryString due to #2507.
     val qs = request.rawQueryString
     assert(qs.startsWith("q="), "Missing query parameter: q")
@@ -136,7 +137,7 @@ abstract class JsonServer extends mvc.Controller {
     }
   }
 
-  def healthCheck(checkHealthy: () => Unit) = mvc.Action { request =>
+  def healthCheck(checkHealthy: () => Unit) = Action { request =>
     log.info(s"${request.remoteAddress} GET ${request.path}")
     checkHealthy()
     Ok("Server healthy")
@@ -283,7 +284,6 @@ object FrontendJson {
   implicit val wTableColumn = json.Json.writes[TableColumn]
   implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
   implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
-  implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
   implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val rBoxCatalogRequest = json.Json.reads[BoxCatalogRequest]
@@ -338,7 +338,12 @@ object FrontendJson {
 
 }
 
-object ProductionJsonServer extends JsonServer {
+@javax.inject.Singleton
+class ProductionJsonServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    cc: mvc.ControllerComponents)
+  extends JsonServer {
   import FrontendJson._
   import WorkspaceJsonFormatters._
 
@@ -347,18 +352,15 @@ object ProductionJsonServer extends JsonServer {
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
-      val upload: mvc.MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile] =
-        request.body.file("file").get
-      try {
-        val size = upload.ref.file.length
-        log.info(s"upload: $user ${upload.filename} ($size bytes)")
+      request.body.file("file").map { upload =>
+        log.info(s"upload: $user ${upload.filename} (${upload.fileSize} bytes)")
         val dataRepo = BigGraphProductionEnvironment.sparkDomain.repositoryPath
         val baseName = upload.filename.replace(" ", "_")
         val tmpName = s"$baseName.$Timestamp"
         val tmpFile = dataRepo / "tmp" / tmpName
         val md = java.security.MessageDigest.getInstance("MD5");
         val stream = new java.security.DigestOutputStream(tmpFile.create(), md)
-        try java.nio.file.Files.copy(upload.ref.file.toPath, stream)
+        try java.nio.file.Files.copy(upload.ref.path, stream)
         finally stream.close()
         val digest = md.digest().map("%02x".format(_)).mkString
         val finalName = s"$digest.$baseName"
@@ -372,7 +374,7 @@ object ProductionJsonServer extends JsonServer {
           assert(success, s"Failed to rename $tmpFile to $finalFile.")
         }
         Ok(finalFile.symbolicName)
-      } finally upload.ref.clean() // Delete temporary file.
+      }.get
     }
   }
 
@@ -382,7 +384,14 @@ object ProductionJsonServer extends JsonServer {
     (user, request) => jsonQuery(user, request)(Downloads.downloadFile)
   }
 
-  def jsError = mvc.Action(parse.json) { request =>
+  def downloadCSV = asyncAction(parse.anyContent) { (user: User, r: mvc.Request[mvc.AnyContent]) =>
+    val request = parseJson[GetTableOutputRequest](user, r)
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.downloadCSV(table, request.sampleRows)
+  }
+
+  def jsError = Action(parse.json) { request =>
     val url = (request.body \ "url").as[String]
     val stack = (request.body \ "stack").as[String]
     log.info(s"JS error at $url:\n$stack")
@@ -465,9 +474,7 @@ object ProductionJsonServer extends JsonServer {
     action(parse.anyContent) { (user, request) =>
       assert(user.isAdmin, "Thread dump is restricted to administrator users.")
       log.info(s"GET ${request.path}")
-      val header = ResponseHeader(OK)
-      val output = ThreadDumper.get().getBytes("utf-8")
-      mvc.Result(header, Enumerator(output))
+      Ok(ThreadDumper.get)
     }
   }
 
@@ -527,7 +534,7 @@ object ProductionJsonServer extends JsonServer {
     val output = new java.io.ByteArrayOutputStream()
     ("python3 -m graphray" #< config #> output).! == 0
   }
-  def graphray = mvc.Action { request: Request[AnyContent] =>
+  def graphray = Action { request: Request[AnyContent] =>
     getUser(request) match {
       case None => Unauthorized
       case Some(user) =>
@@ -553,6 +560,5 @@ object ProductionJsonServer extends JsonServer {
     }
   }
 
-  Ammonite.maybeStart()
   implicit val metaManager = workspaceController.metaManager
 }

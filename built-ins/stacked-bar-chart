@@ -30,12 +30,24 @@ boxes:
   parameters: {}
   parametricParameters:
     plot_code: |-
-      Vegas("Stacked bar chart")
-      .withData(table)
-      .encodeX("$X", Ordinal)
-      .encodeY("$Y", Quantitative, aggregate=AggOps.Sum)
-      .encodeColor("$coloredBy", Nominal)
-      .mark(Bar)
+      {
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "$X",
+            "type": "ordinal"
+          },
+          "y": {
+            "field": "$Y",
+            "aggregate": "sum",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "$coloredBy",
+            "type": "nominal"
+          }
+        }
+      }
   x: 650.0
   y: 200.0
 - id: output-plot

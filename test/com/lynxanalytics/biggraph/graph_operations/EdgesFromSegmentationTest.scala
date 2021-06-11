@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class EdgesFromSegmentationTest extends FunSuite with TestGraphOp {
+class EdgesFromSegmentationTest extends AnyFunSuite with TestGraphOp {
   test("on example graph strong components") {
     val g = ExampleGraph()().result
     val components = {

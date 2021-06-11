@@ -319,3 +319,9 @@ op-editor > :first-child {
 .comment-box-text a {
   pointer-events: auto;
 }
+
+.wizard-aura {
+  fill: url(#wizardGradient);
+  fill-opacity: 0.5;
+  filter: url(#orange);
+}

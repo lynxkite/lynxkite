@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.TestUtils.computeProgress
@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+class DataManagerTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {
 
   test("We can obtain a simple new graph") {
     implicit val metaManager = cleanMetaManager

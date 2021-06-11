@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class HashVertexAttributeTest extends FunSuite with TestGraphOp {
+class HashVertexAttributeTest extends AnyFunSuite with TestGraphOp {
   val secret = "Dennis Bergkamp"
   test("example graph") {
     val eg = ExampleGraph()().result

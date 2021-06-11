@@ -1,9 +1,9 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.TestUtils
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class HadoopFileTest extends FunSuite {
+class HadoopFileTest extends AnyFunSuite {
   val prefixPath = getClass.getResource("/graph_util/hadoop_tests").toString
   PrefixRepository.registerPrefix("HADOOPTEST$", prefixPath)
 

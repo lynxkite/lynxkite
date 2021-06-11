@@ -296,7 +296,9 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("name", "The name of the model", defaultValue = "model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
-      NonNegInt("max_iter", "Maximum number of iterations", default = 20))
+      NonNegInt("max_iter", "Maximum number of iterations", default = 20),
+      Param("elastic_net_param", "Elastic net mixing", defaultValue = "0.0"),
+      Param("reg_param", "Regularization", defaultValue = "0.0"))
     def enabled =
       FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     def apply() = {
@@ -312,7 +314,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val maxIter = params("max_iter").toInt
       val model = {
         val op = graph_operations.LogisticRegressionModelTrainer(
-          maxIter, labelName, featureNames.toList)
+          maxIter, labelName, featureNames.toList,
+          params("elastic_net_param").toDouble, params("reg_param").toDouble)
         op(op.label, label)(op.features, features).result.model
       }
       project.scalars(name) = model

@@ -6,6 +6,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Upgraded to Apache Spark 3.1.1. This also brought us up to Scala 2.12, Java 11,
+  Play Framework 2.8.7, and new versions of some other dependencies.
+- The "Custom plot" box now lets you use the latest version of Vega-Lite
+  by directly writing JSON instead of going through the Vegas Scala DSL.
+- Logistic regression models can now be configured to use elastic net regularization.
+
+### 4.2.2
+
 - Fix for attributes becoming undefined. [#176](https://github.com/lynxkite/lynxkite/pull/176)
 
 ### 4.2.1

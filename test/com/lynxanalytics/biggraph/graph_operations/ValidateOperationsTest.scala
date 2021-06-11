@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -48,7 +48,7 @@ object ValidateOperationsTest {
 }
 
 import ValidateOperationsTest._
-class ValidateOperationsTest extends FunSuite with TestGraphOp {
+class ValidateOperationsTest extends AnyFunSuite with TestGraphOp {
   val s1 = Source(1).result
   val s2 = Source(2).result
   val op = TestOperation()
@@ -68,7 +68,7 @@ class ValidateOperationsTest extends FunSuite with TestGraphOp {
     val e = intercept[java.lang.AssertionError] {
       op(op.es1, s1.es1)(op.vertexAttr, s2.vertexAttr)
     }
-    assert(e.getMessage.contains("Collision: ArrayBuffer('vs)"), e)
+    assert(e.getMessage.contains("Collision: Vector('vs)"), e)
   }
   test("edgeAttr is for a different edge bundle") {
     val e = intercept[java.lang.AssertionError] {
@@ -90,6 +90,6 @@ class ValidateOperationsTest extends FunSuite with TestGraphOp {
     val e = intercept[java.lang.AssertionError] {
       op(op.es2, s1.es1) // idSet requirement is not met.
     }
-    assert(e.getMessage.contains("Collision: ArrayBuffer('vs)"), e)
+    assert(e.getMessage.contains("Collision: Vector('vs)"), e)
   }
 }

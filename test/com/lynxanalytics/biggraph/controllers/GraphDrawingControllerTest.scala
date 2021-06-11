@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.controllers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 
 import scala.concurrent.{ Await, duration }
 
-class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
+class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
   val user = com.lynxanalytics.biggraph.serving.User.singleuser
 

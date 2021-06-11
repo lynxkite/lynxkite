@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.DoubleLinearBucketer
 
-class AttributeHistogramTest extends FunSuite with TestGraphOp {
+class AttributeHistogramTest extends AnyFunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("works on edges") {

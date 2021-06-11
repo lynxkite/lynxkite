@@ -419,7 +419,7 @@ class SQLTest extends OperationsTestBase {
     val query = "select gender, most_common(income) from vertices group by gender"
     val t = runQueryOnExampleGraph(query)
     assert(t.df.collect.toSeq.map(
-      row => toSeq(row)) == Seq(Seq("Female", null), Seq("Male", "2000.0")))
+      row => toSeq(row)).toSet == Set(List("Female", null), List("Male", "2000.0")))
   }
 
   test("columns in tuples are nullable") {

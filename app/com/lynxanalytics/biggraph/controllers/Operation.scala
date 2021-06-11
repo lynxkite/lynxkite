@@ -424,10 +424,6 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     context.inputs(input).visualization.project
   }
 
-  protected def plotInput(input: String): Scalar[String] = {
-    context.inputs(input).plot
-  }
-
   protected def tableInput(input: String): Table = {
     context.inputs(input).table
   }
@@ -712,7 +708,7 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
       case BoxOutputKind.Visualization =>
         visualizationInput(inputName).allEntityGUIDs
       case BoxOutputKind.Plot =>
-        List(plotInput(inputName).gUID)
+        BoxOutputState.guidOfTablesInPlot(input.plot).toList
       case _ => throw new AssertionError(
         s"Cannot use '${input.kind}' as input.")
     }

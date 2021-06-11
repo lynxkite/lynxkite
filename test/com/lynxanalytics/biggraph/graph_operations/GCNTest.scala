@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import Math.round
 
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class GCNTest extends FunSuite with TestGraphOp {
+class GCNTest extends AnyFunSuite with TestGraphOp {
   // Create graph with two disjoint triangles. The target variable is the id of
   // the connected component.
   val graph = SmallTestGraph(

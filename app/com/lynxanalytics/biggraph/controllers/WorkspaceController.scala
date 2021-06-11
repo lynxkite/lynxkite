@@ -2,6 +2,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import scala.collection.mutable.HashMap
+import play.api.libs.json
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
@@ -30,7 +31,6 @@ case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
-case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
 case class CreateWorkspaceRequest(name: String)
 case class BoxCatalogRequest(ref: WorkspaceReference)
@@ -210,11 +210,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getPlotOutput(
-    user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
+    user: serving.User, request: GetPlotOutputRequest): json.JsValue = {
     val state = getOutput(user, request.id)
-    val scalar = state.plot
-    val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
-    GetPlotOutputResponse(fescalar)
+    state.plot
   }
 
   import UIStatusSerialization.fTwoSidedUIStatus
@@ -262,7 +260,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val entities: List[MetaGraphEntity] = state.kind match {
           case BoxOutputKind.Project => state.project.viewer.allEntities
           case BoxOutputKind.Table => List(state.table)
-          case BoxOutputKind.Plot => List(state.plot)
+          case BoxOutputKind.Plot => BoxOutputState.tablesOfPlot(state.plot).toList
           case BoxOutputKind.ExportResult => List(state.exportResult)
           case BoxOutputKind.Visualization =>
             visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
@@ -312,7 +310,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val msg = s"User ${user.email} is restricted to using wizards."
     assert(ws1.copy(boxes = ws0.boxes) == ws0, msg) // Only boxes have changed.
     val stepsJson = ws0.anchor.parameters.getOrElse("steps", "[]")
-    import play.api.libs.json
     val steps = json.Json.parse(stepsJson).as[List[json.JsObject]]
     val editableBoxes = steps
       .filter(j => (j \ "popup").as[String] == "parameters")

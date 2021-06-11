@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class EmptyEdgeBundleTest extends FunSuite with TestGraphOp {
+class EmptyEdgeBundleTest extends AnyFunSuite with TestGraphOp {
   test("empty means empty") {
     val g1 = ExampleGraph()().result
     val g2 = {

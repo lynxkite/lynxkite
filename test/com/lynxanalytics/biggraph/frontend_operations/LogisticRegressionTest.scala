@@ -11,7 +11,8 @@ class LogisticRegressionTest extends OperationsTestBase {
         Map("output" -> "label", "expr" -> "if (age > 30) 1.0 else 0.0"))
       .box(
         "Train a logistic regression model",
-        Map("name" -> "model", "label" -> "label", "features" -> "age", "max_iter" -> "20"))
+        Map("name" -> "model", "label" -> "label", "features" -> "age", "max_iter" -> "5",
+          "elastic_net_param" -> "0.8", "reg_param" -> "0.3"))
       .box(
         "Classify with model",
         Map(

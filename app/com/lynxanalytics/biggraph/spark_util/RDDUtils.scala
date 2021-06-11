@@ -15,17 +15,16 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
-class IDBuckets[T](
-    val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
-  extends Serializable with Equals {
+class IDBuckets[T] extends Serializable with Equals {
+  val counts: mutable.Map[T, Long] = mutable.Map[T, Long]()
   var sample = mutable.Map[ID, T]() // May be null!
   def add(id: ID, t: T): Unit = {
-    counts(t) += 1
+    counts(t) = counts.getOrElse(t, 0L) + 1L
     addSample(id, t)
   }
   def absorb(b: IDBuckets[T]): Unit = {
     for ((k, v) <- b.counts) {
-      counts(k) += v
+      counts(k) = counts.getOrElse(k, 0L) + v
     }
     if (b.sample == null) {
       sample = null

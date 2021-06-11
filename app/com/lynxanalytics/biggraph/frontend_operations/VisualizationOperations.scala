@@ -70,7 +70,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def apply() = ???
 
-    protected def makeOutput(plotResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+    protected def makeOutput(plotResult: json.JsObject): Map[BoxOutput, BoxOutputState] = {
       Map(context.box.output(
         context.meta.outputs(0)) -> BoxOutputState.plot(plotResult))
     }
@@ -91,15 +91,39 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     params += Code(
       "plot_code",
-      "Plot code",
-      language = "scala",
-      defaultValue =
-        s"""Vegas()\n  .withData(table)\n  .encodeX("$bestX", Nom)\n  .encodeY("$bestY", Quant)\n  .mark(Bar)""")
+      "Plot specification",
+      language = "json",
+      defaultValue = s"""
+{
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "$bestX",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "$bestY",
+      "type": "quantitative"
+    }
+  }
+}
+        """.trim)
 
     def plotResult() = {
-      val plotCode = params("plot_code")
-      val op = graph_operations.CreatePlot(plotCode)
-      op(op.t, table).result.plot
+      val j = try {
+        json.Json.parse(params("plot_code")).as[json.JsObject]
+      } catch {
+        case e: com.fasterxml.jackson.core.JsonParseException =>
+          assert(
+            !params("plot_code").contains("Vegas"),
+            "LynxKite has switched from using Vegas Scala code to Vega-Lite JSON code" +
+              "\nfor custom plots. See https://vega.github.io/vega-lite/.")
+          throw e
+      }
+      val limit = 10000
+      val tableURL = s"/downloadCSV?q=%7B%22id%22:%22${table.gUID.toString}%22,%22sampleRows%22:$limit%7D"
+      json.Json.obj("data" -> json.Json.obj(
+        "url" -> tableURL, "format" -> json.Json.obj("type" -> "csv"))) ++ j
     }
   }
 }

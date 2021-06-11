@@ -327,8 +327,8 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
-  def plot(plot: graph_api.Scalar[String]) = {
-    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
+  def plot(plot: json.JsObject) = {
+    BoxOutputState(BoxOutputKind.Plot, Some(plot))
   }
 
   def from(
@@ -353,6 +353,25 @@ object BoxOutputState {
       Some(json.Json.obj(
         "uiStatus" -> v.uiStatus,
         "graph" -> json.Json.toJson(v.project.rootState))))
+  }
+
+  val GUIDRE = raw"\w{8}-\w{4}-\w{4}-\w{4}-\w{12}".r
+  // This is currently expected to return just one GUID. Or zero if
+  // the plot uses some other data source. We use a Seq instead of an
+  // Option just in case we add support for multiple tables in the future.
+  def guidOfTablesInPlot(plot: json.JsObject): Seq[java.util.UUID] = {
+    try {
+      val url = (plot \ "data" \ "url").as[String]
+      GUIDRE.findAllMatchIn(url).toSeq.map(_.matched.asUUID)
+    } catch {
+      case _: json.JsResultException => Seq()
+    }
+  }
+
+  def tablesOfPlot(plot: json.JsObject)(
+    implicit
+    manager: graph_api.MetaGraphManager): Seq[graph_api.Table] = {
+    guidOfTablesInPlot(plot).map(manager.table(_))
   }
 }
 
@@ -389,10 +408,10 @@ case class BoxOutputState(
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
-  def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+  def plot: json.JsObject = {
     success.check()
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
-    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+    state.get.as[json.JsObject]
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
@@ -417,7 +436,7 @@ case class BoxOutputState(
     kind match {
       case BoxOutputKind.Project => BoxOutputState.from(projectState.mapGuids(change))
       case BoxOutputKind.Table => defaultGuidMapper(change)
-      case BoxOutputKind.Plot => defaultGuidMapper(change)
+      case BoxOutputKind.Plot => plotGuidMapper(change)
       case BoxOutputKind.ExportResult => defaultGuidMapper(change)
       case BoxOutputKind.Visualization => this // Contains no GUIDs.
       case BoxOutputKind.Error => this // Has no state: thus, no GUIDs either.
@@ -432,12 +451,27 @@ case class BoxOutputState(
     this.copy(state = Some(newState))
   }
 
+  private def plotGuidMapper(change: java.util.UUID => java.util.UUID): BoxOutputState = {
+    var newState = BoxOutputState.guidOfTablesInPlot(plot).foldLeft(plot) { (plot, oldGuid) =>
+      val newGuid = change(oldGuid)
+      (plot \ "data" \ "url").asOpt[String] match {
+        case Some(oldUrl) =>
+          val oldData = (plot \ "data").as[json.JsObject]
+          val newUrl = oldUrl.replace(oldGuid.toString, newGuid.toString)
+          plot ++ json.Json.obj("data" -> (oldData ++ json.Json.obj("url" -> newUrl)))
+        case None => plot
+      }
+    }
+    this.copy(state = Some(newState))
+  }
+
   // A GUID that depends on the state contents.
   lazy val gUID: java.util.UUID = {
     kind match {
       case BoxOutputKind.Project => projectState.gUID
       case BoxOutputKind.Visualization => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
       case BoxOutputKind.Error => java.util.UUID.nameUUIDFromBytes(success.disabledReason.getBytes)
+      case BoxOutputKind.Plot => java.util.UUID.nameUUIDFromBytes(state.get.toString.getBytes)
       case _ => (state.get \ "guid").as[String].asUUID
     }
   }

@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
-class RDDUtilsTest extends FunSuite with TestSparkContext {
+class RDDUtilsTest extends AnyFunSuite with TestSparkContext {
   test("genId works for small and large numbers") {
     val parts = 10
     val border = Int.MaxValue / parts

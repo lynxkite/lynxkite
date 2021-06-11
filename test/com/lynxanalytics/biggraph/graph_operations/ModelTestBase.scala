@@ -1,7 +1,7 @@
 // A base class for model related tests with utility methods.
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.model._
 import org.apache.spark.mllib
 import org.apache.spark.rdd
 
-class ModelTestBase extends FunSuite with TestGraphOp {
+class ModelTestBase extends AnyFunSuite with TestGraphOp {
   def model(
     method: String,
     labelName: String,
@@ -41,7 +41,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
         val op = LogisticRegressionModelTrainer(
           maxIter = 20,
           labelName,
-          featureNames)
+          featureNames, 0.0, 0.0)
         op(op.features, features)(op.label, l).result.model
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(

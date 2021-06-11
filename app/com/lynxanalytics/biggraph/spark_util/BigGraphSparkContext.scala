@@ -34,6 +34,36 @@ class DeadClass13
 class DeadClass14
 class DeadClass15
 class DeadClass16
+class DeadClass17
+class DeadClass18
+class DeadClass19
+class DeadClass20
+class DeadClass21
+class DeadClass22
+class DeadClass23
+class DeadClass24
+class DeadClass25
+class DeadClass26
+class DeadClass27
+class DeadClass28
+class DeadClass29
+class DeadClass30
+class DeadClass31
+class DeadClass32
+class DeadClass33
+class DeadClass34
+class DeadClass35
+class DeadClass36
+class DeadClass37
+class DeadClass38
+class DeadClass39
+class DeadClass40
+class DeadClass41
+class DeadClass42
+class DeadClass43
+class DeadClass44
+class DeadClass45
+class DeadClass46
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -52,7 +82,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     // http://stackoverflow.com/questions/40867540/kryo-registration-issue-when-upgrading-to-spark-2-0
     kryo.register(classOf[Tuple2[_, _]], 9)
     kryo.register(classOf[Array[Any]])
-    kryo.register(classOf[mutable.WrappedArray$ofRef])
+    kryo.register(classOf[DeadClass17])
     kryo.register(classOf[mutable.ArrayBuffer[_]])
     kryo.register(classOf[Array[mutable.ArrayBuffer[_]]])
     kryo.register(classOf[Array[Int]])
@@ -77,7 +107,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[collection.immutable.Range])
     kryo.register(classOf[DeadClass1])
     kryo.register(classOf[Array[DeadClass1]])
-    kryo.register(classOf[mutable.WrappedArray$ofInt])
+    kryo.register(classOf[DeadClass18])
     kryo.register(('x', 'x').getClass)
     kryo.register(classOf[collection.mutable.Map[_, _]])
     kryo.register(classOf[scala.Tuple2[Double, Double]])
@@ -88,8 +118,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[graph_operations.DynamicValue])
     kryo.register(classOf[Array[graph_operations.DynamicValue]])
     kryo.register(ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass)
-    kryo.register(classOf[collection.mutable.Map$WithDefault])
-    kryo.register(classOf[collection.mutable.Map$$anonfun$withDefaultValue$1])
+    kryo.register(classOf[DeadClass19])
+    kryo.register(classOf[DeadClass20])
     kryo.register(classOf[spark_util.IDBuckets[_]])
     kryo.register(classOf[graph_operations.Stats])
     kryo.register(classOf[Array[graph_operations.Stats]])
@@ -105,8 +135,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass6])
     kryo.register(classOf[DeadClass7])
     // The next three are required by some operations after the Spark 1.3.0 upgrade. (SPARK-6497)
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$10])
-    kryo.register(classOf[scala.reflect.ClassTag$$anon$1])
+    kryo.register(classOf[DeadClass21])
+    kryo.register(classOf[DeadClass22])
     kryo.register(classOf[Class[_]])
     // === #1518 / SPARK-5949 ===
     kryo.register(classOf[org.roaringbitmap.RoaringBitmap])
@@ -121,9 +151,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.lynxanalytics.biggraph.spark_util.CountOrdering[_]])
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_util.HadoopFile])
     // More classes for SPARK-6497.
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$8])
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$9])
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$12])
+    kryo.register(classOf[DeadClass23])
+    kryo.register(classOf[DeadClass24])
+    kryo.register(classOf[DeadClass25])
 
     kryo.register(classOf[org.apache.spark.sql.types.StructType])
     kryo.register(classOf[org.apache.spark.sql.types.StructField])
@@ -165,7 +195,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.VarianceAggregator"))
     kryo.register(classOf[DeadClass9])
     kryo.register(org.apache.spark.mllib.tree.impurity.Variance.getClass)
-    kryo.register(classOf[Enumeration$Val])
+    kryo.register(classOf[DeadClass26])
     kryo.register(org.apache.spark.mllib.tree.configuration.QuantileStrategy.getClass)
     kryo.register(classOf[org.apache.spark.mllib.tree.model.Split])
     kryo.register(org.apache.spark.mllib.tree.configuration.FeatureType.getClass)
@@ -173,7 +203,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.mllib.tree.model.Predict])
 
     kryo.register(classOf[Array[collection.immutable.HashSet[_]]])
-    kryo.register(classOf[collection.immutable.HashSet$HashSet1])
+    kryo.register(classOf[DeadClass27])
 
     kryo.register(classOf[Array[org.apache.spark.sql.Row]])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema])
@@ -197,7 +227,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[java.sql.Timestamp])
     kryo.register(classOf[DeadClass11])
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
-    kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
+    kryo.register(classOf[DeadClass39])
     kryo.register(classOf[DeadClass14])
     kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
     kryo.register(classOf[DeadClass15])
@@ -208,7 +238,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.mllib.evaluation.binary.BinaryLabelCounter"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.evaluation.binary.BinaryLabelCounter;"))
     kryo.register(Class.forName("scala.collection.mutable.ArraySeq"))
-    kryo.register(classOf[scala.math.Ordering$$anon$4])
+    kryo.register(classOf[DeadClass28])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.InterpretedOrdering])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.SortOrder])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.BoundReference])
@@ -216,7 +246,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(org.apache.spark.sql.catalyst.expressions.Ascending.getClass)
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.Literal])
     // More classes for SPARK-6497.
-    kryo.register(classOf[scala.reflect.ManifestFactory$$anon$1])
+    kryo.register(classOf[DeadClass29])
     kryo.register(classOf[Object])
     kryo.register(classOf[java.math.BigDecimal])
     kryo.register(classOf[java.sql.Date])
@@ -252,25 +282,25 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.ml.param.IntParam])
     kryo.register(classOf[org.apache.spark.ml.param.LongParam])
     kryo.register(classOf[org.apache.spark.ml.param.StringArrayParam])
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$alwaysTrue$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$gtEq$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$$anonfun$inRange$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval$$anonfun$1"))
-    kryo.register(Class.forName("org.apache.spark.ml.tree.TreeRegressorParams$$anonfun$3"))
+    kryo.register(classOf[DeadClass40])
+    kryo.register(classOf[DeadClass41])
+    kryo.register(classOf[DeadClass42])
+    kryo.register(classOf[DeadClass43])
+    kryo.register(classOf[DeadClass44])
     kryo.register(classOf[org.apache.spark.ml.tree.LeafNode])
     kryo.register(classOf[org.apache.spark.ml.tree.InternalNode])
     kryo.register(classOf[DeadClass12])
     kryo.register(classOf[org.apache.spark.ml.regression.GBTRegressionModel])
-    kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams$$anonfun$10"))
-    kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.CachedBatch"))
+    kryo.register(classOf[DeadClass45])
+    kryo.register(classOf[DeadClass46])
     kryo.register(Class.forName("org.apache.spark.broadcast.TorrentBroadcast"))
-    kryo.register(classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage])
+    kryo.register(classOf[DeadClass30])
     kryo.register(classOf[DeadClass13])
     kryo.register(classOf[org.apache.spark.storage.BroadcastBlockId])
     kryo.register(Class.forName("org.apache.spark.ml.linalg.MatrixUDT"))
     kryo.register(classOf[org.apache.spark.ml.linalg.Vector])
-    kryo.register(classOf[org.apache.spark.sql.types.BooleanType$])
-    kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
+    kryo.register(classOf[DeadClass31])
+    kryo.register(classOf[DeadClass32])
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.EdgesAndNeighbors])
     kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.GiniAggregator"))
     kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.Gini$"))
@@ -282,21 +312,68 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("[Lorg.apache.spark.sql.types.Metadata;"))
     kryo.register(classOf[org.apache.spark.ml.tree.CategoricalSplit])
     kryo.register(classOf[DeadClass16])
-    kryo.register(classOf[org.apache.spark.ml.tree.TreeEnsembleParams$$anonfun$6])
+    kryo.register(classOf[DeadClass33])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult])
-    kryo.register(classOf[scala.math.Numeric$DoubleAsIfIntegral$])
-    kryo.register(classOf[scala.math.Numeric$DoubleIsFractional$])
-    kryo.register(classOf[org.apache.spark.sql.types.DoubleType$$anon$1])
+    kryo.register(classOf[DeadClass34])
+    kryo.register(classOf[DeadClass35])
+    kryo.register(classOf[DeadClass36])
     kryo.register(classOf[Array[java.lang.Double]])
     kryo.register(classOf[org.apache.spark.sql.types.DecimalType])
-    kryo.register(classOf[org.apache.spark.sql.types.Decimal$DecimalAsIfIntegral$])
-    kryo.register(classOf[org.apache.spark.sql.types.Decimal$DecimalIsFractional$])
+    kryo.register(classOf[DeadClass37])
+    kryo.register(classOf[DeadClass38])
     kryo.register(scala.collection.mutable.ListBuffer().getClass)
     kryo.register(classOf[org.apache.spark.sql.delta.actions.AddFile])
+
+    kryo.register(classOf[java.lang.invoke.SerializedLambda])
+    kryo.register(classOf[scala.collection.immutable.List[_]])
+    kryo.register(Class.forName("scala.Enumeration$Val"))
+    kryo.register(Class.forName("scala.collection.mutable.WrappedArray$ofRef"))
+    kryo.register(classOf[org.apache.spark.sql.catalyst.InternalRow])
+    kryo.register(classOf[org.apache.spark.util.collection.OpenHashSet[_]])
+    kryo.register(Class.forName("org.apache.spark.util.collection.OpenHashSet$DoubleHasher"))
+    kryo.register(Class.forName("org.apache.spark.util.collection.OpenHashMap$mcD$sp"))
+    kryo.register(classOf[org.apache.spark.util.collection.BitSet])
+    kryo.register(classOf[Array[org.apache.spark.ml.tree.Split]])
+    kryo.register(classOf[Array[Array[org.apache.spark.ml.tree.Split]]])
+    kryo.register(Class.forName("scala.reflect.ManifestFactory$LongManifest"))
+    kryo.register(Class.forName("scala.reflect.ManifestFactory$DoubleManifest"))
+    kryo.register(Class.forName("scala.reflect.ManifestFactory$IntManifest"))
+    kryo.register(Class.forName("scala.reflect.ClassTag$GenericClassTag"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummarizerBuffer"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Mean$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Sum$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Variance$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Std$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Count$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$NumNonZeros$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Max$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$Min$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$NormL2$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$NormL1$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMean$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeM2n$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeM2$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeL1$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeWeightSum$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeNNZ$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMax$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMin$"))
+    kryo.register(Class.forName("org.apache.spark.ml.stat.MultiClassSummarizer"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BlockLogisticAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$"))
+    kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval"))
+    kryo.register(Class.forName("org.apache.spark.ml.tree.HasVarianceImpurity"))
+    kryo.register(Class.forName("org.apache.spark.ml.tree.TreeEnsembleParams"))
+    kryo.register(Class.forName("org.apache.spark.ml.tree.GBTRegressorParams"))
+    kryo.register(Class.forName("org.apache.spark.sql.types.BooleanType$"))
+    kryo.register(Class.forName("org.apache.spark.sql.types.Decimal$DecimalAsIfIntegral$"))
+    kryo.register(Class.forName("org.apache.spark.sql.types.Decimal$DecimalIsFractional$"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.datasources.v2.DataWritingSparkTaskResult"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.DefaultCachedBatch"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
@@ -382,7 +459,7 @@ object BigGraphSparkContext {
     useKryo: Boolean = true,
     forceRegistration: Boolean = false,
     master: String = "",
-    settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
+    settings: Iterable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
     JdbcDialects.registerDialect(teradataDialect)
 
@@ -399,9 +476,6 @@ object BigGraphSparkContext {
       .set(
         "spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-      .set(
-        "spark.akka.threads",
-        LoggedEnvironment.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.
       .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
@@ -422,10 +496,6 @@ object BigGraphSparkContext {
       .set(
         "spark.executor.cores",
         LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
-      // We need a higher akka.frameSize (the Spark default is 10) as when the number of
-      // partitions gets into the hundreds of thousands the map output statuses exceed this limit.
-      .setIfMissing(
-        "spark.akka.frameSize", "1000")
       .set("spark.sql.runSQLOnFiles", "false")
       // Configure Spark event logging:
       .set(

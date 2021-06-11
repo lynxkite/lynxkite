@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class JDBCUtilTest extends FunSuite {
+class JDBCUtilTest extends AnyFunSuite {
   test("String partitioning: generic case") {
     val r = JDBCUtil.stringPartitionClauses("c", "ablak", "zsiraf", 5)
     assert(r == Seq(

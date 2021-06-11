@@ -25,7 +25,11 @@ import org.apache.spark
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
-  // Implement from source operation's GUID, name and the actual class of this component.
+  override def toString = s"$gUID (${name.name} of $source)"
+  lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
+  def manager = source.manager
+  lazy val typeString = this.getClass.getSimpleName
+
   lazy val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
@@ -33,13 +37,24 @@ sealed trait MetaGraphEntity extends Serializable {
     objectStream.writeObject(source.gUID)
     objectStream.writeObject(this.getClass.toString)
     objectStream.close()
-    UUID.nameUUIDFromBytes(buffer.toByteArray)
+    val a = buffer.toByteArray
+    // Symbol's serialized form changed from Scala 2.11 to Scala 2.12.
+    // To avoid new GUIDs for every entity when upgrading from LynxKite 4.2,
+    // we patch the byte array to the old form. This is never deserialized anyway.
+    assert(
+      a.slice(0, newPrefix.length).toList == newPrefix,
+      s"Unexpected serialized form for $this: ${a.map(x => "%x ".format(x.toInt)).mkString}")
+    for (i <- 0 until newPrefix.length) {
+      a(i) = oldPrefix(i)
+    }
+    UUID.nameUUIDFromBytes(a)
   }
-  override def toString = s"$gUID (${name.name} of $source)"
-  lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
-  def manager = source.manager
-  lazy val typeString = this.getClass.getSimpleName
+  private val oldPrefix = "ACED00057372000C7363616C612E53796D626F6C292AC645426F2F4B"
+    .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
+  private val newPrefix = "ACED00057372000C7363616C612E53796D626F6C5F4785C13785FF06"
+    .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
 }
+
 case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
   lazy val asString: String = {
     val stuff = contents.map {
@@ -194,7 +209,7 @@ trait FieldNaming {
     val mirror = reflect.runtime.currentMirror.reflect(this)
 
     val fields = mirror.symbol.toType.members.collect {
-      case m: MethodSymbol if (m.isGetter && m.isPublic) => m
+      case m: MethodSymbol if (m.isGetter && m.isPublic && !m.isLazy) => m
     }
     for (m <- fields) {
       res.put(mirror.reflectField(m).get, Symbol(m.name.toString))
@@ -492,7 +507,7 @@ trait MetaGraphOp extends Serializable with ToJson {
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
   val gUID = {
-    val contents = this.toTypedJson.toString
+    val contents = play.api.libs.json.jackson.RetroSerialization(this.toTypedJson)
     val version = JsonMigration.current.version(getClass.getName)
     UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
   }
@@ -616,7 +631,7 @@ case class MetaDataSet(
     }.toMap
   override def toJson = {
     import play.api.libs.json.{ JsObject, JsString }
-    new JsObject(asStringMap.mapValues(JsString(_)).toSeq)
+    new JsObject(asStringMap.mapValues(JsString(_)))
   }
 
   def apply(name: Symbol) = all(name)

@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import GraphTestUtils._
 
-class ImportGraphFromTableTest extends FunSuite with TestGraphOp {
+class ImportGraphFromTableTest extends AnyFunSuite with TestGraphOp {
   test("import edges for existing vertex set from table") {
     val table = SmallTestGraph(
       Map(1 -> Seq(), 2 -> Seq(), 3 -> Seq(), 4 -> Seq()))().result

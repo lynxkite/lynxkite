@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -39,7 +39,7 @@ case class FakePull() extends SparkOperation[FakePull.Input, FakePull.Output] {
   }
 }
 
-class PulledOverAttributeTest extends FunSuite with TestGraphOp {
+class PulledOverAttributeTest extends AnyFunSuite with TestGraphOp {
   test("works with filters") {
     val g = ExampleGraph()().result
     implicit val d = SerializableType.double

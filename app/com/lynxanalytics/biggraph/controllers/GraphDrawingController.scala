@@ -317,8 +317,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val xBucketer = xBucketedAttr.bucketer
     val yBucketer = yBucketedAttr.bucketer
-    val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets))
-      yield FEVertex(x = x, y = y, size = diagram.counts((x, y)))
+    val vertices = for (x <- (0 until xBucketer.numBuckets); y <- (0 until yBucketer.numBuckets)) yield {
+      val size: Long = diagram.counts.getOrElse((x, y), 0L)
+      FEVertex(x = x, y = y, size = size)
+    }
 
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,

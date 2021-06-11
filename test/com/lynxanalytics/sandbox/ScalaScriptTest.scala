@@ -1,6 +1,6 @@
 package com.lynxanalytics.sandbox
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import java.security.AccessControlException
 
 import com.lynxanalytics.biggraph.graph_api.TestGraphOp
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
 
 import scala.reflect.runtime.universe._
 
-class ScalaScriptTest extends FunSuite with TestGraphOp {
+class ScalaScriptTest extends AnyFunSuite with TestGraphOp {
 
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"
@@ -18,42 +18,6 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Bindings work") {
     assert(ScalaScript.run("s\"\"\"asd $qwe\"\"\"", Map("qwe" -> "123")) == "asd 123")
-  }
-
-  test("Scala DataFrame bindings work with runVegas") {
-    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
-    val code = """
-    Vegas("My plot test")
-      .withData(table)
-      .encodeX("name", Nominal)
-      .encodeY("level", Quantitative)
-      .mark(Bar)
-      """
-    val jsonString = ScalaScript.runVegas(code, df)
-    assert(jsonString.contains(""""mark" : "bar""""))
-    assert(jsonString.contains("encoding"))
-    assert(jsonString.contains("description"))
-    assert(jsonString.contains("My plot test"))
-    assert(jsonString.contains(""""name" : "Felix","""))
-  }
-
-  test("Scala multiline string works in plot code") {
-    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
-    val filterRule = """datum.b > 20 &&
-    datum.b < 60"""
-    val code = s"""
-    Vegas("Plot test with multiline string")
-      .withData(
-        Seq(
-          Map("a" -> "A", "b" -> 28), Map("a" -> "B", "b" -> 55), Map("a" -> "C", "b" -> 43),
-          Map("a" -> "D", "b" -> 91), Map("a" -> "E", "b" -> 81), Map("a" -> "F", "b" -> 53),
-          Map("a" -> "G", "b" -> 19), Map("a" -> "H", "b" -> 87), Map("a" -> "I", "b" -> 52)))
-      .encodeX("a", Nominal)
-      .encodeY("b", Quantitative)
-      .mark(Bar)
-      .filter(\"\"\"$filterRule\"\"\")
-      """
-    val jsonString = ScalaScript.runVegas(code, df)
   }
 
   test("Security manager disables file access") {
@@ -180,7 +144,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Recover after compiler gets confused") {
     // See #7227
-    intercept[javax.script.ScriptException] {
+    intercept[Exception] {
       ScalaScript.run("{")
     }
     ScalaScript.run("val a = 1; a")

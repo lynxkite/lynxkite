@@ -1,11 +1,11 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 
-class OrderedSphynxDiskTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+class OrderedSphynxDiskTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {
   test(
     "Writing and reloading entities to ordered Sphynx disk does not change entities",
     com.lynxanalytics.biggraph.SphynxOnly) {

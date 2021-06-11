@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -51,7 +51,7 @@ case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String
   }
 }
 
-class WriteAttributesTest extends FunSuite with TestGraphOp {
+class WriteAttributesTest extends AnyFunSuite with TestGraphOp {
 
   test("Count attributes separately") {
 

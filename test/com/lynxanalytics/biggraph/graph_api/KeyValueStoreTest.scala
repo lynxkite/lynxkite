@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import com.lynxanalytics.biggraph.TestTempDir
 
 class JournalKeyValueStoreTest extends KeyValueStoreTest {
@@ -10,7 +10,7 @@ class JournalKeyValueStoreTest extends KeyValueStoreTest {
   }
 }
 
-abstract class KeyValueStoreTest extends FunSuite with TestTempDir {
+abstract class KeyValueStoreTest extends AnyFunSuite with TestTempDir {
   val storeFile = tempDir("key-value-store-test")
   def newStore: KeyValueStore
 

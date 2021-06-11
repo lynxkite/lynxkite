@@ -55,9 +55,9 @@ if $INTERACTIVE; then
   sbt
 else
   if $WITH_SPHYNX; then
-    sbt "test-only -- -l SparkOnly"
+    sbt "testOnly -- -l SparkOnly"
   else
-    sbt "test-only -- -l SphynxOnly"
+    sbt "testOnly -- -l SphynxOnly"
   fi
 fi
 # We'll check if the logfile contains 'future failed' lines; these

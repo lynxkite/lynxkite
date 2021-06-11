@@ -44,7 +44,7 @@ case class SplitEdges() extends SparkOperation[Input, Output] {
 
     val newEdgesWithIndex =
       edges.sortedJoin(repetitionAttr).flatMapValues {
-        case (edge, numRepetitions) => (0.0 until numRepetitions by 1.0).map(index => (edge, index))
+        case (edge, numRepetitions) => (0L until numRepetitions.toLong).map(index => (edge, index.toDouble))
       }
 
     val partitioner = rc.partitionerForNRows(repetitionAttr.values.sum.toLong)

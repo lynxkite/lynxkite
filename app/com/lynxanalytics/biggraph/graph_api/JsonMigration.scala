@@ -33,14 +33,6 @@ object JsonMigration {
     }
   }
 
-  // Replaces fields in a JsObject.
-  def replaceJson(jv: json.JsValue, replacements: (String, json.JsValue)*): json.JsObject = {
-    val j = jv.as[json.JsObject] // For more convenient invocation.
-    val oldValues = j.fields.toMap
-    val newValues = replacements.toMap
-    new json.JsObject((oldValues ++ newValues).toSeq.sortBy(_._1))
-  }
-
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
     Map(
@@ -212,11 +204,11 @@ object MetaRepositoryManager {
     val newData = (v1 until v2).foldLeft((op \ "data").as[json.JsObject]) {
       (j, v) => migration.upgraders(cls -> v)(j)
     }
-    val newOp = JsonMigration.replaceJson(op, "data" -> newData)
+    val newOp = op + ("data" -> newData)
     // Map inputs.
     val inputs = (j \ "inputs").as[Map[String, String]]
     val newInputs = Json.toJson(inputs.map { case (name, g) => name -> guidMapping.getOrElse(g, g) })
-    val newJson = JsonMigration.replaceJson(j.as[json.JsObject], "operation" -> newOp, "inputs" -> newInputs)
+    val newJson = j.as[json.JsObject] + ("operation" -> newOp) + ("inputs" -> newInputs)
     // Deserialize the upgraded JSON.
     val inst = mm.applyJson(newJson)
     // Add outputs to the GUID mapping.

@@ -239,7 +239,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         val vsAttr = project.vertexAttributes.toMap +
           (graph_operations.ExportGraphToNeo4j.VID -> project.vertexSet.idAttribute)
         val esAttr = project.edgeAttributes.toMap +
-          (graph_operations.ExportGraphToNeo4j.SRCDST -> project.edgeBundle.srcDstAttribute)
+          (graph_operations.ExportGraphToNeo4j.SRCID -> project.edgeBundle.srcAttribute) +
+          (graph_operations.ExportGraphToNeo4j.DSTID -> project.edgeBundle.dstAttribute)
         val vs = graph_operations.AttributesToTable.run(vsAttr)
         val es = graph_operations.AttributesToTable.run(esAttr)
         val op = graph_operations.ExportGraphToNeo4j(

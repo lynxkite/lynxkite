@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
-class HybridRDDTest extends FunSuite with TestSparkContext {
+class HybridRDDTest extends AnyFunSuite with TestSparkContext {
   test("lookup operations work as expected") {
     val rnd = new util.Random(0)
     val localSource = (0 until 1000).map(_ => (rnd.nextInt(100), rnd.nextLong()))
