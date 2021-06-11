@@ -507,7 +507,7 @@ trait MetaGraphOp extends Serializable with ToJson {
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
   val gUID = {
-    val contents = this.toTypedJson.toString
+    val contents = play.api.libs.json.jackson.RetroSerialization(this.toTypedJson)
     val version = JsonMigration.current.version(getClass.getName)
     UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
   }

@@ -110,7 +110,16 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
         """.trim)
 
     def plotResult() = {
-      val j = json.Json.parse(params("plot_code")).as[json.JsObject]
+      val j = try {
+        json.Json.parse(params("plot_code")).as[json.JsObject]
+      } catch {
+        case e: com.fasterxml.jackson.core.JsonParseException =>
+          assert(
+            !params("plot_code").contains("Vegas"),
+            "LynxKite has switched from using Vegas Scala code to Vega-Lite JSON code" +
+              "\nfor custom plots. See https://vega.github.io/vega-lite/.")
+          throw e
+      }
       val limit = 10000
       val tableURL = s"/downloadCSV?q=%7B%22id%22:%22${table.gUID.toString}%22,%22sampleRows%22:$limit%7D"
       json.Json.obj("data" -> json.Json.obj(

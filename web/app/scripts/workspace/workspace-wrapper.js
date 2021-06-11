@@ -31,6 +31,7 @@ angular.module('biggraph')
       this.boxes = [];
       this.arrows = [];
       this.boxMap = {};
+      this.isWizard = false;
       // Immutable backup of the backend state from last
       // request:
       this.backendRequest = undefined;
@@ -131,6 +132,17 @@ angular.module('biggraph')
       _build: function() {
         this._buildBoxes();
         this._buildArrows();
+        const anchor = this.getBox('anchor');
+        this.isWizard = anchor.instance.parameters.wizard === 'yes';
+        if (this.isWizard) {
+          const steps = JSON.parse(anchor.instance.parameters.steps || '[]');
+          const stepsByBox = Object.fromEntries(steps.map(s => [s.box, s]));
+          for (const box of this.boxes) {
+            if (stepsByBox[box.instance.id]) {
+              box.inWizard = true;
+            }
+          }
+        }
       },
 
       _init: function(response) {
