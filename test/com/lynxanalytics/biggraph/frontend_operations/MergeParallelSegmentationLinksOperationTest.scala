@@ -8,8 +8,14 @@ class MergeParallelSegmentationLinksOperationTest extends OperationsTestBase {
       .box("Segment by String attribute", Map("name" -> "bucketing", "attr" -> "gender"))
       .box(
         "Merge vertices by attribute",
-        Map("key" -> "gender", "aggregate_gender" -> "", "aggregate_id" -> "",
-          "aggregate_income" -> "average", "aggregate_location" -> "", "aggregate_name" -> ""))
+        Map(
+          "key" -> "gender",
+          "aggregate_gender" -> "",
+          "aggregate_id" -> "",
+          "aggregate_income" -> "average",
+          "aggregate_location" -> "",
+          "aggregate_name" -> ""),
+      )
       .box("Merge parallel segmentation links", Map("apply_to_graph" -> ".bucketing"))
       .project.segmentation("bucketing")
     assert(bucketing.scalars("!coverage").value == 2)

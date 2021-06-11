@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class Neo4jContainer
-  extends org.testcontainers.containers.Neo4jContainer[Neo4jContainer]("neo4j:4.0.8-enterprise")
+    extends org.testcontainers.containers.Neo4jContainer[Neo4jContainer]("neo4j:4.0.8-enterprise")
 
 class Neo4jExportImportTest extends OperationsTestBase {
   val server = new Neo4jContainer()
@@ -25,10 +25,23 @@ class Neo4jExportImportTest extends OperationsTestBase {
     exportExampleGraph()
     val p = importBox("Import from Neo4j", Map("url" -> server.getBoltUrl)).project
     assert(p.vertexAttributes.toMap.keySet == Set(
-      "!LynxKite ID", "!LynxKite export timestamp", "<id>", "<labels>",
-      "age", "gender", "id", "income", "location", "name"))
+      "!LynxKite ID",
+      "!LynxKite export timestamp",
+      "<id>",
+      "<labels>",
+      "age",
+      "gender",
+      "id",
+      "income",
+      "location",
+      "name"))
     assert(p.edgeAttributes.toMap.keySet == Set(
-      "<rel_id>", "<rel_type>", "<source_id>", "<target_id>", "comment", "weight"))
+      "<rel_id>",
+      "<rel_type>",
+      "<source_id>",
+      "<target_id>",
+      "comment",
+      "weight"))
     assert(get(p.vertexAttributes("name")).values.toSet == Set("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(get(p.edgeAttributes("weight")).values.toSet == Set(1.0, 2.0, 3.0, 4.0))
     server.stop()
@@ -54,9 +67,12 @@ class Neo4jExportImportTest extends OperationsTestBase {
 
   test("export with labels and types") {
     server.start()
-    val res = box("Create example graph").box("Export graph to Neo4j", Map(
-      "url" -> server.getBoltUrl,
-      "node_labels" -> "gender", "relationship_type" -> "comment")).exportResult
+    val res = box("Create example graph").box(
+      "Export graph to Neo4j",
+      Map(
+        "url" -> server.getBoltUrl,
+        "node_labels" -> "gender",
+        "relationship_type" -> "comment")).exportResult
     dataManager.get(res)
     val p = importBox("Import from Neo4j", Map("url" -> server.getBoltUrl)).project
     assert(

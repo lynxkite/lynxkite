@@ -45,7 +45,10 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
     assert(attr.rdd.collect.toMap == Map(
-      0 -> "hi Adam", 1 -> "hi Eve", 2 -> "hi Bob", 3 -> "hi Isolated Joe"))
+      0 -> "hi Adam",
+      1 -> "hi Eve",
+      2 -> "hi Bob",
+      3 -> "hi Isolated Joe"))
   }
 
   test("Derive vertex attribute - uppercase attribute") {
@@ -96,7 +99,8 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
         "Derive vertex attribute",
         Map("output" -> "output", "expr" -> """
         var rnd = new scala.util.Random(income.toLong)
-        rnd.nextDouble() + rnd.nextDouble()"""))
+        rnd.nextDouble() + rnd.nextDouble()"""),
+      )
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     def rndSumScala(income: Double) = {
@@ -128,7 +132,9 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
         Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_age" -> "vector"))
       .box(
         "Derive vertex attribute",
-        Map("output" -> "output", "expr" -> """
+        Map(
+          "output" -> "output",
+          "expr" -> """
         def f() = {
            if (neighbor_age_vector.length > 0) {
              val sorted = neighbor_age_vector.sorted
@@ -137,7 +143,9 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
              None
            }
          }
-       f()"""))
+       f()""",
+        ),
+      )
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 18.2, 1 -> 20.3, 2 -> 18.2))
@@ -156,10 +164,14 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
           "aggregate_neighbor_age_vector" -> "vector"))
       .box(
         "Derive vertex attribute",
-        Map("output" -> "output", "expr" -> """
+        Map(
+          "output" -> "output",
+          "expr" -> """
         neighbor_neighbor_age_vector_vector.map({ subarray =>
           subarray.reduce(_ + _)
-        }).reduce(_ + _)"""))
+        }).reduce(_ + _)""",
+        ),
+      )
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 220.3, 1 -> 211.89999999999998, 2 -> 177.6))
@@ -232,7 +244,10 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[String]]
     assert(attr.rdd.collect.toMap == Map(
-      0 -> Vector("Male"), 1 -> Vector("Female"), 2 -> Vector("Male"), 3 -> Vector("Male")))
+      0 -> Vector("Male"),
+      1 -> Vector("Female"),
+      2 -> Vector("Male"),
+      3 -> Vector("Male")))
   }
 
   test("Derive vertex attribute (Vector of Doubles)") {
@@ -243,7 +258,10 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
     assert(attr.rdd.collect.toMap == Map(
-      0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
+      0 -> Vector(20.3),
+      1 -> Vector(18.2),
+      2 -> Vector(50.3),
+      3 -> Vector(2.0)))
   }
 
   test("Vector input and output") {

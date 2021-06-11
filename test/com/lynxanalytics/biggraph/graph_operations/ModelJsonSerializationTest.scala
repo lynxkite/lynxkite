@@ -7,10 +7,10 @@ import org.apache.spark.mllib.linalg.DenseVector
 
 class ModelJsonSerializationTest extends ModelTestBase {
   def createStandardScalerModel(
-    std: List[Double],
-    mean: List[Double],
-    withStd: Boolean,
-    withMean: Boolean): StandardScalerModel = {
+      std: List[Double],
+      mean: List[Double],
+      withStd: Boolean,
+      withMean: Boolean): StandardScalerModel = {
     new StandardScalerModel(
       new DenseVector(std.toArray),
       new DenseVector(mean.toArray),
@@ -28,7 +28,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
       Some(Map(0 -> Map("1" -> 2.0))),
-      None)
+      None,
+    )
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)
@@ -44,7 +45,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
       Some(Map(0 -> Map("1" -> 2.0))),
-      None)
+      None,
+    )
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)
@@ -60,7 +62,8 @@ class ModelJsonSerializationTest extends ModelTestBase {
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
       Some(Map(0 -> Map("1" -> 2.0))),
-      Some(""))
+      Some(""),
+    )
     val out = m1.toJson
     val m2 = Model.fromJson(out)
     assert(m2 == m1)

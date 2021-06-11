@@ -14,9 +14,7 @@ object PageRank extends OpFromJson {
     val (vs, es) = graph
     val weights = edgeAttribute[Double](es)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val pagerank = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = PageRank(
@@ -27,7 +25,7 @@ import PageRank._
 case class PageRank(
     dampingFactor: Double,
     iterations: Int)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -35,10 +33,10 @@ case class PageRank(
   override def toJson = Json.obj("dampingFactor" -> dampingFactor, "iterations" -> iterations)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val edges = inputs.es.rdd

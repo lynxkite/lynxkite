@@ -9,8 +9,16 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       .box(
         "Merge vertices by attribute",
-        Map("key" -> "gender", "aggregate_age" -> "average", "aggregate_name" -> "count",
-          "aggregate_id" -> "", "aggregate_location" -> "", "aggregate_gender" -> "", "aggregate_income" -> ""))
+        Map(
+          "key" -> "gender",
+          "aggregate_age" -> "average",
+          "aggregate_name" -> "count",
+          "aggregate_id" -> "",
+          "aggregate_location" -> "",
+          "aggregate_gender" -> "",
+          "aggregate_income" -> "",
+        ),
+      )
       .project
     val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
@@ -30,8 +38,16 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     assert(base.project.edgeBundle == null)
     val project = base.box(
       "Merge vertices by attribute",
-      Map("key" -> "gender", "aggregate_age" -> "average", "aggregate_id" -> "", "aggregate_name" -> "",
-        "aggregate_location" -> "", "aggregate_gender" -> "", "aggregate_income" -> "")).project
+      Map(
+        "key" -> "gender",
+        "aggregate_age" -> "average",
+        "aggregate_id" -> "",
+        "aggregate_name" -> "",
+        "aggregate_location" -> "",
+        "aggregate_gender" -> "",
+        "aggregate_income" -> "",
+      ),
+    ).project
     val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(24.2, 18.2))
     assert(project.edgeBundle == null)
@@ -40,17 +56,21 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
   test("Merge vertices by attribute, segmentation") {
     val project = box("Create example graph")
       .box("Segment by String attribute", Map("name" -> "bucketing", "attr" -> "gender"))
-      .box("Add constant vertex attribute", Map(
-        "name" -> "constant",
-        "value" -> "1",
-        "type" -> "number",
-        "apply_to_graph" -> ".bucketing"))
-      .box("Merge vertices by attribute", Map(
-        "key" -> "constant",
-        "aggregate_gender" -> "",
-        "aggregate_id" -> "",
-        "aggregate_size" -> "",
-        "apply_to_graph" -> ".bucketing")).project
+      .box(
+        "Add constant vertex attribute",
+        Map(
+          "name" -> "constant",
+          "value" -> "1",
+          "type" -> "number",
+          "apply_to_graph" -> ".bucketing"))
+      .box(
+        "Merge vertices by attribute",
+        Map(
+          "key" -> "constant",
+          "aggregate_gender" -> "",
+          "aggregate_id" -> "",
+          "aggregate_size" -> "",
+          "apply_to_graph" -> ".bucketing")).project
     val bucketing = project.segmentation("bucketing")
     assert(bucketing.scalars("!coverage").value == 4)
     assert(bucketing.scalars("!belongsToEdges").value == 4)

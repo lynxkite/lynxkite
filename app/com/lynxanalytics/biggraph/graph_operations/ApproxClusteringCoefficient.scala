@@ -11,7 +11,7 @@ import org.apache.spark
 
 object ApproxClusteringCoefficient extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val clustering = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = ApproxClusteringCoefficient((j \ "bits").as[Int])
@@ -24,10 +24,10 @@ case class ApproxClusteringCoefficient(bits: Int) extends SparkOperation[GraphIn
   override def toJson = Json.obj("bits" -> bits)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val edges = inputs.es.rdd
@@ -71,7 +71,7 @@ case class ApproxClusteringCoefficient(bits: Int) extends SparkOperation[GraphIn
 
     val clusteringCoeff =
       vertices.sortedLeftOuterJoin(clusteringCoeffNonIsolated)
-        // Because of approximation > 1.0 values are possible and have to be bounded.
+      // Because of approximation > 1.0 values are possible and have to be bounded.
         .mapValues { case (_, cc) => cc.getOrElse(1.0) min 1.0 }
     output(o.clustering, clusteringCoeff)
   }

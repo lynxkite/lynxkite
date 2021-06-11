@@ -35,7 +35,8 @@ class NetworKitTest extends OperationsTestBase {
         "Harmonic Closeness" -> Map(0 -> 0.33, 1 -> 0.33, 2 -> 0.66, 3 -> 0.0),
         "Katz" -> Map(0 -> 0.7, 1 -> 0.7, 2 -> 0.06, 3 -> 0.06),
         "K-Path" -> Map(0 -> 3.84, 1 -> 4.48, 2 -> 0.0, 3 -> 0.0),
-        "Sfigality" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0))
+        "Sfigality" -> Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0),
+      )
     ) {
       println(algorithm)
       val g = box("Create example graph").box("Compute centrality", Map("algorithm" -> algorithm)).project
@@ -139,7 +140,8 @@ class NetworKitTest extends OperationsTestBase {
         "Pivot MDS" ->
           Map(0 -> Vector(-0.27, -0.77), 1 -> Vector(0.8, 0.15), 2 -> Vector(-0.53, 0.62)),
         "Maxent-Stress" ->
-          Map(0 -> Vector(-0.03, 0.5), 1 -> Vector(-0.55, -0.3), 2 -> Vector(0.58, -0.2)))
+          Map(0 -> Vector(-0.03, 0.5), 1 -> Vector(-0.55, -0.3), 2 -> Vector(0.58, -0.2)),
+      )
     ) {
       println(algorithm)
       val g = box("Create example graph")
@@ -212,7 +214,8 @@ class NetworKitTest extends OperationsTestBase {
         ("Compute segment density", "density", Map(0 -> 1.32, 1 -> 0.82, 2 -> 1.33)),
         ("Compute segment expansion", "expansion", Map(0 -> 28.0, 1 -> 15.0, 2 -> 19.0)),
         ("Compute segment fragmentation", "fragmentation", Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0)),
-        ("Compute segment stability", "stability", Map(0 -> 1.0, 1 -> 0.88, 2 -> 0.5)))
+        ("Compute segment stability", "stability", Map(0 -> 1.0, 1 -> 0.88, 2 -> 0.5)),
+      )
     ) {
       println(name)
       val g = box("Create Mocnik random graph", Map("size" -> "20", "seed" -> "4"))
@@ -229,7 +232,8 @@ class NetworKitTest extends OperationsTestBase {
       (name, scalar, expected) <- Seq(
         ("Compute edge cut of segmentation", "edge_cut", 31.0),
         ("Compute coverage of segmentation", "coverage", 0.69),
-        ("Compute modularity of segmentation", "modularity", 0.3))
+        ("Compute modularity of segmentation", "modularity", 0.3),
+      )
     ) {
       println(name)
       val g = box("Create Mocnik random graph", Map("size" -> "20", "seed" -> "4"))

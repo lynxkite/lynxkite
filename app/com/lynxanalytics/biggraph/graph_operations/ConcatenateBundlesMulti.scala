@@ -15,9 +15,7 @@ object ConcatenateBundlesMulti extends OpFromJson {
     val edgesAB = edgeBundle(vsA, vsB)
     val edgesBC = edgeBundle(vsB, vsC)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val isFunction =
       inputs.edgesAB.properties.isFunction && inputs.edgesBC.properties.isFunction
     val isReversedFunction =
@@ -45,10 +43,10 @@ case class ConcatenateBundlesMulti() extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edgesAB = inputs.edgesAB.rdd
     val edgesBC = inputs.edgesBC.rdd

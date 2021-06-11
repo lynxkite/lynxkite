@@ -196,8 +196,8 @@ class HadoopFileTest extends AnyFunSuite {
   }
 
   def checkPathRules(
-    prefixResolution: String,
-    relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
+      prefixResolution: String,
+      relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
     val prefixSymbol = TestUtils.getDummyPrefixName(prefixResolution, false)
     relativePathsAndExpectedOutputs.foreach { checkOne(prefixSymbol, _) }
   }
@@ -304,7 +304,8 @@ class HadoopFileTest extends AnyFunSuite {
       "TESTFILEDIR" -> "file:/home/user/",
       "TESTFILEDIR_READ_ACL" -> "*",
       "TESTFILEDIR_WRITE_ACL" -> "gabor.olah@lynxanalytics.com",
-      "TESTBLANKS_" -> "hdfs://root/path")
+      "TESTBLANKS_" -> "hdfs://root/path",
+    )
     assert(pairs.sorted === expected.sorted)
   }
 

@@ -35,9 +35,7 @@ object AddRandomAttribute extends OpFromJson {
     val vs = vertexSet
   }
 
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
 
@@ -49,25 +47,29 @@ object AddRandomAttribute extends OpFromJson {
 import AddRandomAttribute._
 case class AddRandomAttribute(
     seed: Int,
-    distribution: String) extends SparkOperation[Input, Output] {
+    distribution: String)
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("seed" -> seed, "distribution" -> distribution)
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     val vertices = inputs.vs.rdd
-    output(o.attr, vertices.mapPartitionsWithIndex(
-      {
-        case (pid, it) =>
-          val rnd = RandomDistribution(distribution, (pid << 16) + seed)
-          it.map { case (vid, _) => vid -> rnd.nextValue() }
-      },
-      preservesPartitioning = true).asUniqueSortedRDD)
+    output(
+      o.attr,
+      vertices.mapPartitionsWithIndex(
+        {
+          case (pid, it) =>
+            val rnd = RandomDistribution(distribution, (pid << 16) + seed)
+            it.map { case (vid, _) => vid -> rnd.nextValue() }
+        },
+        preservesPartitioning = true).asUniqueSortedRDD,
+    )
   }
 }

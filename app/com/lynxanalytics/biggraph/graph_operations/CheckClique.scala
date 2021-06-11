@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -26,7 +26,7 @@ object CheckClique extends OpFromJson {
 }
 import CheckClique._
 case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirections: Boolean = false)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -37,10 +37,10 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
     "needsBothDirections" -> needsBothDirections)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val vertexPartitioner = inputs.vs.rdd.partitioner.get
@@ -77,12 +77,14 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
             // if one direction is enough, we only use the outSets
             if (needsBothDirections) inSets(v) ++= nsIn else outSets(v) ++= nsIn
           }
-          val inv = if (needsBothDirections) {
-            (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members
-          } else {
-            outSets.values.reduceLeft(_ & _) != members
-          }
-          if (inv) log.error(s"Clique $clique is not a maximal clique!\nmembers: ${members}\nout neighbor sets: ${outSets}\nin neighbor sets: $inSets")
+          val inv =
+            if (needsBothDirections) {
+              (outSets.values.reduceLeft(_ & _) & inSets.values.reduceLeft(_ & _)) != members
+            } else {
+              outSets.values.reduceLeft(_ & _) != members
+            }
+          if (inv)
+            log.error(s"Clique $clique is not a maximal clique!\nmembers: ${members}\nout neighbor sets: ${outSets}\nin neighbor sets: $inSets")
           inv
       }.keys
 

@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy
 import play.api.mvc
 
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 case class FileDescriptor(
     name: String,
@@ -26,8 +26,9 @@ object LogController {
 }
 class LogController @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes)
-  extends play.api.http.HeaderNames {
+    ec: concurrent.ExecutionContext,
+    fmt: play.api.http.FileMimeTypes)
+    extends play.api.http.HeaderNames {
 
   val dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 

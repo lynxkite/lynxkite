@@ -8,19 +8,29 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
     val vertices = importCSV("copy-segmentation-one-level-up-vertices.csv")
     val connections = importCSV("copy-segmentation-one-level-up-connections.csv")
     val project = vertices.box("Use table as vertices")
-      .box("Use table as segmentation", Map(
-        "name" -> "segmentation1",
-        "base_id_attr" -> "num",
-        "base_id_column" -> "base_num",
-        "seg_id_column" -> "seg_num"), Seq(connections))
-      .box("Use table as segmentation", Map(
-        "name" -> "segmentation2",
-        "base_id_attr" -> "seg_num",
-        "base_id_column" -> "base_num",
-        "seg_id_column" -> "seg_num",
-        "apply_to_graph" -> ".segmentation1"), Seq(connections))
-      .box("Pull segmentation one level up", Map(
-        "apply_to_graph" -> ".segmentation1.segmentation2"))
+      .box(
+        "Use table as segmentation",
+        Map(
+          "name" -> "segmentation1",
+          "base_id_attr" -> "num",
+          "base_id_column" -> "base_num",
+          "seg_id_column" -> "seg_num"),
+        Seq(connections),
+      )
+      .box(
+        "Use table as segmentation",
+        Map(
+          "name" -> "segmentation2",
+          "base_id_attr" -> "seg_num",
+          "base_id_column" -> "base_num",
+          "seg_id_column" -> "seg_num",
+          "apply_to_graph" -> ".segmentation1"),
+        Seq(connections),
+      )
+      .box(
+        "Pull segmentation one level up",
+        Map(
+          "apply_to_graph" -> ".segmentation1.segmentation2"))
       .project
 
     val segmentation1 = project.segmentation("segmentation1")

@@ -37,9 +37,12 @@ class CompareSegmentationEdgesTest extends AnyFunSuite with TestGraphOp {
     // Run operation:
     val op = CompareSegmentationEdges()
     val result = op(op.goldenBelongsTo, goldenBelongsTo)(
-      op.testBelongsTo, testBelongsTo)(
-        op.goldenEdges, goldenEs)(
-          op.testEdges, testEs).result
+      op.testBelongsTo,
+      testBelongsTo)(
+      op.goldenEdges,
+      goldenEs)(
+      op.testEdges,
+      testEs).result
     assert(Math.abs(2.0 / 3.0 - result.precision.entity.value) < 0.00001)
     assert(Math.abs(0.5 - result.recall.entity.value) < 0.00001)
   }

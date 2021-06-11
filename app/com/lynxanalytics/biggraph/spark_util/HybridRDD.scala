@@ -9,7 +9,7 @@ import org.apache.spark.TaskContext
 
 import scala.reflect._
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 
 object HybridRDD {
@@ -18,12 +18,14 @@ object HybridRDD {
   // in joinLookup. If we pick a too small threshold the largeKeysSet is going to be too large.
   // In the worst case largeKeysSet can have sourceRDD size / threshold elements.
   private val hybridLookupThreshold = util.Properties.envOrElse(
-    "KITE_HYBRID_LOOKUP_THRESHOLD", s"${EntityIO.verticesPerPartition / 5}").toInt
+    "KITE_HYBRID_LOOKUP_THRESHOLD",
+    s"${EntityIO.verticesPerPartition / 5}").toInt
 
   // A lookup method based on joining the source RDD with the lookup table. Assumes
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    leftRDD: SortedRDD[K, T], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+      leftRDD: SortedRDD[K, T],
+      lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     assert(
       leftRDD.partitioner.get eq lookupRDD.partitioner.get,
       "LeftRDD and lookupRDD must have the same partitioner.")
@@ -33,37 +35,37 @@ object HybridRDD {
   // A lookup method based on sending the lookup table to all tasks. The lookup table should be
   // reasonably small.
   private def smallTableLookup[K: Ordering: ClassTag, T: ClassTag, S](
-    leftRDD: RDD[(K, T)], lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
+      leftRDD: RDD[(K, T)],
+      lookupTable: Map[K, S]): RDD[(K, (T, S))] = {
     leftRDD
       .flatMap { case (key, tValue) => lookupTable.get(key).map(sValue => key -> (tValue, sValue)) }
   }
 
   def of[K: Ordering: ClassTag, T: ClassTag](
-    // The large potentially skewed RDD to do joins on.
-    sourceRDD: RDD[(K, T)],
-    // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
-    // must have the same partitioner.
-    partitioner: spark.Partitioner,
-    // The RDD is distributed evenly, both in terms of the sizes of the partitions and the
-    // distribution of the keys per partition.
-    even: Boolean,
-    // The threshold to decide whether this HybridRDD is skewed.
-    threshold: Int = HybridRDD.hybridLookupThreshold)(
-    implicit
-    rc: RuntimeContext): HybridRDD[K, T] = {
+      // The large potentially skewed RDD to do joins on.
+      sourceRDD: RDD[(K, T)],
+      // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
+      // must have the same partitioner.
+      partitioner: spark.Partitioner,
+      // The RDD is distributed evenly, both in terms of the sizes of the partitions and the
+      // distribution of the keys per partition.
+      even: Boolean,
+      // The threshold to decide whether this HybridRDD is skewed.
+      threshold: Int = HybridRDD.hybridLookupThreshold)(
+      implicit rc: RuntimeContext): HybridRDD[K, T] = {
 
     val larges = {
       val numPartitions = sourceRDD.partitions.size
-      val (rdd, sampleRatio) = if (even && numPartitions > 0) {
-        // Assumes that the keys are distributed evenly among the partitions.
-        val numSamplePartitions = rc.numSamplePartitions min numPartitions
-        (new PartialRDD(sourceRDD, numSamplePartitions),
-          numPartitions.toDouble / numSamplePartitions)
-      } else {
-        (sourceRDD, 1.0)
-      }
+      val (rdd, sampleRatio) =
+        if (even && numPartitions > 0) {
+          // Assumes that the keys are distributed evenly among the partitions.
+          val numSamplePartitions = rc.numSamplePartitions min numPartitions
+          (new PartialRDD(sourceRDD, numSamplePartitions), numPartitions.toDouble / numSamplePartitions)
+        } else {
+          (sourceRDD, 1.0)
+        }
       rdd
-        .mapValues(_ => 1l)
+        .mapValues(_ => 1L)
         .reduceByKey(_ + _)
         .mapValues(x => (x * sampleRatio).toLong)
         .filter(_._2 > threshold)
@@ -84,18 +86,20 @@ object HybridRDD {
       }
     }.sort(partitioner)
     // The RDD to use with map lookup. It may contain keys with large cardinalities.
-    val largeKeysRDD: Option[RDD[(K, T)]] = if (isSkewed) {
-      // We need to guarantee that largeKeysRDD has the correct amount of partitions.
-      val largeKeysRDD = if (sourceRDD.partitions.size == partitioner.numPartitions) {
-        // Let's not perform expensive repartitioning if avoidable.
-        sourceRDD
+    val largeKeysRDD: Option[RDD[(K, T)]] =
+      if (isSkewed) {
+        // We need to guarantee that largeKeysRDD has the correct amount of partitions.
+        val largeKeysRDD =
+          if (sourceRDD.partitions.size == partitioner.numPartitions) {
+            // Let's not perform expensive repartitioning if avoidable.
+            sourceRDD
+          } else {
+            sourceRDD.repartition(partitioner.numPartitions)
+          }.filter { case (key, _) => largeKeysSet.contains(key) }
+        Some(largeKeysRDD)
       } else {
-        sourceRDD.repartition(partitioner.numPartitions)
-      }.filter { case (key, _) => largeKeysSet.contains(key) }
-      Some(largeKeysRDD)
-    } else {
-      None
-    }
+        None
+      }
 
     HybridRDD(largeKeysRDD, smallKeysRDD, larges)
   }
@@ -107,9 +111,10 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     // The large potentially skewed RDD to do joins on.
     largeKeysRDD: Option[RDD[(K, T)]],
     smallKeysRDD: SortedRDD[K, T],
-    larges: Seq[(K, Long)]) extends RDD[(K, T)](
-  smallKeysRDD.sparkContext,
-  Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
+    larges: Seq[(K, Long)])
+    extends RDD[(K, T)](
+      smallKeysRDD.sparkContext,
+      Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
 
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !largeKeysRDD.isEmpty
@@ -125,11 +130,12 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     smallKeysRDD.iterator(split, context) ++
       largeKeysRDD.map(_.iterator(split, context)).getOrElse(Iterator())
 
-  val (largeKeysSet, largeKeysCoverage) = if (!isSkewed) {
-    (Set.empty[K], 0L)
-  } else {
-    (larges.map(_._1).toSet, larges.map(_._2).reduce(_ + _))
-  }
+  val (largeKeysSet, largeKeysCoverage) =
+    if (!isSkewed) {
+      (Set.empty[K], 0L)
+    } else {
+      (larges.map(_._1).toSet, larges.map(_._2).reduce(_ + _))
+    }
 
   // Caches the smallKeysRDD and the largeKeysRDD for skewed HybridRDDs.
   override def persist(storageLevel: spark.storage.StorageLevel): HybridRDD.this.type = {
@@ -143,7 +149,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // Same as lookup but repartitions the result after a hybrid lookup. The elements of the
   // result RDD are evenly distributed among its partitions.
   def lookupAndRepartition[S](
-    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+      lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
     val result = lookup(lookupRDD)
     if (isSkewed) {
       // "ord = null" is a workaround for a Scala 2.11 compiler crash bug.
@@ -158,7 +164,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // be handled by joinLookup and does joinLookup for the rest. There are no guarantees about the
   // partitions of the result RDD.
   def lookup[S](
-    lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
+      lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
 
     val smalls = HybridRDD.joinLookup(smallKeysRDD, lookupRDD)
     if (isSkewed) {

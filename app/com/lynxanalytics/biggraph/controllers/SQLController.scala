@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -41,8 +41,9 @@ case class TableSpec(directory: Option[String], sql: String) {
   }
 
   def globalSQL(user: serving.User)(
-    implicit
-    dm: DataManager, mm: MetaGraphManager): Table = {
+      implicit
+      dm: DataManager,
+      mm: MetaGraphManager): Table = {
     mm.synchronized {
       val directoryName = directory.get
       val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
@@ -99,7 +100,8 @@ case class SQLExportToJdbcRequest(
   val validModes = Seq( // Save as the save modes accepted by DataFrameWriter.
     "error", // The table will be created and must not already exist.
     "overwrite", // The table will be dropped (if it exists) and created.
-    "append") // The table must already exist.
+    "append", // The table must already exist.
+  )
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
@@ -145,13 +147,16 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
 
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportResult] {
     val op = ops.opForBox(
-      user, box, inputs = Map[String, BoxOutputState](),
+      user,
+      box,
+      inputs = Map[String, BoxOutputState](),
       workspaceParameters = workspaceParameters).asInstanceOf[Importer]
     op.runImport(env)
   }
 
   def getTableBrowserNodesForBox(workspaceController: WorkspaceController)(
-    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
+      user: serving.User,
+      request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
     val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
     if (request.path.isEmpty) { // Top level request, for boxes that means input tables.
       getInputTablesForBox(user, inputTables)
@@ -162,7 +167,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
   }
 
   private def getInputTablesForBox(
-    user: serving.User, inputTables: Map[String, ProtoTable]): TableBrowserNodeResponse = {
+      user: serving.User,
+      inputTables: Map[String, ProtoTable]): TableBrowserNodeResponse = {
     TableBrowserNodeResponse(
       list = inputTables.map {
         case (name, table) =>
@@ -170,7 +176,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
             absolutePath = name, // Same as name for top level nodes.
             name = name,
             objectType = "table")
-      }.toList.sortBy(_.name)) // Map orders elements randomly so we need to sort for the UI.
+      }.toList.sortBy(_.name), // Map orders elements randomly so we need to sort for the UI.
+    )
   }
 
   // Returns the list of nodes for the table browser. The nodes can be:
@@ -198,14 +205,15 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
     }
 
   private def getDirectory(
-    user: serving.User,
-    dir: Directory,
-    query: Option[String]): TableBrowserNodeResponse = {
-    val (visibleDirs, visibleObjectFrames) = if (!query.isEmpty && !query.get.isEmpty) {
-      BigGraphController.entrySearch(user, dir, query.get, includeNotes = false)
-    } else {
-      BigGraphController.entryList(user, dir)
-    }
+      user: serving.User,
+      dir: Directory,
+      query: Option[String]): TableBrowserNodeResponse = {
+    val (visibleDirs, visibleObjectFrames) =
+      if (!query.isEmpty && !query.get.isEmpty) {
+        BigGraphController.entrySearch(user, dir, query.get, includeNotes = false)
+      } else {
+        BigGraphController.entryList(user, dir)
+      }
     TableBrowserNodeResponse(list = (
       visibleDirs.map { dir =>
         TableBrowserNode(
@@ -241,9 +249,9 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
   }
 
   private def getProjectTables(
-    path: SymbolPath,
-    parentViewer: RootProjectViewer,
-    subPath: Seq[String]): TableBrowserNodeResponse = {
+      path: SymbolPath,
+      parentViewer: RootProjectViewer,
+      subPath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = parentViewer.offspringViewer(subPath)
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
@@ -258,7 +266,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
           absolutePath =
             (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("."),
           name = segmentation.segmentationName,
-          objectType = "segmentation")
+          objectType = "segmentation",
+        )
     }
 
     TableBrowserNodeResponse(list = implicitTables ++ subProjects)
@@ -304,7 +313,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
   }
 
   def exportSQLQueryToCSV(
-    user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
+      user: serving.User,
+      request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     downloadableExportToFile(
       user,
@@ -316,26 +326,31 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
         "quote" -> request.quote,
         "nullValue" -> "",
         "header" -> (if (request.header) "true" else "false")),
-      stripHeaders = request.header)
+      stripHeaders = request.header,
+    )
   }
 
   def exportSQLQueryToJson(
-    user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
+      user: serving.User,
+      request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
     downloadableExportToFile(user, request.dfSpec, request.path, "json")
   }
 
   def exportSQLQueryToParquet(
-    user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
+      user: serving.User,
+      request: SQLExportToParquetRequest) = async[Unit] {
     exportToFile(user, request.dfSpec, request.path, "parquet")
   }
 
   def exportSQLQueryToORC(
-    user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
+      user: serving.User,
+      request: SQLExportToORCRequest) = async[Unit] {
     exportToFile(user, request.dfSpec, request.path, "orc")
   }
 
   def exportSQLQueryToJdbc(
-    user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
+      user: serving.User,
+      request: SQLExportToJdbcRequest) = async[Unit] {
     val table = request.dfSpec.globalSQL(user)
     val op = ExportTableToJdbc(
       request.jdbcUrl,
@@ -346,17 +361,18 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
   }
 
   private def downloadableExportToFile(
-    user: serving.User,
-    dfSpec: TableSpec,
-    path: String,
-    format: String,
-    options: Map[String, String] = Map(),
-    stripHeaders: Boolean = false): SQLExportToFileResult = {
-    val file = if (path == "<download>") {
-      s"DATA$$/exports/$Timestamp.$format"
-    } else {
-      path
-    }
+      user: serving.User,
+      dfSpec: TableSpec,
+      path: String,
+      format: String,
+      options: Map[String, String] = Map(),
+      stripHeaders: Boolean = false): SQLExportToFileResult = {
+    val file =
+      if (path == "<download>") {
+        s"DATA$$/exports/$Timestamp.$format"
+      } else {
+        path
+      }
     exportToFile(user, dfSpec, file, format, options)
     val download =
       if (path == "<download>") Some(serving.DownloadFileRequest(HadoopFile(file).symbolicName, stripHeaders))
@@ -365,11 +381,11 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
   }
 
   private def exportToFile(
-    user: serving.User,
-    dfSpec: TableSpec,
-    file: String,
-    format: String,
-    options: Map[String, String] = Map()): Unit = {
+      user: serving.User,
+      dfSpec: TableSpec,
+      file: String,
+      format: String,
+      options: Map[String, String] = Map()): Unit = {
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     // TODO: #2889 (special characters in S3 passwords).
     HadoopFile(file).assertWriteAllowedFrom(user) // TODO: Do we need this?
@@ -401,7 +417,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
       dropTrailingWhiteSpace = false,
       version = 0,
       saveMode = "overwrite",
-      forDownload = false)
+      forDownload = false,
+    )
     val export: Scalar[String] = op(op.t, table).result.exportResult
     dataManager.getFuture(export).map { _ =>
       val f = HadoopFile(path)
@@ -414,12 +431,16 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) exte
       import scala.collection.JavaConverters._
       val stream = new java.io.SequenceInputStream(iter.asJavaEnumeration)
       play.api.mvc.Result(
-        header = play.api.mvc.ResponseHeader(200, Map(
-          CONTENT_LENGTH -> length.toString,
-          CONTENT_DISPOSITION -> s"attachment; filename=table-${Timestamp.human}.csv")),
+        header = play.api.mvc.ResponseHeader(
+          200,
+          Map(
+            CONTENT_LENGTH -> length.toString,
+            CONTENT_DISPOSITION -> s"attachment; filename=table-${Timestamp.human}.csv")),
         body = play.api.http.HttpEntity.Streamed(
           akka.stream.scaladsl.StreamConverters.fromInputStream(() => stream),
-          Some(length), None))
+          Some(length),
+          None),
+      )
     }.future
   }
 }
@@ -430,9 +451,9 @@ object SQLController {
   }
 
   private def assertAccessAndGetTableEntry(
-    user: serving.User,
-    tableName: String,
-    privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
+      user: serving.User,
+      tableName: String,
+      privacy: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
 
     assert(!tableName.isEmpty, "Table name must be specified.")
     val entry = DirectoryEntry.fromName(tableName)

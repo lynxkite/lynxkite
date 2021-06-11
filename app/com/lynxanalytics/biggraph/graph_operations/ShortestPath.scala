@@ -10,16 +10,14 @@ object ShortestPath extends OpFromJson {
     val edgeDistance = edgeAttribute[Double](es)
     val startingDistance = vertexAttribute[Double](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val distance = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = ShortestPath((j \ "maxIterations").as[Int])
 }
 import ShortestPath._
 case class ShortestPath(maxIterations: Double)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -30,10 +28,10 @@ case class ShortestPath(maxIterations: Double)
     (distance.count(), distance.values.sum)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val edgeDistance = inputs.edgeDistance.rdd

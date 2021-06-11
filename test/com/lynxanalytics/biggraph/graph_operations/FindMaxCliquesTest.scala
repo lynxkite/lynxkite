@@ -27,10 +27,14 @@ class FindMaxCliquesTest extends AnyFunSuite with TestGraphOp {
       40 -> Seq())).result
     val bTo = {
       val op = AddEdgeBundle(Seq(
-        0 -> 10, 1 -> 10, 2 -> 10,
-        1 -> 20, 2 -> 20,
+        0 -> 10,
+        1 -> 10,
+        2 -> 10,
+        1 -> 20,
+        2 -> 20,
         3 -> 30,
-        0 -> 40, 3 -> 40))
+        0 -> 40,
+        3 -> 40))
       op(op.vsA, g.vs)(op.vsB, s.vs).result
     }
     val check = {

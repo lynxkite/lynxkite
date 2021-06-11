@@ -37,7 +37,8 @@ class ClassifyWithModelTest extends ModelTestBase {
       label = Map(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 1),
       featureNames = List("age"),
       attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
-      graph(4))
+      graph(4),
+    )
 
     val g = graph(numVertices = 4)
     val attrs = (0 until 1).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
@@ -59,7 +60,7 @@ class ClassifyWithModelTest extends ModelTestBase {
   test("test the decision tree classification model") {
     import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
       trainingData,
-      testDataForClassification
+      testDataForClassification,
     }
     val m = model(
       method = "Decision tree classification",
@@ -67,7 +68,8 @@ class ClassifyWithModelTest extends ModelTestBase {
       label = trainingData.label,
       featureNames = trainingData.featureNames,
       attrs = trainingData.attrs,
-      graph(trainingData.vertexNumber))
+      graph(trainingData.vertexNumber),
+    )
 
     val g = graph(testDataForClassification.vertexNumber)
     val attrs = testDataForClassification.attrs
@@ -88,7 +90,7 @@ class ClassifyWithModelTest extends ModelTestBase {
   test("test the decision tree classification model - string attributes") {
     import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
       typedTrainingData,
-      typedTestDataForClassification
+      typedTestDataForClassification,
     }
     val m = {
       val g = graph(typedTrainingData.vertexNumber)
@@ -106,7 +108,8 @@ class ClassifyWithModelTest extends ModelTestBase {
         maxDepth = 5,
         minInfoGain = 0,
         minInstancesPerNode = 1,
-        seed = 1234567)
+        seed = 1234567,
+      )
       op(op.features, features)(op.label, l).result.model
     }
 

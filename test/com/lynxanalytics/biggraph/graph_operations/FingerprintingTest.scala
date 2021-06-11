@@ -57,11 +57,16 @@ class FingerprintingTest extends AnyFunSuite with TestGraphOp {
     val fingerprinting = {
       val op = Fingerprinting(0, 0)
       op(
-        op.leftEdges, graph.es)(
-          op.leftEdgeWeights, weights)(
-            op.rightEdges, graph.es)(
-              op.rightEdgeWeights, weights)(
-                op.candidates, candidates).result
+        op.leftEdges,
+        graph.es)(
+        op.leftEdgeWeights,
+        weights)(
+        op.rightEdges,
+        graph.es)(
+        op.rightEdgeWeights,
+        weights)(
+        op.candidates,
+        candidates).result
     }
     val matching = fingerprinting.matching.toPairSeq.map { case (l, r) => (l.toInt, r.toInt) }
     val similarities = fingerprinting.leftSimilarities.rdd.collect.toMap
@@ -107,9 +112,11 @@ class FingerprintingCandidatesTest extends AnyFunSuite with TestGraphOp {
   def candidates(left: Map[Int, Seq[Int]], right: Map[Int, Seq[Int]]): Seq[(Int, Int)] = {
     val graph = SmallTestGraph(left ++ right).result
     val leftName = AddVertexAttribute.run(
-      graph.vs, (left.keys ++ left.values.flatten).map(i => i -> s"L$i").toMap)
+      graph.vs,
+      (left.keys ++ left.values.flatten).map(i => i -> s"L$i").toMap)
     val rightName = AddVertexAttribute.run(
-      graph.vs, (right.keys ++ right.values.flatten).map(i => i -> s"R$i").toMap)
+      graph.vs,
+      (right.keys ++ right.values.flatten).map(i => i -> s"R$i").toMap)
     val candidates = {
       val op = FingerprintingCandidates()
       op(op.es, graph.es)(op.leftName, leftName)(op.rightName, rightName).result.candidates

@@ -78,6 +78,6 @@ class ScalaDomain extends Domain {
 }
 
 trait ScalaOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
-  extends TypedMetaGraphOp[IS, OMDS] {
+    extends TypedMetaGraphOp[IS, OMDS] {
   def execute(input: Map[Symbol, Any], output: collection.mutable.Map[Symbol, Any]): Unit
 }

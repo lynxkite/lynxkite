@@ -14,7 +14,8 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
       label = Map(0 -> 0, 1 -> 1, 2 -> 0, 3 -> 1),
       featureNames = List("age"),
       attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
-      graph(4)).value
+      graph(4),
+    ).value
 
     assert(m.method == "Logistic regression")
     assert(m.featureNames == List("age"))
@@ -30,7 +31,8 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
       label = Map(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0),
       featureNames = List("age"),
       attrs = Seq(Map(0 -> 25, 1 -> 40, 2 -> 30, 3 -> 60)),
-      graph(4)).value
+      graph(4),
+    ).value
 
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
@@ -42,7 +44,7 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
   ignore("z-scores") {
     import sparkSession.implicits._
     import org.scalactic.Tolerance._
-    import ml.linalg.Vectors.{ dense => mlVector }
+    import ml.linalg.Vectors.{dense => mlVector}
     val coefficientsAndIntercept = Array(1.0, -1345763.0, -0.01)
     val predictions = sparkSession.createDataset(Seq(
       (mlVector(3000000.0, 1.0), mlVector(0.88, 0.12), 1.0),
@@ -58,7 +60,7 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
   test("z-score for real model") {
     import sparkSession.implicits._
     import org.scalactic.Tolerance._
-    import ml.linalg.Vectors.{ dense => mlVector }
+    import ml.linalg.Vectors.{dense => mlVector}
     val coefficientsAndIntercept = Array(-0.052874, -0.891587, 8.004224)
     val X = Seq(
       mlVector(0.0, 9.0),
@@ -70,7 +72,8 @@ class LogisticRegressionModelTrainerTest extends ModelTestBase {
       mlVector(1.0, 10.0),
       mlVector(2.0, 10.0),
       mlVector(3.0, 7.0),
-      mlVector(8.0, 8.0))
+      mlVector(8.0, 8.0),
+    )
     val probabilities = Seq(0.49498463, 0.70506297, 0.84686725, 0.97049978, 0.9990952, 0.99904612, 0.27597346,
       0.2655347, 0.83264514, 0.61029074).map(p => mlVector(p, 1 - p))
     val labels = Seq(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0)

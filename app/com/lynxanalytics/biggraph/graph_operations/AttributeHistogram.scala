@@ -23,12 +23,13 @@ object AttributeHistogram extends OpFromJson {
       sampleSizeParameter.fromJson(j))
 }
 import AttributeHistogram._
-/**
- * @param sampleSize specifies the number of data points to use for the histogram.
- * A negative value turns sampling off and all the data points will be used.
- */
+
+/** @param sampleSize
+  *   specifies the number of data points to use for the histogram.
+  *   A negative value turns sampling off and all the data points will be used.
+  */
 case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
-  extends SparkOperation[Input[T], Output] {
+    extends SparkOperation[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -36,10 +37,10 @@ case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
     sampleSizeParameter.toJson(sampleSize)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag

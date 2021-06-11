@@ -12,9 +12,7 @@ object KMeansClusteringModelTrainer extends OpFromJson {
       i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
     }
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
@@ -28,7 +26,8 @@ case class KMeansClusteringModelTrainer(
     k: Int,
     maxIter: Int,
     seed: Long,
-    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
+    featureNames: List[String])
+    extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
@@ -43,10 +42,10 @@ case class KMeansClusteringModelTrainer(
     "featureNames" -> featureNames)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
 
@@ -66,11 +65,13 @@ case class KMeansClusteringModelTrainer(
     val cost = model.summary.trainingCost
     val file = Model.newModelFile
     model.save(file.resolvedName)
-    output(o.model, Model(
-      method = "KMeans clustering",
-      labelName = None,
-      symbolicPath = file.symbolicName,
-      featureNames = featureNames,
-      statistics = Some(s"cost: ${cost}")))
+    output(
+      o.model,
+      Model(
+        method = "KMeans clustering",
+        labelName = None,
+        symbolicPath = file.symbolicName,
+        featureNames = featureNames,
+        statistics = Some(s"cost: ${cost}")))
   }
 }

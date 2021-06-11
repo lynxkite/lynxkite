@@ -45,7 +45,8 @@ class EdgesFromUniqueBipartiteAttributeMatchesTest extends AnyFunSuite with Test
 
     val op = EdgesFromUniqueBipartiteAttributeMatches()
     val result = op(op.toAttr, idColumn)(
-      op.fromAttr, graph.name).result
+      op.fromAttr,
+      graph.name).result
     assert(Seq(Edge(0, 2), Edge(1, 1), Edge(3, 5)) ==
       result.edges.rdd.values.collect.toSeq)
   }

@@ -76,11 +76,13 @@ object SQLHelper {
 
   private val supportedDataTypeCache = new SoftHashMap[TypeTag[_], Option[types.DataType]]()
   private def supportedDataType[T: TypeTag]: Option[types.DataType] = {
-    supportedDataTypeCache.getOrElseUpdate(typeTag[T], try {
-      Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
-    } catch {
-      case _: UnsupportedOperationException => None
-    })
+    supportedDataTypeCache.getOrElseUpdate(
+      typeTag[T],
+      try {
+        Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
+      } catch {
+        case _: UnsupportedOperationException => None
+      })
   }
 
   def typeTagToDataType[T: TypeTag]: types.DataType = {
@@ -121,42 +123,46 @@ object SQLHelper {
   def setContainsNull(elementType: types.DataType): types.DataType = {
     elementType match {
       case t: types.ArrayType => t.copy(
-        elementType = setContainsNull(t.elementType),
-        containsNull = true)
+          elementType = setContainsNull(t.elementType),
+          containsNull = true)
       case _ => elementType
     }
   }
 
   // Make every column nullable. Nullability is not stored in Parquet.
   def makeNullable(schema: types.StructType): types.StructType =
-    types.StructType(schema.map(f => f.dataType match {
-      case s: types.StructType => f.copy(
-        nullable = true,
-        dataType = makeNullable(s))
-      case s: types.ArrayType => f.copy(
-        nullable = true,
-        dataType = setContainsNull(s))
-      case _ => f.copy(nullable = true)
-    }))
+    types.StructType(schema.map(f =>
+      f.dataType match {
+        case s: types.StructType => f.copy(
+            nullable = true,
+            dataType = makeNullable(s))
+        case s: types.ArrayType => f.copy(
+            nullable = true,
+            dataType = setContainsNull(s))
+        case _ => f.copy(nullable = true)
+      }))
 
   // Remove comments. We use them during optimization, but they break deserialization.
   // Also make every column nullable.
   def stripComment(schema: types.StructType): types.StructType =
-    types.StructType(makeNullable(schema).map(f => f.copy(
-      metadata = new MetadataBuilder()
-        .withMetadata(f.metadata).remove("comment").build())))
+    types.StructType(makeNullable(schema).map(f =>
+      f.copy(
+        metadata = new MetadataBuilder()
+          .withMetadata(f.metadata).remove("comment").build())))
 
   // Remove all metadata. Used for excluding the metadata when asserting that the schema of
   // a dataframe is what we think. To see why we need to exclude the metadata check:
   // https://github.com/biggraph/biggraph/issues/7427
   def stripAllMetadata(schema: types.StructType): types.StructType =
-    types.StructType(makeNullable(schema).map(f => f.copy(
-      metadata = new MetadataBuilder().build())))
+    types.StructType(makeNullable(schema).map(f =>
+      f.copy(
+        metadata = new MetadataBuilder().build())))
 
   def assertTableHasCorrectSchema(table: Table, correctSchema: types.StructType): Unit = {
     assert(
       stripAllMetadata(table.schema) == stripAllMetadata(correctSchema),
       s"Schema mismatch for $table.\n" +
-        s"${table.schema.treeString}\n vs\n\n ${correctSchema.treeString}")
+        s"${table.schema.treeString}\n vs\n\n ${correctSchema.treeString}",
+    )
   }
 }

@@ -15,16 +15,18 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
   }
 
   def assertRoughly(
-    result: Map[Long, Double], expectation: Map[Long, Double], maxError: Double = 0.0) = {
+      result: Map[Long, Double],
+      expectation: Map[Long, Double],
+      maxError: Double = 0.0) = {
     assert(result.size == expectation.size)
     val error = result.map { case (k, v) => Math.abs(v - expectation(k)) }
     assert(error.max <= maxError, s"\n  $result is unlike $expectation")
   }
 
   def predictLabelFromAttr(
-    method: String,
-    label: Map[Int, Double],
-    attrs: Seq[Map[Int, Double]]): Map[Long, Double] = {
+      method: String,
+      label: Map[Int, Double],
+      attrs: Seq[Map[Int, Double]]): Map[Long, Double] = {
     // Create the graph from attr in case of missing labels.
     val g = SmallTestGraph(attrs(0).mapValues(_ => Seq())).result
     val l = AddVertexAttribute.run(g.vs, label)
@@ -33,10 +35,10 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
   }
 
   def testRegressions(
-    label: Map[Int, Double],
-    attrs: Seq[Map[Int, Double]],
-    expectation: Map[Long, Double],
-    maxError: Double) {
+      label: Map[Int, Double],
+      attrs: Seq[Map[Int, Double]],
+      expectation: Map[Long, Double],
+      maxError: Double) {
     for (method <- Seq("Linear regression", "Ridge regression", "Lasso")) {
       println("       . " + method)
       assertRoughly(
@@ -55,22 +57,28 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
     }
     assertRoughly(
       incomes("Linear regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0),
+      maxError = 5)
     assertRoughly(
       incomes("Ridge regression"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0),
+      maxError = 5)
     assertRoughly(
       incomes("Lasso"),
-      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
+      Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0),
+      maxError = 5)
     assertRoughly(
       incomes("Decision tree"),
-      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 5)
+      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0),
+      maxError = 5)
     assertRoughly(
       incomes("Random forest"),
-      Map(0L -> 950.0, 1L -> 950.0, 2L -> 1350.0, 3L -> 950.0), maxError = 5)
+      Map(0L -> 950.0, 1L -> 950.0, 2L -> 1350.0, 3L -> 950.0),
+      maxError = 5)
     assertRoughly(
       incomes("Gradient-boosted trees"),
-      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 5)
+      Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0),
+      maxError = 5)
   }
 
   // More like classification.
@@ -83,28 +91,35 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
     }
     assertRoughly(
       gender("Linear regression"),
-      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7),
+      maxError = 0.1)
     assertRoughly(
       gender("Ridge regression"),
-      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7),
+      maxError = 0.1)
     assertRoughly(
       gender("Lasso"),
-      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
+      Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7),
+      maxError = 0.1)
     assertRoughly(
       gender("Logistic regression"),
       Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0))
     assertRoughly(
       gender("Naive Bayes"),
-      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
+      Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0),
+      maxError = 0.1)
     assertRoughly(
       gender("Decision tree"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0),
+      maxError = 0.1)
     assertRoughly(
       gender("Random forest"),
-      Map(0L -> 0.9, 1L -> 0.5, 2L -> 0.9, 3L -> 0.8), maxError = 0.1)
+      Map(0L -> 0.9, 1L -> 0.5, 2L -> 0.9, 3L -> 0.8),
+      maxError = 0.1)
     assertRoughly(
       gender("Gradient-boosted trees"),
-      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
+      Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0),
+      maxError = 0.1)
   }
 
   test("Logistic regression") {
@@ -166,7 +181,8 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
       // Significantly different means and stddev with and without the extra labels.
       attrs = Seq(Map(0 -> 1, 1 -> 2, 2 -> 3, 3 -> 10, 4 -> 20)),
       expectation = Map(0L -> 10, 1L -> 20, 2L -> 30, 3L -> 100, 4L -> 200),
-      maxError = 10)
+      maxError = 10,
+    )
   }
 
   test("regression - two dimensions") {
@@ -177,7 +193,8 @@ class RegressionTest extends AnyFunSuite with TestGraphOp {
         Map(0 -> 10, 1 -> 10, 2 -> 20, 3 -> 20),
         Map(0 -> 10, 1 -> 20, 2 -> 10, 3 -> 20)),
       expectation = Map(0L -> 20, 1L -> 10, 2L -> 40, 3L -> 30),
-      maxError = 1)
+      maxError = 1,
+    )
   }
 
   test("regression - missing value") {

@@ -17,16 +17,12 @@ class SplitVerticesTest extends AnyFunSuite with TestGraphOp {
     assert(res.indexAttr.rdd.values.collect.toSeq.sorted ==
       Seq[Long](
         0, 0, 0, 0, // Everybody has index 0
-        1, 1, 1,
-        2, 2,
-        3 // But only weight 4.0 has index 3
+        1, 1, 1, 2, 2, 3, // But only weight 4.0 has index 3
       ))
     assert(res.belongsTo.rdd.values.collect.toSeq.map { e => e.dst }.sorted ==
       Seq[Long](
         0, // id 0 (weight 1.0) has 1 copy
-        1, 1,
-        2, 2, 2,
-        3, 3, 3, 3 // id 3 (weight 4.0) has 4 copies
+        1, 1, 2, 2, 2, 3, 3, 3, 3, // id 3 (weight 4.0) has 4 copies
       ))
   }
 

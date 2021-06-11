@@ -12,9 +12,7 @@ object CombineSegmentations extends OpFromJson {
     val belongsTo1 = edgeBundle(vs, seg1)
     val belongsTo2 = edgeBundle(vs, seg2)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     private val EBP = EdgeBundleProperties // Short alias.
     val belongsTo = {
@@ -32,16 +30,16 @@ object CombineSegmentations extends OpFromJson {
 }
 import CombineSegmentations._
 case class CombineSegmentations()
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vp = inputs.vs.rdd.partitioner.get
     val belongsTo1 = inputs.belongsTo1.rdd.values.map(e => e.src -> e.dst)
@@ -55,11 +53,15 @@ case class CombineSegmentations()
     val vToSeg = seg12ToV.sortedJoin(seg12ToSeg).values
     output(o.segments, segToSeg12.mapValues(_ => ()))
     output(o.belongsTo, vToSeg.map { case (v, seg) => Edge(v, seg) }.randomNumbered(vp))
-    output(o.origin1, segToSeg12.map {
-      case (seg, (seg1, seg2)) => Edge(seg, seg1)
-    }.randomNumbered(vp))
-    output(o.origin2, segToSeg12.map {
-      case (seg, (seg1, seg2)) => Edge(seg, seg2)
-    }.randomNumbered(vp))
+    output(
+      o.origin1,
+      segToSeg12.map {
+        case (seg, (seg1, seg2)) => Edge(seg, seg1)
+      }.randomNumbered(vp))
+    output(
+      o.origin2,
+      segToSeg12.map {
+        case (seg, (seg1, seg2)) => Edge(seg, seg2)
+      }.randomNumbered(vp))
   }
 }

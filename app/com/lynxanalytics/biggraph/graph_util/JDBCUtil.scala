@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 import java.sql
 import org.apache.spark.sql.DataFrame
@@ -13,13 +13,13 @@ object JDBCUtil {
   // DataFrameReader.jdbc() but it also takes care of deciding the optimal number of partitions and
   // the partitioning strategy depending on keyColumn and predicates.
   def read(
-    context: SQLContext,
-    url: String,
-    table: String,
-    keyColumn: String,
-    numPartitions: Int,
-    predicates: List[String],
-    properties: Map[String, String]): DataFrame = {
+      context: SQLContext,
+      url: String,
+      table: String,
+      keyColumn: String,
+      numPartitions: Int,
+      predicates: List[String],
+      properties: Map[String, String]): DataFrame = {
     assert(url.startsWith("jdbc:"), "JDBC URL has to start with jdbc:")
     assert(keyColumn.isEmpty || predicates.isEmpty, "Cannot define both keyColumn and predicates.")
     assert(numPartitions <= 0 || !keyColumn.isEmpty, "Cannot define numPartitions without keyColumn.")
@@ -38,11 +38,12 @@ object JDBCUtil {
       }
     } else {
       val stats = TableStats(url, table, keyColumn)
-      val p = if (numPartitions <= 0) {
-        RuntimeContext.partitionerForNRows(stats.count).numPartitions
-      } else {
-        numPartitions
-      }
+      val p =
+        if (numPartitions <= 0) {
+          RuntimeContext.partitionerForNRows(stats.count).numPartitions
+        } else {
+          numPartitions
+        }
       stats.keyType match {
         case KeyTypes.String =>
           context.read.jdbc(
@@ -73,7 +74,10 @@ object JDBCUtil {
   // Creates a list of numPartitions conditions for WHERE clauses.
   // It partitions the range between minKey and maxKey by the alphabet.
   def stringPartitionClauses(
-    keyColumn: String, minKey: String, maxKey: String, numPartitions: Int): Iterable[String] = {
+      keyColumn: String,
+      minKey: String,
+      maxKey: String,
+      numPartitions: Int): Iterable[String] = {
     assert(minKey < maxKey, s"The database thinks $minKey < $maxKey.")
     // We assume strings are mostly made up of the following characters.
     val characters = (('0' to '9') ++ ('A' to 'Z') ++ ('a' to 'z') :+ ' ').sorted.mkString
@@ -143,8 +147,10 @@ object KeyTypes extends Enumeration {
 case class TableStats(
     count: Long,
     keyType: KeyTypes.Value,
-    minLongKey: Option[Long] = None, maxLongKey: Option[Long] = None,
-    minStringKey: Option[String] = None, maxStringKey: Option[String] = None)
+    minLongKey: Option[Long] = None,
+    maxLongKey: Option[Long] = None,
+    minStringKey: Option[String] = None,
+    maxStringKey: Option[String] = None)
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {
@@ -164,12 +170,16 @@ object TableStats {
           keyType match {
             case sql.Types.VARCHAR =>
               new TableStats(
-                count, KeyTypes.String, minStringKey = Some(rs.getString("minKey")),
+                count,
+                KeyTypes.String,
+                minStringKey = Some(rs.getString("minKey")),
                 maxStringKey = Some(rs.getString("maxKey")))
             case _ =>
               // Everything else we will try to treat as numbers and see what happens.
               new TableStats(
-                count, KeyTypes.Number, minLongKey = Some(rs.getLong("minKey")),
+                count,
+                KeyTypes.Number,
+                minLongKey = Some(rs.getLong("minKey")),
                 maxLongKey = Some(rs.getLong("maxKey")))
           }
         } finally rs.close()

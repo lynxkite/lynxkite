@@ -11,7 +11,7 @@ import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
@@ -455,11 +455,11 @@ object BigGraphSparkContext {
   }
 
   def getSession(
-    appName: String,
-    useKryo: Boolean = true,
-    forceRegistration: Boolean = false,
-    master: String = "",
-    settings: Iterable[(String, String)] = Map()): spark.sql.SparkSession = {
+      appName: String,
+      useKryo: Boolean = true,
+      forceRegistration: Boolean = false,
+      master: String = "",
+      settings: Iterable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
     JdbcDialects.registerDialect(teradataDialect)
 
@@ -487,7 +487,8 @@ object BigGraphSparkContext {
         // instead of one job finishes completely first. See:
         // http://spark.apache.org/docs/latest/job-scheduling.html
         "spark.scheduler.mode",
-        "FAIR")
+        "FAIR",
+      )
       .set("spark.core.connection.ack.wait.timeout", "240")
       // Combines shuffle output into a single file which improves shuffle performance and reduces
       // number of open files for jobs with many reduce tasks. It only has some bad side effects
@@ -515,7 +516,8 @@ object BigGraphSparkContext {
           "spark.kryo.registrator",
           if (forceRegistration)
             "com.lynxanalytics.biggraph.spark_util.BigGraphKryoForcedRegistrator"
-          else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator")
+          else "com.lynxanalytics.biggraph.spark_util.BigGraphKryoRegistrator",
+        )
     }
     if (master != "") {
       sparkConf = sparkConf.setMaster(master)
@@ -541,7 +543,7 @@ class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.Spar
   val stageFailures = collection.mutable.Map[Int, Int]()
 
   override def onStageCompleted(
-    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+      stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val stage = stageCompleted.stageInfo
     if (stage.failureReason.nonEmpty) {
       stageFailures(stage.stageId) = stageFailures.getOrElse(stage.stageId, 0) + 1
@@ -549,7 +551,7 @@ class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.Spar
   }
 
   override def onStageSubmitted(
-    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
+      stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
     val stage = stageSubmitted.stageInfo
     val failures = stageFailures.getOrElse(stage.stageId, 0)
     if (failures >= maxStageFailures) {

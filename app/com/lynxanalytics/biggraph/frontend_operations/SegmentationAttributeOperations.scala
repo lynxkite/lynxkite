@@ -27,8 +27,7 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
     def addSegmentationParameters = {
       params += Param("name", "Save as", defaultValue = defaultName)
       if (canBeWeighted) {
-        params += Choice("weight", "Edge weight",
-          options = FEOption.list("Unit weight") ++ parent.edgeAttrList[Double])
+        params += Choice("weight", "Edge weight", options = FEOption.list("Unit weight") ++ parent.edgeAttrList[Double])
       }
     }
     def enabled = project.assertSegmentation && parent.hasEdgeBundle
@@ -36,16 +35,25 @@ class SegmentationAttributeOperations(env: SparkFreeEnvironment) extends Project
       assert(
         allowOverlap || seg.belongsTo.properties.isFunction,
         s"Only non-overlapping segmentations are supported.")
-      val weight = if (!canBeWeighted || params("weight") == "Unit weight") None
-      else Some(parent.edgeAttributes(params("weight")).runtimeSafeCast[Double])
+      val weight =
+        if (!canBeWeighted || params("weight") == "Unit weight") None
+        else Some(parent.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       outputType match {
         case "scalar" =>
           val scalar = graph_operations.NetworKitComputeSegmentationScalar.run(
-            nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
+            nkClass,
+            parent.edgeBundle,
+            seg.belongsTo,
+            Map("directed" -> directed),
+            weight)
           project.scalars(params("name")) = scalar
         case "attribute" =>
           val attr = graph_operations.NetworKitComputeSegmentAttribute.run(
-            nkClass, parent.edgeBundle, seg.belongsTo, Map("directed" -> directed), weight)
+            nkClass,
+            parent.edgeBundle,
+            seg.belongsTo,
+            Map("directed" -> directed),
+            weight)
           project.vertexAttributes(params("name")) = attr
       }
     }

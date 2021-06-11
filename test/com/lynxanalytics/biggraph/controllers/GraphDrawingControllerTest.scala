@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 
-import scala.concurrent.{ Await, duration }
+import scala.concurrent.{Await, duration}
 
 class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
@@ -57,7 +57,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         centralVertexIds = Seq("0", "3"),
         sampleSmearEdgeBundleId = g.edges.gUID.toString,
         attrs = Seq(),
-        radius = 1)),
+        radius = 1,
+      )),
       edgeBundles = Seq(EdgeDiagramSpec(
         srcDiagramId = "idx[0]",
         dstDiagramId = "idx[0]",
@@ -66,7 +67,9 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false,
+      )),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -79,7 +82,10 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       FEVertex(id = "3", attrs = Map(), center = true)))
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
-      FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0), FEEdge(2, 0, 1.0), FEEdge(2, 1, 1.0)))
+      FEEdge(0, 1, 1.0),
+      FEEdge(1, 0, 1.0),
+      FEEdge(2, 0, 1.0),
+      FEEdge(2, 1, 1.0)))
   }
 
   test("edge diagram with incomplete edge attribute as weight") {
@@ -103,7 +109,9 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         filters = Seq(),
         layout3D = false,
         relativeEdgeDensity = false,
-        edgeWeightId = incomplete)))
+        edgeWeightId = incomplete,
+      )),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets(0).vertices.toSet == Set(
       FEVertex(id = "0", attrs = Map(), center = true),
@@ -128,7 +136,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
     val ef = FEVertexAttributeFilter(
       attributeId = g.comment.gUID.toString,
       // Second option should be dropped due to connected vertices being filtered.
-      valueSpec = "Adam loves Eve,Bob envies Adam")
+      valueSpec = "Adam loves Eve,Bob envies Adam",
+    )
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
         vertexSetId = g.vertices.gUID.toString,
@@ -137,7 +146,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         centralVertexIds = Seq("0"),
         sampleSmearEdgeBundleId = g.edges.gUID.toString,
         attrs = Seq(age, gender),
-        radius = 1)),
+        radius = 1,
+      )),
       edgeBundles = Seq(EdgeDiagramSpec(
         srcDiagramId = "idx[0]",
         dstDiagramId = "idx[0]",
@@ -147,19 +157,27 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         filters = Seq(ef),
         layout3D = false,
         relativeEdgeDensity = false,
-        attrs = Seq(AggregatedAttribute(weight, "sum")))))
+        attrs = Seq(AggregatedAttribute(weight, "sum")),
+      )),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "sampled")
     assert(res.vertexSets(0).vertices.size == 2)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(id = "0", center = true, attrs = Map(
-        age -> DynamicValue("20.3", double = Some(20.3)),
-        gender -> DynamicValue("Male"))),
-      FEVertex(id = "1", attrs = Map(
-        age -> DynamicValue("18.2", double = Some(18.2)),
-        gender -> DynamicValue("Female")))))
+      FEVertex(
+        id = "0",
+        center = true,
+        attrs = Map(
+          age -> DynamicValue("20.3", double = Some(20.3)),
+          gender -> DynamicValue("Male"))),
+      FEVertex(
+        id = "1",
+        attrs = Map(
+          age -> DynamicValue("18.2", double = Some(18.2)),
+          gender -> DynamicValue("Female"))),
+    ))
     assert(res.edgeBundles(0).edges.size == 1)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0, Map(weight + ":sum" -> DynamicValue("1", double = Some(1.0))))))
@@ -175,7 +193,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         xBucketingAttributeId = g.age.gUID.toString,
         xNumBuckets = 2,
         yBucketingAttributeId = g.gender.gUID.toString,
-        yNumBuckets = 2)),
+        yNumBuckets = 2,
+      )),
       edgeBundles = Seq(EdgeDiagramSpec(
         srcDiagramId = "idx[0]",
         dstDiagramId = "idx[0]",
@@ -184,17 +203,25 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = g.edges.gUID.toString,
         filters = Seq(),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false,
+      )),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
     assert(res.vertexSets(0).mode == "bucketed")
     assert(res.vertexSets(0).vertices.size == 4)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(1.0, 0, 0), FEVertex(2.0, 0, 1), FEVertex(0.0, 1, 0), FEVertex(1.0, 1, 1)))
+      FEVertex(1.0, 0, 0),
+      FEVertex(2.0, 0, 1),
+      FEVertex(0.0, 1, 0),
+      FEVertex(1.0, 1, 1)))
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
-      FEEdge(0, 1, 1.0), FEEdge(3, 0, 1.0), FEEdge(1, 0, 1.0), FEEdge(3, 1, 1.0)))
+      FEEdge(0, 1, 1.0),
+      FEEdge(3, 0, 1.0),
+      FEEdge(1, 0, 1.0),
+      FEEdge(3, 1, 1.0)))
   }
 
   test("relative edge density") {
@@ -204,7 +231,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       srcIdx = 0,
       dstIdx = 0,
       edges = Seq(FEEdge(0, 1, 1.0), FEEdge(0, 2, 1.0), FEEdge(1, 2, 1.0), FEEdge(1, 3, 1.0)),
-      layout3D = Map())
+      layout3D = Map(),
+    )
     val vd = VertexDiagramResponse(
       diagramId = "vertexDiagramId",
       vertices = Seq(FEVertex(1.0, 0, 0), FEVertex(5.0, 0, 1), FEVertex(10.0, 1, 0), FEVertex(2.0, 1, 1)),
@@ -221,7 +249,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       srcIdx = 0,
       dstIdx = 0,
       edges = Seq(FEEdge(0, 1, 1.0), FEEdge(0, 2, 1.0), FEEdge(1, 2, 1.0), FEEdge(1, 3, 1.0)),
-      layout3D = Map())
+      layout3D = Map(),
+    )
     val vd = VertexDiagramResponse(
       diagramId = "vertexDiagramId",
       vertices = Seq(FEVertex(0.0, 0, 0), FEVertex(5.0, 0, 1), FEVertex(10.0, 1, 0), FEVertex(2.0, 1, 1)),
@@ -248,7 +277,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = es.gUID.toString,
         filters = Seq(),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false)),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -280,7 +310,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = es.gUID.toString,
         filters = Seq(),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false)),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -321,7 +352,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = es.gUID.toString,
         filters = Seq(ef),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false)),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -361,7 +393,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
         edgeBundleId = es.gUID.toString,
         filters = Seq(ef),
         layout3D = false,
-        relativeEdgeDensity = false)))
+        relativeEdgeDensity = false)),
+    )
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets.length == 1)
     assert(res.edgeBundles.length == 1)
@@ -439,7 +472,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString,
-      sampleSize = 50000)
+      sampleSize = 50000,
+    )
     val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))
@@ -458,7 +492,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       numBuckets = 4,
       axisOptions = AxisOptions(),
       edgeBundleId = g.edges.gUID.toString,
-      sampleSize = 50000)
+      sampleSize = 50000,
+    )
     val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "between")
     assert(res.labels == Seq("1.00", "1.75", "2.50", "3.25", "4.00"))

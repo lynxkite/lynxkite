@@ -9,9 +9,8 @@ abstract class Filter[-T] extends Serializable with ToJson {
 }
 
 object VertexAttributeFilter extends OpFromJson {
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[T])
+      extends MagicOutput(instance) {
     val fvs = vertexSet
     val identity = edgeBundle(fvs, inputs.vs.entity, EdgeBundleProperties.embedding)
     implicit val tt = inputs.attr.typeTag
@@ -22,7 +21,7 @@ object VertexAttributeFilter extends OpFromJson {
   }
 }
 case class VertexAttributeFilter[T](filter: Filter[T])
-  extends SparkOperation[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
+    extends SparkOperation[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
   import VertexAttributeFilter._
 
   override val isHeavy = true
@@ -33,10 +32,10 @@ case class VertexAttributeFilter[T](filter: Filter[T])
   override def toJson = Json.obj("filter" -> filter.toTypedJson)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val ct = inputs.attr.data.classTag

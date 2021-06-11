@@ -14,7 +14,7 @@ class AddConstantAttributeTest extends AnyFunSuite with TestGraphOp {
 
     val res = g.vs.rdd.join(out.attr.rdd).mapValues(_._2).collect.toMap
 
-    assert(res == Map(0l -> 100.0, 1l -> 100.0, 2l -> 100.0))
+    assert(res == Map(0L -> 100.0, 1L -> 100.0, 2L -> 100.0))
   }
 
   test("triangle edge attribute") {
@@ -27,6 +27,6 @@ class AddConstantAttributeTest extends AnyFunSuite with TestGraphOp {
         (edge.src.toInt, edge.dst.toInt) -> value
     }.collect.toMap
 
-    assert(res == Map((0l, 1l) -> 100.0, (1l, 2l) -> 100.0, (2l, 0l) -> 100.0))
+    assert(res == Map((0L, 1L) -> 100.0, (1L, 2L) -> 100.0, (2L, 0L) -> 100.0))
   }
 }

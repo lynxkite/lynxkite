@@ -7,9 +7,7 @@ object SaveTable extends OpFromJson {
   class Input extends MagicInputSignature {
     val t = table
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val t = table(inputs.t.entity.schema)
   }
 
@@ -28,10 +26,10 @@ case class SaveTable() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.t, inputs.t.df)
   }

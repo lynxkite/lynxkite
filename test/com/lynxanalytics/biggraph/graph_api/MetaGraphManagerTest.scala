@@ -109,23 +109,27 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     assert(!new File(dir, "2").exists)
     import play.api.libs.json
     // Load the test data using a fake JsonMigration class.
-    val m = MetaRepositoryManager(dir, new JsonMigration(
-      Map(
-        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
-      Map(
-        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
-        // The input data has version 1. The upgrader for version 0 will not be called.
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
-        // From version 1 to version 2 we added the "arg" argument.
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
-          j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
-        },
-        // From version 2 to version 3 we removed the "unnecessary" argument.
-        // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
-          j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
-        })))
+    val m = MetaRepositoryManager(
+      dir,
+      new JsonMigration(
+        Map(
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
+        Map(
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
+          // The input data has version 1. The upgrader for version 0 will not be called.
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
+          // From version 1 to version 2 we added the "arg" argument.
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+            j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
+          },
+          // From version 2 to version 3 we removed the "unnecessary" argument.
+          // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
+            j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
+          },
+        )),
+    )
     // The new directory exists.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
@@ -155,7 +159,31 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     // Load the test data using a fake JsonMigration class.
     class TestException extends Exception("test")
     val ex = intercept[Exception] {
-      MetaRepositoryManager(dir, new JsonMigration(
+      MetaRepositoryManager(
+        dir,
+        new JsonMigration(
+          Map(
+            "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
+          Map(
+            "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
+            // The input data has version 1. The upgrader for version 0 will not be called.
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
+            // Bad migration from version 1 to version 2.
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
+              j => throw new TestException
+            },
+          )),
+      )
+    }
+    assert(ex.getCause.isInstanceOf[TestException])
+    // The migration failed, so the version file was not created.
+    assert(new File(dir, "2").exists)
+    assert(!new File(dir, "2/version").exists)
+    // Try again with a corrected upgrader.
+    val m = MetaRepositoryManager(
+      dir,
+      new JsonMigration(
         Map(
           "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
@@ -163,28 +191,12 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
           "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
           // The input data has version 1. The upgrader for version 0 will not be called.
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
-          // Bad migration from version 1 to version 2.
+          // Correct migration from version 1 to version 2.
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
-            j => throw new TestException
-          })))
-    }
-    assert(ex.getCause.isInstanceOf[TestException])
-    // The migration failed, so the version file was not created.
-    assert(new File(dir, "2").exists)
-    assert(!new File(dir, "2/version").exists)
-    // Try again with a corrected upgrader.
-    val m = MetaRepositoryManager(dir, new JsonMigration(
-      Map(
-        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
-      Map(
-        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
-        // The input data has version 1. The upgrader for version 0 will not be called.
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
-        // Correct migration from version 1 to version 2.
-        "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
-          j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
-        })))
+            j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
+          },
+        )),
+    )
     // The migration succeeded.
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
@@ -213,11 +225,8 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
 }
 
 private object CreateSomeGraph extends OpFromJson {
-  class Input extends MagicInputSignature {
-  }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Input extends MagicInputSignature {}
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val vattr = vertexAttribute[Long](vertices)
     val eattr = edgeAttribute[String](edges)
@@ -228,7 +237,7 @@ private object CreateSomeGraph extends OpFromJson {
   }
 }
 private case class CreateSomeGraph(arg: String = "not set")
-  extends SparkOperation[CreateSomeGraph.Input, CreateSomeGraph.Output] {
+    extends SparkOperation[CreateSomeGraph.Input, CreateSomeGraph.Output] {
   import CreateSomeGraph._
 
   @transient override lazy val inputs = new Input()
@@ -239,10 +248,10 @@ private case class CreateSomeGraph(arg: String = "not set")
   override def toJson = Json.obj("arg" -> arg)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = ???
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = ???
 }
 
 private object FromVertexAttr extends OpFromJson {
@@ -250,16 +259,14 @@ private object FromVertexAttr extends OpFromJson {
     val inputVertices = vertexSet
     val inputAttr = vertexAttribute[Long](inputVertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val attrValues = vertexSet
     val links = edgeBundle(attrValues, inputs.inputVertices.entity)
   }
   def fromJson(j: play.api.libs.json.JsValue) = FromVertexAttr()
 }
 private case class FromVertexAttr()
-  extends SparkOperation[FromVertexAttr.Input, FromVertexAttr.Output] {
+    extends SparkOperation[FromVertexAttr.Input, FromVertexAttr.Output] {
   import FromVertexAttr._
 
   @transient override lazy val inputs = new Input()
@@ -268,8 +275,8 @@ private case class FromVertexAttr()
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = ???
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = ???
 }

@@ -5,9 +5,10 @@ import play.api.mvc._
 
 class Assets @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, assets: controllers.Assets,
+    ec: concurrent.ExecutionContext,
+    assets: controllers.Assets,
     val controllerComponents: ControllerComponents)
-  extends BaseController {
+    extends BaseController {
   def at(path: String, file: String): Action[AnyContent] = {
     val action = assets.at(path, file)
     Action.async { request =>

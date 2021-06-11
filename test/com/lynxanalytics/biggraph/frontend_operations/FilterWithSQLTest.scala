@@ -22,9 +22,11 @@ class FilterWithSQLTest extends OperationsTestBase {
 
   test("filter vertices and edges") {
     val p = box("Create example graph")
-      .box("Filter with SQL", Map(
-        "vertex_filter" -> "age < income",
-        "edge_filter" -> "comment like '%envies%'"))
+      .box(
+        "Filter with SQL",
+        Map(
+          "vertex_filter" -> "age < income",
+          "edge_filter" -> "comment like '%envies%'"))
       .output("output").project
     assert(get(p.vertexAttributes("name")) == Map(0 -> "Adam", 2 -> "Bob"))
     assert(get(p.edgeAttributes("comment")) == Map(2 -> "Bob envies Adam"))

@@ -23,7 +23,8 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
     def apply() = {
       project.newEdgeAttribute(
-        params("destination"), project.edgeAttributes(params("name")),
+        params("destination"),
+        project.edgeAttributes(params("name")),
         project.viewer.getEdgeAttributeNote(params("name")))
     }
   })
@@ -40,7 +41,8 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
     def apply() = {
       project.newScalar(
-        params("destination"), project.scalars(params("name")),
+        params("destination"),
+        project.scalars(params("name")),
         project.viewer.getScalarNote(params("name")))
     }
   })
@@ -75,7 +77,8 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     def apply() = {
       assert(params("destination").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
-        params("destination"), project.vertexAttributes(params("name")),
+        params("destination"),
+        project.vertexAttributes(params("name")),
         project.viewer.getVertexAttributeNote(params("name")))
     }
   })
@@ -313,7 +316,9 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       for ((name, icon) <- attrParams.toMap) {
         val attr = project.edgeAttributes(name)
         project.setElementMetadata(
-          EdgeAttributeKind, name, MetadataNames.Icon,
+          EdgeAttributeKind,
+          name,
+          MetadataNames.Icon,
           if (icon.nonEmpty) icon else null)
       }
     }
@@ -333,7 +338,9 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val name = params("name")
       val icon = params("icon")
       project.setElementMetadata(
-        ScalarKind, name, MetadataNames.Icon,
+        ScalarKind,
+        name,
+        MetadataNames.Icon,
         if (icon.nonEmpty) icon else null)
     }
   })
@@ -352,7 +359,9 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val name = params("name")
       val icon = params("icon")
       project.setElementMetadata(
-        SegmentationKind, name, MetadataNames.Icon,
+        SegmentationKind,
+        name,
+        MetadataNames.Icon,
         if (icon.nonEmpty) icon else null)
     }
   })
@@ -378,7 +387,9 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       for ((name, icon) <- attrParams.toMap) {
         val attr = project.vertexAttributes(name)
         project.setElementMetadata(
-          VertexAttributeKind, name, MetadataNames.Icon,
+          VertexAttributeKind,
+          name,
+          MetadataNames.Icon,
           if (icon.nonEmpty) icon else null)
       }
     }

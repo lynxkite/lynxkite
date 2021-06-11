@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 case class DataFilesStats(
     id: String = "",
@@ -60,25 +60,30 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
         " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
         " effects.",
-      metaGraphContents),
+      metaGraphContents,
+    ),
     CleanerMethod(
       "notSnapshotEntities",
       "Entities which do not exist in a snapshot",
       "Entities which are not saved via either a table snapshot, or as a vetrex set, " +
         "edge bundle, vertex or edge attribute or scalar of a project or its segmentation.",
-      snapshotEntities),
+      snapshotEntities,
+    ),
     CleanerMethod(
       "notSnapshotOrImportBoxEntities",
       "Entities which do not exist in a snapshot or outputted by an import box",
       "Entities which are not referenced via a snapshot or as an output of an import box in " +
         "a top level workspace.",
-      () => snapshotEntities() ++ importBoxEntities()),
+      () => snapshotEntities() ++ importBoxEntities(),
+    ),
     CleanerMethod(
       "notSnapshotOrWorkspaceEntities",
       "Entities which do not exist in a snapshot or workspace",
       "Entities which are not referenced via a snapshot or as an output of a box in " +
         "a top level workspace.",
-      () => snapshotEntities() ++ workspaceEntities()))
+      () => snapshotEntities() ++ workspaceEntities(),
+    ),
+  )
 
   private var cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
 
@@ -102,7 +107,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         totalSize = trashFiles.all.map(_._2).sum),
       methods.map { m =>
         getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
-      })
+      },
+    )
   }
 
   private def getAllFiles(trash: Boolean): AllFiles = {
@@ -112,7 +118,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       getAllFilesInDir(io.OperationsDir, trash),
       getAllFilesInDir(io.ScalarsDir, trash),
       getAllFilesInDir(io.TablesDir, trash),
-      getAllFilesInDir(io.BroadcastsDir, trash))
+      getAllFilesInDir(io.BroadcastsDir, trash),
+    )
   }
 
   private def oldEnough(dir: org.apache.hadoop.fs.FileStatus, currentTime: Long): Boolean = {
@@ -141,8 +148,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def heavyOpOutputSourceGUIDs(
-    entities: Iterable[MetaGraphEntity],
-    expanded: HashSet[String]): Set[String] = {
+      entities: Iterable[MetaGraphEntity],
+      expanded: HashSet[String]): Set[String] = {
     entities.flatMap { entity =>
       val gUID = entity.gUID.toString
       if (!expanded.contains(gUID)) {
@@ -214,7 +221,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def operationWithId(
-    operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
+      operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
     (operation.gUID, operation)
   }
 
@@ -223,7 +230,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   // Note that these ID strings are the base names of the corresponding
   // data directories.
   private def allFilesFromSourceOperation(
-    operations: Map[UUID, MetaGraphOperationInstance]): Set[String] = {
+      operations: Map[UUID, MetaGraphOperationInstance]): Set[String] = {
     val files = new HashSet[String]
     for ((id, operation) <- operations) {
       files += id.toString
@@ -233,11 +240,11 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def getDataFilesStats(
-    id: String,
-    name: String,
-    desc: String,
-    filesToKeep: Set[String],
-    allFiles: AllFiles): DataFilesStats = {
+      id: String,
+      name: String,
+      desc: String,
+      filesToKeep: Set[String],
+      allFiles: AllFiles): DataFilesStats = {
     val filesToDelete = allFiles.all -- filesToKeep
     DataFilesStats(id, name, desc, filesToDelete.size, filesToDelete.map(_._2).sum)
   }

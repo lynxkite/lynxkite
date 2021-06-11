@@ -27,10 +27,14 @@ class ConcatenateBundlesTest extends AnyFunSuite with TestGraphOp {
     // Concatenate!
     val cbOp = ConcatenateBundles()
     val cb = cbOp(
-      cbOp.edgesAB, ab.es)(
-        cbOp.weightsAB, ab.weight)(
-          cbOp.edgesBC, bc.es)(
-            cbOp.weightsBC, bc.weight).result
+      cbOp.edgesAB,
+      ab.es)(
+      cbOp.weightsAB,
+      ab.weight)(
+      cbOp.edgesBC,
+      bc.es)(
+      cbOp.weightsBC,
+      bc.weight).result
 
     // join edge bundle and weight data to make an output that is easy to read
     cb.edgesAC.rdd.join(cb.weightsAC.rdd).map {
@@ -63,10 +67,23 @@ class ConcatenateBundlesTest extends AnyFunSuite with TestGraphOp {
     val AB = Seq(Seq(1, 2, 3, 4) -> 10)
     val BC = Seq(10 -> 100, 10 -> 200, 10 -> 300, 10 -> 400)
     assert(concatEdges(AB, BC) === Map(
-      (1, 100) -> 1.0, (1, 200) -> 1.0, (1, 300) -> 1.0, (1, 400) -> 1.0,
-      (2, 100) -> 1.0, (2, 200) -> 1.0, (2, 300) -> 1.0, (2, 400) -> 1.0,
-      (3, 100) -> 1.0, (3, 200) -> 1.0, (3, 300) -> 1.0, (3, 400) -> 1.0,
-      (4, 100) -> 1.0, (4, 200) -> 1.0, (4, 300) -> 1.0, (4, 400) -> 1.0))
+      (1, 100) -> 1.0,
+      (1, 200) -> 1.0,
+      (1, 300) -> 1.0,
+      (1, 400) -> 1.0,
+      (2, 100) -> 1.0,
+      (2, 200) -> 1.0,
+      (2, 300) -> 1.0,
+      (2, 400) -> 1.0,
+      (3, 100) -> 1.0,
+      (3, 200) -> 1.0,
+      (3, 300) -> 1.0,
+      (3, 400) -> 1.0,
+      (4, 100) -> 1.0,
+      (4, 200) -> 1.0,
+      (4, 300) -> 1.0,
+      (4, 400) -> 1.0,
+    ))
   }
 
   test("mix of the above") {
@@ -74,6 +91,10 @@ class ConcatenateBundlesTest extends AnyFunSuite with TestGraphOp {
     val BC = Seq(Seq(10, 20) -> 100, Seq(20) -> 200, Seq(30) -> 300, Seq(40) -> 400)
     assert(concatEdges(AB, BC) === Map(
       (1, 100) -> 2.0,
-      (2, 100) -> 1.0, (3, 100) -> 1.0, (1, 200) -> 1.0, (3, 200) -> 1.0, (4, 300) -> 1.0))
+      (2, 100) -> 1.0,
+      (3, 100) -> 1.0,
+      (1, 200) -> 1.0,
+      (3, 200) -> 1.0,
+      (4, 300) -> 1.0))
   }
 }

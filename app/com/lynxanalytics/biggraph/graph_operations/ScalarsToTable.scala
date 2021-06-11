@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark
-import org.apache.spark.sql.{ Row, types }
+import org.apache.spark.sql.{Row, types}
 
 import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
@@ -15,17 +15,17 @@ object ScalarsToTable extends OpFromJson {
       namesAndTypes.map { case (name, tt) => scalar(Symbol(name)) }
   }
   class Output(schema: types.StructType)(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val t = table(schema)
   }
 
   import Scripting._
   // Ask the type system to trust us that this attribute matches the template type.
   private def build[T, IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    builder: InstanceBuilder[IS, OMDS],
-    template: Input#ScalarTemplate[_],
-    scalar: Scalar[T]) =
+      builder: InstanceBuilder[IS, OMDS],
+      template: Input#ScalarTemplate[_],
+      scalar: Scalar[T]) =
     builder(template.asInstanceOf[Input#ScalarTemplate[T]], scalar)
 
   def run(scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager): Table = {
@@ -54,10 +54,10 @@ case class ScalarsToTable(schema: types.StructType) extends SparkOperation[Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val df = new ScalarSRDDRelation(schema, inputDatas, rc.sqlContext).toDF
     output(o.t, df)
@@ -68,9 +68,9 @@ class ScalarSRDDRelation(
     val schema: types.StructType,
     val inputDatas: DataSet,
     val sqlContext: spark.sql.SQLContext)
-  extends spark.sql.sources.BaseRelation
-  with spark.sql.sources.TableScan
-  with spark.sql.sources.PrunedScan {
+    extends spark.sql.sources.BaseRelation
+    with spark.sql.sources.TableScan
+    with spark.sql.sources.PrunedScan {
   def toDF = sqlContext.baseRelationToDataFrame(this)
 
   // TableScan

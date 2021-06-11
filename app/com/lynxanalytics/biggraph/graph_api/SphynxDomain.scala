@@ -7,13 +7,13 @@ import play.api.libs.json.Json
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
-import java.nio.file.{ Paths, Files }
-import java.io.{ SequenceInputStream, File, FileInputStream }
+import java.nio.file.{Paths, Files}
+import java.io.{SequenceInputStream, File, FileInputStream}
 import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import scala.util.{ Try, Success, Failure }
-import java.io.{ FileWriter, BufferedWriter }
+import scala.util.{Try, Success, Failure}
+import java.io.{FileWriter, BufferedWriter}
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
@@ -22,8 +22,11 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
-    typeTag[String], typeTag[Long], typeTag[Double],
-    typeTag[Vector[Double]], typeTag[Array[ID]])
+    typeTag[String],
+    typeTag[Long],
+    typeTag[Double],
+    typeTag[Vector[Double]],
+    typeTag[Array[ID]])
   def clear(): SafeFuture[Unit]
   def shutDownChannel
 }
@@ -122,7 +125,7 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
 }
 
 abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
-  extends SphynxDomain(host, port, certDir) {
+    extends SphynxDomain(host, port, certDir) {
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
     ???
@@ -231,7 +234,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
 }
 
 class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dataDir: String)
-  extends UnorderedSphynxDisk(host, port, certDir) {
+    extends UnorderedSphynxDisk(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
     new java.io.File(s"${dataDir}/${entity.gUID.toString}/_SUCCESS").exists()
@@ -286,7 +289,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
 }
 
 class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dataDir: HadoopFile)
-  extends UnorderedSphynxDisk(host, port, certDir) {
+    extends UnorderedSphynxDisk(host, port, certDir) {
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case _: UnorderedSphynxLocalDisk => true
@@ -305,23 +308,23 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: UnorderedSphynxLocalDisk => SafeFuture.async({
-        val dstDir = dataDir / e.gUID.toString
-        val srcFiles: Seq[File] = e match {
-          case s: Scalar[_] =>
-            Seq(new File(s"${source.getGUIDPath(s)}/serialized_data"))
-          case _ =>
-            val srcDir = new File(source.getGUIDPath(e))
-            srcDir.listFiles.filter(_.getName.startsWith("part-"))
-        }
-        try {
-          for (f <- srcFiles) {
-            (dstDir / f.getName()).copyFromLocalFile(f.getPath())
+          val dstDir = dataDir / e.gUID.toString
+          val srcFiles: Seq[File] = e match {
+            case s: Scalar[_] =>
+              Seq(new File(s"${source.getGUIDPath(s)}/serialized_data"))
+            case _ =>
+              val srcDir = new File(source.getGUIDPath(e))
+              srcDir.listFiles.filter(_.getName.startsWith("part-"))
           }
-        } catch {
-          case t: Throwable => throw new AssertionError(s"Failed to relocate $e from $source", t)
-        }
-        (dstDir / "_SUCCESS").create()
-      })
+          try {
+            for (f <- srcFiles) {
+              (dstDir / f.getName()).copyFromLocalFile(f.getPath())
+            }
+          } catch {
+            case t: Throwable => throw new AssertionError(s"Failed to relocate $e from $source", t)
+          }
+          (dstDir / "_SUCCESS").create()
+        })
       case source: SparkDomain => relocateFromSpark(e, source)
     }
   }

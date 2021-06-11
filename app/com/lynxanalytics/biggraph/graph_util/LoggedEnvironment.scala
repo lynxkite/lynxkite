@@ -2,7 +2,7 @@
 // their contents are confidential
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 object LoggedEnvironment {
   def envOrElse(name: String, alt: String, confidential: Boolean = false) = synchronized {
@@ -21,4 +21,3 @@ object LoggedEnvironment {
     result
   }
 }
-

@@ -25,7 +25,9 @@ object HyperbolicPrediction extends OpFromJson {
   }
   class Output(
       implicit
-      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+      extends MagicOutput(instance) {
     val predictedEdges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val edgeProbability = edgeAttribute[Double](predictedEdges)
   }
@@ -36,8 +38,8 @@ object HyperbolicPrediction extends OpFromJson {
     (j \ "exponent").as[Double])
 }
 import HyperbolicPrediction._
-case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegree: Double,
-    exponent: Double) extends SparkOperation[Input, Output] {
+case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegree: Double, exponent: Double)
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -49,10 +51,10 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
     "exponent" -> exponent)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val vertexSetSize = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
@@ -72,7 +74,10 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
           angular = angu,
           expectedDegree = HyperDistance.totalExpectedEPSO(
             exponent,
-            externalDegree, internalDegree, vertexSetSize, ordi))
+            externalDegree,
+            internalDegree,
+            vertexSetSize,
+            ordi))
     }
     // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
     // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
@@ -99,7 +104,11 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
       lhv =>
         HyperDistance.linkedListSampler(
           (logVertexSetSize * lhv.vertex.expectedDegree).toInt,
-          lhv, lhv.previous, lhv.next, lhv.radialPrevious, Nil)
+          lhv,
+          lhv.previous,
+          lhv.next,
+          lhv.radialPrevious,
+          Nil)
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
     // Takes the $size most probable edges from all generated edges and adds them.
@@ -125,13 +134,17 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
         List((edge, probability), (Edge(edge.dst, edge.src), probability))
     }
     val randomNumberedEdges = predictedEdges.randomNumbered(partitioner)
-    output(o.predictedEdges, randomNumberedEdges.map {
-      case (id, (e, prob)) =>
-        (id, e)
-    }.sortUnique(partitioner))
-    output(o.edgeProbability, randomNumberedEdges.map {
-      case (id, (e, prob)) =>
-        (id, prob)
-    }.sortUnique(partitioner))
+    output(
+      o.predictedEdges,
+      randomNumberedEdges.map {
+        case (id, (e, prob)) =>
+          (id, e)
+      }.sortUnique(partitioner))
+    output(
+      o.edgeProbability,
+      randomNumberedEdges.map {
+        case (id, (e, prob)) =>
+          (id, prob)
+      }.sortUnique(partitioner))
   }
 }
