@@ -143,6 +143,19 @@
       <marker id="arrow-root" markerWidth="4" markerHeight="4" viewBox="-2 -2 4 4">
         <circle r="2"></circle>
       </marker>
+
+      <!-- A quadratic gradient. To be colored with a filter. -->
+      <radialGradient id="wizardGradient">
+        <stop offset="20%" stop-color="#ffffffff"/>
+        <stop offset="30%" stop-color="#ffffffc3"/>
+        <stop offset="40%" stop-color="#ffffff8f"/>
+        <stop offset="50%" stop-color="#ffffff63"/>
+        <stop offset="60%" stop-color="#ffffff3f"/>
+        <stop offset="70%" stop-color="#ffffff23"/>
+        <stop offset="80%" stop-color="#ffffff0f"/>
+        <stop offset="90%" stop-color="#ffffff03"/>
+        <stop offset="100%" stop-color="#ffffff00"/>
+      </radialGradient>
     </defs>
 
     <g id="drawing-board"
@@ -185,6 +198,7 @@
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
         <ellipse class="pedestal" cx="50" cy="80" rx="75" ry="30" ng-if="!box.comment"></ellipse>
         <ellipse class="pedestal" cx="50" cy="60" rx="20" ry="8" ng-if="box.comment"></ellipse>
+        <circle class="wizard-aura" cx="50" cy="60" r="100" ng-if="box.inWizard"></circle>
         <circle id="click-target" cx="50" cy="60" r="50" ng-if="!box.comment"></circle>
         <circle id="click-target" cx="50" cy="50" r="15" ng-if="box.comment"></circle>
 
