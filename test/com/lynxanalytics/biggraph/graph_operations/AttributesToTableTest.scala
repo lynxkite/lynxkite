@@ -28,6 +28,7 @@ class AttributesToTableTest extends AnyFunSuite with TestGraphOp {
       Seq("Adam", Seq(40.71448, -74.00598), 20.3, 1000.0, "Male"),
       Seq("Eve", Seq(47.5269674, 19.0323968), 18.2, null, "Female"),
       Seq("Bob", Seq(1.352083, 103.819836), 50.3, 2000.0, "Male"),
-      Seq("Isolated Joe", Seq(-33.8674869, 151.2069902), 2.0, null, "Male")))
+      Seq("Isolated Joe", Seq(-33.8674869, 151.2069902), 2.0, null, "Male"),
+    ))
   }
 }

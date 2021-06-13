@@ -14,8 +14,11 @@ class DiscardSegmentationLinksOperationTest extends OperationsTestBase {
     val linked = bucketed
       .box(
         "Define segmentation links from matching attributes",
-        Map("apply_to_graph" -> ".bucketing", "base_id_attr" -> "gender", "seg_id_attr" ->
-          "gender"))
+        Map(
+          "apply_to_graph" -> ".bucketing",
+          "base_id_attr" -> "gender",
+          "seg_id_attr" ->
+            "gender"))
       .project.segmentation("bucketing")
     assert(linked.scalars("!coverage").value == 4)
     assert(linked.scalars("!belongsToEdges").value == 4)

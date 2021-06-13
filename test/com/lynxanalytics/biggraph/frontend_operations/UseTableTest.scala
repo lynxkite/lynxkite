@@ -26,7 +26,8 @@ class UseTableTest extends OperationsTestBase {
     def use(t: TestBox, params: Map[String, String], attr: String = "age") = {
       val g = box(
         "Use table as vertex attributes",
-        Map("id_attr" -> "name", "id_column" -> "n") ++ params, Seq(eg, t))
+        Map("id_attr" -> "name", "id_column" -> "n") ++ params,
+        Seq(eg, t))
         .project
       get(g.vertexAttributes(attr).runtimeSafeCast[Double])
     }
@@ -36,7 +37,8 @@ class UseTableTest extends OperationsTestBase {
     assert(
       use(
         sql("select 1.0 as income, 'Eve' as n union all select 2.0, 'Bob'"),
-        Map("if_exists" -> "Merge, prefer the graph's version"), "income") ==
+        Map("if_exists" -> "Merge, prefer the graph's version"),
+        "income") ==
         Map(0 -> 1000.0, 1 -> 1.0, 2 -> 2000.0))
     assert(use(t, Map("if_exists" -> "Keep the graph's version")) ==
       Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
@@ -64,7 +66,8 @@ class UseTableTest extends OperationsTestBase {
     def use(t: TestBox, params: Map[String, String]) = {
       val g = box(
         "Use table as edge attributes",
-        Map("id_attr" -> "comment", "id_column" -> "n") ++ params, Seq(eg, t))
+        Map("id_attr" -> "comment", "id_column" -> "n") ++ params,
+        Seq(eg, t))
         .project
       get(g.edgeAttributes("weight").runtimeSafeCast[Double])
     }

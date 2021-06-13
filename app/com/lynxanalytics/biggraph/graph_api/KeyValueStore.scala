@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import java.io.File
 import play.api.libs.json.Json
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 trait KeyValueStore {
   def readAll: Iterable[(String, String)]

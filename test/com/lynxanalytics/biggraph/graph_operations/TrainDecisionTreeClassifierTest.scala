@@ -12,7 +12,8 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
       label = trainingData.label,
       featureNames = trainingData.featureNames,
       attrs = trainingData.attrs,
-      graph(trainingData.vertexNumber))
+      graph(trainingData.vertexNumber),
+    )
 
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
@@ -66,7 +67,8 @@ END AS length of the walk""")
         maxDepth = 5,
         minInfoGain = 0,
         minInstancesPerNode = 1,
-        seed = 1234567)
+        seed = 1234567,
+      )
       op(op.features, features)(op.label, l).result.model
     }
 

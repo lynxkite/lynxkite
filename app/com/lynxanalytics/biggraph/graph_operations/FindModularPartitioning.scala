@@ -15,13 +15,13 @@ object FindModularPartitioning extends OpFromJson {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val partitions = vertexSet
     val belongsTo = edgeBundle(
-      inputs.vs.entity, partitions, properties = EdgeBundleProperties.partialFunction)
+      inputs.vs.entity,
+      partitions,
+      properties = EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: JsValue) = FindModularPartitioning()
 }
@@ -33,14 +33,14 @@ case class FindModularPartitioning() extends SparkOperation[Input, Output] {
 
   @annotation.tailrec
   private def findModularRefinement(
-    // Partion ID to member IDs for the partitioning we want to refine.
-    members: SortedRDD[ID, ID],
-    // For non-finalized partitions, gives the total in and out weight of edges from/to finalized
-    // partitions.
-    weightsFromFinals: SortedRDD[ID, (Double, Double)],
-    // Gives total edge weight going from partion A to partition B.
-    connections: SortedRDD[(ID, ID), Double],
-    numEdgesOpt: Option[Double]): SortedRDD[ID, ID] = {
+      // Partion ID to member IDs for the partitioning we want to refine.
+      members: SortedRDD[ID, ID],
+      // For non-finalized partitions, gives the total in and out weight of edges from/to finalized
+      // partitions.
+      weightsFromFinals: SortedRDD[ID, (Double, Double)],
+      // Gives total edge weight going from partion A to partition B.
+      connections: SortedRDD[(ID, ID), Double],
+      numEdgesOpt: Option[Double]): SortedRDD[ID, ID] = {
 
     connections.cache()
     val numEdges = numEdgesOpt.getOrElse(connections.values.reduce(_ + _))
@@ -107,26 +107,27 @@ case class FindModularPartitioning() extends SparkOperation[Input, Output] {
               .map { case (id, (_, _, inWeight, _)) => (id, inWeight) }
               .toSeq
               .filter(_._2 != 0.0)
-            val newId = if (ownedFriends.size == friends.size) {
-              // Yay, we own all our friends. Now we either merge or become final.
-              val deltas = friendsList.filter(_._1 != id).map {
-                case (id, (fInDeg, fOutDeg, inWeight, outWeight)) =>
-                  val fullEdgeDelta = (inWeight + outWeight) / numEdges
-                  val expectationDelta = (fInDeg * outDeg + fOutDeg * inDeg) / numEdges / numEdges
-                  (fullEdgeDelta - expectationDelta, id)
-              }
-              val bestFriend = if (deltas.size > 0) deltas.max else (-1.0, 0L)
-              if (bestFriend._1 > 0) {
-                // We merge with the best, positive delta friend.
-                Some(bestFriend._2)
+            val newId =
+              if (ownedFriends.size == friends.size) {
+                // Yay, we own all our friends. Now we either merge or become final.
+                val deltas = friendsList.filter(_._1 != id).map {
+                  case (id, (fInDeg, fOutDeg, inWeight, outWeight)) =>
+                    val fullEdgeDelta = (inWeight + outWeight) / numEdges
+                    val expectationDelta = (fInDeg * outDeg + fOutDeg * inDeg) / numEdges / numEdges
+                    (fullEdgeDelta - expectationDelta, id)
+                }
+                val bestFriend = if (deltas.size > 0) deltas.max else (-1.0, 0L)
+                if (bestFriend._1 > 0) {
+                  // We merge with the best, positive delta friend.
+                  Some(bestFriend._2)
+                } else {
+                  // Nobody to merge with beneficially.
+                  None
+                }
               } else {
-                // Nobody to merge with beneficially.
-                None
+                // Nay, no cards are dealt for us. We just reproduce the edges for owned friendships.
+                Some(id)
               }
-            } else {
-              // Nay, no cards are dealt for us. We just reproduce the edges for owned friendships.
-              Some(id)
-            }
             (newId, outEdges, inEdges)
         }.cache()
 
@@ -165,10 +166,10 @@ case class FindModularPartitioning() extends SparkOperation[Input, Output] {
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vs.rdd
     val vPart = vs.partitioner.get
@@ -178,7 +179,8 @@ case class FindModularPartitioning() extends SparkOperation[Input, Output] {
       connections = inputs.edges.rdd.sortedJoin(inputs.weights.rdd)
         .map { case (id, (e, w)) => ((e.src, e.dst), w) }
         .reduceBySortedKey(vPart, _ + _),
-      numEdgesOpt = None)
+      numEdgesOpt = None,
+    )
 
     val partitions = members.groupByKey.randomNumbered(vPart).mapValues(_._2)
     output(o.partitions, partitions.mapValues(_ => ()))

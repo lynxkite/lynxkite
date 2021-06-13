@@ -9,8 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class HyperbolicPredictionTest extends AnyFunSuite with TestGraphOp {
   test("small example graph") {
-    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0),
-      2 -> Seq(0), 3 -> Seq(), 4 -> Seq()))().result
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0), 2 -> Seq(0), 3 -> Seq(), 4 -> Seq()))().result
     val radialMap = Map[Int, Double](
       0 -> 0.0,
       1 -> 2 * math.log(2),

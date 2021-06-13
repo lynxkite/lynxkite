@@ -44,8 +44,8 @@ class ParameterHolder(context: Operation.Context) {
   }
 
   private def getNamesAndTypes(
-    context: Operation.Context,
-    kind: String): List[SimpleGraphEntity] = {
+      context: Operation.Context,
+      kind: String): List[SimpleGraphEntity] = {
     context.inputs.values.flatMap {
       case state => getNamesAndGuids(state, kind)
     }.map {
@@ -66,14 +66,14 @@ class ParameterHolder(context: Operation.Context) {
       val paramTypes = Map(
         "vertexAttributes" -> typeTag[List[SimpleGraphEntity]],
         "edgeAttributes" -> typeTag[List[SimpleGraphEntity]],
-        "graphAttributes" -> typeTag[List[SimpleGraphEntity]]) ++
-        context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
+        "graphAttributes" -> typeTag[List[SimpleGraphEntity]],
+      ) ++ context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
       val evaluator = com.lynxanalytics.sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
       evaluator.evaluate(Map(
         "vertexAttributes" -> vertexAttributes,
         "edgeAttributes" -> edgeAttributes,
-        "graphAttributes" -> scalars) ++
-        context.workspaceParameters.toMap).toString
+        "graphAttributes" -> scalars,
+      ) ++ context.workspaceParameters.toMap).toString
     } else if (context.box.parameters.contains(name)) {
       context.box.parameters(name)
     } else if (metaMap.contains(name)) {

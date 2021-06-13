@@ -25,12 +25,15 @@ class SegmentByGeographicalProximityOperationTest extends OperationsTestBase {
   test("Segment by geographical proximity") {
     val shapePath = linkShapeFile("earth")
     val base = box("Create example graph")
-      .box("Segment by geographical proximity", Map(
-        "name" -> "timezones",
-        "position" -> "location",
-        "shapefile" -> shapePath,
-        "distance" -> "0.1",
-        "ignoreUnsupportedShapes" -> "false"))
+      .box(
+        "Segment by geographical proximity",
+        Map(
+          "name" -> "timezones",
+          "position" -> "location",
+          "shapefile" -> shapePath,
+          "distance" -> "0.1",
+          "ignoreUnsupportedShapes" -> "false"),
+      )
     val seg = base.project.segmentation("timezones")
     // Assert that the TZID segment attribute is created.
     assert(seg.vertexAttributes("TZID").runtimeSafeCast[String].rdd.count == 418)

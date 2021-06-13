@@ -12,7 +12,8 @@ object OperationParams {
       title: String,
       defaultValue: String = "",
       override val group: String = "",
-      override val placeholder: String = "") extends OperationParameterMeta {
+      override val placeholder: String = "")
+      extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -26,16 +27,19 @@ object OperationParams {
       multipleChoice: Boolean = false,
       allowUnknownOption: Boolean = false,
       hiddenOptions: List[FEOption] = Nil, // Not offered on the UI, but not an error.
-      override val group: String = "") extends OperationParameterMeta {
+      override val group: String = "")
+      extends OperationParameterMeta {
     val kind = "choice"
     val defaultValue = if (multipleChoice) "" else options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
         val hiddenValues = hiddenOptions.map { x => x.id }.toSet
-        val givenValues: Set[String] = if (!multipleChoice) Set(value) else {
-          if (value.isEmpty) Set() else value.split(",", -1).toSet
-        }
+        val givenValues: Set[String] =
+          if (!multipleChoice) Set(value)
+          else {
+            if (value.isEmpty) Set() else value.split(",", -1).toSet
+          }
         val unknown = givenValues -- possibleValues -- hiddenValues
         assert(
           unknown.isEmpty,
@@ -58,7 +62,8 @@ object OperationParams {
   case class TriggerBoxParam(
       id: String,
       title: String,
-      successMessage: String) extends OperationParameterMeta {
+      successMessage: String)
+      extends OperationParameterMeta {
     val kind = "trigger"
     val options = List()
     val multipleChoice = false
@@ -73,7 +78,8 @@ object OperationParams {
   case class TagList(
       id: String,
       title: String,
-      options: List[FEOption]) extends OperationParameterMeta {
+      options: List[FEOption])
+      extends OperationParameterMeta {
     val kind = "tag-list"
     val multipleChoice = true
     val defaultValue = ""
@@ -89,7 +95,7 @@ object OperationParams {
   }
 
   case class Ratio(id: String, title: String, defaultValue: String = "")
-    extends OperationParameterMeta {
+      extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -101,8 +107,11 @@ object OperationParams {
   }
 
   case class NonNegInt(
-      id: String, title: String, default: Int, override val group: String = "")
-    extends OperationParameterMeta {
+      id: String,
+      title: String,
+      default: Int,
+      override val group: String = "")
+      extends OperationParameterMeta {
     val kind = "default"
     val defaultValue = default.toString
     val options = List()
@@ -113,7 +122,7 @@ object OperationParams {
   }
 
   case class NonNegDouble(id: String, title: String, defaultValue: String = "", override val group: String = "")
-    extends OperationParameterMeta {
+      extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -128,7 +137,8 @@ object OperationParams {
       language: String,
       defaultValue: String = "",
       enableTableBrowser: Boolean = false,
-      override val group: String = "") extends OperationParameterMeta {
+      override val group: String = "")
+      extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false
@@ -156,7 +166,8 @@ object OperationParams {
       title: String,
       models: Map[String, model.ModelMeta],
       attrs: List[FEOption],
-      attrTypes: List[String]) extends OperationParameterMeta {
+      attrTypes: List[String])
+      extends OperationParameterMeta {
     val feModels = models.toList.sortBy(_._1).map { case (k, v) => model.Model.toMetaFE(k, v) }
     val defaultValue = {
       val m = feModels.head
@@ -180,7 +191,8 @@ object OperationParams {
   case class SegmentationParam(
       id: String,
       title: String,
-      options: List[FEOption]) extends OperationParameterMeta {
+      options: List[FEOption])
+      extends OperationParameterMeta {
     val kind = "segmentation"
     val multipleChoice = false
     val defaultValue = ""
@@ -189,7 +201,8 @@ object OperationParams {
 
   case class ParametersParam(
       id: String,
-      title: String) extends OperationParameterMeta {
+      title: String)
+      extends OperationParameterMeta {
     val kind = "parameters"
     val defaultValue = ParametersParam.defaultValue
     val multipleChoice = false
@@ -209,7 +222,8 @@ object OperationParams {
   case class VisualizationParam(
       id: String,
       title: String,
-      defaultValue: String = "") extends OperationParameterMeta {
+      defaultValue: String = "")
+      extends OperationParameterMeta {
     val kind = "visualization"
     def validate(value: String): Unit = {
       if (!value.isEmpty) {
@@ -224,7 +238,8 @@ object OperationParams {
 
   class DummyParam(
       val id: String,
-      changeableTitle: => String) extends OperationParameterMeta {
+      changeableTitle: => String)
+      extends OperationParameterMeta {
     def title = changeableTitle
     val kind = "dummy"
     val options = List()
@@ -235,7 +250,8 @@ object OperationParams {
 
   case class WizardStepsParam(
       id: String,
-      title: String) extends OperationParameterMeta {
+      title: String)
+      extends OperationParameterMeta {
     val kind = "wizard-steps"
     val defaultValue = "[]"
     def validate(value: String): Unit = {

@@ -22,4 +22,3 @@ class CopyEdgesToSegmentationTest extends OperationsTestBase {
     assert(seg2.edgeBundle.toPairSeq.size == 4)
   }
 }
-

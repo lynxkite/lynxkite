@@ -44,7 +44,8 @@ class SparkDomainTest extends AnyFunSuite with TestMetaGraphManager with TestDat
     val sparkDomain2 = {
       val tmpSD = cleanSparkDomain
       new SparkDomain(
-        sparkSession, sparkDomain1.repositoryPath,
+        sparkSession,
+        sparkDomain1.repositoryPath,
         ephemeralPath = Some(tmpSD.repositoryPath))
     }
     assert(sparkDomain2.has(names))
@@ -57,7 +58,8 @@ class SparkDomainTest extends AnyFunSuite with TestMetaGraphManager with TestDat
       val sd1 = cleanSparkDomain
       val sd2 = cleanSparkDomain
       new SparkDomain(
-        sparkSession, sd1.repositoryPath,
+        sparkSession,
+        sd1.repositoryPath,
         ephemeralPath = Some(sd2.repositoryPath))
     }
     val operation = EnhancedExampleGraph()
@@ -89,5 +91,5 @@ class SparkDomainTest extends AnyFunSuite with TestMetaGraphManager with TestDat
     }
     assert(df.count == 5)
   }
-  */
+   */
 }

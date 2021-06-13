@@ -21,9 +21,9 @@ import org.apache.spark.sql.catalyst.plans.logical.Join
 import org.apache.spark.sql.types
 
 class ProtoLocalRelation(val proto: ProtoTable, fields: Seq[types.StructField])
-  extends LocalRelation(fields.map {
-    f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
-  })
+    extends LocalRelation(fields.map {
+      f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
+    })
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
 // operations like ExecuteSQL.
@@ -56,8 +56,8 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(
-    plan: LogicalPlan,
-    protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
+      plan: LogicalPlan,
+      protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // Match tables to ProtoTables based on the comment added in ProtoTable.relation
     val leaves = getLeaves(plan)
     val emptyTableNames = leaves.filter(_.output.isEmpty).collect {
@@ -106,7 +106,8 @@ class TableWrappingProtoTable(table: Table) extends ProtoTable {
 
 class AttributesProtoTable(
     vs: VertexSet,
-    attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) extends ProtoTable {
+    attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager)
+    extends ProtoTable {
   lazy val schema = spark_util.SQLHelper.dataFrameSchema(attributes)
   def maybeSelect(columns: Iterable[String]) = {
     val keep = columns.toSet
@@ -116,7 +117,8 @@ class AttributesProtoTable(
 }
 
 class ScalarsProtoTable(
-    scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) extends ProtoTable {
+    scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager)
+    extends ProtoTable {
   lazy val schema = spark_util.SQLHelper.dataFrameSchemaScalar(scalars)
 
   def maybeSelect(columns: Iterable[String]) = {

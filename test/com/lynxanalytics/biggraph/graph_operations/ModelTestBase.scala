@@ -12,14 +12,14 @@ import org.apache.spark.rdd
 
 class ModelTestBase extends AnyFunSuite with TestGraphOp {
   def model(
-    method: String,
-    labelName: String,
-    label: Map[Int, Double],
-    featureNames: List[String],
-    attrs: Seq[Map[Int, Double]],
-    graph: SmallTestGraph.Output,
-    labelType: SerializableType[_] = SerializableType.double,
-    featureTypes: Option[List[SerializableType[_]]] = None): Scalar[Model] = {
+      method: String,
+      labelName: String,
+      label: Map[Int, Double],
+      featureNames: List[String],
+      attrs: Seq[Map[Int, Double]],
+      graph: SmallTestGraph.Output,
+      labelType: SerializableType[_] = SerializableType.double,
+      featureTypes: Option[List[SerializableType[_]]] = None): Scalar[Model] = {
     val l = AddVertexAttribute.run(graph.vs, label)
     val features = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
     method match {
@@ -41,7 +41,9 @@ class ModelTestBase extends AnyFunSuite with TestGraphOp {
         val op = LogisticRegressionModelTrainer(
           maxIter = 20,
           labelName,
-          featureNames, 0.0, 0.0)
+          featureNames,
+          0.0,
+          0.0)
         op(op.features, features)(op.label, l).result.model
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(
@@ -54,7 +56,8 @@ class ModelTestBase extends AnyFunSuite with TestGraphOp {
           maxDepth = 5,
           minInfoGain = 0,
           minInstancesPerNode = 1,
-          seed = 1234567)
+          seed = 1234567,
+        )
         op(op.features, features)(op.label, l).result.model
     }
   }
@@ -63,9 +66,10 @@ class ModelTestBase extends AnyFunSuite with TestGraphOp {
     // 100 data where the first data point has 20 attributes of value 1.0, the
     // second data point has 20 attributes of value 2.0 ..., and the last data
     // point has 20 attributes of value 100.0.
-    val attrs = (1 to numAttr).map(i => (1 to numData).map {
-      case x => x -> x.toDouble
-    }.toMap)
+    val attrs = (1 to numAttr).map(i =>
+      (1 to numData).map {
+        case x => x -> x.toDouble
+      }.toMap)
     val g = SmallTestGraph(attrs(0).mapValues(_ => Seq()), 10).result
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
     val featureNames = (1 to numAttr).toList.map { i => i.toString }

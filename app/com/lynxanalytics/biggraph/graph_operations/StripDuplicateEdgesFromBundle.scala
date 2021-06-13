@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object StripDuplicateEdgesFromBundle extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val unique = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = StripDuplicateEdgesFromBundle()
@@ -21,10 +21,10 @@ case class StripDuplicateEdgesFromBundle() extends SparkOperation[GraphInput, Ou
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val es = inputs.es.rdd

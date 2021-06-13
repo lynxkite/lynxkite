@@ -11,22 +11,26 @@ class ImportBoxTest extends OperationsTestBase {
     getClass.getResource("/graph_operations/ImportGraphTest").toString)
 
   def importCSVFile(
-    file: String,
-    columns: List[String],
-    infer: Boolean,
-    limit: Option[Int] = None): TestBox = {
-    importBox("Import CSV", Map(
-      "filename" -> ("IMPORTGRAPHTEST$/" + file + "/part*"),
-      "columns" -> columns.mkString(","),
-      "infer" -> (if (infer) "yes" else "no"),
-      "limit" -> limit.map(_.toString).getOrElse("")))
+      file: String,
+      columns: List[String],
+      infer: Boolean,
+      limit: Option[Int] = None): TestBox = {
+    importBox(
+      "Import CSV",
+      Map(
+        "filename" -> ("IMPORTGRAPHTEST$/" + file + "/part*"),
+        "columns" -> columns.mkString(","),
+        "infer" -> (if (infer) "yes" else "no"),
+        "limit" -> limit.map(_.toString).getOrElse(""),
+      ),
+    )
   }
 
   def csvToProject(
-    file: String,
-    columns: List[String],
-    infer: Boolean,
-    limit: Option[Int] = None): ProjectEditor = {
+      file: String,
+      columns: List[String],
+      infer: Boolean,
+      limit: Option[Int] = None): ProjectEditor = {
     importCSVFile(file, columns, infer, limit)
       .box("Use table as vertices")
       .project
@@ -44,25 +48,37 @@ class ImportBoxTest extends OperationsTestBase {
 
   test("import from CSV without header with limit") {
     val p0 = csvToProject(
-      "testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(0))
+      "testgraph/vertex-data",
+      List("vertexId", "name", "age"),
+      infer = false,
+      limit = Some(0))
     assert(vattr[String](p0, "vertexId").isEmpty)
     assert(vattr[String](p0, "name").isEmpty)
     assert(vattr[String](p0, "age").isEmpty)
 
     val p1 = csvToProject(
-      "testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(1))
+      "testgraph/vertex-data",
+      List("vertexId", "name", "age"),
+      infer = false,
+      limit = Some(1))
     assert(vattr[String](p1, "vertexId").length == 1)
     assert(vattr[String](p1, "name").length == 1)
     assert(vattr[String](p1, "age").length == 1)
 
     val p2 = csvToProject(
-      "testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(2))
+      "testgraph/vertex-data",
+      List("vertexId", "name", "age"),
+      infer = false,
+      limit = Some(2))
     assert(vattr[String](p2, "vertexId").length == 2)
     assert(vattr[String](p2, "name").length == 2)
     assert(vattr[String](p2, "age").length == 2)
 
     val p3 = csvToProject(
-      "testgraph/vertex-data", List("vertexId", "name", "age"), infer = false, limit = Some(3))
+      "testgraph/vertex-data",
+      List("vertexId", "name", "age"),
+      infer = false,
+      limit = Some(3))
     assert(vattr[String](p3, "vertexId").length == 3)
     assert(vattr[String](p3, "name").length == 3)
     assert(vattr[String](p3, "age").length == 3)
@@ -132,56 +148,77 @@ class ImportBoxTest extends OperationsTestBase {
 
   test("import from SQLite (no partitioning)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
   }
 
   test("import from SQLite (INTEGER partitioning)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "key_column" -> "id",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "key_column" -> "id",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(",")),
+    ))
   }
 
   test("import from SQLite (DOUBLE partitioning)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "key_column" -> "level",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "key_column" -> "level",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","),
+      ),
+    ))
   }
 
   test("import from SQLite (TEXT partitioning)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "key_column" -> "name",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "key_column" -> "name",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","),
+      ),
+    ))
   }
 
   test("import from SQLite (INTEGER partitioning - custom number of partitions)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "key_column" -> "id",
-      "num_partitions" -> "2",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "key_column" -> "id",
+        "num_partitions" -> "2",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","),
+      ),
+    ))
   }
 
   test("import from SQLite (predicates)") {
     createSqliteSubscribers()
-    checkSqliteSubscribers(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "subscribers",
-      "partition_predicates" -> "id <= 2,id >= 3",
-      "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","))))
+    checkSqliteSubscribers(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "subscribers",
+        "partition_predicates" -> "id <= 2,id >= 3",
+        "imported_columns" -> List("n", "id", "name", "race condition", "level").mkString(","),
+      ),
+    ))
   }
 
   def createSqliteNonConventionalTable() = {
@@ -203,53 +240,68 @@ class ImportBoxTest extends OperationsTestBase {
 
   test("import from SQLite (non conventional table name - double quote)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "\"name with space\"",
-      "key_column" -> "id",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "\"name with space\"",
+        "key_column" -> "id",
+        "imported_columns" -> "id,colname with space,a")))
   }
 
   test("import from SQLite (non conventional key column name - double quote)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "\"name with space\"",
-      "key_column" -> "\"colname with space\"",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "\"name with space\"",
+        "key_column" -> "\"colname with space\"",
+        "imported_columns" -> "id,colname with space,a"),
+    ))
   }
 
   test("import from SQLite (non conventional table name - single quote)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "'name with space'",
-      "key_column" -> "id",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "'name with space'",
+        "key_column" -> "id",
+        "imported_columns" -> "id,colname with space,a")))
   }
 
   test("import from SQLite (aliased native sql - no keyColumn)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "(SELECT * FROM 'name with space') t",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "(SELECT * FROM 'name with space') t",
+        "imported_columns" -> "id,colname with space,a")))
   }
 
   test("import from SQLite (aliased native sql - with keyColumn)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "(SELECT * FROM 'name with space') t",
-      "key_column" -> "\"colname with space\"",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "(SELECT * FROM 'name with space') t",
+        "key_column" -> "\"colname with space\"",
+        "imported_columns" -> "id,colname with space,a",
+      ),
+    ))
   }
 
   test("import from SQLite (non aliased native sql - no keyColumn)") {
     createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "(SELECT * FROM 'name with space')",
-      "imported_columns" -> "id,colname with space,a")))
+    checkSqliteNonConventionalTable(importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "(SELECT * FROM 'name with space')",
+        "imported_columns" -> "id,colname with space,a")))
   }
 }

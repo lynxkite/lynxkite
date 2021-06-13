@@ -22,7 +22,9 @@ object HyperbolicEdgeProbability extends OpFromJson {
   }
   class Output(
       implicit
-      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+      extends MagicOutput(instance) {
     val edgeProbability = edgeAttribute[Double](inputs.es.entity)
   }
   def fromJson(j: JsValue) = HyperbolicEdgeProbability()
@@ -36,10 +38,10 @@ case class HyperbolicEdgeProbability() extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val partitioner = edges.partitioner.get
@@ -101,8 +103,7 @@ case class HyperbolicEdgeProbability() extends SparkOperation[Input, Output] {
     val edgesJoined = srcGrouped.sortedLeftOuterJoin(dstGrouped)
     val edgeProbability = edgesJoined.map {
       case (eid, (srcVertex, dstVertex)) =>
-        (eid, HyperDistance.probability(srcVertex, dstVertex.get,
-          exponent, temperature, avgExpectedDegree))
+        (eid, HyperDistance.probability(srcVertex, dstVertex.get, exponent, temperature, avgExpectedDegree))
     }
     output(o.edgeProbability, edgeProbability.sortUnique(partitioner))
   }

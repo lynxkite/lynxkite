@@ -18,7 +18,7 @@ import org.apache.spark.sql.types.StructType
 import scala.collection.mutable
 
 case class UnresolvedColumnException(message: String, trace: Throwable)
-  extends Exception(message, trace)
+    extends Exception(message, trace)
 
 object ExecuteSQL extends OpFromJson {
   private lazy val sqlConf = new spark.sql.internal.SQLConf()
@@ -36,7 +36,8 @@ object ExecuteSQL extends OpFromJson {
     val locationPath = "file:" + System.getProperty("java.io.tmpdir") + "/lynxkite-executesql-db"
     catalog.createDatabase(
       CatalogDatabase(
-        name = "default", description = "",
+        name = "default",
+        description = "",
         locationUri = new java.net.URI(locationPath),
         properties = Map.empty),
       ignoreIfExists = false)
@@ -44,8 +45,8 @@ object ExecuteSQL extends OpFromJson {
   }
 
   def getLogicalPlan(
-    sqlQuery: String,
-    protoTables: Map[String, ProtoTable]): LogicalPlan = {
+      sqlQuery: String,
+      protoTables: Map[String, ProtoTable]): LogicalPlan = {
     import spark.sql.catalyst.analysis._
     val analyzer = new Analyzer(catalog)
     val parsedPlan = parser.parsePlan(sqlQuery)
@@ -67,8 +68,8 @@ object ExecuteSQL extends OpFromJson {
     val tables = inputTables.map(name => table(Symbol(name)))
   }
   class Output(schema: types.StructType)(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val t = table(schema)
   }
 
@@ -80,8 +81,8 @@ object ExecuteSQL extends OpFromJson {
         .asInstanceOf[types.StructType])
   }
 
-  private def run(sqlQuery: String, outputSchema: StructType,
-    tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
+  private def run(sqlQuery: String, outputSchema: StructType, tables: Map[String, Table])(implicit
+      m: MetaGraphManager): Table = {
     import Scripting._
     val op = ExecuteSQL(sqlQuery, tables.keySet.toList, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
@@ -90,8 +91,8 @@ object ExecuteSQL extends OpFromJson {
   }
 
   def run(
-    sqlQuery: String,
-    protoTables: Map[String, ProtoTable])(implicit m: MetaGraphManager): Table = {
+      sqlQuery: String,
+      protoTables: Map[String, ProtoTable])(implicit m: MetaGraphManager): Table = {
     val plan = getLogicalPlan(sqlQuery, protoTables)
     val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
@@ -110,7 +111,8 @@ import ExecuteSQL._
 case class ExecuteSQL(
     sqlQuery: String,
     inputTables: List[String],
-    outputSchema: types.StructType) extends SparkOperation[Input, Output] {
+    outputSchema: types.StructType)
+    extends SparkOperation[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
@@ -120,10 +122,10 @@ case class ExecuteSQL(
     "outputSchema" -> outputSchema.prettyJson)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }

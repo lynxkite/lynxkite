@@ -22,4 +22,3 @@ class CopyGraphIntoASegmentationOperationTest extends OperationsTestBase {
   }
 
 }
-

@@ -77,7 +77,8 @@ libraryDependencies ++= Seq(
   // Used for working with Delta tables.
   "io.delta" %% "delta-core" % "0.8.0",
   // All kinds of parsing, e.g. filters.
-  "com.lihaoyi" %% "fastparse" % "1.0.0"
+  "com.lihaoyi" %% "fastparse" % "1.0.0",
+  "org.scalaj" %% "scalaj-http" % "2.4.2",
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using

@@ -19,9 +19,7 @@ object ClassifyWithModel extends OpFromJson {
     }
     val model = scalar[Model]
   }
-  class Output[T: TypeTag](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val probability = {
       val modelMeta = inputs.model.entity.modelMeta
       if (modelMeta.generatesProbability) {
@@ -43,14 +41,15 @@ object ClassifyWithModel extends OpFromJson {
         // the "labelType" parameter with the type parameter.)
         ClassifyWithModel[Any](
           SerializableType.fromJson(j \ "labelType").asInstanceOf[SerializableType[Any]],
-          (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json))))
+          (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)),
+        ))
   }
 }
 import ClassifyWithModel._
 case class ClassifyWithModel[T](
     labelType: SerializableType[T],
     featureTypes: List[SerializableType[_]])
-  extends SparkOperation[Input, Output[T]] {
+    extends SparkOperation[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -66,10 +65,10 @@ case class ClassifyWithModel[T](
         "featureTypes" -> featureTypes.map(f => f.toJson))
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = labelType.classTag
     val sqlContext = rc.sparkDomain.newSQLContext()

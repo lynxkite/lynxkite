@@ -25,12 +25,10 @@ object UDF {
     for (v <- set1 if set2 contains v) yield v
   }
 
-  /**
-   * Custom aggregator for SQL queries.
-   *
-   * Computes the most frequent value in a String column.
-   * Null values are not counted.
-   */
+  /** Custom aggregator for SQL queries.
+    *
+    * Computes the most frequent value in a String column. Null values are not counted.
+    */
   private type Counts = Map[String, Long]
   val mostCommon = new org.apache.spark.sql.expressions.Aggregator[String, Counts, String] {
     def zero = Map[String, Long]()

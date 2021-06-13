@@ -12,9 +12,7 @@ object FakePull extends OpFromJson {
     // Assumed to be ExampleGraph
     val vs = vertexSet
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val pull = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: play.api.libs.json.JsValue) = FakePull()
@@ -26,10 +24,10 @@ case class FakePull() extends SparkOperation[FakePull.Input, FakePull.Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(
       o.pull,
@@ -50,7 +48,7 @@ class PulledOverAttributeTest extends AnyFunSuite with TestGraphOp {
     val pulledAttr =
       pop(pop.function, fopRes.identity)(pop.originalAttr, g.name).result.pulledAttr
 
-    assert(pulledAttr.rdd.collect.toMap == Map(0l -> "Adam", 1 -> "Eve", 2 -> "Bob"))
+    assert(pulledAttr.rdd.collect.toMap == Map(0L -> "Adam", 1 -> "Eve", 2 -> "Bob"))
   }
 
   test("works with fake pull") {
@@ -62,7 +60,8 @@ class PulledOverAttributeTest extends AnyFunSuite with TestGraphOp {
     val namePop = PulledOverVertexAttribute[String]()
     val incomePop = PulledOverVertexAttribute[Double]()
     val pulledName = get(namePop(namePop.function, fopRes.pull)(namePop.originalAttr, g.name).result.pulledAttr)
-    val pulledIncome = get(incomePop(incomePop.function, fopRes.pull)(incomePop.originalAttr, g.income).result.pulledAttr)
+    val pulledIncome =
+      get(incomePop(incomePop.function, fopRes.pull)(incomePop.originalAttr, g.income).result.pulledAttr)
 
     assert(pulledName == Map(1 -> "Eve", 2 -> "Bob", 3 -> "Bob"))
     assert(pulledIncome == Map(2 -> 2000.0, 3 -> 2000.0))

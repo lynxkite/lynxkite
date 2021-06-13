@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_operations.{ DynamicValue, GT, VertexAttributeFilter }
+import com.lynxanalytics.biggraph.graph_operations.{DynamicValue, GT, VertexAttributeFilter}
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -58,7 +58,11 @@ class TypeTagToFormatTest extends AnyFunSuite {
         Some(UICenterRequest(1, List(), None)),
         Some(false),
         Some(42),
-        None, None, None, None)
+        None,
+        None,
+        None,
+        None,
+      )
     testTag(uiStatus)
   }
 

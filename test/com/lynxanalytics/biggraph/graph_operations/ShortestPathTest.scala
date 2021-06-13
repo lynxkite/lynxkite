@@ -44,7 +44,9 @@ class ShortestPathTest extends AnyFunSuite with TestGraphOp {
     val edgeDistance = AddConstantAttribute.run(graph.es.idSet, 2.0)
     val distance = {
       val op = ShortestPath(10)
-      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
+      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(
+        op.startingDistance,
+        startingDistance).result.distance
     }.rdd.collect
     assert(distance.toSeq.size == 6)
     assert(distance.toMap == Map(
@@ -68,13 +70,22 @@ class ShortestPathTest extends AnyFunSuite with TestGraphOp {
         6 -> Seq(4))).result
     val startingDistance = AddVertexAttribute.run(graph.vs, Map(0 -> 0.0))
     val edgeDistance = {
-      val vertexWeights = AddVertexAttribute.run(graph.vs, Map(
-        0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0, 5 -> 10.0, 6 -> 10.0))
+      val vertexWeights = AddVertexAttribute.run(
+        graph.vs,
+        Map(
+          0 -> 1.0,
+          1 -> 1.0,
+          2 -> 1.0,
+          3 -> 1.0,
+          5 -> 10.0,
+          6 -> 10.0))
       VertexToEdgeAttribute.srcAttribute(vertexWeights, graph.es)
     }
     val distance = {
       val op = ShortestPath(10)
-      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(op.startingDistance, startingDistance).result.distance
+      op(op.vs, graph.vs)(op.es, graph.es)(op.edgeDistance, edgeDistance)(
+        op.startingDistance,
+        startingDistance).result.distance
     }.rdd.collect
 
     assert(distance.toMap.get(4).get == 4.0)

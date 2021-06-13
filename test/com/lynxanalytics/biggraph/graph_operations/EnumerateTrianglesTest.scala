@@ -64,7 +64,7 @@ class EnumerateTrianglesTest extends AnyFunSuite with TestGraphOp {
     val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
     assert((trianglesF, trianglesT) ==
       ("0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4",
-        ""))
+      ""))
   }
 
   test("5-size clique both directions") {
@@ -83,7 +83,7 @@ class EnumerateTrianglesTest extends AnyFunSuite with TestGraphOp {
     val trianglesT = getSortedTrianglesFromBelongsTo(ftTOut.belongsTo)
     assert((trianglesF, trianglesT) ==
       ("0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4",
-        "0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4"))
+      "0-1-2 0-1-3 0-1-4 0-2-3 0-2-4 0-3-4 1-2-3 1-2-4 1-3-4 2-3-4"))
   }
 
   test("planar graph neighbouring triangles") {
@@ -140,10 +140,10 @@ class EnumerateTrianglesTest extends AnyFunSuite with TestGraphOp {
   }
 
   def testPerformance(
-    n: Int,
-    ratio: Double,
-    lowDegree: Int,
-    highDegree: Int): Unit = {
+      n: Int,
+      ratio: Double,
+      lowDegree: Int,
+      highDegree: Int): Unit = {
     val random = new Random(19910306)
     val adjacencyArray = mutable.Map[Int, Seq[Int]]()
     for (i <- 1 to n) {

@@ -1,34 +1,36 @@
 // The controller to receive and dispatch all JSON HTTP requests from the frontend.
 package com.lynxanalytics.biggraph.serving
 
-import java.io.{ File, FileOutputStream }
+import java.io.{File, FileOutputStream}
 
 import play.api.libs.json
 import play.api.mvc
 
 import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp}
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
-import org.apache.spark.sql.types.{ StructField, StructType }
+import org.apache.spark.sql.types.{StructField, StructType}
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
 import play.api.mvc.ResponseHeader
 
 abstract class JsonServer @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    ec: concurrent.ExecutionContext,
+    fmt: play.api.http.FileMimeTypes,
+    cfg: play.api.Configuration,
     val controllerComponents: mvc.ControllerComponents)
-  extends mvc.BaseController {
+    extends mvc.BaseController {
   def productionMode = cfg.get[String]("play.http.secret.key").nonEmpty
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
-    handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
+      handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
 
     asyncAction(parser, withAuth) { (user, request) =>
       Future(handler(user, request))
@@ -40,7 +42,7 @@ abstract class JsonServer @javax.inject.Inject() (
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
-    handler: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
+      handler: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
     Action.async(parser) { request =>
       getUser(request, withAuth) match {
         case Some(user) => handler(user, request)
@@ -50,9 +52,10 @@ abstract class JsonServer @javax.inject.Inject() (
   }
 
   def jsonPostCommon[I: json.Reads, R](
-    user: User,
-    request: mvc.Request[json.JsValue], logRequest: Boolean = true)(
-    handler: (User, I) => R): R = {
+      user: User,
+      request: mvc.Request[json.JsValue],
+      logRequest: Boolean = true)(
+      handler: (User, I) => R): R = {
     val t0 = System.currentTimeMillis
     if (logRequest) {
       log.info(s"${request.remoteAddress} $user POST ${request.path} ${request.body}")
@@ -68,8 +71,8 @@ abstract class JsonServer @javax.inject.Inject() (
   }
 
   def jsonPost[I: json.Reads, O: json.Writes](
-    handler: (User, I) => O,
-    logRequest: Boolean = true) = {
+      handler: (User, I) => O,
+      logRequest: Boolean = true) = {
     action(parse.json) { (user, request) =>
       jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
         Ok(json.Json.toJson(handler(user, i)))
@@ -78,8 +81,8 @@ abstract class JsonServer @javax.inject.Inject() (
   }
 
   def jsonFuturePost[I: json.Reads, O: json.Writes](
-    handler: (User, I) => Future[O],
-    logRequest: Boolean = true) = {
+      handler: (User, I) => Future[O],
+      logRequest: Boolean = true) = {
     asyncAction(parse.json) { (user, request) =>
       jsonPostCommon(user, request, logRequest) { (user: User, i: I) =>
         handler(user, i).map(o => Ok(json.Json.toJson(o)))
@@ -97,8 +100,8 @@ abstract class JsonServer @javax.inject.Inject() (
   }
 
   def jsonQuery[I: json.Reads, R](
-    user: User,
-    request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
+      user: User,
+      request: mvc.Request[mvc.AnyContent])(handler: (User, I) => R): R = {
     val t0 = System.currentTimeMillis
     val result = util.Try(handler(user, parseJson(user, request)))
     val dt = System.currentTimeMillis - t0
@@ -180,7 +183,8 @@ object AssertNotRunningAndRegisterRunning {
   private def writePid(pidFile: File) = {
     val pid = getPid()
     val output = new FileOutputStream(pidFile)
-    try output.write(pid.getBytes) finally output.close()
+    try output.write(pid.getBytes)
+    finally output.close()
   }
 
   def apply() = {
@@ -194,12 +198,12 @@ object AssertNotRunningAndRegisterRunning {
 }
 
 object FrontendJson {
-  /**
-   * Implicit JSON inception
-   *
-   * json.Json.toJson needs one for every incepted case class,
-   * they need to be ordered so that everything is declared before use.
-   */
+
+  /** Implicit JSON inception
+    *
+    * json.Json.toJson needs one for every incepted case class,
+    * they need to be ordered so that everything is declared before use.
+    */
   import model.FEModel
   import model.FEModelMeta
 
@@ -341,9 +345,11 @@ object FrontendJson {
 @javax.inject.Singleton
 class ProductionJsonServer @javax.inject.Inject() (
     implicit
-    ec: concurrent.ExecutionContext, fmt: play.api.http.FileMimeTypes, cfg: play.api.Configuration,
+    ec: concurrent.ExecutionContext,
+    fmt: play.api.http.FileMimeTypes,
+    cfg: play.api.Configuration,
     cc: mvc.ControllerComponents)
-  extends JsonServer {
+    extends JsonServer {
   import FrontendJson._
   import WorkspaceJsonFormatters._
 
@@ -443,10 +449,11 @@ class ProductionJsonServer @javax.inject.Inject() (
 
   def importBox = jsonFuturePost(importBoxExec)
   def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportResult] = {
-    val workspaceParams = if (request.ref.nonEmpty) {
-      val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref.get)
-      wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
-    } else Map[String, String]()
+    val workspaceParams =
+      if (request.ref.nonEmpty) {
+        val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref.get)
+        wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+      } else Map[String, String]()
     sqlController.importBox(user, request.box, workspaceParams)
   }
 
@@ -488,7 +495,8 @@ class ProductionJsonServer @javax.inject.Inject() (
   def model = jsonFuture(drawingController.getModel)
   def triggerBox = jsonFuturePost(triggerBoxExec)
   def triggerBoxExec(
-    user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
+      user: serving.User,
+      request: GetOperationMetaRequest): Future[Unit] = {
     workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
       .trigger(workspaceController, drawingController)
   }
@@ -517,7 +525,8 @@ class ProductionJsonServer @javax.inject.Inject() (
       version = version,
       graphrayEnabled = graphrayEnabled,
       dataCollectionMode = LoggedEnvironment.envOrElse("KITE_DATA_COLLECTION", "optional"),
-      defaultUIStatus = UIStatus.default)
+      defaultUIStatus = UIStatus.default,
+    )
   }
 
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
@@ -544,11 +553,12 @@ class ProductionJsonServer @javax.inject.Inject() (
           import java.nio.file._
           val config = new java.io.ByteArrayInputStream(request.body.asJson.get.toString().getBytes)
           val hash = config.hashCode()
-          graphrayCache.getOrElseUpdate(hash, {
-            val image = new java.io.ByteArrayOutputStream()
-            ("python3 -m graphray" #< config #> image).!
-            image.toByteArray
-          })
+          graphrayCache.getOrElseUpdate(
+            hash, {
+              val image = new java.io.ByteArrayOutputStream()
+              ("python3 -m graphray" #< config #> image).!
+              image.toByteArray
+            })
           Ok(hash.toString)
         } else {
           val hash = request.queryString("q").head.toInt

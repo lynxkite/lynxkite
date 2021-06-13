@@ -33,8 +33,8 @@ case class ExampleGraph() extends ScalaOperation[NoInput, Output] {
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   def execute(
-    inputs: Map[Symbol, Any],
-    outputs: collection.mutable.Map[Symbol, Any]): Unit = {
+      inputs: Map[Symbol, Any],
+      outputs: collection.mutable.Map[Symbol, Any]): Unit = {
     executionCounter += 1
 
     outputs('vertices) = Set(0L, 1L, 2L, 3L)
@@ -65,7 +65,8 @@ case class ExampleGraph() extends ScalaOperation[NoInput, Output] {
       0L -> Vector(40.71448, -74.00598), // New York
       1L -> Vector(47.5269674, 19.0323968), // Budapest
       2L -> Vector(1.352083, 103.819836), // Singapore
-      3L -> Vector(-33.8674869, 151.2069902)) // Sydney
+      3L -> Vector(-33.8674869, 151.2069902), // Sydney
+    )
     outputs('comment) = Map(
       0L -> "Adam loves Eve",
       1L -> "Eve loves Adam",

@@ -6,9 +6,11 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CreateGraphInPythonTest extends OperationsTestBase {
   test("simple graph", SphynxOnly) {
-    val p = box("Create graph in Python", Map(
-      "outputs" -> "vs.name: str, es.weight: float, graph_attributes.hello: str",
-      "code" -> """
+    val p = box(
+      "Create graph in Python",
+      Map(
+        "outputs" -> "vs.name: str, es.weight: float, graph_attributes.hello: str",
+        "code" -> """
 vs = pd.DataFrame({
   'name': ['Alice', 'Bob', 'Cecil', 'Drew'],
 })
@@ -18,7 +20,9 @@ es = pd.DataFrame({
   'weight': [1, 2, 3],
 })
 graph_attributes.hello = 'hello'
-          """))
+          """,
+      ),
+    )
       .box("Compute degree", Map("direction" -> "all edges"))
       .project
     assert(

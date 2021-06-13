@@ -54,16 +54,22 @@ class ConversionsTest extends AnyFunSuite with TestGraphOp {
   test("bundle vertex attributes", com.lynxanalytics.biggraph.SphynxOnly) {
     val graph = ExampleGraph()().result
     val v1 = DeriveScala.deriveAndInferReturnType(
-      "Vector(age, 1)", Seq("age" -> graph.age), graph.vertices).runtimeSafeCast[Vector[Double]]
+      "Vector(age, 1)",
+      Seq("age" -> graph.age),
+      graph.vertices).runtimeSafeCast[Vector[Double]]
     val v2 = DeriveScala.deriveAndInferReturnType(
-      "Vector(0.2)", Seq(), graph.vertices).runtimeSafeCast[Vector[Double]]
+      "Vector(0.2)",
+      Seq(),
+      graph.vertices).runtimeSafeCast[Vector[Double]]
     val vectors = Seq(v1, v2)
     val doubles: Seq[Attribute[Double]] = Seq(graph.age, graph.income)
     val res = {
       val op = BundleVertexAttributesIntoVector(2, 2)
       op(op.vs, graph.vertices)(
-        op.doubleElements, doubles)(
-          op.vectorElements, vectors).result.vectorAttr
+        op.doubleElements,
+        doubles)(
+        op.vectorElements,
+        vectors).result.vectorAttr
     }
     assert(res.rdd.collect.toMap
       == Map(0 -> Vector(20.3, 1000, 20.3, 1, 0.2), 2 -> Vector(50.3, 2000, 50.3, 1, 0.2)))

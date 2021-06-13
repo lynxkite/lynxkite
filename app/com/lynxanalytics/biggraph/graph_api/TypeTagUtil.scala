@@ -6,7 +6,7 @@ import scala.language.higherKinds
 import scala.annotation.meta.field
 
 class SubTypeCreator(tt: TypeTag[_], i: Int)
-  extends reflect.api.TypeCreator {
+    extends reflect.api.TypeCreator {
   def apply[U <: reflect.api.Universe with Singleton](m: reflect.api.Mirror[U]) = {
     assert(
       m eq tt.mirror,

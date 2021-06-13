@@ -5,7 +5,7 @@
 
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
@@ -65,7 +65,7 @@ case class FEVertex(
     // For sampled view:
     id: String = "",
     attrs: Map[String, DynamicValue] = Map(),
-    center: Boolean = false // Whether it's part of the centers or not.
+    center: Boolean = false, // Whether it's part of the centers or not.
 )
 
 case class VertexDiagramResponse(
@@ -134,7 +134,6 @@ case class EdgeDiagramResponse(
     // Copied from the request.
     srcIdx: Int,
     dstIdx: Int,
-
     edges: Seq[FEEdge],
 
     // The vertex coordinates, if "layout3D" was true in the request.
@@ -208,40 +207,47 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = FEFilters.filter(vertexSet, request.filters)
     loadGUIDsToMemory(request.attrs)
 
-    val centers = if (request.centralVertexIds == Seq("*")) {
-      // Try to show the whole graph.
-      val op = graph_operations.SampleVertices(request.maxSize + 1)
-      val sample = op(op.vs, filtered).result.sample.value
-      assert(
-        sample.size <= request.maxSize,
-        s"The full graph is too large to display (larger than ${request.maxSize}).")
-      sample
-    } else if (request.centralVertexIds == Seq("auto")) {
-      // Pick one center.
-      val op = graph_operations.SampleVertices(1)
-      op(op.vs, filtered).result.sample.value
-    } else {
-      request.centralVertexIds.map(_.toLong)
-    }
+    val centers =
+      if (request.centralVertexIds == Seq("*")) {
+        // Try to show the whole graph.
+        val op = graph_operations.SampleVertices(request.maxSize + 1)
+        val sample = op(op.vs, filtered).result.sample.value
+        assert(
+          sample.size <= request.maxSize,
+          s"The full graph is too large to display (larger than ${request.maxSize}).")
+        sample
+      } else if (request.centralVertexIds == Seq("auto")) {
+        // Pick one center.
+        val op = graph_operations.SampleVertices(1)
+        op(op.vs, filtered).result.sample.value
+      } else {
+        request.centralVertexIds.map(_.toLong)
+      }
 
-    val idSet = if (request.radius > 0) {
-      val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
-      dataManager.cache(smearBundle)
-      val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhood(
-        centers, request.radius, request.maxSize)
-      val nopres = nop(
-        nop.vertices, vertexSet)(
-          nop.srcMapping, edgesAndNeighbors.srcEdges)(
-            nop.dstMapping, edgesAndNeighbors.dstEdges).result
-      val neighborhood = nopres.neighborhood.value
-      assert(
-        centers.isEmpty || neighborhood.nonEmpty,
-        s"Neighborhood is too large to display (larger than ${request.maxSize}).")
-      neighborhood
-    } else {
-      centers.toSet
-    }
+    val idSet =
+      if (request.radius > 0) {
+        val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
+        dataManager.cache(smearBundle)
+        val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
+        val nop = graph_operations.ComputeVertexNeighborhood(
+          centers,
+          request.radius,
+          request.maxSize)
+        val nopres = nop(
+          nop.vertices,
+          vertexSet)(
+          nop.srcMapping,
+          edgesAndNeighbors.srcEdges)(
+          nop.dstMapping,
+          edgesAndNeighbors.dstEdges).result
+        val neighborhood = nopres.neighborhood.value
+        assert(
+          centers.isEmpty || neighborhood.nonEmpty,
+          s"Neighborhood is too large to display (larger than ${request.maxSize}).")
+        neighborhood
+      } else {
+        centers.toSet
+      }
 
     val diagramMeta = {
       val op = graph_operations.SampledView(idSet)
@@ -266,15 +272,16 @@ class GraphDrawingController(env: BigGraphEnvironment) {
           id = v.toString,
           center = centerSet.contains(v),
           attrs = attrs.mapValues(_.getOrElse(v, DynamicValue(defined = false))))),
-      mode = "sampled")
+      mode = "sampled",
+    )
   }
 
   def getDiagramFromBucketedAttributes[S, T](
-    original: VertexSet,
-    filtered: VertexSet,
-    xBucketedAttr: graph_operations.BucketedAttribute[S],
-    yBucketedAttr: graph_operations.BucketedAttribute[T],
-    sampleSize: Int): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
+      original: VertexSet,
+      filtered: VertexSet,
+      xBucketedAttr: graph_operations.BucketedAttribute[S],
+      yBucketedAttr: graph_operations.BucketedAttribute[T],
+      sampleSize: Int): Scalar[spark_util.IDBuckets[(Int, Int)]] = {
 
     val originalCount = graph_operations.Count.run(original)
     val op = graph_operations.VertexBucketGrid(xBucketedAttr.bucketer, yBucketedAttr.bucketer, sampleSize)
@@ -294,25 +301,39 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     loadGUIDsToMemory(request.filters.map(_.attributeId))
     val filtered = FEFilters.filter(vertexSet, request.filters)
 
-    val xBucketedAttr = if (request.xBucketingAttributeId.nonEmpty) {
-      val attribute = metaManager.attribute(request.xBucketingAttributeId.asUUID)
-      dataManager.cache(attribute)
-      FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.xNumBuckets, request.xAxisOptions)
-    } else {
-      graph_operations.BucketedAttribute.emptyBucketedAttribute
-    }
-    val yBucketedAttr = if (request.yBucketingAttributeId.nonEmpty) {
-      val attribute = metaManager.attribute(request.yBucketingAttributeId.asUUID)
-      dataManager.cache(attribute)
-      FEBucketers.bucketedAttribute(
-        metaManager, dataManager, attribute, request.yNumBuckets, request.yAxisOptions)
-    } else {
-      graph_operations.BucketedAttribute.emptyBucketedAttribute
-    }
+    val xBucketedAttr =
+      if (request.xBucketingAttributeId.nonEmpty) {
+        val attribute = metaManager.attribute(request.xBucketingAttributeId.asUUID)
+        dataManager.cache(attribute)
+        FEBucketers.bucketedAttribute(
+          metaManager,
+          dataManager,
+          attribute,
+          request.xNumBuckets,
+          request.xAxisOptions)
+      } else {
+        graph_operations.BucketedAttribute.emptyBucketedAttribute
+      }
+    val yBucketedAttr =
+      if (request.yBucketingAttributeId.nonEmpty) {
+        val attribute = metaManager.attribute(request.yBucketingAttributeId.asUUID)
+        dataManager.cache(attribute)
+        FEBucketers.bucketedAttribute(
+          metaManager,
+          dataManager,
+          attribute,
+          request.yNumBuckets,
+          request.yAxisOptions)
+      } else {
+        graph_operations.BucketedAttribute.emptyBucketedAttribute
+      }
 
     val diagramMeta = getDiagramFromBucketedAttributes(
-      vertexSet, filtered, xBucketedAttr, yBucketedAttr, request.sampleSize)
+      vertexSet,
+      filtered,
+      xBucketedAttr,
+      yBucketedAttr,
+      request.sampleSize)
     val diagram = dataManager.get(diagramMeta)
 
     val xBucketer = xBucketedAttr.bucketer
@@ -331,7 +352,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       xLabels = xBucketer.bucketLabels,
       yLabels = yBucketer.bucketLabels,
       xFilters = xBucketer.bucketFilters,
-      yFilters = yBucketer.bucketFilters)
+      yFilters = yBucketer.bucketFilters,
+    )
   }
 
   private def loadGUIDsToMemory(gUIDs: Seq[String]): Unit = {
@@ -341,7 +363,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def tripletMapping(
-    eb: EdgeBundle, sampled: Boolean): graph_operations.TripletMapping.Output = {
+      eb: EdgeBundle,
+      sampled: Boolean): graph_operations.TripletMapping.Output = {
     val op =
       if (sampled) graph_operations.TripletMapping(sampleSize = DrawingThresholds.TripletSampling)
       else graph_operations.TripletMapping()
@@ -352,7 +375,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def edgesAndNeighborsMapping(
-    eb: EdgeBundle, sampled: Boolean): graph_operations.EdgeAndNeighborMapping.Output = {
+      eb: EdgeBundle,
+      sampled: Boolean): graph_operations.EdgeAndNeighborMapping.Output = {
     val op =
       if (sampled) graph_operations.EdgeAndNeighborMapping(sampleSize = DrawingThresholds.TripletSampling)
       else graph_operations.EdgeAndNeighborMapping()
@@ -361,9 +385,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def mappedAttribute[T](
-    mapping: Attribute[Array[ID]],
-    attr: Attribute[T],
-    target: EdgeBundle): Attribute[T] = {
+      mapping: Attribute[Array[ID]],
+      attr: Attribute[T],
+      target: EdgeBundle): Attribute[T] = {
     val op = new graph_operations.VertexToEdgeAttribute[T]()
     val res = op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
     dataManager.cache(res)
@@ -371,34 +395,34 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def mappedFilter[T](
-    mapping: Attribute[Array[ID]],
-    fa: graph_operations.FilteredAttribute[T],
-    target: EdgeBundle): graph_operations.FilteredAttribute[T] = {
+      mapping: Attribute[Array[ID]],
+      fa: graph_operations.FilteredAttribute[T],
+      target: EdgeBundle): graph_operations.FilteredAttribute[T] = {
     val mattr = mappedAttribute(mapping, fa.attribute, target)
     graph_operations.FilteredAttribute(mattr, fa.filter)
   }
 
   def indexFromBucketedAttribute[T](
-    base: Attribute[Int],
-    ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
+      base: Attribute[Int],
+      ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
 
     val iop = graph_operations.Indexer(ba.bucketer)
     iop(iop.baseIndices, base)(iop.bucketAttribute, ba.attribute).result.indices
   }
 
   def indexFromIndexingSeq(
-    filtered: VertexSet,
-    seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
+      filtered: VertexSet,
+      seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
 
     val startingBase: Attribute[Int] = graph_operations.AddConstantAttribute.run(filtered, 0)
     seq.foldLeft(startingBase) { case (b, ba) => indexFromBucketedAttribute(b, ba) }
   }
 
   def edgeIndexFromBucketedAttribute[T](
-    original: EdgeBundle,
-    base: Attribute[Int],
-    tripletMapping: Attribute[Array[ID]],
-    ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
+      original: EdgeBundle,
+      base: Attribute[Int],
+      tripletMapping: Attribute[Array[ID]],
+      ba: graph_operations.BucketedAttribute[T]): Attribute[Int] = {
 
     val mattr = mappedAttribute(tripletMapping, ba.attribute, original)
 
@@ -407,10 +431,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def edgeIndexFromIndexingSeq(
-    original: EdgeBundle,
-    filteredIds: VertexSet,
-    tripletMapping: Attribute[Array[ID]],
-    seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
+      original: EdgeBundle,
+      filteredIds: VertexSet,
+      tripletMapping: Attribute[Array[ID]],
+      seq: Seq[graph_operations.BucketedAttribute[_]]): Attribute[Int] = {
 
     val startingBase: Attribute[Int] =
       graph_operations.AddConstantAttribute.run(filteredIds, 0)
@@ -421,16 +445,18 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   // Optionally returns a small set of edges filtered by srcView, dstView or both if specified.
   def getSmallEdgeSet(
-    eb: EdgeBundle,
-    srcView: graph_operations.VertexView,
-    dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
+      eb: EdgeBundle,
+      srcView: graph_operations.VertexView,
+      dstView: graph_operations.VertexView): Option[Seq[(ID, Edge)]] = {
 
     val mapping = edgesAndNeighborsMapping(eb, sampled = false)
     if (srcView.vertexIndices.isDefined) {
       val srcIds = srcView.vertexIndices.get.keySet
       val dstIds = dstView.vertexIndices.map(_.keySet)
       val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        srcIds, dstIds, DrawingThresholds.SmallEdges)
+        srcIds,
+        dstIds,
+        DrawingThresholds.SmallEdges)
       val edges = op(op.mapping, mapping.srcEdges).result.edges.value
       if (edges.isDefined) return edges
     }
@@ -438,7 +464,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val srcIds = dstView.vertexIndices.get.keySet
       val dstIds = srcView.vertexIndices.map(_.keySet)
       val op = graph_operations.EdgesForVerticesFromEdgesAndNeighbors(
-        srcIds, dstIds, DrawingThresholds.SmallEdges)
+        srcIds,
+        dstIds,
+        DrawingThresholds.SmallEdges)
       val edges = op(op.mapping, mapping.dstEdges).result.edges.value
       if (edges.isDefined) return edges
     }
@@ -446,12 +474,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   def getAggregatedAttributeByCoord[From, To](
-    ids: Set[ID],
-    attributeWithAggregator: AttributeWithLocalAggregator[From, To],
-    idToCoordMapping: Map[ID, (Int, Int)]): Map[(Int, Int), DynamicValue] = {
+      ids: Set[ID],
+      attributeWithAggregator: AttributeWithLocalAggregator[From, To],
+      idToCoordMapping: Map[ID, (Int, Int)]): Map[(Int, Int), DynamicValue] = {
 
     val attrMap = graph_operations.RestrictAttributeToIds.run(
-      attributeWithAggregator.attr, ids).value.toMap
+      attributeWithAggregator.attr,
+      ids).value.toMap
     val byCoordMap = attributeWithAggregator.aggregator.aggregateByKey(
       attrMap.toSeq.flatMap { case (id, value) => idToCoordMapping.get(id).map(_ -> value) })
     implicit val ttT = attributeWithAggregator.aggregator.outputTypeTag(
@@ -466,25 +495,29 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       metaManager.scalar(request.dstDiagramId.asUUID))
     val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
     dataManager.cache(edgeBundle)
-    val weights = if (request.edgeWeightId.isEmpty) {
-      graph_operations.AddConstantAttribute.run(edgeBundle.idSet, 1.0)
-    } else {
-      val w = metaManager.attributeOf[Double](request.edgeWeightId.asUUID)
-      dataManager.cache(w)
-      w
-    }
+    val weights =
+      if (request.edgeWeightId.isEmpty) {
+        graph_operations.AddConstantAttribute.run(edgeBundle.idSet, 1.0)
+      } else {
+        val w = metaManager.attributeOf[Double](request.edgeWeightId.asUUID)
+        dataManager.cache(w)
+        w
+      }
     assert(
       weights.vertexSet == edgeBundle.idSet,
       "The requested edge weight attribute does not belong to the requested edge bundle.\n" +
-        s"Edge bundle: $edgeBundle\nWeight attribute: $weights")
+        s"Edge bundle: $edgeBundle\nWeight attribute: $weights",
+    )
     assert(
       srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
-        s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")
+        s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}",
+    )
     assert(
       dstView.vertexSet.gUID == edgeBundle.dstVertexSet.gUID,
       "Destination vertex set does not match edge bundle destination." +
-        s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}")
+        s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}",
+    )
 
     val smallEdgeSetOption = getSmallEdgeSet(edgeBundle, srcView, dstView)
     val feEdges = smallEdgeSetOption match {
@@ -515,14 +548,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
               }
           }.toMap
         val attributesWithAggregators: Map[String, AttributeWithLocalAggregator[_, _]] =
-          request.attrs.map(
-            attr => (attr.attributeId + ":" + attr.aggregator) -> AttributeWithLocalAggregator(
+          request.attrs.map(attr =>
+            (attr.attributeId + ":" + attr.aggregator) -> AttributeWithLocalAggregator(
               metaManager.attribute(attr.attributeId.asUUID),
               attr.aggregator)).toMap
         val attributeValues = attributesWithAggregators.mapValues(
           getAggregatedAttributeByCoord(filteredEdgeSetIds, _, idToCoordMapping))
         val weightMap = graph_operations.RestrictAttributeToIds.run(
-          weights, filteredEdgeSetIds).value.toMap
+          weights,
+          filteredEdgeSetIds).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
         for ((id, coord) <- idToCoordMapping) {
           counts(coord) += weightMap.getOrElse(id, 0.0)
@@ -532,7 +566,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
           .map {
             case ((s, d), c) =>
               FEEdge(
-                s, d, c,
+                s,
+                d,
+                c,
                 attrs = attributeValues.mapValues(
                   _.getOrElse((s, d), DynamicValue(defined = false))))
           }
@@ -545,18 +581,29 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val filtered = getFilteredEdgeIds(edgeBundle, srcView.filters, dstView.filters, edgeFilters)
 
         val srcIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, filtered.ids, filtered.srcTripletMapping, srcView.indexingSeq)
+          edgeBundle,
+          filtered.ids,
+          filtered.srcTripletMapping,
+          srcView.indexingSeq)
         val dstIndices = edgeIndexFromIndexingSeq(
-          edgeBundle, filtered.ids, filtered.dstTripletMapping, dstView.indexingSeq)
+          edgeBundle,
+          filtered.ids,
+          filtered.dstTripletMapping,
+          dstView.indexingSeq)
 
         val originalEdgeCount = graph_operations.Count.run(edgeBundle)
         val countOp = graph_operations.IndexPairCounter()
         val counts = countOp(
-          countOp.xIndices, srcIndices)(
-            countOp.yIndices, dstIndices)(
-              countOp.original, edgeBundle.idSet)(
-                countOp.weights, weights)(
-                  countOp.originalCount, originalEdgeCount).result.counts.value
+          countOp.xIndices,
+          srcIndices)(
+          countOp.yIndices,
+          dstIndices)(
+          countOp.original,
+          edgeBundle.idSet)(
+          countOp.weights,
+          weights)(
+          countOp.originalCount,
+          originalEdgeCount).result.counts.value
         counts.map { case ((s, d), c) => FEEdge(s, d, c) }.toSeq
     }
     log.info("PERF edge counts computed")
@@ -571,7 +618,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   // Recalculates the edge weights to be relative to the vertex sizes.
   def relativeEdgeDensity(
-    ed: EdgeDiagramResponse, src: VertexDiagramResponse, dst: VertexDiagramResponse): EdgeDiagramResponse = {
+      ed: EdgeDiagramResponse,
+      src: VertexDiagramResponse,
+      dst: VertexDiagramResponse): EdgeDiagramResponse = {
     val originalEdges = ed.edges
     val newEdges = originalEdges.map { feEdge =>
       val srcSize = src.vertices(feEdge.a).size
@@ -599,9 +648,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       }
     }
     val modifiedEdgeSpecs = request.edgeBundles
-      .map(eb => eb.copy(
-        srcDiagramId = resolveDiagramId(eb.srcDiagramId),
-        dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
+      .map(eb =>
+        eb.copy(
+          srcDiagramId = resolveDiagramId(eb.srcDiagramId),
+          dstDiagramId = resolveDiagramId(eb.dstDiagramId)))
     val edgeDiagrams = modifiedEdgeSpecs.map { spec =>
       val ed = getEdgeDiagram(user, spec)
       if (spec.relativeEdgeDensity) {
@@ -620,15 +670,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def getFilteredVSByFA(
-    vertexSet: VertexSet,
-    vertexFilters: Seq[graph_operations.FilteredAttribute[_]]): VertexSet = {
+      vertexSet: VertexSet,
+      vertexFilters: Seq[graph_operations.FilteredAttribute[_]]): VertexSet = {
     loadGUIDsToMemory(vertexFilters.map(_.attribute.gUID.toString))
     FEFilters.filterFA(vertexSet, vertexFilters)
   }
 
   private def getFilteredVS(
-    vertexSet: VertexSet,
-    vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
+      vertexSet: VertexSet,
+      vertexFilters: Seq[FEVertexAttributeFilter]): VertexSet = {
     loadGUIDsToMemory(vertexFilters.map(_.attributeId))
     FEFilters.filter(vertexSet, vertexFilters)
   }
@@ -639,10 +689,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       dstTripletMapping: Attribute[Array[ID]])
 
   private def getFilteredEdgeIds(
-    edgeBundle: EdgeBundle,
-    srcFilters: Seq[graph_operations.FilteredAttribute[_]],
-    dstFilters: Seq[graph_operations.FilteredAttribute[_]],
-    edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
+      edgeBundle: EdgeBundle,
+      srcFilters: Seq[graph_operations.FilteredAttribute[_]],
+      dstFilters: Seq[graph_operations.FilteredAttribute[_]],
+      edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
     val sampledTrips = tripletMapping(edgeBundle, sampled = true)
     val sampledEdges = getFilteredEdgeIds(sampledTrips, edgeBundle, srcFilters, dstFilters, edgeFilters)
     // TODO: See if we can eliminate the extra stage from this "count".
@@ -657,11 +707,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private def getFilteredEdgeIds(
-    trips: graph_operations.TripletMapping.Output,
-    edgeBundle: EdgeBundle,
-    srcFilters: Seq[graph_operations.FilteredAttribute[_]],
-    dstFilters: Seq[graph_operations.FilteredAttribute[_]],
-    edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
+      trips: graph_operations.TripletMapping.Output,
+      edgeBundle: EdgeBundle,
+      srcFilters: Seq[graph_operations.FilteredAttribute[_]],
+      dstFilters: Seq[graph_operations.FilteredAttribute[_]],
+      edgeFilters: Seq[graph_operations.FilteredAttribute[_]]): FilteredEdges = {
     val srcMapped = srcFilters.map(mappedFilter(trips.srcEdges, _, edgeBundle))
     val dstMapped = dstFilters.map(mappedFilter(trips.dstEdges, _, edgeBundle))
     val ids = getFilteredVSByFA(edgeBundle.idSet, srcMapped ++ dstMapped ++ edgeFilters)
@@ -689,15 +739,20 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     dataManager.cache(attribute)
     loadGUIDsToMemory(request.vertexFilters.map(_.attributeId))
     val bucketedAttr = FEBucketers.bucketedAttribute(
-      metaManager, dataManager, attribute, request.numBuckets, request.axisOptions)
-    val filteredVS = if (request.edgeBundleId.isEmpty) {
-      getFilteredVS(attribute.vertexSet, request.vertexFilters)
-    } else {
-      val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
-      val vertexFilters = request.vertexFilters.map(_.toFilteredAttribute)
-      val edgeFilters = request.edgeFilters.map(_.toFilteredAttribute)
-      getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
-    }
+      metaManager,
+      dataManager,
+      attribute,
+      request.numBuckets,
+      request.axisOptions)
+    val filteredVS =
+      if (request.edgeBundleId.isEmpty) {
+        getFilteredVS(attribute.vertexSet, request.vertexFilters)
+      } else {
+        val edgeBundle = metaManager.edgeBundle(request.edgeBundleId.asUUID)
+        val vertexFilters = request.vertexFilters.map(_.toFilteredAttribute)
+        val edgeFilters = request.edgeFilters.map(_.toFilteredAttribute)
+        getFilteredEdgeIds(edgeBundle, vertexFilters, vertexFilters, edgeFilters).ids
+      }
     val histogram = bucketedAttr.toHistogram(filteredVS, request.sampleSize)
     val counts = histogram.counts
     spark_util.Counters.printAll

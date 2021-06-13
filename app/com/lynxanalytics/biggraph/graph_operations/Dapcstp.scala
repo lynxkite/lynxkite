@@ -13,9 +13,7 @@ object Dapcstp extends OpFromJson {
     val root_costs = vertexAttribute[Double](vs)
     val gain = vertexAttribute[Double](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val arcs = edgeAttribute[Double](inputs.es.entity)
     val nodes = vertexAttribute[Double](inputs.vs.entity)
     val roots = vertexAttribute[Double](inputs.vs.entity)

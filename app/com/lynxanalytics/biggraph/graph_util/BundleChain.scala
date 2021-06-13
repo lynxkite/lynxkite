@@ -49,10 +49,14 @@ class BundleChain(
       import com.lynxanalytics.biggraph.graph_api.Scripting._
       val op = ConcatenateBundles()
       val res = op(
-        op.edgesAB, firstBundle)(
-          op.edgesBC, secondBundle)(
-            op.weightsAB, firstWeights)(
-              op.weightsBC, secondWeights).result
+        op.edgesAB,
+        firstBundle)(
+        op.edgesBC,
+        secondBundle)(
+        op.weightsAB,
+        firstWeights)(
+        op.weightsBC,
+        secondWeights).result
       (res.edgesAC, res.weightsAC)
     }
   }

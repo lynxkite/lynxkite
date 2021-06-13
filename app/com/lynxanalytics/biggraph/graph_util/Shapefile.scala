@@ -28,8 +28,10 @@ case class Shapefile(filename: String) {
   val iterator = dataStore.getFeatureSource.getFeatures().features()
 
   def assertHasAttributeName(name: String): Unit = {
-    assert(attrNames.contains(name), s"Attribute name $name does not exist in Shapefile. " +
-      s"Available attributes are ${attrNames mkString ", "}.")
+    assert(
+      attrNames.contains(name),
+      s"Attribute name $name does not exist in Shapefile. " +
+        s"Available attributes are ${attrNames mkString ", "}.")
   }
 
   def close(): Unit = {
@@ -37,4 +39,3 @@ case class Shapefile(filename: String) {
     dataStore.dispose()
   }
 }
-

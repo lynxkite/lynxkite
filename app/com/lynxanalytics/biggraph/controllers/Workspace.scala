@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import graph_api.MetaGraphManager.StringAsUUID
@@ -13,10 +13,11 @@ import scala.annotation.tailrec
 case class Workspace(
     boxes: List[Box]) {
   val boxMap = boxes.map(b => b.id -> b).toMap
-  assert(boxMap.size == boxes.size, {
-    val dups = boxes.groupBy(_.id).filter(_._2.size > 1).keys
-    s"Duplicate box name: ${dups.mkString(", ")}"
-  })
+  assert(
+    boxMap.size == boxes.size, {
+      val dups = boxes.groupBy(_.id).filter(_._2.size > 1).keys
+      s"Duplicate box name: ${dups.mkString(", ")}"
+    })
 
   assert(anchor.operationId == "Anchor", "Anchor box is missing.")
 
@@ -47,7 +48,8 @@ case class Workspace(
       operationId = name,
       inputs = inputs,
       outputs = outputs,
-      description = Some(description))
+      description = Some(description),
+    )
   }
 
   def workspaceExecutionContextParameters(workspaceParameters: Map[String, String]) = {
@@ -60,9 +62,14 @@ case class Workspace(
   }
 
   def context(
-    user: serving.User, ops: OperationRepository, workspaceParameters: Map[String, String]) = {
+      user: serving.User,
+      ops: OperationRepository,
+      workspaceParameters: Map[String, String]) = {
     WorkspaceExecutionContext(
-      this, user, ops, workspaceExecutionContextParameters(workspaceParameters))
+      this,
+      user,
+      ops,
+      workspaceExecutionContextParameters(workspaceParameters))
   }
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
@@ -84,8 +91,8 @@ case class Workspace(
     // its connections and calling itself on the remaining graph.
     @tailrec
     def discover(
-      reversedTopologicalOrder: List[Box],
-      remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
+        reversedTopologicalOrder: List[Box],
+        remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
       if (remainingBoxInDegrees.isEmpty) {
         Dependencies(reversedTopologicalOrder.reverse, List())
       } else {
@@ -147,7 +154,8 @@ case class WorkspaceExecutionContext(
   }
 
   private def outputStatesOfBox(
-    box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+      box: Box,
+      inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationId)
 
     val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
@@ -210,8 +218,8 @@ case class Box(
   def output(id: String) = BoxOutput(this.id, id)
 
   def getOperation(
-    ctx: WorkspaceExecutionContext,
-    inputStates: Map[String, BoxOutputState]): Operation = {
+      ctx: WorkspaceExecutionContext,
+      inputStates: Map[String, BoxOutputState]): Operation = {
     assert(
       inputs.keys == inputStates.keys,
       s"Input mismatch: $inputStates does not match $inputs")
@@ -219,24 +227,26 @@ case class Box(
   }
 
   def execute(
-    ctx: WorkspaceExecutionContext,
-    inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+      ctx: WorkspaceExecutionContext,
+      inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val op = getOperation(ctx, inputStates)
     val outputStates = op.getOutputs
     outputStates
   }
 
   def allOutputsWithError(
-    meta: BoxMetadata, msg: String,
-    exception: Option[Throwable] = None): Map[BoxOutput, BoxOutputState] = {
+      meta: BoxMetadata,
+      msg: String,
+      exception: Option[Throwable] = None): Map[BoxOutput, BoxOutputState] = {
     meta.outputs.map {
       o => output(o) -> BoxOutputState.error(msg, exception.orElse(Some(new Exception(msg))))
     }.toMap
   }
 
   def orErrors(meta: BoxMetadata)(
-    f: => Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    try f catch {
+      f: => Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+    try f
+    catch {
       case ex: Throwable =>
         log.info(s"Failed to execute $this:", ex)
         meta.outputs.map {
@@ -263,9 +273,10 @@ case class Box(
       }
       // Limit the error message to 10 lines. Keep the last 2, as they are usually the real cause,
       // and keep as much as fits in the limit from the beginning to show the direction.
-      val abridged = (if (details.length <= 10) details else {
-        details.init.take(7) ++ Seq("...") ++ details.takeRight(2)
-      }).mkString("\n")
+      val abridged = (
+        if (details.length <= 10) details
+        else details.init.take(7) ++ Seq("...") ++ details.takeRight(2)
+      ).mkString("\n")
       val list = order.mkString(", ")
       val msg =
         if (inputErrors.size == 1) s"Input $list of box $id has an error:\n$abridged"
@@ -332,10 +343,13 @@ object BoxOutputState {
   }
 
   def from(
-    exportResult: graph_api.Scalar[String],
-    params: Map[String, String]): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
-      "guid" -> exportResult.gUID, "parameters" -> params)))
+      exportResult: graph_api.Scalar[String],
+      params: Map[String, String]): BoxOutputState = {
+    BoxOutputState(
+      BoxOutputKind.ExportResult,
+      Some(json.Json.obj(
+        "guid" -> exportResult.gUID,
+        "parameters" -> params)))
   }
 
   def error(msg: String, exception: Option[Throwable] = None): BoxOutputState = {
@@ -369,8 +383,7 @@ object BoxOutputState {
   }
 
   def tablesOfPlot(plot: json.JsObject)(
-    implicit
-    manager: graph_api.MetaGraphManager): Seq[graph_api.Table] = {
+      implicit manager: graph_api.MetaGraphManager): Seq[graph_api.Table] = {
     guidOfTablesInPlot(plot).map(manager.table(_))
   }
 }

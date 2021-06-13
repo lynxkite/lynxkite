@@ -17,9 +17,7 @@ object TrainDecisionTreeClassifier extends OpFromJson {
     }
     val label = runtimeTypedVertexAttribute(vertices, 'label, labelType.typeTag)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
@@ -37,7 +35,8 @@ object TrainDecisionTreeClassifier extends OpFromJson {
       (j \ "maxDepth").as[Int],
       (j \ "minInfoGain").as[Double],
       (j \ "minInstancesPerNode").as[Int],
-      (j \ "seed").as[Int])
+      (j \ "seed").as[Int],
+    )
   }
 }
 
@@ -52,7 +51,8 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     maxDepth: Int,
     minInfoGain: Double,
     minInstancesPerNode: Int,
-    seed: Int) extends SparkOperation[Input, Output] with ModelMeta {
+    seed: Int)
+    extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   override val generatesProbability = true
@@ -67,19 +67,22 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     "maxDepth" -> maxDepth,
     "minInfoGain" -> minInfoGain,
     "minInstancesPerNode" -> minInstancesPerNode,
-    "seed" -> seed) ++
+    "seed" -> seed,
+  ) ++
     // Store types only if different from the default.
     // This avoids a GUID change on operations saved before typing was added.
-    (if (labelType == SerializableType.double) Json.obj() else Json.obj(
-      "labelType" -> labelType.toJson)) ++
-    (if (featureTypes.forall(_ == SerializableType.double)) Json.obj() else Json.obj(
-      "featureTypes" -> featureTypes.map(f => f.toJson)))
+    (if (labelType == SerializableType.double) Json.obj()
+     else Json.obj(
+       "labelType" -> labelType.toJson)) ++
+    (if (featureTypes.forall(_ == SerializableType.double)) Json.obj()
+     else Json.obj(
+       "featureTypes" -> featureTypes.map(f => f.toJson)))
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
@@ -114,18 +117,22 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
       .setMetricName("accuracy")
     val accuracy = evaluator.evaluate(prediction).toString
     val dataSize = labelDF.count().toDouble
-    val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
-      row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
+    val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(row =>
+      (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
     val statistics = s"$treeDescription\nAccuracy: $accuracy\nSupport: $support"
-    output(o.model, Model(
-      method = "Decision tree classification",
-      symbolicPath = file.symbolicName,
-      labelName = Some(labelName),
-      labelType = Some(labelType),
-      labelReverseMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
-      featureNames = featureNames,
-      featureTypes = Some(featureTypes),
-      featureMappings = Some(featureMappings),
-      statistics = Some(statistics)))
+    output(
+      o.model,
+      Model(
+        method = "Decision tree classification",
+        symbolicPath = file.symbolicName,
+        labelName = Some(labelName),
+        labelType = Some(labelType),
+        labelReverseMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
+        featureNames = featureNames,
+        featureTypes = Some(featureTypes),
+        featureMappings = Some(featureMappings),
+        statistics = Some(statistics),
+      ),
+    )
   }
 }

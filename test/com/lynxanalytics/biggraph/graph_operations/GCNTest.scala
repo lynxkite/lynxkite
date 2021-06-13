@@ -22,16 +22,19 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
   val label = AddVertexAttribute.run(graph.vs, Map(1 -> 0.0, 2 -> 0.0, 4 -> 1.0, 5 -> 1.0))
   val features = AddVertexAttribute.run(
     graph.vs,
-    Map(0 -> Vector(0.0), 1 -> Vector(0.0), 2 -> Vector(0.0),
-      3 -> Vector(0.0), 4 -> Vector(0.0), 5 -> Vector(0.0)))
+    Map(0 -> Vector(0.0), 1 -> Vector(0.0), 2 -> Vector(0.0), 3 -> Vector(0.0), 4 -> Vector(0.0), 5 -> Vector(0.0)))
 
   def predict(model: Scalar[SphynxModel]): Map[ID, Double] = {
     val predOp = PredictWithGCN()
     val pred = predOp(predOp.vs, graph.vs)(
-      predOp.es, graph.es)(
-        predOp.label, label)(
-          predOp.features, features)(
-            predOp.model, model).result.prediction
+      predOp.es,
+      graph.es)(
+      predOp.label,
+      label)(
+      predOp.features,
+      features)(
+      predOp.model,
+      model).result.prediction
     get(pred)
   }
 
@@ -48,9 +51,12 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
         seed = 1)
 
       val result = op(op.vs, graph.vs)(
-        op.es, graph.es)(
-          op.label, label)(
-            op.features, features).result
+        op.es,
+        graph.es)(
+        op.label,
+        label)(
+        op.features,
+        features).result
       val trainAcc = result.trainAcc.value
       assert(trainAcc == 1)
       val model = result.model
@@ -71,9 +77,12 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
         convOp = convOp,
         seed = 1)
       val result = op(op.vs, graph.vs)(
-        op.es, graph.es)(
-          op.label, label)(
-            op.features, features).result
+        op.es,
+        graph.es)(
+        op.label,
+        label)(
+        op.features,
+        features).result
       val trainMSE = result.trainMSE.value
       assert(trainMSE < 0.1)
       val model = result.model

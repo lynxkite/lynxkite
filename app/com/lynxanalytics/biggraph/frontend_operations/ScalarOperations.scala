@@ -36,7 +36,8 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Choice("weight", "Weight", options = project.edgeAttrList[Double])) ++
       aggregateParams(
         project.edgeAttributes,
-        needsGlobal = true, weighted = true)
+        needsGlobal = true,
+        weighted = true)
     def enabled =
       FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No numeric edge attributes")
     def apply() = {
@@ -100,17 +101,22 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       possibleSegmentations.size >= 2,
       "At least two segmentations are needed. Both should have edges " +
         "and both have to contain the same vertices as the base project. " +
-        "(For example, use the copy graph into segmentation operation.)")
+        "(For example, use the copy graph into segmentation operation.)",
+    )
 
     def apply() = {
       val golden = project.existingSegmentation(params("golden"))
       val test = project.existingSegmentation(params("test"))
       val op = graph_operations.CompareSegmentationEdges()
       val result = op(
-        op.goldenBelongsTo, golden.belongsTo)(
-          op.testBelongsTo, test.belongsTo)(
-            op.goldenEdges, golden.edgeBundle)(
-              op.testEdges, test.edgeBundle).result
+        op.goldenBelongsTo,
+        golden.belongsTo)(
+        op.testBelongsTo,
+        test.belongsTo)(
+        op.goldenEdges,
+        golden.edgeBundle)(
+        op.testEdges,
+        test.edgeBundle).result
       test.scalars("precision") = result.precision
       test.scalars("recall") = result.recall
       test.edgeAttributes("present_in_" + golden.segmentationName) = result.presentInGolden

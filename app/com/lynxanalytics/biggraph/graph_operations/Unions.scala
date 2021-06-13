@@ -14,18 +14,23 @@ object VertexSetUnion extends OpFromJson {
   class Output(numVertexSets: Int)(
       implicit
       instance: MetaGraphOperationInstance,
-      input: Input) extends MagicOutput(instance) {
+      input: Input)
+      extends MagicOutput(instance) {
 
     val union = vertexSet
     // Injections of the original vertex sets into the union.
     val injections = Range(0, numVertexSets)
-      .map(i => edgeBundle(
-        input.vss(i).entity, union, EdgeBundleProperties.injection, name = Symbol("injection" + i)))
+      .map(i =>
+        edgeBundle(
+          input.vss(i).entity,
+          union,
+          EdgeBundleProperties.injection,
+          name = Symbol("injection" + i)))
   }
   def fromJson(j: JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
 }
 case class VertexSetUnion(numVertexSets: Int)
-  extends SparkOperation[VertexSetUnion.Input, VertexSetUnion.Output] {
+    extends SparkOperation[VertexSetUnion.Input, VertexSetUnion.Output] {
   import VertexSetUnion._
 
   override val isHeavy = true
@@ -37,10 +42,10 @@ case class VertexSetUnion(numVertexSets: Int)
   override def toJson = Json.obj("numVertexSets" -> numVertexSets)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vss = inputs.vss.map(_.rdd)
 
@@ -57,7 +62,8 @@ case class VertexSetUnion(numVertexSets: Int)
         unionWithOldIds
           .filter { case (newId, (oldId, sourceIdx)) => sourceIdx == idx }
           .map { case (newId, (oldId, sourceIdx)) => Edge(oldId, newId) }
-          .randomNumbered(vss(idx).partitioner.get))
+          .randomNumbered(vss(idx).partitioner.get),
+      )
     }
   }
 }
@@ -85,13 +91,14 @@ object EdgeBundleUnion extends OpFromJson {
   class Output(numEdgeBundles: Int)(
       implicit
       instance: MetaGraphOperationInstance,
-      input: Input) extends MagicOutput(instance) {
+      input: Input)
+      extends MagicOutput(instance) {
     val union = edgeBundle(input.src.entity, input.dst.entity, idSet = input.idSetUnion.entity)
   }
   def fromJson(j: JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
-  extends SparkOperation[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
+    extends SparkOperation[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
   import EdgeBundleUnion._
 
   override val isHeavy = true
@@ -104,10 +111,10 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
   override def toJson = Json.obj("numEdgeBundles" -> numEdgeBundles)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val idSetUnion = inputs.idSetUnion.rdd
     val reIdedEbs = Range(0, numEdgeBundles).map { i =>

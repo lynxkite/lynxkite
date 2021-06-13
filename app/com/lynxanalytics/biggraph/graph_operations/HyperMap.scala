@@ -21,9 +21,7 @@ object HyperMap extends OpFromJson {
     val degree = vertexAttribute[Double](vs)
     val clustering = vertexAttribute[Double](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val radial = vertexAttribute[Double](inputs.vs.entity)
     val angular = vertexAttribute[Double](inputs.vs.entity)
   }
@@ -39,10 +37,10 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
   override def toJson = Json.obj("seed" -> seed)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vertices = inputs.vs.rdd
     val edges = inputs.es.rdd
@@ -92,17 +90,18 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
         val rnd = new Random((pid << 16) + seed)
         iter.filter {
           case (degree, id, ordinal) => rnd.nextDouble * ordinal < math.log(ordinal) ||
-            ordinal < logVertexSetSize * 2
+              ordinal < logVertexSetSize * 2
         }
     }.collect.toList
     // Place down the first vertex with a random angular coordinate.
     val rndFirstVertex = new Random(seed)
-    val firstSampleList = new HyperVertex(
-      id = collectedSamples.head._2,
-      ord = collectedSamples.head._3,
-      radial = 2 * math.log(collectedSamples.head._3),
-      angular = 2 * math.Pi * rndFirstVertex.nextDouble,
-      expectedDegree = 0) :: Nil
+    val firstSampleList =
+      new HyperVertex(
+        id = collectedSamples.head._2,
+        ord = collectedSamples.head._3,
+        radial = 2 * math.log(collectedSamples.head._3),
+        angular = 2 * math.Pi * rndFirstVertex.nextDouble,
+        expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
     val collectedEdges = noLoopEdges.collect.toList
     val firstEdgesToSamples = collectedEdges
@@ -111,16 +110,24 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
         case ((currentSampleList, currentEdgesToSamples), currentSample) =>
-          (HyperVertex(
-            id = currentSample._2,
-            ord = currentSample._3,
-            radial = 2 * math.log(currentSample._3),
-            angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
-              currentSampleList, currentEdgesToSamples, exponent,
-              temperature, avgExpectedDegree, logVertexSetSize),
-            expectedDegree = 0) :: currentSampleList,
+          (
+            HyperVertex(
+              id = currentSample._2,
+              ord = currentSample._3,
+              radial = 2 * math.log(currentSample._3),
+              angular = maximumLikelihoodAngular(
+                currentSample._2,
+                currentSample._3,
+                currentSampleList,
+                currentEdgesToSamples,
+                exponent,
+                temperature,
+                avgExpectedDegree,
+                logVertexSetSize),
+              expectedDegree = 0,
+            ) :: currentSampleList,
             collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
-            currentEdgesToSamples)
+              currentEdgesToSamples)
       }
     val sampleList = sampleTuple._1
     val edgesToSamples = sampleTuple._2
@@ -135,9 +142,17 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
             id = id,
             ord = ord,
             radial = 2 * math.log(ord),
-            angular = maximumLikelihoodAngular(id, ord, sampleList, edgesToSamples,
-              exponent, temperature, avgExpectedDegree, logVertexSetSize),
-            expectedDegree = 0)
+            angular = maximumLikelihoodAngular(
+              id,
+              ord,
+              sampleList,
+              edgesToSamples,
+              exponent,
+              temperature,
+              avgExpectedDegree,
+              logVertexSetSize),
+            expectedDegree = 0,
+          )
         }
     }
 
@@ -147,26 +162,42 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
 
   // Calculates the likelihood function for a node with a given angular coordinate.
   def likelihood(
-    vertexID: Long,
-    ord: Long,
-    angular: Double,
-    samples: List[HyperVertex],
-    sampleEdges: List[(Long, Edge)],
-    exponent: Double,
-    temperature: Double,
-    avgExpectedDegree: Double): Double = {
+      vertexID: Long,
+      ord: Long,
+      angular: Double,
+      samples: List[HyperVertex],
+      sampleEdges: List[(Long, Edge)],
+      exponent: Double,
+      temperature: Double,
+      avgExpectedDegree: Double): Double = {
     val radial = 2 * math.log(ord)
     samples.filter { v => v.ord < ord }
     samples.foldLeft(1.0)((product, otherVertex) =>
-      if (!sampleEdges.filter {
-        case (id, e) => e.src == vertexID &&
-          e.dst == otherVertex.id
-      }.isEmpty) {
-        product * probabilityWrapper(radial, otherVertex.radial, angular, otherVertex.angular,
-          ord, exponent, temperature, avgExpectedDegree)
+      if (
+        !sampleEdges.filter {
+          case (id, e) => e.src == vertexID &&
+              e.dst == otherVertex.id
+        }.isEmpty
+      ) {
+        product * probabilityWrapper(
+          radial,
+          otherVertex.radial,
+          angular,
+          otherVertex.angular,
+          ord,
+          exponent,
+          temperature,
+          avgExpectedDegree)
       } else {
-        product * (1 - probabilityWrapper(radial, otherVertex.radial, angular, otherVertex.angular,
-          ord, exponent, temperature, avgExpectedDegree))
+        product * (1 - probabilityWrapper(
+          radial,
+          otherVertex.radial,
+          angular,
+          otherVertex.angular,
+          ord,
+          exponent,
+          temperature,
+          avgExpectedDegree))
       })
   }
   // Returns the optimal angular coordinate for a node.
@@ -174,14 +205,14 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
   // Divides 0 - 2Pi ( + offset) in half. Takes center point /random point of each, does a
   // comparison. Higher one stays. Divides half as wide angle into two halves again and repeat.
   def maximumLikelihoodAngular(
-    vertexID: Long,
-    ord: Long,
-    samples: List[HyperVertex],
-    sampleEdges: List[(Long, Edge)],
-    exponent: Double,
-    temperature: Double,
-    avgExpectedDegree: Double,
-    logVertexSetSize: Double): Double = {
+      vertexID: Long,
+      ord: Long,
+      samples: List[HyperVertex],
+      sampleEdges: List[(Long, Edge)],
+      exponent: Double,
+      temperature: Double,
+      avgExpectedDegree: Double,
+      logVertexSetSize: Double): Double = {
     val iterations: Int = (math.ceil(logVertexSetSize)).toInt
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
@@ -189,32 +220,53 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
     val offset: Double = math.Pi * 2 * localRandom.nextDouble
     maximumLikelihoodRecursion(
       iterations,
-      firstcwBound, firstccwBound, offset,
-      vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logVertexSetSize)
+      firstcwBound,
+      firstccwBound,
+      offset,
+      vertexID,
+      ord,
+      samples,
+      sampleEdges,
+      exponent,
+      temperature,
+      avgExpectedDegree,
+      logVertexSetSize)
   }
   @annotation.tailrec
   private final def maximumLikelihoodRecursion(
-    remainingIterations: Int,
-    cwBound: Double,
-    ccwBound: Double,
-    offset: Double,
-    vertexID: Long,
-    ord: Long,
-    samples: List[HyperVertex],
-    sampleEdges: List[(Long, Edge)],
-    exponent: Double,
-    temperature: Double,
-    avgExpectedDegree: Double,
-    logVertexSetSize: Double): Double = {
+      remainingIterations: Int,
+      cwBound: Double,
+      ccwBound: Double,
+      offset: Double,
+      vertexID: Long,
+      ord: Long,
+      samples: List[HyperVertex],
+      sampleEdges: List[(Long, Edge)],
+      exponent: Double,
+      temperature: Double,
+      avgExpectedDegree: Double,
+      logVertexSetSize: Double): Double = {
     val angleBound: Double = cwBound - ccwBound
     val topQuarterPoint: Double = cwBound - angleBound / 4
     val bottomQuarterPoint: Double = ccwBound + angleBound / 4
-    val topValue: Double = likelihood(vertexID, ord, normalizeAngular(topQuarterPoint + offset),
-      samples, sampleEdges, exponent, temperature, avgExpectedDegree)
-    val bottomValue: Double = likelihood(vertexID, ord,
+    val topValue: Double = likelihood(
+      vertexID,
+      ord,
+      normalizeAngular(topQuarterPoint + offset),
+      samples,
+      sampleEdges,
+      exponent,
+      temperature,
+      avgExpectedDegree)
+    val bottomValue: Double = likelihood(
+      vertexID,
+      ord,
       normalizeAngular(bottomQuarterPoint + offset),
-      samples, sampleEdges, exponent, temperature, avgExpectedDegree)
+      samples,
+      sampleEdges,
+      exponent,
+      temperature,
+      avgExpectedDegree)
     val newcwBound = {
       if (topValue > bottomValue) cwBound
       else ccwBound + angleBound / 2
@@ -230,9 +282,17 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
     if (remainingIterations == 0) maxAngular
     else maximumLikelihoodRecursion(
       remainingIterations - 1,
-      newcwBound, newccwBound, offset,
-      vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logVertexSetSize)
+      newcwBound,
+      newccwBound,
+      offset,
+      vertexID,
+      ord,
+      samples,
+      sampleEdges,
+      exponent,
+      temperature,
+      avgExpectedDegree,
+      logVertexSetSize)
   }
   def normalizeAngular(ang: Double): Double = {
     if (ang > math.Pi * 2) ang - math.Pi * 2
@@ -242,18 +302,16 @@ case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
   // Data that is currently irrelevant is given arbitrary values for the duration
   // of using these utilities from PSOGenerator.
   def probabilityWrapper(
-    rad1: Double,
-    rad2: Double,
-    ang1: Double,
-    ang2: Double,
-    ord: Long,
-    exponent: Double,
-    temperature: Double,
-    externalLinks: Double): Double = {
-    val firstVertex = HyperVertex(id = 1, ord = ord, radial = rad1,
-      angular = ang1, expectedDegree = 2)
-    val secondVertex = HyperVertex(id = 3, ord = 4, radial = rad2,
-      angular = ang2, expectedDegree = 5)
+      rad1: Double,
+      rad2: Double,
+      ang1: Double,
+      ang2: Double,
+      ord: Long,
+      exponent: Double,
+      temperature: Double,
+      externalLinks: Double): Double = {
+    val firstVertex = HyperVertex(id = 1, ord = ord, radial = rad1, angular = ang1, expectedDegree = 2)
+    val secondVertex = HyperVertex(id = 3, ord = 4, radial = rad2, angular = ang2, expectedDegree = 5)
     HyperDistance.probability(firstVertex, secondVertex, exponent, temperature, externalLinks)
   }
 }

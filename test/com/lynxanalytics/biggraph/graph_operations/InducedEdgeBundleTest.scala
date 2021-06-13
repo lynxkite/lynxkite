@@ -16,9 +16,12 @@ class InducedEdgeBundleTest extends AnyFunSuite with TestGraphOp {
   test("example graph induce src & dst") {
     val op = InducedEdgeBundle()
     val induced = op(
-      op.edges, example.edges)(
-        op.srcMapping, ReverseEdges.run(adamless.identity))(
-          op.dstMapping, ReverseEdges.run(adamless.identity))
+      op.edges,
+      example.edges)(
+      op.srcMapping,
+      ReverseEdges.run(adamless.identity))(
+      op.dstMapping,
+      ReverseEdges.run(adamless.identity))
       .result.induced.toPairSeq
     assert(induced == Seq(2 -> 1))
   }
@@ -26,16 +29,20 @@ class InducedEdgeBundleTest extends AnyFunSuite with TestGraphOp {
   test("example graph induce src") {
     val op = InducedEdgeBundle(induceDst = false)
     val induced = op(
-      op.edges, example.edges)(
-        op.srcMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
+      op.edges,
+      example.edges)(
+      op.srcMapping,
+      ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
     assert(induced == Seq(1 -> 0, 2 -> 0, 2 -> 1))
   }
 
   test("example graph induce dst") {
     val op = InducedEdgeBundle(induceSrc = false)
     val induced = op(
-      op.edges, example.edges)(
-        op.dstMapping, ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
+      op.edges,
+      example.edges)(
+      op.dstMapping,
+      ReverseEdges.run(adamless.identity)).result.induced.toPairSeq
     assert(induced == Seq(0 -> 1, 2 -> 1))
   }
 
@@ -47,9 +54,12 @@ class InducedEdgeBundleTest extends AnyFunSuite with TestGraphOp {
     val induced = {
       val op = InducedEdgeBundle()
       op(
-        op.edges, example.edges)(
-          op.srcMapping, merge.belongsTo)(
-            op.dstMapping, merge.belongsTo)
+        op.edges,
+        example.edges)(
+        op.srcMapping,
+        merge.belongsTo)(
+        op.dstMapping,
+        merge.belongsTo)
         .result.induced
     }
     val v = merge.segments.rdd.keys.collect.toSeq
@@ -74,15 +84,24 @@ class InducedEdgeBundleTest extends AnyFunSuite with TestGraphOp {
     val induced = {
       val op = InducedEdgeBundle()
       op(
-        op.edges, componentEdges)(
-          op.srcMapping, ReverseEdges.run(components.belongsTo))(
-            op.dstMapping, ReverseEdges.run(components.belongsTo))
+        op.edges,
+        componentEdges)(
+        op.srcMapping,
+        ReverseEdges.run(components.belongsTo))(
+        op.dstMapping,
+        ReverseEdges.run(components.belongsTo))
         .result.induced
     }
     val (ids, edges) = induced.toIdPairSeq.unzip
     assert(edges.sorted == Seq(
-      0 -> 2, 0 -> 3, 1 -> 2, 1 -> 3,
-      2 -> 0, 2 -> 1, 3 -> 0, 3 -> 1))
+      0 -> 2,
+      0 -> 3,
+      1 -> 2,
+      1 -> 3,
+      2 -> 0,
+      2 -> 1,
+      3 -> 0,
+      3 -> 1))
     assert(ids.size == ids.toSet.size) // No duplicate IDs.
   }
 }

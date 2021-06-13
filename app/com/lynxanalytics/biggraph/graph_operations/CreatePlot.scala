@@ -8,9 +8,7 @@ object CreatePlot extends OpFromJson {
   class Input extends MagicInputSignature {
     val t = table
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val plot = scalar[String]
   }
   def fromJson(j: JsValue) = CreatePlot((j \ "plotCode").as[String])
