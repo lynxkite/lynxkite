@@ -11,6 +11,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 - The "Custom plot" box now lets you use the latest version of Vega-Lite
   by directly writing JSON instead of going through the Vegas Scala DSL.
 - Logistic regression models can now be configured to use elastic net regularization.
+- Boxes used as steps in a wizard are highlighted in the workspace view by a faint glow.
 
 ### 4.2.2
 
