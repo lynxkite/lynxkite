@@ -1,7 +1,7 @@
 // Common utilities for working with threads.
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 object ThreadUtil {
   def limitedExecutionContext(name: String, maxParallelism: Int) = {
@@ -25,6 +25,7 @@ object ThreadUtil {
             nextIndex += 1
             t
           }
-        }))
+        },
+      ))
   }
 }

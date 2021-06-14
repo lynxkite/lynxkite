@@ -20,10 +20,10 @@ case class CreateVertexSet(size: Long) extends SparkOperation[NoInput, Output] {
   override def toJson = Json.obj("size" -> size)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     // NumericRanges are special-cased in parallelize so that only the range bounds are transmitted
     // for each partition.
     // https://github.com/apache/spark/blob/v1.3.0/core/src/main/scala/org/apache/spark/rdd/ParallelCollectionRDD.scala#L142

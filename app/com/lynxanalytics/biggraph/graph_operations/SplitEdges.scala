@@ -13,9 +13,7 @@ object SplitEdges extends OpFromJson {
     val (vs, es) = graph
     val attr = edgeAttribute[Double](es)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
 
     val newEdges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val belongsTo = edgeBundle(
@@ -33,10 +31,10 @@ case class SplitEdges() extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val edges = inputs.es.rdd

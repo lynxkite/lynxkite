@@ -11,8 +11,14 @@ class LogisticRegressionTest extends OperationsTestBase {
         Map("output" -> "label", "expr" -> "if (age > 30) 1.0 else 0.0"))
       .box(
         "Train a logistic regression model",
-        Map("name" -> "model", "label" -> "label", "features" -> "age", "max_iter" -> "5",
-          "elastic_net_param" -> "0.8", "reg_param" -> "0.3"))
+        Map(
+          "name" -> "model",
+          "label" -> "label",
+          "features" -> "age",
+          "max_iter" -> "5",
+          "elastic_net_param" -> "0.8",
+          "reg_param" -> "0.3"),
+      )
       .box(
         "Classify with model",
         Map(
@@ -21,7 +27,9 @@ class LogisticRegressionTest extends OperationsTestBase {
             "modelName" : "model",
             "isClassification" : true,
             "generatesProbability" : true,
-            "features" : ["age"]}""")).project
+            "features" : ["age"]}""",
+        ),
+      ).project
     val classification = project.vertexAttributes("classification").runtimeSafeCast[Double]
     val classificationMap = classification.rdd.collect.toMap
     val certainty = project.vertexAttributes("classification_certainty").runtimeSafeCast[Double]

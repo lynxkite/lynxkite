@@ -18,16 +18,14 @@ object PulledOverVertexAttribute extends OpFromJson {
     val function = edgeBundle(destinationVS, originalVS, EdgeBundleProperties.partialFunction)
     val originalAttr = vertexAttribute[T](originalVS)
   }
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.originalAttr.typeTag
     val pulledAttr = vertexAttribute[T](inputs.destinationVS.entity)
   }
   def pullAttributeVia[T](
-    originalAttr: Attribute[T], function: EdgeBundle)(
-    implicit
-    metaManager: MetaGraphManager): Attribute[T] = {
+      originalAttr: Attribute[T],
+      function: EdgeBundle)(
+      implicit metaManager: MetaGraphManager): Attribute[T] = {
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val pop = PulledOverVertexAttribute[T]()
     pop(pop.originalAttr, originalAttr)(pop.function, function).result.pulledAttr
@@ -35,7 +33,7 @@ object PulledOverVertexAttribute extends OpFromJson {
   def fromJson(j: JsValue) = PulledOverVertexAttribute()
 }
 case class PulledOverVertexAttribute[T]()
-  extends SparkOperation[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {
+    extends SparkOperation[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {
   import PulledOverVertexAttribute._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()
@@ -43,10 +41,10 @@ case class PulledOverVertexAttribute[T]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val functionEntity = inputs.function.meta
     val function = inputs.function.rdd

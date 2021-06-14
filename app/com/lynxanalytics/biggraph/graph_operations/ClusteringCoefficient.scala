@@ -82,10 +82,10 @@ case class ClusteringCoefficient() extends SparkOperation[GraphInput, Output] {
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val edgePartitioner = inputs.es.rdd.partitioner.get

@@ -18,11 +18,12 @@ object MetaGraph extends OpFromJson {
     val eName = edgeAttribute[String](es)
   }
   def fromJson(j: JsValue) = MetaGraph(
-    (j \ "timestamp").as[String], None)
+    (j \ "timestamp").as[String],
+    None)
 }
 import MetaGraph._
 case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
-  extends SparkOperation[NoInput, Output] {
+    extends SparkOperation[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -39,10 +40,10 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
   private def shortClass(o: Any) = o.getClass.getName.split('.').last
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     assert(env.nonEmpty, "You cannot rerun a MetaGraph operation.")
     val ops = env.get.metaGraphManager.getOperationInstances.toSeq
 
@@ -76,16 +77,25 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
         }
         val edgeRelations = outputs.edgeBundles.values.flatMap {
           edge =>
-            val s = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.srcVertexSet.gUID.toString)), "Source VertexSet", "")
-            val d = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.dstVertexSet.gUID.toString)), "Destination VertexSet", "")
+            val s =
+              (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.srcVertexSet.gUID.toString)), "Source VertexSet", "")
+            val d = (
+              Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.dstVertexSet.gUID.toString)),
+              "Destination VertexSet",
+              "")
             val i = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.idSet.gUID.toString)), "ID VertexSet", "")
             List(s, d, i)
         }
         val attributeRelations = outputs.attributes.values.map {
-          attribute => (Edge(vsByGUID(attribute.gUID.toString), vsByGUID(attribute.vertexSet.gUID.toString)), "Attribute of", "")
+          attribute =>
+            (Edge(vsByGUID(attribute.gUID.toString), vsByGUID(attribute.vertexSet.gUID.toString)), "Attribute of", "")
         }
         val hybridRelations = outputs.hybridBundles.values.map {
-          hybrid => (Edge(vsByGUID(hybrid.gUID.toString), vsByGUID(hybrid.srcToDstEdgeBundle.gUID.toString)), "Hybrid view of", "")
+          hybrid =>
+            (
+              Edge(vsByGUID(hybrid.gUID.toString), vsByGUID(hybrid.srcToDstEdgeBundle.gUID.toString)),
+              "Hybrid view of",
+              "")
         }
         inputEdges ++ outputEdges ++ edgeRelations ++ attributeRelations
     }

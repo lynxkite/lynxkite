@@ -9,7 +9,7 @@ import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers._
 
 // This file is responsible for the metadata compatibility between versions.
@@ -42,7 +42,8 @@ object JsonMigration {
       className(graph_operations.DoubleEQ) -> 1,
       className(graph_operations.DoubleGE) -> 1,
       className(graph_operations.DoubleGT) -> 1,
-      className(graph_operations.EnhancedExampleGraph) -> 1)
+      className(graph_operations.EnhancedExampleGraph) -> 1,
+    )
       .withDefaultValue(0),
     Map(
       (className(graph_operations.ExampleGraph), 0) -> identity,
@@ -51,7 +52,8 @@ object JsonMigration {
       (className(graph_operations.DoubleEQ), 0) -> identity,
       (className(graph_operations.DoubleGE), 0) -> identity,
       (className(graph_operations.DoubleGT), 0) -> identity,
-      (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
+      (className(graph_operations.EnhancedExampleGraph), 0) -> identity,
+    ))
 }
 import JsonMigration._
 class JsonMigration(
@@ -113,7 +115,8 @@ object MetaRepositoryManager {
                 s" The most recent supported version is in ${supported.dir}."
             case None =>
               s"All repository data in $repo has a newer version than the current version."
-          })
+          },
+        )
         val last = newest.dir.getName.toInt
         val currentDir = new File(repo, (last + 1).toString)
         FileUtils.deleteDirectory(currentDir) // Make sure we start from scratch.
@@ -143,10 +146,10 @@ object MetaRepositoryManager {
   }
 
   def migrate(
-    src: String, // Directory to read from.
-    dst: String, // Directory to write to.
-    srcVersion: VersionMap, // Source version map.
-    migration: JsonMigration // JsonMigration for the current version.
+      src: String, // Directory to read from.
+      dst: String, // Directory to write to.
+      srcVersion: VersionMap, // Source version map.
+      migration: JsonMigration, // JsonMigration for the current version.
   ): Unit = {
     log.info(s"Migrating from $src to $dst.")
     // A mapping for entity GUIDs (from old to new) that have changed in the new version.
@@ -191,11 +194,11 @@ object MetaRepositoryManager {
 
   // Applies the operation from JSON, performing the required migrations.
   private def applyOperation(
-    mm: MetaGraphManager,
-    j: json.JsValue,
-    guidMapping: collection.mutable.Map[String, String],
-    srcVersion: VersionMap,
-    migration: JsonMigration): Unit = {
+      mm: MetaGraphManager,
+      j: json.JsValue,
+      guidMapping: collection.mutable.Map[String, String],
+      srcVersion: VersionMap,
+      migration: JsonMigration): Unit = {
     // Call upgraders.
     val op = (j \ "operation").as[json.JsObject]
     val cls = (op \ "class").as[String]

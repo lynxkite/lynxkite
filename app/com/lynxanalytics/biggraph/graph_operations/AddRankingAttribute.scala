@@ -12,14 +12,13 @@ object AddRankingAttribute extends OpFromJson {
     val vertices = vertexSet
     val sortKey = vertexAttribute[T](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[_]) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input[_]) extends MagicOutput(instance) {
     val ordinal = vertexAttribute[Double](inputs.vertices.entity)
   }
 
   def run[T](
-    attr: Attribute[T], ascending: Boolean)(implicit m: MetaGraphManager): Attribute[Double] = {
+      attr: Attribute[T],
+      ascending: Boolean)(implicit m: MetaGraphManager): Attribute[Double] = {
     import Scripting._
     val st = SerializableType[T](attr.typeTag)
     val op = AddRankingAttribute[T](ascending)(st)
@@ -37,7 +36,8 @@ object AddRankingAttribute extends OpFromJson {
 }
 import AddRankingAttribute._
 case class AddRankingAttribute[T: SerializableType](
-    ascending: Boolean) extends SparkOperation[Input[T], Output] {
+    ascending: Boolean)
+    extends SparkOperation[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]()
   override def toJson = Json.obj(
     "ascending" -> ascending,
@@ -45,10 +45,10 @@ case class AddRankingAttribute[T: SerializableType](
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     import SerializableType.Implicits._
     implicit val ds = inputDatas
     val sortKey = inputs.sortKey.rdd

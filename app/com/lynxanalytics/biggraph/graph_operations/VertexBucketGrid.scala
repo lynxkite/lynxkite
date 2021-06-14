@@ -17,9 +17,7 @@ object VertexBucketGrid extends OpFromJson {
     val filtered = vertexSet
     val originalCount = scalar[Long]
   }
-  class Output[S, T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[S, T]) extends MagicOutput(instance) {
+  class Output[S, T](implicit instance: MetaGraphOperationInstance, inputs: Input[S, T]) extends MagicOutput(instance) {
     val buckets = scalar[IDBuckets[(Int, Int)]]
     val xBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
@@ -39,10 +37,11 @@ case class VertexBucketGrid[S, T](
     // elements in buckets. A negative value turns sampling off and all the
     // data points will be used.
     sampleSize: Int)
-  extends SparkOperation[Input[S, T], Output[S, T]] {
+    extends SparkOperation[Input[S, T], Output[S, T]] {
 
   @transient override lazy val inputs = new Input[S, T](
-    xBucketer.nonEmpty, yBucketer.nonEmpty)
+    xBucketer.nonEmpty,
+    yBucketer.nonEmpty)
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
@@ -53,33 +52,35 @@ case class VertexBucketGrid[S, T](
     sampleSizeParameter.toJson(sampleSize)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[S, T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[S, T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
     val filtered = inputs.filtered.rdd
     val filteredPartitioner = filtered.partitioner.get
     var indexingSeq = Seq[BucketedAttribute[_]]()
-    val xBuckets = if (xBucketer.isEmpty) {
-      filtered.mapValues(_ => 0)
-    } else {
-      val xAttr = inputs.xAttribute.rdd
-      implicit val ctx = inputs.xAttribute.data.classTag
-      indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
-      filtered.sortedJoin(xAttr.sortedRepartition(filteredPartitioner))
-        .flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
-    }
-    val yBuckets = if (yBucketer.isEmpty) {
-      filtered.mapValues(_ => 0)
-    } else {
-      val yAttr = inputs.yAttribute.rdd
-      implicit val cty = inputs.yAttribute.data.classTag
-      indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
-      filtered.sortedJoin(yAttr.sortedRepartition(filteredPartitioner))
-        .flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
-    }
+    val xBuckets =
+      if (xBucketer.isEmpty) {
+        filtered.mapValues(_ => 0)
+      } else {
+        val xAttr = inputs.xAttribute.rdd
+        implicit val ctx = inputs.xAttribute.data.classTag
+        indexingSeq = indexingSeq :+ BucketedAttribute(inputs.xAttribute, xBucketer)
+        filtered.sortedJoin(xAttr.sortedRepartition(filteredPartitioner))
+          .flatMapOptionalValues { case (_, value) => xBucketer.whichBucket(value) }
+      }
+    val yBuckets =
+      if (yBucketer.isEmpty) {
+        filtered.mapValues(_ => 0)
+      } else {
+        val yAttr = inputs.yAttribute.rdd
+        implicit val cty = inputs.yAttribute.data.classTag
+        indexingSeq = indexingSeq :+ BucketedAttribute(inputs.yAttribute, yBucketer)
+        filtered.sortedJoin(yAttr.sortedRepartition(filteredPartitioner))
+          .flatMapOptionalValues { case (_, value) => yBucketer.whichBucket(value) }
+      }
     output(o.xBuckets, xBuckets)
     output(o.yBuckets, yBuckets)
     val xyBuckets = xBuckets.sortedJoin(yBuckets)

@@ -6,7 +6,7 @@ import org.apache.hadoop
 import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.serving.AccessControl
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
@@ -53,7 +53,7 @@ object HadoopFile {
     str.nonEmpty && !str.startsWith("/")
 
   def apply(
-    str: String): HadoopFile = {
+      str: String): HadoopFile = {
     val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
@@ -81,7 +81,8 @@ object HadoopFile {
 
 class HadoopFile private (
     val prefixSymbol: String,
-    val normalizedRelativePath: String) extends Serializable with AccessControl {
+    val normalizedRelativePath: String)
+    extends Serializable with AccessControl {
 
   override def equals(o: Any) = o match {
     case o: HadoopFile =>
@@ -164,11 +165,13 @@ class HadoopFile private (
   private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
     val r = reader()
-    try org.apache.commons.io.IOUtils.toString(r) finally r.close()
+    try org.apache.commons.io.IOUtils.toString(r)
+    finally r.close()
   }
   def readFirstLine() = {
     val r = reader()
-    try r.readLine finally r.close()
+    try r.readLine
+    finally r.close()
   }
   def delete() = fs.delete(path, true)
   def deleteIfExists() = !exists() || delete()
@@ -193,7 +196,8 @@ class HadoopFile private (
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.Text],
       fClass = classOf[hadoop.mapreduce.lib.input.TextInputFormat],
-      conf = conf)
+      conf = conf,
+    )
       .map(pair => pair._2.toString)
   }
 
@@ -205,7 +209,8 @@ class HadoopFile private (
       keyClass = classOf[hadoop.io.NullWritable],
       valueClass = classOf[hadoop.io.Text],
       outputFormatClass = classOf[hadoop.mapreduce.lib.output.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
-      conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+      conf = new hadoop.mapred.JobConf(hadoopConfiguration),
+    )
   }
 
   def createFromStrings(contents: String): Unit = {
@@ -235,11 +240,12 @@ class HadoopFile private (
 
   def loadObjectKryo: Any = {
     val input = new kryo.io.Input(open())
-    val res = try {
-      RDDUtils.threadLocalKryo.get.readClassAndObject(input)
-    } finally {
-      input.close()
-    }
+    val res =
+      try {
+        RDDUtils.threadLocalKryo.get.readClassAndObject(input)
+      } finally {
+        input.close()
+      }
     res
   }
 
@@ -252,15 +258,16 @@ class HadoopFile private (
   // Note that this method returns a sortedRDD, as opposed to the
   // new load methods, which return simple RDDs
   def loadLegacyEntityRDD[T: scala.reflect.ClassTag](
-    sc: spark.SparkContext,
-    partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
+      sc: spark.SparkContext,
+      partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
 
     val file = sc.newAPIHadoopFile(
       resolvedNameWithNoCredentials,
       kClass = classOf[hadoop.io.NullWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
-      conf = hadoopConfiguration)
+      conf = hadoopConfiguration,
+    )
     val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
     file
       .map { case (k, v) => RDDUtils.kryoDeserialize[(Long, T)](v.getBytes) }
@@ -274,7 +281,8 @@ class HadoopFile private (
       kClass = classOf[hadoop.io.LongWritable],
       vClass = classOf[hadoop.io.BytesWritable],
       fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
-      conf = hadoopConfiguration)
+      conf = hadoopConfiguration,
+    )
     file.map { case (k, v) => k.get -> v }
   }
 
@@ -307,7 +315,8 @@ class HadoopFile private (
       valueClass = classOf[hadoop.io.BytesWritable],
       outputFormatClass =
         classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
-      conf = new hadoop.mapred.JobConf(hadoopConfiguration))
+      conf = new hadoop.mapred.JobConf(hadoopConfiguration),
+    )
     lines.value
   }
 
@@ -343,20 +352,23 @@ class HadoopFile private (
 
 // A SequenceFile loader that creates one partition per file.
 private[graph_util] class WholeSequenceFileInputFormat[K, V]
-  extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
+    extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
 
   // Do not allow splitting/combining files.
   override protected def isSplitable(
-    context: hadoop.mapreduce.JobContext, file: hadoop.fs.Path): Boolean = false
+      context: hadoop.mapreduce.JobContext,
+      file: hadoop.fs.Path): Boolean = false
 
   // Read files in order.
   override protected def listStatus(
-    job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
+      job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
     val l = super.listStatus(job)
-    java.util.Collections.sort(l, new java.util.Comparator[hadoop.fs.FileStatus] {
-      def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
-        a.getPath.getName compare b.getPath.getName
-    })
+    java.util.Collections.sort(
+      l,
+      new java.util.Comparator[hadoop.fs.FileStatus] {
+        def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
+          a.getPath.getName compare b.getPath.getName
+      })
     l
   }
 }

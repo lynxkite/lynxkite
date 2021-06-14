@@ -81,7 +81,7 @@ class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"Kryo[${typeOf[T]}
 
 object EntityDeserializer {
   def castDeserializer[From: TypeTag, To: TypeTag](
-    d: EntityDeserializer[From]): EntityDeserializer[To] = {
+      d: EntityDeserializer[From]): EntityDeserializer[To] = {
     val from = typeOf[From]
     val to = typeOf[To]
     assert(from =:= to, s"${d.name} is for $from, not $to")

@@ -7,22 +7,31 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
     val vertices = importCSV("fingerprint-100-vertices.csv")
       .box("Use table as vertices")
     val edges = importCSV("fingerprint-100-edges.csv")
-    val fingerprinted = box("Use table as edges", Map(
-      "attr" -> "id",
-      "src" -> "src",
-      "dst" -> "dst"), Seq(vertices, edges))
+    val fingerprinted = box(
+      "Use table as edges",
+      Map(
+        "attr" -> "id",
+        "src" -> "src",
+        "dst" -> "dst"),
+      Seq(vertices, edges))
       // Turn empty strings into None.
-      .box("Derive vertex attribute", Map(
-        "output" -> "email",
-        "expr" -> "if (email.nonEmpty) Some(email) else None"))
-      .box("Derive vertex attribute", Map(
-        "output" -> "name",
-        "expr" -> "if (name.nonEmpty) Some(name) else None"))
-      .box("Fingerprint based on attributes", Map(
-        "leftName" -> "email",
-        "rightName" -> "name",
-        "mo" -> "1",
-        "ms" -> "0.5"))
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "email",
+          "expr" -> "if (email.nonEmpty) Some(email) else None"))
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "name",
+          "expr" -> "if (name.nonEmpty) Some(name) else None"))
+      .box(
+        "Fingerprint based on attributes",
+        Map(
+          "leftName" -> "email",
+          "rightName" -> "name",
+          "mo" -> "1",
+          "ms" -> "0.5"))
     assert(fingerprinted.project.scalars("fingerprinting matches found").value == 9)
     val connected = fingerprinted
       .box("Discard edges")

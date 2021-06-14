@@ -16,12 +16,12 @@ object Modularity extends OpFromJson {
     val segments = vertexSet
     val weights = edgeAttribute[Double](edges)
     val belongsTo = edgeBundle(
-      vs, segments, requiredProperties = EdgeBundleProperties.partialFunction)
+      vs,
+      segments,
+      requiredProperties = EdgeBundleProperties.partialFunction)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val modularity = scalar[Double]
   }
   def fromJson(j: JsValue) = Modularity()
@@ -32,10 +32,10 @@ case class Modularity() extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vPart = inputs.vs.rdd.partitioner.get
     val vToS = inputs.belongsTo.rdd.map { case (eid, e) => (e.src, e.dst) }.sortUnique(vPart)
@@ -70,6 +70,7 @@ case class Modularity() extends SparkOperation[Input, Output] {
             val fulls = fullsOpt.getOrElse(0.0)
             fulls / numEdges - (ins / numEdges) * (outs / numEdges)
         }
-        .reduce(_ + _))
+        .reduce(_ + _),
+    )
   }
 }

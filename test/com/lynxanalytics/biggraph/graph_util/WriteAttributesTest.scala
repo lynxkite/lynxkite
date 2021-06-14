@@ -11,9 +11,8 @@ import com.lynxanalytics.biggraph.graph_operations.NoInput
 
 object CreateTestAttributes extends OpFromJson {
 
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      attrNames: Seq[String], data: Seq[Seq[String]]) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, attrNames: Seq[String], data: Seq[Seq[String]])
+      extends MagicOutput(instance) {
     val vertices = vertexSet
     val attrs = attrNames.map { a => a -> vertexAttribute[String](vertices, name = Symbol(a)) }.toMap
   }
@@ -22,7 +21,7 @@ object CreateTestAttributes extends OpFromJson {
 }
 
 case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String]])
-  extends SparkOperation[NoInput, CreateTestAttributes.Output] {
+    extends SparkOperation[NoInput, CreateTestAttributes.Output] {
 
   import CreateTestAttributes._
   override val isHeavy = true
@@ -32,10 +31,10 @@ case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String
   override def toJson = Json.obj("attrNames" -> attrNames, "data" -> data)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     val sc = rc.sparkContext
 
     val attributes = o.attrs.values.map(_.entity)
@@ -84,4 +83,3 @@ class WriteAttributesTest extends AnyFunSuite with TestGraphOp {
     assert(joined.collect.toSeq.sorted == Seq((0, ((), None)), (1, ((), None)), (2, ((), None)), (3, ((), None))))
   }
 }
-

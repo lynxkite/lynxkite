@@ -10,7 +10,8 @@ class JDBCUtilTest extends AnyFunSuite {
       "\"ff9EujBapm\" <= c AND c < \"kiXu4SOBcr\"",
       "\"kiXu4SOBcr\" <= c AND c < \"plwYFBanNC\"",
       "\"plwYFBanNC\" <= c AND c < \"upKCPvnOAH\"",
-      "\"upKCPvnOAH\" <= c"))
+      "\"upKCPvnOAH\" <= c",
+    ))
   }
 
   test("String partitioning: single partition") {

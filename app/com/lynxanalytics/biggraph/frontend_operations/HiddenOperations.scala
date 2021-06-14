@@ -44,17 +44,17 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   registerProjectCreatingOp(
     "Create enhanced example graph")(new ProjectOutputOperation(_) {
-      def enabled = FEStatus.enabled
-      def apply() = {
-        val g = graph_operations.EnhancedExampleGraph()().result
-        project.vertexSet = g.vertices
-        project.edgeBundle = g.edges
-        for ((name, attr) <- g.vertexAttributes) {
-          project.newVertexAttribute(name, attr)
-        }
-        project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val g = graph_operations.EnhancedExampleGraph()().result
+      project.vertexSet = g.vertices
+      project.edgeBundle = g.edges
+      for ((name, attr) <- g.vertexAttributes) {
+        project.newVertexAttribute(name, attr)
       }
-    })
+      project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
+    }
+  })
 
   registerProjectCreatingOp("Use metagraph as graph")(new ProjectOutputOperation(_) {
     params +=
@@ -81,16 +81,16 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       (1 to i).map(_.toString).toList,
       List("table"),
       "hat-cowboy")(new TableOutputOperation(_) {
-        params += Param("snapshot_prefix", "Snapshot prefix")
-        def enabled = FEStatus.enabled
-        override def getOutputs() = {
-          // Make sure the snapshot name depends on all the input GUIDs.
-          val snapshotName =
-            params("snapshot_prefix") +
-              (1 to i).map(j => exportResultInput(j.toString).gUID.toString).mkString("-")
-          val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
-          makeOutput(snapshot.getState.table)
-        }
-      })
+      params += Param("snapshot_prefix", "Snapshot prefix")
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        // Make sure the snapshot name depends on all the input GUIDs.
+        val snapshotName =
+          params("snapshot_prefix") +
+            (1 to i).map(j => exportResultInput(j.toString).gUID.toString).mkString("-")
+        val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
+        makeOutput(snapshot.getState.table)
+      }
+    })
   }
 }

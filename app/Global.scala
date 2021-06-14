@@ -9,7 +9,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 @javax.inject.Singleton
@@ -43,7 +43,7 @@ class ErrorHandler extends http.HttpErrorHandler {
       getResult(throwable) match {
         case Some(status) => status
         case None => InternalServerError(
-          escapeIfNeeded(serving.Utils.formatThrowable(throwable), request.headers))
+            escapeIfNeeded(serving.Utils.formatThrowable(throwable), request.headers))
       }
     }
   }

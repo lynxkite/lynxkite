@@ -13,6 +13,7 @@ setup(
             'pytest',
             'ruamel.yaml>=0.15',
             'mypy',
+            'types-requests',
         ]
     },
     python_requires='>=3.6',

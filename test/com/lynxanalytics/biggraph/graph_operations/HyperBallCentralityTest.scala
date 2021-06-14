@@ -14,13 +14,17 @@ class HyperBallCentralityTest extends AnyFunSuite with TestGraphOp {
 
     check(op, Map(0 -> Seq()), Map(0 -> 0.0))
     check(op, Map(0 -> Seq(0)), Map(0 -> 0.0))
-    check(op, Map(
-      0 -> Seq(1, 1),
-      1 -> Seq()),
+    check(
+      op,
+      Map(
+        0 -> Seq(1, 1),
+        1 -> Seq()),
       Map(0 -> 0.0, 1 -> 1.0))
-    check(op, Map(
-      0 -> Seq(1),
-      1 -> Seq(0)),
+    check(
+      op,
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(0)),
       Map(0 -> 1.0, 1 -> 1.0))
   }
 
@@ -29,13 +33,17 @@ class HyperBallCentralityTest extends AnyFunSuite with TestGraphOp {
 
     check(op, Map(0 -> Seq()), Map(0 -> 1.0))
     check(op, Map(0 -> Seq(0)), Map(0 -> 1.0))
-    check(op, Map(
-      0 -> Seq(1, 1),
-      1 -> Seq()),
+    check(
+      op,
+      Map(
+        0 -> Seq(1, 1),
+        1 -> Seq()),
       Map(0 -> 1.0, 1 -> 4.0))
-    check(op, Map(
-      0 -> Seq(1),
-      1 -> Seq(0)),
+    check(
+      op,
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(0)),
       Map(0 -> 4.0, 1 -> 4.0))
   }
 
@@ -44,13 +52,17 @@ class HyperBallCentralityTest extends AnyFunSuite with TestGraphOp {
 
     check(op, Map(0 -> Seq()), Map(0 -> 0.0))
     check(op, Map(0 -> Seq(0)), Map(0 -> 0.0))
-    check(op, Map(
-      0 -> Seq(1, 1),
-      1 -> Seq()),
+    check(
+      op,
+      Map(
+        0 -> Seq(1, 1),
+        1 -> Seq()),
       Map(0 -> 0.0, 1 -> 1.0))
-    check(op, Map(
-      0 -> Seq(1),
-      1 -> Seq(0)),
+    check(
+      op,
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(0)),
       Map(0 -> 1.0, 1 -> 1.0))
   }
 
@@ -79,83 +91,101 @@ class HyperBallCentralityTest extends AnyFunSuite with TestGraphOp {
   }
 
   test("path graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(3),
-      3 -> Seq()),
+    check(
+      HyperBallCentrality(5, "Harmonic", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(3),
+        3 -> Seq()),
       Map(0 -> 0.0, 1 -> 1.0, 2 -> 1.5, 3 -> (1.5 + (1.0 / 3.0))))
   }
 
   test("path graph - Lin") {
-    check(HyperBallCentrality(5, "Lin", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(3),
-      3 -> Seq()),
+    check(
+      HyperBallCentrality(5, "Lin", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(3),
+        3 -> Seq()),
       Map(0 -> 1.0, 1 -> 4.0, 2 -> 3.0, 3 -> 16.0 / 6.0))
   }
 
   test("path graph - Average distance") {
-    check(HyperBallCentrality(5, "Average distance", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(3),
-      3 -> Seq()),
+    check(
+      HyperBallCentrality(5, "Average distance", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(3),
+        3 -> Seq()),
       Map(0 -> 0.0, 1 -> 1.0, 2 -> 1.5, 3 -> 2.0))
   }
 
   test("tree graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic", 8), Map(
-      0 -> Seq(),
-      1 -> Seq(0),
-      2 -> Seq(0),
-      3 -> Seq(1),
-      4 -> Seq(1)),
+    check(
+      HyperBallCentrality(5, "Harmonic", 8),
+      Map(
+        0 -> Seq(),
+        1 -> Seq(0),
+        2 -> Seq(0),
+        3 -> Seq(1),
+        4 -> Seq(1)),
       Map(0 -> 3.0, 1 -> 2.0, 2 -> 0.0, 3 -> 0.0, 4 -> 0.0))
   }
 
   test("tree graph - Lin") {
-    check(HyperBallCentrality(5, "Lin", 8), Map(
-      0 -> Seq(),
-      1 -> Seq(0),
-      2 -> Seq(0),
-      3 -> Seq(1),
-      4 -> Seq(1)),
+    check(
+      HyperBallCentrality(5, "Lin", 8),
+      Map(
+        0 -> Seq(),
+        1 -> Seq(0),
+        2 -> Seq(0),
+        3 -> Seq(1),
+        4 -> Seq(1)),
       Map(0 -> 25.0 / 6.0, 1 -> 4.5, 2 -> 1.0, 3 -> 1.0, 4 -> 1.0))
   }
 
   test("tree graph - Average distance") {
-    check(HyperBallCentrality(5, "Average distance", 8), Map(
-      0 -> Seq(),
-      1 -> Seq(0),
-      2 -> Seq(0),
-      3 -> Seq(1),
-      4 -> Seq(1)),
+    check(
+      HyperBallCentrality(5, "Average distance", 8),
+      Map(
+        0 -> Seq(),
+        1 -> Seq(0),
+        2 -> Seq(0),
+        3 -> Seq(1),
+        4 -> Seq(1)),
       Map(0 -> 1.5, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0, 4 -> 0.0))
   }
 
   test("triangle graph - Harmonic") {
-    check(HyperBallCentrality(5, "Harmonic", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(0)),
+    check(
+      HyperBallCentrality(5, "Harmonic", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(0)),
       Map(0 -> 1.5, 1 -> 1.5, 2 -> 1.5))
   }
 
   test("triangle graph - Lin") {
-    check(HyperBallCentrality(5, "Lin", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(0)),
+    check(
+      HyperBallCentrality(5, "Lin", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(0)),
       Map(0 -> 3.0, 1 -> 3.0, 2 -> 3.0))
   }
 
   test("triangle graph - Average distance") {
-    check(HyperBallCentrality(5, "Average distance", 8), Map(
-      0 -> Seq(1),
-      1 -> Seq(2),
-      2 -> Seq(0)),
+    check(
+      HyperBallCentrality(5, "Average distance", 8),
+      Map(
+        0 -> Seq(1),
+        1 -> Seq(2),
+        2 -> Seq(0)),
       Map(0 -> 1.5, 1 -> 1.5, 2 -> 1.5))
   }
 

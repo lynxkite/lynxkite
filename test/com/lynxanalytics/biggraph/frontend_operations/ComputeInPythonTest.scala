@@ -7,21 +7,29 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class ComputeInPythonTest extends OperationsTestBase {
   test("example graph", SphynxOnly) {
     val p = box("Create example graph")
-      .box("Compute in Python", Map(
-        "inputs" -> "vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting",
-        "outputs" -> "vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, graph_attributes.hello: str, graph_attributes.average_age: float",
-        "code" -> """
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting",
+          "outputs" -> "vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, graph_attributes.hello: str, graph_attributes.average_age: float",
+          "code" -> """
 vs['with_title'] = 'The Honorable ' + vs.name
 vs['age_squared'] = vs.age ** 2
 es['score'] = es.weight + es.comment.str.len()
 es['names'] = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
 graph_attributes.hello = graph_attributes.greeting.lower()
 graph_attributes.average_age = vs.age.mean()
-          """))
+          """,
+        ),
+      )
       .project
     assert(
       get(p.vertexAttributes("with_title").runtimeSafeCast[String]) ==
-        Map(0 -> "The Honorable Adam", 1 -> "The Honorable Eve", 2 -> "The Honorable Bob", 3 -> "The Honorable Isolated Joe"))
+        Map(
+          0 -> "The Honorable Adam",
+          1 -> "The Honorable Eve",
+          2 -> "The Honorable Bob",
+          3 -> "The Honorable Isolated Joe"))
     assert(
       get(p.vertexAttributes("age_squared").runtimeSafeCast[Double]).mapValues(_.round) ==
         Map(0 -> 412, 1 -> 331, 2 -> 2530, 3 -> 4))
@@ -37,17 +45,22 @@ graph_attributes.average_age = vs.age.mean()
 
   test("vectors", SphynxOnly) {
     val p = box("Create example graph")
-      .box("Compute in Python", Map(
-        "inputs" -> "vs.age",
-        "outputs" -> "vs.v: np.ndarray",
-        "code" -> """
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "vs.age",
+          "outputs" -> "vs.v: np.ndarray",
+          "code" -> """
 v = np.array([[1, 2]]) * vs.age[:, None]
 vs['v'] = v.tolist()
-          """))
-      .box("Compute in Python", Map(
-        "inputs" -> "vs.v",
-        "outputs" -> "vs.s: float",
-        "code" -> """
+          """),
+      )
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "vs.v",
+          "outputs" -> "vs.s: float",
+          "code" -> """
 vs['s'] = np.stack(vs.v).sum(axis=1).round()
           """))
       .project
@@ -58,19 +71,26 @@ vs['s'] = np.stack(vs.v).sum(axis=1).round()
 
   test("infer from code", SphynxOnly) {
     val p = box("Create example graph")
-      .box("Compute in Python", Map(
-        "code" -> """
+      .box(
+        "Compute in Python",
+        Map(
+          "code" -> """
 vs['with_title']: str = 'The Honorable ' + vs.name
 vs['age_squared']: float = vs.age ** 2
 es['score']: float = es.weight + es.comment.str.len()
 es['names']: str = 'from ' + vs.name[es.src].values + ' to ' + vs.name[es.dst].values
 graph_attributes.hello: str = graph_attributes.greeting.lower()
 graph_attributes.average_age: float = vs.age.mean()
-          """.trim))
+          """.trim),
+      )
       .project
     assert(
       get(p.vertexAttributes("with_title").runtimeSafeCast[String]) ==
-        Map(0 -> "The Honorable Adam", 1 -> "The Honorable Eve", 2 -> "The Honorable Bob", 3 -> "The Honorable Isolated Joe"))
+        Map(
+          0 -> "The Honorable Adam",
+          1 -> "The Honorable Eve",
+          2 -> "The Honorable Bob",
+          3 -> "The Honorable Isolated Joe"))
     assert(
       get(p.vertexAttributes("age_squared").runtimeSafeCast[Double]).mapValues(_.round) ==
         Map(0 -> 412, 1 -> 331, 2 -> 2530, 3 -> 4))

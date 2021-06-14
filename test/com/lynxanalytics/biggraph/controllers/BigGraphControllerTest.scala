@@ -48,7 +48,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(eattr[String]("comment") == Seq("Bob envies Adam", "Bob loves Eve"))
     assert(subProject.toFE.undoOp == "Filter weight >2")
   }
-  */
+   */
 
   def list(dir: String) = controller.entryList(user, EntryListRequest(dir))
   def search(basePath: String, query: String) =
@@ -71,11 +71,14 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
     assert(list("").objects.size == 2)
   }
-  */
+   */
 
   test("create directory") {
-    controller.createDirectory(user, CreateDirectoryRequest(
-      name = "foo/bar", privacy = "private"))
+    controller.createDirectory(
+      user,
+      CreateDirectoryRequest(
+        name = "foo/bar",
+        privacy = "private"))
     assert(list("").directories == Seq("foo"))
     assert(list("foo").objects.isEmpty)
     assert(list("foo").directories == Seq("foo/bar"))

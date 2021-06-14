@@ -14,7 +14,8 @@ class AggregateTest extends AnyFunSuite with TestGraphOp {
       op(op.es, example.edges).result
     }
     def run[Attr, Res](
-      agg: LocalAggregator[Attr, Res], attr: Attribute[Attr]) = {
+        agg: LocalAggregator[Attr, Res],
+        attr: Attribute[Attr]) = {
       val op = AggregateByEdgeBundle(agg)
       op(op.connectionBySrc, HybridEdgeBundle.bySrc(components.belongsTo))(op.attr, attr)
         .result.attr.rdd.collect.toMap

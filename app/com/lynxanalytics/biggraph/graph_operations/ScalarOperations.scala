@@ -9,28 +9,27 @@ object ScalarLongDifference extends OpFromJson {
     val subtrahend = scalar[Long]
   }
   class Output(implicit instance: MetaGraphOperationInstance)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val difference = scalar[Long]
   }
   def fromJson(j: JsValue) = ScalarLongDifference()
   def run(minuend: Scalar[Long], subtrahend: Scalar[Long])(
-    implicit
-    m: MetaGraphManager): Scalar[Long] = {
+      implicit m: MetaGraphManager): Scalar[Long] = {
     import Scripting._
     val op = ScalarLongDifference()
     op(op.minuend, minuend)(op.subtrahend, subtrahend).result.difference
   }
 }
 case class ScalarLongDifference()
-  extends SparkOperation[ScalarLongDifference.Input, ScalarLongDifference.Output] {
+    extends SparkOperation[ScalarLongDifference.Input, ScalarLongDifference.Output] {
   import ScalarLongDifference._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.difference, inputs.minuend.value - inputs.subtrahend.value)
   }

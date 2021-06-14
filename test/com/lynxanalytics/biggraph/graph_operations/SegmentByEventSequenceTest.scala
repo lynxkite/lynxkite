@@ -11,10 +11,14 @@ import SegmentByEventSequence._
 class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
   test("ContinuousEventCrosser.groupEventsByLocation") {
     val events = Seq(
-      Event(1.0, 1L), Event(1.1, 2L),
-      Event(1.2, 2L), Event(1.3, 3L),
-      Event(1.4, 3L), Event(1.5, 3L),
-      Event(1.6, 1L), Event(1.7, 1L))
+      Event(1.0, 1L),
+      Event(1.1, 2L),
+      Event(1.2, 2L),
+      Event(1.3, 3L),
+      Event(1.4, 3L),
+      Event(1.5, 3L),
+      Event(1.6, 1L),
+      Event(1.7, 1L))
     val grouped = ContinuousEventsSegmentGenerator.groupEventsByLocation(events.iterator.buffered)
     assert(grouped.toSeq ==
       Seq(
@@ -39,10 +43,14 @@ class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
 
   test("ConinuousEventsSegmentGenerator") {
     val events = Seq(
-      Event(1.0, 1L), Event(1.1, 2L),
-      Event(1.21, 2L), Event(1.3, 3L),
-      Event(1.4, 3L), Event(1.5, 3L),
-      Event(1.6, 1L), Event(1.7, 1L))
+      Event(1.0, 1L),
+      Event(1.1, 2L),
+      Event(1.21, 2L),
+      Event(1.3, 3L),
+      Event(1.4, 3L),
+      Event(1.5, 3L),
+      Event(1.6, 1L),
+      Event(1.7, 1L))
     val segments = ContinuousEventsSegmentGenerator(3, 0.1, 5.0).getSegments(events)
     assert(
       segments.toSeq ==
@@ -63,7 +71,8 @@ class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
         EventListSegmentId(10, Seq(3L, 3L)),
         EventListSegmentId(11, Seq(2L, 3L)),
         EventListSegmentId(11, Seq(3L, 3L)),
-        EventListSegmentId(12, Seq(3L, 3L)))
+        EventListSegmentId(12, Seq(3L, 3L)),
+      )
     assert(segments.toSeq.sorted == golden.sorted)
   }
 
@@ -74,20 +83,40 @@ class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
     val locationVs = SmallTestGraph((0 to 3).map(id => id -> Seq()).toMap).result.vs
     val personBelongsToEvent = {
       val op = AddEdgeBundle(Seq(
-        (0, 0), (0, 1), (0, 2),
-        (1, 3), (1, 4), (1, 5),
-        (2, 6), (2, 7), (2, 8)))
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (1, 3),
+        (1, 4),
+        (1, 5),
+        (2, 6),
+        (2, 7),
+        (2, 8)))
       op(op.vsA, personVs)(op.vsB, eventVs).result.esAB
     }
-    val eventTimes = AddVertexAttribute.run(eventVs, Map(
-      0 -> 0.0, 1 -> 1.0, 2 -> 2.0,
-      3 -> 0.0, 4 -> 1.0, 5 -> 2.0,
-      6 -> 0.0, 7 -> 1.0, 8 -> 2.0))
+    val eventTimes = AddVertexAttribute.run(
+      eventVs,
+      Map(
+        0 -> 0.0,
+        1 -> 1.0,
+        2 -> 2.0,
+        3 -> 0.0,
+        4 -> 1.0,
+        5 -> 2.0,
+        6 -> 0.0,
+        7 -> 1.0,
+        8 -> 2.0))
     val eventBelongsToLocation = {
       val op = AddEdgeBundle(Seq(
-        (0, 0), (1, 0), (2, 1),
-        (3, 2), (4, 0), (5, 1),
-        (6, 2), (7, 2), (8, 2)))
+        (0, 0),
+        (1, 0),
+        (2, 1),
+        (3, 2),
+        (4, 0),
+        (5, 1),
+        (6, 2),
+        (7, 2),
+        (8, 2)))
       op(op.vsA, eventVs)(op.vsB, locationVs).result.esAB
     }
 
@@ -95,11 +124,16 @@ class SegmentByEventSequenceTest extends AnyFunSuite with TestGraphOp {
     val result = {
       val op = SegmentByEventSequence("continuous", 2, 0.9, 2.1)
       op(op.personVs, personVs)(
-        op.eventVs, eventVs)(
-          op.locationVs, locationVs)(
-            op.eventTimeAttribute, eventTimes)(
-              op.personBelongsToEvent, personBelongsToEvent)(
-                op.eventBelongsToLocation, eventBelongsToLocation).result
+        op.eventVs,
+        eventVs)(
+        op.locationVs,
+        locationVs)(
+        op.eventTimeAttribute,
+        eventTimes)(
+        op.personBelongsToEvent,
+        personBelongsToEvent)(
+        op.eventBelongsToLocation,
+        eventBelongsToLocation).result
     }
     // Ensure that person vertices #0 and #1 are sharing a segment, but no other pairs
     // are sharing a vertex.

@@ -11,8 +11,22 @@ class RemoveNonSymmetricEdgesTest extends AnyFunSuite with TestGraphOp {
     val g = EnhancedExampleGraph()().result
     val op = RemoveNonSymmetricEdges()
     val out = op(op.es, g.edges).result
-    assert(out.symmetric.toPairSeq == Seq((0, 1), (1, 0), (2, 2), (2, 4), (2, 5), (2, 5),
-      (2, 5), (4, 2), (4, 2), (4, 5), (5, 2), (5, 2), (5, 4), (5, 4), (5, 4)))
+    assert(out.symmetric.toPairSeq == Seq(
+      (0, 1),
+      (1, 0),
+      (2, 2),
+      (2, 4),
+      (2, 5),
+      (2, 5),
+      (2, 5),
+      (4, 2),
+      (4, 2),
+      (4, 5),
+      (5, 2),
+      (5, 2),
+      (5, 4),
+      (5, 4),
+      (5, 4)))
 
   }
 }

@@ -112,6 +112,7 @@ class BucketingTest extends AnyFunSuite with TestGraphOp {
       ((60.0, 70.0), 1),
       ((65.0, 75.0), 1),
       ((70.0, 80.0), 1),
-      ((75.0, 85.0), 1)))
+      ((75.0, 85.0), 1),
+    ))
   }
 }

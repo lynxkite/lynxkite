@@ -63,7 +63,8 @@ object UIStatus {
     axisOptions = UIAxisOptions(vertex = Map(), edge = Map()),
     sampleRadius = 1,
     edgeStyle = None,
-    attributeTitles = Map(), animate = UIAnimation(false, "expand", 0),
+    attributeTitles = Map(),
+    animate = UIAnimation(false, "expand", 0),
     centers = Some(Seq("auto")),
     lastCentersRequest = None,
     customVisualizationFilters = Some(false),
@@ -71,7 +72,8 @@ object UIStatus {
     vertexColorMap = Some("Viridis"),
     labelColorMap = Some("Viridis"),
     edgeColorMap = Some("Viridis"),
-    sliderColorMap = Some("Blue to orange"))
+    sliderColorMap = Some("Blue to orange"),
+  )
 }
 
 case class TwoSidedUIStatus(

@@ -25,10 +25,13 @@ case class FEStatus(
 object FEStatus {
   val enabled = FEStatus(true)
   def disabled(disabledReason: String) = FEStatus(false, disabledReason)
-  def from(t: Throwable) = FEStatus(false, t match {
-    case ae: AssertionError => ae.getMessage
-    case _ => t.toString
-  }, Some(t))
+  def from(t: Throwable) = FEStatus(
+    false,
+    t match {
+      case ae: AssertionError => ae.getMessage
+      case _ => t.toString
+    },
+    Some(t))
   def assert(condition: Boolean, disabledReason: => String) =
     if (condition) enabled else disabled(disabledReason)
   implicit val format = new json.Format[FEStatus] {
@@ -158,10 +161,10 @@ object BigGraphController {
   }
 
   def entrySearch(
-    user: serving.User,
-    dir: Directory,
-    query: String,
-    includeNotes: Boolean): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
+      user: serving.User,
+      dir: Directory,
+      query: String,
+      includeNotes: Boolean): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
     val terms = query.split(" ").map(_.toLowerCase)
     val dirs = dir
       .listDirectoriesRecursively
@@ -179,7 +182,7 @@ object BigGraphController {
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||
-              (includeNotes && notes.toLowerCase.contains(term))
+            (includeNotes && notes.toLowerCase.contains(term))
         }
       }
     (dirs, objects)
@@ -201,7 +204,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       dir.writeACL,
       dir.writeAllowedFrom(user),
       visibleDirs.map(_.path.toString).toList,
-      visibleObjectFrames.map(_.toListElementFE).toList)
+      visibleObjectFrames.map(_.toListElementFE).toList,
+    )
   }
 
   def entrySearch(user: serving.User, request: EntrySearchRequest): EntryList = metaManager.synchronized {
@@ -231,7 +235,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def discardEntry(
-    user: serving.User, request: DiscardEntryRequest): Unit = metaManager.synchronized {
+      user: serving.User,
+      request: DiscardEntryRequest): Unit = metaManager.synchronized {
 
     val p = DirectoryEntry.fromName(request.name)
     p.assertParentWriteAllowedFrom(user)
@@ -239,7 +244,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def renameEntry(
-    user: serving.User, request: RenameEntryRequest): Unit = metaManager.synchronized {
+      user: serving.User,
+      request: RenameEntryRequest): Unit = metaManager.synchronized {
     val pFrom = DirectoryEntry.fromName(request.from)
     pFrom.assertParentWriteAllowedFrom(user)
     val pTo = DirectoryEntry.fromName(request.to)

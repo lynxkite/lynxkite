@@ -8,7 +8,7 @@ package com.lynxanalytics.biggraph.graph_util
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 object DayBasedForcibleRollingPolicy {
   private var forceRotation = false

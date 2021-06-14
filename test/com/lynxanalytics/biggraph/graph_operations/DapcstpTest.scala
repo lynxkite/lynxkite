@@ -26,10 +26,14 @@ class DapcstpTest extends AnyFunSuite with TestGraphOp {
 
     val op = Dapcstp()
     val profit = op(op.vs, graph.vs)(
-      op.es, graph.es)(
-        op.edge_costs, cost)(
-          op.root_costs, root)(
-            op.gain, gain).result.profit.value
+      op.es,
+      graph.es)(
+      op.edge_costs,
+      cost)(
+      op.root_costs,
+      root)(
+      op.gain,
+      gain).result.profit.value
 
     assert(profit == 42.0)
   }

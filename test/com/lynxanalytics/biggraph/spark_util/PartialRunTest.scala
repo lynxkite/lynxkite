@@ -18,8 +18,7 @@ class PartialRunTest extends AnyFunSuite with TestSparkContext {
   }
 
   def countAs(in: RDD[(Long, Char)], prefLength: Int): Int = {
-    in.mapPartitions(
-      it => Iterator(it.take(prefLength).filter { case (k, v) => v == 'a' }.size))
+    in.mapPartitions(it => Iterator(it.take(prefLength).filter { case (k, v) => v == 'a' }.size))
       .reduce(_ + _)
   }
 

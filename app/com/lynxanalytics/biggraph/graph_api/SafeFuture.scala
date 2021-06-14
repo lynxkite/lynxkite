@@ -7,7 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import scala.concurrent._
 import scala.util._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 object SafeFuture {
   def async[T](func: => T)(implicit ec: ExecutionContext) =
@@ -26,13 +26,15 @@ object SafeFuture {
   private case class Wrapper(t: Throwable) extends Exception(t)
 
   private def wrapException[B](func: => B): B = {
-    try func catch {
+    try func
+    catch {
       case t: Throwable => throw new Wrapper(t)
     }
   }
 
   private def wrapException[A, B](func: A => B): A => B = { a =>
-    try func(a) catch {
+    try func(a)
+    catch {
       case t: Throwable => throw new Wrapper(t)
     }
   }

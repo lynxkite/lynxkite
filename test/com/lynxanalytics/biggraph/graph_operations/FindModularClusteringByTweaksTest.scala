@@ -106,11 +106,12 @@ class FindModularClusteringByTweaksTest extends AnyFunSuite with TestGraphOp {
       4L -> Seq((3L, 1.0), (5L, 1.0)),
       5L -> Seq((3L, 1.0), (4L, 1.0)),
       // Plus one more dummy point.
-      6L -> Seq((1L, 1.0), (3L, 1.0)))
+      6L -> Seq((1L, 1.0), (3L, 1.0)),
+    )
 
     val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
     val totalDegreeSum = degrees.map(_._2).sum
-    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L, 5l)
+    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L, 5L)
     val fullCluster = ClusterData.fromMembers(fullClusterMembers, edgeLists)
     val spectrum = new ClusterSpectrum(
       totalDegreeSum,
@@ -120,7 +121,7 @@ class FindModularClusteringByTweaksTest extends AnyFunSuite with TestGraphOp {
       edgeLists)
     val rnd = new Random(0)
     val (clust1, clust2, _) = spectrum.bestSplit(rnd)
-    val clustWith0 = if (clust1.contains(0l)) clust1 else clust2
+    val clustWith0 = if (clust1.contains(0L)) clust1 else clust2
     assert(clust1 == Set(0L, 1L, 2L))
   }
 }

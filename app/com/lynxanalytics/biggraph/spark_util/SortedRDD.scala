@@ -36,8 +36,8 @@ private object SortedRDDUtil {
 
   // Keys in bi2 must be unique.
   def merge[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -58,8 +58,8 @@ private object SortedRDDUtil {
 
   // Keys in bi1 and bi2 must be unique.
   def mergeUnique[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -80,15 +80,15 @@ private object SortedRDDUtil {
   }
 
   private class ValuesForKeyIterator[K, V](k: K, bi: collection.BufferedIterator[(K, V)])
-    extends Iterator[V] {
+      extends Iterator[V] {
     def hasNext = bi.hasNext && bi.head._1 == k
     def next = bi.next._2
   }
 
   // This one supports duplicates on both sides. It is 2-3 times slower.
   def mergeWithDuplicates[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, W))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -111,8 +111,8 @@ private object SortedRDDUtil {
 
   // Keys in bi2 must be unique.
   def leftOuterMerge[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -135,8 +135,8 @@ private object SortedRDDUtil {
 
   // Keys in bi1 and bi2 must be unique.
   def uniqueLeftOuterMerge[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (V, Option[W]))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -160,8 +160,8 @@ private object SortedRDDUtil {
 
   // Keys in both inputs must be unique.
   def fullOuterMerge[K, V, W](
-    bi1: collection.BufferedIterator[(K, V)],
-    bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (Option[V], Option[W]))] = {
+      bi1: collection.BufferedIterator[(K, V)],
+      bi2: collection.BufferedIterator[(K, W)])(implicit ord: Ordering[K]): Stream[(K, (Option[V], Option[W]))] = {
     if (bi1.hasNext && bi2.hasNext) {
       val (k1, v1) = bi1.head
       val (k2, v2) = bi2.head
@@ -192,7 +192,8 @@ sealed trait SortedRDDRecipe[K, V] {
 }
 class DerivedSortedRDDRecipe[K: Ordering, VOld, VNew](
     base: SortedRDD[K, VOld],
-    derivation: DerivedSortedRDD.Derivation[K, VOld, VNew]) extends SortedRDDRecipe[K, VNew] {
+    derivation: DerivedSortedRDD.Derivation[K, VOld, VNew])
+    extends SortedRDDRecipe[K, VNew] {
   def asGeneral = new DerivedSortedRDD(base, derivation)
   def trustedUnique = new DerivedSortedRDD(base, derivation) with UniqueSortedRDD[K, VNew]
 }
@@ -200,19 +201,21 @@ class BiDerivedSortedRDDRecipe[K: Ordering, VOld1, VOld2, VNew](
     base1: SortedRDD[K, VOld1],
     base2: SortedRDD[K, VOld2],
     derivation: BiDerivedSortedRDD.Derivation[K, VOld1, VOld2, VNew])
-  extends SortedRDDRecipe[K, VNew] {
+    extends SortedRDDRecipe[K, VNew] {
 
   def asGeneral = new BiDerivedSortedRDD(base1, base2, derivation)
   def trustedUnique = new BiDerivedSortedRDD(base1, base2, derivation) with UniqueSortedRDD[K, VNew]
 }
 class ArrayBackedSortedRDDRecipe[K: Ordering, V](
-    arrayRDD: SortedArrayRDD[K, V]) extends SortedRDDRecipe[K, V] {
+    arrayRDD: SortedArrayRDD[K, V])
+    extends SortedRDDRecipe[K, V] {
   def asGeneral = new ArrayBackedSortedRDD(arrayRDD)
   def trustedUnique = new ArrayBackedSortedRDD(arrayRDD) with UniqueSortedRDD[K, V]
 }
 class RestrictedArrayBackedSortedRDDRecipe[K: Ordering, V](
     arrayRDD: SortedArrayRDD[K, V],
-    ids: IndexedSeq[K]) extends SortedRDDRecipe[K, V] {
+    ids: IndexedSeq[K])
+    extends SortedRDDRecipe[K, V] {
   def asGeneral = new RestrictedArrayBackedSortedRDD(arrayRDD, ids)
   def trustedUnique = new RestrictedArrayBackedSortedRDD(arrayRDD, ids) with UniqueSortedRDD[K, V]
 }
@@ -220,8 +223,8 @@ class RestrictedArrayBackedSortedRDDRecipe[K: Ordering, V](
 // An RDD with each partition sorted by the key. "self" must already be sorted.
 abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
     // We need to make this implicit explicit so that it's visible from SortedRDD's subtraits.
-    implicit
-    val kOrder: Ordering[K]) extends RDD[(K, V)](self) {
+    implicit val kOrder: Ordering[K])
+    extends RDD[(K, V)](self) {
 
   assert(
     self.partitioner.isDefined,
@@ -236,13 +239,14 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
 
   // See comments at DerivedSortedRDD before blindly using this method!
   protected def biDeriveWithRecipe[W, R](
-    other: SortedRDD[K, W],
-    derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
+      other: SortedRDD[K, W],
+      derivation: BiDerivedSortedRDD.Derivation[K, V, W, R]) =
     new BiDerivedSortedRDDRecipe(this, other, derivation)
 
   def sortedRepartition(partitioner: spark.Partitioner)(
-    implicit
-    ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K],
+      cv: ClassTag[V]): SortedRDD[K, V] = {
     if (partitioner eq this.partitioner.orNull) {
       this
     } else {
@@ -251,15 +255,16 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   }
 
   def copartition[W](rdd: SortedRDD[K, W])(
-    implicit
-    ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K],
+      cv: ClassTag[V]): SortedRDD[K, V] = {
     this.sortedRepartition(rdd.partitioner.get)
   }
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
   def sortedJoin[W](
-    other: UniqueSortedRDD[K, W]): SortedRDD[K, (V, W)] =
+      other: UniqueSortedRDD[K, W]): SortedRDD[K, (V, W)] =
     biDeriveWithRecipe[W, (V, W)](
       other,
       { (first, second) =>
@@ -267,7 +272,8 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.merge(it1.buffered, it2.buffered).iterator
         }
-      }).asGeneral
+      },
+    ).asGeneral
 
   // A version of sortedJoin that handles duplicates on both sides. This means the result can be
   // (much) larger than the input, as all combinations are enumerated for the duplicates.
@@ -280,7 +286,8 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.mergeWithDuplicates(it1.buffered, it2.buffered).iterator
         }
-      }).asGeneral
+      },
+    ).asGeneral
 
   // Differs from Spark's join implementation as this allows multiple keys only on the left side.
   // The keys of 'other' must be unique!
@@ -292,7 +299,8 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.leftOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      }).asGeneral
+      },
+    ).asGeneral
 
   def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] =
     mapValuesRecipe(f).asGeneral
@@ -303,11 +311,11 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
       preservesPartitioning = true))
 
   def flatMapValues[U](
-    f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] =
+      f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, U] =
     flatMapValuesRecipe(f).asGeneral
 
   def flatMapValuesRecipe[U](
-    f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDDRecipe[K, U] =
+      f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDDRecipe[K, U] =
     deriveRecipe(_.mapPartitions(
       { it => it.flatMap { case (k, v) => f(v).map { v => (k, v) } } },
       preservesPartitioning = true))
@@ -340,21 +348,24 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
   // `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
   // `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
   def combineByKey[C](
-    createCombiner: V => C,
-    mergeValue: (C, V) => C): UniqueSortedRDD[K, C] =
+      createCombiner: V => C,
+      mergeValue: (C, V) => C): UniqueSortedRDD[K, C] =
     deriveRecipe(
-      _.mapPartitions({ it =>
-        val bi = it.buffered
-        new Iterator[(K, C)] {
-          def hasNext = bi.hasNext
-          def next() = {
-            val n = bi.next
-            var res = createCombiner(n._2)
-            while (bi.hasNext && bi.head._1 == n._1) res = mergeValue(res, bi.next._2)
-            n._1 -> res
+      _.mapPartitions(
+        { it =>
+          val bi = it.buffered
+          new Iterator[(K, C)] {
+            def hasNext = bi.hasNext
+            def next() = {
+              val n = bi.next
+              var res = createCombiner(n._2)
+              while (bi.hasNext && bi.head._1 == n._1) res = mergeValue(res, bi.next._2)
+              n._1 -> res
+            }
           }
-        }
-      }, preservesPartitioning = true)).trustedUnique
+        },
+        preservesPartitioning = true,
+      )).trustedUnique
 
   def reduceByKey(func: (V, V) => V): UniqueSortedRDD[K, V] = combineByKey(identity, func)
 
@@ -416,8 +427,9 @@ abstract class SortedRDD[K, V] private[spark_util] (val self: RDD[(K, V)])(
 trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
 
   override def sortedRepartition(partitioner: spark.Partitioner)(
-    implicit
-    ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K],
+      cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
     if (partitioner eq this.partitioner.orNull) {
       this
     } else {
@@ -426,19 +438,22 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   }
 
   override def copartition[W](rdd: SortedRDD[K, W])(
-    implicit
-    ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K],
+      cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
     this.sortedRepartition(rdd.partitioner.get)
   }
 
   override def sortedJoin[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (V, W)] = {
     biDeriveWithRecipe[W, (V, W)](
-      other, { (first, second) =>
-      SortedRDDUtil.assertMatchingRDDs(first, second)
-      first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
-        SortedRDDUtil.mergeUnique(it1.buffered, it2.buffered).iterator
-      }
-    }).trustedUnique
+      other,
+      { (first, second) =>
+        SortedRDDUtil.assertMatchingRDDs(first, second)
+        first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
+          SortedRDDUtil.mergeUnique(it1.buffered, it2.buffered).iterator
+        }
+      },
+    ).trustedUnique
   }
 
   // Returns an RDD with the union of the keyset of this and other. For each key it returns two
@@ -451,7 +466,8 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.fullOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      }).trustedUnique
+      },
+    ).trustedUnique
 
   override def sortedLeftOuterJoin[W](other: UniqueSortedRDD[K, W]): UniqueSortedRDD[K, (V, Option[W])] =
     biDeriveWithRecipe[W, (V, Option[W])](
@@ -461,7 +477,8 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
         first.zipPartitions(second, preservesPartitioning = true) { (it1, it2) =>
           SortedRDDUtil.uniqueLeftOuterMerge(it1.buffered, it2.buffered).iterator
         }
-      }).trustedUnique
+      },
+    ).trustedUnique
 
   // The ids seq needs to be sorted.
   override def restrictToIdSet(ids: IndexedSeq[K]): UniqueSortedRDD[K, V] =
@@ -473,7 +490,9 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     mapValuesRecipe(f).trustedUnique
 
-  override def flatMapValues[U](f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
+  override def flatMapValues[U](f: V => TraversableOnce[U])(implicit
+      ck: ClassTag[K],
+      cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     flatMapValuesRecipe(f).trustedUnique
 
   override def filter(f: ((K, V)) => Boolean): UniqueSortedRDD[K, V] =
@@ -498,7 +517,7 @@ private[spark_util] object DerivedSortedRDD {
 private[spark_util] class DerivedSortedRDD[K: Ordering, VOld, VNew](
     source: SortedRDD[K, VOld],
     derivation: DerivedSortedRDD.Derivation[K, VOld, VNew])
-  extends SortedRDD[K, VNew](derivation(source)) {
+    extends SortedRDD[K, VNew](derivation(source)) {
 
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, VNew] =
     new DerivedSortedRDDRecipe(source.restrictToIdSet(ids), derivation)
@@ -517,16 +536,20 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
     source1: SortedRDD[K, VOld1],
     source2: SortedRDD[K, VOld2],
     derivation: BiDerivedSortedRDD.Derivation[K, VOld1, VOld2, VNew])
-  extends SortedRDD[K, VNew](derivation(source1, source2)) {
+    extends SortedRDD[K, VNew](derivation(source1, source2)) {
 
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, VNew] =
     new BiDerivedSortedRDDRecipe(
-      source1.restrictToIdSet(ids), source2.restrictToIdSet(ids), derivation)
+      source1.restrictToIdSet(ids),
+      source2.restrictToIdSet(ids),
+      derivation)
 
   protected def meCached = None
   protected def copyWithAncestorsCachedRecipe: SortedRDDRecipe[K, VNew] = {
     new BiDerivedSortedRDDRecipe(
-      source1.copyWithAncestorsCached, source2.copyWithAncestorsCached, derivation)
+      source1.copyWithAncestorsCached,
+      source2.copyWithAncestorsCached,
+      derivation)
   }
 }
 
@@ -535,7 +558,7 @@ private[spark_util] class BiDerivedSortedRDD[K: Ordering, VOld1, VOld2, VNew](
 // partitioned by a hash partitioner. A (k,v) in partition i of data will end up in the array in
 // partition i of this SortedArrayRDD.
 private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], needsSorting: Boolean)
-  extends RDD[(Int, Array[(K, V)])](data) {
+    extends RDD[(Int, Array[(K, V)])](data) {
 
   assert(
     data.partitioner.isDefined,
@@ -560,7 +583,7 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
 
 // "Trust me, this RDD is partitioned with this partitioner."
 private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Partitioner)
-  extends RDD[T](data) {
+    extends RDD[T](data) {
   assert(p.numPartitions == data.partitions.size, s"Mismatched partitioner: $p")
   override val partitioner = Some(p)
   override def getPartitions: Array[Partition] = data.partitions
@@ -571,7 +594,7 @@ private[spark_util] class AlreadyPartitionedRDD[T: ClassTag](data: RDD[T], p: Pa
 
 // "Trust me, this RDD is already sorted."
 private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
-  extends SortedRDD[K, V](data) {
+    extends SortedRDD[K, V](data) {
   // Normal operations run on the iterators. Arrays are only created when necessary.
   lazy val arrayRDD = new SortedArrayRDD(data, needsSorting = false)
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
@@ -584,10 +607,10 @@ private[spark_util] class AlreadySortedRDD[K: Ordering, V](data: RDD[(K, V)])
 }
 
 private[spark_util] class ArrayBackedSortedRDD[K: Ordering, V](arrayRDD: SortedArrayRDD[K, V])
-  extends SortedRDD[K, V](
-    arrayRDD.mapPartitions(
-      it => it.next._2.iterator,
-      preservesPartitioning = true)) {
+    extends SortedRDD[K, V](
+      arrayRDD.mapPartitions(
+        it => it.next._2.iterator,
+        preservesPartitioning = true)) {
   def restrictToIdSetRecipe(ids: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids)
 
@@ -611,7 +634,10 @@ private object BinarySearchUtils {
   // of the range being strictly less while elements to the right being strictly more than id.
   // Both input and output start indices are inclusive, end indices are exclusive.
   def findRange[K: Ordering, V](
-    array: Array[(K, V)], id: K, startIdx: Int, endIdx: Int): (Int, Int) = {
+      array: Array[(K, V)],
+      id: K,
+      startIdx: Int,
+      endIdx: Int): (Int, Int) = {
 
     val ord = implicitly[Ordering[K]]
     import ord.mkOrderingOps
@@ -640,7 +666,10 @@ private object BinarySearchUtils {
 
   // The ids seq needs to be sorted.
   def findIds[K: Ordering, V](
-    array: Array[(K, V)], ids: IndexedSeq[K], startIdx: Int, endIdx: Int): Iterator[(K, V)] = {
+      array: Array[(K, V)],
+      ids: IndexedSeq[K],
+      startIdx: Int,
+      endIdx: Int): Iterator[(K, V)] = {
 
     if (ids.size == 0) Iterator()
     else {
@@ -656,8 +685,8 @@ private object BinarySearchUtils {
 
 object RestrictedArrayBackedSortedRDD {
   def restrictArrayRDDToIds[K: Ordering, V](
-    arrayRDD: SortedArrayRDD[K, V],
-    ids: IndexedSeq[K]): RDD[(K, V)] = {
+      arrayRDD: SortedArrayRDD[K, V],
+      ids: IndexedSeq[K]): RDD[(K, V)] = {
     val partitioner = arrayRDD.partitioner.get
     arrayRDD.mapPartitionsWithIndex(
       {
@@ -671,14 +700,15 @@ object RestrictedArrayBackedSortedRDD {
             Iterator()
           }
       },
-      preservesPartitioning = true)
+      preservesPartitioning = true,
+    )
   }
 }
 private[spark_util] class RestrictedArrayBackedSortedRDD[K: Ordering, V](
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K])
-  extends SortedRDD[K, V](
-    RestrictedArrayBackedSortedRDD.restrictArrayRDDToIds(arrayRDD, ids)) {
+    extends SortedRDD[K, V](
+      RestrictedArrayBackedSortedRDD.restrictArrayRDDToIds(arrayRDD, ids)) {
   def restrictToIdSetRecipe(newIds: IndexedSeq[K]): SortedRDDRecipe[K, V] =
     new RestrictedArrayBackedSortedRDDRecipe(arrayRDD, ids.intersect(newIds))
 

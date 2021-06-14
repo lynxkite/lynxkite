@@ -14,7 +14,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
 import scala.collection.mutable
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -33,17 +33,17 @@ object CompactUndirectedGraph {
   }
 
   def apply(
-    rc: RuntimeContext,
-    edges: EdgeBundleData,
-    needsBothDirections: Boolean): CompactUndirectedGraph = {
+      rc: RuntimeContext,
+      edges: EdgeBundleData,
+      needsBothDirections: Boolean): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
     apply(rc, edges.rdd, needsBothDirections)
   }
 
   def apply(
-    rc: RuntimeContext,
-    edgesRDD: EdgeBundleRDD,
-    needsBothDirections: Boolean): CompactUndirectedGraph = {
+      rc: RuntimeContext,
+      edgesRDD: EdgeBundleRDD,
+      needsBothDirections: Boolean): CompactUndirectedGraph = {
     val path = rc.broadcastDirectory / scala.util.Random.alphanumeric.take(10).mkString.toLowerCase
     val outEdges = edgesRDD.map {
       case (id, edge) => (edge.src, edge.dst)

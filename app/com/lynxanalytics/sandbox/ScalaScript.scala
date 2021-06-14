@@ -9,7 +9,7 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
-import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, Timestamp}
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
@@ -50,7 +50,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
     Thread.currentThread.getStackTrace.exists {
       stackTraceElement =>
         stackTraceElement.getClassName == "java.lang.ClassLoader" &&
-          stackTraceElement.getMethodName == "loadClass"
+        stackTraceElement.getMethodName == "loadClass"
     }
   }
 
@@ -92,9 +92,11 @@ class ScalaScriptSecurityManager extends SecurityManager {
 
   override def checkPackageAccess(s: String): Unit = {
     super.checkPackageAccess(s) // This must be the first thing to do!
-    if (shouldCheck.value &&
+    if (
+      shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
-        s.contains("org.apache.spark"))) {
+        s.contains("org.apache.spark"))
+    ) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
@@ -112,8 +114,8 @@ object ScalaScript {
 
   private val evaluatorCache = new SoftHashMap[String, Evaluator]()
   def run(
-    code: String,
-    bindings: Map[String, String] = Map()): String = {
+      code: String,
+      bindings: Map[String, String] = Map()): String = {
     val e = compileAndGetEvaluator(code, bindings.keys.map(k => k -> typeTag[String]).toMap)
     e.evaluate(bindings).toString
   }
@@ -126,10 +128,7 @@ object ScalaScript {
     val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
     SQLHelper.toSeqRDD(df).take(maxRows).map {
       row =>
-        names.zip(row.toSeq.toList).
-          groupBy(_._1).
-          mapValues(_.map(_._2)).
-          mapValues(_(0))
+        names.zip(row.toSeq.toList).groupBy(_._1).mapValues(_.map(_._2)).mapValues(_(0))
     }.toSeq
   }
 
@@ -140,11 +139,12 @@ object ScalaScript {
     // Whether the expression returns an Option or not.
     def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
     // The type argument for Options otherwise the return type.
-    def payloadType = if (isOptionType) {
-      returnType.typeArgs(0)
-    } else {
-      returnType
-    }
+    def payloadType =
+      if (isOptionType) {
+        returnType.typeArgs(0)
+      } else {
+        returnType
+      }
   }
 
   // Inferring the type for the exact same code and parameters is expected to happen often,
@@ -152,9 +152,9 @@ object ScalaScript {
   private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
 
   def compileAndGetType(
-    code: String,
-    mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): ScalaType = {
+      code: String,
+      mandatoryParamTypes: Map[String, TypeTag[_]],
+      optionalParamTypes: Map[String, TypeTag[_]] = Map()): ScalaType = {
     val funcCode = evalFuncString(
       code,
       mandatoryParamTypes ++ optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) })
@@ -180,8 +180,8 @@ object ScalaScript {
 
   // Both type inference and evaluation should use this function.
   private def evalFuncString(
-    code: String,
-    convertedParamTypes: Map[String, TypeTag[_]]): String = {
+      code: String,
+      convertedParamTypes: Map[String, TypeTag[_]]): String = {
     val paramString = convertedParamTypes.map {
       case (k, v) => s"`$k`: ${v.tpe}"
     }.mkString(", ")
@@ -225,28 +225,30 @@ object ScalaScript {
   }
 
   def compileAndGetEvaluator(
-    code: String,
-    mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
+      code: String,
+      mandatoryParamTypes: Map[String, TypeTag[_]],
+      optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
     val cacheKey = (
       Seq(code) ++
-      mandatoryParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" }
-      ++
-      optionalParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" })
+        mandatoryParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" }
+        ++
+        optionalParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" })
       .mkString(";")
-    evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
-      // Parameters are back quoted and taken out from the Map. The input argument is one Map to
-      // make the calling of the compiled function easier (otherwise we had varying number of args).
-      val convertedParamTypes = mandatoryParamTypes ++
-        optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
-      val paramsString = convertedParamTypes.map {
-        case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
-      }.mkString("\n")
-      val callParams = convertedParamTypes.map {
-        case (k, _) => s"`$k`"
-      }.mkString(", ")
-      val func = evalFuncString(code, convertedParamTypes)
-      val fullCode = s"""
+    evaluatorCache.getOrElseUpdate(
+      cacheKey,
+      synchronized {
+        // Parameters are back quoted and taken out from the Map. The input argument is one Map to
+        // make the calling of the compiled function easier (otherwise we had varying number of args).
+        val convertedParamTypes = mandatoryParamTypes ++
+          optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
+        val paramsString = convertedParamTypes.map {
+          case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
+        }.mkString("\n")
+        val callParams = convertedParamTypes.map {
+          case (k, _) => s"`$k`"
+        }.mkString(", ")
+        val func = evalFuncString(code, convertedParamTypes)
+        val fullCode = s"""
       $func
       def evalWrapper(params: Map[String, Any]) = {
         $paramsString
@@ -254,14 +256,15 @@ object ScalaScript {
       }
       evalWrapper _
       """
-      withEngine {
-        val compiledCode = compile(fullCode)
-        val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval()
+        withEngine {
+          val compiledCode = compile(fullCode)
+          val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+            compiledCode.eval()
+          }
+          Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
         }
-        Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
-      }
-    })
+      },
+    )
   }
 
   private def withEngine[T](func: => T): T = synchronized {

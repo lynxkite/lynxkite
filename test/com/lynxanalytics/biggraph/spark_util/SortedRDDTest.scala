@@ -72,8 +72,8 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
   }
 
   def assertSortedPartitions(
-    rdd: SortedRDD[Int, Int],
-    partitioner: Partitioner) {
+      rdd: SortedRDD[Int, Int],
+      partitioner: Partitioner) {
     assert(rdd.partitioner.orNull eq partitioner)
     val partitionContents = rdd
       .mapPartitionsWithIndex { (pid, it) => it.map(x => (pid, x)) }
@@ -110,11 +110,13 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
       val data = genData(parts, rows, 1).cache
       data.calculate
       def oldSort = data.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true).collect
-      def newSort = data.mapPartitions(x => {
-        val a = x.toArray
-        scala.util.Sorting.quickSort(a)
-        a.iterator
-      }, preservesPartitioning = true).collect
+      def newSort = data.mapPartitions(
+        x => {
+          val a = x.toArray
+          scala.util.Sorting.quickSort(a)
+          a.iterator
+        },
+        preservesPartitioning = true).collect
     }
     val parts = 4
     val table = "%10s | %10s | %10s"

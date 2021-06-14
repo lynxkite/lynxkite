@@ -5,26 +5,24 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations.{ Filter, _ }
+import com.lynxanalytics.biggraph.graph_operations.{Filter, _}
 
 case class FEVertexAttributeFilter(
     val attributeId: String,
     val valueSpec: String) {
 
   def attribute(
-    implicit
-    manager: MetaGraphManager): Attribute[_] = {
+      implicit manager: MetaGraphManager): Attribute[_] = {
     manager.attribute(attributeId.asUUID)
   }
 
   def toFilteredAttribute(
-    implicit
-    manager: MetaGraphManager): FilteredAttribute[_] = {
+      implicit manager: MetaGraphManager): FilteredAttribute[_] = {
     toFilteredAttributeFromAttribute(attribute)
   }
 
   private def toFilteredAttributeFromAttribute[T](
-    attr: Attribute[T]): FilteredAttribute[T] = {
+      attr: Attribute[T]): FilteredAttribute[T] = {
     implicit val tt = attr.typeTag
     return FilteredAttribute(attr, FEFilters.filterFromSpec(valueSpec))
   }
@@ -32,16 +30,16 @@ case class FEVertexAttributeFilter(
 
 object FEFilters {
   def filter(
-    vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-    implicit
-    metaManager: MetaGraphManager): VertexSet = {
+      vertexSet: VertexSet,
+      filters: Seq[FEVertexAttributeFilter])(
+      implicit metaManager: MetaGraphManager): VertexSet = {
     filterFA(vertexSet, filters.map(_.toFilteredAttribute))
   }
 
   def filterFA(
-    vertexSet: VertexSet, filters: Seq[FilteredAttribute[_]])(
-    implicit
-    metaManager: MetaGraphManager): VertexSet = {
+      vertexSet: VertexSet,
+      filters: Seq[FilteredAttribute[_]])(
+      implicit metaManager: MetaGraphManager): VertexSet = {
     for (f <- filters) {
       assert(
         f.attribute.vertexSet == vertexSet,
@@ -53,18 +51,23 @@ object FEFilters {
   }
 
   def localFilter(
-    vertices: Set[ID], filters: Seq[FEVertexAttributeFilter])(
-    implicit
-    metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+      vertices: Set[ID],
+      filters: Seq[FEVertexAttributeFilter])(
+      implicit
+      metaManager: MetaGraphManager,
+      dataManager: DataManager): Set[ID] = {
     filters.foldLeft(vertices) { (vs, filter) =>
       localFilter(vs, filter.attribute, filter.valueSpec)
     }
   }
 
   def localFilter[T](
-    vertices: Set[ID], attr: Attribute[T], spec: String)(
-    implicit
-    metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+      vertices: Set[ID],
+      attr: Attribute[T],
+      spec: String)(
+      implicit
+      metaManager: MetaGraphManager,
+      dataManager: DataManager): Set[ID] = {
     implicit val tt = attr.typeTag
     val filter = filterFromSpec[T](spec)
     val values = RestrictAttributeToIds.run(attr, vertices).value
@@ -72,16 +75,18 @@ object FEFilters {
   }
 
   def embedFilteredVertices(
-    base: VertexSet, filters: Seq[FEVertexAttributeFilter], heavy: Boolean = false)(
-    implicit
-    metaManager: MetaGraphManager): EdgeBundle = {
+      base: VertexSet,
+      filters: Seq[FEVertexAttributeFilter],
+      heavy: Boolean = false)(
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
     embedFilteredVerticesFA(base, filters.map(_.toFilteredAttribute), heavy)
   }
 
   def embedFilteredVerticesFA(
-    base: VertexSet, filters: Seq[FilteredAttribute[_]], heavy: Boolean = false)(
-    implicit
-    metaManager: MetaGraphManager): EdgeBundle = {
+      base: VertexSet,
+      filters: Seq[FilteredAttribute[_]],
+      heavy: Boolean = false)(
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
     for (v <- filters) {
       assert(v.attribute.vertexSet == base, s"Filter mismatch: ${v.attribute} and $base")
     }
@@ -90,33 +95,30 @@ object FEFilters {
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
-    implicit
-    metaManager: MetaGraphManager): VertexSet = {
+      implicit metaManager: MetaGraphManager): VertexSet = {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
   }
 
   private def filterEmbedding[T](
-    fa: FilteredAttribute[T])(
-    implicit
-    metaManager: MetaGraphManager): EdgeBundle = {
+      fa: FilteredAttribute[T])(
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
     import Scripting._
     val op = VertexAttributeFilter(fa.filter)
     return op(op.attr, fa.attribute).result.identity
   }
 
   private def applyFilter[T](
-    fa: FilteredAttribute[T])(
-    implicit
-    metaManager: MetaGraphManager): VertexSet = {
+      fa: FilteredAttribute[T])(
+      implicit metaManager: MetaGraphManager): VertexSet = {
     import Scripting._
     val op = VertexAttributeFilter(fa.filter)
     return op(op.attr, fa.attribute).result.fvs
   }
 
   private def intersectionEmbedding(
-    filteredVss: Seq[VertexSet], heavy: Boolean = false)(
-    implicit
-    metaManager: MetaGraphManager): EdgeBundle = {
+      filteredVss: Seq[VertexSet],
+      heavy: Boolean = false)(
+      implicit metaManager: MetaGraphManager): EdgeBundle = {
 
     val op = VertexSetIntersection(filteredVss.size, heavy)
     op(op.vss, filteredVss).result.firstEmbedding
@@ -217,21 +219,20 @@ object FEFilters {
 
   class VectorParser extends TokenParser {
     def forall[T: TypeTag] =
-      P(("forall" | "all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(
-        x => ForAll(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
+      P(("forall" | "all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(x =>
+        ForAll(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
     def exists[T: TypeTag] =
-      P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
-        x => Exists(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
+      P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(x =>
+        Exists(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
     def parse[T: TypeTag](spec: String): Filter[T] = {
       val outerNotFilter = P("!" ~ notWs.!).map { x =>
         NotFilter(filterFromSpec(x)(typeTag[Vector[T]]).asInstanceOf[Filter[T]])
       }
       val matchAllFilter = P("*").map(_ => MatchAllFilter().asInstanceOf[Filter[T]])
       val vec = P(forall | exists)
-      val intervals = P(
-        DoubleParser.interval ~ ws ~ "," ~ ws ~ DoubleParser.interval).map {
-          x => VectorFilter(x._1, x._2).asInstanceOf[Filter[T]]
-        }
+      val intervals = P(DoubleParser.interval ~ ws ~ "," ~ ws ~ DoubleParser.interval).map {
+        x => VectorFilter(x._1, x._2).asInstanceOf[Filter[T]]
+      }
       val expr = P(Start ~ ws ~ (outerNotFilter | matchAllFilter | vec | intervals) ~ ws ~ End)
       import fastparse.core.Parsed
       val Parsed.Success(filter, _) = expr.parse(spec)

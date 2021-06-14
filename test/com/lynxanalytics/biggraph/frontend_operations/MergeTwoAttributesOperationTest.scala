@@ -14,4 +14,3 @@ class MergeTwoAttributesOperationTest extends OperationsTestBase {
     c.project
   }
 }
-

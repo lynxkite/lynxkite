@@ -18,7 +18,7 @@ object FastRandomEdgeBundle extends OpFromJson {
     val vs = vertexSet
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = FastRandomEdgeBundle(
@@ -27,7 +27,7 @@ object FastRandomEdgeBundle extends OpFromJson {
 }
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -36,10 +36,10 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
   override def toJson = Json.obj("seed" -> seed, "averageDegree" -> averageDegree)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd
@@ -54,7 +54,10 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
   }
 
   private def randomCopies(
-    vs: VertexSetRDD, averageCopies: Double, seed: Int, partitioner: Partitioner): rdd.RDD[ID] = {
+      vs: VertexSetRDD,
+      averageCopies: Double,
+      seed: Int,
+      partitioner: Partitioner): rdd.RDD[ID] = {
 
     val numPartitions = partitioner.numPartitions
     vs

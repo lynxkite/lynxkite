@@ -74,7 +74,8 @@ object StringStruct {
 
 case class VertexSet(
     source: MetaGraphOperationInstance,
-    name: Symbol) extends MetaGraphEntity {
+    name: Symbol)
+    extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
 }
 
@@ -146,7 +147,7 @@ case class EdgeBundle(
     properties: EdgeBundleProperties = EdgeBundleProperties.default,
     idSet: VertexSet, // The edge IDs as a VertexSet.
     autogenerateIdSet: Boolean) // The RDD for idSet will be auto-generated.
-  extends MetaGraphEntity {
+    extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
   val isLocal = srcVertexSet == dstVertexSet
 }
@@ -157,7 +158,7 @@ case class HybridBundle(
     name: Symbol,
     // Always uses the src->dst mapping, the edge IDs are ignored.
     srcToDstEdgeBundle: EdgeBundle)
-  extends MetaGraphEntity {
+    extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
 }
 
@@ -171,7 +172,7 @@ case class Attribute[T: TypeTag](
     source: MetaGraphOperationInstance,
     name: Symbol,
     vertexSet: VertexSet)
-  extends TypedEntity[T] with RuntimeSafeCastable[T, Attribute] {
+    extends TypedEntity[T] with RuntimeSafeCastable[T, Attribute] {
   assert(name != null, s"name is null for $this")
   val typeTag = implicitly[TypeTag[T]]
 }
@@ -179,7 +180,7 @@ case class Attribute[T: TypeTag](
 case class Scalar[T: TypeTag](
     source: MetaGraphOperationInstance,
     name: Symbol)
-  extends TypedEntity[T] with RuntimeSafeCastable[T, Scalar] {
+    extends TypedEntity[T] with RuntimeSafeCastable[T, Scalar] {
   assert(name != null, s"name is null for $this")
   val typeTag = implicitly[TypeTag[T]]
 }
@@ -188,7 +189,7 @@ case class Table(
     source: MetaGraphOperationInstance,
     name: Symbol,
     schema: spark.sql.types.StructType)
-  extends MetaGraphEntity {
+    extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
 }
 
@@ -222,7 +223,9 @@ trait FieldNaming {
       name != null,
       "This is typically caused by a name being used before the initialization of " +
         "the FieldNaming subclass. We were looking for the name of: %s. Available names: %s".format(
-          obj, naming))
+          obj,
+          naming),
+    )
     name
   }
 }
@@ -235,9 +238,8 @@ trait EntityTemplate[T <: MetaGraphEntity] {
 object EntityTemplate {
   import scala.language.implicitConversions
   implicit def unpackTemplate[T <: MetaGraphEntity](
-    template: EntityTemplate[T])(
-    implicit
-    instance: MetaGraphOperationInstance): T = template.entity
+      template: EntityTemplate[T])(
+      implicit instance: MetaGraphOperationInstance): T = template.entity
 }
 
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
@@ -263,7 +265,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       idSetF: => Option[Symbol],
       requiredProperties: EdgeBundleProperties,
       nameOpt: Option[Symbol])
-    extends ET[EdgeBundle](nameOpt) {
+      extends ET[EdgeBundle](nameOpt) {
     private lazy val src = srcF
     private lazy val dst = dstF
     private lazy val idSet = idSetF
@@ -278,7 +280,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         templatesByName(dst).asInstanceOf[VertexSetTemplate].set(withSrc, eb.dstVertexSet)
       val withSrcDstIdSet = idSet match {
         case Some(vsName) => templatesByName(vsName).asInstanceOf[VertexSetTemplate]
-          .set(withSrcDst, eb.idSet)
+            .set(withSrcDst, eb.idSet)
         case None => withSrcDst
       }
       super.set(withSrcDstIdSet, eb)
@@ -290,7 +292,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   class HybridBundleTemplate(
       esF: => Symbol,
       nameOpt: Option[Symbol])
-    extends ET[HybridBundle](nameOpt) {
+      extends ET[HybridBundle](nameOpt) {
     private lazy val es = esF
     override def set(target: MetaDataSet, hb: HybridBundle): MetaDataSet = {
       val withEs =
@@ -302,7 +304,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   }
 
   class VertexAttributeTemplate[T](vsF: => Symbol, nameOpt: Option[Symbol])
-    extends ET[Attribute[T]](nameOpt) {
+      extends ET[Attribute[T]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: Attribute[T]): MetaDataSet = {
       val withVs =
@@ -314,7 +316,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   }
 
   class RuntimeTypedVATemplate(vsF: => Symbol, nameOpt: Option[Symbol], tt: TypeTag[_])
-    extends ET[Attribute[_]](nameOpt) {
+      extends ET[Attribute[_]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: Attribute[_]): MetaDataSet = {
       assert(
@@ -329,7 +331,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   }
 
   class EdgeAttributeTemplate[T](esF: => Symbol, nameOpt: Option[Symbol])
-    extends ET[Attribute[T]](nameOpt) {
+      extends ET[Attribute[T]](nameOpt) {
     lazy val es = esF
     override def set(target: MetaDataSet, ea: Attribute[T]): MetaDataSet = {
       assert(
@@ -369,18 +371,23 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(
-    src: VertexSetTemplate,
-    dst: VertexSetTemplate,
-    requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
-    idSet: VertexSetTemplate = null,
-    name: Symbol = null) =
+      src: VertexSetTemplate,
+      dst: VertexSetTemplate,
+      requiredProperties: EdgeBundleProperties = EdgeBundleProperties.default,
+      idSet: VertexSetTemplate = null,
+      name: Symbol = null) =
     new EdgeBundleTemplate(
-      src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
+      src.name,
+      dst.name,
+      Option(idSet).map(_.name),
+      requiredProperties,
+      Option(name))
   def hybridBundle(
-    es: EdgeBundleTemplate,
-    name: Symbol = null) =
+      es: EdgeBundleTemplate,
+      name: Symbol = null) =
     new HybridBundleTemplate(
-      es.name, Option(name))
+      es.name,
+      Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
   def runtimeTypedVertexAttribute(vs: VertexSetTemplate, name: Symbol = null, tt: TypeTag[_]) =
@@ -412,7 +419,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         case sc: ScalarTemplate[_] => sc.name
         case sc: RuntimeTypedScalarTemplate => sc.name
       }.toSet,
-      tables = templates.collect { case tb: TableTemplate => tb.name }.toSet)
+      tables = templates.collect { case tb: TableTemplate => tb.name }.toSet,
+    )
 
   private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()
   private lazy val templatesByName = {
@@ -436,7 +444,7 @@ object EntityContainer {
 }
 
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
-  extends MetaDataSetProvider with FieldNaming {
+    extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
     lazy val name: Symbol = {
       val name = nameOpt.getOrElse(nameOf(this))
@@ -458,11 +466,11 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   def vertexSet = new P(VertexSet(instance, _), None)
   def vertexSet(name: Symbol) = new P(VertexSet(instance, _), Some(name))
   def edgeBundle(
-    src: => EntityContainer[VertexSet],
-    dst: => EntityContainer[VertexSet],
-    properties: EdgeBundleProperties = EdgeBundleProperties.default,
-    idSet: EntityContainer[VertexSet] = null,
-    name: Symbol = null) = {
+      src: => EntityContainer[VertexSet],
+      dst: => EntityContainer[VertexSet],
+      properties: EdgeBundleProperties = EdgeBundleProperties.default,
+      idSet: EntityContainer[VertexSet] = null,
+      name: Symbol = null) = {
     // A "var" is used because the edge bundle and its idSet need each other's references.
     var eb: P[EdgeBundle] = null
     val idSetSafe = Option(idSet).getOrElse {
@@ -473,14 +481,21 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
         }
       }
     }
-    eb = new P(EdgeBundle(
-      instance, _, src, dst, properties,
-      idSetSafe, autogenerateIdSet = idSet == null), Option(name))
+    eb = new P(
+      EdgeBundle(
+        instance,
+        _,
+        src,
+        dst,
+        properties,
+        idSetSafe,
+        autogenerateIdSet = idSet == null),
+      Option(name))
     eb
   }
   def hybridBundle(
-    es: => EntityContainer[EdgeBundle],
-    name: Symbol = null) = new P(HybridBundle(instance, _, es), Option(name))
+      es: => EntityContainer[EdgeBundle],
+      name: Symbol = null) = new P(HybridBundle(instance, _, es), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
@@ -518,7 +533,8 @@ trait MetaGraphOp extends Serializable with ToJson {
     val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
     def get(param: MethodSymbol) = mirror.reflectField(param).get
     StringStruct(
-      className, params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
+      className,
+      params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
 }
 
@@ -527,7 +543,7 @@ object TypedMetaGraphOp {
   type Type = TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
 }
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
-  extends MetaGraphOp {
+    extends MetaGraphOp {
   def inputs: IS = ???
   def inputSig: InputSignature = inputs.inputSignature
   def outputMeta(instance: MetaGraphOperationInstance): OMDS
@@ -598,7 +614,8 @@ trait MetaGraphOperationInstance {
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     manager: MetaGraphManager,
     operation: TypedMetaGraphOp[IS, OMDS],
-    inputs: MetaDataSet) extends MetaGraphOperationInstance {
+    inputs: MetaDataSet)
+    extends MetaGraphOperationInstance {
   val result: OMDS = operation.outputMeta(this)
   val outputs: MetaDataSet = result.metaDataSet
   override lazy val hashCode = gUID.hashCode
@@ -612,7 +629,7 @@ case class MetaDataSet(
     attributes: Map[Symbol, Attribute[_]] = Map(),
     scalars: Map[Symbol, Scalar[_]] = Map(),
     tables: Map[Symbol, Table] = Map())
-  extends ToJson {
+    extends ToJson {
   val all: Map[Symbol, MetaGraphEntity] =
     vertexSets ++ edgeBundles ++ hybridBundles ++ attributes ++ scalars ++ tables
   assert(
@@ -630,7 +647,7 @@ case class MetaDataSet(
       case (name, entity) => name.name -> entity.gUID.toString
     }.toMap
   override def toJson = {
-    import play.api.libs.json.{ JsObject, JsString }
+    import play.api.libs.json.{JsObject, JsString}
     new JsObject(asStringMap.mapValues(JsString(_)))
   }
 
@@ -639,15 +656,16 @@ case class MetaDataSet(
   def ++(mds: MetaDataSet): MetaDataSet = {
     assert(
       (all.keySet & mds.all.keySet).forall(key => all(key).gUID == mds.all(key).gUID),
-      "Collision: " + (all.keySet & mds.all.keySet).toSeq.filter(
-        key => all(key).gUID != mds.all(key).gUID))
+      "Collision: " + (all.keySet & mds.all.keySet).toSeq.filter(key => all(key).gUID != mds.all(key).gUID),
+    )
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
       hybridBundles ++ mds.hybridBundles,
       attributes ++ mds.attributes,
       scalars ++ mds.scalars,
-      tables ++ mds.tables)
+      tables ++ mds.tables,
+    )
   }
 
   def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = {
@@ -666,6 +684,7 @@ object MetaDataSet {
       hybridBundles = all.collect { case (k, v: HybridBundle) => (k, v) },
       attributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap,
-      tables = all.collect { case (k, v: Table) => (k, v) })
+      tables = all.collect { case (k, v: Table) => (k, v) },
+    )
   }
 }

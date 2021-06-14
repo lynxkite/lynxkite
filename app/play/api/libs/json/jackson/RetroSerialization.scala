@@ -35,7 +35,7 @@ import play.api.libs.json._
 
 // A fork of PlayJsonModule.
 sealed class RetroJsonModule(parserSettings: JsonParserSettings)
-  extends SimpleModule("RetroJson", Version.unknownVersion()) {
+    extends SimpleModule("RetroJson", Version.unknownVersion()) {
   override def setupModule(context: SetupContext): Unit = {
     context.addSerializers(new RetroSerializers(parserSettings))
   }
@@ -43,21 +43,24 @@ sealed class RetroJsonModule(parserSettings: JsonParserSettings)
 
 // A fork of PlaySerializers.
 private[jackson] class RetroSerializers(parserSettings: JsonParserSettings)
-  extends Serializers.Base {
+    extends Serializers.Base {
   override def findSerializer(
-    config: SerializationConfig, javaType: JavaType, beanDesc: BeanDescription) = {
-    val ser: Object = if (classOf[JsValue].isAssignableFrom(beanDesc.getBeanClass)) {
-      new RetroJsValueSerializer(parserSettings)
-    } else {
-      null
-    }
+      config: SerializationConfig,
+      javaType: JavaType,
+      beanDesc: BeanDescription) = {
+    val ser: Object =
+      if (classOf[JsValue].isAssignableFrom(beanDesc.getBeanClass)) {
+        new RetroJsValueSerializer(parserSettings)
+      } else {
+        null
+      }
     ser.asInstanceOf[JsonSerializer[Object]]
   }
 }
 
 // Monkey patch JsValueSerializer.
 private[jackson] class RetroJsValueSerializer(parserSettings: JsonParserSettings)
-  extends JsValueSerializer(parserSettings) {
+    extends JsValueSerializer(parserSettings) {
   override def serialize(value: JsValue, json: JsonGenerator, provider: SerializerProvider): Unit = {
     value match {
       // Write it out without stripping trailing zeroes.

@@ -14,10 +14,30 @@ class MetaGraphTest extends AnyFunSuite with TestGraphOp {
     val mg = MetaGraph(timestamp = "1", Some(this)).result
     assert(mg.vName.rdd.values.collect.toSet ==
       Set(
-        "MetaGraph", "vs", "vName", "vProgress", "vGUID", "vKind", "es", "es-idSet", "eName",
+        "MetaGraph",
+        "vs",
+        "vName",
+        "vProgress",
+        "vGUID",
+        "vKind",
+        "es",
+        "es-idSet",
+        "eName",
         "eKind",
-        "OutDegree", "outDegree",
-        "ExampleGraph", "weight", "name", "location", "age", "income", "comment", "greeting",
-        "edges", "edges-idSet", "vertices", "gender"))
+        "OutDegree",
+        "outDegree",
+        "ExampleGraph",
+        "weight",
+        "name",
+        "location",
+        "age",
+        "income",
+        "comment",
+        "greeting",
+        "edges",
+        "edges-idSet",
+        "vertices",
+        "gender",
+      ))
   }
 }

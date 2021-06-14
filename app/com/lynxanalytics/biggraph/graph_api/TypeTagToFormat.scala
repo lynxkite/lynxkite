@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import play.api.libs.json
-import play.api.libs.json.{ JsArray, JsValue }
+import play.api.libs.json.{JsArray, JsValue}
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -65,8 +65,8 @@ object TypeTagToFormat {
     def reads(jv: json.JsValue): json.JsSuccess[Map[A, B]] = {
       val extracted = jv match {
         case JsArray(arr) => arr.map {
-          element => (element \ "key").as[A] -> (element \ "val").as[B]
-        }
+            element => (element \ "key").as[A] -> (element \ "val").as[B]
+          }
         case _ => ???
       }
       json.JsSuccess(extracted.toMap)

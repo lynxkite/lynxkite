@@ -10,24 +10,26 @@ trait AttributeWithLocalAggregator[From, To] {
 }
 object AttributeWithLocalAggregator {
   def apply[From, To](
-    attrInp: Attribute[From],
-    aggregatorInp: graph_operations.LocalAggregator[From, To]): AttributeWithLocalAggregator[From, To] = {
+      attrInp: Attribute[From],
+      aggregatorInp: graph_operations.LocalAggregator[From, To]): AttributeWithLocalAggregator[From, To] = {
     new AttributeWithLocalAggregator[From, To] {
       val attr = attrInp
       val aggregator = aggregatorInp
     }
   }
   def apply[T](
-    attr: Attribute[T], choice: String)(
-    implicit
-    manager: MetaGraphManager): AttributeWithLocalAggregator[_, _] = {
+      attr: Attribute[T],
+      choice: String)(
+      implicit manager: MetaGraphManager): AttributeWithLocalAggregator[_, _] = {
     choice match {
       case "majority_50" =>
         AttributeWithLocalAggregator(
-          attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(0.5))
+          attr.runtimeSafeCast[String],
+          graph_operations.Aggregator.Majority(0.5))
       case "majority_100" =>
         AttributeWithLocalAggregator(
-          attr.runtimeSafeCast[String], graph_operations.Aggregator.Majority(1.0))
+          attr.runtimeSafeCast[String],
+          graph_operations.Aggregator.Majority(1.0))
       case "vector" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsVector[T]())
       case "set" => AttributeWithLocalAggregator(attr, graph_operations.Aggregator.AsSet[T]())
       case "median" => AttributeWithLocalAggregator(attr.runtimeSafeCast[Double], graph_operations.Aggregator.Median())
@@ -39,13 +41,13 @@ object AttributeWithLocalAggregator {
 case class AttributeWithAggregator[From, Intermediate, To](
     val attr: Attribute[From],
     val aggregator: graph_operations.Aggregator[From, Intermediate, To])
-  extends AttributeWithLocalAggregator[From, To]
+    extends AttributeWithLocalAggregator[From, To]
 
 object AttributeWithAggregator {
   def apply[T](
-    attr: Attribute[T], choice: String)(
-    implicit
-    manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
+      attr: Attribute[T],
+      choice: String)(
+      implicit manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
     def d = attr.runtimeSafeCast[Double]
     def v = attr.runtimeSafeCast[Vector[Double]]
     choice match {
@@ -57,10 +59,12 @@ object AttributeWithAggregator {
       case "max" =>
         AttributeWithAggregator(d, graph_operations.Aggregator.Max())
       case "average" => AttributeWithAggregator(
-        d, graph_operations.Aggregator.Average())
+          d,
+          graph_operations.Aggregator.Average())
       case "first" => AttributeWithAggregator(attr, graph_operations.Aggregator.First[T]())
       case "std_deviation" => AttributeWithAggregator(
-        d, graph_operations.Aggregator.StdDev())
+          d,
+          graph_operations.Aggregator.StdDev())
       case "most_common" =>
         AttributeWithAggregator(attr, graph_operations.Aggregator.MostCommon[T]())
       case "count_most_common" =>
@@ -84,26 +88,30 @@ object AttributeWithAggregator {
 }
 object AttributeWithWeightedAggregator {
   def apply[T](
-    weight: Attribute[Double],
-    attr: Attribute[T],
-    choice: String)(
-    implicit
-    manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
+      weight: Attribute[Double],
+      attr: Attribute[T],
+      choice: String)(
+      implicit manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
 
     choice match {
       case "by_max_weight" => AttributeWithAggregator(
-        graph_operations.JoinAttributes.run(weight, attr),
-        graph_operations.Aggregator.MaxByDouble[T]())
+          graph_operations.JoinAttributes.run(weight, attr),
+          graph_operations.Aggregator.MaxByDouble[T]())
       case "by_min_weight" => AttributeWithAggregator(
-        graph_operations.JoinAttributes.run(
-          graph_operations.DeriveScala.negative(weight), attr),
-        graph_operations.Aggregator.MaxByDouble[T]())
+          graph_operations.JoinAttributes.run(
+            graph_operations.DeriveScala.negative(weight),
+            attr),
+          graph_operations.Aggregator.MaxByDouble[T]())
       case "weighted_sum" => AttributeWithAggregator(
-        graph_operations.JoinAttributes.run(
-          weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedSum())
+          graph_operations.JoinAttributes.run(
+            weight,
+            attr.runtimeSafeCast[Double]),
+          graph_operations.Aggregator.WeightedSum())
       case "weighted_average" => AttributeWithAggregator(
-        graph_operations.JoinAttributes.run(
-          weight, attr.runtimeSafeCast[Double]), graph_operations.Aggregator.WeightedAverage())
+          graph_operations.JoinAttributes.run(
+            weight,
+            attr.runtimeSafeCast[Double]),
+          graph_operations.Aggregator.WeightedAverage())
     }
   }
 }

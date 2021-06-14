@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 import com.lynxanalytics.biggraph.graph_operations.HybridEdgeBundle
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, PrefixRepository}
 import org.scalatest.funsuite.AnyFunSuite
 
 class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {
@@ -118,8 +118,10 @@ class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataMa
     // Now we can delete any superfluous directories, even
     // onePartitionedPath, if its creation was not requested explicitly.
     for (i <- collectNumericSubdirs(partitionedPath)) {
-      if (!partitionedConfig.contains(i.toInt) ||
-        partitionedConfig(i.toInt) == EntityDirStatus.NONEXISTENT) {
+      if (
+        !partitionedConfig.contains(i.toInt) ||
+        partitionedConfig(i.toInt) == EntityDirStatus.NONEXISTENT
+      ) {
         (partitionedPath / i).delete()
       }
     }

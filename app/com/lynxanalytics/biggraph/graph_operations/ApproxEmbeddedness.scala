@@ -11,7 +11,7 @@ import org.apache.spark
 
 object ApproxEmbeddedness extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val embeddedness = edgeAttribute[Double](inputs.es.entity)
   }
   def fromJson(j: JsValue) = ApproxEmbeddedness((j \ "bits").as[Int])
@@ -42,10 +42,10 @@ case class ApproxEmbeddedness(bits: Int) extends SparkOperation[GraphInput, Outp
   override def toJson = Json.obj("bits" -> bits)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val edges = inputs.es.rdd

@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil }
+import com.lynxanalytics.biggraph.graph_util.{JDBCUtil}
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
@@ -37,7 +37,9 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     params ++= List(
       FileParam("filename", "File"),
       Param(
-        "columns", "Columns in file", placeholder = "Leave empty to read header.",
+        "columns",
+        "Columns in file",
+        placeholder = "Leave empty to read header.",
         group = "Advanced settings"),
       Code("delimiter", "Delimiter", defaultValue = ",", group = "Advanced settings", language = ""),
       Code("quote", "Quote character", defaultValue = "\"", group = "Advanced settings", language = ""),
@@ -45,29 +47,43 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Code("null_value", "Null value", defaultValue = "", group = "Advanced settings", language = ""),
       Code("date_format", "Date format", defaultValue = "yyyy-MM-dd", group = "Advanced settings", language = ""),
       Code(
-        "timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-        group = "Advanced settings", language = ""),
+        "timestamp_format",
+        "Timestamp format",
+        defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        group = "Advanced settings",
+        language = ""),
       Choice(
-        "ignore_leading_white_space", "Ignore leading white space", options = FEOption.noyes,
+        "ignore_leading_white_space",
+        "Ignore leading white space",
+        options = FEOption.noyes,
         group = "Advanced settings"),
       Choice(
-        "ignore_trailing_white_space", "Ignore trailing white space", options = FEOption.noyes,
+        "ignore_trailing_white_space",
+        "Ignore trailing white space",
+        options = FEOption.noyes,
         group = "Advanced settings"),
       Code("comment", "Comment character", defaultValue = "", group = "Advanced settings", language = ""),
       Choice(
-        "error_handling", "Error handling", List(
+        "error_handling",
+        "Error handling",
+        List(
           FEOption("FAILFAST", "Fail on any malformed line"),
           FEOption("DROPMALFORMED", "Ignore malformed lines"),
-          FEOption("PERMISSIVE", "Salvage malformed lines: truncate or fill with nulls")),
-        group = "Advanced settings"),
+          FEOption("PERMISSIVE", "Salvage malformed lines: truncate or fill with nulls"),
+        ),
+        group = "Advanced settings",
+      ),
       Choice("infer", "Infer types", options = FEOption.noyes, group = "Advanced settings"),
       Param(
-        "imported_columns", "Columns to import", placeholder = "Leave empty to import all columns.",
+        "imported_columns",
+        "Columns to import",
+        placeholder = "Leave empty to import all columns.",
         group = "Advanced settings"),
       Param("limit", "Limit", group = "Advanced settings"),
       Code("sql", "SQL", language = "sql", group = "Advanced settings"),
       ImportedDataParam(),
-      new DummyParam("last_settings", ""))
+      new DummyParam("last_settings", ""),
+    )
 
     override def summary = {
       if (params("filename").nonEmpty) {
@@ -100,12 +116,13 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         .option("ignoreTrailingWhiteSpace", if (ignoreTrailingWhiteSpace) "true" else "false")
         .option("comment", params("comment"))
         .option("inferSchema", if (infer) "true" else "false")
-      val readerWithSchema = if (columns.nonEmpty) {
-        reader.schema(SQLController.stringOnlySchema(columns.split(",", -1)))
-      } else {
-        // Read column names from header.
-        reader.option("header", "true")
-      }
+      val readerWithSchema =
+        if (columns.nonEmpty) {
+          reader.schema(SQLController.stringOnlySchema(columns.split(",", -1)))
+        } else {
+          // Read column names from header.
+          reader.option("header", "true")
+        }
       val hadoopFile = graph_util.HadoopFile(params("filename"))
       hadoopFile.assertReadAllowedFrom(user)
       FileImportValidator.checkFileHasContents(hadoopFile)
@@ -125,7 +142,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
       ImportedDataParam(),
-      new DummyParam("last_settings", ""))
+      new DummyParam("last_settings", ""),
+    )
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
@@ -141,7 +159,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
             eq != -1,
             s"Invalid connection property definition: ${params("connection_properties")}")
           e.take(eq) -> e.drop(eq + 1)
-        }.toMap)
+        }.toMap,
+      )
     }
   })
 
@@ -156,7 +175,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node"),
       Param("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel"),
       ImportedDataParam(),
-      new DummyParam("last_settings", ""))
+      new DummyParam("last_settings", ""),
+    )
 
     override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
       params.validate()
@@ -233,7 +253,10 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         } else {
           val idAttr = project.vertexAttributes("<id>").asString
           val es = graph_operations.ImportEdgesForExistingVertices.run(
-            idAttr, idAttr, srcAttr, dstAttr)
+            idAttr,
+            idAttr,
+            srcAttr,
+            dstAttr)
           project.edgeBundle = es.edges
           pullAttributes(es.embedding)
         }
@@ -251,7 +274,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedDataParam(),
-      new DummyParam("last_settings", ""))
+      new DummyParam("last_settings", ""),
+    )
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -296,7 +320,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedDataParam(),
-      new DummyParam("last_settings", ""))
+      new DummyParam("last_settings", ""),
+    )
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
         SparkDomain.hiveConfigured,
@@ -331,8 +356,14 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   register("Import well-known graph dataset", List(), List("graph"))(
     new ProjectOutputOperation(_) {
-      params += Choice("name", "Name", options = FEOption.list(
-        "Cora", "CiteSeer", "Karate Club", "PubMed"))
+      params += Choice(
+        "name",
+        "Name",
+        options = FEOption.list(
+          "Cora",
+          "CiteSeer",
+          "Karate Club",
+          "PubMed"))
       override def summary = {
         val fn = params("name")
         s"Import $fn"

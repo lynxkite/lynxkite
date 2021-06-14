@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.graph_api.{ SafeFuture, ThreadUtil }
+import com.lynxanalytics.biggraph.graph_api.{SafeFuture, ThreadUtil}
 import org.scalatest.funsuite.AnyFunSuite
 
 class ControlledFuturesTest extends AnyFunSuite {

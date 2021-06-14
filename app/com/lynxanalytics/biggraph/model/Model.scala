@@ -29,31 +29,34 @@ trait ModelImplementation {
   def details: String
   // Override this if SQL can be generated for the model.
   def toSQL(
-    labelName: Option[String],
-    featureNames: List[String],
-    featureReverseMappings: Option[Map[Int, Map[Double, String]]],
-    labelReverseMapping: Option[Map[Double, String]]): String =
+      labelName: Option[String],
+      featureNames: List[String],
+      featureReverseMappings: Option[Map[Int, Map[Double, String]]],
+      labelReverseMapping: Option[Map[Double, String]]): String =
     "Sorry, SQL generation is not supported for this model type."
 }
 
 // Helper classes to provide a common abstraction for various types of models.
 private[biggraph] class LinearRegressionModelImpl(
     m: ml.regression.LinearRegressionModel,
-    statistics: String) extends ModelImplementation {
+    statistics: String)
+    extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
 }
 
 private[biggraph] class DecisionTreeRegressionModelImpl(
     m: ml.regression.DecisionTreeRegressionModel,
-    statistics: String) extends ModelImplementation {
+    statistics: String)
+    extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
 }
 
 private[biggraph] class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel,
-    statistics: String) extends ModelImplementation {
+    statistics: String)
+    extends ModelImplementation {
   // Transform the data with logistic regression model to a dataframe with the schema [vector |
   // rawPredition | probability | prediction].
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
@@ -62,7 +65,9 @@ private[biggraph] class LogisticRegressionModelImpl(
 }
 
 private[biggraph] class ClusterModelImpl(
-    m: ml.clustering.KMeansModel, statistics: String) extends ModelImplementation {
+    m: ml.clustering.KMeansModel,
+    statistics: String)
+    extends ModelImplementation {
   // Transform the data with clustering model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = s"cluster centers: ${m.clusterCenters}\n" + statistics
@@ -70,27 +75,28 @@ private[biggraph] class ClusterModelImpl(
 
 private[biggraph] class DecisionTreeClassificationModelImpl(
     m: ml.classification.DecisionTreeClassificationModel,
-    statistics: String) extends ModelImplementation {
+    statistics: String)
+    extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
 
   import org.apache.spark.ml.tree._
   override def toSQL(
-    labelName: Option[String],
-    featureNames: List[String],
-    featureReverseMappings: Option[Map[Int, Map[Double, String]]],
-    labelReverseMapping: Option[Map[Double, String]]): String = {
+      labelName: Option[String],
+      featureNames: List[String],
+      featureReverseMappings: Option[Map[Int, Map[Double, String]]],
+      labelReverseMapping: Option[Map[Double, String]]): String = {
     val caseStr = printNode(m.rootNode, featureNames, featureReverseMappings, labelReverseMapping, 0)
     val alias = labelName.map(s => s" AS $s").getOrElse("")
     s"${caseStr}${alias}"
   }
 
   private def printNode(
-    node: Node,
-    featureNames: List[String],
-    featureRM: Option[Map[Int, Map[Double, String]]],
-    labelRM: Option[Map[Double, String]],
-    indent: Int): String = {
+      node: Node,
+      featureNames: List[String],
+      featureRM: Option[Map[Int, Map[Double, String]]],
+      labelRM: Option[Map[Double, String]],
+      indent: Int): String = {
     val indentStr = " " * indent
     node match {
       case n: InternalNode =>
@@ -107,13 +113,14 @@ $rightStr
 ${indentStr}END"""
           case s: CategoricalSplit =>
             val feature = featureNames(s.featureIndex)
-            val leftCategoriesStr = if (featureRM.nonEmpty && featureRM.get.contains(s.featureIndex)) {
-              s.leftCategories.map { category =>
-                featureRM.get(s.featureIndex)(category)
-              }.mkString("'", "', '", "'") // 'a', 'b', 'c' ...
-            } else {
-              s.leftCategories.mkString(", ") // 0.0, 1.0, 2.0 ...
-            }
+            val leftCategoriesStr =
+              if (featureRM.nonEmpty && featureRM.get.contains(s.featureIndex)) {
+                s.leftCategories.map { category =>
+                  featureRM.get(s.featureIndex)(category)
+                }.mkString("'", "', '", "'") // 'a', 'b', 'c' ...
+              } else {
+                s.leftCategories.mkString(", ") // 0.0, 1.0, 2.0 ...
+              }
             s"""${indentStr}CASE
 ${indentStr} WHEN $feature IN (${leftCategoriesStr}) THEN
 $leftStr
@@ -142,15 +149,15 @@ case class Model(
     // Mappings for non Double features from their type to Double, identified by the feature's index.
     featureMappings: Option[Map[Int, Map[String, Double]]] = None,
     statistics: Option[String]) // For the details that require training data
-  extends ToJson with Equals {
+    extends ToJson with Equals {
 
   override def equals(other: Any) = {
     if (canEqual(other)) {
       val o = other.asInstanceOf[Model]
       method == o.method &&
-        symbolicPath == o.symbolicPath &&
-        labelName == o.labelName &&
-        featureNames == o.featureNames
+      symbolicPath == o.symbolicPath &&
+      labelName == o.labelName &&
+      featureNames == o.featureNames
     } else {
       false
     }
@@ -168,7 +175,8 @@ case class Model(
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes.map(_.map(_.toJson)),
       "featureMappings" -> featureMappings.map(_.map { case (k, v) => k.toString -> v }),
-      "statistics" -> statistics)
+      "statistics" -> statistics,
+    )
   }
 
   // Loads the previously created model from the file system.
@@ -185,7 +193,8 @@ case class Model(
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get)
       case "Decision tree classification" =>
         new DecisionTreeClassificationModelImpl(
-          ml.classification.DecisionTreeClassificationModel.load(path), statistics.get)
+          ml.classification.DecisionTreeClassificationModel.load(path),
+          statistics.get)
     }
   }
 
@@ -209,7 +218,8 @@ object Model extends FromJson[Model] {
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").asOpt[List[JsValue]].map(_.map(json => SerializableType.fromJson(json))),
       (j \ "featureMappings").asOpt[Map[String, Map[String, Double]]].map(_.map { case (k, v) => k.toInt -> v }),
-      (j \ "statistics").asOpt[String])
+      (j \ "statistics").asOpt[String],
+    )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
     modelName,
@@ -232,7 +242,8 @@ object Model extends FromJson[Model] {
         m.labelName,
         m.featureNames,
         m.featureMappings.map(_.mapValues(m => m.map(_.swap))),
-        m.labelReverseMapping))
+        m.labelReverseMapping),
+    )
   }
 
   def newModelFile: HadoopFile = {
@@ -242,20 +253,23 @@ object Model extends FromJson[Model] {
   // Converts the input attributes of various types to a DataFrame of Doubles. Returns a
   // mapping by index for each non-Double attribute from their type to Double.
   def toDoubleDF(
-    sqlContext: spark.sql.SQLContext,
-    vertices: VertexSetRDD,
-    attrsArray: Array[AttributeData[_]])(
-    implicit
-    dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
+      sqlContext: spark.sql.SQLContext,
+      vertices: VertexSetRDD,
+      attrsArray: Array[AttributeData[_]])(
+      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
     val mappingsCollector = mutable.Map[Int, Map[String, Double]]()
-    val df = toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
-      case (attr, i) =>
-        val (rdd, mapping) = toDoubleRDD(attr)
-        if (mapping.nonEmpty) {
-          mappingsCollector(i) = mapping.get
-        }
-        rdd
-    })
+    val df = toDF(
+      sqlContext,
+      vertices,
+      attrsArray.zipWithIndex.map {
+        case (attr, i) =>
+          val (rdd, mapping) = toDoubleRDD(attr)
+          if (mapping.nonEmpty) {
+            mappingsCollector(i) = mapping.get
+          }
+          rdd
+      },
+    )
     val mappings = mappingsCollector.toMap
     (markCategoricalVariablesInDFSchema(df, attrsArray.size, mappings), mappings)
   }
@@ -263,9 +277,8 @@ object Model extends FromJson[Model] {
   // Converts the input attribute of a certain type to an RDD of Doubles. Optionally returns a
   // mapping for the attribute from its type - if not Double - to Double.
   def toDoubleRDD(
-    attr: AttributeData[_])(
-    implicit
-    dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
+      attr: AttributeData[_])(
+      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
     attr match {
       case a if a.is[Double] => (a.runtimeSafeCast[Double].rdd, None)
       case a if a.is[String] =>
@@ -279,22 +292,29 @@ object Model extends FromJson[Model] {
   // Converts the input attributes of various types to a DataFrame of Doubles. Mappings for non-Double
   // attributes have to be provided.
   def toDF(
-    sqlContext: spark.sql.SQLContext,
-    vertices: VertexSetRDD,
-    attrsArray: Array[AttributeData[_]],
-    mappings: Map[Int, Map[String, Double]])(
-    implicit
-    dataSet: DataSet): spark.sql.DataFrame = {
-    markCategoricalVariablesInDFSchema(toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
-      case (attr, i) => attr match {
-        case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
-        case a if a.is[String] =>
-          val rdd = a.runtimeSafeCast[String].rdd
-          val mapping = mappings(i)
-          rdd.mapValues(v => mapping(v))
-        case _ => throw new AssertionError()
-      }
-    }), attrsArray.size, mappings)
+      sqlContext: spark.sql.SQLContext,
+      vertices: VertexSetRDD,
+      attrsArray: Array[AttributeData[_]],
+      mappings: Map[Int, Map[String, Double]])(
+      implicit dataSet: DataSet): spark.sql.DataFrame = {
+    markCategoricalVariablesInDFSchema(
+      toDF(
+        sqlContext,
+        vertices,
+        attrsArray.zipWithIndex.map {
+          case (attr, i) => attr match {
+              case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
+              case a if a.is[String] =>
+                val rdd = a.runtimeSafeCast[String].rdd
+                val mapping = mappings(i)
+                rdd.mapValues(v => mapping(v))
+              case _ => throw new AssertionError()
+            }
+        },
+      ),
+      attrsArray.size,
+      mappings,
+    )
   }
 
   // Returns the same DataFrame if mappings is empty. Otherwise creates a new DataFrame with the
@@ -304,7 +324,9 @@ object Model extends FromJson[Model] {
   // This information is used by the ML algorithms to identify features as categorical (nominal) or
   // numerical features.
   private def markCategoricalVariablesInDFSchema(
-    df: spark.sql.DataFrame, numFeatures: Int, mappings: Map[Int, Map[String, Double]]) = {
+      df: spark.sql.DataFrame,
+      numFeatures: Int,
+      mappings: Map[Int, Map[String, Double]]) = {
     if (mappings.isEmpty) {
       df
     } else {
@@ -333,9 +355,9 @@ object Model extends FromJson[Model] {
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
   def toDF(
-    sqlContext: spark.sql.SQLContext,
-    vertices: VertexSetRDD,
-    featuresArray: Array[AttributeRDD[Double]]): spark.sql.DataFrame = {
+      sqlContext: spark.sql.SQLContext,
+      vertices: VertexSetRDD,
+      featuresArray: Array[AttributeRDD[Double]]): spark.sql.DataFrame = {
     val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
     val numberedFeatures = featuresArray.zipWithIndex
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
@@ -371,9 +393,9 @@ object Model extends FromJson[Model] {
 // Helper method to print statistical tables of the models.
 object Tabulator {
   def getTable(
-    headers: Array[String],
-    rowNames: Array[String],
-    columnData: Array[Array[Double]]): String = {
+      headers: Array[String],
+      rowNames: Array[String],
+      columnData: Array[Array[Double]]): String = {
     assert(
       rowNames.size == columnData(0).size,
       s"Size mismatch: rowNames (${rowNames.size}) != columnData[0] (${columnData(0).size})")
