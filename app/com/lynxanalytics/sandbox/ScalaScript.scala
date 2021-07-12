@@ -286,17 +286,22 @@ object ScalaScript {
     }
   }
 
+  private val findVariablesCache = new SoftHashMap[String, Set[String]]()                                             
+  
   def findVariables(code: String): Set[String] = {
     import scala.reflect.internal.util.ScriptSourceFile
     import scala.reflect.internal.util.NoFile
-    withEngine {
-      val script = ScriptSourceFile(NoFile, code.toArray)
-      val global = engine.intp.global
-      val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
-      ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
-        .filter(i => i.isTerm)
-        .map { case i => if (i.isBackquoted) i.name.decodedName.toString else i.toString }
-        .toSet
-    }
+    findVariablesCache.getOrElseUpdate(                                                                               
+      code,
+      withEngine {
+        val script = ScriptSourceFile(NoFile, code.toArray)
+        val global = engine.intp.global
+        val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
+        ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
+          .filter(i => i.isTerm)
+          .map { case i => if (i.isBackquoted) i.name.decodedName.toString else i.toString }
+          .toSet
+      },
+    )
   }
 }
