@@ -337,7 +337,7 @@ startSphynx () {
 case $mode in
   interactive)
     startSphynx
-    "${command[@]}"
+    exec "${command[@]}"
   ;;
   start)
     startSphynx
