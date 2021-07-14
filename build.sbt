@@ -95,8 +95,7 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
-  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/",
-  "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven")
+  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
