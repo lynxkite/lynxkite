@@ -3,22 +3,23 @@
 Category | License | Dependency | Notes
 --- | --- | --- | ---
 Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.fluentlenium # fluentlenium-core # 3.7.1 | <notextile></notextile>
+Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0) | org.scalaj # scalaj-http_2.12 # 2.4.2 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.google.android # annotations # 4.1.1.4 | <notextile></notextile>
-Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.code.gson # gson # 2.7 | <notextile></notextile>
-Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.errorprone # error_prone_annotations # 2.3.4 | <notextile></notextile>
+Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.code.gson # gson # 2.8.6 | <notextile></notextile>
+Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.errorprone # error_prone_annotations # 2.4.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.squareup.okhttp3 # okhttp # 3.11.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.squareup.okio # okio # 1.14.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-api # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-context # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-core # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-netty # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf-lite # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.24.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.17.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-api # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-context # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-core # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-netty # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf-lite # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.23.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.1.1 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.1.1 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.1.2 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.1.2 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
@@ -27,24 +28,24 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # gcsio # 1.6.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # util # 1.6.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.bigdataoss # util-hadoop # 1.6.1-hadoop2 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.guava # guava # 28.2-jre | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.guava # guava # 30.1-android | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.jamesmurty.utils # java-xmlbuilder # 1.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.15 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-io # commons-io # 2.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-net # commons-net # 3.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.jsonwebtoken # jjwt # 0.9.1 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-all # 4.1.51.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-buffer # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-http # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-http2 # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-socks # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-common # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler-proxy # 4.1.38.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-resolver # 4.1.38.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-all # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-buffer # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-http # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-http2 # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-codec-socks # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-common # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler-proxy # 4.1.52.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-resolver # 4.1.52.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-tcnative-boringssl-static # 2.0.26.Final | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-transport # 4.1.38.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-transport # 4.1.52.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | it.unimi.dsi # fastutil # 8.1.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | joda-time # joda-time # 2.10.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.sourceforge.htmlunit # htmlunit # 2.36.0 | <notextile></notextile>
@@ -70,7 +71,7 @@ Apache | [Apache Software License - Version 2.0](http://www.apache.org/licenses/
 Apache | [Apache Software License - Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.eclipse.jetty.websocket # websocket-api # 9.4.20.v20190813 | <notextile></notextile>
 Apache | [Apache Software License - Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.eclipse.jetty.websocket # websocket-client # 9.4.20.v20190813 | <notextile></notextile>
 Apache | [Apache Software License - Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.eclipse.jetty.websocket # websocket-common # 9.4.20.v20190813 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.api.grpc # proto-google-common-protos # 1.12.0 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.api.grpc # proto-google-common-protos # 2.0.1 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | com.typesafe # config # 1.4.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.typesafe # ssl-config-core_2.12 # 0.4.2 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-actor-typed_2.12 # 2.6.10 | <notextile></notextile>
@@ -103,8 +104,6 @@ Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-l
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-xml_2.12 # 1.2.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-xml_2.12 # 1.3.0 | <notextile></notextile>
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
-Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.21.0 | <notextile></notextile>
-Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-grpc-metrics # 0.21.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.10.5 | <notextile></notextile>
@@ -172,7 +171,7 @@ Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LI
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-shouldmatchers_2.12 # 3.2.7 | <notextile></notextile>
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-wordspec_2.12 # 3.2.7 | <notextile></notextile>
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest_2.12 # 3.2.7 | <notextile></notextile>
-BSD | [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.9.2 | <notextile></notextile>
+BSD | [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.17.2 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | com.thoughtworks.paranamer # paranamer # 2.8 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | javax.measure # unit-api # 1.0 | <notextile></notextile>
 BSD | [BSD](https://github.com/sbt/test-interface/blob/master/LICENSE) | org.scala-sbt # test-interface # 1.0 | <notextile></notextile>
@@ -217,8 +216,8 @@ MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.sl
 MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.slf4j # slf4j-api # 1.7.30 | <notextile></notextile>
 MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | com.lihaoyi # fastparse-utils_2.12 # 1.0.0 | <notextile></notextile>
 MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | com.lihaoyi # fastparse_2.12 # 1.0.0 | <notextile></notextile>
-MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | org.codehaus.mojo # animal-sniffer-annotations # 1.17 | <notextile></notextile>
-MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframework # checker-qual # 2.10.0 | <notextile></notextile>
+MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | org.codehaus.mojo # animal-sniffer-annotations # 1.19 | <notextile></notextile>
+MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframework # checker-compat-qual # 2.5.5 | <notextile></notextile>
 MIT | [The MIT License(MIT)](http://opensource.org/licenses/MIT) | net.sf.geographiclib # GeographicLib-Java # 1.49 | <notextile></notextile>
 Mozilla | [Mozilla Public License, Version 2.0](http://www.mozilla.org/MPL/2.0/index.txt) | net.sourceforge.htmlunit # htmlunit-core-js # 2.36.0 | <notextile></notextile>
 Public Domain | [Public Domain](null) | aopalliance # aopalliance # 1.0 | <notextile></notextile>

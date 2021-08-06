@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
   filters, // Play library for compressing HTTP responses.
   // Play and Spark depend on different Netty versions. We help them decide here.
-  "io.netty" % "netty-all" % "4.1.51.Final",
+  "io.netty" % "netty-all" % "4.1.52.Final",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.7" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
@@ -59,9 +59,9 @@ libraryDependencies ++= Seq(
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Generate java from proto files. Used by Sphynx.
-  "io.grpc" % "grpc-protobuf" % "1.24.0",
-  "io.grpc" % "grpc-stub" % "1.24.0",
-  "io.grpc" % "grpc-netty" % "1.24.0",
+  "io.grpc" % "grpc-protobuf" % "1.39.0",
+  "io.grpc" % "grpc-stub" % "1.39.0",
+  "io.grpc" % "grpc-netty" % "1.39.0",
   "com.google.protobuf" % "protobuf-java" % "3.9.2",
   // Used for encrypted connection with Sphynx.
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
