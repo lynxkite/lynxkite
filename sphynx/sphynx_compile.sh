@@ -8,5 +8,4 @@ go fmt $GO_PKG/lynxkite-sphynx $GO_PKG/networkit
 pushd networkit
 source build_env.sh
 popd
-go build "$@" -o .build/lynxkite-sphynx $GO_PKG/lynxkite-sphynx
-cp -L networkit/libnetworkit.so .build/
+go build -x "$@" -o .build/lynxkite-sphynx $GO_PKG/lynxkite-sphynx
