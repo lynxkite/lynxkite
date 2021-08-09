@@ -54,7 +54,6 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
   // The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
   "org.geotools" % "gt-shapefile" % "20.0",
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
