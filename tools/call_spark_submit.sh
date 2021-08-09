@@ -143,7 +143,7 @@ if [ "${SPARK_MASTER}" == "yarn" ]; then
     fi
   fi
   YARN_SETTINGS="$YARN_SETTINGS \
-    --conf spark.yarn.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
+    --conf spark.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then
