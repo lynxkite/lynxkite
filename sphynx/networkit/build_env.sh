@@ -3,15 +3,20 @@
 
 if [[ ! -e ~/networkit ]]; then
   pushd ~
-  # Temporarily using a fork for some fixes, but eventually should be:
-  # git clone https://github.com/networkit/networkit.git --branch 7.1 --single-branch --depth 1
-  NK_VERSION=67eab6048fdb6bb61dec4be3add68fef1968e582
-  git clone https://github.com/darabos/networkit.git && cd networkit && git checkout $NK_VERSION && cd ..
-  mkdir networkit/build
-  cd networkit/build
+  git clone https://github.com/networkit/networkit.git --branch release-7.1 --depth 1
+  cd networkit
+  cat <<EOF | patch -p0 -i -
+--- include/networkit/auxiliary/PrioQueue.hpp
++++ include/networkit/auxiliary/PrioQueue.hpp
+@@ -12,2 +12,3 @@
+ #include <vector>
++#include <limits>
+ 
+EOF
+  mkdir build && cd build
   git submodule update --init
   cmake ..
-  make -j4
+  make -j5
   popd
 fi
 if [[ ! -e include ]]; then ln -s ~/networkit/include .; fi
