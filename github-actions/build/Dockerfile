@@ -38,7 +38,7 @@ RUN \
   bash conda.sh -b -p /opt/conda && \
   rm conda.sh && \
   conda install python=3.7 mypy numpy pandas ruamel.yaml requests && \
-  pip install types-requests
+  pip install types-requests typed-ast
 
 # Install Go.
 RUN \
