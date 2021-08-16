@@ -14,7 +14,7 @@ fi
 
 # Get protobuf compiler.
 if ! type "protoc" > /dev/null; then
-  PROTOC_VERSION="3.10.0"
+  PROTOC_VERSION="3.10.1"
   PROTOC_ZIP="protoc-$PROTOC_VERSION-$OS_NAME-x86_64.zip"
   wget -nv https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
   mkdir -p protoc
@@ -22,7 +22,7 @@ if ! type "protoc" > /dev/null; then
 fi
 
 # Generate the gRPC Java interfaces.
-GRPC_JAVA_VERSION="1.24.0"
+GRPC_JAVA_VERSION="1.24.2"
 GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-$OS_NAME-x86_64.exe
 if [[ ! -f $REPO/.build/$GRPC_JAVA ]]; then
   wget -nv -P .build https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
