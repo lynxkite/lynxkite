@@ -3,9 +3,12 @@
 
 if [[ ! -e ~/networkit ]]; then
   pushd ~
-  git clone https://github.com/networkit/networkit.git --branch release-7.1 --depth 1
-  cd networkit
-  mkdir build && cd build
+  # Temporarily using a fork for some fixes, but eventually should be:
+  # git clone https://github.com/networkit/networkit.git --branch 9.0 --single-branch --depth 1
+  NK_VERSION=67eab6048fdb6bb61dec4be3add68fef1968e582
+  git clone https://github.com/darabos/networkit.git && cd networkit && git checkout $NK_VERSION && cd ..
+  mkdir networkit/build
+  cd networkit/build
   git submodule update --init
   cmake -DNETWORKIT_STATIC=ON ..
   make -j5
