@@ -12,9 +12,9 @@ RUN \
 
 # Add repository for SBT.
 RUN \
-  echo 'deb https://dl.bintray.com/sbt/debian /' > /etc/apt/sources.list.d/sbt.list && \
-  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
-    --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
+  echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" > /etc/apt/sources.list.d/sbt.list && \
+  curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | \
+  apt-key add -
 
 # Add repository for Node.js.
 RUN \
@@ -38,7 +38,7 @@ RUN \
   bash conda.sh -b -p /opt/conda && \
   rm conda.sh && \
   conda install python=3.7 mypy numpy pandas ruamel.yaml requests && \
-  pip install types-requests
+  pip install types-requests typed-ast
 
 # Install Go.
 RUN \

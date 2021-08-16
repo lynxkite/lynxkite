@@ -70,7 +70,11 @@ class ScalaScriptSecurityManager extends SecurityManager {
             }
           case _: java.lang.reflect.ReflectPermission =>
           case p: java.lang.RuntimePermission =>
-            if (!(p.getName == "accessDeclaredMembers" || p.getName == "setContextClassLoader")) {
+            if (
+              !(p.getName == "accessDeclaredMembers"
+                || p.getName == "setContextClassLoader"
+                || p.getName == "createClassLoader")
+            ) {
               super.checkPermission(p)
             }
           case _ =>

@@ -143,7 +143,7 @@ if [ "${SPARK_MASTER}" == "yarn" ]; then
     fi
   fi
   YARN_SETTINGS="$YARN_SETTINGS \
-    --conf spark.yarn.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
+    --conf spark.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then
@@ -193,7 +193,7 @@ if [ -n "${KITE_EXTRA_JARS}" ]; then
 fi
 
 
-className="play.core.server.ProdServerStart"
+className="com.lynxanalytics.biggraph.Main"
 
 
 final_java_opts="${final_java_opts} -Xss${DRIVER_THREAD_STACK_SIZE}"
@@ -323,6 +323,7 @@ startSphynx () {
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
+      -addext "subjectAltName = DNS:$SPHYNX_HOST" \
       -subj "/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
     cd "$stage_dir/sphynx"

@@ -10,15 +10,16 @@ if [[ ! -e ~/networkit ]]; then
   mkdir networkit/build
   cd networkit/build
   git submodule update --init
-  cmake ..
+  cmake -DNETWORKIT_STATIC=ON ..
   make -j4
   popd
 fi
 if [[ ! -e include ]]; then ln -s ~/networkit/include .; fi
 if [[ ! -e cpp ]]; then ln -s ~/networkit/networkit/cpp .; fi
 if [[ ! -e tlx ]]; then ln -s ~/networkit/extlibs/tlx/tlx .; fi
-if [[ ! -e libnetworkit.so ]]; then ln -s ~/networkit/build/libnetworkit.so .; fi
+if [[ ! -e libnetworkit.a ]]; then ln -s ~/networkit/build/libnetworkit.a .; fi
 export CPLUS_INCLUDE_PATH="$(pwd)/include"
 export LD_LIBRARY_PATH="$(pwd)"
 export LIBRARY_PATH="$(pwd)"
-export CGO_LDFLAGS="-lnetworkit"
+export CGO_CXXFLAGS="-Wno-deprecated-declarations"
+export CGO_LDFLAGS="-static -lnetworkit -fopenmp"

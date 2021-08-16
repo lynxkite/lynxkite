@@ -94,7 +94,6 @@ class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataMa
 
   case class EntityScenario(
       partitionedConfig: Map[Int, EntityDirStatus.Value],
-      legacyConfig: EntityDirStatus.Value = EntityDirStatus.NONEXISTENT,
       metaExists: Boolean = true,
       partitionedExists: Boolean = true,
       opExists: Boolean = true,
@@ -107,13 +106,6 @@ class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataMa
     val repo = mpfs.repo
     val gUID = mpfs.vertices.gUID.toString
     val partitionedPath = repo / io.PartitionedDir / gUID
-    val legacyPath = repo / io.EntitiesDir / gUID
-
-    if (legacyConfig != EntityDirStatus.NONEXISTENT) {
-      val legacyData = HadoopFile(resourcePrefix) / gUID
-      copyDirContents(legacyData, legacyPath)
-      modifyEntityDir(legacyPath, legacyConfig)
-    }
 
     // Now we can delete any superfluous directories, even
     // onePartitionedPath, if its creation was not requested explicitly.
@@ -170,60 +162,14 @@ class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataMa
     }
   }
 
-  test("We can migrate old data without recalculation") {
-    val es = EntityScenario(
-      Map(),
-      legacyConfig = EntityDirStatus.VALID)
-    assert(es.executionCounter == 0)
-  }
-
-  test("We don't migrate old data if operation was not finished") {
-    val es = EntityScenario(
-      Map(),
-      legacyConfig = EntityDirStatus.VALID,
-      opExists = false)
-    assert(es.executionCounter == 1)
-  }
-
-  test("We don't migrate incomplete old data; we recalculate instead") {
-    val es = EntityScenario(
-      Map(),
-      legacyConfig = EntityDirStatus.NOSUCCESS)
-    assert(es.executionCounter == 1)
-  }
-
-  test("We read from the partitioned directory even if there's available data in legacy") {
-    val es = EntityScenario(
-      Map(
-        1 -> EntityDirStatus.VALID,
-        2 -> EntityDirStatus.CORRUPT,
-        4 -> EntityDirStatus.CORRUPT),
-      legacyConfig = EntityDirStatus.CORRUPT)
-    assert(es.executionCounter == 0)
-  }
-
-  test("We read from the partitioned directory even if there's available data in legacy - from partition 2") {
-    val es = EntityScenario(
-      Map(
-        1 -> EntityDirStatus.CORRUPT,
-        2 -> EntityDirStatus.VALID,
-        4 -> EntityDirStatus.CORRUPT),
-      legacyConfig = EntityDirStatus.CORRUPT,
-      numPartitions = 2)
-    assert(es.executionCounter == 0)
-  }
-
   test("After recalculation, stale files are deleted") {
     val es = EntityScenario(
       Map(
         1 -> EntityDirStatus.VALID,
         2 -> EntityDirStatus.VALID,
         4 -> EntityDirStatus.VALID),
-      legacyConfig = EntityDirStatus.VALID,
       opExists = false)
     assert(es.executionCounter == 1)
-    val legacyDir = es.legacyPath
-    assert(!legacyDir.exists)
     val pfiles = (es.partitionedPath / "*").list
     assert(pfiles.size == 2) // One dir and one metafile
   }

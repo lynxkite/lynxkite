@@ -523,12 +523,15 @@ object BigGraphSparkContext {
       sparkConf = sparkConf.setMaster(master)
     }
     sparkConf = sparkConf.setAll(settings)
-    log.info("Creating Spark Context with configuration: " + sparkConf.toDebugString)
+    log.info("Creating SparkSession with configuration:\n" + sparkConf.toDebugString)
     val sparkSession = spark.sql.SparkSession
       .builder()
       .config(sparkConf)
       .enableHiveSupport
       .getOrCreate
+    log.info(
+      "Started SparkSession with configuration:\n" +
+        sparkSession.conf.getAll.toSeq.sorted.map { case (k, v) => s"$k=$v" }.mkString("\n"))
     val sc = sparkSession.sparkContext
     sc.addSparkListener(new BigGraphSparkListener(sc))
     if (isMonitoringEnabled) {
