@@ -290,12 +290,12 @@ object ScalaScript {
     }
   }
 
-  private val findVariablesCache = new SoftHashMap[String, Set[String]]()                                             
-  
+  private val findVariablesCache = new SoftHashMap[String, Set[String]]()
+
   def findVariables(code: String): Set[String] = {
     import scala.reflect.internal.util.ScriptSourceFile
     import scala.reflect.internal.util.NoFile
-    findVariablesCache.getOrElseUpdate(                                                                               
+    findVariablesCache.getOrElseUpdate(
       code,
       withEngine {
         val script = ScriptSourceFile(NoFile, code.toArray)
