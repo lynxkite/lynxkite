@@ -1,3 +1,4 @@
+import time
 import unittest
 import lynx.kite
 
@@ -34,6 +35,7 @@ class TestCleaner(unittest.TestCase):
     when we delete a snapshot, which referred to computed entitties,
     we know that the number of "notSnapshotEntities" has to increase.'''
     before = self.data_status
+    time.sleep(2)  # Allow time for async writes.
     after = simpler(stats(self.lk.get_data_files_status()))
     if before:
       print(f'  Diff({msg})')
