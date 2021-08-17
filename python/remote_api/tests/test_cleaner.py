@@ -21,7 +21,7 @@ class TestCleaner(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
-    cls.lk.set_cleaner_min_age(days=0)
+    cls.lk.set_cleaner_min_age(days=-1)
 
   @classmethod
   def tearDownClass(cls):
