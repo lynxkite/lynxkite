@@ -1,0 +1,154 @@
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: |-
+      Draws an ROC curve and computes the AUC
+      for a binary classifier prediction.
+      The two parameters are the true label (0 or 1)
+      and the predicted score from the model (between 0 and 1).
+
+      To avoid an overly detailed plot,
+      the curve is based on a sample of vertices.
+    parameters: >-
+      [{"kind":"vertex attribute (number)","id":"true
+      label","defaultValue":""},{"kind":"vertex
+      attribute (number)","id":"predicted
+      score","defaultValue":""},{"kind":"text","id":"sample
+      size","defaultValue":"1000"}]
+  parametricParameters: {}
+  x: 0
+  y: 0
+- id: Custom-plot_2
+  inputs:
+    table:
+      boxId: SQL1_5
+      id: table
+  operationId: Custom plot
+  parameters:
+    plot_code: |-
+      {
+        "layer": [{
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "fpr",
+              "title": "False positive rate",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "tpr",
+              "title": "True positive rate",
+              "type": "quantitative"
+            }
+          }
+        }, {
+          "mark": {
+            "type": "rule",
+            "color": "lightgray",
+            "strokeDash": [8, 8]
+          },
+          "encoding": {
+            "x": { "datum": 0 },
+            "y": { "datum": 0 },
+            "x2": { "datum": 1 },
+            "y2": { "datum": 1 }
+          }
+        }]
+      }
+  parametricParameters: {}
+  x: 700
+  y: 150
+- id: SQL1_4
+  inputs:
+    input:
+      boxId: input-input
+      id: input
+  operationId: SQL1
+  parameters:
+    persist: no
+    summary: Rename and filter
+  parametricParameters:
+    sql: |-
+      select
+        ${`true label`} as label,
+        ${`predicted score`} as score
+      from vertices
+      where isnotnull(${`true label`})
+        and isnotnull(${`predicted score`})
+      limit ${`sample size`}
+  x: 250
+  y: 250
+- id: input-input
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: input
+  parametricParameters: {}
+  x: 50
+  y: 250
+- id: SQL1_5
+  inputs:
+    input:
+      boxId: SQL1_4
+      id: table
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: |-
+      select
+      label, score,
+      sum(label) over (
+        order by score desc rows between
+        unbounded preceding and current row)
+        / (select sum(label) from input)
+        as tpr,
+
+      sum(1 - label) over (
+        order by score desc rows between
+        unbounded preceding and current row)
+        / (select sum(1 - label) from input)
+        as fpr
+
+      from input
+    summary: Compute TPR / FPR
+  parametricParameters: {}
+  x: 450
+  y: 250
+- id: SQL1_6
+  inputs:
+    input:
+      boxId: SQL1_5
+      id: table
+  operationId: SQL1
+  parameters:
+    persist: no
+    sql: |
+      select sum(1 - fpr) / count(1) as AUC
+      from input where label == 1
+    summary: Compute AUC
+  parametricParameters: {}
+  x: 700
+  y: 300
+- id: output-plot
+  inputs:
+    output:
+      boxId: Custom-plot_2
+      id: plot
+  operationId: Output
+  parameters:
+    name: plot
+  parametricParameters: {}
+  x: 900
+  y: 150
+- id: output-table
+  inputs:
+    output:
+      boxId: SQL1_6
+      id: table
+  operationId: Output
+  parameters:
+    name: AUC
+  parametricParameters: {}
+  x: 900
+  y: 300
