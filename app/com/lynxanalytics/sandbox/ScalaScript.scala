@@ -70,7 +70,11 @@ class ScalaScriptSecurityManager extends SecurityManager {
             }
           case _: java.lang.reflect.ReflectPermission =>
           case p: java.lang.RuntimePermission =>
-            if (!(p.getName == "accessDeclaredMembers" || p.getName == "setContextClassLoader")) {
+            if (
+              !(p.getName == "accessDeclaredMembers"
+                || p.getName == "setContextClassLoader"
+                || p.getName == "createClassLoader")
+            ) {
               super.checkPermission(p)
             }
           case _ =>
@@ -286,12 +290,12 @@ object ScalaScript {
     }
   }
 
-  private val findVariablesCache = new SoftHashMap[String, Set[String]]()                                             
-  
+  private val findVariablesCache = new SoftHashMap[String, Set[String]]()
+
   def findVariables(code: String): Set[String] = {
     import scala.reflect.internal.util.ScriptSourceFile
     import scala.reflect.internal.util.NoFile
-    findVariablesCache.getOrElseUpdate(                                                                               
+    findVariablesCache.getOrElseUpdate(
       code,
       withEngine {
         val script = ScriptSourceFile(NoFile, code.toArray)

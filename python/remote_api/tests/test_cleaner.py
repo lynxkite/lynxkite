@@ -1,3 +1,4 @@
+import time
 import unittest
 import lynx.kite
 
@@ -10,13 +11,8 @@ def stats(data_status):
   )
 
 
-def count_diff(before, after):
-  diff = dict(
-      total_cnt=after['total_cnt'] - before['total_cnt'],
-      trash_cnt=after['trash_cnt'] - before['trash_cnt'])
-  for method in before['entities'].keys():
-    diff[method] = after['entities'][method] - before['entities'][method]
-  return diff
+def simpler(status):
+  return {**status['entities'], **status}
 
 
 class TestCleaner(unittest.TestCase):
@@ -26,7 +22,7 @@ class TestCleaner(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
-    cls.lk.set_cleaner_min_age(days=0)
+    cls.lk.set_cleaner_min_age(days=-1)
 
   @classmethod
   def tearDownClass(cls):
@@ -39,18 +35,18 @@ class TestCleaner(unittest.TestCase):
     when we delete a snapshot, which referred to computed entitties,
     we know that the number of "notSnapshotEntities" has to increase.'''
     before = self.data_status
-    after = stats(self.lk.get_data_files_status())
+    time.sleep(2)  # Allow time for async writes.
+    after = simpler(stats(self.lk.get_data_files_status()))
     if before:
-      diff = count_diff(before, after)
       print(f'  Diff({msg})')
       if expected:
         for key in expected.keys():
           if expected[key] == '+':
-            self.assertGreater(diff[key], 0)
+            self.assertGreater(after[key], before[key])
           elif expected[key] == '0':
-            self.assertEqual(diff[key], 0)
+            self.assertEqual(after[key], before[key])
           elif expected[key] == '-':
-            self.assertLess(diff[key], 0)
+            self.assertLess(after[key], before[key])
           else:
             raise Exception('Wrong sign')
     else:

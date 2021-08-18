@@ -128,6 +128,7 @@ public:
   }
 }
 
+#define TLX_DEPRECATED(x) x
 %include "additions.h"
 %include <stdint.i>
 %include <std_vector.i>

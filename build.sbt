@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
   filters, // Play library for compressing HTTP responses.
   // Play and Spark depend on different Netty versions. We help them decide here.
-  "io.netty" % "netty-all" % "4.1.51.Final",
+  "io.netty" % "netty-all" % "4.1.52.Final",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.7" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
@@ -54,14 +54,13 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
   // The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
   "org.geotools" % "gt-shapefile" % "20.0",
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Generate java from proto files. Used by Sphynx.
-  "io.grpc" % "grpc-protobuf" % "1.24.0",
-  "io.grpc" % "grpc-stub" % "1.24.0",
-  "io.grpc" % "grpc-netty" % "1.24.0",
+  "io.grpc" % "grpc-protobuf" % "1.39.0",
+  "io.grpc" % "grpc-stub" % "1.39.0",
+  "io.grpc" % "grpc-netty" % "1.39.0",
   "com.google.protobuf" % "protobuf-java" % "3.9.2",
   // Used for encrypted connection with Sphynx.
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
@@ -95,8 +94,7 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
-  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/",
-  "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven")
+  "Geospatial Foundation Repository" at "https://repo.osgeo.org/repository/geotools-releases/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
@@ -146,8 +144,7 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx",
-  file("sphynx/.build/libnetworkit.so") -> "sphynx/libnetworkit.so")
+  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
 sourceDirectory in Assets := new File("web/dist")
 
