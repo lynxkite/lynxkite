@@ -1,10 +1,10 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.graph_api.Edge
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe._
 
-class EntitySerializationTest extends FunSuite {
+class EntitySerializationTest extends AnyFunSuite {
   def serde[T](values: Seq[T], s: EntitySerializer[T], d: EntityDeserializer[T]) = {
     val numbered = values.zipWithIndex.map { case (v, k) => k.toLong -> v }
     val serialized = numbered.iterator.map { case (k, v) => k -> s.serialize(v) }

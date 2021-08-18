@@ -29,32 +29,33 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
 
   register(
     "Weighted aggregate to segmentation")(new ProjectTransformation(_) with SegOp {
-      def addSegmentationParameters = {
-        params += Choice("weight", "Weight", options = project.parentVertexAttrList[Double])
-        params ++= aggregateParams(parent.vertexAttributes, weighted = true)
+    def addSegmentationParameters = {
+      params += Choice("weight", "Weight", options = project.parentVertexAttrList[Double])
+      params ++= aggregateParams(parent.vertexAttributes, weighted = true)
+    }
+    def enabled =
+      project.assertSegmentation &&
+        FEStatus.assert(
+          parent.vertexAttributeNames[Double].nonEmpty,
+          "No numeric vertex attributes on parent")
+    def apply() = {
+      val weightName = params("weight")
+      val weight = parent.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
+        val result = aggregateViaConnection(
+          seg.belongsTo,
+          AttributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
+        project.newVertexAttribute(name, result)
       }
-      def enabled =
-        project.assertSegmentation &&
-          FEStatus.assert(
-            parent.vertexAttributeNames[Double].nonEmpty,
-            "No numeric vertex attributes on parent")
-      def apply() = {
-        val weightName = params("weight")
-        val weight = parent.vertexAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-          val result = aggregateViaConnection(
-            seg.belongsTo,
-            AttributeWithWeightedAggregator(weight, parent.vertexAttributes(attr), choice))
-          project.newVertexAttribute(name, result)
-        }
-      }
-      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
-    })
+    }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
+  })
 
   register("Aggregate from segmentation")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {
       params ++= aggregateParams(
-        project.vertexAttributes, defaultPrefix = project.asSegmentation.segmentationName)
+        project.vertexAttributes,
+        defaultPrefix = project.asSegmentation.segmentationName)
     }
     def enabled = project.assertSegmentation
     def apply() = {
@@ -70,26 +71,27 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
 
   register(
     "Weighted aggregate from segmentation")(new ProjectTransformation(_) with SegOp {
-      def addSegmentationParameters = params ++= List(
-        Choice("weight", "Weight", options = project.vertexAttrList[Double])) ++
-        aggregateParams(
-          project.vertexAttributes, weighted = true,
-          defaultPrefix = project.asSegmentation.segmentationName)
-      def enabled =
-        project.assertSegmentation &&
-          FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes")
-      def apply() = {
-        val weightName = params("weight")
-        val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-          val result = aggregateViaConnection(
-            seg.belongsTo.reverse,
-            AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
-          seg.parent.newVertexAttribute(name, result)
-        }
+    def addSegmentationParameters = params ++= List(
+      Choice("weight", "Weight", options = project.vertexAttrList[Double])) ++
+      aggregateParams(
+        project.vertexAttributes,
+        weighted = true,
+        defaultPrefix = project.asSegmentation.segmentationName)
+    def enabled =
+      project.assertSegmentation &&
+        FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes")
+    def apply() = {
+      val weightName = params("weight")
+      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
+        val result = aggregateViaConnection(
+          seg.belongsTo.reverse,
+          AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+        seg.parent.newVertexAttribute(name, result)
       }
-      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
-    })
+    }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
+  })
 
   register("Aggregate on neighbors")(new ProjectTransformation(_) {
     params ++= List(
@@ -151,31 +153,31 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
 
   register(
     "Weighted aggregate edge attribute to vertices")(new ProjectTransformation(_) {
-      params ++= List(
-        Choice("weight", "Weight", options = project.edgeAttrList[Double]),
-        Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
-        aggregateParams(
-          project.edgeAttributes,
-          weighted = true,
-          defaultPrefix = "edge")
-      def enabled =
-        FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No numeric edge attributes")
-      def apply() = {
-        val direction = Direction(params("direction"), project.edgeBundle)
-        val weightName = params("weight")
-        val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
-        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-          val result = aggregateFromEdges(
-            direction.edgeBundle,
-            AttributeWithWeightedAggregator(
-              direction.pull(weight),
-              direction.pull(project.edgeAttributes(attr)),
-              choice))
-          project.newVertexAttribute(name, result)
-        }
+    params ++= List(
+      Choice("weight", "Weight", options = project.edgeAttrList[Double]),
+      Choice("direction", "Aggregate on", options = Direction.attrOptions)) ++
+      aggregateParams(
+        project.edgeAttributes,
+        weighted = true,
+        defaultPrefix = "edge")
+    def enabled =
+      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No numeric edge attributes")
+    def apply() = {
+      val direction = Direction(params("direction"), project.edgeBundle)
+      val weightName = params("weight")
+      val weight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
+      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
+        val result = aggregateFromEdges(
+          direction.edgeBundle,
+          AttributeWithWeightedAggregator(
+            direction.pull(weight),
+            direction.pull(project.edgeAttributes(attr)),
+            choice))
+        project.newVertexAttribute(name, result)
       }
-      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
-    })
+    }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
+  })
 
   register("Copy vertex attributes from segmentation")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters =

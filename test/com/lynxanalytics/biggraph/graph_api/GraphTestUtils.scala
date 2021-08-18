@@ -7,11 +7,11 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.language.implicitConversions
 import org.apache.commons.io.FileUtils
 
-import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
+import com.lynxanalytics.biggraph.{TestUtils, TestTempDir, TestSparkContext}
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_operations._
-import com.lynxanalytics.biggraph.graph_util.{ PrefixRepository, HadoopFile, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{PrefixRepository, HadoopFile, Timestamp}
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
@@ -43,51 +43,60 @@ object GraphTestUtils {
     }
   }
   def computeAndGet(e: MetaGraphEntity)(
-    implicit
-    dm: DataManager, sd: SparkDomain): EntityData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): EntityData = {
     implicit val ec = dm.executionContext
     dm.await(dm.ensure(e, sd).map(_ => sd.getData(e)))
   }
 
   implicit def getVertexSetDataEC(e: EntityContainer[VertexSet])(
-    implicit
-    dm: DataManager, sd: SparkDomain): VertexSetData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): VertexSetData = {
     computeAndGet(e.entity).asInstanceOf[VertexSetData]
   }
   implicit def getEdgeBundleDataEC(e: EntityContainer[EdgeBundle])(
-    implicit
-    dm: DataManager, sd: SparkDomain): EdgeBundleData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): EdgeBundleData = {
     computeAndGet(e.entity).asInstanceOf[EdgeBundleData]
   }
   implicit def getAttributeDataEC[T](e: EntityContainer[Attribute[T]])(
-    implicit
-    dm: DataManager, sd: SparkDomain): AttributeData[T] = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): AttributeData[T] = {
     computeAndGet(e.entity).asInstanceOf[AttributeData[T]]
   }
   implicit def getTableDataEC(e: EntityContainer[Table])(
-    implicit
-    dm: DataManager, sd: SparkDomain): TableData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): TableData = {
     computeAndGet(e.entity).asInstanceOf[TableData]
   }
 
   implicit def getVertexSetData(entity: VertexSet)(
-    implicit
-    dm: DataManager, sd: SparkDomain): VertexSetData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): VertexSetData = {
     computeAndGet(entity).asInstanceOf[VertexSetData]
   }
   implicit def getEdgeBundleData(entity: EdgeBundle)(
-    implicit
-    dm: DataManager, sd: SparkDomain): EdgeBundleData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): EdgeBundleData = {
     computeAndGet(entity).asInstanceOf[EdgeBundleData]
   }
   implicit def getAttributeData[T](entity: Attribute[T])(
-    implicit
-    dm: DataManager, sd: SparkDomain): AttributeData[T] = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): AttributeData[T] = {
     computeAndGet(entity).asInstanceOf[AttributeData[T]]
   }
   implicit def getTableData(entity: Table)(
-    implicit
-    dm: DataManager, sd: SparkDomain): TableData = {
+      implicit
+      dm: DataManager,
+      sd: SparkDomain): TableData = {
     computeAndGet(entity).asInstanceOf[TableData]
   }
 
@@ -147,7 +156,8 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
         new UnorderedSphynxLocalDisk(host, port.toInt, certDir, unorderedDataDir),
         new ScalaDomain,
         new UnorderedSphynxSparkDisk(host, port.toInt, certDir, dataDir / "sphynx"),
-        new SparkDomain(sparkSession, dataDir)))
+        new SparkDomain(sparkSession, dataDir),
+      ))
       dm.domains.filter(_.isInstanceOf[SphynxDomain]).map(_.asInstanceOf[SphynxDomain].clear).foreach(
         _.awaitReady(concurrent.duration.Duration.Inf))
       dm
@@ -161,8 +171,7 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
 trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
   // Override this if you want to do some preparation to the data directories before
   // the data manager is created.
-  def prepareDataRepos(permanent: HadoopFile, ephemeral: HadoopFile): Unit = {
-  }
+  def prepareDataRepos(permanent: HadoopFile, ephemeral: HadoopFile): Unit = {}
   def cleanDataManagerEphemeral: DataManager = {
     val permanentDir = cleanDataManagerDir()
     val ephemeralDir = cleanDataManagerDir()
@@ -174,7 +183,7 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
 }
 
 trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGraphEnvironment
-  with scalatest.Suite with scalatest.BeforeAndAfter with scalatest.BeforeAndAfterAll {
+    with scalatest.Suite with scalatest.BeforeAndAfter with scalatest.BeforeAndAfterAll {
   PrefixRepository.dropResolutions()
   after {
     dataManager.waitAllFutures()
@@ -207,8 +216,9 @@ case class TestGraph(vertices: VertexSet, edges: EdgeBundle, attrs: Map[String, 
 object TestGraph {
   import Scripting._
   def loadCSV(file: String)(
-    implicit
-    mm: MetaGraphManager, sd: SparkDomain): TableToAttributes.Output = {
+      implicit
+      mm: MetaGraphManager,
+      sd: SparkDomain): TableToAttributes.Output = {
     val df = sd.newSQLContext().read.format("com.databricks.spark.csv")
       .option("header", "true")
       .load(file)
@@ -223,14 +233,21 @@ object TestGraph {
     val edges = {
       val op = new ImportEdgeListForExistingVertexSetFromTable()
       op(
-        op.srcVidColumn, edgeCSV.columns("src").runtimeSafeCast[String])(
-          op.dstVidColumn, edgeCSV.columns("dst").runtimeSafeCast[String])(
-            op.srcVidAttr, vertexCSV.columns("id").runtimeSafeCast[String])(
-              op.dstVidAttr, vertexCSV.columns("id").runtimeSafeCast[String]).result.edges
+        op.srcVidColumn,
+        edgeCSV.columns("src").runtimeSafeCast[String])(
+        op.dstVidColumn,
+        edgeCSV.columns("dst").runtimeSafeCast[String])(
+        op.srcVidAttr,
+        vertexCSV.columns("id").runtimeSafeCast[String])(
+        op.dstVidAttr,
+        vertexCSV.columns("id").runtimeSafeCast[String]).result.edges
     }
-    TestGraph(vertexCSV.ids, edges, vertexCSV.columns.map {
-      case (name, attr) => name -> attr.entity
-    }.toMap)
+    TestGraph(
+      vertexCSV.ids,
+      edges,
+      vertexCSV.columns.map {
+        case (name, attr) => name -> attr.entity
+      }.toMap)
   }
 }
 
@@ -245,14 +262,16 @@ object SmallTestGraph extends OpFromJson {
   }
 }
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
-  extends SparkOperation[NoInput, SmallTestGraph.Output] {
+    extends SparkOperation[NoInput, SmallTestGraph.Output] {
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = {
     import play.api.libs.json
     Json.obj(
-      "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) => k.toString -> json.JsArray(v.map(json.JsNumber(_))) }),
+      "edgeLists" -> json.JsObject(edgeLists.toSeq.map { case (k, v) =>
+        k.toString -> json.JsArray(v.map(json.JsNumber(_)))
+      }),
       "numPartitions" -> numPartitions)
   }
 
@@ -285,7 +304,8 @@ object AddEdgeBundle extends OpFromJson {
       implicit
       instance: MetaGraphOperationInstance,
       inputs: Input,
-      properties: EdgeBundleProperties) extends MagicOutput(instance) {
+      properties: EdgeBundleProperties)
+      extends MagicOutput(instance) {
     val esAB = edgeBundle(inputs.vsA.entity, inputs.vsB.entity, properties = properties)
   }
   def fromJson(j: JsValue) = AddEdgeBundle((j \ "edgeList").as[Seq[Seq[Int]]].map(ab => ab(0) -> ab(1)))
@@ -298,7 +318,7 @@ object AddEdgeBundle extends OpFromJson {
   }
 }
 case class AddEdgeBundle(edgeList: Seq[(Int, Int)])
-  extends SparkOperation[AddEdgeBundle.Input, AddEdgeBundle.Output] {
+    extends SparkOperation[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -328,7 +348,7 @@ object SegmentedTestGraph extends OpFromJson {
     SegmentedTestGraph((j \ "edgeLists").as[Seq[Seq[Int]]].map(s => s.tail -> s.head))
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
-  extends SparkOperation[NoInput, SegmentedTestGraph.Output] {
+    extends SparkOperation[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
   @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -367,7 +387,7 @@ object AddWeightedEdges extends OpFromJson {
     AddWeightedEdges((j \ "edges").as[Seq[Seq[ID]]].map(ab => ab(0) -> ab(1)), (j \ "weight").as[Double])
 }
 case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
-  extends SparkOperation[AddWeightedEdges.Input, AddWeightedEdges.Output] {
+    extends SparkOperation[AddWeightedEdges.Input, AddWeightedEdges.Output] {
   import AddWeightedEdges._
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -403,14 +423,15 @@ object AddVertexAttribute extends OpFromJson {
   }
 
   def run[T: TypeTag](
-    vs: VertexSet, values: Map[Int, T])(implicit m: MetaGraphManager): Attribute[T] = {
+      vs: VertexSet,
+      values: Map[Int, T])(implicit m: MetaGraphManager): Attribute[T] = {
     import Scripting._
     val op = AddVertexAttribute(values)(SerializableType[T])
     op(op.vs, vs).result.attr
   }
 }
 case class AddVertexAttribute[T](values: Map[Int, T])(implicit st: SerializableType[T])
-  extends SparkOperation[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
+    extends SparkOperation[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
   import AddVertexAttribute._
 
   @transient override lazy val inputs = new Input
@@ -437,14 +458,14 @@ object VertexSetAsScalar extends OpFromJson {
     val vs = vertexSet
   }
   class Output(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val sc = scalar[Set[ID]]
   }
   def fromJson(j: JsValue) = VertexSetAsScalar()
 }
 case class VertexSetAsScalar()
-  extends ScalaOperation[VertexSetAsScalar.Input, VertexSetAsScalar.Output] {
+    extends ScalaOperation[VertexSetAsScalar.Input, VertexSetAsScalar.Output] {
   import VertexSetAsScalar._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -461,8 +482,8 @@ object EdgeBundleAsScalar extends OpFromJson {
     val es = edgeBundle(src, dst)
   }
   class Output(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val sc = scalar[Map[ID, Edge]]
   }
   def fromJson(j: JsValue) = EdgeBundleAsScalar()
@@ -479,14 +500,14 @@ case class EdgeBundleAsScalar() extends ScalaOperation[EdgeBundleAsScalar.Input,
 
 object AttributeAsScalar extends OpFromJson {
   class Output[T: TypeTag](
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val sc = scalar[Map[ID, T]]
   }
   def fromJson(j: JsValue) = AttributeAsScalar()
 }
 case class AttributeAsScalar[T]()
-  extends ScalaOperation[VertexAttributeInput[T], AttributeAsScalar.Output[T]] {
+    extends ScalaOperation[VertexAttributeInput[T], AttributeAsScalar.Output[T]] {
   import AttributeAsScalar._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = {

@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class AggregateTest extends FunSuite with TestGraphOp {
+class AggregateTest extends AnyFunSuite with TestGraphOp {
   test("example graph components") {
     val example = ExampleGraph()().result
     val components = {
@@ -14,7 +14,8 @@ class AggregateTest extends FunSuite with TestGraphOp {
       op(op.es, example.edges).result
     }
     def run[Attr, Res](
-      agg: LocalAggregator[Attr, Res], attr: Attribute[Attr]) = {
+        agg: LocalAggregator[Attr, Res],
+        attr: Attribute[Attr]) = {
       val op = AggregateByEdgeBundle(agg)
       op(op.connectionBySrc, HybridEdgeBundle.bySrc(components.belongsTo))(op.attr, attr)
         .result.attr.rdd.collect.toMap

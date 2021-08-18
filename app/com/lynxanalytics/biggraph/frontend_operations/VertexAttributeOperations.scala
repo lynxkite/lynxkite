@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.controllers.OperationParams._
 
 abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: ProjectOperations)
-  extends ProjectOutputOperation(context) {
+    extends ProjectOutputOperation(context) {
   import Operation.Implicits._
   override lazy val project = projectInput("graph")
   lazy val table = tableLikeInput("attributes").asProject
@@ -21,20 +21,23 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
   val projectAttrNames = projectAttributes.iterator.map(_._1).toList.sorted
 
   params ++= List(
-    Choice("id_attr", "ID attribute",
-      options = FEOption.unset +: FEOption.list(projectAttrNames)),
-    Choice("id_column", "ID column",
-      options = FEOption.unset +: table.vertexAttrList),
+    Choice("id_attr", "ID attribute", options = FEOption.unset +: FEOption.list(projectAttrNames)),
+    Choice("id_column", "ID column", options = FEOption.unset +: table.vertexAttrList),
     Param("prefix", "Name prefix for the imported attributes"),
     Choice("unique_keys", "Assert unique ID attribute values", options = FEOption.boolsDefaultFalse),
-    Choice("if_exists", "What happens if an attribute already exists",
+    Choice(
+      "if_exists",
+      "What happens if an attribute already exists",
       options = FEOption.list(
         "Merge, prefer the table's version",
         "Merge, prefer the graph's version",
         "Merge, report error on conflict",
         "Keep the graph's version",
         "Use the table's version",
-        "Disallow this")))
+        "Disallow this",
+      ),
+    ),
+  )
   def enabled =
     project.hasVertexSet &&
       FEStatus.assert(projectAttrNames.nonEmpty, "No attributes to use as key.")
@@ -47,13 +50,14 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
     val idAttr = projectAttributes(idAttrName).asString
     val idColumn = tableAttributes(idColumnName).asString
     val uniqueKeys = params("unique_keys").toBoolean
-    val edges = if (uniqueKeys) {
-      val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-      op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-    } else {
-      val op = graph_operations.EdgesFromLookupAttributeMatches()
-      op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-    }
+    val edges =
+      if (uniqueKeys) {
+        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      } else {
+        val op = graph_operations.EdgesFromLookupAttributeMatches()
+        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+      }
     val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
     for ((name, attr) <- tableAttributes) {
       val tableAttr = attr.pullVia(edges)
@@ -62,7 +66,7 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
         params("if_exists") match {
           case _ if prefix + name == idAttrName => // Leave the key alone.
           case "Disallow this" => throw new AssertionError(
-            s"Cannot import column `${prefix + name}`. Attribute already exists.")
+              s"Cannot import column `${prefix + name}`. Attribute already exists.")
           case "Merge, prefer the table's version" =>
             assert(
               tableAttr.typeTag.tpe =:= graphAttr.typeTag.tpe,
@@ -86,7 +90,8 @@ abstract class UseTableAsAttributeOperation(context: Operation.Context, ops: Pro
                 """.replace("ATTR", name),
                 Seq("g" -> graphAttr, "t" -> tableAttr, "id" -> idAttr),
                 projectIdSet,
-                onlyOnDefinedAttrs = false)
+                onlyOnDefinedAttrs = false,
+              )
         }
       } else projectAttributes(prefix + name) = tableAttr
     }
@@ -114,9 +119,12 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val value = params("value")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = (params("type") == "number"), value)
+          isDouble = (params("type") == "number"),
+          value)
       project.newVertexAttribute(
-        params("name"), op(op.vs, project.vertexSet).result.attr, s"constant $value")
+        params("name"),
+        op(op.vs, project.vertexSet).result.attr,
+        s"constant $value")
     }
   })
 
@@ -124,7 +132,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Param("name", "Attribute name", defaultValue = "random"),
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
-      RandomSeed("seed", "Seed", context.box))
+      RandomSeed("seed", "Seed", context.box),
+    )
     def enabled = project.hasVertexSet
     override def summary = {
       val dist = params("dist").toLowerCase
@@ -134,20 +143,23 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
       project.newVertexAttribute(
-        params("name"), op(op.vs, project.vertexSet).result.attr, help)
+        params("name"),
+        op(op.vs, project.vertexSet).result.attr,
+        help)
     }
   })
 
   register("Add rank attribute")(new ProjectTransformation(_) {
     def attrs = (
       project.vertexAttrList[String] ++
-      project.vertexAttrList[Double] ++
-      project.vertexAttrList[Long] ++
-      project.vertexAttrList[Int]).sortBy(_.title)
+        project.vertexAttrList[Double] ++
+        project.vertexAttrList[Long] ++
+        project.vertexAttrList[Int]).sortBy(_.title)
     params ++= List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
       Choice("keyattr", "Key attribute name", options = attrs),
-      Choice("order", "Order", options = FEOption.list("ascending", "descending")))
+      Choice("order", "Order", options = FEOption.list("ascending", "descending")),
+    )
 
     def enabled = FEStatus.assert(attrs.nonEmpty, "No sortable vertex attributes")
     override def summary = {
@@ -170,7 +182,11 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       project.vertexAttrList[String] ++
         project.vertexAttrList[Long] ++
         project.vertexAttrList[Int]
-    params += Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true,
+    params += Choice(
+      "attr",
+      "Vertex attribute",
+      options = eligible,
+      multipleChoice = true,
       hiddenOptions = project.vertexAttrList[Double])
     def enabled = project.hasVertexSet
     def apply() = {
@@ -183,23 +199,23 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register(
     "Convert vertex attribute to String")(new ProjectTransformation(_) {
-      params +=
-        Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true)
-      def enabled = project.hasVertexSet
-      def apply() = {
-        for (attr <- splitParam("attr")) {
-          project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
-        }
+    params +=
+      Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true)
+    def enabled = project.hasVertexSet
+    def apply() = {
+      for (attr <- splitParam("attr")) {
+        project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
       }
-    })
+    }
+  })
 
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("defined_attrs", "Only run on defined attributes",
-        options = FEOption.bools), // Default is true.
+      Choice("defined_attrs", "Only run on defined attributes", options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "scala"),
-      Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
+      Choice("persist", "Persist result", options = FEOption.bools), // Default is true.
+    )
     def enabled = project.hasVertexSet
     override def summary = {
       val name = if (params("output").nonEmpty) params("output") else "?"
@@ -218,7 +234,12 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val persist = params("persist").toBoolean
 
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
-        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs, persist)
+        expr,
+        namedAttributes,
+        vertexSet,
+        namedScalars,
+        onlyOnDefinedAttrs,
+        persist)
 
       project.newVertexAttribute(output, result, expr + help)
     }
@@ -235,39 +256,41 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register(
     "Fill vertex attributes with constant default values")(new ProjectTransformation(_) {
-      params += new DummyParam("text", "The default values for each attribute:")
-      params ++= project.vertexAttrList.map {
-        attr => Param(s"fill_${attr.id}", attr.id)
+    params += new DummyParam("text", "The default values for each attribute:")
+    params ++= project.vertexAttrList.map {
+      attr => Param(s"fill_${attr.id}", attr.id)
+    }
+    def enabled = project.hasVertexSet
+    val attrParams: Map[String, String] = params.toMap.collect {
+      case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+    }
+    override def summary = {
+      val fillStrings = attrParams.map {
+        case (name, const) => s"${name} with ${const}"
       }
-      def enabled = project.hasVertexSet
-      val attrParams: Map[String, String] = params.toMap.collect {
-        case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+      s"Fill ${fillStrings.mkString(", ")}"
+    }
+    def apply() = {
+      for ((name, const) <- attrParams.toMap) {
+        val attr = project.vertexAttributes(name)
+        val op: graph_operations.AddConstantAttribute[_] =
+          graph_operations.AddConstantAttribute.doubleOrString(
+            isDouble = attr.is[Double],
+            const)
+        val default = op(op.vs, project.vertexSet).result
+        project.newVertexAttribute(
+          name,
+          unifyAttribute(attr, default.attr.entity),
+          project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
       }
-      override def summary = {
-        val fillStrings = attrParams.map {
-          case (name, const) => s"${name} with ${const}"
-        }
-        s"Fill ${fillStrings.mkString(", ")}"
-      }
-      def apply() = {
-        for ((name, const) <- attrParams.toMap) {
-          val attr = project.vertexAttributes(name)
-          val op: graph_operations.AddConstantAttribute[_] =
-            graph_operations.AddConstantAttribute.doubleOrString(
-              isDouble = attr.is[Double], const)
-          val default = op(op.vs, project.vertexSet).result
-          project.newVertexAttribute(
-            name, unifyAttribute(attr, default.attr.entity),
-            project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
-        }
-      }
-    })
+    }
+  })
 
   register("Hash vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
-      Param("salt", "Salt",
-        defaultValue = graph_operations.HashVertexAttribute.makeSecret("")))
+      Param("salt", "Salt", defaultValue = graph_operations.HashVertexAttribute.makeSecret("")),
+    )
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
 
     def apply() = {
@@ -275,12 +298,15 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val salt = params("salt")
       graph_operations.HashVertexAttribute.assertSecret(salt)
       assert(
-        graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
+        graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty,
+        "Please set a salt value.")
       val op = graph_operations.HashVertexAttribute(salt)
       for (attribute <- splitParam("attr")) {
         val attr = project.vertexAttributes(attribute).asString
         project.newVertexAttribute(
-          attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
+          attribute,
+          op(op.vs, project.vertexSet)(op.attr, attr).result.hashed,
+          "hashed")
       }
     }
   })
@@ -290,11 +316,12 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("position", "Position", options = project.vertexAttrList[Vector[Double]]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
-      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
-        options = FEOption.boolsDefaultFalse),
-      Param("output", "Output name"))
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types", options = FEOption.boolsDefaultFalse),
+      Param("output", "Output name"),
+    )
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty,
+      "No vector vertex attributes.")
 
     def apply() = {
       val shapeFilePath = getShapeFilePath(params)
@@ -312,9 +339,11 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Param("name", "New attribute name", defaultValue = ""),
       Choice("attr1", "Primary attribute", options = project.vertexAttrList),
-      Choice("attr2", "Secondary attribute", options = project.vertexAttrList))
+      Choice("attr2", "Secondary attribute", options = project.vertexAttrList),
+    )
     def enabled = FEStatus.assert(
-      project.vertexAttrList.size >= 2, "Not enough vertex attributes.")
+      project.vertexAttrList.size >= 2,
+      "Not enough vertex attributes.")
     override def summary = {
       val name1 = params("attr1")
       val name2 = params("attr2")
@@ -333,16 +362,22 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Use table as vertex attributes", List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
-      def projectAttributes = project.vertexAttributes
-      def projectIdSet = project.vertexSet
-    })
+    "Use table as vertex attributes",
+    List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
+    def projectAttributes = project.vertexAttributes
+    def projectIdSet = project.vertexSet
+  })
 
   register("Bundle vertex attributes into a Vector")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("elements", "Elements", options =
-        project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]], multipleChoice = true))
+      Choice(
+        "elements",
+        "Elements",
+        options =
+          project.vertexAttrList[Double] ++ project.vertexAttrList[Vector[Double]],
+        multipleChoice = true),
+    )
     override def summary = {
       val elementNames = splitParam("elements")
       val output = params("output")
@@ -367,8 +402,11 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       }
       val vectorAttr = {
         val op = graph_operations.BundleVertexAttributesIntoVector(
-          doubleElements.size, vectorElements.size)
-        op(op.vs, project.vertexSet)(op.doubleElements, doubleElements)(op.vectorElements, vectorElements).result.vectorAttr
+          doubleElements.size,
+          vectorElements.size)
+        op(op.vs, project.vertexSet)(op.doubleElements, doubleElements)(
+          op.vectorElements,
+          vectorElements).result.vectorAttr
       }
       project.newVertexAttribute(output, vectorAttr)
     }
@@ -380,7 +418,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("catAttr", "Categorical attribute", options = project.vertexAttrList[String]),
       Param("categories", "Categories"))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
+      project.vertexAttrList[String].nonEmpty,
+      "No String vertex attributes.")
     override def summary = {
       val catAttr = params("catAttr").toString
       s"One-hot encode $catAttr"

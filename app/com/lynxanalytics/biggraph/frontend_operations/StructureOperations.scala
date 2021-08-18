@@ -95,15 +95,19 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
         seg.segmentationState = segViewer.segmentationState
         val op = graph_operations.InducedEdgeBundle(induceDst = false)
         seg.belongsTo = op(
-          op.srcMapping, m.belongsTo)(
-            op.edges, seg.belongsTo).result.induced
+          op.srcMapping,
+          m.belongsTo)(
+          op.edges,
+          seg.belongsTo).result.induced
       }
       if (project.isSegmentation) {
         val seg = project.asSegmentation
         val op = graph_operations.InducedEdgeBundle(induceSrc = false)
         seg.belongsTo = op(
-          op.dstMapping, m.belongsTo)(
-            op.edges, oldBelongsTo).result.induced
+          op.dstMapping,
+          m.belongsTo)(
+          op.edges,
+          oldBelongsTo).result.induced
       }
       for ((attr, choice, name) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -134,7 +138,8 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def apply() = {
       val op = graph_operations.ConcatenateBundlesMulti()
       val result = op(op.edgesAB, project.edgeBundle)(
-        op.edgesBC, project.edgeBundle).result
+        op.edgesBC,
+        project.edgeBundle).result
 
       // saving attributes and original edges
       val origEdgeAttrs = project.edgeAttributes.toIndexedSeq
@@ -209,7 +214,10 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
       val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
 
       project.pullBackEdges(
-        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
+        project.edgeBundle,
+        project.edgeAttributes.toIndexedSeq,
+        split.newEdges,
+        split.belongsTo)
       project.edgeAttributes(params("idx")) = split.indexAttr
     }
   })

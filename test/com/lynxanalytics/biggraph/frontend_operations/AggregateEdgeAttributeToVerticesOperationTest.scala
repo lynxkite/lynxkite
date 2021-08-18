@@ -6,21 +6,27 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
   test("Aggregate edge attribute to vertices, all directions") {
     val project = box("Create example graph")
-      .box("Aggregate edge attribute to vertices", Map(
-        "prefix" -> "incoming",
-        "direction" -> "incoming edges",
-        "aggregate_weight" -> "sum",
-        "aggregate_comment" -> ""))
-      .box("Aggregate edge attribute to vertices", Map(
-        "prefix" -> "outgoing",
-        "direction" -> "outgoing edges",
-        "aggregate_weight" -> "sum",
-        "aggregate_comment" -> ""))
-      .box("Aggregate edge attribute to vertices", Map(
-        "prefix" -> "all",
-        "direction" -> "all edges",
-        "aggregate_weight" -> "sum",
-        "aggregate_comment" -> ""))
+      .box(
+        "Aggregate edge attribute to vertices",
+        Map(
+          "prefix" -> "incoming",
+          "direction" -> "incoming edges",
+          "aggregate_weight" -> "sum",
+          "aggregate_comment" -> ""))
+      .box(
+        "Aggregate edge attribute to vertices",
+        Map(
+          "prefix" -> "outgoing",
+          "direction" -> "outgoing edges",
+          "aggregate_weight" -> "sum",
+          "aggregate_comment" -> ""))
+      .box(
+        "Aggregate edge attribute to vertices",
+        Map(
+          "prefix" -> "all",
+          "direction" -> "all edges",
+          "aggregate_weight" -> "sum",
+          "aggregate_comment" -> ""))
       .project
     def value(direction: String) = {
       val attr = project.vertexAttributes(s"${direction}_weight_sum").runtimeSafeCast[Double]
@@ -31,4 +37,3 @@ class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
     assert(value("all") == Seq(0L -> 6.0, 1L -> 7.0, 2L -> 7.0))
   }
 }
-

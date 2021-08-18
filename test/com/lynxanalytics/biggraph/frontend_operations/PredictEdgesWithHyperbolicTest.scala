@@ -6,10 +6,12 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class PredictEdgesWithHyperbolicTest extends OperationsTestBase {
   test("Predict edges with hyperbolic positions") {
     val project = box("Create example graph")
-      .box("Predict edges with hyperbolic positions", Map(
-        "size" -> "4",
-        "radial" -> "age",
-        "angular" -> "age"))
+      .box(
+        "Predict edges with hyperbolic positions",
+        Map(
+          "size" -> "4",
+          "radial" -> "age",
+          "angular" -> "age"))
       .project
 
     assert(project.edgeAttributes("hyperbolic_edge_probability")

@@ -10,10 +10,8 @@ object OutDegree extends OpFromJson {
     val dst = vertexSet
     val es = edgeBundle(src, dst)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val outDegree = vertexAttribute[Double](inputs.src.entity)
   }
   def fromJson(j: JsValue) = OutDegree()
@@ -25,10 +23,10 @@ case class OutDegree() extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vsA = inputs.src.rdd
     val outdegrees = inputs.es.rdd

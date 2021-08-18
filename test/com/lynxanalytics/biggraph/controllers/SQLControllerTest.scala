@@ -28,11 +28,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select name from `people.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select name from `people.vertices` where age < 40"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -43,11 +45,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select src_name, dst_name from `people.edges` where edge_weight = 1"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select src_name, dst_name from `people.edges` where edge_weight = 1"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("src_name", "String"), SQLColumn("dst_name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -58,11 +62,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select comment from `people.edge_attributes` where weight = 1"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select comment from `people.edge_attributes` where weight = 1"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("comment", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -73,15 +79,20 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = """select edge_comment
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = """select edge_comment
                  from (select edge_comment, edge_weight, avg(dst_age) avg_dst_age
                        from `people.edges`
                        group by 1,2)
-                 where avg_dst_age > 20"""),
-      maxRows = 10)))
+                 where avg_dst_age > 20""",
+        ),
+        maxRows = 10,
+      ),
+    ))
 
     assert(result.header == List(SQLColumn("edge_comment", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -94,11 +105,14 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       Map("name" -> "gender_seg", "attr" -> "gender"))
     egSeg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select base_gender from `people.gender_seg.belongs_to` where segment_size = 1"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select base_gender from `people.gender_seg.belongs_to` where segment_size = 1"),
+        maxRows = 10),
+    ))
 
     assert(result.header == List(SQLColumn("base_gender", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -109,11 +123,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "",
-        sql = "select name from `test_dir/people.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "",
+          sql = "select name from `test_dir/people.vertices` where age < 40"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -123,11 +139,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
   test("global sql on vertices with attribute name quoted with backticks") {
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "graph")
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select `name` from `people.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select `name` from `people.vertices` where age < 40"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -138,11 +156,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/PEOPLE", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select name from `PEOPLE.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select name from `PEOPLE.vertices` where age < 40"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -153,11 +173,14 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select name from `firstname.lastname@lynx.com/eg.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select name from `firstname.lastname@lynx.com/eg.vertices` where age < 40"),
+        maxRows = 10),
+    ))
 
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -172,11 +195,13 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       Map("change_name" -> "NAME"))
     eg.snapshotOutput("test_dir/people", "graph")
 
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      TableSpec.global(
-        directory = "test_dir",
-        sql = "select NAME from `people.vertices` where age < 40"),
-      maxRows = 10)))
+    val result = await(sqlController.runSQLQuery(
+      user,
+      SQLQueryRequest(
+        TableSpec.global(
+          directory = "test_dir",
+          sql = "select NAME from `people.vertices` where age < 40"),
+        maxRows = 10)))
 
     assert(result.header == List(SQLColumn("NAME", "String")))
     val resultStrings = SQLResultToStrings(result.data)
@@ -224,12 +249,14 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
           "name" -> "vertices", // This segmentation is named vertices to test extremes.
           "attr" -> "age",
           "interval_size" -> "0.1",
-          "overlap" -> "no"))
+          "overlap" -> "no"),
+      )
       .box("SQL1")
 
     // List tables and segmentation of a project.
     val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
-      user, TableBrowserNodeForBoxRequest(getMeta(project), ""))
+      user,
+      TableBrowserNodeForBoxRequest(getMeta(project), ""))
     assert(res.list == List(
       "bucketing.belongs_to",
       "bucketing.graph_attributes",
@@ -250,7 +277,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       "vertices",
       "vertices.belongs_to",
       "vertices.graph_attributes",
-      "vertices.vertices").map(t => TableBrowserNode(t, t, "table")))
+      "vertices.vertices",
+    ).map(t => TableBrowserNode(t, t, "table")))
   }
 
   def checkExampleGraphColumns(response: TableBrowserNodeResponse) = {
@@ -260,14 +288,16 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       TableBrowserNode("", "id", "column", "String"),
       TableBrowserNode("", "location", "column", "Array[Double]"),
       TableBrowserNode("", "name", "column", "String"),
-      TableBrowserNode("", "gender", "column", "String"))
+      TableBrowserNode("", "gender", "column", "String"),
+    )
     assert(expected.sortBy(_.name) == response.list.sortBy(_.name))
   }
 
   test("list project table columns") {
     val project = box("Create example graph").box("SQL1")
     val res = sqlController.getTableBrowserNodesForBox(workspaceController)(
-      user, TableBrowserNodeForBoxRequest(getMeta(project), "vertices"))
+      user,
+      TableBrowserNodeForBoxRequest(getMeta(project), "vertices"))
     checkExampleGraphColumns(res)
   }
 
@@ -290,5 +320,5 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
       TableBrowserNodeRequest(path = "table1"),
       idTypeOverride = "Long")
   }
-  */
+   */
 }

@@ -11,17 +11,24 @@ class AuxiliaryOperationTest extends OperationsTestBase {
 
   test("Optional and mandatory parameters work") {
     val firstPart = box("Create example graph")
-      .box("Aggregate edge attribute to vertices", Map(
+      .box(
+        "Aggregate edge attribute to vertices",
+        Map(
+          "prefix" -> "incoming",
+          "direction" -> "incoming edges",
+          // "aggregate_comment" -> "", This is now optional
+          "aggregate_weight" -> "sum"),
+      )
+    firstPart.box(
+      "Aggregate edge attribute to vertices",
+      Map(
         "prefix" -> "incoming",
-        "direction" -> "incoming edges",
-        // "aggregate_comment" -> "", This is now optional
-        "aggregate_weight" -> "sum"))
-    firstPart.box("Aggregate edge attribute to vertices", Map(
-      "prefix" -> "incoming",
-      // "direction" -> "incoming edges", This is not optional, but it has
-      // a default so it should still work.
-      "aggregate_comment" -> "",
-      "aggregate_weight" -> "sum")).project
+        // "direction" -> "incoming edges", This is not optional, but it has
+        // a default so it should still work.
+        "aggregate_comment" -> "",
+        "aggregate_weight" -> "sum",
+      ),
+    ).project
   }
 
   test("Default parameters work") {
@@ -55,7 +62,11 @@ class AuxiliaryOperationTest extends OperationsTestBase {
   }
 
   test("Parametric parameters built-ins: vertexAttributes") {
-    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+    val df = box("Create example graph").box(
+      "SQL1",
+      Map(),
+      Seq(),
+      Map("sql" -> """
       select ${vertexAttributes.map(a => "'" + a.typeName + "' as " + a.name).mkString(",")}
       """))
       .table.df
@@ -70,7 +81,11 @@ class AuxiliaryOperationTest extends OperationsTestBase {
   }
 
   test("Parametric parameters built-ins: edgeAttributes") {
-    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+    val df = box("Create example graph").box(
+      "SQL1",
+      Map(),
+      Seq(),
+      Map("sql" -> """
       select ${edgeAttributes.map(a => "'" + a.typeName + "' as " + a.name).mkString(",")}
       """))
       .table.df
@@ -79,7 +94,11 @@ class AuxiliaryOperationTest extends OperationsTestBase {
   }
 
   test("Parametric parameters built-ins: graphAttributes") {
-    val df = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+    val df = box("Create example graph").box(
+      "SQL1",
+      Map(),
+      Seq(),
+      Map("sql" -> """
       select ${graphAttributes.map(a => "'" + a.typeName + "' as `" + a.name + "`").mkString(",")}
       """))
       .table.df
@@ -91,11 +110,14 @@ class AuxiliaryOperationTest extends OperationsTestBase {
   }
 
   test("Parametric parameters built-ins: workspaceName") {
-    val name = box("Create example graph").box("SQL1", Map(), Seq(), Map("sql" -> """
+    val name = box("Create example graph").box(
+      "SQL1",
+      Map(),
+      Seq(),
+      Map("sql" -> """
       select '${workspaceName}' as x
       """))
       .table.df.collect.head(0)
     assert(name == "test workspace")
   }
 }
-

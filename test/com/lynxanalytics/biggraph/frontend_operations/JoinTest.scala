@@ -31,7 +31,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
-        "attrs" -> "eight"), Seq(target, source)).project
+        "attrs" -> "eight"),
+      Seq(target, source)).project
 
     val values = project.edgeAttributes("eight").rdd.collect.toMap.values.toSeq
 
@@ -67,7 +68,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> "",
         "apply_to_source" -> "",
-        "segs" -> "bucketing"), Seq(target, source)).project
+        "segs" -> "bucketing"),
+      Seq(target, source)).project
 
     val segm = project.existingSegmentation("bucketing")
     val values = segm.edgeAttributes("ten").rdd.collect.toMap.values.toSeq
@@ -88,7 +90,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",
-        "attrs" -> "dst_name,dst_gender"), Seq(target, source)).project
+        "attrs" -> "dst_name,dst_gender"),
+      Seq(target, source)).project
 
     val names = project.edgeAttributes("dst_name")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
@@ -104,11 +107,12 @@ class JoinTest extends OperationsTestBase {
     val source = root
       .box(
         "Filter by attributes",
-        Map("filterva_age" -> "> -10")) // Dummy segmentation
-
+        Map("filterva_age" -> "> -10"), // Dummy segmentation
+      )
       .box(
         "Filter by attributes",
-        Map("filterva_age" -> "> 40")) // Keep only Bob
+        Map("filterva_age" -> "> 40"), // Keep only Bob
+      )
       .box(
         "Add constant vertex attribute",
         Map("name" -> "ten", "value" -> "10", "type" -> "number"))
@@ -166,7 +170,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
-        "attrs" -> "const1"), Seq(target, source)).project
+        "attrs" -> "const1"),
+      Seq(target, source)).project
 
     val joinedAttributes = project.edgeAttributes("const1")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[Double])
@@ -215,7 +220,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> ".seg!edges",
         "apply_to_source" -> "!edges",
-        "attrs" -> "random2"), Seq(target, source))
+        "attrs" -> "random2"),
+      Seq(target, source))
 
     val random2Defined =
       join.box(
@@ -280,7 +286,8 @@ class JoinTest extends OperationsTestBase {
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",
-        "attrs" -> "newattr"), Seq(target, source)).project
+        "attrs" -> "newattr"),
+      Seq(target, source)).project
 
     val newEdgeAttributes = project.edgeAttributes("newattr")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
@@ -293,11 +300,13 @@ class JoinTest extends OperationsTestBase {
     val root = box("Create example graph")
     val target = root.box(
       "Filter by attributes",
-      Map("filterva_age" -> "> -1")) // Make chain longer
+      Map("filterva_age" -> "> -1"),
+    ) // Make chain longer
       .box("Filter by attributes", Map("filterva_age" -> "<40")) // Discard Bob
     val source = root.box(
       "Filter by attributes",
-      Map("filterva_age" -> "> -2")) // Make chain longer
+      Map("filterva_age" -> "> -2"),
+    ) // Make chain longer
       .box("Filter by attributes", Map("filterva_age" -> ">10")) // Discard Joe
     (target, source)
   }
@@ -324,7 +333,8 @@ class JoinTest extends OperationsTestBase {
     val join = box(
       "Graph rejoin",
       Map(
-        "segs" -> "bucketing"), Seq(target, source))
+        "segs" -> "bucketing"),
+      Seq(target, source))
 
     val result =
       join.box(
@@ -350,7 +360,8 @@ class JoinTest extends OperationsTestBase {
     val result = box(
       "Graph rejoin",
       Map(
-        "edge" -> "yes"), Seq(target, source))
+        "edge" -> "yes"),
+      Seq(target, source))
       .box(
         "SQL1",
         Map("sql" -> "select edge_edge_attr from `edges`"))

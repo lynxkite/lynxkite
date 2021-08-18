@@ -1,7 +1,7 @@
 // Generates an approximation of the optimal graph coloring
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.graph_api.{ DataSet, OutputBuilder, RuntimeContext, _ }
+import com.lynxanalytics.biggraph.graph_api.{DataSet, OutputBuilder, RuntimeContext, _}
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
@@ -11,9 +11,7 @@ object Coloring extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val coloring = vertexAttribute[Double](inputs.vs.entity)
 
   }
@@ -21,17 +19,17 @@ object Coloring extends OpFromJson {
 }
 import Coloring._
 case class Coloring()
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val vertices = inputs.vs.rdd
@@ -54,8 +52,10 @@ case class Coloring()
      */
     @annotation.tailrec
     def pertColoring(
-      directedEdges: RDD[(Long, Long)], coloringSoFar: AttributeRDD[Double],
-      nextColor: Double, tooManyColors: Double): PertColoring = {
+        directedEdges: RDD[(Long, Long)],
+        coloringSoFar: AttributeRDD[Double],
+        nextColor: Double,
+        tooManyColors: Double): PertColoring = {
       if (nextColor >= tooManyColors) PertColoring(None)
       else {
         if (directedEdges.isEmpty()) PertColoring(Some(nextColor - 1, coloringSoFar))
@@ -80,8 +80,9 @@ case class Coloring()
       // RDD of (dst, (src, order of src))
       val directedEdges2 = ordering.join(edgesWithoutId).map { case (src, (srcOrd, dst)) => (dst, (src, srcOrd)) }
       // RDD of ((src, order of src), (dst, order of dst)
-      val directedEdges1 = ordering.join(directedEdges2).
-        map { case (dst, (dstOrd, (src, srcOrd))) => ((src, srcOrd), (dst, dstOrd)) }
+      val directedEdges1 = ordering.join(directedEdges2).map { case (dst, (dstOrd, (src, srcOrd))) =>
+        ((src, srcOrd), (dst, dstOrd))
+      }
       // RDD of (src, dst) where edges are directed in such a way that order of src < order of dst
       val directedEdges = directedEdges1.map {
         case ((src, srcOrd), (dst, dstOrd)) =>
@@ -100,8 +101,10 @@ case class Coloring()
      * We iterate it for maxIterations steps or until we can't improve the coloring.
      */
     @annotation.tailrec
-    def findBetterColoring(oldColoring: AttributeRDD[Double], currentNumberOfColors: Double,
-      iterationsLeft: Int): AttributeRDD[Double] = {
+    def findBetterColoring(
+        oldColoring: AttributeRDD[Double],
+        currentNumberOfColors: Double,
+        iterationsLeft: Int): AttributeRDD[Double] = {
       if (iterationsLeft > 0) {
         val newOrdering = oldColoring.mapValues(c => if (c % 2 == 0) c + currentNumberOfColors else c)
         val directedEdges = directEdgesFromOrdering(newOrdering)
@@ -114,8 +117,9 @@ case class Coloring()
       } else oldColoring
     }
 
-    val degreeWithoutIsolatedVertices = edgesWithoutId.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
-      reduceBySortedKey(betterPartitioner, _ + _)
+    val degreeWithoutIsolatedVertices = edgesWithoutId.flatMap { case (src, dst) =>
+      Seq(src -> 1.0, dst -> 1.0)
+    }.reduceBySortedKey(betterPartitioner, _ + _)
 
     /* we use the degree AttributeRDD to direct the edges to create a directed acyclic graph (DAG).
      * We want to create a DAG where the length of the longest directed path is as small as possible.
@@ -124,8 +128,8 @@ case class Coloring()
      * is very likely to go through vertices with high degree. If the vertices with high degree have vertices with
      * smaller degree between them along the path then the ordering based on the degree will cut up such a path.
      */
-    val degree = vertices.sortUnique(betterPartitioner).sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
-      mapValues(_._2.getOrElse(0.0))
+    val degree = vertices.sortUnique(betterPartitioner).sortedLeftOuterJoin(degreeWithoutIsolatedVertices).mapValues(
+      _._2.getOrElse(0.0))
 
     /* findColoring starts with the ordering based on the degrees of the vertices in hopes that it gives us a good
      * starting coloring. Then try to improve the coloring by iterating the findBetterColoring function.
@@ -136,7 +140,9 @@ case class Coloring()
       val directedEdgesToDegreeOrdering = directEdgesFromOrdering(degree)
       val (numberOfColorsSoFar, coloringByDegreeOrdering) = pertColoring(
         directedEdgesToDegreeOrdering,
-        startingColoring, 2, vertexCount + 1).result.get
+        startingColoring,
+        2,
+        vertexCount + 1).result.get
 
       findBetterColoring(coloringByDegreeOrdering, numberOfColorsSoFar, iteration)
     }

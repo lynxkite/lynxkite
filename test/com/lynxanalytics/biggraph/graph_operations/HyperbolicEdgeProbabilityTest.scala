@@ -1,16 +1,15 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.math
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
+class HyperbolicEdgeProbabilityTest extends AnyFunSuite with TestGraphOp {
   test("radial connections with high probability") {
-    val g = SmallTestGraph(Map(0 -> Seq(1, 2, 3), 1 -> Seq(0),
-      2 -> Seq(0), 3 -> Seq(0), 4 -> Seq()))().result
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2, 3), 1 -> Seq(0), 2 -> Seq(0), 3 -> Seq(0), 4 -> Seq()))().result
     val radialMap = Map[Int, Double](
       0 -> 0.0,
       1 -> 2 * math.log(2),
@@ -31,13 +30,14 @@ class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
     val radial = AddVertexAttribute.run(g.vs, radialMap)
     val angular = AddVertexAttribute.run(g.vs, angularMap)
 
-    val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial)(op.angular, angular)(op.degree, degree)(op.clustering, clus).result
+    val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial)(op.angular, angular)(op.degree, degree)(
+      op.clustering,
+      clus).result
     val probs = out.edgeProbability.rdd
     assert(probs.filter { case (id, prob) => prob < 0.35 }.collect.toList.length < 2)
   }
   test("lateral connections with low probability") {
-    val g = SmallTestGraph(Map(0 -> Seq(), 1 -> Seq(2, 3),
-      2 -> Seq(1), 3 -> Seq(1, 4), 4 -> Seq(3)))().result
+    val g = SmallTestGraph(Map(0 -> Seq(), 1 -> Seq(2, 3), 2 -> Seq(1), 3 -> Seq(1, 4), 4 -> Seq(3)))().result
     val radialMap = Map[Int, Double](
       0 -> 0.0,
       1 -> 2 * math.log(6),
@@ -58,7 +58,9 @@ class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
     val radial = AddVertexAttribute.run(g.vs, radialMap)
     val angular = AddVertexAttribute.run(g.vs, angularMap)
 
-    val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial)(op.angular, angular)(op.degree, degree)(op.clustering, clus).result
+    val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial)(op.angular, angular)(op.degree, degree)(
+      op.clustering,
+      clus).result
     val probs = out.edgeProbability.rdd
     assert(probs.filter { case (id, prob) => prob > 0.1 }.isEmpty)
   }

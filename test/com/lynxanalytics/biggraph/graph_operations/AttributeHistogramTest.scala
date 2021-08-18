@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.DoubleLinearBucketer
 
-class AttributeHistogramTest extends FunSuite with TestGraphOp {
+class AttributeHistogramTest extends AnyFunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("works on edges") {
@@ -14,10 +14,14 @@ class AttributeHistogramTest extends FunSuite with TestGraphOp {
     val count = Count.run(g.edges.idSet)
     val op = AttributeHistogram(bucketer, 50000)
     val out = op(
-      op.original, g.edges.idSet)(
-        op.filtered, g.edges.idSet)(
-          op.attr, g.weight)(
-            op.originalCount, count).result
+      op.original,
+      g.edges.idSet)(
+      op.filtered,
+      g.edges.idSet)(
+      op.attr,
+      g.weight)(
+      op.originalCount,
+      count).result
     assert(out.counts.value === Map(0 -> 2, 1 -> 2))
   }
 }

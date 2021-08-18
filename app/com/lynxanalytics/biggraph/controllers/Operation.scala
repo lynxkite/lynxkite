@@ -40,7 +40,8 @@ object FEOperationParameterMeta {
     "visualization", // Describes a two-sided visualization UI state.
     "wizard-steps",
     "trigger", // A computation triggering button.
-    "dummy") // A piece of text without an input field.
+    "dummy", // A piece of text without an input field.
+  )
 }
 
 case class FEOperationParameterMeta(
@@ -67,7 +68,8 @@ case class CustomOperationParameterMeta(
   assert(
     CustomOperationParameterMeta.validKinds.contains(kind) ||
       CustomOperationParameterMeta.deprecatedKinds.contains(kind),
-    s"'$kind' is not a valid parameter type.")
+    s"'$kind' is not a valid parameter type.",
+  )
 }
 object CustomOperationParameterMeta {
   val validKinds = List(
@@ -82,7 +84,8 @@ object CustomOperationParameterMeta {
     "edge attribute (String)",
     "graph attribute",
     "segmentation",
-    "column")
+    "column",
+  )
   val deprecatedKinds = List(
     "vertexattribute",
     "vertexattribute (Double)",
@@ -98,7 +101,10 @@ case class FEOperationSpec(
     parameters: Map[String, String])
 
 case class FEOperationCategory(
-    title: String, icon: String, color: String, browseByDir: Boolean)
+    title: String,
+    icon: String,
+    color: String,
+    browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -114,7 +120,15 @@ abstract class OperationParameterMeta {
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
-    id, title, kind, group, defaultValue, placeholder, options, multipleChoice, payload)
+    id,
+    title,
+    kind,
+    group,
+    defaultValue,
+    placeholder,
+    options,
+    multipleChoice,
+    payload)
 }
 
 // An Operation is the computation that a Box represents in a workspace.
@@ -138,7 +152,7 @@ object Operation {
       // Browse operations in this category using the dir structure. If true, the UI will display the
       // operations in a tree structure using the '/' character in the operation id as path separator.
       browseByDir: Boolean = false)
-    extends Ordered[Category] {
+      extends Ordered[Category] {
     def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
       FEOperationCategory(title, icon, color, browseByDir)
@@ -179,21 +193,23 @@ object Operation {
         "This operation is not available for segmentations.")
       def assertSegmentation = {
         val baseMsg = "This operation is only available for segmentations."
-        def errorMsg = if (project.segmentationNames.nonEmpty) {
-          val names = project.segmentationNames.map(name => s"'$name'").mkString(", ")
-          if (project.segmentationNames.size > 1) {
-            s"${baseMsg} Please pick from ${names}."
+        def errorMsg =
+          if (project.segmentationNames.nonEmpty) {
+            val names = project.segmentationNames.map(name => s"'$name'").mkString(", ")
+            if (project.segmentationNames.size > 1) {
+              s"${baseMsg} Please pick from ${names}."
+            } else {
+              s"${baseMsg} Please select ${names}."
+            }
           } else {
-            s"${baseMsg} Please select ${names}."
+            s"${baseMsg} The current input project state has none."
           }
-        } else {
-          s"${baseMsg} The current input project state has none."
-        }
         FEStatus.assert(project.isSegmentation, errorMsg)
       }
 
       protected def segmentationsRecursively(
-        editor: ProjectEditor, prefix: String = ""): Seq[String] = {
+          editor: ProjectEditor,
+          prefix: String = ""): Seq[String] = {
         prefix +: editor.segmentationNames.flatMap { seg =>
           segmentationsRecursively(editor.segmentation(seg), prefix + "." + seg)
         }
@@ -210,7 +226,8 @@ object Operation {
     }
     implicit class OperationInputTables(operation: Operation) {
       // Returns all tables output by all inputs of this operation.
-      def getInputTables(renaming: Map[String, String] = null)(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
+      def getInputTables(renaming: Map[String, String] = null)(implicit
+          metaManager: MetaGraphManager): Map[String, ProtoTable] = {
         val inputs =
           if (renaming == null) operation.context.inputs
           else operation.context.inputs.map {
@@ -218,11 +235,12 @@ object Operation {
           }
         inputs.flatMap {
           case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
-          case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.flatMap {
-            case (tableName, proto) =>
-              val prefixes = Seq(s"$inputName.") ++ (if (inputs.size == 1) Seq("") else Seq())
-              prefixes.map(prefix => s"$prefix$tableName" -> proto)
-          }
+          case (inputName, state) if state.isProject =>
+            state.project.viewer.getProtoTables.flatMap {
+              case (tableName, proto) =>
+                val prefixes = Seq(s"$inputName.") ++ (if (inputs.size == 1) Seq("") else Seq())
+                prefixes.map(prefix => s"$prefix$tableName" -> proto)
+            }
         }
       }
     }
@@ -240,12 +258,12 @@ trait OperationRegistry {
   def defaultIcon = "black_medium_square"
 
   def registerOp(
-    id: String,
-    icon: String,
-    category: Operation.Category,
-    inputs: List[String],
-    outputs: List[String],
-    factory: Operation.Factory): Unit = {
+      id: String,
+      icon: String,
+      category: Operation.Category,
+      inputs: List[String],
+      outputs: List[String],
+      factory: Operation.Factory): Unit = {
     assert(!operations.contains(id), s"$id is already registered.")
     assert(
       !categories.contains(category.title) || categories(category.title) == category,
@@ -301,9 +319,9 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   def operationsRelevantToWorkspace(
-    user: serving.User,
-    path: String,
-    myCustomBoxOperationIds: List[String]) = {
+      user: serving.User,
+      path: String,
+      myCustomBoxOperationIds: List[String]) = {
     val pathParts = path.split("/").init
     val possibleCustomBoxPaths = Range(1, pathParts.length + 1)
       .map(pathParts.slice(0, _))
@@ -328,8 +346,10 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   def opForBox(
-    user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
-    workspaceParameters: Map[String, String]) = {
+      user: serving.User,
+      box: Box,
+      inputs: Map[String, BoxOutputState],
+      workspaceParameters: Map[String, String]) = {
     val (meta, factory) = getBox(box.operationId)
     val context =
       Operation.Context(user, this, box, meta, inputs, workspaceParameters, env.metaGraphManager)
@@ -383,7 +403,8 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     for (input <- projects) {
       val param = "apply_to_" + input
       params += OperationParams.SegmentationParam(
-        param, s"Apply to ($input)",
+        param,
+        s"Apply to ($input)",
         context.inputs(input).project.segmentationsRecursively)
     }
     params
@@ -422,10 +443,6 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
 
   protected def visualizationInput(input: String): ProjectEditor = {
     context.inputs(input).visualization.project
-  }
-
-  protected def plotInput(input: String): Scalar[String] = {
-    context.inputs(input).plot
   }
 
   protected def tableInput(input: String): Table = {
@@ -493,7 +510,8 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
 
 // A "ProjectTransformation" takes 1 input project and produces 1 output project.
 abstract class ProjectTransformation(
-    context: Operation.Context) extends ProjectOutputOperation(context) {
+    context: Operation.Context)
+    extends ProjectOutputOperation(context) {
   assert(
     context.meta.inputs == List("graph"),
     s"A ProjectTransformation must input a single graph. $context")
@@ -585,7 +603,7 @@ trait Importer {
 }
 
 abstract class ImportOperation(context: Operation.Context)
-  extends TableOutputOperation(context) with Importer {
+    extends TableOutputOperation(context) with Importer {
   import MetaGraphManager.StringAsUUID
   protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
 
@@ -611,14 +629,18 @@ abstract class ImportOperation(context: Operation.Context)
     val limit = params("limit")
     val query = params("sql")
     val raw = getRawDataFrame(context)
-    val partial = if (importedColumns.isEmpty) raw else {
-      val columns = importedColumns.map(spark.sql.functions.column(_))
-      raw.select(columns: _*)
-    }
+    val partial =
+      if (importedColumns.isEmpty) raw
+      else {
+        val columns = importedColumns.map(spark.sql.functions.column(_))
+        raw.select(columns: _*)
+      }
     val limited = if (limit.isEmpty) partial else partial.limit(limit.toInt)
-    val queried = if (query.isEmpty) limited else {
-      SparkDomain.sql(context, query, List("this" -> limited))
-    }
+    val queried =
+      if (query.isEmpty) limited
+      else {
+        SparkDomain.sql(context, query, List("this" -> limited))
+      }
     queried
   }
 
@@ -661,7 +683,7 @@ abstract class ExportOperation(context: Operation.Context) extends TriggerableOp
 }
 
 abstract class ExportOperationToFile(context: Operation.Context)
-  extends ExportOperation(context) {
+    extends ExportOperation(context) {
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     assertWriteAllowed(params("path"))
@@ -712,15 +734,17 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
       case BoxOutputKind.Visualization =>
         visualizationInput(inputName).allEntityGUIDs
       case BoxOutputKind.Plot =>
-        List(plotInput(inputName).gUID)
+        BoxOutputState.guidOfTablesInPlot(input.plot).toList
       case _ => throw new AssertionError(
-        s"Cannot use '${input.kind}' as input.")
+          s"Cannot use '${input.kind}' as input.")
     }
   }
 }
 
 class CustomBoxOperation(
-    workspace: Workspace, override val context: Operation.Context) extends SmartOperation(context) {
+    workspace: Workspace,
+    override val context: Operation.Context)
+    extends SmartOperation(context) {
   override val params = new ParameterHolder(context) // No automatically generated parameters.
   override def summary = context.meta.operationId.split("/", -1).last
   params ++= {
@@ -767,11 +791,16 @@ class CustomBoxOperation(
     workspace.copy(boxes = workspace.boxes.map { box =>
       if (box.operationId == "Input" && box.parameters.contains("name")) {
         new Box(
-          box.id, box.operationId, box.parameters, box.x, box.y, box.inputs,
+          box.id,
+          box.operationId,
+          box.parameters,
+          box.x,
+          box.y,
+          box.inputs,
           box.parametricParameters) {
           override def execute(
-            ctx: WorkspaceExecutionContext,
-            inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+              ctx: WorkspaceExecutionContext,
+              inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
             Map(this.output("input") -> context.inputs(this.parameters("name")))
           }
         }

@@ -14,4 +14,3 @@ class SplitEdgesOperationTest extends OperationsTestBase {
     assert(index.rdd.values.collect.toSeq.sorted == Seq(0, 0, 0, 0, 1, 1, 1, 2, 2, 3))
   }
 }
-

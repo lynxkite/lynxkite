@@ -4,9 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 
 object Node2Vec extends OpFromJson {
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: GraphInput) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput) extends MagicOutput(instance) {
     val embedding = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = Node2Vec(
@@ -17,12 +15,15 @@ object Node2Vec extends OpFromJson {
     (j \ "contextSize").as[Int])
 }
 case class Node2Vec(dimensions: Int, iterations: Int, walkLength: Int, walksPerNode: Int, contextSize: Int)
-  extends TypedMetaGraphOp[GraphInput, Node2Vec.Output] {
+    extends TypedMetaGraphOp[GraphInput, Node2Vec.Output] {
   @transient override lazy val inputs = new GraphInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Node2Vec.Output()(instance, inputs)
   override def toJson = Json.obj(
-    "dimensions" -> dimensions, "iterations" -> iterations, "walkLength" -> walkLength,
-    "walksPerNode" -> walksPerNode, "contextSize" -> contextSize)
+    "dimensions" -> dimensions,
+    "iterations" -> iterations,
+    "walkLength" -> walkLength,
+    "walksPerNode" -> walksPerNode,
+    "contextSize" -> contextSize)
 }
 
 object EmbedVectors {
@@ -30,9 +31,8 @@ object EmbedVectors {
     val vs = vertexSet
     val vector = vertexAttribute[Vector[Double]](vs)
   }
-  class Output(dimensions: Int)(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(dimensions: Int)(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val embedding = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 }
@@ -76,9 +76,7 @@ object TrainGCNClassifier extends OpFromJson {
     val label = vertexAttribute[Double](vs)
     val features = vertexAttribute[Vector[Double]](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val trainAcc = scalar[Double]
     val model = scalar[SphynxModel]
   }
@@ -90,7 +88,8 @@ object TrainGCNClassifier extends OpFromJson {
     (j \ "num_conv_layers").as[Int],
     (j \ "hidden_size").as[Int],
     (j \ "conv_op").as[String],
-    (j \ "seed").as[Int])
+    (j \ "seed").as[Int],
+  )
 }
 case class TrainGCNClassifier(
     iterations: Int,
@@ -101,7 +100,7 @@ case class TrainGCNClassifier(
     hiddenSize: Int,
     convOp: String,
     seed: Int)
-  extends TypedMetaGraphOp[TrainGCNClassifier.Input, TrainGCNClassifier.Output] {
+    extends TypedMetaGraphOp[TrainGCNClassifier.Input, TrainGCNClassifier.Output] {
   @transient override lazy val inputs = new TrainGCNClassifier.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNClassifier.Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -112,7 +111,8 @@ case class TrainGCNClassifier(
     "num_conv_layers" -> numConvLayers,
     "hidden_size" -> hiddenSize,
     "conv_op" -> convOp,
-    "seed" -> seed)
+    "seed" -> seed,
+  )
 }
 
 object TrainGCNRegressor extends OpFromJson {
@@ -122,9 +122,7 @@ object TrainGCNRegressor extends OpFromJson {
     val label = vertexAttribute[Double](vs)
     val features = vertexAttribute[Vector[Double]](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val trainMSE = scalar[Double]
     val model = scalar[SphynxModel]
   }
@@ -136,7 +134,8 @@ object TrainGCNRegressor extends OpFromJson {
     (j \ "num_conv_layers").as[Int],
     (j \ "hidden_size").as[Int],
     (j \ "conv_op").as[String],
-    (j \ "seed").as[Int])
+    (j \ "seed").as[Int],
+  )
 }
 case class TrainGCNRegressor(
     iterations: Int,
@@ -147,7 +146,7 @@ case class TrainGCNRegressor(
     hiddenSize: Int,
     convOp: String,
     seed: Int)
-  extends TypedMetaGraphOp[TrainGCNRegressor.Input, TrainGCNRegressor.Output] {
+    extends TypedMetaGraphOp[TrainGCNRegressor.Input, TrainGCNRegressor.Output] {
   @transient override lazy val inputs = new TrainGCNRegressor.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new TrainGCNRegressor.Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -158,7 +157,8 @@ case class TrainGCNRegressor(
     "num_conv_layers" -> numConvLayers,
     "hidden_size" -> hiddenSize,
     "conv_op" -> convOp,
-    "seed" -> seed)
+    "seed" -> seed,
+  )
 }
 
 object PredictWithGCN extends OpFromJson {
@@ -169,15 +169,13 @@ object PredictWithGCN extends OpFromJson {
     val features = vertexAttribute[Vector[Double]](vs)
     val model = scalar[SphynxModel]
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = PredictWithGCN()
 }
 case class PredictWithGCN()
-  extends TypedMetaGraphOp[PredictWithGCN.Input, PredictWithGCN.Output] {
+    extends TypedMetaGraphOp[PredictWithGCN.Input, PredictWithGCN.Output] {
   @transient override lazy val inputs = new PredictWithGCN.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new PredictWithGCN.Output()(instance, inputs)
   override def toJson = Json.obj()
@@ -193,9 +191,7 @@ object BundleVertexAttributesIntoVector extends OpFromJson {
       i => vertexAttribute[Vector[Double]](vs, Symbol(s"vectorElement-$i"))
     }
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val vectorAttr = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 
@@ -205,7 +201,9 @@ object BundleVertexAttributesIntoVector extends OpFromJson {
 }
 
 case class BundleVertexAttributesIntoVector(
-    numDoubleElements: Int, numVectorElements: Int) extends TypedMetaGraphOp[BundleVertexAttributesIntoVector.Input, BundleVertexAttributesIntoVector.Output] {
+    numDoubleElements: Int,
+    numVectorElements: Int)
+    extends TypedMetaGraphOp[BundleVertexAttributesIntoVector.Input, BundleVertexAttributesIntoVector.Output] {
   @transient override lazy val inputs = new BundleVertexAttributesIntoVector.Input(numDoubleElements, numVectorElements)
   def outputMeta(instance: MetaGraphOperationInstance) = new BundleVertexAttributesIntoVector.Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -218,9 +216,7 @@ object OneHotEncoder extends OpFromJson {
     val vs = vertexSet
     val catAttr = vertexAttribute[String](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val oneHotVector = vertexAttribute[Vector[Double]](inputs.vs.entity)
   }
 

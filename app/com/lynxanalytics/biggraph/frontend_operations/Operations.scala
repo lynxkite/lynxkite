@@ -28,7 +28,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new ManageProjectOperations(env),
     new ExportOperations(env),
     new VisualizationOperations(env),
-    new HiddenOperations(env))
+    new HiddenOperations(env),
+  )
 
   override val atomicOperations = registries.flatMap(_.operations).toMap
   override val atomicCategories = registries.flatMap(_.categories).toMap
@@ -102,7 +103,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   }
 
   def register(id: String, inputs: List[String], outputs: List[String], icon: String = defaultIcon)(
-    factory: Context => Operation): Unit = {
+      factory: Context => Operation): Unit = {
     registerOp(id, icon, category, inputs, outputs, factory)
   }
 
@@ -116,8 +117,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   import OperationParams._
 
   protected def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Scalar[_] = {
+      implicit manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
       seg.belongsTo,
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count"))
@@ -128,8 +128,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   }
 
   protected def segmentationSizesProductSum(seg: SegmentationEditor, parent: ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Scalar[_] = {
+      implicit manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
       seg.belongsTo,
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count"))
@@ -199,56 +198,100 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     }
   }
   def aggregateParams(
-    attrs: Iterable[(String, Attribute[_])],
-    needsGlobal: Boolean = false,
-    weighted: Boolean = false,
-    defaultPrefix: String = ""): List[OperationParameterMeta] = {
+      attrs: Iterable[(String, Attribute[_])],
+      needsGlobal: Boolean = false,
+      weighted: Boolean = false,
+      defaultPrefix: String = ""): List[OperationParameterMeta] = {
     val sortedAttrs = attrs.toList.sortBy(_._1)
     Param("prefix", "Generated name prefix", defaultValue = defaultPrefix) ::
       Choice("add_suffix", "Add suffixes to attribute names", options = FEOption.yesno) ::
       sortedAttrs.toList.map {
         case (name, attr) =>
-          val options = if (attr.is[Double]) {
-            if (weighted) { // At the moment all weighted aggregators are global.
-              FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
-            } else if (needsGlobal) {
-              FEOption.list(
-                "average", "count", "count_distinct", "count_most_common", "first", "max", "min", "most_common",
-                "std_deviation", "sum")
+          val options =
+            if (attr.is[Double]) {
+              if (weighted) { // At the moment all weighted aggregators are global.
+                FEOption.list("weighted_average", "by_max_weight", "by_min_weight", "weighted_sum")
+              } else if (needsGlobal) {
+                FEOption.list(
+                  "average",
+                  "count",
+                  "count_distinct",
+                  "count_most_common",
+                  "first",
+                  "max",
+                  "min",
+                  "most_common",
+                  "std_deviation",
+                  "sum")
 
+              } else {
+                FEOption.list(
+                  "average",
+                  "count",
+                  "count_distinct",
+                  "count_most_common",
+                  "first",
+                  "max",
+                  "median",
+                  "min",
+                  "most_common",
+                  "set",
+                  "std_deviation",
+                  "sum",
+                  "vector")
+              }
+            } else if (attr.is[String]) {
+              if (weighted) { // At the moment all weighted aggregators are global.
+                FEOption.list("by_max_weight", "by_min_weight")
+              } else if (needsGlobal) {
+                FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+              } else {
+                FEOption.list(
+                  "count",
+                  "count_distinct",
+                  "first",
+                  "most_common",
+                  "count_most_common",
+                  "majority_50",
+                  "majority_100",
+                  "vector",
+                  "set")
+              }
+            } else if (attr.is[Vector[Double]]) {
+              if (weighted) {
+                FEOption.list("by_max_weight", "by_min_weight")
+              } else {
+                FEOption.list(
+                  "concatenate",
+                  "count",
+                  "count_distinct",
+                  "count_most_common",
+                  "elementwise_average",
+                  "elementwise_max",
+                  "elementwise_min",
+                  "elementwise_std_deviation",
+                  "elementwise_sum",
+                  "first",
+                  "most_common",
+                )
+              }
             } else {
-              FEOption.list(
-                "average", "count", "count_distinct", "count_most_common", "first", "max", "median", "min", "most_common",
-                "set", "std_deviation", "sum", "vector")
+              if (weighted) { // At the moment all weighted aggregators are global.
+                FEOption.list("by_max_weight", "by_min_weight")
+              } else if (needsGlobal) {
+                FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
+              } else {
+                FEOption.list(
+                  "count",
+                  "count_distinct",
+                  "first",
+                  "median",
+                  "most_common",
+                  "count_most_common",
+                  "set",
+                  "vector")
+              }
             }
-          } else if (attr.is[String]) {
-            if (weighted) { // At the moment all weighted aggregators are global.
-              FEOption.list("by_max_weight", "by_min_weight")
-            } else if (needsGlobal) {
-              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-            } else {
-              FEOption.list(
-                "count", "count_distinct", "first", "most_common", "count_most_common", "majority_50", "majority_100",
-                "vector", "set")
-            }
-          } else if (attr.is[Vector[Double]]) {
-            if (weighted) {
-              FEOption.list("by_max_weight", "by_min_weight")
-            } else {
-              FEOption.list(
-                "concatenate", "count", "count_distinct", "count_most_common", "elementwise_average",
-                "elementwise_max", "elementwise_min", "elementwise_std_deviation", "elementwise_sum",
-                "first", "most_common")
-            }
-          } else {
-            if (weighted) { // At the moment all weighted aggregators are global.
-              FEOption.list("by_max_weight", "by_min_weight")
-            } else if (needsGlobal) {
-              FEOption.list("count", "count_distinct", "first", "most_common", "count_most_common")
-            } else {
-              FEOption.list("count", "count_distinct", "first", "median", "most_common", "count_most_common", "set", "vector")
-            }
-          }
           TagList(s"aggregate_$name", name, options = options)
       }
   }
@@ -260,19 +303,21 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   // Performs AggregateAttributeToScalar.
   protected def aggregate[From, Intermediate, To](
-    attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
+      attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
     val op = graph_operations.AggregateAttributeToScalar(attributeWithAggregator.aggregator)
     op(op.attr, attributeWithAggregator.attr).result.aggregated
   }
 
   // Performs AggregateByEdgeBundle.
   protected def aggregateViaConnection[From, To](
-    connection: EdgeBundle,
-    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
+      connection: EdgeBundle,
+      attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(
-      op.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(connection))(
-        op.attr, attributeWithAggregator.attr).result.attr
+      op.connectionBySrc,
+      graph_operations.HybridEdgeBundle.bySrc(connection))(
+      op.attr,
+      attributeWithAggregator.attr).result.attr
   }
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
     val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr.join(keyAttr)
@@ -287,7 +332,9 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   // Common code for operations "merge parallel edges" and "merge parallel edges by key"
   protected def applyMergeParallelEdges(
-    project: ProjectEditor, params: ParameterHolder, byKey: Boolean) = {
+      project: ProjectEditor,
+      params: ParameterHolder,
+      byKey: Boolean) = {
 
     val edgesAsAttr = {
       val op = graph_operations.EdgeBundleAsAttribute()
@@ -327,8 +374,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   // Performs AggregateFromEdges.
   protected def aggregateFromEdges[From, To](
-    edges: EdgeBundle,
-    attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
+      edges: EdgeBundle,
+      attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateFromEdges(attributeWithAggregator.aggregator)
     val res = op(op.edges, edges)(op.eattr, attributeWithAggregator.attr).result
     res.dstAttr
@@ -348,7 +395,10 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     }
     // Options suitable when only neighbors are involved.
     val neighborOptions = FEOption.list(
-      "in-neighbors", "out-neighbors", "all neighbors", "symmetric neighbors")
+      "in-neighbors",
+      "out-neighbors",
+      "all neighbors",
+      "symmetric neighbors")
     // Options suitable when edge attributes are not involved.
     val options = attrOptions ++ FEOption.list("symmetric edges") ++ neighborOptions
     // Neighborhood directions correspond to these
@@ -404,8 +454,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   }
 
   def unifyAttributes(
-    as1: Iterable[(String, Attribute[_])],
-    as2: Iterable[(String, Attribute[_])]): Map[String, Attribute[_]] = {
+      as1: Iterable[(String, Attribute[_])],
+      as2: Iterable[(String, Attribute[_])]): Map[String, Attribute[_]] = {
 
     val m1 = as1.toMap
     val m2 = as2.toMap
@@ -457,7 +507,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
         .map {
           case (name, attr) =>
             name -> attr.pullVia(vsUnion.injections(1).reverse)
-        })
+        },
+    )
     val ebInduced = Option(project.edgeBundle).map { eb =>
       val op = graph_operations.InducedEdgeBundle()
       val mapping = vsUnion.injections(0)
@@ -485,8 +536,10 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
         val ebUnion = {
           val op = graph_operations.EdgeBundleUnion(2)
           op(
-            op.ebs, Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
-              op.injections, idUnion.injections.map(_.entity)).result.union
+            op.ebs,
+            Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
+            op.injections,
+            idUnion.injections.map(_.entity)).result.union
         }
         (
           ebUnion,
@@ -503,7 +556,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       other.edgeAttributes
         .map {
           case (name, attr) => name -> attr.pullVia(otherEbInjection)
-        })
+        },
+    )
 
     project.vertexSet = vsUnion.union
     for ((name, attr) <- newVertexAttributes) {
@@ -518,9 +572,9 @@ object ScalaUtilities {
   import com.lynxanalytics.sandbox.ScalaScript
 
   def collectIdentifiers[T <: MetaGraphEntity](
-    holder: StateMapHolder[T],
-    expr: String,
-    prefix: String = ""): IndexedSeq[(String, T)] = {
+      holder: StateMapHolder[T],
+      expr: String,
+      prefix: String = ""): IndexedSeq[(String, T)] = {
     var vars = ScalaScript.findVariables(expr)
     holder.filter {
       case (name, _) => vars.contains(prefix + name)
@@ -536,7 +590,7 @@ object PythonUtilities {
     case "no" => false
     case "" => false
     case unexpected => throw new AssertionError(
-      s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
+        s"KITE_ALLOW_PYTHON must be either 'yes' or 'no'. Found '$unexpected'.")
   }
   def assertAllowed() = {
     assert(allowed, "Python code execution is disabled on this server for security reasons.")
@@ -562,15 +616,16 @@ object PythonUtilities {
           s"Invalid output: '$parent.$name'. Valid groups are: " + api.mkString(", "))
         Field(parent, name, toSerializableType(tpe))
       case output => throw new AssertionError(
-        s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
+          s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
     }
   }
 
   def derive(
-    code: String, inputs: Seq[String], outputs: Seq[String],
-    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Unit = {
+      code: String,
+      inputs: Seq[String],
+      outputs: Seq[String],
+      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+      implicit manager: MetaGraphManager): Unit = {
     val api = Seq("vs", "es", "graph_attributes")
     // Parse the input list into Fields.
     val existingFields = project.vertexAttributes.map {
@@ -588,8 +643,8 @@ object PythonUtilities {
       existingFields.get(i) match {
         case Some(f) => f
         case None => throw new AssertionError(
-          s"No available input called '$i'. Available inputs are: " +
-            existingFields.keys.toSeq.sorted.mkString(", "))
+            s"No available input called '$i'. Available inputs are: " +
+              existingFields.keys.toSeq.sorted.mkString(", "))
       }
     }
     // Run the operation.
@@ -624,10 +679,10 @@ object PythonUtilities {
   }
 
   def create(
-    code: String, outputs: Seq[String],
-    project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
-    implicit
-    manager: MetaGraphManager): Unit = {
+      code: String,
+      outputs: Seq[String],
+      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+      implicit manager: MetaGraphManager): Unit = {
     val api = Seq("vs", "es", "graph_attributes")
     // Run the operation.
     val res = graph_operations.CreateGraphInPython(code, outputFields(outputs, api).toList)().result
@@ -674,9 +729,10 @@ object PythonUtilities {
   }
 
   def deriveTable(
-    code: String, table: Table, outputs: Seq[String])(
-    implicit
-    manager: MetaGraphManager): Table = {
+      code: String,
+      table: Table,
+      outputs: Seq[String])(
+      implicit manager: MetaGraphManager): Table = {
     val api = Seq("df")
     // Run the operation.
     val op = graph_operations.DeriveTablePython(code, outputFields(outputs, api).toList)

@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class EdgesFromAttributeMatchesTest extends FunSuite with TestGraphOp {
+class EdgesFromAttributeMatchesTest extends AnyFunSuite with TestGraphOp {
   test("example graph") {
     val g = ExampleGraph()().result
     val op = EdgesFromAttributeMatches[String]()
@@ -15,7 +15,7 @@ class EdgesFromAttributeMatchesTest extends FunSuite with TestGraphOp {
   }
 }
 
-class EdgesFromBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
+class EdgesFromBipartiteAttributeMatchesTest extends AnyFunSuite with TestGraphOp {
   test("example graph") {
     val g1 = ExampleGraph()().result
     val g2 = SmallTestGraph(Map(0 -> Seq(1)))().result
@@ -26,7 +26,7 @@ class EdgesFromBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
   }
 }
 
-class EdgesFromUniqueBipartiteAttributeMatchesTest extends FunSuite with TestGraphOp {
+class EdgesFromUniqueBipartiteAttributeMatchesTest extends AnyFunSuite with TestGraphOp {
   test("import attributes for existing vertex set from table") {
     val table = SmallTestGraph(
       Map(1 -> Seq(), 2 -> Seq(), 3 -> Seq(), 4 -> Seq()))().result
@@ -45,13 +45,14 @@ class EdgesFromUniqueBipartiteAttributeMatchesTest extends FunSuite with TestGra
 
     val op = EdgesFromUniqueBipartiteAttributeMatches()
     val result = op(op.toAttr, idColumn)(
-      op.fromAttr, graph.name).result
+      op.fromAttr,
+      graph.name).result
     assert(Seq(Edge(0, 2), Edge(1, 1), Edge(3, 5)) ==
       result.edges.rdd.values.collect.toSeq)
   }
 }
 
-class EdgesFromLookupAttributeMatchesTest extends FunSuite with TestGraphOp {
+class EdgesFromLookupAttributeMatchesTest extends AnyFunSuite with TestGraphOp {
   test("example graph") {
     val g1 = ExampleGraph()().result
     val g2 = SmallTestGraph(Map(0 -> Seq(1)))().result

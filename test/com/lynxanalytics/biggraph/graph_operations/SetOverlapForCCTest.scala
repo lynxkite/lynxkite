@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class SetOverlapForCCTest extends FunSuite with TestGraphOp {
+class SetOverlapForCCTest extends AnyFunSuite with TestGraphOp {
   def RandomSets(esize: Int, vsize: Int, seed: Int): Seq[(Seq[Int], Int)] = {
     val rand = new Random(seed)
     val elementIds = Seq.range[Int](0, vsize)

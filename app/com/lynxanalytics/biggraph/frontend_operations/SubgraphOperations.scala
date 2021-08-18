@@ -19,7 +19,8 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.0001"),
       NonNegInt("radius", "Radius", default = 3),
       Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
-      RandomSeed("seed", "Seed", context.box))
+      RandomSeed("seed", "Seed", context.box),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val ratio = params("ratio")
@@ -39,16 +40,21 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       val distance = {
         val op = graph_operations.ShortestPath(params("radius").toInt)
         op(op.vs, project.vertexSet)(
-          op.es, project.edgeBundle)(
-            op.edgeDistance, edgeLength)(
-              op.startingDistance, startingDistance).result.distance
+          op.es,
+          project.edgeBundle)(
+          op.edgeDistance,
+          edgeLength)(
+          op.startingDistance,
+          startingDistance).result.distance
       }
       project.newVertexAttribute(params("attrName"), distance)
 
       // Filtering on distance attribute.
       val guid = distance.entity.gUID.toString
       val vertexEmbedding = FEFilters.embedFilteredVertices(
-        project.vertexSet, Seq(FEVertexAttributeFilter(guid, ">-1")), heavy = true)
+        project.vertexSet,
+        Seq(FEVertexAttributeFilter(guid, ">-1")),
+        heavy = true)
       project.pullBack(vertexEmbedding)
 
     }
@@ -61,7 +67,8 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
       Param("edgeAttrName", "Save edge indices as", defaultValue = "first_traversed"),
-      RandomSeed("seed", "Seed", context.box))
+      RandomSeed("seed", "Seed", context.box),
+    )
     def enabled = project.hasEdgeBundle
 
     def apply() = {
@@ -70,8 +77,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         val walksFromOnePoint = params("walksFromOnePoint").toInt
         val walkAbortionProbability = params("walkAbortionProbability").toDouble
         val seed = params("seed").toInt
-        val op = graph_operations.RandomWalkSample(startPoints, walksFromOnePoint,
-          walkAbortionProbability, seed)
+        val op = graph_operations.RandomWalkSample(startPoints, walksFromOnePoint, walkAbortionProbability, seed)
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
       }
       project.newVertexAttribute(params("vertexAttrName"), output.vertexFirstVisited)
@@ -138,7 +144,9 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
       if (vertexFilters.nonEmpty) {
         val vertexEmbedding = FEFilters.embedFilteredVertices(
-          project.vertexSet, vertexFilters, heavy = true)
+          project.vertexSet,
+          vertexFilters,
+          heavy = true)
         project.pullBack(vertexEmbedding)
       }
       val edgeFilters = params.toMap.collect {
@@ -148,7 +156,9 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }.toSeq
       if (edgeFilters.nonEmpty) {
         val edgeEmbedding = FEFilters.embedFilteredVertices(
-          project.edgeBundle.idSet, edgeFilters, heavy = true)
+          project.edgeBundle.idSet,
+          edgeFilters,
+          heavy = true)
         project.pullBackEdges(edgeEmbedding)
       }
     }

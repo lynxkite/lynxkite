@@ -1,9 +1,9 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.graph_api.{ SafeFuture, ThreadUtil }
-import org.scalatest.FunSuite
+import com.lynxanalytics.biggraph.graph_api.{SafeFuture, ThreadUtil}
+import org.scalatest.funsuite.AnyFunSuite
 
-class ControlledFuturesTest extends FunSuite {
+class ControlledFuturesTest extends AnyFunSuite {
   val maxParalellism = 11
   val numFutures = 487
   implicit val executionContext =

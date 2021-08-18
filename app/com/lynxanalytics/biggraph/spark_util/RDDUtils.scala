@@ -11,21 +11,20 @@ import org.apache.spark.rdd.ShuffledRDD
 import scala.collection.mutable
 import scala.reflect._
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
-class IDBuckets[T](
-    val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
-  extends Serializable with Equals {
+class IDBuckets[T] extends Serializable with Equals {
+  val counts: mutable.Map[T, Long] = mutable.Map[T, Long]()
   var sample = mutable.Map[ID, T]() // May be null!
   def add(id: ID, t: T): Unit = {
-    counts(t) += 1
+    counts(t) = counts.getOrElse(t, 0L) + 1L
     addSample(id, t)
   }
   def absorb(b: IDBuckets[T]): Unit = {
     for ((k, v) <- b.counts) {
-      counts(k) += v
+      counts(k) = counts.getOrElse(k, 0L) + v
     }
     if (b.sample == null) {
       sample = null
@@ -121,7 +120,8 @@ object RDDUtils {
    * estimate totals from the filtered numbers.
    */
   private def unfilteredCounts[T](
-    full: SortedRDD[ID, _], restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
+      full: SortedRDD[ID, _],
+      restricted: SortedRDD[ID, T]): RDD[(ID, (T, Int))] = {
     full.zipPartitions(restricted, true) { (fit, rit) =>
       new Iterator[(ID, (T, Int))] {
         def hasNext = rit.hasNext
@@ -136,19 +136,19 @@ object RDDUtils {
   }
 
   private def estimateValueCounts[T](
-    fullRDD: SortedRDD[ID, _],
-    data: SortedRDD[ID, T],
-    totalVertexCount: Long,
-    requiredPositiveSamples: Int,
-    rc: RuntimeContext): IDBuckets[T] = {
+      fullRDD: SortedRDD[ID, _],
+      data: SortedRDD[ID, T],
+      totalVertexCount: Long,
+      requiredPositiveSamples: Int,
+      rc: RuntimeContext): IDBuckets[T] = {
 
     import Implicits._
     val withCounts = unfilteredCounts(fullRDD, data)
     val sampleWithCounts = withCounts.coalesce(rc).takeFirstNValuesOrSo(requiredPositiveSamples)
     val (valueBuckets, unfilteredCount, filteredCount) = sampleWithCounts
       .aggregate((
-        new IDBuckets[T]() /* observed value counts */ ,
-        0 /* estimated total count corresponding to the observed filtered sample */ ,
+        new IDBuckets[T]() /* observed value counts */,
+        0 /* estimated total count corresponding to the observed filtered sample */,
         0 /* observed filtered sample size */ ))(
         {
           case ((buckets, uct, fct), (id, (value, uc))) =>
@@ -159,14 +159,16 @@ object RDDUtils {
           case ((buckets1, uct1, fct1), (buckets2, uct2, fct2)) =>
             buckets1.absorb(buckets2)
             (buckets1, uct1 + uct2, fct1 + fct2)
-        })
+        },
+      )
     // Extrapolate from sample.
-    val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
-      // No sampling must have happened.
-      1.0
-    } else {
-      totalVertexCount * 1.0 / unfilteredCount
-    }
+    val multiplier =
+      if (filteredCount < requiredPositiveSamples / 2) {
+        // No sampling must have happened.
+        1.0
+      } else {
+        totalVertexCount * 1.0 / unfilteredCount
+      }
     valueBuckets.counts.transform { (value, count) => (multiplier * count).toInt }
     // Round to next power of 10.
     // TODO: Move this closer to the UI.
@@ -178,7 +180,7 @@ object RDDUtils {
   }
 
   private def preciseValueCounts[T](
-    data: SortedRDD[ID, T]): IDBuckets[T] = {
+      data: SortedRDD[ID, T]): IDBuckets[T] = {
 
     data.aggregate(new IDBuckets[T]())(
       {
@@ -194,11 +196,11 @@ object RDDUtils {
   }
 
   def estimateOrPreciseValueCounts[T](
-    fullRDD: SortedRDD[ID, _],
-    data: SortedRDD[ID, T],
-    totalVertexCount: Long,
-    requiredPositiveSamples: Int,
-    rc: RuntimeContext): IDBuckets[T] = {
+      fullRDD: SortedRDD[ID, _],
+      data: SortedRDD[ID, T],
+      totalVertexCount: Long,
+      requiredPositiveSamples: Int,
+      rc: RuntimeContext): IDBuckets[T] = {
 
     if (requiredPositiveSamples < 0) {
       preciseValueCounts(data)
@@ -213,12 +215,12 @@ object RDDUtils {
   }
 
   def estimateValueWeights[T](
-    fullRDD: SortedRDD[ID, _],
-    weightsRDD: UniqueSortedRDD[ID, Double],
-    data: SortedRDD[ID, T],
-    totalVertexCount: Long,
-    requiredPositiveSamples: Int,
-    rc: RuntimeContext): Map[T, Double] = {
+      fullRDD: SortedRDD[ID, _],
+      weightsRDD: UniqueSortedRDD[ID, Double],
+      data: SortedRDD[ID, T],
+      totalVertexCount: Long,
+      requiredPositiveSamples: Int,
+      rc: RuntimeContext): Map[T, Double] = {
 
     import Implicits._
     val withWeights = data.sortedJoin(weightsRDD)
@@ -228,8 +230,8 @@ object RDDUtils {
     val (valueWeights, unfilteredCount, filteredCount) = sampleWithWeightsAndCounts
       .values
       .aggregate((
-        mutable.Map[T, Double]() /* observed value weights */ ,
-        0 /* estimated total count corresponding to the observed filtered sample */ ,
+        mutable.Map[T, Double]() /* observed value weights */,
+        0 /* estimated total count corresponding to the observed filtered sample */,
         0 /* observed filtered sample size */ ))(
         {
           case ((map, uct, fct), ((key, weight), uc)) =>
@@ -242,13 +244,15 @@ object RDDUtils {
               incrementWeightMap(map1, k, v)
             }
             (map1, uct1 + uct2, fct1 + fct2)
-        })
-    val multiplier = if (filteredCount < requiredPositiveSamples / 2) {
-      // No sampling must have happened.
-      1.0
-    } else {
-      totalVertexCount * 1.0 / unfilteredCount
-    }
+        },
+      )
+    val multiplier =
+      if (filteredCount < requiredPositiveSamples / 2) {
+        // No sampling must have happened.
+        1.0
+      } else {
+        totalVertexCount * 1.0 / unfilteredCount
+      }
     valueWeights.toMap.map { case (k, c) => k -> multiplier * c }
   }
 
@@ -281,7 +285,7 @@ object RDDUtils {
   // so if the partition sizes are sufficiently close to the ideal no repartitioning happens.
   // This method assumes that the RDD is partitioned evenly.
   def maybeRepartitionForOutput[K: Ordering: ClassTag, V: ClassTag](
-    rdd: UniqueSortedRDD[K, V])(implicit rc: RuntimeContext): UniqueSortedRDD[K, V] = {
+      rdd: UniqueSortedRDD[K, V])(implicit rc: RuntimeContext): UniqueSortedRDD[K, V] = {
     val count = countApproxEvenRDD(rdd)
     val desiredNumPartitions = EntityIO.desiredNumPartitions(count)
     if (RatioSorter.ratio(rdd.partitions.size, desiredNumPartitions) < EntityIO.tolerance) {
@@ -379,12 +383,14 @@ object Implicits {
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Trust that the RDD is sorted. Check the partitioner.
     def asSortedRDD(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): SortedRDD[K, V] = {
       assert(
         self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
-          s" to RDD of size ${self.partitions.size}: $self")
+          s" to RDD of size ${self.partitions.size}: $self",
+      )
       new AlreadyPartitionedRDD(self, partitioner).asSortedRDD
     }
     // Trust that this RDD is partitioned and sorted.
@@ -397,12 +403,14 @@ object Implicits {
     // Trust that this RDD is partitioned and sorted and has unique keys.
     // Make sure it uses the given partitioner.
     def asUniqueSortedRDD(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       assert(
         self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
-          s" to RDD of size ${self.partitions.size}: $self")
+          s" to RDD of size ${self.partitions.size}: $self",
+      )
       new AlreadyPartitionedRDD(self, partitioner).asUniqueSortedRDD
     }
     def asUniqueSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
@@ -413,8 +421,9 @@ object Implicits {
     }
     // Sorts each partition of the RDD in isolation.
     def sort(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
@@ -429,8 +438,9 @@ object Implicits {
 
     // Sorts each partition of the RDD in isolation and trusts that keys are unique.
     def sortUnique(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
@@ -450,8 +460,9 @@ object Implicits {
     }
 
     def groupBySortedKey(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
 
       if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].groupByKey()
@@ -462,8 +473,9 @@ object Implicits {
       }
     }
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
 
       if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].reduceByKey(f)
@@ -474,8 +486,10 @@ object Implicits {
       }
     }
     def aggregateBySortedKey[U](zeroValue: U, partitioner: spark.Partitioner)(seqOp: (U, V) => U, combOp: (U, U) => U)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V], cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V],
+        cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
 
       // TODO: efficient implementation for SortedRDDs.
       val rawRDD = self.aggregateByKey(zeroValue, partitioner)(seqOp, combOp)
@@ -490,16 +504,15 @@ object Implicits {
     // Returns the RDD unchanged. Fails if the RDD does not have unique
     // keys.
     def assertUniqueKeys(partitioner: spark.Partitioner)(
-      implicit
-      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
+        implicit
+        ck: ClassTag[K],
+        cv: ClassTag[V]): UniqueSortedRDD[K, V] =
       self.groupBySortedKey(partitioner)
         .mapValuesWithKeys {
           case (key, id) =>
             assert(
               id.size == 1,
-              s"The ID attribute must contain unique keys. $key appears ${
-                id.size
-              } times.")
+              s"The ID attribute must contain unique keys. $key appears ${id.size} times.")
             id.head
         }
 

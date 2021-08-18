@@ -14,9 +14,7 @@ object EdgesFromSegmentation extends OpFromJson {
     val seg = vertexSet
     val belongsTo = edgeBundle(vs, seg)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      input: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, input: Input) extends MagicOutput(instance) {
     // Multiple co-occurrence is represented by parallel edges.
     val es = edgeBundle(input.vs.entity, input.vs.entity)
     val origin = edgeBundle(es.idSet, input.seg.entity, EdgeBundleProperties.partialFunction)
@@ -25,17 +23,17 @@ object EdgesFromSegmentation extends OpFromJson {
 }
 import EdgesFromSegmentation._
 case class EdgesFromSegmentation()
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val belongsTo = inputs.belongsTo.rdd
     val p = belongsTo.partitioner.get

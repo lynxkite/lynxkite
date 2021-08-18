@@ -16,17 +16,17 @@ object AttributesToTable extends OpFromJson {
       attributes.map { case (name, tt) => va(name)(tt) }
   }
   class Output(schema: types.StructType)(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val t = table(schema)
   }
 
   import Scripting._
   // Ask the type system to trust us that this attribute matches the template type.
   private def build[T, IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    builder: InstanceBuilder[IS, OMDS],
-    template: Input#VertexAttributeTemplate[_],
-    attribute: Attribute[T]) =
+      builder: InstanceBuilder[IS, OMDS],
+      template: Input#VertexAttributeTemplate[_],
+      attribute: Attribute[T]) =
     builder(template.asInstanceOf[Input#VertexAttributeTemplate[T]], attribute)
 
   def run(vs: VertexSet, attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager): Table = {
@@ -61,10 +61,10 @@ case class AttributesToTable(schema: types.StructType) extends SparkOperation[In
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val columnRDDs: Map[String, AttributeRDD[_]] = inputs.attrs.map { attr =>
       schema(attr.name.name).dataType match {
@@ -88,9 +88,9 @@ class RDDRelation(
     vertexSetRDD: VertexSetRDD,
     columnRDDs: Map[String, AttributeRDD[_]],
     val sqlContext: spark.sql.SQLContext)
-  extends spark.sql.sources.BaseRelation
-  with spark.sql.sources.TableScan
-  with spark.sql.sources.PrunedScan {
+    extends spark.sql.sources.BaseRelation
+    with spark.sql.sources.TableScan
+    with spark.sql.sources.PrunedScan {
   def toDF = sqlContext.baseRelationToDataFrame(this)
 
   // TableScan

@@ -12,12 +12,13 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
       label = trainingData.label,
       featureNames = trainingData.featureNames,
       attrs = trainingData.attrs,
-      graph(trainingData.vertexNumber))
+      graph(trainingData.vertexNumber),
+    )
 
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
+    assert(s == """DecisionTreeClassificationModel: depth=3, numNodes=7, numClasses=3, numFeatures=2
   If (rain <= 0.5)
    If (temperature <= 27.5)
     If (temperature <= -12.5)
@@ -66,14 +67,15 @@ END AS length of the walk""")
         maxDepth = 5,
         minInfoGain = 0,
         minInstancesPerNode = 1,
-        seed = 1234567)
+        seed = 1234567,
+      )
       op(op.features, features)(op.label, l).result.model
     }
 
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeClassificationModel of depth 2 with 5 nodes
+    assert(s == """DecisionTreeClassificationModel: depth=2, numNodes=5, numClasses=3, numFeatures=2
   If (rain <= 0.5)
    If (temperature in {0.0,1.0})
     Predict: 1.0

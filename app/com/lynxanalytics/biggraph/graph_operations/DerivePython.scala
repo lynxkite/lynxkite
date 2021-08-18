@@ -26,8 +26,8 @@ object DerivePython extends OpFromJson {
 
   class Input(fields: Seq[Field]) extends MagicInputSignature {
     val (scalarFields, propertyFields) = fields.partition(_.parent == "graph_attributes")
-    val (edgeFields, attrFields) = propertyFields.partition(
-      f => f.parent == "es" && (f.name == "src" || f.name == "dst"))
+    val (edgeFields, attrFields) =
+      propertyFields.partition(f => f.parent == "es" && (f.name == "src" || f.name == "dst"))
     val edgeParents = edgeFields.map(_.parent).toSet
     val vss = propertyFields.map(f => f.parent -> vertexSet(Symbol(f.parent))).toMap
     val attrs = attrFields.map(f =>
@@ -38,16 +38,15 @@ object DerivePython extends OpFromJson {
       p -> edgeBundle(srcs(p), dsts(p), idSet = vss(p), name = Symbol("edges-for-" + p))).toMap
     val scalars = scalarFields.map(f => runtimeTypedScalar(f.fullName, f.tpe.typeTag))
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input, fields: Seq[Field]) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input, fields: Seq[Field])
+      extends MagicOutput(instance) {
     val (scalarFields, attrFields) = fields.partition(_.parent == "graph_attributes")
     val attrs = attrFields.map { f =>
       inputs.vss.get(f.parent) match {
         case Some(vs) => vertexAttribute(vs.entity, f.fullName)(f.tpe.typeTag)
         case None => throw new AssertionError(
-          s"Cannot produce output for '${f.parent}' when we only have inputs for "
-            + inputs.vss.keys.toSeq.sorted.mkString(", "))
+            s"Cannot produce output for '${f.parent}' when we only have inputs for "
+              + inputs.vss.keys.toSeq.sorted.mkString(", "))
       }
     }
     val scalars = scalarFields.map(f => scalar(f.fullName)(f.tpe.typeTag))
@@ -66,7 +65,7 @@ case class DerivePython private[graph_operations] (
     code: String,
     inputFields: List[Field],
     outputFields: List[Field])
-  extends TypedMetaGraphOp[Input, Output] {
+    extends TypedMetaGraphOp[Input, Output] {
   override def toJson = Json.obj(
     "code" -> code,
     "inputFields" -> inputFields,
@@ -74,4 +73,3 @@ case class DerivePython private[graph_operations] (
   override lazy val inputs = new Input(inputFields)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, outputFields)
 }
-

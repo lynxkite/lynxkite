@@ -21,7 +21,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= List(
       Param("name", "Attribute name", defaultValue = "weight"),
       Param("value", "Value", defaultValue = "1"),
-      Choice("type", "Type", options = FEOption.list("number", "String")))
+      Choice("type", "Type", options = FEOption.list("number", "String")),
+    )
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("name")
@@ -45,7 +46,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     params ++= List(
       Param("name", "Attribute name", defaultValue = "random"),
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
-      RandomSeed("seed", "Seed", context.box))
+      RandomSeed("seed", "Seed", context.box),
+    )
     def enabled = project.hasEdgeBundle
     override def summary = {
       val dist = params("dist").toLowerCase
@@ -55,7 +57,9 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
       project.newEdgeAttribute(
-        params("name"), op(op.vs, project.edgeBundle.idSet).result.attr, help)
+        params("name"),
+        op(op.vs, project.edgeBundle.idSet).result.attr,
+        help)
     }
   })
 
@@ -75,7 +79,11 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       project.edgeAttrList[String] ++
         project.edgeAttrList[Long] ++
         project.edgeAttrList[Int]
-    params += Choice("attr", "Edge attribute", options = eligible, multipleChoice = true,
+    params += Choice(
+      "attr",
+      "Edge attribute",
+      options = eligible,
+      multipleChoice = true,
       hiddenOptions = project.edgeAttrList[Double])
     def enabled = project.hasEdgeBundle
     def apply() = {
@@ -89,10 +97,10 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   register("Derive edge attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("defined_attrs", "Only run on defined attributes",
-        options = FEOption.bools), // Default is true.
+      Choice("defined_attrs", "Only run on defined attributes", options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "scala"),
-      Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
+      Choice("persist", "Persist result", options = FEOption.bools), // Default is true.
+    )
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = if (params("output").nonEmpty) params("output") else "?"
@@ -126,7 +134,12 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val persist = params("persist").toBoolean
 
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
-        expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs, persist)
+        expr,
+        namedAttributes,
+        idSet,
+        namedScalars,
+        onlyOnDefinedAttrs,
+        persist)
 
       project.newEdgeAttribute(output, result, expr + help)
     }
@@ -143,41 +156,45 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register(
     "Fill edge attributes with constant default values")(new ProjectTransformation(_) {
-      params += new DummyParam("text", "The default values for each attribute:")
-      params ++= project.edgeAttrList.map {
-        attr => Param(s"fill_${attr.id}", attr.id)
+    params += new DummyParam("text", "The default values for each attribute:")
+    params ++= project.edgeAttrList.map {
+      attr => Param(s"fill_${attr.id}", attr.id)
+    }
+    def enabled = project.hasEdgeBundle
+    val attrParams: Map[String, String] = params.toMap.collect {
+      case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+    }
+    override def summary = {
+      val fillStrings = attrParams.map {
+        case (name, const) => s"${name} with ${const}"
       }
-      def enabled = project.hasEdgeBundle
-      val attrParams: Map[String, String] = params.toMap.collect {
-        case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+      s"Fill ${fillStrings.mkString(", ")}"
+    }
+    def apply() = {
+      for ((name, const) <- attrParams.toMap) {
+        val attr = project.edgeAttributes(name)
+        val op: graph_operations.AddConstantAttribute[_] =
+          graph_operations.AddConstantAttribute.doubleOrString(
+            isDouble = attr.is[Double],
+            const)
+        val default = op(op.vs, project.edgeBundle.idSet).result
+        project.newEdgeAttribute(
+          name,
+          unifyAttribute(attr, default.attr.entity),
+          project.viewer.getEdgeAttributeNote(name) + s" (filled with default $const)" + help)
       }
-      override def summary = {
-        val fillStrings = attrParams.map {
-          case (name, const) => s"${name} with ${const}"
-        }
-        s"Fill ${fillStrings.mkString(", ")}"
-      }
-      def apply() = {
-        for ((name, const) <- attrParams.toMap) {
-          val attr = project.edgeAttributes(name)
-          val op: graph_operations.AddConstantAttribute[_] =
-            graph_operations.AddConstantAttribute.doubleOrString(
-              isDouble = attr.is[Double], const)
-          val default = op(op.vs, project.edgeBundle.idSet).result
-          project.newEdgeAttribute(
-            name, unifyAttribute(attr, default.attr.entity),
-            project.viewer.getEdgeAttributeNote(name) + s" (filled with default $const)" + help)
-        }
-      }
-    })
+    }
+  })
 
   register("Merge two edge attributes")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "New attribute name", defaultValue = ""),
       Choice("attr1", "Primary attribute", options = project.edgeAttrList),
-      Choice("attr2", "Secondary attribute", options = project.edgeAttrList))
+      Choice("attr2", "Secondary attribute", options = project.edgeAttrList),
+    )
     def enabled = FEStatus.assert(
-      project.edgeAttrList.size >= 2, "Not enough edge attributes.")
+      project.edgeAttrList.size >= 2,
+      "Not enough edge attributes.")
     override def summary = {
       val name1 = params("attr1")
       val name2 = params("attr2")
@@ -196,26 +213,31 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register(
-    "Use table as edge attributes", List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
-      def projectAttributes = project.edgeAttributes
-      def projectIdSet = project.edgeBundle.idSet
-    })
+    "Use table as edge attributes",
+    List(projectInput, "attributes"))(new UseTableAsAttributeOperation(_, this) {
+    def projectAttributes = project.edgeAttributes
+    def projectIdSet = project.edgeBundle.idSet
+  })
 
   register("Score edges with the forest fire model")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save as", defaultValue = "forest_fire_score"),
       NonNegDouble("spread_prob", "Probability of fire spreading", defaultValue = "0.99"),
       NonNegDouble("burn_ratio", "Portion of edges to burn", defaultValue = "10"),
-      RandomSeed("seed", "Random seed", context.box))
+      RandomSeed("seed", "Random seed", context.box),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val name = params("name")
       val attr = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
-        "ForestFireScore", project.edgeBundle, Map(
+        "ForestFireScore",
+        project.edgeBundle,
+        Map(
           "directed" -> false,
           "seed" -> params("seed").toLong,
           "spread_prob" -> params("spread_prob").toDouble,
-          "burn_ratio" -> params("burn_ratio").toDouble))
+          "burn_ratio" -> params("burn_ratio").toDouble),
+      )
       project.edgeAttributes(params("name")) = attr
     }
   })

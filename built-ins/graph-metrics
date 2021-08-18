@@ -373,11 +373,21 @@ boxes:
   operationId: Custom plot
   parameters:
     plot_code: |-
-      Vegas()
-        .withData(table)
-        .encodeX("degrees", Quant, bin=Bin(maxbins=20.0))
-        .encodeY("Vertices", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )
-        .mark(Bar)
+      {
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "degrees",
+            "bin": {"maxbins": 20},
+            "type": "quantitative"
+          },
+          "y": {
+            "field": "Vertices",
+            "scale": {"type": "log"},
+            "type": "quantitative"
+          }
+        }
+      }
   parametricParameters: {}
   x: 631.0940838335453
   y: 3.5922531942784133
@@ -432,11 +442,21 @@ boxes:
   operationId: Custom plot
   parameters:
     plot_code: |-
-      Vegas()
-        .withData(table)
-        .encodeX("SizeOfComponent", Quant, bin=Bin(maxbins=20.0))
-        .encodeY("NumberOfComponents", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )
-        .mark(Bar)
+      {
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "SizeOfComponent",
+            "bin": {"maxbins": 20},
+            "type": "quantitative"
+          },
+          "y": {
+            "field": "NumberOfComponents",
+            "scale": {"type": "log"},
+            "type": "quantitative"
+          }
+        }
+      }
   parametricParameters: {}
   x: 555.4097886263496
   y: 1277.7389240087218

@@ -36,7 +36,8 @@ object RemoteAPIProtocol {
   case class PrefixedPathRequest(
       path: String)
   case class PrefixedPathResult(
-      exists: Boolean, resolved: String)
+      exists: Boolean,
+      resolved: String)
   case class ListElement(name: String, checkpoint: String, objectType: String)
   case class ListResult(entries: List[ListElement])
   case class SetExecutorsRequest(count: Int)
@@ -57,9 +58,16 @@ object RemoteAPIProtocol {
   implicit val rSetExecutorsRequest = json.Json.reads[SetExecutorsRequest]
 }
 
-object RemoteAPIServer extends JsonServer {
+class RemoteAPIServer @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext,
+    fmt: play.api.http.FileMimeTypes,
+    cfg: play.api.Configuration,
+    cc: play.api.mvc.ControllerComponents,
+    pjs: ProductionJsonServer)
+    extends JsonServer {
   import RemoteAPIProtocol._
-  val c = new RemoteAPIController(BigGraphProductionEnvironment)
+  val c = new RemoteAPIController(BigGraphProductionEnvironment, pjs)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getParquetMetadata = jsonPost(c.getParquetMetadata)
@@ -71,7 +79,7 @@ object RemoteAPIServer extends JsonServer {
   def setExecutors = jsonPost(c.setExecutors)
 }
 
-class RemoteAPIController(env: BigGraphEnvironment) {
+class RemoteAPIController(env: BigGraphEnvironment, pjs: ProductionJsonServer) {
 
   import RemoteAPIProtocol._
 
@@ -109,7 +117,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       isWorkspace = entry.isWorkspace,
       isSnapshot = entry.isSnapshot,
       isReadAllowed = entry.readAllowedFrom(user),
-      isWriteAllowed = entry.writeAllowedFrom(user))
+      isWriteAllowed = entry.writeAllowedFrom(user),
+    )
   }
 
   def getPrefixedPath(user: User, request: PrefixedPathRequest): PrefixedPathResult = {
@@ -120,8 +129,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def removeName(
-    user: User,
-    request: RemoveNameRequest): Unit = {
+      user: User,
+      request: RemoveNameRequest): Unit = {
     val entry = controllers.DirectoryEntry.fromName(request.name)
     if (!request.force) {
       assert(entry.exists, s"Entry '$entry' does not exist.")
@@ -166,7 +175,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def cleanFileSystem(user: User, request: Empty) = {
-    val cleanerController = ProductionJsonServer.cleanerController
+    val cleanerController = pjs.cleanerController
     cleanerController.moveAllToCleanerTrash(user)
     cleanerController.emptyCleanerTrash(user, request)
   }
@@ -174,6 +183,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def setExecutors(user: User, request: SetExecutorsRequest) = {
     assert(user.isAdmin, "Only administrator users can set the number of executors.")
     env.sparkContext.requestTotalExecutors(
-      request.count, localityAwareTasks = 0, hostToLocalTaskCount = Map.empty)
+      request.count,
+      localityAwareTasks = 0,
+      hostToLocalTaskCount = Map.empty)
   }
 }

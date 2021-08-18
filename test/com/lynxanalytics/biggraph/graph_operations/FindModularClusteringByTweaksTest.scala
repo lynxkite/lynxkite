@@ -1,14 +1,14 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
-import org.scalatest.ShouldMatchers
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers._
 import scala.util.Random
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers with TestGraphOp {
+class FindModularClusteringByTweaksTest extends AnyFunSuite with TestGraphOp {
   test("example graph") {
     val eg = ExampleGraph()().result
     val clusters = {
@@ -106,11 +106,12 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
       4L -> Seq((3L, 1.0), (5L, 1.0)),
       5L -> Seq((3L, 1.0), (4L, 1.0)),
       // Plus one more dummy point.
-      6L -> Seq((1L, 1.0), (3L, 1.0)))
+      6L -> Seq((1L, 1.0), (3L, 1.0)),
+    )
 
     val degrees = edgeLists.mapValues(edges => edges.map(_._2).sum)
     val totalDegreeSum = degrees.map(_._2).sum
-    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L, 5l)
+    val fullClusterMembers = Set(0L, 1L, 2L, 3L, 4L, 5L)
     val fullCluster = ClusterData.fromMembers(fullClusterMembers, edgeLists)
     val spectrum = new ClusterSpectrum(
       totalDegreeSum,
@@ -120,7 +121,7 @@ class FindModularClusteringByTweaksTest extends FunSuite with ShouldMatchers wit
       edgeLists)
     val rnd = new Random(0)
     val (clust1, clust2, _) = spectrum.bestSplit(rnd)
-    val clustWith0 = if (clust1.contains(0l)) clust1 else clust2
+    val clustWith0 = if (clust1.contains(0L)) clust1 else clust2
     assert(clust1 == Set(0L, 1L, 2L))
   }
 }

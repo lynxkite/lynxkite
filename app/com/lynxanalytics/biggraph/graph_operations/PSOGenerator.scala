@@ -32,7 +32,9 @@ object PSOGenerator extends OpFromJson {
   }
   class Output(
       implicit
-      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+      extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val radial = vertexAttribute[Double](inputs.vs.entity)
     val angular = vertexAttribute[Double](inputs.vs.entity)
@@ -44,8 +46,8 @@ object PSOGenerator extends OpFromJson {
     (j \ "seed").as[Long])
 }
 import PSOGenerator._
-case class PSOGenerator(externalDegree: Double, internalDegree: Double,
-    exponent: Double, seed: Long) extends SparkOperation[Input, Output] {
+case class PSOGenerator(externalDegree: Double, internalDegree: Double, exponent: Double, seed: Long)
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -57,10 +59,10 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     "seed" -> seed)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
@@ -82,7 +84,11 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
               angular = rnd.nextDouble * math.Pi * 2,
               expectedDegree = HyperDistance.totalExpectedEPSO(
                 exponent,
-                externalDegree, internalDegree, size, ordinal))
+                externalDegree,
+                internalDegree,
+                size,
+                ordinal),
+            )
         }
     }
     // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
@@ -111,7 +117,11 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
       lhv =>
         HyperDistance.linkedListSampler(
           (logSize * lhv.vertex.expectedDegree).toInt,
-          lhv, lhv.previous, lhv.next, lhv.radialPrevious, Nil)
+          lhv,
+          lhv.previous,
+          lhv.next,
+          lhv.radialPrevious,
+          Nil)
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
     val possibilities = sc.parallelize(possibilityList)
@@ -142,10 +152,10 @@ object HyperDistance {
   }
   // Expected number of internal connections at given time in the E-PSO model.
   def internalConnectionsEPSO(
-    exponent: Double,
-    internalLinks: Double,
-    maxNodes: Long,
-    ord: Long): Double = {
+      exponent: Double,
+      internalLinks: Double,
+      maxNodes: Long,
+      ord: Long): Double = {
     val firstPart: Double = ((2 * internalLinks * (1 - exponent)) /
       (math.pow(1 - math.pow(maxNodes.toDouble, -(1 - exponent)), 2) * (2 * exponent - 1)))
     val secondPart: Double = math.pow((maxNodes / ord.toDouble), 2 * exponent - 1) - 1
@@ -154,11 +164,11 @@ object HyperDistance {
   }
   // Expected number of connections at given time in the E-PSO model.
   def totalExpectedEPSO(
-    exponent: Double,
-    externalLinks: Double,
-    internalLinks: Double,
-    maxNodes: Long,
-    ord: Long): Double = {
+      exponent: Double,
+      externalLinks: Double,
+      internalLinks: Double,
+      maxNodes: Long,
+      ord: Long): Double = {
     externalLinks + internalConnectionsEPSO(exponent, internalLinks, maxNodes, ord)
   }
   // Equation for parameter denoted I_i in the HyperMap paper.
@@ -167,10 +177,10 @@ object HyperDistance {
   }
   // Expected number of connections for a vertex, used in calculating angular.
   def expectedConnections(
-    vertex: HyperVertex,
-    exponent: Double,
-    temperature: Double,
-    externalLinks: Double): Double = {
+      vertex: HyperVertex,
+      exponent: Double,
+      temperature: Double,
+      externalLinks: Double): Double = {
     val firstPart: Double = (2 * temperature) / math.sin(temperature * math.Pi)
     val secondPart: Double = inverseExponent(vertex.ord, exponent) / externalLinks
     val logged: Double = math.log(firstPart * secondPart)
@@ -178,23 +188,23 @@ object HyperDistance {
   }
   // Connection probability.
   def probability(
-    first: HyperVertex,
-    second: HyperVertex,
-    exponent: Double,
-    temperature: Double,
-    externalLinks: Double): Double = {
+      first: HyperVertex,
+      second: HyperVertex,
+      exponent: Double,
+      temperature: Double,
+      externalLinks: Double): Double = {
     val dist: Double = hyperbolicDistance(first, second)
     1 / (1 + math.exp((1 / (2 * temperature)) * (dist -
       expectedConnections(first, exponent, temperature, externalLinks))))
   }
   @annotation.tailrec
   final def linkedListSampler(
-    remainingIterations: Int,
-    starter: LinkedHyperVertex,
-    previous: LinkedHyperVertex,
-    next: LinkedHyperVertex,
-    radialPrevious: LinkedHyperVertex,
-    samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
+      remainingIterations: Int,
+      starter: LinkedHyperVertex,
+      previous: LinkedHyperVertex,
+      next: LinkedHyperVertex,
+      radialPrevious: LinkedHyperVertex,
+      samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
     val newSamplesSoFar = {
       if (radialPrevious != starter) {
         radialPrevious.vertex :: next.vertex :: previous.vertex :: samplesSoFar
@@ -204,7 +214,6 @@ object HyperDistance {
     val newNext = next.next
     val newRadialPrevious = radialPrevious.radialPrevious
     if (remainingIterations < 1) starter.vertex :: samplesSoFar
-    else linkedListSampler(remainingIterations - 1, starter, newPrevious,
-      newNext, newRadialPrevious, newSamplesSoFar)
+    else linkedListSampler(remainingIterations - 1, starter, newPrevious, newNext, newRadialPrevious, newSamplesSoFar)
   }
 }

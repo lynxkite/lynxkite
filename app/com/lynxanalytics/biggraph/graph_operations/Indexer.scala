@@ -18,16 +18,14 @@ object Indexer extends OpFromJson {
     val baseIndices = vertexAttribute[Int](filtered)
     val bucketAttribute = vertexAttribute[T](vs)
   }
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T]) extends MagicOutput(instance) {
     val indices = vertexAttribute[Int](inputs.filtered.entity)
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = Indexer(TypedJson.read[Bucketer[_]](j \ "bucketer"))
 }
 import Indexer._
 case class Indexer[T](bucketer: Bucketer[T])
-  extends SparkOperation[Input[T], Output[T]] {
+    extends SparkOperation[Input[T], Output[T]] {
 
   @transient override lazy val inputs = new Input[T]
 
@@ -36,10 +34,10 @@ case class Indexer[T](bucketer: Bucketer[T])
   override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val bc = inputs.bucketAttribute.data.classTag
     val filtered = inputs.filtered.rdd

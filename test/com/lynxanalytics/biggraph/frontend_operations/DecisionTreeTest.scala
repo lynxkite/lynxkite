@@ -22,7 +22,9 @@ class DecisionTreeTest extends OperationsTestBase {
           "maxDepth" -> "5",
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
-          "seed" -> "1234567"))
+          "seed" -> "1234567",
+        ),
+      )
       .box(
         "Classify with model",
         Map(
@@ -31,7 +33,9 @@ class DecisionTreeTest extends OperationsTestBase {
             "modelName" : "model",
             "isClassification" : true,
             "generatesProbability" : true,
-            "features" : ["age"]}"""))
+            "features" : ["age"]}""",
+        ),
+      )
       .project
     val classification = project.vertexAttributes("classification").runtimeSafeCast[Double]
     val classificationMap = classification.rdd.collect.toMap
@@ -63,7 +67,9 @@ class DecisionTreeTest extends OperationsTestBase {
           "maxDepth" -> "5",
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
-          "seed" -> "1234567"))
+          "seed" -> "1234567",
+        ),
+      )
       .box(
         "Predict with model",
         Map(
@@ -72,7 +78,9 @@ class DecisionTreeTest extends OperationsTestBase {
             "modelName" : "model",
             "isClassification" : false,
             "generatesProbability" : false,
-            "features" : ["gender01","isJoe"]}"""))
+            "features" : ["gender01","isJoe"]}""",
+        ),
+      )
       .project
     val prediction = project.vertexAttributes("prediction").runtimeSafeCast[Double]
     val predictionMap = prediction.rdd.collect.toMap

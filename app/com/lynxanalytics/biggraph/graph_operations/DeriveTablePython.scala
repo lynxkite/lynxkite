@@ -13,7 +13,7 @@ object DeriveTablePython extends OpFromJson {
     val df = table
   }
   class Output(implicit i: MetaGraphOperationInstance, fields: Seq[Field])
-    extends MagicOutput(i) {
+      extends MagicOutput(i) {
     val df = table(SQLHelper.dataFrameSchemaForTypes(fields.map(f => f.name -> f.tpe.typeTag)))
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
@@ -25,8 +25,10 @@ object DeriveTablePython extends OpFromJson {
 
 import DeriveTablePython._
 case class DeriveTablePython private[graph_operations] (
-    code: String, outputFields: List[Field]) extends TypedMetaGraphOp[Input, Output]
-  with UnorderedSphynxOperation {
+    code: String,
+    outputFields: List[Field])
+    extends TypedMetaGraphOp[Input, Output]
+    with UnorderedSphynxOperation {
   override def toJson = Json.obj(
     "code" -> code,
     "outputFields" -> outputFields)

@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api._
@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
 
-trait OperationsTestBase extends FunSuite with TestGraphOp {
+trait OperationsTestBase extends AnyFunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
@@ -26,8 +26,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       inputMap: Map[String, TestBox]) {
 
     private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
-      val inputBoxNames = inputMap.mapValues(
-        box => (box.projectRec(boxes), box)).view.force
+      val inputBoxNames = inputMap.mapValues(box => (box.projectRec(boxes), box)).view.force
       val name = s"${operationId} ${boxes.length}"
       val inputBoxOutputs = inputBoxNames.map {
         case (inputId, (inputName, inputBox)) =>
@@ -39,7 +38,9 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       val box = Box(
         name,
         operationId,
-        parameters, 0, 0,
+        parameters,
+        0,
+        0,
         inputBoxOutputs,
         parametricParameters)
       boxes += box
@@ -81,35 +82,41 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     }
 
     def box(
-      operationId: String,
-      parameters: Map[String, String] = Map(),
-      otherInputs: Seq[TestBox] = Seq(),
-      parametricParameters: Map[String, String] = Map()): TestBox = {
+        operationId: String,
+        parameters: Map[String, String] = Map(),
+        otherInputs: Seq[TestBox] = Seq(),
+        parametricParameters: Map[String, String] = Map()): TestBox = {
       val meta = ops.getBoxMetadata(operationId)
       TestBox(
-        operationId, parameters, parametricParameters, meta.inputs.zip(this +: otherInputs).toMap)
+        operationId,
+        parameters,
+        parametricParameters,
+        meta.inputs.zip(this +: otherInputs).toMap)
     }
   }
 
   def box(
-    operationId: String,
-    parameters: Map[String, String] = Map(),
-    inputs: Seq[TestBox] = Seq(),
-    parametricParameters: Map[String, String] = Map(),
-    inputMap: Map[String, TestBox] = Map()): TestBox = {
+      operationId: String,
+      parameters: Map[String, String] = Map(),
+      inputs: Seq[TestBox] = Seq(),
+      parametricParameters: Map[String, String] = Map(),
+      inputMap: Map[String, TestBox] = Map()): TestBox = {
     assert(inputs.isEmpty || inputMap.isEmpty)
     TestBox(
-      operationId, parameters, parametricParameters,
-      if (inputs.isEmpty) inputMap else {
+      operationId,
+      parameters,
+      parametricParameters,
+      if (inputs.isEmpty) inputMap
+      else {
         val meta = ops.getBoxMetadata(operationId)
         meta.inputs.zip(inputs).toMap
       })
   }
 
   def importBox(
-    operationId: String,
-    parameters: Map[String, String] = Map(),
-    parametricParameters: Map[String, String] = Map()): TestBox = {
+      operationId: String,
+      parameters: Map[String, String] = Map(),
+      parametricParameters: Map[String, String] = Map()): TestBox = {
     val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox, Map())
     val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
@@ -122,7 +129,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     importBox("Import CSV", options + ("filename" -> ("OPERATIONSTEST$/" + filename)))
 
   def importSeq[T <: Product: reflect.runtime.universe.TypeTag](
-    columns: Seq[String], rows: Seq[T]): TestBox = {
+      columns: Seq[String],
+      rows: Seq[T]): TestBox = {
     val sql = sparkDomain.newSQLContext
     val df = sql.createDataFrame(rows).toDF(columns: _*)
     val table = graph_operations.ImportDataFrame.run(df)

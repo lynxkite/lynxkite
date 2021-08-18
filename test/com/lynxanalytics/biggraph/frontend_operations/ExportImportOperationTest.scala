@@ -8,12 +8,16 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class ExportImportOperationTest extends OperationsTestBase {
   test("Imports from implicit tables") {
     val eg = box("Create example graph")
-      .box("Find connected components", Map(
-        "name" -> "cc",
-        "directions" -> "ignore directions"))
-      .box("Convert vertex attribute to String", Map(
-        "apply_to_graph" -> ".cc",
-        "attr" -> "id"))
+      .box(
+        "Find connected components",
+        Map(
+          "name" -> "cc",
+          "directions" -> "ignore directions"))
+      .box(
+        "Convert vertex attribute to String",
+        Map(
+          "apply_to_graph" -> ".cc",
+          "attr" -> "id"))
 
     // Import vertices as vertices
     {
@@ -51,11 +55,15 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import belongs to as edges
     {
       val project = eg
-        .box("Take segmentation links as base graph", Map(
-          "apply_to_graph" -> ".cc"))
-        .box("Use table as graph", Map(
-          "src" -> "base_name",
-          "dst" -> "segment_id"))
+        .box(
+          "Take segmentation links as base graph",
+          Map(
+            "apply_to_graph" -> ".cc"))
+        .box(
+          "Use table as graph",
+          Map(
+            "src" -> "base_name",
+            "dst" -> "segment_id"))
         .project
       // 4 nodes in 2 segments
       assert(project.vertexSet.rdd.count == 6)
@@ -81,17 +89,22 @@ class ExportImportOperationTest extends OperationsTestBase {
   }
 
   test("Use table as edges") {
-    val edges = importSeq(Seq("src", "dst", "string", "number"), Seq(
-      ("Adam", "Eve", "value1", 1L),
-      ("Isolated Joe", "Bob", "value2", 2L),
-      ("Eve", "Alice", "value3", 3L)))
+    val edges = importSeq(
+      Seq("src", "dst", "string", "number"),
+      Seq(
+        ("Adam", "Eve", "value1", 1L),
+        ("Isolated Joe", "Bob", "value2", 2L),
+        ("Eve", "Alice", "value3", 3L)))
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Use table as edges", Map(
-        "attr" -> "name",
-        "src" -> "src",
-        "dst" -> "dst"), Seq(edges))
+      .box(
+        "Use table as edges",
+        Map(
+          "attr" -> "name",
+          "src" -> "src",
+          "dst" -> "dst"),
+        Seq(edges))
       .project
     assert(Seq(Edge(0, 1), Edge(3, 2)) ==
       project.edgeBundle.rdd.collect.toSeq.map(_._2))
@@ -114,53 +127,70 @@ class ExportImportOperationTest extends OperationsTestBase {
   }
 
   test("Use table as vertex attributes") {
-    val attrs = importSeq(Seq("row_id", "value"), Seq(
-      ("Adam", "value1"),
-      ("Isolated Joe", "value2"),
-      ("Alice", "value3")))
+    val attrs = importSeq(
+      Seq("row_id", "value"),
+      Seq(
+        ("Adam", "value1"),
+        ("Isolated Joe", "value2"),
+        ("Alice", "value3")))
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Use table as vertex attributes", Map(
-        "id_attr" -> "name",
-        "id_column" -> "row_id",
-        "prefix" -> "imported"), Seq(attrs))
+      .box(
+        "Use table as vertex attributes",
+        Map(
+          "id_attr" -> "name",
+          "id_column" -> "row_id",
+          "prefix" -> "imported"),
+        Seq(attrs))
       .project
     val valueAttr = project.vertexAttributes("imported_value").runtimeSafeCast[String].rdd
     assert(Seq((0, "value1"), (3, "value2")) == valueAttr.collect.toSeq.sorted)
   }
 
   test("Use table as edge attributes") {
-    val attrs = importSeq(Seq("row_id", "value"), Seq(
-      ("Adam loves Eve", "value1"),
-      ("Bob envies Adam", "value2"),
-      ("Squirrell loves Peanuts", "value3")))
+    val attrs = importSeq(
+      Seq("row_id", "value"),
+      Seq(
+        ("Adam loves Eve", "value1"),
+        ("Bob envies Adam", "value2"),
+        ("Squirrell loves Peanuts", "value3")))
     // The last row does not match any edges in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Use table as edge attributes", Map(
-        "id_attr" -> "comment",
-        "id_column" -> "row_id",
-        "prefix" -> "imported"), Seq(attrs))
+      .box(
+        "Use table as edge attributes",
+        Map(
+          "id_attr" -> "comment",
+          "id_column" -> "row_id",
+          "prefix" -> "imported"),
+        Seq(attrs))
       .project
     val valueAttr = project.edgeAttributes("imported_value").runtimeSafeCast[String].rdd
     assert(Seq((0, "value1"), (2, "value2")) == valueAttr.collect.toSeq.sorted)
   }
 
   test("Attributes are not overwritten during import") {
-    val table = importSeq(Seq("id", "name", "age"), Seq(
-      ("1", "Bob", "12"),
-      ("2", "Eve", "23"),
-      ("3", "Chris", "34")))
-    val edgeTable = importSeq(Seq("new_comment", "weight"), Seq(
-      ("Adam loves Eve", "1.0")))
+    val table = importSeq(
+      Seq("id", "name", "age"),
+      Seq(
+        ("1", "Bob", "12"),
+        ("2", "Eve", "23"),
+        ("3", "Chris", "34")))
+    val edgeTable = importSeq(
+      Seq("new_comment", "weight"),
+      Seq(
+        ("Adam loves Eve", "1.0")))
 
     val ex = intercept[java.lang.AssertionError] {
       box("Create example graph")
-        .box("Use table as vertex attributes", Map(
-          "if_exists" -> "Disallow this",
-          "id_attr" -> "id",
-          "id_column" -> "id"), Seq(table))
+        .box(
+          "Use table as vertex attributes",
+          Map(
+            "if_exists" -> "Disallow this",
+            "id_attr" -> "id",
+            "id_column" -> "id"),
+          Seq(table))
         .project
     }
     assert(ex.getMessage.contains(
@@ -168,10 +198,13 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     val ex2 = intercept[java.lang.AssertionError] {
       box("Create example graph")
-        .box("Use table as edge attributes", Map(
-          "if_exists" -> "Disallow this",
-          "id_attr" -> "comment",
-          "id_column" -> "new_comment"), Seq(edgeTable))
+        .box(
+          "Use table as edge attributes",
+          Map(
+            "if_exists" -> "Disallow this",
+            "id_attr" -> "comment",
+            "id_column" -> "new_comment"),
+          Seq(edgeTable))
         .project
     }
     assert(ex2.getMessage.contains(

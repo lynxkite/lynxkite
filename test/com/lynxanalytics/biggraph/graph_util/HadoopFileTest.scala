@@ -1,9 +1,9 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.TestUtils
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class HadoopFileTest extends FunSuite {
+class HadoopFileTest extends AnyFunSuite {
   val prefixPath = getClass.getResource("/graph_util/hadoop_tests").toString
   PrefixRepository.registerPrefix("HADOOPTEST$", prefixPath)
 
@@ -196,8 +196,8 @@ class HadoopFileTest extends FunSuite {
   }
 
   def checkPathRules(
-    prefixResolution: String,
-    relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
+      prefixResolution: String,
+      relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
     val prefixSymbol = TestUtils.getDummyPrefixName(prefixResolution, false)
     relativePathsAndExpectedOutputs.foreach { checkOne(prefixSymbol, _) }
   }
@@ -304,7 +304,8 @@ class HadoopFileTest extends FunSuite {
       "TESTFILEDIR" -> "file:/home/user/",
       "TESTFILEDIR_READ_ACL" -> "*",
       "TESTFILEDIR_WRITE_ACL" -> "gabor.olah@lynxanalytics.com",
-      "TESTBLANKS_" -> "hdfs://root/path")
+      "TESTBLANKS_" -> "hdfs://root/path",
+    )
     assert(pairs.sorted === expected.sorted)
   }
 

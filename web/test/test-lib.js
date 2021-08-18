@@ -496,14 +496,19 @@ State.prototype = {
 
 function PlotState(popup) {
   this.popup = popup;
-  this.canvas = popup.$('#plot-div .vega svg');
+  this.canvas = popup.$('#plot-div svg');
 }
 
 PlotState.prototype = {
   __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   barHeights: function() {
-    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+    const bars = this.canvas.$$('g.mark-rect.marks path');
+    // Data is fetched outside of Angular.
+    testLib.wait(protractor.ExpectedConditions.visibilityOf(bars.first()));
+    // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
+    return this.canvas.$$('g.mark-rect.marks path').map(e =>
+      e.getAttribute('d').then(d => parseFloat(d.match(/v([0-9.]+)h/)[1])));
   },
 
   expectBarHeightsToBe: function(expected) {
@@ -511,8 +516,8 @@ PlotState.prototype = {
     this.barHeights().then(heights => {
       expect(heights.length).toEqual(expected.length);
       for (let i = 0; i < heights.length; ++i) {
-        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * heights[i]);
-        expect(heights[i]).toBeLessThanOrEqual(1.01 * heights[i]);
+        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * expected[i]);
+        expect(heights[i]).toBeLessThanOrEqual(1.01 * expected[i]);
       }
     });
   }
@@ -1287,10 +1292,10 @@ testLib = {
   },
 
   sendKeysToACE: function(e, keys) {
-    const aceContent = e.$('div.ace_content');
+    const aceScroller = e.$('div.ace_scroller');
     const aceInput = e.$('textarea.ace_text-input');
     // The double click on the text area focuses it properly.
-    browser.actions().doubleClick(aceContent).perform();
+    browser.actions().doubleClick(aceScroller).perform();
     aceInput.sendKeys(testLib.selectAllKey + keys);
   },
 

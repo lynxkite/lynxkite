@@ -101,9 +101,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
 
       private def attributeEditorParameter(
-        titlePrefix: String,
-        input: String,
-        title: String): OperationParams.SegmentationParam = {
+          titlePrefix: String,
+          input: String,
+          title: String): OperationParams.SegmentationParam = {
         val param = titlePrefix + input
         val vertexAttributeEditors =
           context.inputs(input).project.segmentationsRecursively
@@ -130,9 +130,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
           // d -> d
           //      e
           (eb.properties.isIdPreserving
-            && eb.properties.isFunction
-            && eb.properties.isReversedFunction
-            && eb.properties.isEverywhereDefined)
+          && eb.properties.isFunction
+          && eb.properties.isReversedFunction
+          && eb.properties.isEverywhereDefined)
         }
 
         val reachableAncestors = mutable.Map[VertexSet, Seq[EdgeBundle]]()
@@ -159,8 +159,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       case class PathsToCommonAncestor(chain1: Seq[EdgeBundle], chain2: Seq[EdgeBundle])
 
       def computeChains(
-        a: VertexSet,
-        b: VertexSet): Option[PathsToCommonAncestor] = {
+          a: VertexSet,
+          b: VertexSet): Option[PathsToCommonAncestor] = {
         val aPaths = getReachableAncestors(a)
         val bPaths = getReachableAncestors(b)
         val possibleCommonAncestors = aPaths.keys.toSet & bPaths.keys.toSet
@@ -186,13 +186,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       private def attributesAreAvailable = source.names.nonEmpty
       private def segmentationsAreAvailable = {
         (target.kind == VertexAttributeKind) &&
-          (source.kind == VertexAttributeKind) && (source.projectEditor.segmentationNames.nonEmpty)
+        (source.kind == VertexAttributeKind) && (source.projectEditor.segmentationNames.nonEmpty)
       }
 
       private def edgesCanBeCarriedOver = {
         (target.kind == VertexAttributeKind) &&
-          (source.kind == VertexAttributeKind) &&
-          (source.projectEditor.hasEdgeBundle.enabled)
+        (source.kind == VertexAttributeKind) &&
+        (source.projectEditor.hasEdgeBundle.enabled)
       }
 
       if (compatible && attributesAreAvailable) {
@@ -211,11 +211,11 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         && FEStatus(compatible, "Inputs are not compatible"))
 
       private def copyAttributesViaCommonAncestor(
-        target: AttributeEditor,
-        source: AttributeEditor,
-        fromSourceToAncestor: Seq[EdgeBundle],
-        fromAncestorToTarget: Seq[EdgeBundle],
-        attributeNames: Seq[String]): Unit = {
+          target: AttributeEditor,
+          source: AttributeEditor,
+          fromSourceToAncestor: Seq[EdgeBundle],
+          fromAncestorToTarget: Seq[EdgeBundle],
+          attributeNames: Seq[String]): Unit = {
         for (attrName <- attributeNames) {
           val attr = source.attributes(attrName)
           val note = source.getElementNote(attrName)
@@ -238,8 +238,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         val fromSourceToAncestor = chain.get.chain2
         val fromAncestorToTarget = chain.get.chain1.reverse
         if (attributesAreAvailable) {
-          copyAttributesViaCommonAncestor(target, source,
-            fromSourceToAncestor, fromAncestorToTarget, splitParam("attrs"))
+          copyAttributesViaCommonAncestor(
+            target,
+            source,
+            fromSourceToAncestor,
+            fromAncestorToTarget,
+            splitParam("attrs"))
         }
 
         if (segmentationsAreAvailable) {
@@ -336,9 +340,11 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       project.vertexSet = edgeBundle.idSet
       for ((name, attr) <- vertexAttrs) {
         project.newVertexAttribute(
-          "src_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle))
+          "src_" + name,
+          graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle))
         project.newVertexAttribute(
-          "dst_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle))
+          "dst_" + name,
+          graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle))
       }
       for ((name, attr) <- edgeAttrs) {
         project.newVertexAttribute("edge_" + name, attr)
@@ -358,56 +364,69 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       root.vertexSet = belongsTo.idSet
       for ((name, attr) <- baseAttrs) {
         root.newVertexAttribute(
-          "base_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, belongsTo))
+          "base_" + name,
+          graph_operations.VertexToEdgeAttribute.srcAttribute(attr, belongsTo))
       }
       for ((name, attr) <- segAttrs) {
         root.newVertexAttribute(
-          "segment_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, belongsTo))
+          "segment_" + name,
+          graph_operations.VertexToEdgeAttribute.dstAttribute(attr, belongsTo))
       }
     }
   })
 
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
-    registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
-      override val params = new ParameterHolder(context) // No "apply_to" parameters.
-      params += Param("summary", "Summary", defaultValue = "SQL")
-      params += Param("input_names", "Input names", defaultValue = inputs.mkString(", "))
-      params += Code("sql", "SQL", defaultValue = s"select * from $defaultTableName limit 10\n",
-        language = "sql", enableTableBrowser = true)
-      params += Choice("persist", "Persist result", options = FEOption.yesno)
-      override def summary = params("summary")
-      def enabled = FEStatus.enabled
-      def defaultTableName = {
-        val tableNames = this.getInputTables(renaming).keySet.toList.sorted
-        val name = Seq("vertices", inputNames.head, inputNames.head + ".vertices")
-          .find(tableNames.contains(_))
-          .getOrElse(tableNames.head)
-        val simple = "[a-zA-Z0-9]*".r
-        name match {
-          case simple() => name
-          case _ => s"`$name`"
+    registerOp(
+      name,
+      defaultIcon,
+      category,
+      inputs,
+      List("table"),
+      new TableOutputOperation(_) {
+        override val params = new ParameterHolder(context) // No "apply_to" parameters.
+        params += Param("summary", "Summary", defaultValue = "SQL")
+        params += Param("input_names", "Input names", defaultValue = inputs.mkString(", "))
+        params += Code(
+          "sql",
+          "SQL",
+          defaultValue = s"select * from $defaultTableName limit 10\n",
+          language = "sql",
+          enableTableBrowser = true)
+        params += Choice("persist", "Persist result", options = FEOption.yesno)
+        override def summary = params("summary")
+        def enabled = FEStatus.enabled
+        def defaultTableName = {
+          val tableNames = this.getInputTables(renaming).keySet.toList.sorted
+          val name = Seq("vertices", inputNames.head, inputNames.head + ".vertices")
+            .find(tableNames.contains(_))
+            .getOrElse(tableNames.head)
+          val simple = "[a-zA-Z0-9]*".r
+          name match {
+            case simple() => name
+            case _ => s"`$name`"
+          }
         }
-      }
-      lazy val renaming: Map[String, String] = {
-        inputs.zip(inputNames).toMap
-      }
-      lazy val inputNames = {
-        val names = params("input_names").split(",", -1).map(_.trim)
-        assert(
-          names.length == inputs.length,
-          s"Mismatched input name list: ${params("input_names")}")
-        names
-      }
-      override def getOutputs() = {
-        params.validate()
-        val sql = params("sql")
-        val protoTables = this.getInputTables(renaming)
-        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
-        if (params("persist") == "yes") makeOutput(result.saved)
-        else makeOutput(result)
-      }
-    })
+        lazy val renaming: Map[String, String] = {
+          inputs.zip(inputNames).toMap
+        }
+        lazy val inputNames = {
+          val names = params("input_names").split(",", -1).map(_.trim)
+          assert(
+            names.length == inputs.length,
+            s"Mismatched input name list: ${params("input_names")}")
+          names
+        }
+        override def getOutputs() = {
+          params.validate()
+          val sql = params("sql")
+          val protoTables = this.getInputTables(renaming)
+          val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+          if (params("persist") == "yes") makeOutput(result.saved)
+          else makeOutput(result)
+        }
+      },
+    )
   }
 
   registerSQLOp("SQL1", List("input"))
@@ -418,124 +437,151 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
 
-  registerOp("Filter with SQL", "filter", category, List("input"), List("output"), new SmartOperation(_) {
-    private val input = context.inputs("input")
-    if (input.isProject) {
-      params ++= List(
-        Code("vertex_filter", "Vertex filter", language = "sql"),
-        Code("edge_filter", "Edge filter", language = "sql"))
-    } else {
-      assert(input.isTable, "Input must be a graph or a table.")
-      params ++= List(
-        Code("filter", "Filter", language = "sql"))
-    }
-    override def summary = {
+  registerOp(
+    "Filter with SQL",
+    "filter",
+    category,
+    List("input"),
+    List("output"),
+    new SmartOperation(_) {
+      private val input = context.inputs("input")
       if (input.isProject) {
-        val vf = params("vertex_filter").trim
-        val ef = params("edge_filter").trim
-        if (vf.isEmpty && ef.isEmpty) "Filter with SQL"
-        else if (vf.nonEmpty && ef.nonEmpty) s"Filter to $vf; $ef"
-        else s"Filter to $vf$ef"
-      } else {
-        val f = params("filter").trim
-        if (f.isEmpty) "Filter with SQL"
-        else s"Filter to $f"
-      }
-    }
-    def enabled = FEStatus.enabled
-    override def getOutputs() = {
-      params.validate()
-      if (input.isProject) {
-        val project = input.project
-        val before = project.rootEditor.viewer
-        if (params("vertex_filter").trim.nonEmpty) {
-          val p = project.viewer.editor // Create a copy.
-          // Must use low-level method to avoid automatic conversion to Double.
-          p.vertexAttributes.updateEntityMap(
-            p.vertexAttributes.iterator.toMap + ("!id" -> p.vertexSet.idAttribute))
-          val vf = graph_operations.ExecuteSQL.run(
-            "select `!id` from vertices where " + params("vertex_filter"),
-            p.viewer.getProtoTables.toMap)
-          val vertexEmbedding = {
-            val op = graph_operations.FilterByTable("!id")
-            op(op.vs, p.vertexSet)(op.t, vf).result.identity
-          }
-          project.pullBack(vertexEmbedding)
-        }
-        if (params("edge_filter").trim.nonEmpty) {
-          val p = project.viewer.editor
-          p.edgeAttributes.updateEntityMap(
-            p.edgeAttributes.iterator.toMap + ("!id" -> p.edgeBundle.idSet.idAttribute))
-          val vf = graph_operations.ExecuteSQL.run(
-            "select `!id` from edge_attributes where " + params("edge_filter"),
-            p.viewer.getProtoTables.toMap)
-          val edgeEmbedding = {
-            val op = graph_operations.FilterByTable("!id")
-            op(op.vs, p.edgeBundle.idSet)(op.t, vf).result.identity
-          }
-          project.pullBackEdges(edgeEmbedding)
-        }
-        updateDeltas(project.rootEditor, before)
-        Map(context.box.output("output") -> BoxOutputState.from(project))
+        params ++= List(
+          Code("vertex_filter", "Vertex filter", language = "sql"),
+          Code("edge_filter", "Edge filter", language = "sql"))
       } else {
         assert(input.isTable, "Input must be a graph or a table.")
-        Map(context.box.output("output") -> BoxOutputState.from(
-          if (params("filter").trim.isEmpty) input.table
-          else graph_operations.ExecuteSQL.run(
-            "select * from input where " + params("filter"), Map("input" -> ProtoTable(input.table)))))
+        params ++= List(
+          Code("filter", "Filter", language = "sql"))
       }
-    }
-    def apply(): Unit = ???
-  })
-
-  registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
-    def paramNames = tableInput("input").schema.fieldNames
-    params ++= paramNames.map {
-      name => Code(s"new_$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
-    }
-    def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
-    override def summary = s"Transform $transformedColumns"
-    def enabled = FEStatus.enabled
-    override def getOutputs() = {
-      params.validate()
-      val transformations = paramNames.map { name =>
-        val newName = s"new_$name"
-        s"${params(newName)} as `$name`"
-      }.mkString(", ")
-      val sql = s"select $transformations from input"
-      val protoTables = this.getInputTables()
-      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
-      makeOutput(result)
-    }
-  })
-
-  registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
-    def paramNames = tableInput("input").schema.fieldNames
-    params ++= List(
-      Param("name", "Column name"),
-      Code("value", s"Column value", language = "sql", enableTableBrowser = false))
-    def name = params("name")
-    def value = params("value")
-    override def summary = s"Derive $name = $value"
-    def enabled = FEStatus.enabled
-    override def getOutputs() = {
-      params.validate()
-      // SparkSQL allows multiple columns with the same name, so we have to remove it manually.
-      val paramsStr = paramNames.filter(_ != name).mkString(", ")
-      val sql = s"select $paramsStr, $value as `$name` from input"
-      val protoTables = this.getInputTables()
-      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
-      makeOutput(result)
-    }
-  })
+      override def summary = {
+        if (input.isProject) {
+          val vf = params("vertex_filter").trim
+          val ef = params("edge_filter").trim
+          if (vf.isEmpty && ef.isEmpty) "Filter with SQL"
+          else if (vf.nonEmpty && ef.nonEmpty) s"Filter to $vf; $ef"
+          else s"Filter to $vf$ef"
+        } else {
+          val f = params("filter").trim
+          if (f.isEmpty) "Filter with SQL"
+          else s"Filter to $f"
+        }
+      }
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        params.validate()
+        if (input.isProject) {
+          val project = input.project
+          val before = project.rootEditor.viewer
+          if (params("vertex_filter").trim.nonEmpty) {
+            val p = project.viewer.editor // Create a copy.
+            // Must use low-level method to avoid automatic conversion to Double.
+            p.vertexAttributes.updateEntityMap(
+              p.vertexAttributes.iterator.toMap + ("!id" -> p.vertexSet.idAttribute))
+            val vf = graph_operations.ExecuteSQL.run(
+              "select `!id` from vertices where " + params("vertex_filter"),
+              p.viewer.getProtoTables.toMap)
+            val vertexEmbedding = {
+              val op = graph_operations.FilterByTable("!id")
+              op(op.vs, p.vertexSet)(op.t, vf).result.identity
+            }
+            project.pullBack(vertexEmbedding)
+          }
+          if (params("edge_filter").trim.nonEmpty) {
+            val p = project.viewer.editor
+            p.edgeAttributes.updateEntityMap(
+              p.edgeAttributes.iterator.toMap + ("!id" -> p.edgeBundle.idSet.idAttribute))
+            val vf = graph_operations.ExecuteSQL.run(
+              "select `!id` from edge_attributes where " + params("edge_filter"),
+              p.viewer.getProtoTables.toMap)
+            val edgeEmbedding = {
+              val op = graph_operations.FilterByTable("!id")
+              op(op.vs, p.edgeBundle.idSet)(op.t, vf).result.identity
+            }
+            project.pullBackEdges(edgeEmbedding)
+          }
+          updateDeltas(project.rootEditor, before)
+          Map(context.box.output("output") -> BoxOutputState.from(project))
+        } else {
+          assert(input.isTable, "Input must be a graph or a table.")
+          Map(context.box.output("output") -> BoxOutputState.from(
+            if (params("filter").trim.isEmpty) input.table
+            else graph_operations.ExecuteSQL.run(
+              "select * from input where " + params("filter"),
+              Map("input" -> ProtoTable(input.table)))))
+        }
+      }
+      def apply(): Unit = ???
+    },
+  )
 
   registerOp(
-    "Compute in Python", defaultIcon, category, List("graph"), List("graph"),
+    "Transform",
+    defaultIcon,
+    category,
+    List("input"),
+    List("table"),
+    new TableOutputOperation(_) {
+      def paramNames = tableInput("input").schema.fieldNames
+      params ++= paramNames.map {
+        name => Code(s"new_$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
+      }
+      def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
+      override def summary = s"Transform $transformedColumns"
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        params.validate()
+        val transformations = paramNames.map { name =>
+          val newName = s"new_$name"
+          s"${params(newName)} as `$name`"
+        }.mkString(", ")
+        val sql = s"select $transformations from input"
+        val protoTables = this.getInputTables()
+        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+        makeOutput(result)
+      }
+    },
+  )
+
+  registerOp(
+    "Derive column",
+    defaultIcon,
+    category,
+    List("input"),
+    List("table"),
+    new TableOutputOperation(_) {
+      def paramNames = tableInput("input").schema.fieldNames
+      params ++= List(
+        Param("name", "Column name"),
+        Code("value", s"Column value", language = "sql", enableTableBrowser = false))
+      def name = params("name")
+      def value = params("value")
+      override def summary = s"Derive $name = $value"
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        params.validate()
+        // SparkSQL allows multiple columns with the same name, so we have to remove it manually.
+        val paramsStr = paramNames.filter(_ != name).mkString(", ")
+        val sql = s"select $paramsStr, $value as `$name` from input"
+        val protoTables = this.getInputTables()
+        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+        makeOutput(result)
+      }
+    },
+  )
+
+  registerOp(
+    "Compute in Python",
+    defaultIcon,
+    category,
+    List("graph"),
+    List("graph"),
     new SmartOperation(_) {
       params ++= List(
         Param("inputs", "Inputs", defaultValue = "<infer from code>"),
         Param("outputs", "Outputs", defaultValue = "<infer from code>"),
-        Code("code", "Python code", language = "python"))
+        Code("code", "Python code", language = "python"),
+      )
       val input = context.inputs("graph")
       private def pythonInputs = {
         if (params("inputs") == "<infer from code>")
@@ -565,15 +611,16 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             // We named the input and output before adding table support.
             // It's bad naming here, but lets us keep compatibility.
             val table = tableInput("graph")
-            val outputs: Seq[String] = if (params("outputs") == "<infer from code>")
-              table.schema.fields.map { f =>
-                s"df.${f.name}: " + (f.dataType match {
-                  case org.apache.spark.sql.types.StringType => "str"
-                  case org.apache.spark.sql.types.LongType => "int"
-                  case _ => "float"
-                })
-              } ++ pythonOutputs
-            else pythonOutputs
+            val outputs: Seq[String] =
+              if (params("outputs") == "<infer from code>")
+                table.schema.fields.map { f =>
+                  s"df.${f.name}: " + (f.dataType match {
+                    case org.apache.spark.sql.types.StringType => "str"
+                    case org.apache.spark.sql.types.LongType => "int"
+                    case _ => "float"
+                  })
+                } ++ pythonOutputs
+              else pythonOutputs
             val result = PythonUtilities.deriveTable(params("code"), table, outputs)
             Map(context.box.output("graph") -> BoxOutputState.from(result))
         }
@@ -581,5 +628,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       // Unused because we are overriding getOutputs.
       protected def apply(): Unit = ???
       protected def enabled: com.lynxanalytics.biggraph.controllers.FEStatus = ???
-    })
+    },
+  )
 }

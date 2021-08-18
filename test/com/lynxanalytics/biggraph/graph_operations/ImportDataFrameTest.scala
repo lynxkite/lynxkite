@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import java.sql
 import org.apache.spark
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.runtime.universe.typeTag
 
@@ -34,7 +34,7 @@ object ImportDataFrameTest {
       .load()
   }
 }
-class ImportDataFrameTest extends FunSuite with TestGraphOp {
+class ImportDataFrameTest extends AnyFunSuite with TestGraphOp {
   test("dataframe import using JDBC works") {
     val df = ImportDataFrameTest.jdbcDF(sparkDomain)
     val t = ImportDataFrame.run(df)

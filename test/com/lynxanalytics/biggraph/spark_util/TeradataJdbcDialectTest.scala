@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class TeradataJdbcDialectTest extends FunSuite {
+class TeradataJdbcDialectTest extends AnyFunSuite {
 
   test("test TeradataDialect") {
     val magicMarker = "/*LYNX-TD-SCHEMA-AUTO-FIX*/"

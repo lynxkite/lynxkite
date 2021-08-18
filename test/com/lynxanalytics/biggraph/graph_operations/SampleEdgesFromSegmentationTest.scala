@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.commons.math3.random.JDKRandomGenerator
 import org.apache.spark
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
+class SampleEdgesFromSegmentationTest extends AnyFunSuite with TestGraphOp {
 
   def createColocationLikeSetup(numEvents: Int, numPersons: Int): (VertexSet, EdgeBundle) = {
     val vs1 = CreateVertexSet(numEvents).result.vs
@@ -32,7 +32,8 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
     val segmentation2 = {
       val op = InducedEdgeBundle(induceDst = false)
       op(op.srcMapping, mergeResult.belongsTo)(
-        op.edges, segmentation1.belongsTo).result.induced
+        op.edges,
+        segmentation1.belongsTo).result.induced
     }
     // segmentation2.gUID
     (vs2, segmentation2)
@@ -56,15 +57,15 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
 
     val sampler = SampleEdgesFromSegmentation(0.1, 20)
     val belongsTo = sparkContext.parallelize(Seq(
-      (1l, Edge(1, 101)),
-      (2l, Edge(1, 102)),
-      (3l, Edge(2, 101)),
-      (4l, Edge(3, 101)),
-      (5l, Edge(4, 101)),
-      (6l, Edge(4, 101)),
-      (7l, Edge(4, 102)))).sortUnique(p)
+      (1L, Edge(1, 101)),
+      (2L, Edge(1, 102)),
+      (3L, Edge(2, 101)),
+      (4L, Edge(3, 101)),
+      (5L, Edge(4, 101)),
+      (6L, Edge(4, 101)),
+      (7L, Edge(4, 102)))).sortUnique(p)
     val selectedEdges = sparkContext.parallelize(
-      Seq((1l, 2l), (6l, 4l))).sort(p)
+      Seq((1L, 2L), (6L, 4L))).sort(p)
     val restrictedBelongsTo =
       sampler.getVertexToSegmentPairsForSampledEdges(
         sampler.getVsToSegDistinct(belongsTo),
@@ -83,18 +84,19 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
 
     val sampler = SampleEdgesFromSegmentation(0.1, 20)
     val belongsTo = sparkContext.parallelize(Seq(
-      (1l, Edge(1, 101)),
-      (2l, Edge(1, 102)),
-      (3l, Edge(1, 103)),
-      (4l, Edge(2, 101)),
-      (5l, Edge(2, 103)),
-      (6l, Edge(2, 105)),
-      (7l, Edge(3, 101)),
-      (8l, Edge(3, 101)),
-      (9l, Edge(4, 101)),
-      (10l, Edge(4, 102)))).sortUnique(p)
+      (1L, Edge(1, 101)),
+      (2L, Edge(1, 102)),
+      (3L, Edge(1, 103)),
+      (4L, Edge(2, 101)),
+      (5L, Edge(2, 103)),
+      (6L, Edge(2, 105)),
+      (7L, Edge(3, 101)),
+      (8L, Edge(3, 101)),
+      (9L, Edge(4, 101)),
+      (10L, Edge(4, 102)),
+    )).sortUnique(p)
     val selectedEdges = sparkContext.parallelize(
-      Seq((1l, 2l), (1l, 2l), (2l, 1l), (3l, 4l))).sort(p)
+      Seq((1L, 2L), (1L, 2L), (2L, 1L), (3L, 4L))).sort(p)
     val edgeCounts = sampler.getEdgeMultiplicities(
       selectedEdges,
       sampler.getVsToSegDistinct(belongsTo),

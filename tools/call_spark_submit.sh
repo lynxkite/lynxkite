@@ -77,7 +77,7 @@ addJPropIfNonEmpty http.address "${KITE_HTTP_ADDRESS}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
 addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
 addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"
-addJPropIfNonEmpty application.secret "${KITE_APPLICATION_SECRET}"
+addJPropIfNonEmpty play.http.secret.key "${KITE_APPLICATION_SECRET}"
 addJPropIfNonEmpty authentication.google.clientSecret "${KITE_GOOGLE_CLIENT_SECRET}"
 addJPropIfNonEmpty authentication.google.clientId "${KITE_GOOGLE_CLIENT_ID}"
 addJPropIfNonEmpty hadoop.tmp.dir "${KITE_LOCAL_TMP}"
@@ -143,7 +143,7 @@ if [ "${SPARK_MASTER}" == "yarn" ]; then
     fi
   fi
   YARN_SETTINGS="$YARN_SETTINGS \
-    --conf spark.yarn.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
+    --conf spark.executor.memoryOverhead=${COMPUTED_EXECUTOR_MEMORY_OVERHEAD_MB}"
 fi
 
 if [ -n "${NUM_EXECUTORS}" ]; then
@@ -193,7 +193,7 @@ if [ -n "${KITE_EXTRA_JARS}" ]; then
 fi
 
 
-className="play.core.server.NettyServer"
+className="com.lynxanalytics.biggraph.Main"
 
 
 final_java_opts="${final_java_opts} -Xss${DRIVER_THREAD_STACK_SIZE}"
@@ -230,17 +230,19 @@ startKite () {
     >&2 echo "Spark cannot be found at ${SPARK_HOME}"
     exit 1
   fi
-  export KITE_READY_PIPE=/tmp/kite_pipe_$(randomString)
-  mkfifo ${KITE_READY_PIPE}
   nohup "${command[@]}" > ${log_dir}/kite.stdout.$$ 2> ${log_dir}/kite.stderr.$$ &
   PID=$!
-  read RESULT < ${KITE_READY_PIPE}
-  STATUS=`echo $RESULT | cut -f 1 -d " "`
-  if [[ "${STATUS}" == "ready" ]]; then
-    >&2 echo "LynxKite server started (PID ${PID})."
-  else
-    >&2 echo "LynxKite server failed: $RESULT"
-    exit 1
+  # Wait until LynxKite starts accepting connections.
+  while ! 2> /dev/null echo > /dev/tcp/0.0.0.0/${KITE_HTTP_PORT}; do
+    if ! kill -0 $PID 2> /dev/null; then
+      >&2 echo "LynxKite server failed."
+      exit 1
+    fi
+    sleep 1
+  done
+  echo "LynxKite server started (PID ${PID})."
+  if [ -n "$KITE_PID_FILE" ]; then
+    echo $PID > $KITE_PID_FILE
   fi
 }
 
@@ -321,6 +323,7 @@ startSphynx () {
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
       -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
+      -addext "subjectAltName = DNS:$SPHYNX_HOST" \
       -subj "/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
     fi
     cd "$stage_dir/sphynx"
