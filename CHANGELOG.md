@@ -8,10 +8,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 - Upgraded to Apache Spark 3.1.1. This also brought us up to Scala 2.12, Java 11,
   Play Framework 2.8.7, and new versions of some other dependencies.
+  [#178](https://github.com/lynxkite/lynxkite/pull/178)
+  [#184](https://github.com/lynxkite/lynxkite/pull/184)
 - The "Custom plot" box now lets you use the latest version of Vega-Lite
   by directly writing JSON instead of going through the Vegas Scala DSL.
 - Logistic regression models can now be configured to use elastic net regularization.
 - Boxes used as steps in a wizard are highlighted in the workspace view by a faint glow.
+  [#183](https://github.com/lynxkite/lynxkite/pull/183)
+- _"Compute in Python"_ boxes can be used on tables. [#160](https://github.com/lynxkite/lynxkite/pull/160)
+- Performance and compatibility improvements.
+  [#188](https://github.com/lynxkite/lynxkite/pull/188)
+  [#194](https://github.com/lynxkite/lynxkite/pull/194)
 
 ### 4.2.2
 
