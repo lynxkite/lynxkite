@@ -1,3 +1,4 @@
+boxes:
 - id: anchor
   inputs: {}
   operationId: Anchor
@@ -66,7 +67,7 @@
       id: input
   operationId: SQL1
   parameters:
-    persist: no
+    persist: 'yes'
     summary: Rename and filter
   parametricParameters:
     sql: |-
@@ -94,7 +95,7 @@
       id: table
   operationId: SQL1
   parameters:
-    persist: no
+    persist: 'no'
     sql: |-
       select
       label, score,
@@ -122,7 +123,7 @@
       id: table
   operationId: SQL1
   parameters:
-    persist: no
+    persist: 'no'
     sql: |
       select sum(1 - fpr) / count(1) as AUC
       from input where label == 1
