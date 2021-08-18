@@ -103,4 +103,39 @@ graph_attributes.average_age: float = vs.age.mean()
     assert(get(p.scalars("hello").runtimeSafeCast[String]) == "hello world! 😀 ")
     assert(get(p.scalars("average_age").runtimeSafeCast[Double]).round == 23)
   }
+
+  test("table to table", SphynxOnly) {
+    val t = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select name, age from vertices"))
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "<infer from code>",
+          "outputs" -> "<infer from code>",
+          "code" -> """
+df['age'] = np.round(df.age)
+df['age_2']: float = df.age ** 2
+          """),
+      )
+      // A second box to test that tables created in Python can also be used in Python.
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "<infer from code>",
+          // Let's also test that a different order of columns is not a problem.
+          "outputs" -> "df.age_4: float, df.name: str",
+          "code" -> """
+df['age_4']: float = df.age_2 ** 2
+          """,
+        ),
+      )
+      .box("SQL1")
+      .table
+    val data = t.df.collect.toList.map(_.toSeq.toList)
+    assert(data == List(
+      List(160000.0, "Adam"),
+      List(104976.0, "Eve"),
+      List(6250000.0, "Bob"),
+      List(16.0, "Isolated Joe")))
+  }
 }

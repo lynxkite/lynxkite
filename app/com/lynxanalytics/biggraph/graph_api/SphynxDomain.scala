@@ -207,7 +207,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
           StructField("id", LongType, false),
           StructField("value", ArrayType(LongType, false), false)))
         writeRDD(rdd, schema, e)
-      case s: ScalarData[_] => {
+      case s: ScalarData[_] =>
         val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
         val jsonString = Json.stringify(format.writes(s.value))
         val dir = new File(getGUIDPath(e))
@@ -227,17 +227,28 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
             bw.close()
             new File(successFile).createNewFile()
         }
-      }
+      case t: TableData => t.df.write.parquet(getGUIDPath(e))
       case e => throw new AssertionError(s"Relocation not implemented for $e")
     }
   }
 }
+
+trait UnorderedSphynxOperation
 
 class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dataDir: String)
     extends UnorderedSphynxDisk(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
     new java.io.File(s"${dataDir}/${entity.gUID.toString}/_SUCCESS").exists()
+  }
+
+  override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    instance.operation.isInstanceOf[UnorderedSphynxOperation]
+  }
+
+  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
+    val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    client.compute(jsonMeta, "UnorderedSphynxDisk").map(_ => ())
   }
 
   override def canRelocateFrom(source: Domain): Boolean = {

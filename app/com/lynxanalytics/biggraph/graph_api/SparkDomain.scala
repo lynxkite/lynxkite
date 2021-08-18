@@ -460,6 +460,7 @@ class SparkDomain(
               val value = format.reads(json.Json.parse(jsonString)).get
               new ScalarData(s, value)
             })
+          case t: Table => SafeFuture.async(new TableData(t, sparkSession.read.parquet(srcPath)))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }

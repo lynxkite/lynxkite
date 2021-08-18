@@ -583,9 +583,7 @@ object ScalaUtilities {
 }
 
 object PythonUtilities {
-  import com.lynxanalytics.biggraph.graph_operations.DerivePython
-  import com.lynxanalytics.biggraph.graph_operations.CreateGraphInPython
-  import DerivePython._
+  import graph_operations.DerivePython._
 
   val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
     case "yes" => true
@@ -602,15 +600,14 @@ object PythonUtilities {
     pythonType match {
       case "str" => SerializableType.string
       case "float" => SerializableType.double
+      case "int" => SerializableType.long
       case "np.ndarray" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }
 
-  val api = Seq("vs", "es", "graph_attributes")
-
   // Parses the output list into Fields.
-  def outputFields(outputs: Seq[String]): Seq[Field] = {
+  def outputFields(outputs: Seq[String], api: Seq[String]): Seq[Field] = {
     val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-zA-Z0-9.]+)".r
     outputs.map {
       case outputDeclaration(parent, name, tpe) =>
@@ -629,6 +626,7 @@ object PythonUtilities {
       outputs: Seq[String],
       project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
       implicit manager: MetaGraphManager): Unit = {
+    val api = Seq("vs", "es", "graph_attributes")
     // Parse the input list into Fields.
     val existingFields = project.vertexAttributes.map {
       case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
@@ -650,7 +648,7 @@ object PythonUtilities {
       }
     }
     // Run the operation.
-    val op = DerivePython(code, inputFields.toList, outputFields(outputs).toList)
+    val op = graph_operations.DerivePython(code, inputFields.toList, outputFields(outputs, api).toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
@@ -685,8 +683,9 @@ object PythonUtilities {
       outputs: Seq[String],
       project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
       implicit manager: MetaGraphManager): Unit = {
+    val api = Seq("vs", "es", "graph_attributes")
     // Run the operation.
-    val res = CreateGraphInPython(code, outputFields(outputs).toList)().result
+    val res = graph_operations.CreateGraphInPython(code, outputFields(outputs, api).toList)().result
     project.vertexSet = res.vertices
     project.edgeBundle = res.edges
     // Save the outputs into the project.
@@ -701,8 +700,12 @@ object PythonUtilities {
     }
   }
 
-  def inferInputs(code: String): Seq[String] = {
-    val outputs = inferOutputs(code).map(_.replaceFirst(":.*", "")).toSet
+  def inferInputs(code: String, kind: String): Seq[String] = {
+    val api = kind match {
+      case BoxOutputKind.Project => Seq("vs", "es", "graph_attributes")
+      case BoxOutputKind.Table => Seq("df")
+    }
+    val outputs = inferOutputs(code, kind).map(_.replaceFirst(":.*", "")).toSet
     val mentions = api.flatMap { parent =>
       val a = s"\\b$parent\\.\\w+".r.findAllMatchIn(code).map(_.matched).toSeq
       val b = s"""\\b$parent\\s*\\[\\s*['"](\\w+)['"]\\s*\\]""".r
@@ -711,7 +714,11 @@ object PythonUtilities {
     }.toSet
     (mentions -- outputs).toSeq.sorted
   }
-  def inferOutputs(code: String): Seq[String] = {
+  def inferOutputs(code: String, kind: String): Seq[String] = {
+    val api = kind match {
+      case BoxOutputKind.Project => Seq("vs", "es", "graph_attributes")
+      case BoxOutputKind.Table => Seq("df")
+    }
     api.flatMap { parent =>
       val a = s"""\\b$parent\\.\\w+\\s*:\\s*[a-zA-Z0-9.]+""".r
         .findAllMatchIn(code).map(_.matched).toSeq
@@ -719,5 +726,16 @@ object PythonUtilities {
         .findAllMatchIn(code).map(m => s"$parent.${m.group(1)}: ${m.group(2)}").toSeq
       a ++ b
     }.sorted
+  }
+
+  def deriveTable(
+      code: String,
+      table: Table,
+      outputs: Seq[String])(
+      implicit manager: MetaGraphManager): Table = {
+    val api = Seq("df")
+    // Run the operation.
+    val op = graph_operations.DeriveTablePython(code, outputFields(outputs, api).toList)
+    op(op.df, table).result.df
   }
 }

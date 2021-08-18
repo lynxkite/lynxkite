@@ -11,8 +11,8 @@
 ├─ (MIT OR CC0-1.0)
 │  ├─ type-fest@0.21.3
 │  └─ type-fest@0.8.1
-├─ (MIT OR GPL-3.0)
-│  └─ jszip@3.6.0
+├─ (MIT OR GPL-3.0-or-later)
+│  └─ jszip@3.7.1
 ├─ (WTFPL OR MIT)
 │  └─ path-is-inside@1.0.2
 ├─ 0BSD
@@ -20,36 +20,36 @@
 │  └─ tslib@2.2.0
 ├─ Apache-2.0
 │  ├─ @firebase/analytics-types@0.4.0
-│  ├─ @firebase/analytics@0.6.10
+│  ├─ @firebase/analytics@0.6.12
 │  ├─ @firebase/app-check-interop-types@0.1.0
 │  ├─ @firebase/app-check-types@0.1.0
-│  ├─ @firebase/app-check@0.1.1
+│  ├─ @firebase/app-check@0.1.3
 │  ├─ @firebase/app-types@0.6.2
-│  ├─ @firebase/app@0.6.22
+│  ├─ @firebase/app@0.6.26
 │  ├─ @firebase/auth-interop-types@0.1.6
 │  ├─ @firebase/auth-types@0.10.3
 │  ├─ @firebase/auth@0.16.6
-│  ├─ @firebase/component@0.5.0
+│  ├─ @firebase/component@0.5.2
 │  ├─ @firebase/database-types@0.7.2
-│  ├─ @firebase/database@0.10.2
+│  ├─ @firebase/database@0.10.4
 │  ├─ @firebase/firestore-types@2.3.0
-│  ├─ @firebase/firestore@2.3.2
+│  ├─ @firebase/firestore@2.3.6
 │  ├─ @firebase/functions-types@0.4.0
-│  ├─ @firebase/functions@0.6.9
+│  ├─ @firebase/functions@0.6.11
 │  ├─ @firebase/installations-types@0.3.4
-│  ├─ @firebase/installations@0.4.26
+│  ├─ @firebase/installations@0.4.28
 │  ├─ @firebase/logger@0.2.6
 │  ├─ @firebase/messaging-types@0.5.0
-│  ├─ @firebase/messaging@0.7.10
+│  ├─ @firebase/messaging@0.7.12
 │  ├─ @firebase/performance-types@0.0.13
-│  ├─ @firebase/performance@0.4.12
+│  ├─ @firebase/performance@0.4.14
 │  ├─ @firebase/polyfill@0.3.36
 │  ├─ @firebase/remote-config-types@0.1.9
-│  ├─ @firebase/remote-config@0.1.37
+│  ├─ @firebase/remote-config@0.1.39
 │  ├─ @firebase/storage-types@0.4.1
-│  ├─ @firebase/storage@0.5.2
+│  ├─ @firebase/storage@0.5.4
 │  ├─ @firebase/util@1.1.0
-│  ├─ @firebase/webchannel-wrapper@0.4.1
+│  ├─ @firebase/webchannel-wrapper@0.5.0
 │  ├─ @grpc/grpc-js@1.3.2
 │  ├─ @grpc/proto-loader@0.5.6
 │  ├─ aws-sign2@0.7.0
@@ -61,7 +61,7 @@
 │  ├─ eazy-logger@3.1.0
 │  ├─ eslint-visitor-keys@1.3.0
 │  ├─ faye-websocket@0.11.3
-│  ├─ firebase@8.6.3
+│  ├─ firebase@8.6.7
 │  ├─ forever-agent@0.6.1
 │  ├─ fuse.js@6.4.6
 │  ├─ long@4.0.0
@@ -109,7 +109,7 @@
 │  ├─ d3-force@2.1.1
 │  ├─ d3-format@2.0.0
 │  ├─ d3-geo-projection@3.0.0
-│  ├─ d3-geo@2.0.1
+│  ├─ d3-geo@2.0.2
 │  ├─ d3-hierarchy@2.0.0
 │  ├─ d3-interpolate@2.0.1
 │  ├─ d3-path@2.0.0
@@ -172,7 +172,7 @@
 ├─ CC-BY-3.0
 │  └─ spdx-exceptions@2.3.0
 ├─ CC-BY-4.0
-│  └─ caniuse-lite@1.0.30001232
+│  └─ caniuse-lite@1.0.30001236
 ├─ CC0-1.0
 │  ├─ array-flat-polyfill@1.0.1
 │  └─ spdx-license-ids@3.0.9
@@ -190,7 +190,7 @@
 │  ├─ d@1.0.1
 │  ├─ d3-delaunay@5.3.0
 │  ├─ delaunator@4.0.1
-│  ├─ electron-to-chromium@1.3.743
+│  ├─ electron-to-chromium@1.3.752
 │  ├─ es5-ext@0.10.53
 │  ├─ es6-symbol@3.1.3
 │  ├─ es6-weak-map@2.0.3
@@ -256,18 +256,18 @@
 │  ├─ yargs-parser@20.2.7
 │  └─ yargs-parser@5.0.1
 ├─ MIT
-│  ├─ @babel/code-frame@7.12.13
-│  ├─ @babel/helper-validator-identifier@7.14.0
-│  ├─ @babel/highlight@7.14.0
+│  ├─ @babel/code-frame@7.14.5
+│  ├─ @babel/helper-validator-identifier@7.14.5
+│  ├─ @babel/highlight@7.14.5
 │  ├─ @gulp-sourcemaps/identity-map@2.0.1
 │  ├─ @gulp-sourcemaps/map-sources@1.0.0
-│  ├─ @nodelib/fs.scandir@2.1.4
-│  ├─ @nodelib/fs.stat@2.0.4
-│  ├─ @nodelib/fs.walk@1.2.6
+│  ├─ @nodelib/fs.scandir@2.1.5
+│  ├─ @nodelib/fs.stat@2.0.5
+│  ├─ @nodelib/fs.walk@1.2.7
 │  ├─ @types/clone@2.1.0
 │  ├─ @types/fast-json-stable-stringify@2.1.0
 │  ├─ @types/long@4.0.1
-│  ├─ @types/node@15.6.1
+│  ├─ @types/node@15.12.2
 │  ├─ @types/q@0.0.32
 │  ├─ @types/selenium-webdriver@3.0.17
 │  ├─ accepts@1.3.7
@@ -666,8 +666,8 @@
 │  ├─ merge2@1.4.1
 │  ├─ micromatch@3.1.10
 │  ├─ micromatch@4.0.4
-│  ├─ mime-db@1.47.0
-│  ├─ mime-types@2.1.30
+│  ├─ mime-db@1.48.0
+│  ├─ mime-types@2.1.31
 │  ├─ mime@1.4.1
 │  ├─ mimic-fn@2.1.0
 │  ├─ minimist@1.2.5
@@ -687,7 +687,7 @@
 │  ├─ next-tick@1.0.0
 │  ├─ nice-try@1.0.5
 │  ├─ node-fetch@2.6.1
-│  ├─ node-releases@1.1.72
+│  ├─ node-releases@1.1.73
 │  ├─ normalize-path@2.1.1
 │  ├─ normalize-path@3.0.0
 │  ├─ normalize-range@0.1.2
@@ -746,8 +746,8 @@
 │  ├─ portscanner@2.1.1
 │  ├─ posix-character-classes@0.1.1
 │  ├─ postcss-value-parser@4.1.0
-│  ├─ postcss@7.0.35
-│  ├─ postcss@8.3.0
+│  ├─ postcss@7.0.36
+│  ├─ postcss@8.3.2
 │  ├─ prelude-ls@1.1.2
 │  ├─ pretty-bytes@5.6.0
 │  ├─ pretty-hrtime@1.0.3

@@ -371,7 +371,8 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       Code("code", "Python code", language = "python"))
     def enabled = FEStatus.enabled
     private def pythonOutputs = {
-      if (params("outputs") == "<infer from code>") PythonUtilities.inferOutputs(params("code"))
+      if (params("outputs") == "<infer from code>")
+        PythonUtilities.inferOutputs(params("code"), BoxOutputKind.Project)
       else splitParam("outputs")
     }
     def apply() = {
