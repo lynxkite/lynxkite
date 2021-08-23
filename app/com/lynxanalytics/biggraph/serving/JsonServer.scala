@@ -392,8 +392,7 @@ class ProductionJsonServer @javax.inject.Inject() (
 
   def downloadCSV = asyncAction(parse.anyContent) { (user: User, r: mvc.Request[mvc.AnyContent]) =>
     val request = parseJson[GetTableOutputRequest](user, r)
-    implicit val metaManager = workspaceController.metaManager
-    val table = workspaceController.getOutput(user, request.id).table
+    val table = workspaceController.metaManager.table(java.util.UUID.fromString(request.id))
     sqlController.downloadCSV(table, request.sampleRows)
   }
 

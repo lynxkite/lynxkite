@@ -16,6 +16,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 - Boxes used as steps in a wizard are highlighted in the workspace view by a faint glow.
   [#183](https://github.com/lynxkite/lynxkite/pull/183)
 - _"Compute in Python"_ boxes can be used on tables. [#160](https://github.com/lynxkite/lynxkite/pull/160)
+- Added a _"Draw ROC curve"_ built-in custom box. [#197](https://github.com/lynxkite/lynxkite/pull/197)
 - Performance and compatibility improvements.
   [#188](https://github.com/lynxkite/lynxkite/pull/188)
   [#194](https://github.com/lynxkite/lynxkite/pull/194)
