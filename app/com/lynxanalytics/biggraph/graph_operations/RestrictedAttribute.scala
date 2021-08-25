@@ -29,7 +29,7 @@ case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
-  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet)
+  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet.toSeq.sorted)
 
   def execute(
       inputDatas: DataSet,

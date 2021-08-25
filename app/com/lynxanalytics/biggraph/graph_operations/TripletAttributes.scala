@@ -264,8 +264,8 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
   }
 
   override def toJson = Json.obj(
-    "srcIdSet" -> srcIdSet,
-    "dstIdSet" -> dstIdSet,
+    "srcIdSet" -> srcIdSet.toSeq.sorted,
+    "dstIdSet" -> dstIdSet.map(_.toSeq.sorted),
     "maxNumEdges" -> maxNumEdges)
 
   def execute(

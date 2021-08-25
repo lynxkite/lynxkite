@@ -43,6 +43,13 @@ object JsonMigration {
       className(graph_operations.DoubleGE) -> 1,
       className(graph_operations.DoubleGT) -> 1,
       className(graph_operations.EnhancedExampleGraph) -> 1,
+      // These have Set-typed parameters that have unreliable JSON representations across versions.
+      // In LynxKite 4.3.0 we switched to saving them as sorted arrays.
+      className(graph_operations.CollectAttribute) -> 1,
+      className(graph_operations.EdgesForVerticesFromEdgesAndNeighbors) -> 1,
+      className(graph_operations.OneOf) -> 1,
+      className(graph_operations.RestrictAttributeToIds) -> 1,
+      className(graph_operations.SampledView) -> 1,
     )
       .withDefaultValue(0),
     Map(
@@ -53,6 +60,11 @@ object JsonMigration {
       (className(graph_operations.DoubleGE), 0) -> identity,
       (className(graph_operations.DoubleGT), 0) -> identity,
       (className(graph_operations.EnhancedExampleGraph), 0) -> identity,
+      (className(graph_operations.CollectAttribute), 0) -> identity,
+      (className(graph_operations.EdgesForVerticesFromEdgesAndNeighbors), 0) -> identity,
+      (className(graph_operations.OneOf), 0) -> identity,
+      (className(graph_operations.RestrictAttributeToIds), 0) -> identity,
+      (className(graph_operations.SampledView), 0) -> identity,
     ))
 }
 import JsonMigration._
