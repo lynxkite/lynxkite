@@ -67,7 +67,7 @@ class RemoteAPIServer @javax.inject.Inject() (
     pjs: ProductionJsonServer)
     extends JsonServer {
   import RemoteAPIProtocol._
-  val userController = ProductionJsonServer.userController
+  val userController = pjs.userController
   val c = new RemoteAPIController(BigGraphProductionEnvironment, pjs)
   def getDirectoryEntry = jsonPost(c.getDirectoryEntry)
   def getPrefixedPath = jsonPost(c.getPrefixedPath)

@@ -365,6 +365,7 @@ class ProductionJsonServer @javax.inject.Inject() (
     ec: concurrent.ExecutionContext,
     fmt: play.api.http.FileMimeTypes,
     cfg: play.api.Configuration,
+    val userController: UserController,
     cc: mvc.ControllerComponents)
     extends JsonServer {
   import FrontendJson._
@@ -517,7 +518,6 @@ class ProductionJsonServer @javax.inject.Inject() (
       .trigger(workspaceController, drawingController)
   }
 
-  val userController = new UserController(BigGraphProductionEnvironment)
   val passwordLogin = userController.passwordLogin
   val googleLogin = userController.googleLogin
   val signedUsernameLogin = userController.signedUsernameLogin
@@ -557,7 +557,7 @@ class ProductionJsonServer @javax.inject.Inject() (
     GlobalSettings(
       hasAuth = productionMode,
       authMethods = getAuthMethods,
-      googleClientId = GoogleAuth.clientId,
+      googleClientId = userController.googleAuth.clientId,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "The Complete Graph Data Science Platform"),
       frontendConfig = LoggedEnvironment.envOrElse("KITE_FRONTEND_CONFIG", "{}"),

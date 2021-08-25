@@ -3,8 +3,8 @@ package com.lynxanalytics.biggraph.serving
 
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.commons.io.FileUtils
+import play.api.libs.crypto.CSRFTokenSigner
 import play.api.libs.json
-import play.api.libs.Crypto
 import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
@@ -56,15 +56,14 @@ class SignedToken private (signature: String, timestamp: Long, val token: String
   override def toString = s"$signature $timestamp $token"
 }
 object SignedToken {
-  val maxAge = {
-    val config = play.api.Play.current.configuration
-    config.getInt("authentication.cookie.validDays").getOrElse(1) * 24 * 3600
+  def maxAge()(implicit cfg: play.api.Configuration) = {
+    cfg.getOptional[Int]("authentication.cookie.validDays").getOrElse(1) * 24 * 3600
   }
 
-  def apply(): SignedToken = {
-    val token = Crypto.generateToken
+  def apply()(implicit signer: CSRFTokenSigner): SignedToken = {
+    val token = signer.generateToken
     val timestamp = time
-    new SignedToken(Crypto.sign(s"$timestamp $token"), timestamp, token)
+    new SignedToken(signer.signToken(s"$timestamp $token"), timestamp, token)
   }
 
   private def time = java.lang.System.currentTimeMillis / 1000
@@ -74,10 +73,13 @@ object SignedToken {
     else Some((ss(0), ss(1)))
   }
 
-  def unapply(s: String): Option[SignedToken] = {
+  def unapply(s: String)(
+      implicit
+      cfg: play.api.Configuration,
+      signer: CSRFTokenSigner): Option[SignedToken] = {
     split(s).flatMap {
       case (signature, timedToken) =>
-        if (signature != Crypto.sign(timedToken)) None
+        if (signature != signer.signToken(timedToken)) None
         else split(timedToken).flatMap {
           case (timestamp, token) =>
             val tsOpt = util.Try(timestamp.toLong).toOption
@@ -97,7 +99,7 @@ object LDAPProps {
   def hasLDAP = url.nonEmpty && authentication.nonEmpty && principalTemplate.nonEmpty
 }
 
-object GoogleAuth {
+class GoogleAuth(cfg: play.api.Configuration) {
   val hostedDomain = util.Properties.envOrElse("KITE_GOOGLE_HOSTED_DOMAIN", "").toLowerCase
   def envToBoolean(variable: String) = util.Properties.envOrElse(variable, "") match {
     case "yes" => true
@@ -110,8 +112,7 @@ object GoogleAuth {
   val requiredSuffix = util.Properties.envOrElse("KITE_GOOGLE_REQUIRED_SUFFIX", "").toLowerCase
   val publicAccess = envToBoolean("KITE_GOOGLE_PUBLIC_ACCESS")
   val clientId = {
-    val config = play.api.Play.current.configuration
-    config.getString("authentication.google.clientId").getOrElse("")
+    cfg.getOptional[String]("authentication.google.clientId").getOrElse("")
   }
   if (clientId.nonEmpty) {
     assert(
@@ -145,8 +146,18 @@ object UserController {
   }
 }
 
-class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
-  implicit val metaManager = env.metaGraphManager
+@javax.inject.Singleton
+class UserController @javax.inject.Inject() (
+    implicit
+    playConfig: play.api.Configuration,
+    tokenSigner: CSRFTokenSigner,
+    ec: concurrent.ExecutionContext,
+    fmt: play.api.http.FileMimeTypes,
+    val controllerComponents: mvc.ControllerComponents)
+    extends mvc.BaseController with play.api.http.HeaderNames {
+  // Maybe we should pick up dependency injection as well?
+  // For now this always uses the production environment.
+  implicit val metaManager = com.lynxanalytics.biggraph.BigGraphProductionEnvironment.metaGraphManager
   implicit val fUserOnDisk = json.Json.format[UserOnDisk]
 
   def get(request: mvc.Request[_]): Option[User] = synchronized {
@@ -159,7 +170,7 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
     if (UserController.accessWithoutLogin) user.orElse(Some(User.notLoggedIn)) else user
   }
 
-  val logout = mvc.Action { request =>
+  val logout = Action { request =>
     synchronized {
       val cookie = request.cookies.find(_.name == "auth")
       // Find and forget the signed token(s).
@@ -187,7 +198,7 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
     signed
   }
 
-  val passwordLogin = mvc.Action(parse.json) { request =>
+  val passwordLogin = Action(parse.json) { request =>
     val username = (request.body \ "username").as[String]
     val password = (request.body \ "password").as[String]
     val method = (request.body \ "method").as[String]
@@ -201,9 +212,8 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
       maxAge = Some(SignedToken.maxAge)))
   }
 
-  val googleLogin = mvc.Action.async(parse.json) { request =>
-    implicit val context = scala.concurrent.ExecutionContext.Implicits.global
-    implicit val app = play.api.Play.current
+  val googleAuth = new GoogleAuth(playConfig)
+  val googleLogin = Action.async(parse.json) { request =>
     val idToken = (request.body \ "id_token").as[String]
     val tokeninfo: concurrent.Future[play.api.libs.json.JsValue] = concurrent.Future {
       scalaj.http.Http("https://www.googleapis.com/oauth2/v3/tokeninfo")
@@ -213,15 +223,15 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
       val email = (ti \ "email").as[String]
       log.info(s"User login attempt by $email.")
       val authenticatedDomain = (ti \ "aud").as[String]
-      assert(email.endsWith(GoogleAuth.requiredSuffix), s"Permission denied to $email.")
-      assert(authenticatedDomain == GoogleAuth.clientId, s"Bad token: $ti")
-      if (GoogleAuth.hostedDomain.nonEmpty) {
-        val hostedDomain = (ti \ "hd").as[Option[String]]
-        assert(hostedDomain == Some(GoogleAuth.hostedDomain), s"Permission denied to $email.")
+      assert(email.endsWith(googleAuth.requiredSuffix), s"Permission denied to $email.")
+      assert(authenticatedDomain == googleAuth.clientId, s"Bad token: $ti")
+      if (googleAuth.hostedDomain.nonEmpty) {
+        val hostedDomain = (ti \ "hd").asOpt[String]
+        assert(hostedDomain == Some(googleAuth.hostedDomain), s"Permission denied to $email.")
       }
       // Create signed token for email address.
       val signed = makeToken(
-        User(email, isAdmin = false, wizardOnly = GoogleAuth.wizardOnly, auth = "Google"))
+        User(email, isAdmin = false, wizardOnly = googleAuth.wizardOnly, auth = "Google"))
       log.info(s"$email logged in successfully.")
       Redirect("/").withCookies(mvc.Cookie(
         "auth",
@@ -231,7 +241,7 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
     }
   }
 
-  val signedUsernameLogin = mvc.Action { request: mvc.Request[mvc.AnyContent] =>
+  val signedUsernameLogin = Action { request: mvc.Request[mvc.AnyContent] =>
     val fromQuery = request.queryString.get("token").flatMap(_.headOption)
     val fromBody = request.body.asJson.map(j => (j \ "token").as[String])
     val token = fromQuery.orElse(fromBody).get
@@ -294,8 +304,7 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
   }
 
   private def config(setting: String) = {
-    val config = play.api.Play.current.configuration
-    config.getString(setting).get
+    playConfig.get[String](setting)
   }
 
   private val usersFileName = LoggedEnvironment.envOrElse("KITE_USERS_FILE", "")
