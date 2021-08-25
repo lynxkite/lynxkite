@@ -186,7 +186,7 @@ object OneOf extends FromJson[OneOf[_]] {
 }
 case class OneOf[T](options: Set[T]) extends Filter[T] {
   def matches(value: T) = options.contains(value)
-  override def toJson = Json.obj("options" -> options.toSeq.map(TypedJson(_)))
+  override def toJson = Json.obj("options" -> options.toSeq.map(TypedJson(_)).sortBy(_.toString))
 }
 
 object Exists extends FromJson[Exists[_]] {

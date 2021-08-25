@@ -20,7 +20,7 @@ case class CollectAttribute[T](
     extends SparkOperation[VertexAttributeInput[T], Output[T]] {
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("idSet" -> idSet)
+  override def toJson = Json.obj("idSet" -> idSet.toSeq.sorted)
 
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas
