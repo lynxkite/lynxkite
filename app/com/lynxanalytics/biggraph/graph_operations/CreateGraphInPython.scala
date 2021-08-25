@@ -9,9 +9,8 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark
 
 object CreateGraphInPython extends OpFromJson {
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      fields: Seq[DerivePython.Field]) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, fields: Seq[DerivePython.Field])
+      extends MagicOutput(instance) {
     val vertices = vertexSet
     private val names = fields.map(f => f.parent + "." + f.name)
     val edges = edgeBundle(vertices, vertices)
@@ -34,11 +33,10 @@ import CreateGraphInPython._
 case class CreateGraphInPython private[graph_operations] (
     code: String,
     outputFields: List[DerivePython.Field])
-  extends TypedMetaGraphOp[NoInput, Output] {
+    extends TypedMetaGraphOp[NoInput, Output] {
   override def toJson = Json.obj(
     "code" -> code,
     "outputFields" -> outputFields)
   override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, outputFields)
 }
-

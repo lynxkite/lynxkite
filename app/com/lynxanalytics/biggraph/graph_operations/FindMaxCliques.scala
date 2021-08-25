@@ -15,7 +15,8 @@ object FindMaxCliques extends OpFromJson {
 }
 case class FindMaxCliques(
     minCliqueSize: Int,
-    needsBothDirections: Boolean = false) extends SparkOperation[GraphInput, Segmentation] {
+    needsBothDirections: Boolean = false)
+    extends SparkOperation[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
@@ -29,22 +30,28 @@ case class FindMaxCliques(
     "needsBothDirections" -> needsBothDirections)
 
   def execute(
-    inputDatas: DataSet,
-    o: Segmentation,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Segmentation,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val inputPartitioner = inputs.vs.rdd.partitioner.get
     val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
     val numTasks = (rc.sparkContext.defaultParallelism * 5) max inputPartitioner.numPartitions
     val outputPartitioner = new HashPartitioner(numTasks)
     val cliqueLists = computeCliques(
-      inputs.vs.data, cug, rc, minCliqueSize, numTasks)
+      inputs.vs.data,
+      cug,
+      rc,
+      minCliqueSize,
+      numTasks)
     val indexedCliqueLists = cliqueLists.randomNumbered(outputPartitioner)
     output(o.segments, indexedCliqueLists.mapValues(_ => ()))
-    output(o.belongsTo, indexedCliqueLists.flatMap {
-      case (cid, vids) => vids.map(vid => Edge(vid, cid))
-    }.randomNumbered(outputPartitioner))
+    output(
+      o.belongsTo,
+      indexedCliqueLists.flatMap {
+        case (cid, vids) => vids.map(vid => Edge(vid, cid))
+      }.randomNumbered(outputPartitioner))
   }
 
   // Implementation of the actual algorithm.
@@ -64,10 +71,10 @@ case class FindMaxCliques(
    * Extends markedCandidates if necessary. Returns the new end position.
    */
   private def SmartIntersectNA(
-    markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
-    start: Int,
-    end: Int,
-    neighbours: Seq[ID]): Int = {
+      markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
+      start: Int,
+      end: Int,
+      neighbours: Seq[ID]): Int = {
     var source = start
     var target = end
     val nit = neighbours.iterator.buffered
@@ -102,13 +109,13 @@ case class FindMaxCliques(
    * state of the recursion.
    */
   private def SmartBKNA(
-    currentClique: List[ID],
-    markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
-    start: Int,
-    end: Int,
-    fullGraph: CompactUndirectedGraph,
-    cliqueCollector: mutable.ArrayBuffer[List[ID]],
-    minCliqueSize: Int) {
+      currentClique: List[ID],
+      markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
+      start: Int,
+      end: Int,
+      fullGraph: CompactUndirectedGraph,
+      cliqueCollector: mutable.ArrayBuffer[List[ID]],
+      minCliqueSize: Int) {
     if (start == end) {
       if (currentClique.size >= minCliqueSize) cliqueCollector += currentClique
       return
@@ -124,7 +131,10 @@ case class FindMaxCliques(
         if (!pit.hasNext || pit.head != id) {
           val neighbours = fullGraph.getNeighbors(id)
           val nextEnd = SmartIntersectNA(
-            markedCandidates, start, end, neighbours)
+            markedCandidates,
+            start,
+            end,
+            neighbours)
           SmartBKNA(
             id :: currentClique,
             markedCandidates,
@@ -140,25 +150,24 @@ case class FindMaxCliques(
   }
 
   private def computeCliques(
-    g: VertexSetData,
-    fullGraph: CompactUndirectedGraph,
-    rc: RuntimeContext,
-    minCliqueSize: Int,
-    numTasks: Int): rdd.RDD[List[ID]] = {
-    g.rdd.keys.repartition(numTasks).flatMap(
-      v => {
-        val markedCandidates =
-          mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
-        val collector = mutable.ArrayBuffer[List[ID]]()
-        SmartBKNA(
-          List(v),
-          markedCandidates,
-          0, // start
-          markedCandidates.size, // end
-          fullGraph,
-          collector,
-          minCliqueSize)
-        collector
-      })
+      g: VertexSetData,
+      fullGraph: CompactUndirectedGraph,
+      rc: RuntimeContext,
+      minCliqueSize: Int,
+      numTasks: Int): rdd.RDD[List[ID]] = {
+    g.rdd.keys.repartition(numTasks).flatMap(v => {
+      val markedCandidates =
+        mutable.ArrayBuffer.concat(fullGraph.getNeighbors(v).map(n => (n, n < v)))
+      val collector = mutable.ArrayBuffer[List[ID]]()
+      SmartBKNA(
+        List(v),
+        markedCandidates,
+        0, // start
+        markedCandidates.size, // end
+        fullGraph,
+        collector,
+        minCliqueSize)
+      collector
+    })
   }
 }

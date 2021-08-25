@@ -78,7 +78,7 @@ We have test suits for the different parts of the system:
 
 - **Backend tests** are unit tests for the Scala code. They can also be executed with Sphynx as the
   backend. If you run `make backend-test` it will do both. Or you can start `sbt` and run
-  `test-only *SomethingTest` to run just one test. Run `./test_backend.sh -si` to start `sbt` with
+  `testOnly *SomethingTest` to run just one test. Run `./test_backend.sh -si` to start `sbt` with
   Sphynx as the backend.
 
 - **Frontend tests** use [Protractor](https://www.protractortest.org/) to simulate a user's actions

@@ -2,13 +2,14 @@
 package com.lynxanalytics.biggraph.controllers
 
 import scala.collection.mutable.HashMap
+import play.api.libs.json
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import MetaGraphManager.StringAsUUID
 
 case class WorkspaceReference(
@@ -30,7 +31,6 @@ case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
-case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
 case class CreateWorkspaceRequest(name: String)
 case class BoxCatalogRequest(ref: WorkspaceReference)
@@ -77,7 +77,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def createWorkspace(
-    user: serving.User, request: CreateWorkspaceRequest): Unit = metaManager.synchronized {
+      user: serving.User,
+      request: CreateWorkspaceRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val entry = DirectoryEntry.fromName(request.name)
@@ -86,7 +87,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private def getWorkspaceFrame(
-    user: serving.User, name: String): WorkspaceFrame = metaManager.synchronized {
+      user: serving.User,
+      name: String): WorkspaceFrame = metaManager.synchronized {
     val f = DirectoryEntry.fromName(name)
     assert(f.exists, s"Entry ${name} does not exist.")
     f.assertReadAllowedFrom(user)
@@ -119,23 +121,32 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getWorkspace(
-    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+      user: serving.User,
+      request: WorkspaceReference): GetWorkspaceResponse = {
     val ref = ResolvedWorkspaceReference(user, request)
-    val run = try runWorkspace(user, RunWorkspaceRequest(ref.ws, ref.params)) catch {
-      case t: Throwable =>
-        log.error(s"Could not execute $request", t)
-        // We can still return the "cold" data that is available without execution.
-        // This makes it at least possible to press Undo.
-        RunWorkspaceResponse(List(), Map(), Map())
-    }
+    val run =
+      try runWorkspace(user, RunWorkspaceRequest(ref.ws, ref.params))
+      catch {
+        case t: Throwable =>
+          log.error(s"Could not execute $request", t)
+          // We can still return the "cold" data that is available without execution.
+          // This makes it at least possible to press Undo.
+          RunWorkspaceResponse(List(), Map(), Map())
+      }
     GetWorkspaceResponse(
-      ref.name, ref.ws, run.outputs, run.summaries, run.progress,
+      ref.name,
+      ref.ws,
+      run.outputs,
+      run.summaries,
+      run.progress,
       canUndo = ref.frame.currentState.previousCheckpoint.nonEmpty,
-      canRedo = ref.frame.nextCheckpoint.nonEmpty)
+      canRedo = ref.frame.nextCheckpoint.nonEmpty,
+    )
   }
 
   def openWizard(
-    user: serving.User, request: OpenWizardRequest): OpenWizardResponse = {
+      user: serving.User,
+      request: OpenWizardRequest): OpenWizardResponse = {
     val frame = getWorkspaceFrame(user, request.name)
     val ws = frame.workspace
     assert(ws.isWizard, s"${request.name} is not a wizard")
@@ -155,7 +166,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def runWorkspace(
-    user: serving.User, request: RunWorkspaceRequest): RunWorkspaceResponse = {
+      user: serving.User,
+      request: RunWorkspaceRequest): RunWorkspaceResponse = {
     val context = request.workspace.context(user, ops, request.parameters)
     val states = context.allStatesOrdered
     calculatedStates.synchronized {
@@ -166,14 +178,18 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val stateInfo = states.toList.map {
       case (boxOutput, boxOutputState) =>
         BoxOutputInfo(
-          boxOutput, boxOutputState.gUID.toString, boxOutputState.success, boxOutputState.kind)
+          boxOutput,
+          boxOutputState.gUID.toString,
+          boxOutputState.success,
+          boxOutputState.kind)
     }
     def crop(s: String): String = {
       val maxLength = 50
-      if (s.length > maxLength) { s.substring(0, maxLength - 3) + "..." } else { s }
+      if (s.length > maxLength) { s.substring(0, maxLength - 3) + "..." }
+      else s
     }
-    val summaries = request.workspace.boxes.map(
-      box => box.id -> crop(
+    val summaries = request.workspace.boxes.map(box =>
+      box.id -> crop(
         try { context.getOperationForStates(box, context.allStates).summary }
         catch {
           case t: Throwable =>
@@ -199,7 +215,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getProjectOutput(
-    user: serving.User, request: GetProjectOutputRequest): FEProject = {
+      user: serving.User,
+      request: GetProjectOutputRequest): FEProject = {
     val state = getOutput(user, request.id)
     val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
     val project =
@@ -210,23 +227,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getPlotOutput(
-    user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
+      user: serving.User,
+      request: GetPlotOutputRequest): json.JsValue = {
     val state = getOutput(user, request.id)
-    val scalar = state.plot
-    val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
-    GetPlotOutputResponse(fescalar)
+    state.plot
   }
 
   import UIStatusSerialization.fTwoSidedUIStatus
 
   def getVisualizationOutput(
-    user: serving.User, request: GetVisualizationOutputRequest): TwoSidedUIStatus = {
+      user: serving.User,
+      request: GetVisualizationOutputRequest): TwoSidedUIStatus = {
     val state = getOutput(user, request.id)
     state.visualization.uiStatus
   }
 
   def getExportResultOutput(
-    user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
+      user: serving.User,
+      request: GetExportResultRequest): GetExportResultResponse = {
     val state = getOutput(user, request.stateId)
     state.kind match {
       case BoxOutputKind.ExportResult =>
@@ -239,7 +257,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   private val edgeVisualizationOptions = Set("edge label", "edge color", "width")
   private def visualizedEntitiesForSide(
-    state: VisualizationState, side: UIStatus): List[MetaGraphEntity] = {
+      state: VisualizationState,
+      side: UIStatus): List[MetaGraphEntity] = {
     side.projectPath match {
       case None => List()
       case Some(p) =>
@@ -257,33 +276,35 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val states = stateIdsOrdered.map(stateId => stateId -> getOutput(user, stateId))
     val seen = collection.mutable.Set[MetaGraphEntity]()
     states.map {
-      case (stateId, state) => try {
-        state.success.check()
-        val entities: List[MetaGraphEntity] = state.kind match {
-          case BoxOutputKind.Project => state.project.viewer.allEntities
-          case BoxOutputKind.Table => List(state.table)
-          case BoxOutputKind.Plot => List(state.plot)
-          case BoxOutputKind.ExportResult => List(state.exportResult)
-          case BoxOutputKind.Visualization =>
-            visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
-              visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
-          case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
-        }
-        val progress = entityProgressManager.computeProgress(entities, seen.toSet).toList
-        seen ++= entities
-        stateId -> progress
-      } catch {
-        case t: Throwable =>
-          if (!t.getMessage.startsWith("assertion failed: Unknown BoxOutputState:")) {
-            log.error(s"Error computing progress for $stateId", t)
+      case (stateId, state) =>
+        try {
+          state.success.check()
+          val entities: List[MetaGraphEntity] = state.kind match {
+            case BoxOutputKind.Project => state.project.viewer.allEntities
+            case BoxOutputKind.Table => List(state.table)
+            case BoxOutputKind.Plot => BoxOutputState.tablesOfPlot(state.plot).toList
+            case BoxOutputKind.ExportResult => List(state.exportResult)
+            case BoxOutputKind.Visualization =>
+              visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
+                visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
+            case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
-          stateId -> List(-1.0)
-      }
+          val progress = entityProgressManager.computeProgress(entities, seen.toSet).toList
+          seen ++= entities
+          stateId -> progress
+        } catch {
+          case t: Throwable =>
+            if (!t.getMessage.startsWith("assertion failed: Unknown BoxOutputState:")) {
+              log.error(s"Error computing progress for $stateId", t)
+            }
+            stateId -> List(-1.0)
+        }
     }.toMap
   }
 
   def createSnapshot(
-    user: serving.User, request: CreateSnapshotRequest): Unit = {
+      user: serving.User,
+      request: CreateSnapshotRequest): Unit = {
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     def calculatedState() = calculatedStates.synchronized {
       calculatedStates(request.id.asUUID)
@@ -298,7 +319,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
+      user: serving.User,
+      request: SetWorkspaceRequest): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
     f.assertWriteAllowedFrom(user)
     if (user.wizardOnly) assertWizardEditAllowed(user, f.workspace, request.workspace)
@@ -312,7 +334,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val msg = s"User ${user.email} is restricted to using wizards."
     assert(ws1.copy(boxes = ws0.boxes) == ws0, msg) // Only boxes have changed.
     val stepsJson = ws0.anchor.parameters.getOrElse("steps", "[]")
-    import play.api.libs.json
     val steps = json.Json.parse(stepsJson).as[List[json.JsObject]]
     val editableBoxes = steps
       .filter(j => (j \ "popup").as[String] == "parameters")
@@ -332,13 +353,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setAndGetWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = {
+      user: serving.User,
+      request: SetWorkspaceRequest): GetWorkspaceResponse = {
     setWorkspace(user, request)
     getWorkspace(user, request.reference)
   }
 
   def undoWorkspace(
-    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+      user: serving.User,
+      request: WorkspaceReference): GetWorkspaceResponse = {
     metaManager.synchronized {
       val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
       f.assertWriteAllowedFrom(user)
@@ -348,7 +371,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def redoWorkspace(
-    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+      user: serving.User,
+      request: WorkspaceReference): GetWorkspaceResponse = {
     metaManager.synchronized {
       val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
       f.assertWriteAllowedFrom(user)
@@ -365,17 +389,20 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def boxCatalog(user: serving.User, request: BoxCatalogRequest): BoxCatalogResponse = {
     // We need the custom boxes of the current workspace, if the call comes
     // from the UI.
-    val customBoxOperationIds = if (!request.ref.top.isEmpty()) {
-      val ref = ResolvedWorkspaceReference(
-        user,
-        WorkspaceReference(request.ref.top, request.ref.customBoxStack))
-      ref.ws.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
-    } else {
-      List()
-    }
+    val customBoxOperationIds =
+      if (!request.ref.top.isEmpty()) {
+        val ref = ResolvedWorkspaceReference(
+          user,
+          WorkspaceReference(request.ref.top, request.ref.customBoxStack))
+        ref.ws.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
+      } else {
+        List()
+      }
     BoxCatalogResponse(
       ops.operationsRelevantToWorkspace(
-        user, request.ref.top, customBoxOperationIds).toList.map(ops.getBoxMetadata(_)),
+        user,
+        request.ref.top,
+        customBoxOperationIds).toList.map(ops.getBoxMetadata(_)),
       ops.getCategories(user))
   }
 
@@ -396,35 +423,37 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   @annotation.tailrec
   private def instrumentStatesAndMetas(
-    ctx: WorkspaceExecutionContext,
-    instruments: List[Instrument],
-    states: List[BoxOutputState],
-    opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
-    val next = if (instruments.isEmpty) {
-      None
-    } else {
-      val instr = instruments.head
-      val state = states.last
-      val meta = ops.getBoxMetadata(instr.operationId)
-      assert(
-        meta.inputs.size == 1,
-        s"${instr.operationId} has ${meta.inputs.size} inputs instead of 1.")
-      assert(
-        meta.outputs.size == 1,
-        s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
-      val box = Box(
-        id = "",
-        operationId = instr.operationId,
-        parameters = instr.parameters,
-        x = 0,
-        y = 0,
-        // It does not matter where the inputs come from. Using "null" for BoxOutput.
-        inputs = Map(meta.inputs.head -> null),
-        parametricParameters = instr.parametricParameters)
-      val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
-      val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
-      Some((newState, op.toFE))
-    }
+      ctx: WorkspaceExecutionContext,
+      instruments: List[Instrument],
+      states: List[BoxOutputState],
+      opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
+    val next =
+      if (instruments.isEmpty) {
+        None
+      } else {
+        val instr = instruments.head
+        val state = states.last
+        val meta = ops.getBoxMetadata(instr.operationId)
+        assert(
+          meta.inputs.size == 1,
+          s"${instr.operationId} has ${meta.inputs.size} inputs instead of 1.")
+        assert(
+          meta.outputs.size == 1,
+          s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
+        val box = Box(
+          id = "",
+          operationId = instr.operationId,
+          parameters = instr.parameters,
+          x = 0,
+          y = 0,
+          // It does not matter where the inputs come from. Using "null" for BoxOutput.
+          inputs = Map(meta.inputs.head -> null),
+          parametricParameters = instr.parametricParameters,
+        )
+        val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
+        val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
+        Some((newState, op.toFE))
+      }
     next match {
       case Some((newState, newMeta)) if newState.isError =>
         // Pretend there are no more instruments. This allows the error state to be seen.
@@ -436,7 +465,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getInstrumentedState(
-    user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+      user: serving.User,
+      request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
     assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val ctx = request.workspace match {
       case Some(ws) =>
@@ -447,7 +477,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
     val inputState = getOutput(user, request.inputStateId)
     var (states, opMetas) = instrumentStatesAndMetas(
-      ctx, request.instruments, List(inputState), List[FEOperationMeta]())
+      ctx,
+      request.instruments,
+      List(inputState),
+      List[FEOperationMeta]())
     val instrumentStates = calculatedStates.synchronized {
       states.map { state =>
         calculatedStates(state.gUID) = state

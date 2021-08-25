@@ -23,7 +23,8 @@ object TableToAttributes extends OpFromJson {
   private def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
 
   private def toNumberedLines(
-    dataFrame: spark.sql.DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
+      dataFrame: spark.sql.DataFrame,
+      rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val numRows = dataFrame.count()
     val seqRDD = SQLHelper.toSeqRDD(dataFrame)
     val partitioner = rc.partitionerForNRows(numRows)
@@ -32,15 +33,16 @@ object TableToAttributes extends OpFromJson {
   }
 
   class Output(schema: types.StructType)(implicit instance: MetaGraphOperationInstance)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     // Methods for listing the output entities for metagraph building purposes.
     private def attributeFromTypeTag[T: TypeTag](
-      ids: => EntityContainer[VertexSet], name: scala.Symbol): EntityContainer[Attribute[T]] =
+        ids: => EntityContainer[VertexSet],
+        name: scala.Symbol): EntityContainer[Attribute[T]] =
       vertexAttribute[T](ids, name)
 
     private def attributeFromField(
-      ids: => EntityContainer[VertexSet],
-      field: types.StructField): EntityContainer[Attribute[_]] = {
+        ids: => EntityContainer[VertexSet],
+        field: types.StructField): EntityContainer[Attribute[_]] = {
       attributeFromTypeTag(ids, toSymbol(field))(SQLHelper.typeTagFromDataType(field.dataType))
     }
 
@@ -51,9 +53,9 @@ object TableToAttributes extends OpFromJson {
 
     // Methods for populating this output instance with computed output RDDs.
     def populateOutput(
-      rc: RuntimeContext,
-      schema: types.StructType,
-      dataFrame: spark.sql.DataFrame) {
+        rc: RuntimeContext,
+        schema: types.StructType,
+        dataFrame: spark.sql.DataFrame) {
       val entities = this.columns.values.map(_.entity)
       val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
       val inOrder = schema.map(f => entitiesByName(toSymbol(f)))
@@ -75,10 +77,10 @@ case class TableToAttributes() extends SparkOperation[Input, Output] {
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val t = inputs.t.data
     SQLHelper.assertTableHasCorrectSchema(t.entity, t.df.schema)

@@ -18,10 +18,10 @@ abstract class CreateScalar[T] extends SparkOperation[NoInput, Output[T]] {
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, tt)
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     output(o.created, value)
   }
 }
@@ -36,8 +36,7 @@ case class CreateStringScalar(value: String) extends CreateScalar[String] {
 
 object CreateUIStatusScalar extends OpFromJson {
   import com.lynxanalytics.biggraph.controllers.UIStatusSerialization._
-  def fromJson(j: JsValue) = CreateUIStatusScalar(
-    json.Json.fromJson[UIStatus](j \ "value").get)
+  def fromJson(j: JsValue) = CreateUIStatusScalar((j \ "value").as[UIStatus])
 }
 case class CreateUIStatusScalar(value: UIStatus) extends CreateScalar[UIStatus] {
   @transient lazy val tt = typeTag[UIStatus]

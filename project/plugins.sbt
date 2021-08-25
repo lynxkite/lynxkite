@@ -5,13 +5,13 @@ logLevel := Level.Warn
 resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.7")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.7")
 
 // Code formatting.
-addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.0")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
 // Package dependencies. Run "dependencyList" or "dependencyGraph" to access the data.
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 
 // Adds the "dumpLicenseReport" command.
 addSbtPlugin("com.typesafe.sbt" % "sbt-license-report" % "1.2.0")

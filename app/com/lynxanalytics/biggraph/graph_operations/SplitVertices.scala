@@ -11,7 +11,8 @@ object SplitVertices extends OpFromJson {
   class Output(
       implicit
       instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[Double]) extends MagicOutput(instance) {
+      inputs: VertexAttributeInput[Double])
+      extends MagicOutput(instance) {
 
     val newVertices = vertexSet
     val belongsTo = edgeBundle(
@@ -31,16 +32,16 @@ case class SplitVertices() extends SparkOperation[VertexAttributeInput[Double], 
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val repetitionAttr = inputs.attr.rdd
 
     val requestedNumberOfVerticesWithIndex =
-      repetitionAttr.flatMapValues { numRepetitions => (0.0 until numRepetitions by 1.0) }
+      repetitionAttr.flatMapValues { numRepetitions => (0L until numRepetitions.toLong).map(_.toDouble) }
 
     val partitioner = rc.partitionerForNRows(repetitionAttr.values.sum.toLong)
 

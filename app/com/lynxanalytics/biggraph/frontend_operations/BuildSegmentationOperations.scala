@@ -21,8 +21,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     params ++= List(
       Param("name", "New segmentation name"),
       Choice(
-        "segmentations", "Segmentations",
-        options = project.segmentationList, multipleChoice = true))
+        "segmentations",
+        "Segmentations",
+        options = project.segmentationList,
+        multipleChoice = true))
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
     override def summary = {
       val segmentations = params("segmentations").replace(",", ", ")
@@ -41,7 +43,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       result.belongsTo = first.belongsTo
       for ((name, attr) <- first.vertexAttributes) {
         result.newVertexAttribute(
-          s"${first.segmentationName}_$name", attr)
+          s"${first.segmentationName}_$name",
+          attr)
       }
       // Then combine the other segmentations one by one.
       for (seg <- segmentations.tail) {
@@ -78,15 +81,16 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice(
         "seg_id_attr",
         s"Identifying vertex attribute in segmentation",
-        options = project.vertexAttrList[String]))
+        options = project.vertexAttrList[String]),
+    )
     def enabled =
       project.assertSegmentation &&
         FEStatus.assert(
           project.vertexAttrList[String].nonEmpty,
           "No String vertex attributes in this segmentation.") &&
-          FEStatus.assert(
-            parent.vertexAttributeNames[String].nonEmpty,
-            "No String vertex attributes in base project.")
+        FEStatus.assert(
+          parent.vertexAttributeNames[String].nonEmpty,
+          "No String vertex attributes in base project.")
     def apply() = {
       val baseIdAttr = parent.vertexAttributes(params("base_id_attr")).runtimeSafeCast[String]
       val segIdAttr = project.vertexAttributes(params("seg_id_attr")).runtimeSafeCast[String]
@@ -110,7 +114,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice(
         "directions",
         "Edge direction",
-        options = FEOption.list("ignore directions", "require both directions")))
+        options = FEOption.list("ignore directions", "require both directions")),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val directions = params("directions")
@@ -131,13 +136,20 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Find infocom communities")(new ProjectTransformation(_) {
     params ++= List(
       Param(
-        "cliques_name", "Name for maximal cliques segmentation", defaultValue = "maximal_cliques"),
+        "cliques_name",
+        "Name for maximal cliques segmentation",
+        defaultValue = "maximal_cliques"),
       Param(
-        "communities_name", "Name for communities segmentation", defaultValue = "communities"),
+        "communities_name",
+        "Name for communities segmentation",
+        defaultValue = "communities"),
       Choice("bothdir", "Edges required in cliques in both directions", options = FEOption.bools),
       NonNegInt("min_cliques", "Minimum clique size", default = 3),
       Ratio(
-        "adjacency_threshold", "Adjacency threshold for clique overlaps", defaultValue = "0.6"))
+        "adjacency_threshold",
+        "Adjacency threshold for clique overlaps",
+        defaultValue = "0.6"),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val minCliques = params("min_cliques").toInt
@@ -172,10 +184,14 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       val vertexToCommunity = {
         val op = graph_operations.ConcatenateBundles()
         op(
-          op.edgesAB, cliquesResult.belongsTo)(
-            op.edgesBC, ccResult.belongsTo)(
-              op.weightsAB, weightedVertexToClique)(
-                op.weightsBC, weightedCliqueToCommunity).result.edgesAC
+          op.edgesAB,
+          cliquesResult.belongsTo)(
+          op.edgesBC,
+          ccResult.belongsTo)(
+          op.weightsAB,
+          weightedVertexToClique)(
+          op.weightsBC,
+          weightedCliqueToCommunity).result.edgesAC
       }
 
       val communitiesSegmentation = project.segmentation(params("communities_name"))
@@ -185,7 +201,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           s" $minCliques, adjacency threshold: $adjacencyThreshold)"
       communitiesSegmentation.belongsTo = vertexToCommunity
       communitiesSegmentation.newVertexAttribute(
-        "size", computeSegmentSizes(communitiesSegmentation))
+        "size",
+        computeSegmentSizes(communitiesSegmentation))
     }
   })
 
@@ -193,8 +210,11 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     params ++= List(
       Param("name", "Segmentation name", defaultValue = "maximal_cliques"),
       Choice(
-        "bothdir", "Edges required in both directions", options = FEOption.bools),
-      NonNegInt("min", "Minimum clique size", default = 3))
+        "bothdir",
+        "Edges required in both directions",
+        options = FEOption.bools),
+      NonNegInt("min", "Minimum clique size", default = 3),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val minCliques = params("min").toInt
@@ -213,8 +233,11 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Find modular clustering")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Segmentation name", defaultValue = "modular_clusters"),
-      Choice("weights", "Weight attribute", options =
-        FEOption.noWeight +: project.edgeAttrList[Double]),
+      Choice(
+        "weights",
+        "Weight attribute",
+        options =
+          FEOption.noWeight +: project.edgeAttrList[Double]),
       Param(
         "max_iterations",
         "Maximum number of iterations to do",
@@ -222,7 +245,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Param(
         "min_increment_per_iteration",
         "Minimal modularity increment in an iteration to keep going",
-        defaultValue = "0.001"))
+        defaultValue = "0.001"),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val edgeBundle = project.edgeBundle
@@ -232,7 +256,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         else project.edgeAttributes(weightsName).runtimeSafeCast[Double]
       val result = {
         val op = graph_operations.FindModularClusteringByTweaks(
-          params("max_iterations").toInt, params("min_increment_per_iteration").toDouble)
+          params("max_iterations").toInt,
+          params("min_increment_per_iteration").toDouble)
         op(op.edges, edgeBundle)(op.weights, weights).result
       }
       val segmentation = project.segmentation(params("name"))
@@ -305,101 +330,25 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     })
 
   register(
-    "Use table as segmentation", List(projectInput, "table"))(
-      new ProjectOutputOperation(_) {
-        override lazy val project = projectInput("graph")
-        lazy val segTable = tableLikeInput("table").asProject
-        params ++= List(
-          Param("name", s"Name of new segmentation"),
-          Choice("base_id_attr", "Vertex ID attribute",
-            options = FEOption.unset +: project.vertexAttrList),
-          Choice("base_id_column", "Vertex ID column",
-            options = FEOption.unset +: segTable.vertexAttrList),
-          Choice("seg_id_column", "Segment ID column",
-            options = FEOption.unset +: segTable.vertexAttrList))
-        def enabled = FEStatus.assert(
-          project.vertexAttrList.nonEmpty, "No suitable vertex attributes") &&
-          FEStatus.assert(segTable.vertexAttrList.nonEmpty, "No columns in table")
-        def apply() = {
-          val baseColumnName = params("base_id_column")
-          val segColumnName = params("seg_id_column")
-          val baseAttrName = params("base_id_attr")
-          assert(
-            baseColumnName != FEOption.unset.id,
-            "The identifying column parameter must be set for the base project.")
-          assert(
-            segColumnName != FEOption.unset.id,
-            "The identifying column parameter must be set for the segmentation.")
-          assert(
-            baseAttrName != FEOption.unset.id,
-            "The base ID attribute parameter must be set.")
-          val baseColumn = segTable.vertexAttributes(baseColumnName).asString
-          val segColumn = segTable.vertexAttributes(segColumnName).asString
-          val baseAttr = project.vertexAttributes(baseAttrName).asString
-          val segmentation = project.segmentation(params("name"))
-
-          val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
-          segmentation.newVertexAttribute(segColumnName, segAttr)
-        }
-
-        def typedImport(
-          segmentation: SegmentationEditor,
-          baseColumn: Attribute[String], segColumn: Attribute[String], baseAttr: Attribute[String]): Attribute[String] = {
-          // Merge by segment ID to create the segments.
-          val merge = {
-            val op = graph_operations.MergeVertices[String]()
-            op(op.attr, segColumn).result
-          }
-          segmentation.setVertexSet(merge.segments, idAttr = "id")
-          // Move segment ID to the segments.
-          val segAttr = aggregateViaConnection(
-            merge.belongsTo,
-            // Use scalable aggregator.
-            AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[String]()))
-          // Import belongs-to relationship as edges between the base and the segmentation.
-          val imp = graph_operations.ImportEdgesForExistingVertices.run(
-            baseAttr, segAttr, baseColumn, segColumn)
-          segmentation.belongsTo = imp.edges
-          segAttr
-        }
-      })
-
-  register(
-    "Use table as segmentation links", List(projectInput, "links"))(new ProjectOutputOperation(_) {
+    "Use table as segmentation",
+    List(projectInput, "table"))(
+    new ProjectOutputOperation(_) {
       override lazy val project = projectInput("graph")
-      lazy val links = tableLikeInput("links").asProject
-      def seg = project.asSegmentation
-      def parent = seg.parent
-      if (project.isSegmentation) params ++= List(
-        Choice(
-          "base_id_attr",
-          s"Identifying vertex attribute in base graph",
-          options = FEOption.unset +: parent.vertexAttrList),
-        Choice(
-          "base_id_column",
-          s"Identifying column for base project",
-          options = FEOption.unset +: links.vertexAttrList),
-        Choice(
-          "seg_id_attr",
-          s"Identifying vertex attribute in segmentation",
-          options = FEOption.unset +: project.vertexAttrList),
-        Choice(
-          "seg_id_column",
-          s"Identifying column for segmentation",
-          options = FEOption.unset +: links.vertexAttrList))
-      def enabled =
-        project.assertSegmentation &&
-          FEStatus.assert(
-            project.vertexAttrList.nonEmpty,
-            "No vertex attributes in this segmentation") &&
-            FEStatus.assert(
-              parent.vertexAttributeNames.nonEmpty,
-              "No vertex attributes in base project")
+      lazy val segTable = tableLikeInput("table").asProject
+      params ++= List(
+        Param("name", s"Name of new segmentation"),
+        Choice("base_id_attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
+        Choice("base_id_column", "Vertex ID column", options = FEOption.unset +: segTable.vertexAttrList),
+        Choice("seg_id_column", "Segment ID column", options = FEOption.unset +: segTable.vertexAttrList),
+      )
+      def enabled = FEStatus.assert(
+        project.vertexAttrList.nonEmpty,
+        "No suitable vertex attributes") &&
+        FEStatus.assert(segTable.vertexAttrList.nonEmpty, "No columns in table")
       def apply() = {
         val baseColumnName = params("base_id_column")
         val segColumnName = params("seg_id_column")
         val baseAttrName = params("base_id_attr")
-        val segAttrName = params("seg_id_attr")
         assert(
           baseColumnName != FEOption.unset.id,
           "The identifying column parameter must be set for the base project.")
@@ -409,26 +358,112 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         assert(
           baseAttrName != FEOption.unset.id,
           "The base ID attribute parameter must be set.")
-        assert(
-          segAttrName != FEOption.unset.id,
-          "The segmentation ID attribute parameter must be set.")
+        val baseColumn = segTable.vertexAttributes(baseColumnName).asString
+        val segColumn = segTable.vertexAttributes(segColumnName).asString
+        val baseAttr = project.vertexAttributes(baseAttrName).asString
+        val segmentation = project.segmentation(params("name"))
+
+        val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
+        segmentation.newVertexAttribute(segColumnName, segAttr)
+      }
+
+      def typedImport(
+          segmentation: SegmentationEditor,
+          baseColumn: Attribute[String],
+          segColumn: Attribute[String],
+          baseAttr: Attribute[String]): Attribute[String] = {
+        // Merge by segment ID to create the segments.
+        val merge = {
+          val op = graph_operations.MergeVertices[String]()
+          op(op.attr, segColumn).result
+        }
+        segmentation.setVertexSet(merge.segments, idAttr = "id")
+        // Move segment ID to the segments.
+        val segAttr = aggregateViaConnection(
+          merge.belongsTo,
+          // Use scalable aggregator.
+          AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[String]()))
+        // Import belongs-to relationship as edges between the base and the segmentation.
         val imp = graph_operations.ImportEdgesForExistingVertices.run(
-          parent.vertexAttributes(baseAttrName).asString,
-          project.vertexAttributes(segAttrName).asString,
-          links.vertexAttributes(baseColumnName).asString,
-          links.vertexAttributes(segColumnName).asString)
-        seg.belongsTo = imp.edges
+          baseAttr,
+          segAttr,
+          baseColumn,
+          segColumn)
+        segmentation.belongsTo = imp.edges
+        segAttr
       }
     })
+
+  register(
+    "Use table as segmentation links",
+    List(projectInput, "links"))(new ProjectOutputOperation(_) {
+    override lazy val project = projectInput("graph")
+    lazy val links = tableLikeInput("links").asProject
+    def seg = project.asSegmentation
+    def parent = seg.parent
+    if (project.isSegmentation) params ++= List(
+      Choice(
+        "base_id_attr",
+        s"Identifying vertex attribute in base graph",
+        options = FEOption.unset +: parent.vertexAttrList),
+      Choice(
+        "base_id_column",
+        s"Identifying column for base project",
+        options = FEOption.unset +: links.vertexAttrList),
+      Choice(
+        "seg_id_attr",
+        s"Identifying vertex attribute in segmentation",
+        options = FEOption.unset +: project.vertexAttrList),
+      Choice(
+        "seg_id_column",
+        s"Identifying column for segmentation",
+        options = FEOption.unset +: links.vertexAttrList),
+    )
+    def enabled =
+      project.assertSegmentation &&
+        FEStatus.assert(
+          project.vertexAttrList.nonEmpty,
+          "No vertex attributes in this segmentation") &&
+        FEStatus.assert(
+          parent.vertexAttributeNames.nonEmpty,
+          "No vertex attributes in base project")
+    def apply() = {
+      val baseColumnName = params("base_id_column")
+      val segColumnName = params("seg_id_column")
+      val baseAttrName = params("base_id_attr")
+      val segAttrName = params("seg_id_attr")
+      assert(
+        baseColumnName != FEOption.unset.id,
+        "The identifying column parameter must be set for the base project.")
+      assert(
+        segColumnName != FEOption.unset.id,
+        "The identifying column parameter must be set for the segmentation.")
+      assert(
+        baseAttrName != FEOption.unset.id,
+        "The base ID attribute parameter must be set.")
+      assert(
+        segAttrName != FEOption.unset.id,
+        "The segmentation ID attribute parameter must be set.")
+      val imp = graph_operations.ImportEdgesForExistingVertices.run(
+        parent.vertexAttributes(baseAttrName).asString,
+        project.vertexAttributes(segAttrName).asString,
+        links.vertexAttributes(baseColumnName).asString,
+        links.vertexAttributes(segColumnName).asString,
+      )
+      seg.belongsTo = imp.edges
+    }
+  })
 
   register("Segment by numeric attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
-      Choice("overlap", "Overlap", options = FEOption.noyes))
+      Choice("overlap", "Overlap", options = FEOption.noyes),
+    )
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+      project.vertexAttrList[Double].nonEmpty,
+      "No numeric vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -460,7 +495,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[String]))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
+      project.vertexAttrList[String].nonEmpty,
+      "No String vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val name = params("name")
@@ -530,10 +566,11 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice("position", "Position", options = project.vertexAttrList[Vector[Double]]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       NonNegDouble("distance", "Distance", defaultValue = "0.0"),
-      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
-        options = FEOption.boolsDefaultFalse))
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types", options = FEOption.boolsDefaultFalse),
+    )
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Vector[Double]].nonEmpty, "No vector vertex attributes.")
+      project.vertexAttrList[Vector[Double]].nonEmpty,
+      "No vector vertex attributes.")
 
     def apply() = {
       import com.lynxanalytics.biggraph.graph_util.Shapefile
@@ -564,7 +601,8 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       Choice("begin_attr", "Begin attribute", options = project.vertexAttrList[Double]),
       Choice("end_attr", "End attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
-      Choice("overlap", "Overlap", options = FEOption.noyes))
+      Choice("overlap", "Overlap", options = FEOption.noyes),
+    )
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].size >= 2,
       "Less than two numeric vertex attributes.")
@@ -616,21 +654,25 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         "Location",
         options = possibleLocations),
       Choice("time_attr", "Time attribute", options = project.vertexAttrList[Double]),
-      Choice("algorithm", "Algorithm", options = List(
-        FEOption("continuous", "Take continuous event sequences"),
-        FEOption("with-gaps", "Allow gaps in event sequences"))),
+      Choice(
+        "algorithm",
+        "Algorithm",
+        options = List(
+          FEOption("continuous", "Take continuous event sequences"),
+          FEOption("with-gaps", "Allow gaps in event sequences"))),
       NonNegInt("sequence_length", "Sequence length", default = 2),
       NonNegDouble("time_window_step", "Time window step"),
-      NonNegDouble("time_window_length", "Time window length"))
+      NonNegDouble("time_window_length", "Time window length"),
+    )
 
     def enabled =
       FEStatus.assert(project.isSegmentation, "Must be run on a segmentation") &&
         FEStatus.assert(
           possibleLocations.nonEmpty,
           "There must be a String attribute or a sub-segmentation to define event locations") &&
-          FEStatus.assert(
-            project.vertexAttrList[Double].nonEmpty,
-            "There must be a numeric attribute to define event times")
+        FEStatus.assert(
+          project.vertexAttrList[Double].nonEmpty,
+          "There must be a numeric attribute to define event times")
 
     override def summary = {
       val name = params("name")
@@ -658,8 +700,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           params("time_window_step").toDouble,
           params("time_window_length").toDouble)
         op(op.personBelongsToEvent, project.asSegmentation.belongsTo)(
-          op.eventTimeAttribute, timeAttr)(
-            op.eventBelongsToLocation, belongsToLocation).result
+          op.eventTimeAttribute,
+          timeAttr)(
+          op.eventBelongsToLocation,
+          belongsToLocation).result
       }
       val segmentation = project.asSegmentation.parent.segmentation(params("name"))
       segmentation.setVertexSet(cells.segments, idAttr = "id")
@@ -673,16 +717,22 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Find communities with the Louvain method")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save segmentation as", defaultValue = "communities"),
-      Choice("weight", "Weight attribute", options =
-        FEOption.noWeight +: project.edgeAttrList[Double]),
-      NonNegDouble("resolution", "Resolution", defaultValue = "1.0"))
+      Choice(
+        "weight",
+        "Weight attribute",
+        options =
+          FEOption.noWeight +: project.edgeAttrList[Double]),
+      NonNegDouble("resolution", "Resolution", defaultValue = "1.0"),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val weight =
         if (params("weight") == FEOption.noWeight.id) None
         else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
-        "PLM", project.edgeBundle, Map(
+        "PLM",
+        project.edgeBundle,
+        Map(
           "resolution" -> params("resolution").toDouble,
           "directed" -> false),
         weight)
@@ -697,9 +747,13 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
   register("Find communities with label propagation")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Save segmentation as", defaultValue = "communities"),
-      Choice("weight", "Weight attribute", options =
-        FEOption.noWeight +: project.edgeAttrList[Double]),
-      Choice("variant", "Variant", options = FEOption.list("classic", "degree-ordered")))
+      Choice(
+        "weight",
+        "Weight attribute",
+        options =
+          FEOption.noWeight +: project.edgeAttrList[Double]),
+      Choice("variant", "Variant", options = FEOption.list("classic", "degree-ordered")),
+    )
     def enabled = project.hasEdgeBundle
     def apply() = {
       val op = params("variant") match {
@@ -710,7 +764,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         if (params("weight") == FEOption.noWeight.id) None
         else Some(project.edgeAttributes(params("weight")).runtimeSafeCast[Double])
       val seg = graph_operations.NetworKitCommunityDetection.run(
-        op, project.edgeBundle, Map("directed" -> false), weight)
+        op,
+        project.edgeBundle,
+        Map("directed" -> false),
+        weight)
       val result = project.segmentation(params("name"))
       result.setVertexSet(seg.partitions, idAttr = "id")
       result.belongsTo = seg.belongsTo

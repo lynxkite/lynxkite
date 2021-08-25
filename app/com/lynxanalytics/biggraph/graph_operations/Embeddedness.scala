@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object Embeddedness extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val embeddedness = edgeAttribute[Double](inputs.es.entity)
   }
   def fromJson(j: JsValue) = Embeddedness()
@@ -18,10 +18,10 @@ case class Embeddedness() extends SparkOperation[GraphInput, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }

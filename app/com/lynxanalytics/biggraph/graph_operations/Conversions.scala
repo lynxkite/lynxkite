@@ -33,10 +33,12 @@ object DynamicValue {
     }
     else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(
-        double = Some(value.asInstanceOf[Long].toDouble), string = value.toString)
+        double = Some(value.asInstanceOf[Long].toDouble),
+        string = value.toString)
     else if (typeOf[T] =:= typeOf[Int]) value =>
       DynamicValue(
-        double = Some(value.asInstanceOf[Int].toDouble), string = value.toString)
+        double = Some(value.asInstanceOf[Int].toDouble),
+        string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
     else if (typeOf[T] <:< typeOf[Seq[_]]) {
@@ -101,7 +103,7 @@ trait AttributeConverter[From, To] extends OpFromJson {
   def fromJson(j: JsValue) = newOp
 }
 abstract class AttributeConverterOp[From, To: TypeTag]()
-  extends SparkOperation[VertexAttributeInput[From], AttributeOutput[To]] {
+    extends SparkOperation[VertexAttributeInput[From], AttributeOutput[To]] {
   @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
@@ -124,14 +126,19 @@ object VertexAttributeToString extends OpFromJson {
 }
 case class VertexAttributeToString[T]() extends AttributeConverterOp[T, String] {
   def convert(rdd: AttributeRDD[T]): AttributeRDD[String] = ??? // Unused.
-  override def execute(inputDatas: DataSet, o: AttributeOutput[String], output: OutputBuilder, rc: RuntimeContext): Unit = {
+  override def execute(
+      inputDatas: DataSet,
+      o: AttributeOutput[String],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     if (inputs.attr.data.is[Double]) {
       // Double.toString always adds a ".0" at the end. ("1981.0")
       // We avoid that using DecimalFormat.
       val df = new java.text.DecimalFormat(
-        "0", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH))
+        "0",
+        java.text.DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH))
       df.setMaximumFractionDigits(10)
       output(o.attr, inputs.attr.rdd.mapValues(df.format))
     } else {
@@ -192,15 +199,12 @@ case class BigDecimalAttributeToDouble() extends AttributeConverterOp[java.math.
 }
 
 object VertexAttributeToDynamicValue extends OpFromJson {
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[T])
-    extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[T])
+      extends MagicOutput(instance) {
     val attr = vertexAttribute[DynamicValue](inputs.vs.entity)
   }
   def run[T](attr: Attribute[T])(
-    implicit
-    manager: MetaGraphManager): Attribute[DynamicValue] = {
+      implicit manager: MetaGraphManager): Attribute[DynamicValue] = {
 
     import Scripting._
     val op = VertexAttributeToDynamicValue[T]()
@@ -209,16 +213,16 @@ object VertexAttributeToDynamicValue extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToDynamicValue()
 }
 case class VertexAttributeToDynamicValue[T]()
-  extends SparkOperation[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
+    extends SparkOperation[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
   import VertexAttributeToDynamicValue._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
@@ -233,7 +237,11 @@ object AttributeVectorToAny extends OpFromJson {
 }
 case class AttributeVectorToAny[From]() extends AttributeConverterOp[Vector[From], Vector[Any]] {
   def convert(rdd: AttributeRDD[Vector[From]]): AttributeRDD[Vector[Any]] = ??? // Unused.
-  override def execute(inputDatas: DataSet, o: AttributeOutput[Vector[Any]], output: OutputBuilder, rc: RuntimeContext): Unit = {
+  override def execute(
+      inputDatas: DataSet,
+      o: AttributeOutput[Vector[Any]],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     output(o.attr, inputs.attr.rdd.mapValues(_.asInstanceOf[Vector[Any]]))

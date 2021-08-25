@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.graph_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class VertexBucketerTest extends FunSuite {
+class VertexBucketerTest extends AnyFunSuite {
   test("Long bucketer works as expected") {
     assert((1 to 6).flatMap(LongBucketer(1, 6, 3).whichBucket(_)) ==
       Seq(0, 0, 1, 1, 2, 2))

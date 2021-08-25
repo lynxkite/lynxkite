@@ -1,6 +1,6 @@
 ### Compute in Python
 
-Executes custom Python code to define new vertex, edge, or graph attributes.
+Executes custom Python code to define new vertex, edge, or graph attributes, or to transform a table.
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
 two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
@@ -29,6 +29,13 @@ vertex for each edge. These can be used to index into `vs` as in the example.
 
 Assign the new columns to these same DataFrames to output new vertex or edge attributes.
 
+Manipulating tables works the same way, but with a single DataFrame called `df`:
+
+[source,python]
+----
+df['with_title'] = 'The Honorable ' + df.name
+----
+
 When you write this Python code, the input data may not be available yet.
 And you may want to keep building on the output of the box without having
 to wait for the Python code to execute. To make this possible, LynxKite has
@@ -38,11 +45,12 @@ For outputs you must also declare their types.
 
 The currently supported types for outputs are:
 
-- `float` to create a `number`-typed attribute.
-- `str` to create a `String`-typed attribute.
+- `float` to create a `number`-typed attribute or `Double`-typed table column.
+- `str` to create a `String`-typed attribute or table column.
+- `int` to create a `Long`-typed table column.
 - `np.ndarray` to create a `Vector[number]`-typed attribute.
 
-In the previous example we would set:
+In the first example we would set:
 
 - Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting`
 - Outputs: `vs.with_title: str, vs.age_squared: float, es.score: float, es.names: str, graph_attributes.hello: str, graph_attributes.average_age: float`

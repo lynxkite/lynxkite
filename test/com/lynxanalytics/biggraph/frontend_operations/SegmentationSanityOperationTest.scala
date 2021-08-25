@@ -17,9 +17,15 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
         Map("name" -> "const", "value" -> "1.0", "type" -> "number", "apply_to_graph" -> ".seg"))
       .box(
         "Merge vertices by attribute",
-        Map("key" -> "const", "aggregate_bottom" -> "", "aggregate_id" -> "",
-          "aggregate_size" -> "", "aggregate_top" -> "", "aggregate_const" -> "count",
-          "apply_to_graph" -> ".seg")).project
+        Map(
+          "key" -> "const",
+          "aggregate_bottom" -> "",
+          "aggregate_id" -> "",
+          "aggregate_size" -> "",
+          "aggregate_top" -> "",
+          "aggregate_const" -> "count",
+          "apply_to_graph" -> ".seg"),
+      ).project
     val seg = project.segmentation("seg")
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
@@ -29,11 +35,20 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
       .box(
         "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
-      .box("Filter by attributes", Map(
-        "filterva_age" -> "> 10",
-        "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-        "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-        "filterea_weight" -> "", "filterva_segmentation[seg]" -> ""))
+      .box(
+        "Filter by attributes",
+        Map(
+          "filterva_age" -> "> 10",
+          "filterva_gender" -> "",
+          "filterva_id" -> "",
+          "filterva_income" -> "",
+          "filterva_location" -> "",
+          "filterva_name" -> "",
+          "filterea_comment" -> "",
+          "filterea_weight" -> "",
+          "filterva_segmentation[seg]" -> "",
+        ),
+      )
       .project.segmentation("seg")
 
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
@@ -44,11 +59,23 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
       .box(
         "Segment by numeric attribute",
         Map("name" -> "seg", "attr" -> "age", "interval_size" -> "17", "overlap" -> "no"))
-      .box("Add rank attribute", Map(
-        "rankattr" -> "ranking", "keyattr" -> "top", "order" -> "ascending", "apply_to_graph" -> ".seg"))
-      .box("Filter by attributes", Map(
-        "filterva_ranking" -> "> 0", "filterva_bottom" -> "", "filterva_id" -> "",
-        "filterva_size" -> "", "filterva_top" -> "", "apply_to_graph" -> ".seg"))
+      .box(
+        "Add rank attribute",
+        Map(
+          "rankattr" -> "ranking",
+          "keyattr" -> "top",
+          "order" -> "ascending",
+          "apply_to_graph" -> ".seg"))
+      .box(
+        "Filter by attributes",
+        Map(
+          "filterva_ranking" -> "> 0",
+          "filterva_bottom" -> "",
+          "filterva_id" -> "",
+          "filterva_size" -> "",
+          "filterva_top" -> "",
+          "apply_to_graph" -> ".seg"),
+      )
       .project.segmentation("seg")
     assert(seg.vertexSet.gUID == seg.belongsTo.dstVertexSet.gUID)
   }
@@ -68,4 +95,3 @@ class SegmentationSanityOperationTest extends OperationsTestBase {
     assert(belongsTo.map { case (_, (src)) => src.src }.toSeq.distinct.size == 2)
   }
 }
-

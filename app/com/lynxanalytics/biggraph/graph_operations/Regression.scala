@@ -17,9 +17,7 @@ object Regression extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = Regression((j \ "method").as[String], (j \ "numFeatures").as[Int])
@@ -31,10 +29,10 @@ case class Regression(method: String, numFeatures: Int) extends SparkOperation[I
   override def toJson = Json.obj("method" -> method, "numFeatures" -> numFeatures)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._

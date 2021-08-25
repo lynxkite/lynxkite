@@ -27,7 +27,7 @@ object CountVertices extends OpFromJson {
   def fromJson(j: JsValue) = CountVertices()
 }
 case class CountVertices()
-  extends SparkOperation[CountVertices.Input, CountVertices.Output] {
+    extends SparkOperation[CountVertices.Input, CountVertices.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountVertices.Input()
 
@@ -35,10 +35,10 @@ case class CountVertices()
     new CountVertices.Output()(instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: CountVertices.Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: CountVertices.Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vertices.data
     output(o.count, vs.count.getOrElse(vs.rdd.count))
@@ -70,10 +70,10 @@ class CountEdges extends SparkOperation[CountEdges.Input, CountEdges.Output] wit
     new Output()(instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val es = inputs.edges.data
     output(o.count, es.count.getOrElse(es.rdd.count))
@@ -91,7 +91,7 @@ object CountAttributes extends OpFromJson {
   def fromJson(j: JsValue) = CountAttributes()
 }
 case class CountAttributes[T]()
-  extends SparkOperation[CountAttributes.Input[T], CountAttributes.Output] {
+    extends SparkOperation[CountAttributes.Input[T], CountAttributes.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountAttributes.Input[T]
 
@@ -99,10 +99,10 @@ case class CountAttributes[T]()
     new CountAttributes.Output()(instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: CountAttributes.Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: CountAttributes.Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attr = inputs.attribute.data
     output(o.count, attr.count.getOrElse(attr.rdd.count))
@@ -114,9 +114,7 @@ object ComputeMinMaxMinPositive {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
   }
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val min = scalar[Option[T]]
     val max = scalar[Option[T]]
@@ -124,7 +122,7 @@ object ComputeMinMaxMinPositive {
   }
 }
 abstract class ComputeMinMaxMinPositive[T: Numeric]
-  extends SparkOperation[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
+    extends SparkOperation[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new ComputeMinMaxMinPositive.Input[T]
   private lazy val num = implicitly[Numeric[T]]
@@ -147,10 +145,10 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: ComputeMinMaxMinPositive.Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: ComputeMinMaxMinPositive.Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attribute.data.classTag
     import num.mkOrderingOps
@@ -169,7 +167,8 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
               smaller(min1, min2),
               bigger(max1, max2),
               smaller(minpos1, minpos2))
-        })
+        },
+      )
     output(o.min, min)
     output(o.max, max)
     output(o.minPositive, minpos)
@@ -184,9 +183,7 @@ object ComputeMinMaxDouble extends OpFromJson {
     val vertices = vertexSet
     val attribute = vertexAttribute[Double](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val min = scalar[Double]
     val max = scalar[Double]
@@ -196,17 +193,17 @@ object ComputeMinMaxDouble extends OpFromJson {
 }
 @deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 class ComputeMinMaxDouble
-  extends SparkOperation[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
-  with Serializable {
+    extends SparkOperation[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
+    with Serializable {
   override def equals(o: Any) = o.isInstanceOf[ComputeMinMaxDouble]
   @transient override lazy val inputs = new ComputeMinMaxDouble.Input
   def outputMeta(instance: MetaGraphOperationInstance) =
     new ComputeMinMaxDouble.Output()(instance, inputs)
   def execute(
-    inputDatas: DataSet,
-    o: ComputeMinMaxDouble.Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = ???
+      inputDatas: DataSet,
+      o: ComputeMinMaxDouble.Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = ???
 }
 
 object ComputeMinMaxMinPositiveDouble extends OpFromJson {
@@ -219,9 +216,7 @@ object ComputeTopValues extends OpFromJson {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
   }
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val topValues = scalar[Seq[(T, Int)]]
   }
@@ -235,7 +230,7 @@ object ComputeTopValues extends OpFromJson {
     ComputeTopValues((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
-  extends SparkOperation[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
+    extends SparkOperation[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   override val isHeavy = true
   override def toJson =
     Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
@@ -245,10 +240,10 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     new ComputeTopValues.Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: ComputeTopValues.Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: ComputeTopValues.Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attribute.data.classTag
     val ordering = new ComputeTopValues.PairOrdering[T]
@@ -285,16 +280,16 @@ object Coverage extends OpFromJson {
   }
 }
 case class Coverage()
-  extends SparkOperation[Coverage.Input, Coverage.Output] {
+    extends SparkOperation[Coverage.Input, Coverage.Output] {
   import Coverage._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val srcs = inputs.edges.rdd.values.map(_.src)
     val dsts = inputs.edges.rdd.values.map(_.dst)

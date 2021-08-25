@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.controllers.SQLTestCases
-import com.lynxanalytics.biggraph.graph_api.{ DataManager, SparkDomain, ThreadUtil }
+import com.lynxanalytics.biggraph.graph_api.{DataManager, SparkDomain, ThreadUtil}
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 
 object SQLTest {
   def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -41,15 +41,30 @@ class SQLTest extends OperationsTestBase {
       Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
       Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve"),
       Seq(50.3, "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
-      Seq(2.0, "Male", "3", null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
+      Seq(2.0, "Male", "3", null, Seq(-33.8674869, 151.2069902), "Isolated Joe"),
+    ))
   }
 
   test("edges table") {
     val table = runQueryOnExampleGraph("select * from edges order by edge_comment")
-    assert(table.schema.map(_.name) == Seq("dst_age", "dst_gender", "dst_id", "dst_income",
-      "dst_location", "dst_name", "edge_comment", "edge_weight", "src_age", "src_gender", "src_id",
-      "src_income", "src_location", "src_name"))
+    assert(table.schema.map(_.name) == Seq(
+      "dst_age",
+      "dst_gender",
+      "dst_id",
+      "dst_income",
+      "dst_location",
+      "dst_name",
+      "edge_comment",
+      "edge_weight",
+      "src_age",
+      "src_gender",
+      "src_id",
+      "src_income",
+      "src_location",
+      "src_name",
+    ))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
+    // @formatter:off
     assert(data == Seq(
       Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
         20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam"),
@@ -58,7 +73,9 @@ class SQLTest extends OperationsTestBase {
       Seq(18.2, "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
         "Male", "2", 2000.0, Seq(1.352083, 103.819836), "Bob"),
       Seq(20.3, "Male", "0", 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
-        "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve")))
+        "Female", "1", null, Seq(47.5269674, 19.0323968), "Eve"),
+    ))
+    // @formatter:on
   }
 
   test("edge_attributes table") {
@@ -75,14 +92,19 @@ class SQLTest extends OperationsTestBase {
   test("belongs_to table") {
     val table = box("Create example graph")
       .box("Find connected components")
-      .box("SQL1", Map("sql" -> """
+      .box(
+        "SQL1",
+        Map("sql" -> """
         select base_name, segment_id, segment_size
         from `connected_components.belongs_to` order by base_id"""))
       .table
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Adam", "0", 3.0), Seq("Eve", "0", 3.0), Seq("Bob", "0", 3.0), Seq("Isolated Joe", "3", 1.0)))
+      Seq("Adam", "0", 3.0),
+      Seq("Eve", "0", 3.0),
+      Seq("Bob", "0", 3.0),
+      Seq("Isolated Joe", "3", 1.0)))
   }
 
   test("scalars table") {
@@ -134,13 +156,17 @@ class SQLTest extends OperationsTestBase {
     val one = box("Create example graph")
     val two = box("Create example graph")
     val three = box("Create example graph")
-    val table = box("SQL3", Map("sql" -> """
+    val table = box(
+      "SQL3",
+      Map("sql" -> """
       select one.edge_comment, two.name as src_name, three.name as dst_name
       from `one.edges` as one
       join `two.vertices` as two
       join `three.vertices` as three
       where one.src_name = two.name and one.dst_name = three.name
-      """), Seq(one, two, three)).table
+      """),
+      Seq(one, two, three),
+    ).table
     assert(table.schema.map(_.name) == Seq("edge_comment", "src_name", "dst_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
@@ -155,7 +181,8 @@ class SQLTest extends OperationsTestBase {
     val one = eg.box("SQL1", Map("sql" -> "select 'one' as table"))
     val two = eg.box("SQL1", Map("sql" -> "select 'two' as table"))
     val table = box(
-      "SQL2", Map("sql" -> "select * from one"),
+      "SQL2",
+      Map("sql" -> "select * from one"),
       inputMap = collection.immutable.ListMap("two" -> two, "one" -> one)).table
     assert(table.df.head.get(0) == "one")
   }
@@ -163,14 +190,18 @@ class SQLTest extends OperationsTestBase {
   test("union") {
     val one = box("Create example graph")
     val two = box("Create example graph")
-    val table = box("SQL2", Map("sql" -> """
+    val table = box(
+      "SQL2",
+      Map("sql" -> """
       select * from (select edge_comment
       from `one.edges`
       union all
       select edge_comment
       from `two.edges`)
       order by edge_comment
-      """), Seq(one, two)).table
+      """),
+      Seq(one, two),
+    ).table
     assert(table.schema.map(_.name) == Seq("edge_comment"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
@@ -181,19 +212,24 @@ class SQLTest extends OperationsTestBase {
       Seq("Bob loves Eve"),
       Seq("Bob loves Eve"),
       Seq("Eve loves Adam"),
-      Seq("Eve loves Adam")))
+      Seq("Eve loves Adam"),
+    ))
   }
 
   test("union and sum of counts") {
     val one = box("Create example graph")
     val two = box("Create example graph")
-    val table = box("SQL2", Map("sql" -> """
+    val table = box(
+      "SQL2",
+      Map("sql" -> """
       select sum(cnt) as cnt from (
       select count(age) as cnt from `one.vertices`
       union all
       select count(income) as cnt from `two.vertices`
       )
-      """), Seq(one, two)).table
+      """),
+      Seq(one, two),
+    ).table
     assert(table.schema.map(_.name) == Seq("cnt"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(Seq(6)))
@@ -257,10 +293,12 @@ class SQLTest extends OperationsTestBase {
 
   test("set type attribute") {
     val table = box("Create example graph")
-      .box("Aggregate edge attribute to vertices", Map(
-        "prefix" -> "edge",
-        "direction" -> "all edges",
-        "aggregate_weight" -> "set"))
+      .box(
+        "Aggregate edge attribute to vertices",
+        Map(
+          "prefix" -> "edge",
+          "direction" -> "all edges",
+          "aggregate_weight" -> "set"))
       .box("SQL1", Map("sql" -> "select edge_weight_set from vertices", "persist" -> "no"))
       .table
     val data = table.df.collect.toSeq.map(row => {
@@ -362,7 +400,8 @@ class SQLTest extends OperationsTestBase {
       Seq("22B5B6740450B367DEDADC0EF5142F42E3BBAFAA19F8FDA1016E3DA0389CB0D8"),
       Seq("FE3DA8E41069BE8068ACCD8AA32788D1037898114CBF213E851BD1DCDD15F092"),
       Seq("11D690C14A747559DFFF9B63ACA0F894F338D3EEBEACCBDF7C6FFCABAEEAF6F0"),
-      Seq("33D6D5B65AC19814812586FAF9D1399DFB70D16EEB66702B62AB001B38CE3259")))
+      Seq("33D6D5B65AC19814812586FAF9D1399DFB70D16EEB66702B62AB001B38CE3259"),
+    ))
   }
 
   test("user defined functions - geodistance") {
@@ -373,8 +412,9 @@ class SQLTest extends OperationsTestBase {
     assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
       Seq(7023993.307994274), // New York / Budapest ~7k kilometers.
       Seq(7023993.307994274),
-      Seq(1.5340398666732997E7), // New York / Singapore ~15k kilometers.
-      Seq(9507129.781908857))) // Budapest / Singapore ~ 9.5k kilometers.
+      Seq(1.5340398666732997e7), // New York / Singapore ~15k kilometers.
+      Seq(9507129.781908857),
+    )) // Budapest / Singapore ~ 9.5k kilometers.
   }
 
   test("user defined functions - dayofweek") {
@@ -397,10 +437,13 @@ class SQLTest extends OperationsTestBase {
       Map("sql" -> """select collect_set(name) as names
                       from `vertices`
                       where income > 0"""))
-    val table = box("SQL2", Map("sql" -> """
+    val table = box(
+      "SQL2",
+      Map("sql" -> """
       select string_intersect(one.names, two.names) as si
       from one cross join two
-      """), Seq(one, two)).table
+      """),
+      Seq(one, two)).table
     assert(table.schema.map(_.name) == Seq("si"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     def flatten(ls: Seq[Any]): Seq[Any] = ls flatMap {
@@ -418,8 +461,7 @@ class SQLTest extends OperationsTestBase {
   test("user defined aggr functions - most_common with null values") {
     val query = "select gender, most_common(income) from vertices group by gender"
     val t = runQueryOnExampleGraph(query)
-    assert(t.df.collect.toSeq.map(
-      row => toSeq(row)) == Seq(Seq("Female", null), Seq("Male", "2000.0")))
+    assert(t.df.collect.toSeq.map(row => toSeq(row)).toSet == Set(List("Female", null), List("Male", "2000.0")))
   }
 
   test("columns in tuples are nullable") {
@@ -431,12 +473,12 @@ class SQLTest extends OperationsTestBase {
       .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
       .box("SQL1", Map("sql" -> sql))
       .table
-    assert(t.df.collect.toSeq.map(
-      row => toSeq(row)) == Seq(
-        Seq("Adam", Seq(40.71448, -74.00598)),
-        Seq("Eve", Seq(47.5269674, 19.0323968)),
-        Seq("Bob", Seq(1.352083, 103.819836)),
-        Seq("Isolated Joe", Seq(-33.8674869, 151.2069902))))
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq("Adam", Seq(40.71448, -74.00598)),
+      Seq("Eve", Seq(47.5269674, 19.0323968)),
+      Seq("Bob", Seq(1.352083, 103.819836)),
+      Seq("Isolated Joe", Seq(-33.8674869, 151.2069902)),
+    ))
   }
 
   test("array columns can be persisted") {
@@ -446,10 +488,9 @@ class SQLTest extends OperationsTestBase {
       .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
       .box("SQL1", Map("sql" -> "select age_set from input"))
       .table
-    assert(t.df.collect.toSeq.map(
-      row => toSeq(row)) == Seq(
-        Seq(Seq(20.3, 18.2)),
-        Seq(Seq(50.3, 2.0))))
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq(Seq(20.3, 18.2)),
+      Seq(Seq(50.3, 2.0))))
   }
 
   test("nested array columns can be persisted") {
@@ -461,22 +502,25 @@ class SQLTest extends OperationsTestBase {
       .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
       .box("SQL1", Map("sql" -> "select age_vector_vector, c from input"))
       .table
-    assert(t.df.collect.toSeq.map(
-      row => toSeq(row)) == Seq(Seq(Seq(Seq(20.3, 18.2), Seq(50.3, 2.0)), 1)))
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(Seq(Seq(20.3, 18.2), Seq(50.3, 2.0)), 1)))
   }
 
   test("inputs can be given custom names") {
     val eg = box("Create example graph")
-    val t = box("SQL2", Map(
-      "sql" -> "select count(*) as cnt from `a.vertices` join `b.vertices` using (name)",
-      "input_names" -> "a, b"), Seq(eg, eg)).table
+    val t = box(
+      "SQL2",
+      Map(
+        "sql" -> "select count(*) as cnt from `a.vertices` join `b.vertices` using (name)",
+        "input_names" -> "a, b"),
+      Seq(eg, eg)).table
     assert(t.df.collect.toSeq.map(toSeq) == Seq(Seq(4)))
   }
 
-  SQLTestCases.list.foreach(query => test(query._1) {
-    val one = box("Create example graph")
-    val two = box("Create example graph")
-    val graphQuery = query._1.replace("one", "`one.vertices`").replace("two", "`two.vertices`")
-    box("SQL2", Map("sql" -> graphQuery), Seq(one, two)).table.df.collect()
-  })
+  SQLTestCases.list.foreach(query =>
+    test(query._1) {
+      val one = box("Create example graph")
+      val two = box("Create example graph")
+      val graphQuery = query._1.replace("one", "`one.vertices`").replace("two", "`two.vertices`")
+      box("SQL2", Map("sql" -> graphQuery), Seq(one, two)).table.df.collect()
+    })
 }

@@ -12,7 +12,8 @@ import com.lynxanalytics.biggraph.controllers
 object Scripting {
 
   implicit class RichContainedVertexSet(
-      p: EntityContainer[VertexSet])(implicit m: MetaGraphManager) extends RichVertexSet(p.entity)
+      p: EntityContainer[VertexSet])(implicit m: MetaGraphManager)
+      extends RichVertexSet(p.entity)
   implicit class RichVertexSet(self: VertexSet)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self, value)
@@ -45,7 +46,8 @@ object Scripting {
   }
 
   implicit class RichContainedEdgeBundle(
-      p: EntityContainer[EdgeBundle])(implicit m: MetaGraphManager) extends RichEdgeBundle(p.entity)
+      p: EntityContainer[EdgeBundle])(implicit m: MetaGraphManager)
+      extends RichEdgeBundle(p.entity)
   implicit class RichEdgeBundle(self: EdgeBundle)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
@@ -77,11 +79,21 @@ object Scripting {
       val op = graph_operations.EdgeBundleAsAttribute()
       op(op.edges, self).result.attr
     }
+
+    def srcAttribute: Attribute[ID] = {
+      val op = graph_operations.EdgeBundleAsTwoAttributes()
+      op(op.edges, self).result.src
+    }
+
+    def dstAttribute: Attribute[ID] = {
+      val op = graph_operations.EdgeBundleAsTwoAttributes()
+      op(op.edges, self).result.dst
+    }
   }
 
   implicit class RichContainedAttribute[T](
       p: EntityContainer[Attribute[T]])(implicit m: MetaGraphManager)
-    extends RichAttribute[T](p.entity)
+      extends RichAttribute[T](p.entity)
   implicit class RichAttribute[T](self: Attribute[T])(implicit manager: MetaGraphManager) {
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
       graph_operations.Count.run(self.vertexSet)
@@ -105,13 +117,15 @@ object Scripting {
 
     def deriveX[S: TypeTag](expression: String): Attribute[S] = {
       graph_operations.DeriveScala.deriveAndInferReturnType(
-        expression, Seq("x" -> self), self.vertexSet).runtimeSafeCast[S]
+        expression,
+        Seq("x" -> self),
+        self.vertexSet).runtimeSafeCast[S]
     }
   }
 
   implicit class RichContainedStringAttribute(
       p: EntityContainer[Attribute[String]])(implicit m: MetaGraphManager)
-    extends RichStringAttribute(p.entity)
+      extends RichStringAttribute(p.entity)
   implicit class RichStringAttribute(self: Attribute[String])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
@@ -119,7 +133,7 @@ object Scripting {
 
   implicit class RichContainedDoubleAttribute(
       p: EntityContainer[Attribute[Double]])(implicit m: MetaGraphManager)
-    extends RichDoubleAttribute(p.entity)
+      extends RichDoubleAttribute(p.entity)
   implicit class RichDoubleAttribute(self: Attribute[Double])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
@@ -127,7 +141,7 @@ object Scripting {
 
   implicit class RichContainedLongAttribute(
       p: EntityContainer[Attribute[Long]])(implicit m: MetaGraphManager)
-    extends RichLongAttribute(p.entity)
+      extends RichLongAttribute(p.entity)
   implicit class RichLongAttribute(self: Attribute[Long])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.LongAttributeToDouble.run(self)
@@ -135,7 +149,7 @@ object Scripting {
 
   implicit class RichContainedIntAttribute(
       p: EntityContainer[Attribute[Int]])(implicit m: MetaGraphManager)
-    extends RichIntAttribute(p.entity)
+      extends RichIntAttribute(p.entity)
   implicit class RichIntAttribute(self: Attribute[Int])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.IntAttributeToLong.run(self)
@@ -145,7 +159,7 @@ object Scripting {
 
   implicit class RichContainedTable(
       p: EntityContainer[Table])(implicit m: MetaGraphManager)
-    extends RichTable(p.entity)
+      extends RichTable(p.entity)
   implicit class RichTable(self: Table)(implicit manager: MetaGraphManager) {
     def toAttributes =
       graph_operations.TableToAttributes.run(self)
@@ -163,20 +177,22 @@ object Scripting {
   // Take the union of edge bundles that are parallel, that is that are going between the same
   // two vertex sets.
   def parallelEdgeBundleUnion(
-    first: EdgeBundle, others: EdgeBundle*)(
-    implicit
-    m: MetaGraphManager): EdgeBundle = {
+      first: EdgeBundle,
+      others: EdgeBundle*)(
+      implicit m: MetaGraphManager): EdgeBundle = {
     if (others.isEmpty) first
     else {
       others.foreach { other =>
         assert(
           first.srcVertexSet.gUID == other.srcVertexSet.gUID,
           s"Source vertex set of $first does not match that of $other so" +
-            " they cannot be used together in a parallelEdgeBundleUnion")
+            " they cannot be used together in a parallelEdgeBundleUnion",
+        )
         assert(
           first.dstVertexSet.gUID == other.dstVertexSet.gUID,
           s"Destination vertex set of $first does not match that of $other so" +
-            " they cannot be used together in a parallelEdgeBundleUnion")
+            " they cannot be used together in a parallelEdgeBundleUnion",
+        )
       }
       val all = first +: others
       val idSetUnion = {
@@ -198,47 +214,48 @@ object Scripting {
   // In effect, this corresponds to the mathematical "model" where we assume all different
   // vertex sets represent disjoint mathematical sets.
   def generalEdgeBundleUnion(
-    first: EdgeBundle, others: EdgeBundle*)(
-    implicit
-    m: MetaGraphManager): EdgeBundle = {
+      first: EdgeBundle,
+      others: EdgeBundle*)(
+      implicit m: MetaGraphManager): EdgeBundle = {
     if (others.isEmpty) first
     else {
       val all = first +: others
       // We sort these to make sure that the we get the same union vertex set if we start from
       // the same component vertex sets. (E.g. A U B is the same as B U A.)
-      val srcs = all.map(_.srcVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
-      val dsts = all.map(_.dstVertexSet).toSet.toSeq.sortBy[java.util.UUID](_.gUID)
+      val srcs = (all.map(_.srcVertexSet).toSet.toSeq: Seq[VertexSet]).sortBy(_.gUID)
+      val dsts = (all.map(_.dstVertexSet).toSet.toSeq: Seq[VertexSet]).sortBy(_.gUID)
 
       val induceSrc = (srcs.size > 1)
       val induceDst = (dsts.size > 1)
 
-      val inducedAll = if (induceSrc || induceDst) {
-        var opBuilders = all.map { eb =>
-          val op = graph_operations.InducedEdgeBundle(induceSrc, induceDst)
-          op(op.edges, eb)
-        }
-        if (induceSrc) {
-          val op = graph_operations.VertexSetUnion(srcs.size)
-          val injections = op(op.vss, srcs).result.injections
-          val injectionMap = (srcs zip injections).toMap
-          opBuilders = (opBuilders zip all).map {
-            case (builder, eb) =>
-              builder(builder.op.srcMapping, injectionMap(eb.srcVertexSet))
+      val inducedAll =
+        if (induceSrc || induceDst) {
+          var opBuilders = all.map { eb =>
+            val op = graph_operations.InducedEdgeBundle(induceSrc, induceDst)
+            op(op.edges, eb)
           }
-        }
-        if (induceDst) {
-          val op = graph_operations.VertexSetUnion(dsts.size)
-          val injections = op(op.vss, dsts).result.injections
-          val injectionMap = (dsts zip injections).toMap
-          opBuilders = (opBuilders zip all).map {
-            case (builder, eb) =>
-              builder(builder.op.dstMapping, injectionMap(eb.dstVertexSet))
+          if (induceSrc) {
+            val op = graph_operations.VertexSetUnion(srcs.size)
+            val injections = op(op.vss, srcs).result.injections
+            val injectionMap = (srcs zip injections).toMap
+            opBuilders = (opBuilders zip all).map {
+              case (builder, eb) =>
+                builder(builder.op.srcMapping, injectionMap(eb.srcVertexSet))
+            }
           }
+          if (induceDst) {
+            val op = graph_operations.VertexSetUnion(dsts.size)
+            val injections = op(op.vss, dsts).result.injections
+            val injectionMap = (dsts zip injections).toMap
+            opBuilders = (opBuilders zip all).map {
+              case (builder, eb) =>
+                builder(builder.op.dstMapping, injectionMap(eb.dstVertexSet))
+            }
+          }
+          opBuilders.map(_.result.induced.entity)
+        } else {
+          all
         }
-        opBuilders.map(_.result.induced.entity)
-      } else {
-        all
-      }
       parallelEdgeBundleUnion(inducedAll.head, inducedAll.tail: _*)
     }
   }

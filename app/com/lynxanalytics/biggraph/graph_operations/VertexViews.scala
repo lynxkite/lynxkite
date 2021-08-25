@@ -22,16 +22,16 @@ trait AttributeFromGUID[T] {
 
 class BucketedAttribute[T] private (
     protected val attributeGUID: UUID,
-    val bucketer: Bucketer[T]) extends AttributeFromGUID[T] with Serializable with ToJson {
+    val bucketer: Bucketer[T])
+    extends AttributeFromGUID[T] with Serializable with ToJson {
 
   @throws(classOf[java.io.ObjectStreamException])
   def writeReplace(): AnyRef = new BucketedAttributeSerialized(toJson.toString)
 
   def toHistogram(
-    filtered: VertexSet,
-    sampleSize: Int)(
-    implicit
-    manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
+      filtered: VertexSet,
+      sampleSize: Int)(
+      implicit manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
     val originalCount = graph_operations.Count.run(attribute.vertexSet)
     val op = graph_operations.AttributeHistogram[T](bucketer, sampleSize)
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
@@ -60,7 +60,8 @@ private class BucketedAttributeSerialized(json: String) extends Serializable {
 
 class FilteredAttribute[T] private (
     protected val attributeGUID: UUID,
-    val filter: Filter[T]) extends AttributeFromGUID[T] with Serializable with ToJson {
+    val filter: Filter[T])
+    extends AttributeFromGUID[T] with Serializable with ToJson {
 
   @throws(classOf[java.io.ObjectStreamException])
   def writeReplace(): AnyRef = new FilteredAttributeSerialized(toJson.toString)
@@ -110,63 +111,69 @@ case class VertexView(
     // telling the bucket index of each vertex used. Otherwise this is None.
     vertexIndices: Option[Map[ID, Int]],
     // Filtering in a vertex view has to be a conjunction of per attribute filters.
-    filters: Seq[FilteredAttribute[_]]) extends Serializable
+    filters: Seq[FilteredAttribute[_]])
+    extends Serializable
 object VertexView {
   def fromDiagram(diagram: Scalar[_])(
-    implicit
-    metaManager: MetaGraphManager, dataManager: DataManager): VertexView = {
+      implicit
+      metaManager: MetaGraphManager,
+      dataManager: DataManager): VertexView = {
 
     val indexerInstance = diagram.source
     assert(
       indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]] ||
         indexerInstance.operation.isInstanceOf[SampledView],
-      s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
+      s"$indexerInstance is neither a VertexBucketGrid nor a SampledView",
+    )
 
     val indexingSeq =
       indexerInstance.outputs.scalars('indexingSeq).runtimeSafeCast[Seq[BucketedAttribute[_]]].value
 
     val vertexSet = indexerInstance.inputs.vertexSets('vertices)
 
-    val vertexIndices = if (indexerInstance.operation.isInstanceOf[SampledView]) {
-      Some(indexerInstance.outputs.scalars('vertexIndices).runtimeSafeCast[Map[ID, Int]].value)
-    } else {
-      assert(
-        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
-        s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
-      val idBuckets = indexerInstance.outputs.scalars('buckets)
-        .runtimeSafeCast[IDBuckets[(Int, Int)]].value
-      // This is pretty terrible. TODO: make vertex bucket grid generate indexes directly, not
-      // x-y coordinates. If we are at it, remove duplications between indexer and
-      // vertexbucketgrid.
-      val ySize = if (indexingSeq.size == 2) indexingSeq(1).bucketer.numBuckets else 1
-      Option(idBuckets.sample).map(_.map { case (id, (x, y)) => (id, x * ySize + y) }.toMap)
-    }
+    val vertexIndices =
+      if (indexerInstance.operation.isInstanceOf[SampledView]) {
+        Some(indexerInstance.outputs.scalars('vertexIndices).runtimeSafeCast[Map[ID, Int]].value)
+      } else {
+        assert(
+          indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
+          s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
+        val idBuckets = indexerInstance.outputs.scalars('buckets)
+          .runtimeSafeCast[IDBuckets[(Int, Int)]].value
+        // This is pretty terrible. TODO: make vertex bucket grid generate indexes directly, not
+        // x-y coordinates. If we are at it, remove duplications between indexer and
+        // vertexbucketgrid.
+        val ySize = if (indexingSeq.size == 2) indexingSeq(1).bucketer.numBuckets else 1
+        Option(idBuckets.sample).map(_.map { case (id, (x, y)) => (id, x * ySize + y) }.toMap)
+      }
 
     val filtered = indexerInstance.inputs.vertexSets('filtered)
-    val filtersFromInputs: Seq[FilteredAttribute[_]] = if (filtered.gUID == vertexSet.gUID) {
-      Seq()
-    } else {
-      val filters = filtered.source.operation match {
-        case _: VertexAttributeFilter[_] => Seq(filtered.source)
-        case _: VertexSetIntersection => filtered.source.inputs.vertexSets.values.map(_.source).toSeq
+    val filtersFromInputs: Seq[FilteredAttribute[_]] =
+      if (filtered.gUID == vertexSet.gUID) {
+        Seq()
+      } else {
+        val filters = filtered.source.operation match {
+          case _: VertexAttributeFilter[_] => Seq(filtered.source)
+          case _: VertexSetIntersection => filtered.source.inputs.vertexSets.values.map(_.source).toSeq
+        }
+        filters.map { f =>
+          f.outputs.scalars('filteredAttribute).value.asInstanceOf[FilteredAttribute[_]]
+        }
       }
-      filters.map { f =>
-        f.outputs.scalars('filteredAttribute).value.asInstanceOf[FilteredAttribute[_]]
+    val filters =
+      if (indexerInstance.operation.isInstanceOf[SampledView]) {
+        // For sampled view we need to explicitly add an id filter here. Without this if
+        // we go with huge edge set mode, that is going through all edges and checking which one
+        // matches, we will find ones that we shouldn't.
+        val iaaop = graph_operations.IdAsAttribute()
+        val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
+        filtersFromInputs :+ FilteredAttribute(idAttr, OneOf(vertexIndices.get.keySet))
+      } else {
+        assert(
+          indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
+          s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
+        filtersFromInputs
       }
-    }
-    val filters = if (indexerInstance.operation.isInstanceOf[SampledView]) {
-      // For sampled view we need to explicitly add an id filter here. Without this if
-      // we go with huge edge set mode, that is going through all edges and checking which one
-      // matches, we will find ones that we shouldn't.
-      val iaaop = graph_operations.IdAsAttribute()
-      val idAttr = iaaop(iaaop.vertices, vertexSet).result.vertexIds
-      filtersFromInputs :+ FilteredAttribute(idAttr, OneOf(vertexIndices.get.keySet))
-    } else {
-      assert(
-        indexerInstance.operation.isInstanceOf[VertexBucketGrid[_, _]],
-        s"$indexerInstance is neither a VertexBucketGrid nor a SampledView")
-      filtersFromInputs
-    }
 
     VertexView(vertexSet, indexingSeq, vertexIndices, filters)
   }

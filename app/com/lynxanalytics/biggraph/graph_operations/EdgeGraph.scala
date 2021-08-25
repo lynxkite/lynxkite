@@ -23,10 +23,10 @@ case class EdgeGraph() extends SparkOperation[GraphInput, Output] {
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sc = rc.sparkContext
     val edges = inputs.es.rdd

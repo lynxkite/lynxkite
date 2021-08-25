@@ -64,6 +64,7 @@ POST /ajax/setCleanerMinAge      com.lynxanalytics.biggraph.serving.ProductionJs
 POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
 GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
 GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
+GET  /downloadCSV      com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadCSV
 
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
 GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile

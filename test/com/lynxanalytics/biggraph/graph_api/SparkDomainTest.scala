@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.TestUtils.computeProgress
@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
-class SparkDomainTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+class SparkDomainTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {
   def newDataManager(sd: SparkDomain) = new DataManager(Seq(new ScalaDomain, sd))
 
   test("We can reload a graph from disk without recomputing it") {
@@ -44,7 +44,8 @@ class SparkDomainTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val sparkDomain2 = {
       val tmpSD = cleanSparkDomain
       new SparkDomain(
-        sparkSession, sparkDomain1.repositoryPath,
+        sparkSession,
+        sparkDomain1.repositoryPath,
         ephemeralPath = Some(tmpSD.repositoryPath))
     }
     assert(sparkDomain2.has(names))
@@ -57,7 +58,8 @@ class SparkDomainTest extends FunSuite with TestMetaGraphManager with TestDataMa
       val sd1 = cleanSparkDomain
       val sd2 = cleanSparkDomain
       new SparkDomain(
-        sparkSession, sd1.repositoryPath,
+        sparkSession,
+        sd1.repositoryPath,
         ephemeralPath = Some(sd2.repositoryPath))
     }
     val operation = EnhancedExampleGraph()
@@ -89,5 +91,5 @@ class SparkDomainTest extends FunSuite with TestMetaGraphManager with TestDataMa
     }
     assert(df.count == 5)
   }
-  */
+   */
 }

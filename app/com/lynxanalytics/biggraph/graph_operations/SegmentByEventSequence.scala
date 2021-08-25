@@ -22,8 +22,7 @@ object SegmentByEventSequence extends OpFromJson {
   }
 
   // This identifies a segment by the bucket of the starting time and a list of locations.
-  case class EventListSegmentId(timeBucket: Long, locations: Seq[Long]) {
-  }
+  case class EventListSegmentId(timeBucket: Long, locations: Seq[Long])
   implicit val eventListSegmentIdOrdering: Ordering[EventListSegmentId] = {
     import scala.math.Ordering.Implicits._
     Ordering.by(id => (id.timeBucket, id.locations))
@@ -51,7 +50,8 @@ object SegmentByEventSequence extends OpFromJson {
   case class ContinuousEventsSegmentGenerator(
       sequenceLength: Int,
       timeWindowStep: Double,
-      timeWindowLength: Double) extends TimeLineSegmentGenerator[EventListSegmentId] {
+      timeWindowLength: Double)
+      extends TimeLineSegmentGenerator[EventListSegmentId] {
 
     override def getSegments(events: Iterable[Event]): Iterator[EventListSegmentId] = {
       val dedupedEvents = ContinuousEventsSegmentGenerator.groupEventsByLocation(events.iterator.buffered)
@@ -87,7 +87,8 @@ object SegmentByEventSequence extends OpFromJson {
   case class EventsWithGapsSegmentGenerator(
       sequenceLength: Int,
       timeWindowStep: Double,
-      timeWindowLength: Double) extends TimeLineSegmentGenerator[EventListSegmentId] {
+      timeWindowLength: Double)
+      extends TimeLineSegmentGenerator[EventListSegmentId] {
     override def getSegments(events: Iterable[Event]): Iterator[EventListSegmentId] = {
       val eventSeq = events.toSeq
       eventSeq.indices.flatMap {
@@ -117,7 +118,8 @@ object SegmentByEventSequence extends OpFromJson {
   class Output(
       implicit
       instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+      inputs: Input)
+      extends MagicOutput(instance) {
     val segments = vertexSet
     val segmentDescription = vertexAttribute[String](segments)
     val segmentSize = vertexAttribute[Double](segments)
@@ -138,7 +140,7 @@ case class SegmentByEventSequence(
     sequenceLength: Int,
     timeWindowStep: Double,
     timeWindowLength: Double)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -150,13 +152,14 @@ case class SegmentByEventSequence(
     "timeWindowLength" -> timeWindowLength)
 
   def executeWithAlgorithm[T](
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext,
-    segmentGenerator: TimeLineSegmentGenerator[T])(
-    implicit
-    ct: ClassTag[T], ordering: Ordering[T]): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext,
+      segmentGenerator: TimeLineSegmentGenerator[T])(
+      implicit
+      ct: ClassTag[T],
+      ordering: Ordering[T]): Unit = {
 
     implicit val id = inputDatas
     val eventTimeAttributeRdd = inputs.eventTimeAttribute.rdd
@@ -196,7 +199,8 @@ case class SegmentByEventSequence(
       segmentIdToCodeAndPersons
         .flatMapValues { case (code, persons) => persons } // (segmentId -> personId)
         .map { case (segmentId, personId) => Edge(personId, segmentId) }
-        .randomNumbered(partitioner))
+        .randomNumbered(partitioner),
+    )
     output(
       o.segments,
       segmentIdToCodeAndPersons.mapValues { _ => () })
@@ -213,10 +217,10 @@ case class SegmentByEventSequence(
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     algorithm match {
       case "continuous" =>
         executeWithAlgorithm(

@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import org.apache.spark
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
@@ -86,7 +86,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   }
 
   override def onStageCompleted(
-    stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
+      stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
     val id = fullId(stageCompleted.stageInfo)
     if (activeStages.contains(id)) {
       val stage = activeStages(id)
@@ -117,7 +117,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   }
 
   override def onStageSubmitted(
-    stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
+      stageSubmitted: spark.scheduler.SparkListenerStageSubmitted): Unit = synchronized {
     val stage = stageSubmitted.stageInfo
     val id = fullId(stage)
     val hash = stage.details.hashCode
@@ -156,7 +156,8 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
         numExecutors,
         sys.props.get("spark.executor.instances").map(_.toInt),
         sparkWorking = !sparkStalled,
-        kiteCoreWorking = kiteCoreWorking)
+        kiteCoreWorking = kiteCoreWorking,
+      )
     for (p <- promises) {
       p.success(currentResp)
     }
@@ -177,7 +178,8 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
 
 class SparkCheckThread(
     listener: KiteListener,
-    sc: spark.SparkContext) extends Thread("spark-check") {
+    sc: spark.SparkContext)
+    extends Thread("spark-check") {
 
   private var shouldRun = false
 
@@ -231,13 +233,14 @@ class KiteMonitorThread(
     // We check kite core if it went unchecked for this amount of time.
     maxCoreUncheckedMillis: Long,
     // We declare kite core dead if it didn't respond in this amount of time.
-    coreTimeoutMillis: Long) extends Thread("kite-monitor") {
+    coreTimeoutMillis: Long)
+    extends Thread("kite-monitor") {
 
   val sparkChecker = new SparkCheckThread(listener, environment.sparkContext)
   sparkChecker.start()
 
   private def kiteCoreWorks(): Boolean = {
-    import com.lynxanalytics.biggraph.graph_operations.{ ExampleGraph, CountVertices }
+    import com.lynxanalytics.biggraph.graph_operations.{ExampleGraph, CountVertices}
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     implicit val metaManager = environment.metaGraphManager
     implicit val dataManager = environment.dataManager
@@ -285,19 +288,20 @@ class KiteMonitorThread(
       val lastSparkEvent = listener.getLastSparkTaskFinish max sparkLastLookedAt
       val sc = environment.sparkContext
       val runningTaskCount = if (!sc.isStopped) sc.getAllPools.map(_.runningTasks).sum else 0
-      val nextSparkCheck = if (runningTaskCount > 0) {
-        now + maxNoSparkProgressMillis
-      } else if (sparkActive) {
-        if (sparkStalled) {
-          // We use our idle check interval if we already know Spark is stalled to avoid
-          // logging too much.
-          lastSparkEvent + maxSparkIdleMillis
+      val nextSparkCheck =
+        if (runningTaskCount > 0) {
+          now + maxNoSparkProgressMillis
+        } else if (sparkActive) {
+          if (sparkStalled) {
+            // We use our idle check interval if we already know Spark is stalled to avoid
+            // logging too much.
+            lastSparkEvent + maxSparkIdleMillis
+          } else {
+            lastSparkEvent + maxNoSparkProgressMillis
+          }
         } else {
-          lastSparkEvent + maxNoSparkProgressMillis
+          lastSparkEvent + maxSparkIdleMillis
         }
-      } else {
-        lastSparkEvent + maxSparkIdleMillis
-      }
       if (now > nextCoreCheck) {
         // do core checks
         import scala.concurrent.ExecutionContext.Implicits.global
@@ -351,7 +355,7 @@ class InternalWatchdogThread(
     shutdownTimeoutSecs: Int,
     listener: KiteListener,
     controller: SparkClusterController)
-  extends Thread("internal-watchdog-thread") {
+    extends Thread("internal-watchdog-thread") {
 
   val warningTimeoutSecs = shutdownTimeoutSecs / 2
 
@@ -375,8 +379,10 @@ class InternalWatchdogThread(
     var lastOkStatusTimeNanos = System.nanoTime
     while (true) {
       val status = listener.getCurrentResponse
-      if (controller.getForceReportHealthy() ||
-        (status.sparkWorking && status.kiteCoreWorking)) {
+      if (
+        controller.getForceReportHealthy() ||
+        (status.sparkWorking && status.kiteCoreWorking)
+      ) {
         lastOkStatusTimeNanos = System.nanoTime
       }
       checkExitCondition(lastOkStatusTimeNanos)
@@ -397,10 +403,12 @@ class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceCont
   environment.dataManager.setListener(listener)
   LoggedEnvironment.envOrNone(
     "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS").foreach { timeoutSecs =>
-      val watchdog = new InternalWatchdogThread(
-        timeoutSecs.toInt, listener, this)
-      watchdog.start()
-    }
+    val watchdog = new InternalWatchdogThread(
+      timeoutSecs.toInt,
+      listener,
+      this)
+    watchdog.start()
+  }
 
   def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
 
@@ -426,14 +434,14 @@ class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceCont
   }
 
   def longPoll(user: serving.User, req: LongPollRequest)(
-    implicit
-    ec: concurrent.ExecutionContext): concurrent.Future[LongPollResponse] = {
+      implicit ec: concurrent.ExecutionContext): concurrent.Future[LongPollResponse] = {
     val res = listener.future(req.syncedUntil)
-    val patched = if (!getForceReportHealthy) {
-      res
-    } else {
-      res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
-    }
+    val patched =
+      if (!getForceReportHealthy) {
+        res
+      } else {
+        res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
+      }
     patched.map { ss => LongPollResponse(ss, ws.getProgress(user, req.stateIds)) }
   }
 

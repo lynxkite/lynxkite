@@ -9,14 +9,14 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
-import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, Timestamp}
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.reflect.runtime.universe._
-import scala.tools.nsc.interpreter.IMain
+import scala.tools.nsc.interpreter.Scripted
 import scala.util.DynamicVariable
 
 // For describing project structure in parametric parameters.
@@ -50,7 +50,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
     Thread.currentThread.getStackTrace.exists {
       stackTraceElement =>
         stackTraceElement.getClassName == "java.lang.ClassLoader" &&
-          stackTraceElement.getMethodName == "loadClass"
+        stackTraceElement.getMethodName == "loadClass"
     }
   }
 
@@ -69,6 +69,14 @@ class ScalaScriptSecurityManager extends SecurityManager {
               super.checkPermission(permission)
             }
           case _: java.lang.reflect.ReflectPermission =>
+          case p: java.lang.RuntimePermission =>
+            if (
+              !(p.getName == "accessDeclaredMembers"
+                || p.getName == "setContextClassLoader"
+                || p.getName == "createClassLoader")
+            ) {
+              super.checkPermission(p)
+            }
           case _ =>
             super.checkPermission(permission)
         }
@@ -88,28 +96,30 @@ class ScalaScriptSecurityManager extends SecurityManager {
 
   override def checkPackageAccess(s: String): Unit = {
     super.checkPackageAccess(s) // This must be the first thing to do!
-    if (shouldCheck.value &&
+    if (
+      shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
-        s.contains("org.apache.spark"))) {
+        s.contains("org.apache.spark"))
+    ) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
 }
 
 object ScalaScript {
-  private def createEngine(): IMain = {
-    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
-    e.settings.usejavacp.value = true
-    e.settings.embeddedDefaults[ScalaScriptSecurityManager]
+  private def createEngine(): Scripted = {
+    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[Scripted]
+    e.intp.settings.usejavacp.value = true
+    e.intp.settings.embeddedDefaults[ScalaScriptSecurityManager]
     e
   }
 
-  private var engine: IMain = null
+  private var engine: Scripted = null
 
   private val evaluatorCache = new SoftHashMap[String, Evaluator]()
   def run(
-    code: String,
-    bindings: Map[String, String] = Map()): String = {
+      code: String,
+      bindings: Map[String, String] = Map()): String = {
     val e = compileAndGetEvaluator(code, bindings.keys.map(k => k -> typeTag[String]).toMap)
     e.evaluate(bindings).toString
   }
@@ -122,36 +132,8 @@ object ScalaScript {
     val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
     SQLHelper.toSeqRDD(df).take(maxRows).map {
       row =>
-        names.zip(row.toSeq.toList).
-          groupBy(_._1).
-          mapValues(_.map(_._2)).
-          mapValues(_(0))
+        names.zip(row.toSeq.toList).groupBy(_._1).mapValues(_.map(_._2)).mapValues(_(0))
     }.toSeq
-  }
-
-  def runVegas(
-    code: String,
-    df: DataFrame): String = synchronized {
-    // To avoid the need of spark packages in the script
-    // we convert the DataFrame before passing it to Vegas
-    val data = dfToSeq(df)
-    val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
-    withContextClassLoader {
-      engine.put("table: Seq[Map[String, Any]]", data)
-      val fullCode = s"""
-      import vegas._
-      val plot = {
-        $code
-      }
-      plot.toJson.toString
-      """
-      val compiledCode = compile(fullCode)
-      withTimeout(timeoutInSeconds) {
-        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval().toString
-        }
-      }
-    }
   }
 
   // A wrapper class representing the type signature of a Scala expression.
@@ -161,11 +143,12 @@ object ScalaScript {
     // Whether the expression returns an Option or not.
     def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
     // The type argument for Options otherwise the return type.
-    def payloadType = if (isOptionType) {
-      returnType.typeArgs(0)
-    } else {
-      returnType
-    }
+    def payloadType =
+      if (isOptionType) {
+        returnType.typeArgs(0)
+      } else {
+        returnType
+      }
   }
 
   // Inferring the type for the exact same code and parameters is expected to happen often,
@@ -173,9 +156,9 @@ object ScalaScript {
   private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
 
   def compileAndGetType(
-    code: String,
-    mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): ScalaType = {
+      code: String,
+      mandatoryParamTypes: Map[String, TypeTag[_]],
+      optionalParamTypes: Map[String, TypeTag[_]] = Map()): ScalaType = {
     val funcCode = evalFuncString(
       code,
       mandatoryParamTypes ++ optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) })
@@ -190,7 +173,7 @@ object ScalaScript {
     $func
     typeTagOf(eval _)
     """
-    withContextClassLoader {
+    withEngine {
       val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
@@ -201,8 +184,8 @@ object ScalaScript {
 
   // Both type inference and evaluation should use this function.
   private def evalFuncString(
-    code: String,
-    convertedParamTypes: Map[String, TypeTag[_]]): String = {
+      code: String,
+      convertedParamTypes: Map[String, TypeTag[_]]): String = {
     val paramString = convertedParamTypes.map {
       case (k, v) => s"`$k`: ${v.tpe}"
     }.mkString(", ")
@@ -213,29 +196,21 @@ object ScalaScript {
     """
   }
 
-  private class CompileReturnedNullError() extends RuntimeException
-  // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
-  // error message in case of a compilation error.
-  private def compile(fullCode: String) = {
-    // The Scala compiler doesn't include the compilation error message, but prints it to the
-    // console, so we need to capture the console.
-    val os = new java.io.ByteArrayOutputStream
+  // Compiles the code and makes error messages prettier.
+  private def compile(code: String) = {
     try {
-      Console.withOut(os) {
-        val script = engine.compile(fullCode)
-        // See #7227
-        // We re-create the engine if engine.compile() returns a null
-        if (script == null) {
-          engine = null
-          throw new CompileReturnedNullError()
-        }
-        script
-      }
+      engine.compile("// CODE START\n" + code)
     } catch {
-      case _: javax.script.ScriptException =>
-        throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
-      case _: CompileReturnedNullError =>
-        throw new javax.script.ScriptException("Compile error")
+      case e: ScriptException =>
+        // The exception includes the whole code (including internal details)
+        // and does not highlight the line with the error. We reformat it here.
+        val msg = e.getMessage
+        val withoutCode = msg.replaceAll("(?s)\\s*// CODE START.*", "")
+        val codeLines = e.getFileName.split("\n", -1)
+        throw new Exception(Seq(
+          withoutCode,
+          codeLines(e.getLineNumber - 11),
+          " " * (e.getColumnNumber - 1) + "^\n").mkString("\n"))
     }
   }
 
@@ -254,28 +229,30 @@ object ScalaScript {
   }
 
   def compileAndGetEvaluator(
-    code: String,
-    mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
+      code: String,
+      mandatoryParamTypes: Map[String, TypeTag[_]],
+      optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = {
     val cacheKey = (
       Seq(code) ++
-      mandatoryParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" }
-      ++
-      optionalParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" })
+        mandatoryParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" }
+        ++
+        optionalParamTypes.toSeq.sortBy(_._1).map { x => s"${x._1}@${x._2.tpe}" })
       .mkString(";")
-    evaluatorCache.getOrElseUpdate(cacheKey, synchronized {
-      // Parameters are back quoted and taken out from the Map. The input argument is one Map to
-      // make the calling of the compiled function easier (otherwise we had varying number of args).
-      val convertedParamTypes = mandatoryParamTypes ++
-        optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
-      val paramsString = convertedParamTypes.map {
-        case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
-      }.mkString("\n")
-      val callParams = convertedParamTypes.map {
-        case (k, _) => s"`$k`"
-      }.mkString(", ")
-      val func = evalFuncString(code, convertedParamTypes)
-      val fullCode = s"""
+    evaluatorCache.getOrElseUpdate(
+      cacheKey,
+      synchronized {
+        // Parameters are back quoted and taken out from the Map. The input argument is one Map to
+        // make the calling of the compiled function easier (otherwise we had varying number of args).
+        val convertedParamTypes = mandatoryParamTypes ++
+          optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
+        val paramsString = convertedParamTypes.map {
+          case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
+        }.mkString("\n")
+        val callParams = convertedParamTypes.map {
+          case (k, _) => s"`$k`"
+        }.mkString(", ")
+        val func = evalFuncString(code, convertedParamTypes)
+        val fullCode = s"""
       $func
       def evalWrapper(params: Map[String, Any]) = {
         $paramsString
@@ -283,25 +260,23 @@ object ScalaScript {
       }
       evalWrapper _
       """
-      withContextClassLoader {
-        val compiledCode = compile(fullCode)
-        val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval()
+        withEngine {
+          val compiledCode = compile(fullCode)
+          val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+            compiledCode.eval()
+          }
+          Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
         }
-        Evaluator(fullCode, result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
-      }
-    })
+      },
+    )
   }
 
-  private def withContextClassLoader[T](func: => T): T = synchronized {
-    // IMAIN.compile changes the class loader and does not restore it.
-    // https://issues.scala-lang.org/browse/SI-8521
-    if (engine == null) engine = createEngine()
-    val cl = Thread.currentThread().getContextClassLoader
+  private def withEngine[T](func: => T): T = synchronized {
+    engine = createEngine()
     try {
       func
     } finally {
-      Thread.currentThread().setContextClassLoader(cl)
+      engine = null
     }
   }
 
@@ -315,17 +290,22 @@ object ScalaScript {
     }
   }
 
+  private val findVariablesCache = new SoftHashMap[String, Set[String]]()
+
   def findVariables(code: String): Set[String] = {
     import scala.reflect.internal.util.ScriptSourceFile
     import scala.reflect.internal.util.NoFile
-    withContextClassLoader {
-      val script = ScriptSourceFile(NoFile, code.toArray)
-      val global = engine.global
-      val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
-      ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
-        .filter(i => i.isTerm)
-        .map { case i => if (i.isBackquoted) i.name.decodedName.toString else i.toString }
-        .toSet
-    }
+    findVariablesCache.getOrElseUpdate(
+      code,
+      withEngine {
+        val script = ScriptSourceFile(NoFile, code.toArray)
+        val global = engine.intp.global
+        val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
+        ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
+          .filter(i => i.isTerm)
+          .map { case i => if (i.isBackquoted) i.name.decodedName.toString else i.toString }
+          .toSet
+      },
+    )
   }
 }

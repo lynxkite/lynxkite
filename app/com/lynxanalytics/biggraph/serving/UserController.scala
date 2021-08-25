@@ -8,23 +8,30 @@ import play.api.libs.Crypto
 import play.api.mvc
 import org.mindrot.jbcrypt.BCrypt
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.controllers._
 
 object User {
   val dir = "Users"
   val singleuser = User(
-    email = "(single-user)", isAdmin = true, wizardOnly = false, home = "/")
+    email = "(single-user)",
+    isAdmin = true,
+    wizardOnly = false,
+    home = "/")
   val notLoggedIn = User(
     email = "(not logged in)",
     isAdmin = false,
     auth = "none",
     home = util.Properties.envOrElse("KITE_HOME_WITHOUT_LOGIN", dir + "/(not logged in)"),
-    wizardOnly = util.Properties.envOrElse("KITE_WIZARD_ONLY_WITHOUT_LOGIN", "") == "yes")
+    wizardOnly = util.Properties.envOrElse("KITE_WIZARD_ONLY_WITHOUT_LOGIN", "") == "yes",
+  )
   def apply(
-    email: String, isAdmin: Boolean, wizardOnly: Boolean, auth: String = "none",
-    home: String = null): User =
+      email: String,
+      isAdmin: Boolean,
+      wizardOnly: Boolean,
+      auth: String = "none",
+      home: String = null): User =
     new User(email, isAdmin, wizardOnly, auth, if (home == null) s"$dir/$email" else home) {}
 }
 // Abstract so that it doesn't generate an apply() method.
@@ -39,7 +46,10 @@ case class UserOnDisk(email: String, hash: String, isAdmin: Boolean, wizardOnly:
 case class CreateUserRequest(email: String, password: String, isAdmin: Boolean, wizardOnly: Boolean)
 case class ChangeUserPasswordRequest(oldPassword: String, newPassword: String, newPassword2: String)
 case class ChangeUserRequest(
-    email: String, password: Option[String], isAdmin: Option[Boolean], wizardOnly: Option[Boolean])
+    email: String,
+    password: Option[String],
+    isAdmin: Option[Boolean],
+    wizardOnly: Option[Boolean])
 case class DeleteUserRequest(email: String)
 
 class SignedToken private (signature: String, timestamp: Long, val token: String) {
@@ -94,7 +104,7 @@ object GoogleAuth {
     case "no" => false
     case "" => false
     case x => throw new AssertionError(
-      s"$variable must be 'yes', 'no', or empty (meaning no), but found: $x")
+        s"$variable must be 'yes', 'no', or empty (meaning no), but found: $x")
   }
   val wizardOnly = envToBoolean("KITE_GOOGLE_WIZARD_ONLY")
   val requiredSuffix = util.Properties.envOrElse("KITE_GOOGLE_REQUIRED_SUFFIX", "").toLowerCase
@@ -107,7 +117,8 @@ object GoogleAuth {
     assert(
       publicAccess || requiredSuffix.nonEmpty || hostedDomain.nonEmpty,
       "If you set KITE_GOOGLE_CLIENT_ID, you must also set" +
-        " KITE_GOOGLE_REQUIRED_SUFFIX, KITE_GOOGLE_HOSTED_DOMAIN, or KITE_GOOGLE_PUBLIC_ACCESS.")
+        " KITE_GOOGLE_REQUIRED_SUFFIX, KITE_GOOGLE_HOSTED_DOMAIN, or KITE_GOOGLE_PUBLIC_ACCESS.",
+    )
   }
 }
 
@@ -123,9 +134,9 @@ object UserController {
   }
 
   def isValidSignature(
-    msg: String,
-    signatureBase64: String,
-    publicKey: java.security.PublicKey = null) = {
+      msg: String,
+      signatureBase64: String,
+      publicKey: java.security.PublicKey = null) = {
     val signatureBytes = java.util.Base64.getDecoder.decode(signatureBase64)
     val sig = java.security.Signature.getInstance("SHA256withRSA")
     sig.initVerify(Option(publicKey).getOrElse(trustedPublicKey))
@@ -160,7 +171,10 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
       }
       // Clear cookie.
       Redirect("/").withCookies(mvc.Cookie(
-        "auth", "", secure = true, maxAge = Some(SignedToken.maxAge)))
+        "auth",
+        "",
+        secure = true,
+        maxAge = Some(SignedToken.maxAge)))
     }
   }
 
@@ -181,7 +195,10 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
     val signed = makeToken(getUser(username, password, method))
     log.info(s"$username logged in successfully.")
     Redirect("/").withCookies(mvc.Cookie(
-      "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+      "auth",
+      signed.toString,
+      secure = true,
+      maxAge = Some(SignedToken.maxAge)))
   }
 
   val googleLogin = mvc.Action.async(parse.json) { request =>
@@ -207,7 +224,10 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
         User(email, isAdmin = false, wizardOnly = GoogleAuth.wizardOnly, auth = "Google"))
       log.info(s"$email logged in successfully.")
       Redirect("/").withCookies(mvc.Cookie(
-        "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+        "auth",
+        signed.toString,
+        secure = true,
+        maxAge = Some(SignedToken.maxAge)))
     }
   }
 
@@ -224,7 +244,10 @@ class UserController(val env: SparkFreeEnvironment) extends mvc.Controller {
         val signed = makeToken(User(username, isAdmin = false, wizardOnly = false, auth = "signed"))
         log.info(s"$username logged in with signed username token.")
         Redirect(".").withCookies(mvc.Cookie(
-          "auth", signed.toString, secure = true, maxAge = Some(SignedToken.maxAge)))
+          "auth",
+          signed.toString,
+          secure = true,
+          maxAge = Some(SignedToken.maxAge)))
     }
   }
 

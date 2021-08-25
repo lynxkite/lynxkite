@@ -33,7 +33,9 @@ object InducedEdgeBundle extends OpFromJson {
   }
   class Output(induceSrc: Boolean, induceDst: Boolean)(
       implicit
-      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+      extends MagicOutput(instance) {
     private val srcMappingProp =
       if (induceSrc) inputs.srcMapping.entity.properties
       else EdgeBundleProperties.identity
@@ -57,7 +59,8 @@ object InducedEdgeBundle extends OpFromJson {
           origProp.isReverseEverywhereDefined && srcMappingProp.isEverywhereDefined &&
             dstMappingProp.isReverseEverywhereDefined,
         isIdPreserving =
-          origProp.isIdPreserving && srcMappingProp.isIdPreserving && dstMappingProp.isIdPreserving)
+          origProp.isIdPreserving && srcMappingProp.isIdPreserving && dstMappingProp.isIdPreserving,
+      )
       edgeBundle(src.entity, dst.entity, inducedProp)
     }
     val embedding = {
@@ -77,7 +80,7 @@ case class InducedRDD[T: ClassTag](rdd: RDD[T], partitioner: Partitioner) {
 
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input(induceSrc, induceDst)
 
@@ -86,10 +89,10 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
   override def toJson = Json.obj("induceSrc" -> induceSrc, "induceDst" -> induceDst)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val runtimeContext = rc
@@ -101,8 +104,8 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     val edges = InducedRDD(inputs.edges.rdd, maxPartitioner)
 
     def getMapping(
-      mappingInput: MagicInputSignature#EdgeBundleTemplate,
-      partitioner: Partitioner): SortedRDD[ID, ID] = {
+        mappingInput: MagicInputSignature#EdgeBundleTemplate,
+        partitioner: Partitioner): SortedRDD[ID, ID] = {
       val mappingEntity = mappingInput.entity
       val mappingEdges = mappingInput.rdd
       if (mappingEntity.properties.isIdPreserving) {
@@ -116,43 +119,54 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     }
 
     def joinMapping[V: ClassTag](
-      inducedRDD: InducedRDD[(ID, V)],
-      mappingInput: MagicInputSignature#EdgeBundleTemplate,
-      repartition: Boolean): InducedRDD[(ID, (V, ID))] = {
+        inducedRDD: InducedRDD[(ID, V)],
+        mappingInput: MagicInputSignature#EdgeBundleTemplate,
+        repartition: Boolean): InducedRDD[(ID, (V, ID))] = {
       val partitioner = inducedRDD.partitioner
       val props = mappingInput.entity.properties
       val mapping = getMapping(mappingInput, partitioner)
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
         if (repartition) {
-          InducedRDD(HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
-            .lookupAndRepartition(mapping.asUniqueSortedRDD), partitioner)
+          InducedRDD(
+            HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
+              .lookupAndRepartition(mapping.asUniqueSortedRDD),
+            partitioner)
         } else {
-          InducedRDD(HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
-            .lookup(mapping.asUniqueSortedRDD), partitioner)
+          InducedRDD(
+            HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
+              .lookup(mapping.asUniqueSortedRDD),
+            partitioner)
         }
       } else {
         // If the mapping can have duplicates we need to use the less reliable
         // sortedJoinWithDuplicates.
         val newInduced = inducedRDD.rdd.sort(partitioner).sortedJoinWithDuplicates(mapping)
         // Because of duplicates the new RDD may need a bigger partitioner.
-        InducedRDD(newInduced, RDDUtils.maxPartitioner(
-          partitioner, rc.partitionerForNRows(newInduced.count)))
+        InducedRDD(
+          newInduced,
+          RDDUtils.maxPartitioner(
+            partitioner,
+            rc.partitionerForNRows(newInduced.count)))
       }
     }
 
-    val srcInduced = if (!induceSrc) edges else {
-      val byOldSrc = edges
-        .map { case (id, edge) => (edge.src, (id, edge)) }
-      joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
-        .map { case (_, ((id, edge), newSrc)) => (id, Edge(newSrc, edge.dst)) }
-    }
-    val dstInduced = if (!induceDst) srcInduced else {
-      val byOldDst = srcInduced
-        .map { case (id, edge) => (edge.dst, (id, edge)) }
-      joinMapping(byOldDst, inputs.dstMapping, repartition = false)
-        .map { case (_, ((id, edge), newDst)) => (id, Edge(edge.src, newDst)) }
-    }
+    val srcInduced =
+      if (!induceSrc) edges
+      else {
+        val byOldSrc = edges
+          .map { case (id, edge) => (edge.src, (id, edge)) }
+        joinMapping(byOldSrc, inputs.srcMapping, repartition = true)
+          .map { case (_, ((id, edge), newSrc)) => (id, Edge(newSrc, edge.dst)) }
+      }
+    val dstInduced =
+      if (!induceDst) srcInduced
+      else {
+        val byOldDst = srcInduced
+          .map { case (id, edge) => (edge.dst, (id, edge)) }
+        joinMapping(byOldDst, inputs.dstMapping, repartition = false)
+          .map { case (_, ((id, edge), newDst)) => (id, Edge(edge.src, newDst)) }
+      }
     val srcIsFunction = !induceSrc || inputs.srcMapping.properties.isFunction
     val dstIsFunction = !induceDst || inputs.dstMapping.properties.isFunction
     if (srcIsFunction && dstIsFunction) {

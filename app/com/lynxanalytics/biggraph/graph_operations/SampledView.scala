@@ -20,12 +20,13 @@ object SampledView extends OpFromJson {
 }
 import SampledView._
 case class SampledView(
-    idSet: Set[ID]) extends SparkOperation[Input, Output] {
+    idSet: Set[ID])
+    extends SparkOperation[Input, Output] {
 
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  override def toJson = Json.obj("idSet" -> idSet)
+  override def toJson = Json.obj("idSet" -> idSet.toSeq.sorted)
 
   def execute(inputDatas: DataSet, o: Output, output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

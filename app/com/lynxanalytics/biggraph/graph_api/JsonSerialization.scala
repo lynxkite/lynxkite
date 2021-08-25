@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import play.api.libs.json
-import play.api.libs.json.{ Writes, Reads }
+import play.api.libs.json.{Writes, Reads}
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
@@ -15,7 +15,8 @@ import scala.reflect.ClassTag
 // must have a companion object that extends FromJson[T].
 object TypedJson {
   // Re-creates the object from a TypedJson format.
-  def read[T](j: json.JsValue): T = {
+  def read[T](jr: json.JsReadable): T = {
+    val j = jr.as[json.JsObject]
     try {
       (j \ "class").as[String] match {
         case "Long" => (j \ "data").as[Long].asInstanceOf[T]
@@ -27,7 +28,7 @@ object TypedJson {
           val obj = reflect.runtime.currentMirror.reflectModule(sym).instance
           val des = obj.asInstanceOf[FromJson[T]]
           // Ask the companion object to parse the data.
-          des.fromJson(j \ "data")
+          des.fromJson((j \ "data").get)
       }
     } catch {
       // Include more details in the exception.
@@ -88,7 +89,8 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
     }
   }
 
-  def fromJson(j: json.JsValue): T = {
+  def fromJson(jr: json.JsReadable): T = {
+    val j = jr.as[json.JsObject]
     (j \ paramName).asOpt[T].getOrElse(defaultValue)
   }
 }
@@ -115,7 +117,8 @@ object SerializableType {
       result
     }
   }
-  def fromJson(j: json.JsValue): SerializableType[_] = {
+  def fromJson(jr: json.JsReadable): SerializableType[_] = {
+    val j = jr.as[json.JsObject]
     TypeParser.parse((j \ "typename").as[String])
   }
 
@@ -141,7 +144,8 @@ object SerializableType {
 
   def tuple2[A, B](innerType1: SerializableType[A], innerType2: SerializableType[B]): SerializableType[(A, B)] = {
     new Tuple2SerializableType(s"Tuple2[${innerType1.getTypename},${innerType2.getTypename}]")(
-      innerType1.typeTag, innerType2.typeTag)
+      innerType1.typeTag,
+      innerType2.typeTag)
   }
 
   def apply[T: TypeTag]: SerializableType[T] = {
@@ -176,7 +180,8 @@ class SerializableType[T] private[graph_api] (
     // @transient drops this non-serializable field when sending to the executors.
     @transient val format: play.api.libs.json.Format[T],
     val ordering: Ordering[T],
-    val typeTag: TypeTag[T]) extends ToJson with Serializable {
+    val typeTag: TypeTag[T])
+    extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
   def getTypename = typename
   override def equals(o: Any) = o match {
@@ -185,16 +190,16 @@ class SerializableType[T] private[graph_api] (
   }
 }
 class VectorSerializableType[T: TypeTag] private[graph_api] (
-    typename: String) extends SerializableType[Vector[T]](typename)(
-  classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
-  format = TypeTagToFormat.vectorToFormat(typeTag),
-  ordering = new SerializableType.MockVectorOrdering()(typeTag),
-  typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {
-}
+    typename: String)
+    extends SerializableType[Vector[T]](typename)(
+      classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
+      format = TypeTagToFormat.vectorToFormat(typeTag),
+      ordering = new SerializableType.MockVectorOrdering()(typeTag),
+      typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {}
 class Tuple2SerializableType[T1: TypeTag, T2: TypeTag] private[graph_api] (
-    typename: String) extends SerializableType[(T1, T2)](typename)(
-  classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
-  format = TypeTagToFormat.pairToFormat(typeTag[T1], typeTag[T2]),
-  ordering = new SerializableType.MockTuple2Ordering()(typeTag[T1], typeTag[T2]),
-  typeTag = TypeTagUtil.tuple2TypeTag(typeTag[T1], typeTag[T2])) {
-}
+    typename: String)
+    extends SerializableType[(T1, T2)](typename)(
+      classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
+      format = TypeTagToFormat.pairToFormat(typeTag[T1], typeTag[T2]),
+      ordering = new SerializableType.MockTuple2Ordering()(typeTag[T1], typeTag[T2]),
+      typeTag = TypeTagUtil.tuple2TypeTag(typeTag[T1], typeTag[T2])) {}

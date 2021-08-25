@@ -37,11 +37,19 @@ boxes:
   parameters: {}
   parametricParameters:
     plot_code: |-
-      Vegas("Scatter plot")
-      .withData(table)
-      .encodeX("$X", Quantitative)
-      .encodeY("$Y", Quantitative)
-      .mark(Point)
+      {
+        "mark": "point",
+        "encoding": {
+          "x": {
+            "field": "$X",
+            "type": "quantitative"
+          },
+          "y": {
+            "field": "$Y",
+            "type": "quantitative"
+          }
+        }
+      }
   x: 650.0
   y: 200.0
 - id: Output_1

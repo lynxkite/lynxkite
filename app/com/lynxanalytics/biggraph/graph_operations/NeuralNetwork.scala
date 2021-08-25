@@ -9,12 +9,9 @@ object PredictViaNNOnGraphV1 extends OpFromJson {
     val vertices = vertexSet
     val edges = edgeBundle(vertices, vertices)
     val label = vertexAttribute[Double](vertices)
-    val features = (0 until featureCount).map(
-      i => vertexAttribute[Double](vertices, Symbol("feature-" + i)))
+    val features = (0 until featureCount).map(i => vertexAttribute[Double](vertices, Symbol("feature-" + i)))
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = PredictViaNNOnGraphV1(
@@ -33,7 +30,8 @@ object PredictViaNNOnGraphV1 extends OpFromJson {
     (j \ "knownLabelWeight").as[Double],
     (j \ "seed").as[Int],
     (j \ "gradientCheckOn").as[Boolean],
-    (j \ "networkLayout").as[String])
+    (j \ "networkLayout").as[String],
+  )
 }
 import PredictViaNNOnGraphV1._
 @deprecated("Use GCN boxes instead.", "3.2.1")
@@ -53,7 +51,8 @@ case class PredictViaNNOnGraphV1(
     knownLabelWeight: Double,
     seed: Int,
     gradientCheckOn: Boolean,
-    networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
+    networkLayout: String)
+    extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
@@ -72,5 +71,6 @@ case class PredictViaNNOnGraphV1(
     "knownLabelWeight" -> knownLabelWeight,
     "seed" -> seed,
     "gradientCheckOn" -> gradientCheckOn,
-    "networkLayout" -> networkLayout)
+    "networkLayout" -> networkLayout,
+  )
 }

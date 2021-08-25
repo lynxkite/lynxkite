@@ -9,22 +9,23 @@ import org.apache.spark.Partitioner
 
 object EdgesFromAttributeMatches extends OpFromJson {
   class Output[T](implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[T])
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = EdgesFromAttributeMatches()
 }
-case class EdgesFromAttributeMatches[T]() extends SparkOperation[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
+case class EdgesFromAttributeMatches[T]()
+    extends SparkOperation[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
   import EdgesFromAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     val attr = inputs.attr.rdd
@@ -47,23 +48,23 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
     val toAttr = vertexAttribute[T](to)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T])
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.from.entity, inputs.to.entity)
   }
   def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
 }
 case class EdgesFromBipartiteAttributeMatches[T]()
-  extends SparkOperation[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
+    extends SparkOperation[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
   import EdgesFromBipartiteAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.fromAttr.data.classTag
     val fromByAttr = inputs.fromAttr.rdd
@@ -93,10 +94,8 @@ object EdgesFromUniqueBipartiteAttributeMatches extends OpFromJson {
     val to = vertexSet
     val toAttr = vertexAttribute[String](to)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val edges = edgeBundle(
       inputs.from.entity,
       inputs.to.entity,
@@ -106,7 +105,9 @@ object EdgesFromUniqueBipartiteAttributeMatches extends OpFromJson {
     EdgesFromUniqueBipartiteAttributeMatches()
 }
 case class EdgesFromUniqueBipartiteAttributeMatches()
-  extends SparkOperation[EdgesFromUniqueBipartiteAttributeMatches.Input, EdgesFromUniqueBipartiteAttributeMatches.Output] {
+    extends SparkOperation[
+      EdgesFromUniqueBipartiteAttributeMatches.Input,
+      EdgesFromUniqueBipartiteAttributeMatches.Output] {
   import EdgesFromUniqueBipartiteAttributeMatches._
 
   override val isHeavy = true
@@ -115,10 +116,10 @@ case class EdgesFromUniqueBipartiteAttributeMatches()
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = RDDUtils.maxPartitioner(
       inputs.from.rdd.partitioner.get,
@@ -149,10 +150,8 @@ object EdgesFromLookupAttributeMatches extends OpFromJson {
     val to = vertexSet
     val toAttr = vertexAttribute[String](to)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val edges = edgeBundle(
       inputs.from.entity,
       inputs.to.entity,
@@ -162,7 +161,7 @@ object EdgesFromLookupAttributeMatches extends OpFromJson {
     EdgesFromLookupAttributeMatches()
 }
 case class EdgesFromLookupAttributeMatches()
-  extends SparkOperation[EdgesFromLookupAttributeMatches.Input, EdgesFromLookupAttributeMatches.Output] {
+    extends SparkOperation[EdgesFromLookupAttributeMatches.Input, EdgesFromLookupAttributeMatches.Output] {
   import EdgesFromLookupAttributeMatches._
 
   override val isHeavy = true
@@ -171,10 +170,10 @@ case class EdgesFromLookupAttributeMatches()
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val partitioner = RDDUtils.maxPartitioner(

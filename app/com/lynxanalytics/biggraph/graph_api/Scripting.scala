@@ -30,21 +30,22 @@ object Scripting {
     val builder = this
     private var currentInput = MetaDataSet()
     def apply[T <: MetaGraphEntity](
-      adder: EntityTemplate[T],
-      container: EntityContainer[T]): InstanceBuilder[IS, OMDS] = apply(adder, container.entity)
+        adder: EntityTemplate[T],
+        container: EntityContainer[T]): InstanceBuilder[IS, OMDS] = apply(adder, container.entity)
     def apply[T <: MetaGraphEntity](
-      adder: EntityTemplate[T],
-      entity: T): InstanceBuilder[IS, OMDS] = {
+        adder: EntityTemplate[T],
+        entity: T): InstanceBuilder[IS, OMDS] = {
       currentInput = adder.set(currentInput, entity)
       this
     }
     def apply[T <: MetaGraphEntity](
-      adders: Seq[EntityTemplate[T]],
-      entities: Seq[T]): InstanceBuilder[IS, OMDS] = {
-      assert(adders.size == entities.size, {
-        val adderNames = adders.map(_.name)
-        s"Input sequence mismatch: $adderNames vs $entities"
-      })
+        adders: Seq[EntityTemplate[T]],
+        entities: Seq[T]): InstanceBuilder[IS, OMDS] = {
+      assert(
+        adders.size == entities.size, {
+          val adderNames = adders.map(_.name)
+          s"Input sequence mismatch: $adderNames vs $entities"
+        })
       for ((adder, entity) <- adders.zip(entities)) {
         currentInput = adder.set(currentInput, entity)
       }
@@ -59,9 +60,8 @@ object Scripting {
   }
 
   implicit def buildInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    builder: InstanceBuilder[IS, OMDS])(
-    implicit
-    manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
+      builder: InstanceBuilder[IS, OMDS])(
+      implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     builder.toInstance(manager)
 
   implicit class EasyScalarContainer[T](self: EntityContainer[Scalar[T]])(implicit dm: DataManager) {
@@ -72,11 +72,10 @@ object Scripting {
   }
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
+      op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
 
   implicit def emptyInputInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    op: TypedMetaGraphOp[IS, OMDS])(
-    implicit
-    manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
+      op: TypedMetaGraphOp[IS, OMDS])(
+      implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     manager.apply(op, MetaDataSet())
 }

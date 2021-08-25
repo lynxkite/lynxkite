@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_operations._
 
-class OneHotEncoderTest extends FunSuite with TestGraphOp {
+class OneHotEncoderTest extends AnyFunSuite with TestGraphOp {
   test("one-hot encode attribute", com.lynxanalytics.biggraph.SphynxOnly) {
     val graph = ExampleGraph()().result
     val categories = Seq("Female", "Male", "Non-binary")

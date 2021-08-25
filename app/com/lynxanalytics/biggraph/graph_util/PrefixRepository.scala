@@ -94,7 +94,8 @@ object PrefixRepositoryImpl {
     assert(
       LoggedEnvironment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
         !path.startsWith("file:"),
-      s"Local file prefix resolution: ${path}. This is illegal in non-local mode.")
+      s"Local file prefix resolution: ${path}. This is illegal in non-local mode.",
+    )
   }
 
 }
@@ -154,7 +155,8 @@ class PrefixRepositoryImpl(inputLines: List[String], allowNonPrefixedPaths: Bool
     assert(
       resolvedResolution.isEmpty || hasScheme(resolvedResolution),
       "Resolved prefix definition has to specify URI scheme (aka filesystem type) or be empty." +
-        s"But ${prefixSymbol}'s definition ${prefixResolution} resolved to ${resolvedResolution}.")
+        s"But ${prefixSymbol}'s definition ${prefixResolution} resolved to ${resolvedResolution}.",
+    )
     pathResolutions(prefixSymbol) = PathNormalizer.normalize(resolvedResolution)
   }
 

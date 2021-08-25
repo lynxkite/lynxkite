@@ -18,9 +18,7 @@ object TableToScalar extends OpFromJson {
     val tab = table
   }
 
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val tableContents = scalar[TableContents]
   }
 
@@ -39,10 +37,10 @@ case class TableToScalar private (maxRows: Int) extends SparkOperation[Input, Ou
   override def toJson = Json.obj("maxRows" -> maxRows)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     implicit val sd = rc.sparkDomain
     val df = inputs.tab.data.df

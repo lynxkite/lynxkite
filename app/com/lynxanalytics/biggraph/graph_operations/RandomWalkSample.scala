@@ -27,9 +27,7 @@ object RandomWalkSample extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val vertexFirstVisited = vertexAttribute[Double](inputs.vs.entity)
     val edgeFirstTraversed = edgeAttribute[Double](inputs.es.entity)
   }
@@ -40,9 +38,12 @@ object RandomWalkSample extends OpFromJson {
     (j \ "seed").as[Int])
 }
 import RandomWalkSample._
-case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
-    walkAbortionProbability: Double, seed: Int)
-  extends SparkOperation[Input, Output] {
+case class RandomWalkSample(
+    numOfStartPoints: Int,
+    numOfWalksFromOnePoint: Int,
+    walkAbortionProbability: Double,
+    seed: Int)
+    extends SparkOperation[Input, Output] {
   assert(
     walkAbortionProbability < 1.0,
     "The probability of aborting a walk at RandomWalkSample must be smaller than 1.0")
@@ -69,10 +70,10 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private type WalkState = (ID, (StepIdx, RemainingSteps))
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val nodes = inputs.vs.rdd
@@ -163,19 +164,18 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     outEdgesPerNode.persist(StorageLevel.DISK_ONLY)
 
     def step(multiWalkState: RDD[WalkState], seed: Int): (RDD[WalkState], RDD[(ID, StepIdx)]) = {
-      val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).
-        sort(outEdgesPerNode.partitioner.get).
-        sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
-          case (pid, it) =>
-            val rnd = new Random((pid << 16) + seed)
-            it.map {
-              case (_, ((idx, remainingSteps), edgesFromHere)) =>
-                val rndIdx = rnd.nextInt(edgesFromHere.length)
-                val (toNode, onEdge) = edgesFromHere(rndIdx)
-                val stepIdx = idx + 1
-                ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
-            }
-        }
+      val nextStateAndEdges = multiWalkState.filter(walkState => walkState._2._2 > 0).sort(
+        outEdgesPerNode.partitioner.get).sortedJoin(outEdgesPerNode).mapPartitionsWithIndex {
+        case (pid, it) =>
+          val rnd = new Random((pid << 16) + seed)
+          it.map {
+            case (_, ((idx, remainingSteps), edgesFromHere)) =>
+              val rndIdx = rnd.nextInt(edgesFromHere.length)
+              val (toNode, onEdge) = edgesFromHere(rndIdx)
+              val stepIdx = idx + 1
+              ((toNode, (stepIdx, remainingSteps - 1)), (onEdge, stepIdx))
+          }
+      }
       nextStateAndEdges.persist(StorageLevel.DISK_ONLY)
       val nexState = nextStateAndEdges.map(_._1)
       val edgesTraversed = nextStateAndEdges.map(_._2)
@@ -188,8 +188,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     nodes.takeSample(withReplacement = false, n, seed).map(_._1)
 
   private def minByKey(
-    keyValue1: RDD[(ID, StepIdx)],
-    keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
+      keyValue1: RDD[(ID, StepIdx)],
+      keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
     val x = keyValue2.reduceByKey(_ min _)
     keyValue1.leftOuterJoin(x).mapValues {
       case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(StepIdx.MaxValue)

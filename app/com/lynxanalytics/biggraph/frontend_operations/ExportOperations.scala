@@ -37,7 +37,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
       NonNegInt("version", "Version", default = 0),
       Choice("save_mode", "Save mode", FEOption.saveMode),
-      Choice("for_download", "Export for download", FEOption.noyes))
+      Choice("for_download", "Export for download", FEOption.noyes),
+    )
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
@@ -59,7 +60,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         dropTrailingWhiteSpace = dropTrailingWhiteSpace,
         version = params("version").toInt,
         saveMode = params("save_mode"),
-        forDownload = params("for_download") == "yes")
+        forDownload = params("for_download") == "yes",
+      )
       op(op.t, table).result.exportResult
     }
   })
@@ -69,10 +71,14 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     params ++= List(
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "Table"),
-      Choice("mode", "Mode", FEOption.list(
-        "The table must not exist",
-        "Drop the table if it already exists",
-        "Insert into an existing table")))
+      Choice(
+        "mode",
+        "Mode",
+        FEOption.list(
+          "The table must not exist",
+          "Drop the table if it already exists",
+          "Insert into an existing table")),
+    )
 
     def exportResult() = {
       val mode = params("mode") match {
@@ -92,13 +98,15 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val format = "hive"
     params ++= List(
       Param("table", "Table"),
-      Choice("mode", "Mode", FEOption.list(
-        "The table must not exist",
-        "Drop the table if it already exists",
-        "Insert into an existing table")),
-      Choice("partition_by", "Partition by",
-        FEOption.list(table.schema.map(_.name).toList),
-        multipleChoice = true))
+      Choice(
+        "mode",
+        "Mode",
+        FEOption.list(
+          "The table must not exist",
+          "Drop the table if it already exists",
+          "Insert into an existing table")),
+      Choice("partition_by", "Partition by", FEOption.list(table.schema.map(_.name).toList), multipleChoice = true),
+    )
 
     def exportResult() = {
       val mode = params("mode") match {
@@ -130,37 +138,50 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Param("path", "Path", defaultValue = "<auto>"),
         NonNegInt("version", "Version", default = 0),
         Choice("save_mode", "Save mode", FEOption.saveMode),
-        Choice("for_download", "Export for download", FEOption.noyes))
+        Choice("for_download", "Export for download", FEOption.noyes),
+      )
 
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
-          path, format, params("version").toLong, params("save_mode"), params("for_download") == "yes")
+          path,
+          format,
+          params("version").toLong,
+          params("save_mode"),
+          params("for_download") == "yes")
         op(op.t, table).result.exportResult
       }
     })
   }
 
-  registerOp("Save to snapshot", defaultIcon, ExportOperations, List("state"), List(), new TriggerableOperation(_) {
-    params ++= List(
-      Param("path", "Path"),
-      TriggerBoxParam("save", "Save to snapshot", "Snapshot created."))
+  registerOp(
+    "Save to snapshot",
+    defaultIcon,
+    ExportOperations,
+    List("state"),
+    List(),
+    new TriggerableOperation(_) {
+      params ++= List(
+        Param("path", "Path"),
+        TriggerBoxParam("save", "Save to snapshot", "Snapshot created."))
 
-    private def getState() = context.inputs("state")
+      private def getState() = context.inputs("state")
 
-    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      gdc.getComputeBoxResult(getGUIDs("state"))
-        .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
-    }
-  })
+      override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+        import scala.concurrent.ExecutionContext.Implicits.global
+        gdc.getComputeBoxResult(getGUIDs("state"))
+          .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
+      }
+    },
+  )
 
   abstract class Neo4jAttributeExport(context: Operation.Context) extends TriggerableOperation(context) {
     params ++= List(
       Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
-      NonNegInt("version", "Export repetition ID", default = 1))
+      NonNegInt("version", "Export repetition ID", default = 1),
+    )
     lazy val project = projectInput("graph")
     val nodesOrRelationships: String
     override def enabled = FEStatus.enabled
@@ -177,54 +198,90 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val keys = splitParam("keys")
       val attrs = (splitParam("to_export") ++ keys).toSet.toList
       val t = graph_operations.AttributesToTable.run(attrs.map(a => a -> getAttribute(a)))
-      assert(keys.nonEmpty, "You have to choose one or more attributes to use as the keys for identifying the nodes in Neo4j.")
+      assert(
+        keys.nonEmpty,
+        "You have to choose one or more attributes to use as the keys for identifying the nodes in Neo4j.")
       val op = graph_operations.ExportAttributesToNeo4j(
-        params("url"), params("username"), params("password"), params("labels"), keys,
-        params("version").toInt, nodesOrRelationships)
+        params("url"),
+        params("username"),
+        params("password"),
+        params("labels"),
+        keys,
+        params("version").toInt,
+        nodesOrRelationships)
       op(op.t, t).result.exportResult
     }
   }
 
   registerOp(
-    "Export vertex attributes to Neo4j", defaultIcon, ExportOperations,
-    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+    "Export vertex attributes to Neo4j",
+    defaultIcon,
+    ExportOperations,
+    List("graph"),
+    List("exported"),
+    new Neo4jAttributeExport(_) {
       import Operation.Implicits._
       params ++= List(
         Param("labels", "Node labels", defaultValue = ""),
-        Choice("keys", "Attribute(s) to use as key",
+        Choice(
+          "keys",
+          "Attribute(s) to use as key",
           // Cannot join on internal ID ("<id>") and stuff like that.
-          options = project.vertexAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
-        Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true))
+          options = project.vertexAttrList.filter(!_.id.startsWith("<")),
+          multipleChoice = true,
+        ),
+        Choice("to_export", "Exported attributes", options = project.vertexAttrList, multipleChoice = true),
+      )
       val nodesOrRelationships = "nodes"
       def getAttribute(a: String) = project.vertexAttributes(a)
-    })
+    },
+  )
   registerOp(
-    "Export edge attributes to Neo4j", defaultIcon, ExportOperations,
-    List("graph"), List("exported"), new Neo4jAttributeExport(_) {
+    "Export edge attributes to Neo4j",
+    defaultIcon,
+    ExportOperations,
+    List("graph"),
+    List("exported"),
+    new Neo4jAttributeExport(_) {
       import Operation.Implicits._
       params ++= List(
         Param("labels", "Relationship labels", defaultValue = ""),
-        Choice("keys", "Attribute(s) to use as key",
+        Choice(
+          "keys",
+          "Attribute(s) to use as key",
           // Cannot join on internal ID ("<id>") and stuff like that.
-          options = project.edgeAttrList.filter(!_.id.startsWith("<")), multipleChoice = true),
-        Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true))
+          options = project.edgeAttrList.filter(!_.id.startsWith("<")),
+          multipleChoice = true,
+        ),
+        Choice("to_export", "Exported attributes", options = project.edgeAttrList, multipleChoice = true),
+      )
       val nodesOrRelationships = "relationships"
       def getAttribute(a: String) = project.edgeAttributes(a)
-    })
+    },
+  )
 
   registerOp(
-    "Export graph to Neo4j", defaultIcon, ExportOperations,
-    List("graph"), List("exported"), new TriggerableOperation(_) {
+    "Export graph to Neo4j",
+    defaultIcon,
+    ExportOperations,
+    List("graph"),
+    List("exported"),
+    new TriggerableOperation(_) {
       import Operation.Implicits._
       params ++= List(
         Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
         Param("username", "Neo4j username", defaultValue = "neo4j"),
         Param("password", "Neo4j password", defaultValue = "neo4j"),
         NonNegInt("version", "Export repetition ID", default = 1),
-        Choice("node_labels", "Attribute with node labels",
+        Choice(
+          "node_labels",
+          "Attribute with node labels",
           options = List(FEOption("", "")) ++ project.vertexAttrList[String]),
-        Choice("relationship_type", "Attribute with relationship type",
-          options = List(FEOption("", "")) ++ project.edgeAttrList[String]))
+        Choice(
+          "relationship_type",
+          "Attribute with relationship type",
+          options = List(FEOption("", "")) ++ project.edgeAttrList[String]),
+      )
       lazy val project = projectInput("graph")
       override def enabled = FEStatus.enabled
       override def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit] = {
@@ -239,13 +296,19 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         val vsAttr = project.vertexAttributes.toMap +
           (graph_operations.ExportGraphToNeo4j.VID -> project.vertexSet.idAttribute)
         val esAttr = project.edgeAttributes.toMap +
-          (graph_operations.ExportGraphToNeo4j.SRCDST -> project.edgeBundle.srcDstAttribute)
+          (graph_operations.ExportGraphToNeo4j.SRCID -> project.edgeBundle.srcAttribute) +
+          (graph_operations.ExportGraphToNeo4j.DSTID -> project.edgeBundle.dstAttribute)
         val vs = graph_operations.AttributesToTable.run(vsAttr)
         val es = graph_operations.AttributesToTable.run(esAttr)
         val op = graph_operations.ExportGraphToNeo4j(
-          params("url"), params("username"), params("password"), params("node_labels"),
-          params("relationship_type"), params("version").toInt)
+          params("url"),
+          params("username"),
+          params("password"),
+          params("node_labels"),
+          params("relationship_type"),
+          params("version").toInt)
         op(op.vs, vs)(op.es, es).result.exportResult
       }
-    })
+    },
+  )
 }

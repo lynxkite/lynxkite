@@ -468,7 +468,7 @@ angular.module('biggraph').directive(
           if (inputBoxFocused() || window.getSelection().toString()) {
             return;
           }
-          const data = jsyaml.safeDump(
+          const data = jsyaml.dump(
             scope.selectedBoxes().map(function(box) { return box.instance; }),
             { noCompatMode: true, sortKeys: true });
           e.clipboardData.setData('text/plain', data);
@@ -479,7 +479,7 @@ angular.module('biggraph').directive(
           data = data.replace(/\xa0/g, ' '); // Convert back non-breaking spaces, e.g. from Gmail.
           let boxes, message;
           try {
-            boxes = jsyaml.safeLoad(data);
+            boxes = jsyaml.load(data);
           } catch (err) {
             const jData = { clipboard: data };
             message = 'Cannot create boxes from clipboard. (Not in JSON format)';

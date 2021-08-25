@@ -14,9 +14,7 @@ object TrainDecisionTreeRegressor extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = TrainDecisionTreeRegressor(
@@ -27,7 +25,8 @@ object TrainDecisionTreeRegressor extends OpFromJson {
     (j \ "maxDepth").as[Int],
     (j \ "minInfoGain").as[Double],
     (j \ "minInstancesPerNode").as[Int],
-    (j \ "seed").as[Int])
+    (j \ "seed").as[Int],
+  )
 }
 
 import TrainDecisionTreeRegressor._
@@ -39,7 +38,8 @@ case class TrainDecisionTreeRegressor(
     maxDepth: Int,
     minInfoGain: Double,
     minInstancesPerNode: Int,
-    seed: Int) extends SparkOperation[Input, Output] with ModelMeta {
+    seed: Int)
+    extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
@@ -56,13 +56,14 @@ case class TrainDecisionTreeRegressor(
     "maxDepth" -> maxDepth,
     "minInfoGain" -> minInfoGain,
     "minInstancesPerNode" -> minInstancesPerNode,
-    "seed" -> seed)
+    "seed" -> seed,
+  )
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
@@ -85,7 +86,7 @@ case class TrainDecisionTreeRegressor(
     model.save(file.resolvedName)
     val treeDescription = (0 until featureNames.length).foldLeft { model.toDebugString } {
       (description, i) => description.replaceAll("feature " + i.toString, featureNames(i))
-    }.replaceFirst("[(]uid=.*[)] ", "")
+    }.replaceFirst("uid=\\w*, ", "")
     val prediction = model.transform(labeledFeaturesDF)
     val evaluation = Seq("rmse", "mse", "r2", "mae").map { metric =>
       val evaluator = new ml.evaluation.RegressionEvaluator()
@@ -99,11 +100,14 @@ Root mean squared error: ${evaluation("rmse")}
 Mean squared error: ${evaluation("mse")}
 R-squared: ${evaluation("r2")}
 Mean absolute error: ${evaluation("mae")}""")
-    output(o.model, Model(
-      method = "Decision tree regression",
-      symbolicPath = file.symbolicName,
-      labelName = Some(labelName),
-      featureNames = featureNames,
-      statistics = Some(statistics)))
+    output(
+      o.model,
+      Model(
+        method = "Decision tree regression",
+        symbolicPath = file.symbolicName,
+        labelName = Some(labelName),
+        featureNames = featureNames,
+        statistics = Some(statistics)),
+    )
   }
 }

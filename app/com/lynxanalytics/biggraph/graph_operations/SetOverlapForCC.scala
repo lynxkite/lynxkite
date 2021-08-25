@@ -20,7 +20,7 @@ object SetOverlapForCC {
     val belongsTo = edgeBundle(vs, segments)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
   }
 }
@@ -33,10 +33,10 @@ abstract class SetOverlapForCC extends SparkOperation[Input, Output] {
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val belongsTo = inputs.belongsTo.rdd
@@ -61,9 +61,9 @@ abstract class SetOverlapForCC extends SparkOperation[Input, Output] {
   // Checks if the two sorted array has an intersection of at least minOverlap. If yes,
   // returns the minimal element of the intesection. If no, returns None.
   private def hasEnoughIntersection(
-    a: Array[ID],
-    b: Array[ID],
-    minOverlap: Int): Option[Long] = {
+      a: Array[ID],
+      b: Array[ID],
+      minOverlap: Int): Option[Long] = {
     var ai = 0
     var bi = 0
     var res = 0
@@ -147,7 +147,7 @@ object InfocomOverlapForCC extends OpFromJson {
   def fromJson(j: JsValue) = InfocomOverlapForCC((j \ "adjacencyThreshold").as[Double])
 }
 case class InfocomOverlapForCC(adjacencyThreshold: Double)
-  extends SetOverlapForCC {
+    extends SetOverlapForCC {
   override def toJson = Json.obj("adjacencyThreshold" -> adjacencyThreshold)
   def minOverlapFn(a: Int, b: Int): Int =
     math.ceil(adjacencyThreshold * (a + b) * (a * a + b * b) / (4 * a * b)).toInt

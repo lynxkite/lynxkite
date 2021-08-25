@@ -10,9 +10,7 @@ object ExportTable {
     val t = table
   }
 
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val exportResult = scalar[String]
   }
 
@@ -37,10 +35,10 @@ abstract class ExportTable extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     implicit val sd = rc.sparkDomain
     val df = inputs.t.df
@@ -63,8 +61,10 @@ object ExportTableToCSV extends OpFromJson {
   val saveModeParameter = NewParameter("save_mode", "error if exists")
   val forDownLoadParameter = NewParameter[Boolean]("for_download", false)
   def fromJson(j: JsValue) = ExportTableToCSV(
-    (j \ "path").as[String], (j \ "header").as[Boolean],
-    (j \ "delimiter").as[String], (j \ "quote").as[String],
+    (j \ "path").as[String],
+    (j \ "header").as[Boolean],
+    (j \ "delimiter").as[String],
+    (j \ "quote").as[String],
     quoteAllParameter.fromJson(j),
     escapeParameter.fromJson(j),
     nullValueParameter.fromJson(j),
@@ -74,18 +74,31 @@ object ExportTableToCSV extends OpFromJson {
     dropTrailingWhiteSpaceParameter.fromJson(j),
     (j \ "version").as[Int],
     saveModeParameter.fromJson(j),
-    forDownLoadParameter.fromJson(j))
+    forDownLoadParameter.fromJson(j),
+  )
 }
 
-case class ExportTableToCSV(path: String, header: Boolean,
-    delimiter: String, quote: String, quoteAll: Boolean,
-    escape: String, nullValue: String, dateFormat: String, timestampFormat: String,
-    dropLeadingWhiteSpace: Boolean, dropTrailingWhiteSpace: Boolean,
-    version: Int, saveMode: String, forDownload: Boolean)
-  extends ExportTable {
+case class ExportTableToCSV(
+    path: String,
+    header: Boolean,
+    delimiter: String,
+    quote: String,
+    quoteAll: Boolean,
+    escape: String,
+    nullValue: String,
+    dateFormat: String,
+    timestampFormat: String,
+    dropLeadingWhiteSpace: Boolean,
+    dropTrailingWhiteSpace: Boolean,
+    version: Int,
+    saveMode: String,
+    forDownload: Boolean)
+    extends ExportTable {
   override def toJson = Json.obj(
-    "path" -> path, "header" -> header,
-    "delimiter" -> delimiter, "quote" -> quote,
+    "path" -> path,
+    "header" -> header,
+    "delimiter" -> delimiter,
+    "quote" -> quote,
     "version" -> version) ++
     ExportTableToCSV.quoteAllParameter.toJson(quoteAll) ++
     ExportTableToCSV.escapeParameter.toJson(escape) ++
@@ -109,7 +122,8 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "timestampFormat" -> timestampFormat,
       "ignoreLeadingWhiteSpace" -> (if (dropLeadingWhiteSpace) "true" else "false"),
       "ignoreTrailingWhiteSpaces" -> (if (dropTrailingWhiteSpace) "true" else "false"),
-      "header" -> (if (header) "true" else "false"))
+      "header" -> (if (header) "true" else "false"),
+    )
     val mode = toSaveMode(saveMode)
     maybeRepartitionForDownload(df, forDownload).write.mode(mode).format("csv").options(options).save(file.resolvedName)
   }
@@ -119,14 +133,20 @@ object ExportTableToStructuredFile extends OpFromJson {
   val saveModeParameter = NewParameter("save_mode", "error if exists")
   val forDownLoadParameter = NewParameter[Boolean]("for_download", false)
   def fromJson(j: JsValue) = ExportTableToStructuredFile(
-    (j \ "path").as[String], (j \ "format").as[String],
+    (j \ "path").as[String],
+    (j \ "format").as[String],
     (j \ "version").as[Long],
     saveModeParameter.fromJson(j),
     forDownLoadParameter.fromJson(j))
 }
 
-case class ExportTableToStructuredFile(path: String, format: String, version: Long, saveMode: String, forDownload: Boolean)
-  extends ExportTable {
+case class ExportTableToStructuredFile(
+    path: String,
+    format: String,
+    version: Long,
+    saveMode: String,
+    forDownload: Boolean)
+    extends ExportTable {
 
   override def toJson = Json.obj(
     "path" -> path,
@@ -144,11 +164,13 @@ case class ExportTableToStructuredFile(path: String, format: String, version: Lo
 
 object ExportTableToJdbc extends OpFromJson {
   def fromJson(j: JsValue) = ExportTableToJdbc(
-    (j \ "jdbc_url").as[String], (j \ "jdbc_table").as[String], (j \ "mode").as[String])
+    (j \ "jdbc_url").as[String],
+    (j \ "jdbc_table").as[String],
+    (j \ "mode").as[String])
 }
 
 case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
-  extends ExportTable {
+    extends ExportTable {
 
   override def toJson = Json.obj("jdbc_url" -> jdbcUrl, "jdbc_table" -> table, "mode" -> mode)
 
@@ -159,11 +181,13 @@ case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
 
 object ExportTableToHive extends OpFromJson {
   def fromJson(j: JsValue) = ExportTableToHive(
-    (j \ "table").as[String], (j \ "mode").as[String], (j \ "partitionBy").as[Seq[String]])
+    (j \ "table").as[String],
+    (j \ "mode").as[String],
+    (j \ "partitionBy").as[Seq[String]])
 }
 
 case class ExportTableToHive(table: String, mode: String, partitionBy: Seq[String])
-  extends ExportTable {
+    extends ExportTable {
 
   override def toJson = Json.obj("table" -> table, "mode" -> mode, "partitionBy" -> partitionBy)
 
@@ -176,4 +200,3 @@ case class ExportTableToHive(table: String, mode: String, partitionBy: Seq[Strin
     }
   }
 }
-

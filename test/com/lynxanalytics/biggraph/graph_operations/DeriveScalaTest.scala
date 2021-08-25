@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class DeriveScalaTest extends FunSuite with TestGraphOp {
+class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
 
   test("example graph: 'name.length * 10 + age'") {
     val expr = "name.length * 10 + age"
@@ -34,7 +34,8 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val derived = DeriveScala.derive[Double](
       expr,
-      Seq("age" -> g.age.entity, "name" -> g.name.entity), Seq("greeting" -> g.greeting.entity))
+      Seq("age" -> g.age.entity, "name" -> g.name.entity),
+      Seq("greeting" -> g.greeting.entity))
     assert(derived.rdd.collect.sorted.toList == List(0 -> 76.3, 1 -> 64.2, 2 -> 96.3, 3 -> 138.0))
   }
 
@@ -58,7 +59,10 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       expr,
       Seq("gender" -> g.gender.entity, "name" -> g.name.entity))
     assert(derived.rdd.collect.toSet == Set(
-      0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
+      0 -> "Mr Adam",
+      1 -> "Ms Eve",
+      2 -> "Mr Bob",
+      3 -> "Mr Isolated Joe"))
   }
 
   test("DeriveScala works with no input attributes (vertices)") {
@@ -74,11 +78,13 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("Many input attributes to check correct param substitution") {
     val expr = "age.toString + income.toString + name + gender"
     val g = ExampleGraph()().result
-    val derived = DeriveScala.derive[String](expr, Seq(
-      "age" -> g.age.entity,
-      "income" -> g.income.entity,
-      "name" -> g.name.entity,
-      "gender" -> g.gender.entity))
+    val derived = DeriveScala.derive[String](
+      expr,
+      Seq(
+        "age" -> g.age.entity,
+        "income" -> g.income.entity,
+        "name" -> g.name.entity,
+        "gender" -> g.gender.entity))
     assert(derived.rdd.collect.toSet == Set(0 -> "20.31000.0AdamMale", 2 -> "50.32000.0BobMale"))
   }
 
@@ -95,10 +101,15 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("Utility methods") {
     val g = ExampleGraph()().result
     val nameHash = DeriveScala.deriveAndInferReturnType(
-      "name.hashCode.toDouble", Seq("name" -> g.name), g.vertices).runtimeSafeCast[Double]
+      "name.hashCode.toDouble",
+      Seq("name" -> g.name),
+      g.vertices).runtimeSafeCast[Double]
     assert(nameHash.rdd.collect.toSeq.sorted ==
-      Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
-        2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
+      Seq(
+        0 -> "Adam".hashCode.toDouble,
+        1 -> "Eve".hashCode.toDouble,
+        2 -> "Bob".hashCode.toDouble,
+        3 -> "Isolated Joe".hashCode.toDouble))
 
     val rndSum = DeriveScala.deriveAndInferReturnType(
       """
@@ -137,7 +148,7 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    val e = intercept[javax.script.ScriptException] {
+    val e = intercept[Exception] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity),
@@ -145,9 +156,9 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
         onlyOnDefinedAttrs = false)
     }
     assert(e.getMessage ==
-      """<console>:18: error: value * is not a member of Option[Double]
-             income * 10.0
-                    ^
+      """value * is not a member of Option[Double] in
+      income * 10.0
+             ^
 """)
   }
 
@@ -164,7 +175,7 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    val e = intercept[javax.script.ScriptException] {
+    val e = intercept[Exception] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity, "age" -> g.age.entity),
@@ -172,11 +183,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
         onlyOnDefinedAttrs = false)
     }
     assert(e.getMessage ==
-      """<console>:18: error: type mismatch;
+      """type mismatch;
  found   : Option[Double]
- required: String
-             income + age
-                      ^
+ required: String in
+      income + age
+               ^
 """)
   }
 
@@ -195,17 +206,21 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
       op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.gender).result.attr
     }
-    checkScala("ages.toString()", "ages", ages,
-      Set(0 -> "Vector(18.2, 50.3)", 1 -> "Vector(20.3, 50.3)"))
-    checkScala("genders.toString()", "genders", genders,
-      Set(0 -> "Vector(Female, Male)", 1 -> "Vector(Male, Male)"))
+    checkScala("ages.toString()", "ages", ages, Set(0 -> "Vector(18.2, 50.3)", 1 -> "Vector(20.3, 50.3)"))
+    checkScala("genders.toString()", "genders", genders, Set(0 -> "Vector(Female, Male)", 1 -> "Vector(Male, Male)"))
     checkScala("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
     checkScala("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
     checkScala("ages(0).toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
     checkScala("genders(0)", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
-    checkScala("(ages :+ 100.0).toString()", "ages", ages,
+    checkScala(
+      "(ages :+ 100.0).toString()",
+      "ages",
+      ages,
       Set(0 -> "Vector(18.2, 50.3, 100.0)", 1 -> "Vector(20.3, 50.3, 100.0)"))
-    checkScala("(genders :+ \"abc\").toString()", "genders", genders,
+    checkScala(
+      "(genders :+ \"abc\").toString()",
+      "genders",
+      genders,
       Set(0 -> "Vector(Female, Male, abc)", 1 -> "Vector(Male, Male, abc)"))
   }
 
@@ -221,11 +236,19 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.es))(op.attr, ages).result.attr
     }
     checkScala("agess.length.toString()", "agess", agess, Set(0 -> "2", 1 -> "2", 2 -> "2"))
-    checkScala("agess.toString()", "agess", agess, Set(
-      0 -> "Vector(Vector(10, 30), Vector(10, 20))",
-      1 -> "Vector(Vector(20, 30), Vector(10, 20))",
-      2 -> "Vector(Vector(20, 30), Vector(10, 30))"))
-    checkScala("agess(0).toString()", "agess", agess,
+    checkScala(
+      "agess.toString()",
+      "agess",
+      agess,
+      Set(
+        0 -> "Vector(Vector(10, 30), Vector(10, 20))",
+        1 -> "Vector(Vector(20, 30), Vector(10, 20))",
+        2 -> "Vector(Vector(20, 30), Vector(10, 30))"),
+    )
+    checkScala(
+      "agess(0).toString()",
+      "agess",
+      agess,
       Set(0 -> "Vector(10, 30)", 1 -> "Vector(20, 30)", 2 -> "Vector(20, 30)"))
     checkScala("agess(0)(0).toString()", "agess", agess, Set(0 -> "10", 1 -> "20", 2 -> "20"))
   }
@@ -237,7 +260,9 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       Set((0, Vector(20.3)), (1, Vector(18.2)), (2, Vector(50.3)), (3, Vector(2.0))))
 
     val d2 = DeriveScala.derive[Vector[String]](
-      "Vector(\"abc\")", Seq(), vertexSet = Some(g.vertices))
+      "Vector(\"abc\")",
+      Seq(),
+      vertexSet = Some(g.vertices))
     assert(d2.rdd.collect.toSet ==
       Set((0, Vector("abc")), (1, Vector("abc")), (2, Vector("abc")), (3, Vector("abc"))))
 
@@ -246,7 +271,8 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       Set((0, Vector(1)), (1, Vector(1)), (2, Vector(1)), (3, Vector(1))))
 
     val d4 = DeriveScala.derive[Vector[Vector[Double]]](
-      "Vector(Vector(income))", Seq("income" -> g.income.entity))
+      "Vector(Vector(income))",
+      Seq("income" -> g.income.entity))
     assert(d4.rdd.collect.toSet ==
       Set((0, Vector(Vector(1000.0))), (2, Vector(Vector(2000.0)))))
   }
@@ -257,7 +283,9 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     1.0"""
     val g = ExampleGraph()().result
     val derived = DeriveScala.derive[Double](
-      expr, Seq(), vertexSet = Some(g.vertices))
+      expr,
+      Seq(),
+      vertexSet = Some(g.vertices))
     val e = intercept[org.apache.spark.SparkException] {
       derived.rdd.collect
     }

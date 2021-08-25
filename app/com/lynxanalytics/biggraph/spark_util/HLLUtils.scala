@@ -30,4 +30,3 @@ case class HLLUtils(bits: Int) {
     (c1 + c2 - c12) max 0
   }
 }
-
