@@ -14,7 +14,7 @@ object NetworKitCommon {
       case v: Long => json.Json.toJson(v)
       case v: Double => json.Json.toJson(v)
       case v: Boolean => json.Json.toJson(v)
-    }.toSeq)
+    }.toSeq.sortBy(_._1))
   }
   class GraphInput(hasWeight: Boolean, hasAttribute: Boolean) extends MagicInputSignature {
     val vs = vertexSet
