@@ -157,9 +157,9 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(operationInstance.gUID) = operationInstance
     for (entity <- operationInstance.outputs.all.values) {
       val gUID = entity.gUID
-      assert(
-        !entities.contains(gUID),
-        "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
+      if (entities.contains(gUID)) {
+        log.error(s"Repeated entity.\nOld copy: ${entities(gUID)}\nNew copy: $entity")
+      }
       entities(gUID) = entity
     }
     for (eb <- operationInstance.outputs.edgeBundles.values) {
