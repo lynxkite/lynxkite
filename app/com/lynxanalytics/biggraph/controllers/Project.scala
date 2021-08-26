@@ -546,12 +546,13 @@ class CheckpointRepository(val baseDir: String) {
   def checkpointFileName(checkpoint: String): File =
     new File(baseDirFile, s"${checkpointFilePrefix}${checkpoint}")
 
-  def allCheckpoints: Map[String, CheckpointObject] =
+  def allValidCheckpoints: Map[String, CheckpointObject] =
     baseDirFile
       .list
       .filter(_.startsWith(checkpointFilePrefix))
       .map(fileName => fileName.drop(checkpointFilePrefix.length))
-      .map(cp => cp -> readCheckpoint(cp))
+      // Ignore broken checkpoints.
+      .flatMap(cp => util.Try(readCheckpoint(cp)).toOption.map(cp -> _))
       .toMap
 
   def saveCheckpointedState(checkpoint: String, state: CheckpointObject): Unit = {

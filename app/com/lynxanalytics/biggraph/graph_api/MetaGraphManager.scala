@@ -157,9 +157,9 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(operationInstance.gUID) = operationInstance
     for (entity <- operationInstance.outputs.all.values) {
       val gUID = entity.gUID
-      assert(
-        !entities.contains(gUID),
-        "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
+      if (entities.contains(gUID)) {
+        log.error(s"Repeated entity.\nOld copy: ${entities(gUID)}\nNew copy: $entity")
+      }
       entities(gUID) = entity
     }
     for (eb <- operationInstance.outputs.edgeBundles.values) {
@@ -198,7 +198,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val repo = new File(repositoryPath, folder)
     val dumpFile = new File(repo, s"dump-$time")
     val finalFile = new File(repo, s"save-$time")
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+    val str = play.api.libs.json.jackson.RetroSerialization.prettyPrint(j)
+    FileUtils.writeStringToFile(dumpFile, str, "utf8")
     dumpFile.renameTo(finalFile)
     time
   }
