@@ -82,4 +82,14 @@ object RetroSerialization {
     sw.flush
     sw.getBuffer.toString
   }
+
+  def prettyPrint(j: JsValue): String = {
+    val sw = new StringWriter
+    val gen = jsonFactory.createGenerator(sw).setPrettyPrinter(
+      new com.fasterxml.jackson.core.util.DefaultPrettyPrinter())
+    val writer: ObjectWriter = mapper.writerWithDefaultPrettyPrinter()
+    writer.writeValue(gen, j)
+    sw.flush
+    sw.getBuffer.toString
+  }
 }

@@ -198,7 +198,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val repo = new File(repositoryPath, folder)
     val dumpFile = new File(repo, s"dump-$time")
     val finalFile = new File(repo, s"save-$time")
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+    val str = play.api.libs.json.jackson.RetroSerialization.prettyPrint(j)
+    FileUtils.writeStringToFile(dumpFile, str, "utf8")
     dumpFile.renameTo(finalFile)
     time
   }
