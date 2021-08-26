@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-- Upgraded to Apache Spark 3.1.1. This also brought us up to Scala 2.12, Java 11,
+- Upgraded to Apache Spark 3.1.2. This also brought us up to Scala 2.12, Java 11,
   Play Framework 2.8.7, and new versions of some other dependencies.
   [#178](https://github.com/lynxkite/lynxkite/pull/178)
   [#184](https://github.com/lynxkite/lynxkite/pull/184)
