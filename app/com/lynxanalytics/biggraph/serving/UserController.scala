@@ -52,9 +52,7 @@ case class ChangeUserRequest(
     wizardOnly: Option[Boolean])
 case class DeleteUserRequest(email: String)
 
-class SignedToken private (signature: String, timestamp: Long, val token: String) {
-  override def toString = s"$signature $timestamp $token"
-}
+case class SignedToken(signed: String, timestamp: Long, token: String)
 object SignedToken {
   def maxAge()(implicit cfg: play.api.Configuration) = {
     cfg.getOptional[Int]("authentication.cookie.validDays").getOrElse(1) * 24 * 3600
@@ -63,29 +61,27 @@ object SignedToken {
   def apply()(implicit signer: CSRFTokenSigner): SignedToken = {
     val token = signer.generateToken
     val timestamp = time
-    new SignedToken(signer.signToken(s"$timestamp $token"), timestamp, token)
+    SignedToken(signer.signToken(s"$timestamp-$token"), timestamp, token)
   }
 
-  private def time = java.lang.System.currentTimeMillis / 1000
-  private def split(s: String): Option[(String, String)] = {
-    val ss = s.split(" ", 2)
+  def time = java.lang.System.currentTimeMillis / 1000
+  def split(s: String): Option[(String, String)] = {
+    val ss = s.split("-", 2)
     if (ss.size != 2) None
     else Some((ss(0), ss(1)))
   }
 
-  def unapply(s: String)(
+  def unapply(signed: String)(
       implicit
       cfg: play.api.Configuration,
       signer: CSRFTokenSigner): Option[SignedToken] = {
-    split(s).flatMap {
-      case (signature, timedToken) =>
-        if (signature != signer.signToken(timedToken)) None
-        else split(timedToken).flatMap {
+    signer.extractSignedToken(signed).flatMap {
+      case timedToken => split(timedToken).flatMap {
           case (timestamp, token) =>
             val tsOpt = util.Try(timestamp.toLong).toOption
             tsOpt.flatMap {
               case ts if ts + maxAge < time => None // Token has expired.
-              case ts => Some(new SignedToken(signature, ts, token))
+              case ts => Some(SignedToken(signed, ts, token))
             }
         }
     }
@@ -203,11 +199,11 @@ class UserController @javax.inject.Inject() (
     val password = (request.body \ "password").as[String]
     val method = (request.body \ "method").as[String]
     log.info(s"User login attempt by $username.")
-    val signed = makeToken(getUser(username, password, method))
+    val st = makeToken(getUser(username, password, method))
     log.info(s"$username logged in successfully.")
     Redirect("/").withCookies(mvc.Cookie(
       "auth",
-      signed.toString,
+      st.signed,
       secure = true,
       maxAge = Some(SignedToken.maxAge)))
   }
@@ -230,12 +226,12 @@ class UserController @javax.inject.Inject() (
         assert(hostedDomain == Some(googleAuth.hostedDomain), s"Permission denied to $email.")
       }
       // Create signed token for email address.
-      val signed = makeToken(
+      val st = makeToken(
         User(email, isAdmin = false, wizardOnly = googleAuth.wizardOnly, auth = "Google"))
       log.info(s"$email logged in successfully.")
       Redirect("/").withCookies(mvc.Cookie(
         "auth",
-        signed.toString,
+        st.signed,
         secure = true,
         maxAge = Some(SignedToken.maxAge)))
     }
@@ -251,11 +247,11 @@ class UserController @javax.inject.Inject() (
         assert(
           UserController.isValidSignature(username, signatureBase64),
           s"Invalid signature for $username: $signatureBase64")
-        val signed = makeToken(User(username, isAdmin = false, wizardOnly = false, auth = "signed"))
+        val st = makeToken(User(username, isAdmin = false, wizardOnly = false, auth = "signed"))
         log.info(s"$username logged in with signed username token.")
         Redirect(".").withCookies(mvc.Cookie(
           "auth",
-          signed.toString,
+          st.signed,
           secure = true,
           maxAge = Some(SignedToken.maxAge)))
     }
