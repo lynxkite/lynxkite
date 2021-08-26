@@ -2,7 +2,7 @@
 # Builds the required LynxKite version into a Docker image.
 # The version number is hardwired.
 
-VERSION=4.2.1
+VERSION=4.3.0
 
 cd $(dirname $0)
 rm -rf build
