@@ -23,8 +23,8 @@ boxes:
 - id: Custom-plot_2
   inputs:
     table:
-      boxId: SQL1_5
-      id: table
+      boxId: Compute-in-Python_1
+      id: graph
   operationId: Custom plot
   parameters:
     plot_code: |-
@@ -59,7 +59,7 @@ boxes:
       }
   parametricParameters: {}
   x: 700
-  y: 150
+  y: 250
 - id: SQL1_4
   inputs:
     input:
@@ -67,7 +67,6 @@ boxes:
       id: input
   operationId: SQL1
   parameters:
-    persist: 'yes'
     summary: Rename and filter
   parametricParameters:
     sql: |-
@@ -88,49 +87,6 @@ boxes:
   parametricParameters: {}
   x: 50
   y: 250
-- id: SQL1_5
-  inputs:
-    input:
-      boxId: SQL1_4
-      id: table
-  operationId: SQL1
-  parameters:
-    persist: 'no'
-    sql: |-
-      select
-      label, score,
-      sum(label) over (
-        order by score desc rows between
-        unbounded preceding and current row)
-        / (select sum(label) from input)
-        as tpr,
-
-      sum(1 - label) over (
-        order by score desc rows between
-        unbounded preceding and current row)
-        / (select sum(1 - label) from input)
-        as fpr
-
-      from input
-    summary: Compute TPR / FPR
-  parametricParameters: {}
-  x: 450
-  y: 250
-- id: SQL1_6
-  inputs:
-    input:
-      boxId: SQL1_5
-      id: table
-  operationId: SQL1
-  parameters:
-    persist: 'no'
-    sql: |
-      select sum(1 - fpr) / count(1) as AUC
-      from input where label == 1
-    summary: Compute AUC
-  parametricParameters: {}
-  x: 700
-  y: 300
 - id: output-plot
   inputs:
     output:
@@ -141,15 +97,45 @@ boxes:
     name: plot
   parametricParameters: {}
   x: 900
-  y: 150
+  y: 250
 - id: output-table
   inputs:
     output:
-      boxId: SQL1_6
-      id: table
+      boxId: Compute-in-Python_2
+      id: graph
   operationId: Output
   parameters:
     name: AUC
   parametricParameters: {}
-  x: 900
-  y: 300
+  x: 700
+  y: 450
+- id: Compute-in-Python_1
+  inputs:
+    graph:
+      boxId: SQL1_4
+      id: table
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      from sklearn.metrics import roc_curve
+      fpr, tpr, _ = roc_curve(df.label == 1, df.score)
+      df = pd.DataFrame({'fpr': fpr, 'tpr': tpr})
+    outputs: 'df.tpr: float, df.fpr: float'
+  parametricParameters: {}
+  x: 450
+  y: 250
+- id: Compute-in-Python_2
+  inputs:
+    graph:
+      boxId: SQL1_4
+      id: table
+  operationId: Compute in Python
+  parameters:
+    code: |-
+      from sklearn.metrics import roc_auc_score
+      auc = roc_auc_score(df.label == 1, df.score)
+      df = pd.DataFrame({'AUC': [auc]})
+    outputs: 'df.AUC: float'
+  parametricParameters: {}
+  x: 450
+  y: 450
