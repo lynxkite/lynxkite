@@ -161,6 +161,7 @@ class Op:
     --cap-add=SYS_ADMIN and --security-opt apparmor:unconfined (depending on kernel version).
     If you start the container with --privileged that also covers these settings.
     '''
+    import os
     import tempfile
     import shutil
     import subprocess
@@ -177,7 +178,9 @@ class Op:
       mounts.append(dst)
     # Prepare chroot environment.
     jail = tempfile.mkdtemp()
-    for pdir in sorted(sys.path):
+    ADD_TO_PYTHON_JAIL = os.environ.get('ADD_TO_PYTHON_JAIL')
+    user_path = ADD_TO_PYTHON_JAIL.split(':') if ADD_TO_PYTHON_JAIL else []
+    for pdir in user_path + sorted(sys.path):
       if os.path.isdir(pdir) and pdir.startswith('/'):
         mount(pdir, jail + pdir)
     for e in self.inputs.values():
