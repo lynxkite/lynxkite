@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark
 import scala.collection.mutable
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 
 object Counters {
   def registerCounter(name: String, counter: spark.util.LongAccumulator): Unit =

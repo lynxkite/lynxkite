@@ -4,10 +4,10 @@ import org.apache.spark
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 // Things tested here are unfortunately not trivial due to things not being registered in kryo...
-class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
+class SparkSQLTest extends AnyFunSuite with TestDataManager with BeforeAndAfter {
 
   test("We can run a simple SparkSQL workflow using our internal spark context") {
     val sqlContext = cleanSparkDomain.newSQLContext()

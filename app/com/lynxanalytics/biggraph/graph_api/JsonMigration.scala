@@ -9,7 +9,7 @@ import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers._
 
 // This file is responsible for the metadata compatibility between versions.
@@ -33,14 +33,6 @@ object JsonMigration {
     }
   }
 
-  // Replaces fields in a JsObject.
-  def replaceJson(jv: json.JsValue, replacements: (String, json.JsValue)*): json.JsObject = {
-    val j = jv.as[json.JsObject] // For more convenient invocation.
-    val oldValues = j.fields.toMap
-    val newValues = replacements.toMap
-    new json.JsObject((oldValues ++ newValues).toSeq.sortBy(_._1))
-  }
-
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
     Map(
@@ -50,7 +42,15 @@ object JsonMigration {
       className(graph_operations.DoubleEQ) -> 1,
       className(graph_operations.DoubleGE) -> 1,
       className(graph_operations.DoubleGT) -> 1,
-      className(graph_operations.EnhancedExampleGraph) -> 1)
+      className(graph_operations.EnhancedExampleGraph) -> 1,
+      // These have Set-typed parameters that have unreliable JSON representations across versions.
+      // In LynxKite 4.3.0 we switched to saving them as sorted arrays.
+      className(graph_operations.CollectAttribute) -> 1,
+      className(graph_operations.EdgesForVerticesFromEdgesAndNeighbors) -> 1,
+      className(graph_operations.OneOf) -> 1,
+      className(graph_operations.RestrictAttributeToIds) -> 1,
+      className(graph_operations.SampledView) -> 1,
+    )
       .withDefaultValue(0),
     Map(
       (className(graph_operations.ExampleGraph), 0) -> identity,
@@ -59,7 +59,13 @@ object JsonMigration {
       (className(graph_operations.DoubleEQ), 0) -> identity,
       (className(graph_operations.DoubleGE), 0) -> identity,
       (className(graph_operations.DoubleGT), 0) -> identity,
-      (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
+      (className(graph_operations.EnhancedExampleGraph), 0) -> identity,
+      (className(graph_operations.CollectAttribute), 0) -> identity,
+      (className(graph_operations.EdgesForVerticesFromEdgesAndNeighbors), 0) -> identity,
+      (className(graph_operations.OneOf), 0) -> identity,
+      (className(graph_operations.RestrictAttributeToIds), 0) -> identity,
+      (className(graph_operations.SampledView), 0) -> identity,
+    ))
 }
 import JsonMigration._
 class JsonMigration(
@@ -121,7 +127,8 @@ object MetaRepositoryManager {
                 s" The most recent supported version is in ${supported.dir}."
             case None =>
               s"All repository data in $repo has a newer version than the current version."
-          })
+          },
+        )
         val last = newest.dir.getName.toInt
         val currentDir = new File(repo, (last + 1).toString)
         FileUtils.deleteDirectory(currentDir) // Make sure we start from scratch.
@@ -151,10 +158,10 @@ object MetaRepositoryManager {
   }
 
   def migrate(
-    src: String, // Directory to read from.
-    dst: String, // Directory to write to.
-    srcVersion: VersionMap, // Source version map.
-    migration: JsonMigration // JsonMigration for the current version.
+      src: String, // Directory to read from.
+      dst: String, // Directory to write to.
+      srcVersion: VersionMap, // Source version map.
+      migration: JsonMigration, // JsonMigration for the current version.
   ): Unit = {
     log.info(s"Migrating from $src to $dst.")
     // A mapping for entity GUIDs (from old to new) that have changed in the new version.
@@ -188,7 +195,7 @@ object MetaRepositoryManager {
     }
 
     val oldRepo = MetaGraphManager.getCheckpointRepo(src)
-    for ((checkpoint, state) <- oldRepo.allCheckpoints) {
+    for ((checkpoint, state) <- oldRepo.allValidCheckpoints) {
       mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedCheckpoint(state))
     }
 
@@ -199,11 +206,11 @@ object MetaRepositoryManager {
 
   // Applies the operation from JSON, performing the required migrations.
   private def applyOperation(
-    mm: MetaGraphManager,
-    j: json.JsValue,
-    guidMapping: collection.mutable.Map[String, String],
-    srcVersion: VersionMap,
-    migration: JsonMigration): Unit = {
+      mm: MetaGraphManager,
+      j: json.JsValue,
+      guidMapping: collection.mutable.Map[String, String],
+      srcVersion: VersionMap,
+      migration: JsonMigration): Unit = {
     // Call upgraders.
     val op = (j \ "operation").as[json.JsObject]
     val cls = (op \ "class").as[String]
@@ -212,11 +219,11 @@ object MetaRepositoryManager {
     val newData = (v1 until v2).foldLeft((op \ "data").as[json.JsObject]) {
       (j, v) => migration.upgraders(cls -> v)(j)
     }
-    val newOp = JsonMigration.replaceJson(op, "data" -> newData)
+    val newOp = op + ("data" -> newData)
     // Map inputs.
     val inputs = (j \ "inputs").as[Map[String, String]]
     val newInputs = Json.toJson(inputs.map { case (name, g) => name -> guidMapping.getOrElse(g, g) })
-    val newJson = JsonMigration.replaceJson(j.as[json.JsObject], "operation" -> newOp, "inputs" -> newInputs)
+    val newJson = j.as[json.JsObject] + ("operation" -> newOp) + ("inputs" -> newInputs)
     // Deserialize the upgraded JSON.
     val inst = mm.applyJson(newJson)
     // Add outputs to the GUID mapping.

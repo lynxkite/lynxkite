@@ -20,9 +20,7 @@ object PulledOverEdges extends OpFromJson {
     val destinationVS = vertexSet
     val injection = edgeBundle(destinationVS, originalIds, EdgeBundleProperties.injection)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val pulledEB = edgeBundle(
       inputs.originalSrc.entity,
       inputs.originalDst.entity,
@@ -32,17 +30,17 @@ object PulledOverEdges extends OpFromJson {
 }
 import PulledOverEdges._
 case class PulledOverEdges()
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val injectionEntity = inputs.injection.meta
     val injection = inputs.injection.rdd

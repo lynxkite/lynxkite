@@ -15,7 +15,7 @@ object SetOverlap extends OpFromJson {
     val belongsTo = edgeBundle(vs, segments)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
     val overlapSize = edgeAttribute[Double](overlaps)
   }
@@ -36,10 +36,10 @@ case class SetOverlap(minOverlap: Int) extends SparkOperation[Input, Output] {
   override def toJson = Json.obj("minOverlap" -> minOverlap)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val belongsTo = inputs.belongsTo.rdd
     val partitioner = belongsTo.partitioner.get
@@ -63,11 +63,11 @@ case class SetOverlap(minOverlap: Int) extends SparkOperation[Input, Output] {
       // Increase prefix length.
       long = long.flatMap {
         case (prefix, sets) => sets.flatMap {
-          case (setId, set) =>
-            set
-              .filter(node => node > prefix.last)
-              .map(next => (prefix :+ next, (setId, set)))
-        }
+            case (setId, set) =>
+              set
+                .filter(node => node > prefix.last)
+                .map(next => (prefix :+ next, (setId, set)))
+          }
       }.groupByKey(partitioner)
     }
     // Accept the remaining large set lists. We cannot split them further.
@@ -100,7 +100,9 @@ case class SetOverlap(minOverlap: Int) extends SparkOperation[Input, Output] {
   // reporting them multiple times, SortedIntersectionSize() returns 0 unless
   // `pref` is a prefix of the overlap.
   protected def SortedIntersectionSize(
-    a: Array[ID], b: Array[ID], pref: Seq[ID]): Int = {
+      a: Array[ID],
+      b: Array[ID],
+      pref: Seq[ID]): Int = {
     var ai = 0
     var bi = 0
     val prefi = pref.iterator

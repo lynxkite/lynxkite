@@ -11,9 +11,7 @@ object HashVertexAttribute extends OpFromJson {
     val vs = vertexSet
     val attr = vertexAttribute[String](vs)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val hashed = vertexAttribute[String](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HashVertexAttribute(
@@ -40,7 +38,8 @@ object HashVertexAttribute extends OpFromJson {
   def assertSecret(str: String): Unit = {
     assert(
       str.startsWith("SECRET(") && str.endsWith(")"),
-      "Secret string should be protected. Use SECRET( followed by your secret string, followed by a closing bracket")
+      "Secret string should be protected. Use SECRET( followed by your secret string, followed by a closing bracket",
+    )
     assert(
       !getSecret(str).contains(")"),
       "Secret string should not contain a closing bracket")
@@ -48,17 +47,17 @@ object HashVertexAttribute extends OpFromJson {
 }
 import HashVertexAttribute._
 case class HashVertexAttribute(salt: String)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   assertSecret(salt)
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("salt" -> salt)
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val hashed = inputs.attr.rdd.mapValues(v => HashVertexAttribute.hash(v, salt))

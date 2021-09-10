@@ -13,7 +13,7 @@ import play.api.libs.json.Json
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 import com.lynxanalytics.biggraph.controllers.Workspace
@@ -24,15 +24,15 @@ class MetaGraphManager(val repositoryPath: String) {
   val repositoryRoot = new File(repositoryPath).getParent()
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    operation: TypedMetaGraphOp[IS, OMDS],
-    inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
+      operation: TypedMetaGraphOp[IS, OMDS],
+      inputs: (Symbol, MetaGraphEntity)*): TypedOperationInstance[IS, OMDS] = {
 
     apply(operation, MetaDataSet(inputs.toMap))
   }
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
-    operation: TypedMetaGraphOp[IS, OMDS],
-    inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = synchronized {
+      operation: TypedMetaGraphOp[IS, OMDS],
+      inputs: MetaDataSet = MetaDataSet()): TypedOperationInstance[IS, OMDS] = synchronized {
 
     val operationInstance = TypedOperationInstance(this, operation, inputs)
     val gUID = operationInstance.gUID
@@ -157,9 +157,9 @@ class MetaGraphManager(val repositoryPath: String) {
     operationInstances(operationInstance.gUID) = operationInstance
     for (entity <- operationInstance.outputs.all.values) {
       val gUID = entity.gUID
-      assert(
-        !entities.contains(gUID),
-        "Fatal conflict %s <=> %s".format(entity, entities(gUID)))
+      if (entities.contains(gUID)) {
+        log.error(s"Repeated entity.\nOld copy: ${entities(gUID)}\nNew copy: $entity")
+      }
       entities(gUID) = entity
     }
     for (eb <- operationInstance.outputs.edgeBundles.values) {
@@ -198,7 +198,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val repo = new File(repositoryPath, folder)
     val dumpFile = new File(repo, s"dump-$time")
     val finalFile = new File(repo, s"save-$time")
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
+    val str = play.api.libs.json.jackson.RetroSerialization.prettyPrint(j)
+    FileUtils.writeStringToFile(dumpFile, str, "utf8")
     dumpFile.renameTo(finalFile)
     time
   }
@@ -243,7 +244,9 @@ class MetaGraphManager(val repositoryPath: String) {
         op.inputSig.scalars
           .map(n => n -> scalar(inputs(n))).toMap,
         op.inputSig.tables
-          .map(n => n -> table(inputs(n))).toMap))
+          .map(n => n -> table(inputs(n))).toMap,
+      ),
+    )
   }
 }
 object MetaGraphManager {
@@ -318,7 +321,7 @@ object BuiltIns {
       val files = opdir.listFiles.sortBy(_.getName)
       files.map { f =>
         try {
-          f.getName() -> json.Yaml.parseJsValue(FileUtils.readFileToString(f, "utf8"))
+          f.getName() -> Yaml.parseJsValue(FileUtils.readFileToString(f, "utf8"))
         } catch {
           case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
         }

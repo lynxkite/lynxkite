@@ -27,17 +27,15 @@ class PredictFromModelTest extends ModelTestBase {
   }
 
   test("test decision tree regression") {
-    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
-      trainingData,
-      testDataForRegression
-    }
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{trainingData, testDataForRegression}
     val m = model(
       method = "Decision tree regression",
       labelName = trainingData.labelName,
       label = trainingData.label,
       featureNames = trainingData.featureNames,
       attrs = trainingData.attrs,
-      graph(trainingData.vertexNumber))
+      graph(trainingData.vertexNumber),
+    )
 
     val g = graph(testDataForRegression.vertexNumber)
     val attrs = testDataForRegression.attrs

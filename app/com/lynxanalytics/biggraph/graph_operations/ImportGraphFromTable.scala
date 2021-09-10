@@ -19,36 +19,40 @@ object ImportEdgesForExistingVertices extends OpFromJson {
     val srcVidAttr = vertexAttribute[String](sources)
     val dstVidAttr = vertexAttribute[String](destinations)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input)
-    extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
+      extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val embedding = edgeBundle(edges.idSet, inputs.rows.entity, EdgeBundleProperties.embedding)
   }
 
   def run(
-    srcVidAttr: Attribute[String],
-    dstVidAttr: Attribute[String],
-    srcVidColumn: Attribute[String],
-    dstVidColumn: Attribute[String])(implicit m: MetaGraphManager): Output = {
+      srcVidAttr: Attribute[String],
+      dstVidAttr: Attribute[String],
+      srcVidColumn: Attribute[String],
+      dstVidColumn: Attribute[String])(implicit m: MetaGraphManager): Output = {
     import Scripting._
     val op = ImportEdgesForExistingVertices()
     op(
-      op.srcVidColumn, srcVidColumn)(
-        op.dstVidColumn, dstVidColumn)(
-          op.srcVidAttr, srcVidAttr)(
-            op.dstVidAttr, dstVidAttr).result
+      op.srcVidColumn,
+      srcVidColumn)(
+      op.dstVidColumn,
+      dstVidColumn)(
+      op.srcVidAttr,
+      srcVidAttr)(
+      op.dstVidAttr,
+      dstVidAttr).result
   }
 
   def resolveEdges(
-    unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
-    srcVidAttr: AttributeData[String],
-    dstVidAttr: AttributeData[String])(implicit rc: RuntimeContext): UniqueSortedRDD[ID, Edge] = {
+      unresolvedEdges: UniqueSortedRDD[ID, (String, String)],
+      srcVidAttr: AttributeData[String],
+      dstVidAttr: AttributeData[String])(implicit rc: RuntimeContext): UniqueSortedRDD[ID, Edge] = {
 
     val edgePartitioner = unresolvedEdges.partitioner.get
     val maxPartitioner = RDDUtils.maxPartitioner(
-      edgePartitioner, srcVidAttr.rdd.partitioner.get, dstVidAttr.rdd.partitioner.get)
+      edgePartitioner,
+      srcVidAttr.rdd.partitioner.get,
+      dstVidAttr.rdd.partitioner.get)
 
     val srcNameToVid = srcVidAttr.rdd
       .map(_.swap)
@@ -78,17 +82,17 @@ object ImportEdgesForExistingVertices extends OpFromJson {
 }
 import ImportEdgesForExistingVertices._
 case class ImportEdgesForExistingVertices()
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj()
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     import SerializableType.Implicits._
@@ -101,7 +105,9 @@ case class ImportEdgesForExistingVertices()
       .sortedJoin(inputs.dstVidColumn.rdd)
 
     val edges = resolveEdges(
-      unresolvedEdges, inputs.srcVidAttr.data, inputs.dstVidAttr.data)
+      unresolvedEdges,
+      inputs.srcVidAttr.data,
+      inputs.dstVidAttr.data)
 
     val embedding = edges.mapValuesWithKeys { case (id, _) => Edge(id, id) }
 
@@ -117,5 +123,4 @@ object ImportEdgeListForExistingVertexSetFromTable extends OpFromJson {
 // Use the new implementation, but without changing the serialized form.
 // This keeps the GUID unchanged and avoids recomputation.
 class ImportEdgeListForExistingVertexSetFromTable
-  extends ImportEdgesForExistingVertices() {
-}
+    extends ImportEdgesForExistingVertices()

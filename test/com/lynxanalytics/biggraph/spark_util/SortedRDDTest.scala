@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.Partitioner
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.Timed
 
 import scala.reflect.ClassTag
 
-class SortedRDDTest extends FunSuite with TestSparkContext {
+class SortedRDDTest extends AnyFunSuite with TestSparkContext {
   import Implicits._
 
   test("join without intersection") {
@@ -72,8 +72,8 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
   }
 
   def assertSortedPartitions(
-    rdd: SortedRDD[Int, Int],
-    partitioner: Partitioner) {
+      rdd: SortedRDD[Int, Int],
+      partitioner: Partitioner) {
     assert(rdd.partitioner.orNull eq partitioner)
     val partitionContents = rdd
       .mapPartitionsWithIndex { (pid, it) => it.map(x => (pid, x)) }
@@ -110,11 +110,13 @@ class SortedRDDTest extends FunSuite with TestSparkContext {
       val data = genData(parts, rows, 1).cache
       data.calculate
       def oldSort = data.mapPartitions(_.toIndexedSeq.sortBy(_._1).iterator, preservesPartitioning = true).collect
-      def newSort = data.mapPartitions(x => {
-        val a = x.toArray
-        scala.util.Sorting.quickSort(a)
-        a.iterator
-      }, preservesPartitioning = true).collect
+      def newSort = data.mapPartitions(
+        x => {
+          val a = x.toArray
+          scala.util.Sorting.quickSort(a)
+          a.iterator
+        },
+        preservesPartitioning = true).collect
     }
     val parts = 4
     val table = "%10s | %10s | %10s"

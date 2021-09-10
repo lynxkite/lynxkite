@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.Timed
 
-class PartialRunTest extends FunSuite with TestSparkContext {
+class PartialRunTest extends AnyFunSuite with TestSparkContext {
   import Implicits._
 
   def genData(parts: Int, rows: Int, seed: Int): RDD[(Long, Char)] = {
@@ -18,8 +18,7 @@ class PartialRunTest extends FunSuite with TestSparkContext {
   }
 
   def countAs(in: RDD[(Long, Char)], prefLength: Int): Int = {
-    in.mapPartitions(
-      it => Iterator(it.take(prefLength).filter { case (k, v) => v == 'a' }.size))
+    in.mapPartitions(it => Iterator(it.take(prefLength).filter { case (k, v) => v == 'a' }.size))
       .reduce(_ + _)
   }
 

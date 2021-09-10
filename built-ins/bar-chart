@@ -26,12 +26,21 @@ boxes:
   operationId: Custom plot
   parameters: {}
   parametricParameters:
-    plot_code: |
-      Vegas("Bar chart")
-      .withData(table)
-      .encodeX("$X", Ordinal)
-      .encodeY("$Y", Quantitative, aggregate=AggOps.Sum)
-      .mark(Bar)
+    plot_code: |-
+      {
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "$X",
+            "type": "ordinal"
+          },
+          "y": {
+            "field": "$Y",
+            "aggregate": "sum",
+            "type": "quantitative"
+          }
+        }
+      }
   x: 650.0
   y: 200.0
 - id: Input_1

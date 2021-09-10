@@ -7,9 +7,7 @@ object IdAsAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val vertexIds = vertexAttribute[ID](inputs.vertices.entity)
   }
   def run(vs: VertexSet)(implicit manager: MetaGraphManager): Attribute[ID] = {

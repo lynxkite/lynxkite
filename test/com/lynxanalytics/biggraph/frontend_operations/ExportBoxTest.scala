@@ -14,15 +14,20 @@ class ExportBoxTest extends OperationsTestBase {
   def vattr(project: ProjectEditor, name: String) =
     project.vertexAttributes(name).runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
 
-  def importTestFile = importBox("Import CSV", Map(
-    "filename" -> "EXPORTTEST$/table_input.csv",
-    "columns" -> "",
-    "infer" -> "no"))
+  def importTestFile = importBox(
+    "Import CSV",
+    Map(
+      "filename" -> "EXPORTTEST$/table_input.csv",
+      "columns" -> "",
+      "infer" -> "no"))
 
   def checkResult(importedAgain: ProjectEditor) = {
     assert(vattr(importedAgain, "name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(vattr(importedAgain, "favorite_sport") == Seq(
-      "American football", "Basketball", "Football", "Solitaire"))
+      "American football",
+      "Basketball",
+      "Football",
+      "Solitaire"))
   }
 
   test("Export to CSV") {
@@ -31,10 +36,12 @@ class ExportBoxTest extends OperationsTestBase {
     exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to CSV", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
-    val importedAgain = importBox("Import CSV", Map(
-      "filename" -> path,
-      "columns" -> "",
-      "infer" -> "no"))
+    val importedAgain = importBox(
+      "Import CSV",
+      Map(
+        "filename" -> path,
+        "columns" -> "",
+        "infer" -> "no"))
       .box("Use table as vertices").project
     checkResult(importedAgain)
 
@@ -48,13 +55,15 @@ class ExportBoxTest extends OperationsTestBase {
     val exportResult = importTestFile.box("Export to CSV", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
     val exportResult2 = importTestFile.box(
-      "Export to CSV", Map("path" -> path, "version" -> "2", "save_mode" -> "overwrite")).exportResult
+      "Export to CSV",
+      Map("path" -> path, "version" -> "2", "save_mode" -> "overwrite")).exportResult
     dataManager.get(exportResult2)
-    val importedAgain = importBox("Import CSV", Map(
-      "filename" -> path,
-      "columns" -> "",
-      "infer" -> "no")).
-      box("Use table as vertices").project
+    val importedAgain = importBox(
+      "Import CSV",
+      Map(
+        "filename" -> path,
+        "columns" -> "",
+        "infer" -> "no")).box("Use table as vertices").project
     checkResult(importedAgain)
 
     exportTarget.delete()
@@ -78,15 +87,19 @@ class ExportBoxTest extends OperationsTestBase {
     // Seems like this part is needed for registering the jdbc driver.
     val connection = graph_util.JDBCUtil.getConnection(sqliteURL)
     connection.close()
-    val exportResult = importTestFile.box("Export to JDBC", Map(
-      "jdbc_url" -> sqliteURL, "jdbc_table" -> "hobbies",
-      "mode" -> "Drop the table if it already exists")).exportResult
+    val exportResult = importTestFile.box(
+      "Export to JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "hobbies",
+        "mode" -> "Drop the table if it already exists")).exportResult
     dataManager.get(exportResult)
-    val importedAgain = importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "hobbies",
-      "imported_columns" -> "")).
-      box("Use table as vertices").project
+    val importedAgain = importBox(
+      "Import JDBC",
+      Map(
+        "jdbc_url" -> sqliteURL,
+        "jdbc_table" -> "hobbies",
+        "imported_columns" -> "")).box("Use table as vertices").project
     checkResult(importedAgain)
   }
 
@@ -96,8 +109,10 @@ class ExportBoxTest extends OperationsTestBase {
     exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to AVRO", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
-    val importedAgain = importBox("Import AVRO", Map(
-      "filename" -> path))
+    val importedAgain = importBox(
+      "Import AVRO",
+      Map(
+        "filename" -> path))
       .box("Use table as vertices").project
     checkResult(importedAgain)
 
@@ -110,8 +125,10 @@ class ExportBoxTest extends OperationsTestBase {
     exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to Delta", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
-    val importedAgain = importBox("Import Delta", Map(
-      "filename" -> path))
+    val importedAgain = importBox(
+      "Import Delta",
+      Map(
+        "filename" -> path))
       .box("Use table as vertices").project
     checkResult(importedAgain)
 
@@ -126,8 +143,11 @@ class ExportBoxTest extends OperationsTestBase {
     val exportResult = importTestFile.box("Export to Delta", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
 
-    val importedAgain = importBox("Import Delta", Map(
-      "filename" -> path, "version_as_of" -> "0"))
+    val importedAgain = importBox(
+      "Import Delta",
+      Map(
+        "filename" -> path,
+        "version_as_of" -> "0"))
       .box("Use table as vertices").project
     checkResult(importedAgain)
 

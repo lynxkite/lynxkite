@@ -24,4 +24,11 @@ Attributes to be used as inputs for the training algorithm.
 [p-max_iter]#Maximum iterations#::
 The maximum number of iterations (>=0).
 
+[p-elastic_net_param]#Elastic net mixing#::
+This parameter ("alpha") allows combining L1 and L2 regularization.
+At alpha=0 we get L2 regularization and at alpha=1 we get L1.
+
+[p-reg_param]#Regularization#::
+The parameter of L1/L2 regularization, depending on how the elastic net mixing parameter is set.
+
 ====

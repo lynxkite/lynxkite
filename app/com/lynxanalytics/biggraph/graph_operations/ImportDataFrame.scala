@@ -10,10 +10,15 @@ import org.apache.spark.sql.types
 
 object ImportDataFrame extends OpFromJson {
 
-  def fromJson(j: JsValue) = new ImportDataFrame(
-    types.DataType.fromJson((j \ "schema").as[String]).asInstanceOf[types.StructType],
-    None,
-    (j \ "timestamp").as[String])
+  def fromJson(j: JsValue) = {
+    // This is meta level, so we may not have a Spark session at this point.
+    // But we've got to allow reading old schemas for compatibility.
+    org.apache.spark.sql.internal.SQLConf.get.setConfString("spark.sql.legacy.allowNegativeScaleOfDecimal", "true")
+    new ImportDataFrame(
+      types.DataType.fromJson((j \ "schema").as[String]).asInstanceOf[types.StructType],
+      None,
+      (j \ "timestamp").as[String])
+  }
 
   private def apply(df: DataFrame) = {
     new ImportDataFrame(SQLHelper.stripComment(df.schema), Some(df), Timestamp.toString)
@@ -25,8 +30,8 @@ object ImportDataFrame extends OpFromJson {
   }
 
   class Output(schema: types.StructType)(
-      implicit
-      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit instance: MetaGraphOperationInstance)
+      extends MagicOutput(instance) {
     val t = table(schema)
   }
 }
@@ -35,7 +40,7 @@ class ImportDataFrame private (
     val schema: types.StructType,
     inputFrame: Option[DataFrame],
     val timestamp: String)
-  extends SparkOperation[NoInput, ImportDataFrame.Output] {
+    extends SparkOperation[NoInput, ImportDataFrame.Output] {
 
   for (df <- inputFrame) {
     // If the DataFrame is backed by LynxKite operations, we need to trigger these now. Triggering
@@ -59,10 +64,10 @@ class ImportDataFrame private (
     "timestamp" -> timestamp)
 
   def execute(
-    inputDatas: DataSet,
-    o: ImportDataFrame.Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: ImportDataFrame.Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     inputFrame match {
       case None =>
         throw new AssertionError(

@@ -12,7 +12,14 @@ class GrowSegmentationTest extends OperationsTestBase {
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSet == Set(
-      (0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1), (3, 3), (2, 2)))
+      (0, 0),
+      (1, 0),
+      (0, 1),
+      (1, 1),
+      (2, 0),
+      (2, 1),
+      (3, 3),
+      (2, 2)))
   }
 
   test("Grow segmentation - out-neighbors") {
@@ -24,7 +31,14 @@ class GrowSegmentationTest extends OperationsTestBase {
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSet == Set(
-      (0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2), (3, 3), (2, 2)))
+      (0, 0),
+      (1, 0),
+      (0, 1),
+      (1, 1),
+      (0, 2),
+      (1, 2),
+      (3, 3),
+      (2, 2)))
   }
 
   test("Grow segmentation - all neighbors") {
@@ -36,7 +50,16 @@ class GrowSegmentationTest extends OperationsTestBase {
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSet == Set(
-      (2, 1), (0, 0), (1, 0), (0, 1), (2, 0), (1, 1), (0, 2), (1, 2), (3, 3), (2, 2)))
+      (2, 1),
+      (0, 0),
+      (1, 0),
+      (0, 1),
+      (2, 0),
+      (1, 1),
+      (0, 2),
+      (1, 2),
+      (3, 3),
+      (2, 2)))
   }
 
   test("Grow segmentation - symmetric neighbors") {
@@ -48,6 +71,11 @@ class GrowSegmentationTest extends OperationsTestBase {
       .project
     val newSeg = project.segmentation("seg")
     assert(newSeg.belongsTo.rdd.map { case (_, e) => e.src -> e.dst }.collect.toSet == Set(
-      (0, 0), (1, 0), (0, 1), (1, 1), (3, 3), (2, 2)))
+      (0, 0),
+      (1, 0),
+      (0, 1),
+      (1, 1),
+      (3, 3),
+      (2, 2)))
   }
 }

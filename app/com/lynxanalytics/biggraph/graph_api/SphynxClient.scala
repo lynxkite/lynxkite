@@ -8,8 +8,8 @@ import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
 import scala.reflect.runtime.universe._
-import scala.concurrent.{ Promise, Future }
-import scala.util.{ Success, Failure }
+import scala.concurrent.{Promise, Future}
+import scala.util.{Success, Failure}
 import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.TimeUnit
@@ -102,11 +102,11 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     val request = e match {
       case v: VertexSet => requestBuilder.build()
       case eb: EdgeBundle => requestBuilder
-        .setVsguid1(eb.srcVertexSet.gUID.toString)
-        .setVsguid2(eb.dstVertexSet.gUID.toString).build()
+          .setVsguid1(eb.srcVertexSet.gUID.toString)
+          .setVsguid2(eb.dstVertexSet.gUID.toString).build()
       case a: Attribute[_] => requestBuilder
-        .setAttributeType(a.typeTag.toString)
-        .setVsguid1(a.vertexSet.gUID.toString).build()
+          .setAttributeType(a.typeTag.toString)
+          .setVsguid1(a.vertexSet.gUID.toString).build()
       case s: Scalar[_] => requestBuilder.build()
       case _ => ???
     }

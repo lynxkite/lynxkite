@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util._
 
-class VertexBucketGridTest extends FunSuite with TestGraphOp {
+class VertexBucketGridTest extends AnyFunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("Only 1 bucket") {
@@ -27,11 +27,16 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer, 50000)
     val out = op(
-      op.vertices, g.vertices)(
-        op.filtered, g.vertices)(
-          op.xAttribute, g.name)(
-            op.yAttribute, g.age)(
-              op.originalCount, count).result
+      op.vertices,
+      g.vertices)(
+      op.filtered,
+      g.vertices)(
+      op.xAttribute,
+      g.name)(
+      op.yAttribute,
+      g.age)(
+      op.originalCount,
+      count).result
 
     assert(out.buckets.value.counts == Map((0, 0) -> 1, (1, 0) -> 1, (2, 0) -> 1, (2, 1) -> 1))
     assert(out.xBuckets.rdd.collect.toMap == Map((0 -> 0), (1 -> 1), (2 -> 2), (3 -> 2)))
@@ -46,11 +51,16 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer, -1)
     val out = op(
-      op.vertices, g.vertices)(
-        op.filtered, g.vertices)(
-          op.xAttribute, g.gender)(
-            op.yAttribute, g.age)(
-              op.originalCount, count).result
+      op.vertices,
+      g.vertices)(
+      op.filtered,
+      g.vertices)(
+      op.xAttribute,
+      g.gender)(
+      op.yAttribute,
+      g.age)(
+      op.originalCount,
+      count).result
 
     assert(out.buckets.value.counts == Map((1, 0) -> 1, (0, 1) -> 1, (0, 0) -> 2))
   }
@@ -63,10 +73,14 @@ class VertexBucketGridTest extends FunSuite with TestGraphOp {
     val count = Count.run(g.vertices)
     val op = VertexBucketGrid(xBucketer, yBucketer, 2)
     val out = (op(op.vertices, g.vertices)(
-      op.filtered, g.vertices)(
-        op.xAttribute, g.gender)(
-          op.yAttribute, g.age)(
-            op.originalCount, count)).result
+      op.filtered,
+      g.vertices)(
+      op.xAttribute,
+      g.gender)(
+      op.yAttribute,
+      g.age)(
+      op.originalCount,
+      count)).result
 
     for ((key, value) <- out.buckets.value.counts) {
       assert(value == 0) // All counters are zero because of rounding.

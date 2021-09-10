@@ -9,13 +9,12 @@ object RestrictAttributeToIds extends OpFromJson {
     val attr = vertexAttribute[T](vs)
   }
   class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T])
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
     val attrMap = scalar[Map[ID, T]]
   }
   def run[T](attr: Attribute[T], ids: Set[ID])(
-    implicit
-    manager: MetaGraphManager): Scalar[Map[ID, T]] = {
+      implicit manager: MetaGraphManager): Scalar[Map[ID, T]] = {
 
     import Scripting._
     val op = RestrictAttributeToIds[T](ids)
@@ -25,18 +24,18 @@ object RestrictAttributeToIds extends OpFromJson {
 }
 import RestrictAttributeToIds._
 case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
-  extends SparkOperation[Input[T], Output[T]] {
+    extends SparkOperation[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
-  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet)
+  override def toJson = Json.obj("vertexIdSet" -> vertexIdSet.toSeq.sorted)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val restricted = inputs.attr.rdd.restrictToIdSet(vertexIdSet.toIndexedSeq.sorted)
     output(o.attrMap, restricted.collect.toMap)

@@ -7,7 +7,8 @@ object CollectAttribute extends OpFromJson {
   class Output[T](
       implicit
       instance: MetaGraphOperationInstance,
-      inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
+      inputs: VertexAttributeInput[T])
+      extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]
   }
@@ -15,10 +16,11 @@ object CollectAttribute extends OpFromJson {
 }
 import CollectAttribute._
 case class CollectAttribute[T](
-    idSet: Set[ID]) extends SparkOperation[VertexAttributeInput[T], Output[T]] {
+    idSet: Set[ID])
+    extends SparkOperation[VertexAttributeInput[T], Output[T]] {
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("idSet" -> idSet)
+  override def toJson = Json.obj("idSet" -> idSet.toSeq.sorted)
 
   def execute(inputDatas: DataSet, o: Output[T], output: OutputBuilder, rc: RuntimeContext) = {
     implicit val id = inputDatas

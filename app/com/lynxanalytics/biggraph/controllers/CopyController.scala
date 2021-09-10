@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.hadoop
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
@@ -68,8 +68,10 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     val srcPath = new hadoop.fs.Path("file://" + metaRoot)
     val srcFs = srcPath.getFileSystem(conf)
     hadoop.fs.FileUtil.copy(
-      srcFs, srcPath,
-      dst.fs, dst.path,
+      srcFs,
+      srcPath,
+      dst.fs,
+      dst.path,
       /* deleteSource = */ false,
       /* overwrite = */ true,
       dst.hadoopConfiguration)
@@ -96,8 +98,10 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       rdd.foreach {
         case (src, dst) =>
           hadoop.fs.FileUtil.copy(
-            src.fs, src.path,
-            dst.fs, dst.path,
+            src.fs,
+            src.path,
+            dst.fs,
+            dst.path,
             /* deleteSource = */ false, /* overwrite = */ true,
             dst.hadoopConfiguration)
       }

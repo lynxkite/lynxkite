@@ -7,7 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 
 import org.apache.spark
-import org.apache.spark.sql.{ SQLContext, Row }
+import org.apache.spark.sql.{SQLContext, Row}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.io.Source
@@ -17,7 +17,7 @@ import scala.util.Success
 import reflect.runtime.universe.typeTag
 import java.nio.file.Paths
 import play.api.libs.json
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -27,7 +27,8 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 class SparkDomain(
     val sparkSession: spark.sql.SparkSession,
     val repositoryPath: HadoopFile,
-    val ephemeralPath: Option[HadoopFile] = None) extends Domain {
+    val ephemeralPath: Option[HadoopFile] = None)
+    extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
@@ -72,7 +73,8 @@ class SparkDomain(
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = synchronized {
     assert(!entityCache.contains(entity.gUID), s"We already have $entity.")
     entitiesOnDiskCache.getOrElseUpdate(
-      entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
+      entity.gUID,
+      entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
   private def load(entity: MetaGraphEntity): EntityData = {
@@ -149,22 +151,22 @@ class SparkDomain(
   }
 
   private def asSparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
-    instance: MetaGraphOperationInstance): SparkOperation[I, O] =
+      instance: MetaGraphOperationInstance): SparkOperation[I, O] =
     asSparkOp(instance.asInstanceOf[TypedOperationInstance[I, O]])
 
   private def asSparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
-    instance: TypedOperationInstance[I, O]): SparkOperation[I, O] = {
+      instance: TypedOperationInstance[I, O]): SparkOperation[I, O] = {
     instance.operation.asInstanceOf[SparkOperation[I, O]]
   }
 
   private def run[I <: InputSignatureProvider, O <: MetaDataSetProvider](
-    instance: MetaGraphOperationInstance,
-    inputDatas: DataSet): Map[UUID, EntityData] =
+      instance: MetaGraphOperationInstance,
+      inputDatas: DataSet): Map[UUID, EntityData] =
     run(instance.asInstanceOf[TypedOperationInstance[I, O]], inputDatas)
 
   private def run[I <: InputSignatureProvider, O <: MetaDataSetProvider](
-    instance: TypedOperationInstance[I, O],
-    inputDatas: DataSet): Map[UUID, EntityData] = {
+      instance: TypedOperationInstance[I, O],
+      inputDatas: DataSet): Map[UUID, EntityData] = {
     val outputBuilder = new OutputBuilder(instance)
     asSparkOp(instance).execute(inputDatas, instance.result, outputBuilder, runtimeContext)
     outputBuilder.dataMap.toMap
@@ -190,25 +192,26 @@ class SparkDomain(
       // Reloading attributes needs us to have reloaded the vertex sets already. Hence the sort.
       val outputMeta = instance.outputs.all.values
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
-        val data = if (sparkOp.isHeavy) {
-          if (sparkOp.hasCustomSaving) synchronized {
-            // Just need to remember it's already saved.
-            entitiesOnDiskCache(o.gUID) = true
-          }
-          else if (o.isInstanceOf[Scalar[_]]) {
-            // Save asynchronously, but we can use the value immediately.
-            SafeFuture.async(saveToDisk(output(o.gUID)))
-            set(o, output(o.gUID))
+        val data =
+          if (sparkOp.isHeavy) {
+            if (sparkOp.hasCustomSaving) synchronized {
+              // Just need to remember it's already saved.
+              entitiesOnDiskCache(o.gUID) = true
+            }
+            else if (o.isInstanceOf[Scalar[_]]) {
+              // Save asynchronously, but we can use the value immediately.
+              SafeFuture.async(saveToDisk(output(o.gUID)))
+              set(o, output(o.gUID))
+            } else {
+              // Save synchronously, and we will load it back when accessed.
+              saveToDisk(output(o.gUID))
+            }
           } else {
-            // Save synchronously, and we will load it back when accessed.
-            saveToDisk(output(o.gUID))
+            if (o.isInstanceOf[Scalar[_]]) {
+              SafeFuture.async(saveToDisk(output(o.gUID)))
+            }
+            set(o, output(o.gUID))
           }
-        } else {
-          if (o.isInstanceOf[Scalar[_]]) {
-            SafeFuture.async(saveToDisk(output(o.gUID)))
-          }
-          set(o, output(o.gUID))
-        }
       }
     }
     markOperationComplete(instance)
@@ -230,8 +233,8 @@ class SparkDomain(
   }
 
   private def validateOutput(
-    instance: MetaGraphOperationInstance,
-    output: Map[UUID, EntityData]): Unit = {
+      instance: MetaGraphOperationInstance,
+      output: Map[UUID, EntityData]): Unit = {
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
@@ -246,9 +249,9 @@ class SparkDomain(
       val vsd = output.get(vs.gUID) match {
         case Some(vsd) => vsd.asInstanceOf[VertexSetData]
         case None => synchronized {
-          assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
-          entityCache(vs.gUID).asInstanceOf[VertexSetData]
-        }
+            assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
+            entityCache(vs.gUID).asInstanceOf[VertexSetData]
+          }
       }
       assert(
         vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
@@ -279,8 +282,8 @@ class SparkDomain(
   }
 
   private def enforceCoLocationWithIdSet[T: ClassTag](
-    entity: MetaGraphEntity,
-    idSet: VertexSet): (UniqueSortedRDD[Long, T], Option[Long]) = synchronized {
+      entity: MetaGraphEntity,
+      idSet: VertexSet): (UniqueSortedRDD[Long, T], Option[Long]) = synchronized {
     val data = entityCache(entity.gUID).asInstanceOf[EntityRDDData[T]]
     val parent = entityCache(idSet.gUID).asInstanceOf[VertexSetData]
     val vsRDD = parent.rdd.copyWithAncestorsCached
@@ -290,11 +293,14 @@ class SparkDomain(
       vsRDD.partitions.size == rawRDD.partitions.size,
       s"$vsRDD and $rawRDD should have the same number of partitions, " +
         s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}\n" +
-        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}")
+        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}",
+    )
     import com.lynxanalytics.biggraph.spark_util.Implicits.PairRDDUtils
-    (vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
-      (it1, it2) => it2
-    }.asUniqueSortedRDD, data.count)
+    (
+      vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
+        (it1, it2) => it2
+      }.asUniqueSortedRDD,
+      data.count)
   }
   def cache(entity: MetaGraphEntity): Unit = synchronized {
     assert(entityCache.contains(entity.gUID), s"Cannot cache unloaded entity: $entity")
@@ -338,7 +344,8 @@ class SparkDomain(
       sqlContext = masterSQLContext,
       ioContext = io.IOContext(dataRoot, sparkSession),
       broadcastDirectory = broadcastDirectory,
-      sparkDomain = this)
+      sparkDomain = this,
+    )
   }
 
   def newSQLContext(): SQLContext = {
@@ -367,14 +374,16 @@ class SparkDomain(
         }
         e match {
           case e: VertexSet => SafeFuture.async(new VertexSetData(
-            e, parallelize(source.get(e).toSeq.map((_, ()))), count = Some(source.get(e).size)))
+              e,
+              parallelize(source.get(e).toSeq.map((_, ()))),
+              count = Some(source.get(e).size)))
           case e: EdgeBundle => SafeFuture.async({
-            val seq = source.get(e).toSeq
-            val vs = getData(e.idSet)
-            val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-            val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
-            new EdgeBundleData(e, rdd, count = Some(seq.size))
-          })
+              val seq = source.get(e).toSeq
+              val vs = getData(e.idSet)
+              val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+              val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
+              new EdgeBundleData(e, rdd, count = Some(seq.size))
+            })
           case e: Attribute[_] =>
             def attr[T: reflect.ClassTag](e: Attribute[T]) = {
               val seq = source.get(e).toSeq
@@ -387,64 +396,74 @@ class SparkDomain(
           case e: Scalar[_] => source.get(e).map(new ScalarData(e, _))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
-      case source: UnorderedSphynxDisk =>
-        {
-          val srcPath = source.getGUIDPath(e)
-          import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-          import com.lynxanalytics.biggraph.spark_util.Implicits._
-          e match {
-            case e: VertexSet => SafeFuture.async({
+      case source: UnorderedSphynxDisk => {
+        val srcPath = source.getGUIDPath(e)
+        import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+        import com.lynxanalytics.biggraph.spark_util.Implicits._
+        e match {
+          case e: VertexSet => SafeFuture.async({
               val rdd = sparkSession.read.parquet(srcPath).rdd
               val size = rdd.count()
-              new VertexSetData(e, rdd.map(r => (r.getAs[Long]("id"), ()))
-                .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
+              new VertexSetData(
+                e,
+                rdd.map(r => (r.getAs[Long]("id"), ()))
+                  .sortUnique(runtimeContext.partitionerForNRows(size)),
+                Some(size))
             })
-            case e: EdgeBundle => SafeFuture.async({
+          case e: EdgeBundle => SafeFuture.async({
               val rdd = sparkSession.read.parquet(srcPath).rdd
               val size = rdd.count()
-              new EdgeBundleData(e, rdd.map(r =>
-                (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst"))))
-                .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
+              new EdgeBundleData(
+                e,
+                rdd.map(r =>
+                  (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst"))))
+                  .sortUnique(runtimeContext.partitionerForNRows(size)),
+                Some(size))
             })
-            case e: Attribute[_] if e.typeTag == typeTag[Vector[Double]] =>
-              def attr(e: Attribute[Vector[Double]]) = {
-                val vs = getData(e.vertexSet)
-                val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val df = sparkSession.read.parquet(srcPath)
-                val rdd = df.rdd
-                val size = rdd.count()
-                val valueIdx = df.schema.fieldIndex("value")
-                val castRDD = rdd.map(r => (r.getAs[Long]("id"), r.getSeq(valueIdx).toVector.asInstanceOf[Vector[Double]]))
-                new AttributeData[Vector[Double]](e, castRDD.sortUnique(partitioner), Some(size))
-              }
-              SafeFuture.async(attr(e.asInstanceOf[Attribute[Vector[Double]]]))
-            case e: Attribute[_] =>
-              def attr[T: reflect.ClassTag](e: Attribute[T]) = {
-                val vs = getData(e.vertexSet)
-                val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                val rdd = sparkSession.read.parquet(srcPath).rdd
-                val size = rdd.count()
-                new AttributeData[T](e, rdd.map(r =>
+          case e: Attribute[_] if e.typeTag == typeTag[Vector[Double]] =>
+            def attr(e: Attribute[Vector[Double]]) = {
+              val vs = getData(e.vertexSet)
+              val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+              val df = sparkSession.read.parquet(srcPath)
+              val rdd = df.rdd
+              val size = rdd.count()
+              val valueIdx = df.schema.fieldIndex("value")
+              val castRDD =
+                rdd.map(r => (r.getAs[Long]("id"), r.getSeq(valueIdx).toVector.asInstanceOf[Vector[Double]]))
+              new AttributeData[Vector[Double]](e, castRDD.sortUnique(partitioner), Some(size))
+            }
+            SafeFuture.async(attr(e.asInstanceOf[Attribute[Vector[Double]]]))
+          case e: Attribute[_] =>
+            def attr[T: reflect.ClassTag](e: Attribute[T]) = {
+              val vs = getData(e.vertexSet)
+              val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+              val rdd = sparkSession.read.parquet(srcPath).rdd
+              val size = rdd.count()
+              new AttributeData[T](
+                e,
+                rdd.map(r =>
                   (r.getAs[Long]("id"), r.getAs[T]("value")))
-                  .sortUnique(partitioner), Some(size))
+                  .sortUnique(partitioner),
+                Some(size))
+            }
+            SafeFuture.async(attr(e)(e.classTag))
+          case s: Scalar[_] =>
+            SafeFuture.async({
+              val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
+              val jsonString = source match {
+                case source: UnorderedSphynxSparkDisk =>
+                  (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
+                case source: UnorderedSphynxLocalDisk =>
+                  val fname = s"${srcPath}/serialized_data"
+                  Source.fromFile(fname, "utf-8").getLines.mkString
               }
-              SafeFuture.async(attr(e)(e.classTag))
-            case s: Scalar[_] =>
-              SafeFuture.async({
-                val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
-                val jsonString = source match {
-                  case source: UnorderedSphynxSparkDisk =>
-                    (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
-                  case source: UnorderedSphynxLocalDisk =>
-                    val fname = s"${srcPath}/serialized_data"
-                    Source.fromFile(fname, "utf-8").getLines.mkString
-                }
-                val value = format.reads(json.Json.parse(jsonString)).get
-                new ScalarData(s, value)
-              })
-            case _ => throw new AssertionError(s"Cannot fetch $e from $source")
-          }
+              val value = format.reads(json.Json.parse(jsonString)).get
+              new ScalarData(s, value)
+            })
+          case t: Table => SafeFuture.async(new TableData(t, sparkSession.read.parquet(srcPath)))
+          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
+      }
     }
     future.map { data =>
       saveToDisk(data)
@@ -459,9 +478,9 @@ object SparkDomain {
   // the same SQLContext, and name collisions (same name - different DataFrame)
   // are thus now possible.
   def sql(
-    ctx: SQLContext,
-    query: String,
-    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = synchronized {
+      ctx: SQLContext,
+      query: String,
+      dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = synchronized {
     for ((name, df) <- dfs) {
       assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
       df.createOrReplaceTempView(s"`$name`")
@@ -485,10 +504,10 @@ trait SparkOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider] 
   val hasCustomSaving: Boolean = false
   assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
   def execute(
-    inputDatas: DataSet,
-    outputMeta: OMDS,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit
+      inputDatas: DataSet,
+      outputMeta: OMDS,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit
 }
 
 sealed trait EntityData {
@@ -504,7 +523,8 @@ sealed trait EntityRDDData[T] extends EntityData {
 class VertexSetData(
     val entity: VertexSet,
     val rdd: VertexSetRDD,
-    val count: Option[Long] = None) extends EntityRDDData[Unit] {
+    val count: Option[Long] = None)
+    extends EntityRDDData[Unit] {
   val vertexSet = entity
   def cached = new VertexSetData(entity, rdd.copyWithAncestorsCached, count)
 }
@@ -512,7 +532,8 @@ class VertexSetData(
 class EdgeBundleData(
     val entity: EdgeBundle,
     val rdd: EdgeBundleRDD,
-    val count: Option[Long] = None) extends EntityRDDData[Edge] {
+    val count: Option[Long] = None)
+    extends EntityRDDData[Edge] {
   val edgeBundle = entity
   def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
 }
@@ -520,7 +541,8 @@ class EdgeBundleData(
 class HybridBundleData(
     val entity: HybridBundle,
     val rdd: HybridBundleRDD,
-    val count: Option[Long] = None) extends EntityRDDData[ID] {
+    val count: Option[Long] = None)
+    extends EntityRDDData[ID] {
   val hybridBundle = entity
   def cached = new HybridBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
 }
@@ -529,7 +551,7 @@ class AttributeData[T](
     val entity: Attribute[T],
     val rdd: AttributeRDD[T],
     val count: Option[Long] = None)
-  extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
+    extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
   val attribute = entity
   val typeTag = attribute.typeTag
   def cached = new AttributeData[T](entity, rdd.copyWithAncestorsCached, count)
@@ -538,7 +560,7 @@ class AttributeData[T](
 class ScalarData[T](
     val entity: Scalar[T],
     val value: T)
-  extends EntityData with RuntimeSafeCastable[T, ScalarData] {
+    extends EntityData with RuntimeSafeCastable[T, ScalarData] {
   val scalar = entity
   val typeTag = scalar.typeTag
 }
@@ -546,7 +568,7 @@ class ScalarData[T](
 class TableData(
     val entity: Table,
     val df: spark.sql.DataFrame)
-  extends EntityData {
+    extends EntityData {
   val table = entity
 }
 
@@ -564,7 +586,8 @@ case class DataSet(
     hybridBundles.mapValues(_.hybridBundle),
     attributes.mapValues(_.attribute),
     scalars.mapValues(_.scalar),
-    tables.mapValues(_.table))
+    tables.mapValues(_.table),
+  )
 
   def all: Map[Symbol, EntityData] =
     vertexSets ++ edgeBundles ++ hybridBundles ++ attributes ++ scalars ++ tables
@@ -578,7 +601,8 @@ object DataSet {
       hybridBundles = all.collect { case (k, v: HybridBundleData) => (k, v) },
       attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap,
-      tables = all.collect { case (k, v: TableData) => (k, v) })
+      tables = all.collect { case (k, v: TableData) => (k, v) },
+    )
   }
 }
 

@@ -5,11 +5,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object EnhancedExampleGraph extends OpFromJson {
-  class Input extends MagicInputSignature {
-  }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Input extends MagicInputSignature
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val name = vertexAttribute[String](vertices)
     val age = vertexAttribute[Double](vertices)
@@ -74,10 +71,10 @@ case class EnhancedExampleGraph() extends SparkOperation[Input, Output] {
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: EnhancedExampleGraph.Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: EnhancedExampleGraph.Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     executionCounter += 1
 
     val sc = rc.sparkContext
@@ -108,70 +105,91 @@ case class EnhancedExampleGraph() extends SparkOperation[Input, Output] {
         (eCatBob1, Edge(Cat, Bob)),
         (eCatBob2, Edge(Cat, Bob)),
         (eMouseCat, Edge(Mouse, Cat)),
-        (eFishWanda, Edge(Fish, Wanda))))
+        (eFishWanda, Edge(Fish, Wanda)),
+      ))
+        .sortUnique(partitioner),
+    )
+    output(
+      o.name,
+      sc.parallelize(Seq(
+        (Adam, "Adam"),
+        (Eve, "Eve"),
+        (Bob, "Bob"),
+        (Joe, "Isolated Joe"),
+        (Cat, "Cat"),
+        (Fish, "Fish"),
+        (Mouse, "Mouse"),
+        (Wanda, "Wanda"))).sortUnique(partitioner),
+    )
+    output(
+      o.age,
+      sc.parallelize(Seq(
+        (Adam, 20.3),
+        (Eve, 18.2),
+        (Bob, 50.3),
+        (Joe, 2.0),
+        (Cat, 12.0),
+        (Fish, 5.0),
+        (Mouse, 41.0),
+        (Wanda, 26.1))).sortUnique(partitioner))
+    output(
+      o.gender,
+      sc.parallelize(Seq(
+        (Adam, "Male"),
+        (Eve, "Female"),
+        (Bob, "Male"),
+        (Joe, "Male"),
+        (Cat, "Female"),
+        (Fish, "Female"),
+        (Mouse, "Male"),
+        (Wanda, "Female"))).sortUnique(partitioner),
+    )
+    output(
+      o.income,
+      sc.parallelize(Seq(
+        (Adam, 1000.0),
+        (Joe, 2000.0))).sortUnique(partitioner))
+    output(
+      o.location,
+      sc.parallelize(Seq(
+        (Adam, Vector(40.71448, -74.00598)), // New York
+        (Eve, Vector(47.5269674, 19.0323968)), // Budapest
+        (Bob, Vector(1.352083, 103.819836)), // Singapore
+        (Joe, Vector(-33.8674869, 151.2069902)), // Sydney
+        (Cat, Vector(1.352083, 103.819836)), // Singapore
+        (Fish, Vector(1.352083, 103.819836)), // Singapore
+        (Mouse, Vector(1.352083, 103.819836)), // Singapore
+        (Wanda, Vector(3.1412, 101.68653)), // Kuala Lumpur
+      )).sortUnique(partitioner),
+    )
+    output(
+      o.comment,
+      sc.parallelize(Seq(
+        (eAdamEve, "Adam loves Eve"),
+        (eEveAdam, "Eve loves Adam"),
+        (eBobAdam, "Bob envies Adam"),
+        (eBobEve, "Bob loves Eve"),
+        (eBobBob, "Bob hates himself"),
+        (eBobCat, "Bob doesn't see the cat"),
+        (eBobFish1, "Bob owns the fish"),
+        (eBobFish2, "Bob feeds the fish"),
+        (eBobFish3, "Bob complains to the fish"),
+        (eFishBob1, "The fish understands Bob"),
+        (eFishBob2, "The fish helps Bob"),
+        (eFishCat1, "The fish summons the cat"),
+        (eFishCat2, "The fish mesmerizes the cat"),
+        (eFishCat3, "The fish controls the cat"),
+        (eCatFish, "The cat obeys the fish"),
+        (eCatBob1, "The cat distracts Bob's attention"),
+        (eCatBob2, "The cat steals Bob's phone"),
+        (eMouseCat, "The mouse sees the cat"),
+        (eFishWanda, "The fish calls Wanda"),
+      )).sortUnique(partitioner),
+    )
+    output(
+      o.weight,
+      sc.parallelize((firstEdge to lastEdge).map { x => (x, x.toDouble) })
         .sortUnique(partitioner))
-    output(o.name, sc.parallelize(Seq(
-      (Adam, "Adam"),
-      (Eve, "Eve"),
-      (Bob, "Bob"),
-      (Joe, "Isolated Joe"),
-      (Cat, "Cat"),
-      (Fish, "Fish"),
-      (Mouse, "Mouse"),
-      (Wanda, "Wanda"))).sortUnique(partitioner))
-    output(o.age, sc.parallelize(Seq(
-      (Adam, 20.3),
-      (Eve, 18.2),
-      (Bob, 50.3),
-      (Joe, 2.0),
-      (Cat, 12.0),
-      (Fish, 5.0),
-      (Mouse, 41.0),
-      (Wanda, 26.1))).sortUnique(partitioner))
-    output(o.gender, sc.parallelize(Seq(
-      (Adam, "Male"),
-      (Eve, "Female"),
-      (Bob, "Male"),
-      (Joe, "Male"),
-      (Cat, "Female"),
-      (Fish, "Female"),
-      (Mouse, "Male"),
-      (Wanda, "Female"))).sortUnique(partitioner))
-    output(o.income, sc.parallelize(Seq(
-      (Adam, 1000.0),
-      (Joe, 2000.0))).sortUnique(partitioner))
-    output(o.location, sc.parallelize(Seq(
-      (Adam, Vector(40.71448, -74.00598)), // New York
-      (Eve, Vector(47.5269674, 19.0323968)), // Budapest
-      (Bob, Vector(1.352083, 103.819836)), // Singapore
-      (Joe, Vector(-33.8674869, 151.2069902)), // Sydney
-      (Cat, Vector(1.352083, 103.819836)), // Singapore
-      (Fish, Vector(1.352083, 103.819836)), // Singapore
-      (Mouse, Vector(1.352083, 103.819836)), // Singapore
-      (Wanda, Vector(3.1412, 101.68653)) // Kuala Lumpur
-    )).sortUnique(partitioner))
-    output(o.comment, sc.parallelize(Seq(
-      (eAdamEve, "Adam loves Eve"),
-      (eEveAdam, "Eve loves Adam"),
-      (eBobAdam, "Bob envies Adam"),
-      (eBobEve, "Bob loves Eve"),
-      (eBobBob, "Bob hates himself"),
-      (eBobCat, "Bob doesn't see the cat"),
-      (eBobFish1, "Bob owns the fish"),
-      (eBobFish2, "Bob feeds the fish"),
-      (eBobFish3, "Bob complains to the fish"),
-      (eFishBob1, "The fish understands Bob"),
-      (eFishBob2, "The fish helps Bob"),
-      (eFishCat1, "The fish summons the cat"),
-      (eFishCat2, "The fish mesmerizes the cat"),
-      (eFishCat3, "The fish controls the cat"),
-      (eCatFish, "The cat obeys the fish"),
-      (eCatBob1, "The cat distracts Bob's attention"),
-      (eCatBob2, "The cat steals Bob's phone"),
-      (eMouseCat, "The mouse sees the cat"),
-      (eFishWanda, "The fish calls Wanda"))).sortUnique(partitioner))
-    output(o.weight, sc.parallelize((firstEdge to lastEdge).map { x => (x, x.toDouble) })
-      .sortUnique(partitioner))
 
     output(o.greeting, "Hello world! 😀 ")
   }

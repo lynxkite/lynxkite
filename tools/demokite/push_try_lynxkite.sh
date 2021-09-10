@@ -15,6 +15,7 @@ export ZONE='us-central1-a'
 export PROJECT='external-lynxkite'
 export KITE_HOSTNAME='try.lynxkite.com'
 export KITE_MASTER_MEMORY_MB=6000
+export NUM_CORES_PER_EXECUTOR=8
 export SPHYNX_CACHED_ENTITIES_MAX_MEM_MB=6000
 export KITE_ALLOW_PYTHON='yes'
 # We need to pass it through Bash and JSON. It's easier to load from a file than to manually escape.

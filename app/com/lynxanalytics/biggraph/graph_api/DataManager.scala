@@ -42,7 +42,8 @@ trait Domain {
 // Manages data computation across domains.
 class DataManager(
     // The domains are in order of preference.
-    val domains: Seq[Domain]) extends EntityProgressManager {
+    val domains: Seq[Domain])
+    extends EntityProgressManager {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "DataManager",
@@ -59,7 +60,8 @@ class DataManager(
   private val DOES_NOT_HAVE = SafeFuture.successful(())
 
   override def computeProgress(
-    entities: Seq[MetaGraphEntity], ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
+      entities: Seq[MetaGraphEntity],
+      ignore: Set[MetaGraphEntity] = Set()): Seq[Double] = {
     // Returns all the futures that are responsible for producing the entity.
     def getFutures(e: MetaGraphEntity): Set[SafeFuture[_]] = synchronized {
       val sets = domains.map { d =>
@@ -140,7 +142,10 @@ class DataManager(
       // The base vertex set must be present for edges and attributes before we can relocate them.
       case e: Attribute[_] => combineFutures(Seq(ensure(e, directSrc), ensure(e.vertexSet, dst)))
       case e: EdgeBundle => combineFutures(Seq(
-        ensure(e, directSrc), ensure(e.idSet, dst), ensure(e.srcVertexSet, dst), ensure(e.dstVertexSet, dst)))
+          ensure(e, directSrc),
+          ensure(e.idSet, dst),
+          ensure(e.srcVertexSet, dst),
+          ensure(e.dstVertexSet, dst)))
       case _ => ensure(e, directSrc)
     }
     f.flatMap { _ =>

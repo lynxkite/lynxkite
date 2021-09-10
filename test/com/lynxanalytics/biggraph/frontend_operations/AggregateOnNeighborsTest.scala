@@ -7,10 +7,12 @@ class AggregateOnNeighborsTest extends OperationsTestBase {
   test("all aggregators") {
     def agg[T](attribute: String, aggregator: String): Map[Long, T] = {
       val p = box("Create example graph")
-        .box("Aggregate on neighbors", Map(
-          "prefix" -> "",
-          "direction" -> "all edges",
-          ("aggregate_" + attribute) -> aggregator))
+        .box(
+          "Aggregate on neighbors",
+          Map(
+            "prefix" -> "",
+            "direction" -> "all edges",
+            ("aggregate_" + attribute) -> aggregator))
         .project
       get(p.vertexAttributes(attribute + "_" + aggregator)).asInstanceOf[Map[Long, T]]
     }
@@ -20,9 +22,12 @@ class AggregateOnNeighborsTest extends OperationsTestBase {
     assert(agg("gender", "count_most_common") == Map(0 -> 2.0, 1 -> 3.0, 2 -> 1.0))
     assert(agg("gender", "first") == Map(0 -> "Female", 1 -> "Male", 2 -> "Male"))
     assert(agg("gender", "set") == Map(
-      0 -> Set("Female", "Male"), 1 -> Set("Male"), 2 -> Set("Male", "Female")))
+      0 -> Set("Female", "Male"),
+      1 -> Set("Male"),
+      2 -> Set("Male", "Female")))
     assert(agg("gender", "vector") == Map(
-      0 -> Vector("Female", "Female", "Male"), 1 -> Vector("Male", "Male", "Male"),
+      0 -> Vector("Female", "Female", "Male"),
+      1 -> Vector("Male", "Male", "Male"),
       2 -> Vector("Male", "Female")))
     assert(agg[Double]("age", "average").mapValues(_.round) == Map(0 -> 29, 1 -> 30, 2 -> 19))
     assert(agg[Double]("age", "min").mapValues(_.round) == Map(0 -> 18, 1 -> 20, 2 -> 18))
@@ -41,8 +46,8 @@ class AggregateOnNeighborsTest extends OperationsTestBase {
     assert(agg[Vector[Double]]("location", "elementwise_std_deviation").mapValues(v => v.map(_.round))
       == Map(0 -> Vector(27, 49), 1 -> Vector(23, 103), 2 -> Vector(5, 66)))
     assert(agg[Vector[Double]]("location", "concatenate").mapValues(v => v.map(_.round)) == Map(
-      0 -> Vector(48, 19, 48, 19, 1, 104), 1 -> Vector(41, -74, 41, -74, 1, 104),
+      0 -> Vector(48, 19, 48, 19, 1, 104),
+      1 -> Vector(41, -74, 41, -74, 1, 104),
       2 -> Vector(41, -74, 48, 19)))
   }
 }
-

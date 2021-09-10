@@ -12,7 +12,7 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable
 import scala.util.Random
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -23,12 +23,12 @@ object FindModularClusteringByTweaks extends OpFromJson {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val clusters = vertexSet
     val belongsTo = edgeBundle(
-      inputs.vs.entity, clusters, properties = EdgeBundleProperties.partialFunction)
+      inputs.vs.entity,
+      clusters,
+      properties = EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: JsValue) =
     FindModularClusteringByTweaks(
@@ -63,7 +63,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
         // We add inClusterEdges only once here as it will be also added when processing the
         // other end of the edge.
         insideDegreeSum + inClusterEdges,
-        size + 1)
+        size + 1,
+      )
     }
 
     def modularity(totalDegreeSum: Double) =
@@ -232,10 +233,10 @@ object FindModularClusteringByTweaks extends OpFromJson {
   // In other words, returns:
   //   (cluster1.add(cluster2).modularity - cluter1.modularity - cluster2.modularity)
   def mergeModularityChange(
-    totalDegreeSum: Double,
-    cluster1: ClusterData,
-    cluster2: ClusterData,
-    connection: Double): Double = {
+      totalDegreeSum: Double,
+      cluster1: ClusterData,
+      cluster2: ClusterData,
+      connection: Double): Double = {
 
     val totalDegreeSumSquare = totalDegreeSum * totalDegreeSum
     2 * connection / totalDegreeSum -
@@ -246,12 +247,12 @@ object FindModularClusteringByTweaks extends OpFromJson {
   // It returns a map where keys are ids of merge canidate clusters and values are
   // (mergeModularityChange, connection) pairs.
   def getMergeCandidates(
-    totalDegreeSum: Double,
-    clusters: scala.collection.Map[ID, ClusterData],
-    cluster: ClusterData,
-    members: scala.collection.Set[ID],
-    edgeLists: Map[ID, Iterable[(ID, Double)]],
-    containedIn: mutable.Map[ID, ID]): Map[ID, (Double, Double)] = {
+      totalDegreeSum: Double,
+      clusters: scala.collection.Map[ID, ClusterData],
+      cluster: ClusterData,
+      members: scala.collection.Set[ID],
+      edgeLists: Map[ID, Iterable[(ID, Double)]],
+      containedIn: mutable.Map[ID, ID]): Map[ID, (Double, Double)] = {
 
     val clusterConnections = mutable.Map[ID, Double]().withDefaultValue(0.0)
     for (vertex <- members) {
@@ -266,7 +267,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
     clusterConnections
       .map {
         case (id, connection) =>
-          (id,
+          (
+            id,
             (
               mergeModularityChange(totalDegreeSum, cluster, clusters(id), connection),
               connection))
@@ -275,13 +277,13 @@ object FindModularClusteringByTweaks extends OpFromJson {
   }
 
   def refineClusters(
-    totalDegreeSum: Double,
-    edgeLists: Map[ID, Iterable[(ID, Double)]],
-    containedIn: mutable.Map[ID, ID],
-    start: spark.util.DoubleAccumulator,
-    end: spark.util.DoubleAccumulator,
-    increase: spark.util.DoubleAccumulator,
-    rnd: Random): Unit = {
+      totalDegreeSum: Double,
+      edgeLists: Map[ID, Iterable[(ID, Double)]],
+      containedIn: mutable.Map[ID, ID],
+      start: spark.util.DoubleAccumulator,
+      end: spark.util.DoubleAccumulator,
+      increase: spark.util.DoubleAccumulator,
+      rnd: Random): Unit = {
 
     var localIncrease = 0.0
     val clusters = mutable.Map[ID, ClusterData]()
@@ -353,14 +355,14 @@ object FindModularClusteringByTweaks extends OpFromJson {
             Set(id),
             edgeLists,
             containedIn)
-          val finalCandidates = if (homeConnection == 0)
-            // We don't have ANY connection to our own home. In this case candidates won't
-            // contain the score of staying in our own cluster. Let's add that.
-            candidates.updated(
-              homeClusterId,
-              (mergeModularityChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0),
-                0.0))
-          else candidates
+          val finalCandidates =
+            if (homeConnection == 0)
+              // We don't have ANY connection to our own home. In this case candidates won't
+              // contain the score of staying in our own cluster. Let's add that.
+              candidates.updated(
+                homeClusterId,
+                (mergeModularityChange(totalDegreeSum, singletonCluster, homeClusterWithoutMe, 0), 0.0))
+            else candidates
           val (bestClusterId, (bestModularityChange, bestClusterConnection)) =
             finalCandidates.maxBy { case (id, (change, connection)) => change }
           val currentValue = finalCandidates(homeClusterId)._1
@@ -518,7 +520,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
 import FindModularClusteringByTweaks._
 case class FindModularClusteringByTweaks(
     maxIterations: Int,
-    minIncrementPerIteration: Double) extends SparkOperation[Input, Output] {
+    minIncrementPerIteration: Double)
+    extends SparkOperation[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -529,10 +532,10 @@ case class FindModularClusteringByTweaks(
       minIncrementPerIterationParameter.toJson(minIncrementPerIteration)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vs.rdd
     val vPart = vs.partitioner.get
@@ -566,17 +569,16 @@ case class FindModularClusteringByTweaks(
       val end = rc.sparkContext.doubleAccumulator
       val increase = rc.sparkContext.doubleAccumulator
       val vertexMeta = members
-        .mapPartitionsWithIndex(
-          {
-            case (idx, it) =>
-              val seed = new Random((idx << 16) + i).nextLong
-              val rnd = new Random(seed)
-              it.flatMap {
-                case (cid, vs) =>
-                  val pid = rnd.nextInt(numParts)
-                  vs.map(vid => vid -> (cid, pid))
-              }
-          })
+        .mapPartitionsWithIndex({
+          case (idx, it) =>
+            val seed = new Random((idx << 16) + i).nextLong
+            val rnd = new Random(seed)
+            it.flatMap {
+              case (cid, vs) =>
+                val pid = rnd.nextInt(numParts)
+                vs.map(vid => vid -> (cid, pid))
+            }
+        })
         .sortUnique(vPart) // Unique because of the invariant of members, see above.
       val perPartitionData = vertexMeta.sortedJoin(edgeLists)
         .map { case (vid, ((cid, pid), edges)) => pid -> (vid, cid, edges) }

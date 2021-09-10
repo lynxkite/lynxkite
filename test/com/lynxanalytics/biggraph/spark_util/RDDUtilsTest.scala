@@ -1,22 +1,37 @@
 package com.lynxanalytics.biggraph.spark_util
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
-class RDDUtilsTest extends FunSuite with TestSparkContext {
+class RDDUtilsTest extends AnyFunSuite with TestSparkContext {
   test("genId works for small and large numbers") {
     val parts = 10
     val border = Int.MaxValue / parts
     val interestingRows = Seq(
-      0, 1, parts - 1, parts, parts + 1,
-      border - 1, border, border + 1,
-      2 * border - 1, 2 * border, 2 * border + 1,
-      3 * border - 1, 3 * border, 3 * border + 1,
-      4 * border - 1, 4 * border, 4 * border + 1,
-      5 * border - 1, 5 * border, 5 * border + 1)
+      0,
+      1,
+      parts - 1,
+      parts,
+      parts + 1,
+      border - 1,
+      border,
+      border + 1,
+      2 * border - 1,
+      2 * border,
+      2 * border + 1,
+      3 * border - 1,
+      3 * border,
+      3 * border + 1,
+      4 * border - 1,
+      4 * border,
+      4 * border + 1,
+      5 * border - 1,
+      5 * border,
+      5 * border + 1,
+    )
     val partitioner = new HashPartitioner(parts)
     val ids = collection.mutable.Set[Long]()
     for (part <- 0 until parts) {

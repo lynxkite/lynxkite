@@ -11,6 +11,7 @@ RUN \
   bash conda.sh -b -p /opt/conda && \
   rm conda.sh
 ENV PATH /opt/conda/bin:$PATH
+ENV ADD_TO_PYTHON_JAIL /opt/conda/lib
 
 # Install dependencies early so they are in a low layer.
 COPY stage/conf/SPARK_VERSION /lynxkite/conf/SPARK_VERSION

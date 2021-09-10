@@ -27,9 +27,7 @@ object HyperBallCentrality extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val centrality = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
@@ -39,7 +37,7 @@ object HyperBallCentrality extends OpFromJson {
 }
 import HyperBallCentrality._
 case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -49,10 +47,10 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     bitsParameter.toJson(bits)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val centralities = algorithm match {
@@ -113,10 +111,10 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
   // Computes a centrality-like measure for each vertex, defined by measureFunction.
   // The result for each vertex is a pair of (coreachable set size, centrality measure).
   private def getMeasures(
-    rc: RuntimeContext,
-    vs: UniqueSortedRDD[ID, Unit],
-    es: UniqueSortedRDD[ID, Edge],
-    measureFunction: MeasureFunction): UniqueSortedRDD[ID, (Int, Double)] = {
+      rc: RuntimeContext,
+      vs: UniqueSortedRDD[ID, Unit],
+      es: UniqueSortedRDD[ID, Edge],
+      measureFunction: MeasureFunction): UniqueSortedRDD[ID, (Int, Double)] = {
     implicit val rcImplicit = rc
     val partitioner = RDDUtils.maxPartitioner(es.partitioner.get, vs.partitioner.get)
 
@@ -128,7 +126,8 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val edges = HybridRDD.of(
       distinctEdges,
       partitioner,
-      even = true) // The RDD should be even after distinct.
+      even = true, // The RDD should be even after distinct.
+    )
     edges.persist(StorageLevel.DISK_ONLY)
     // Hll counters are used to estimate set sizes.
     val hyperBallCounters = vertices.mapValuesWithKeys {
@@ -142,18 +141,19 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
       measures = vertices.mapValues { _ => (1, 0.0) },
       measureFunction = measureFunction,
       partitioner = partitioner,
-      edges = edges)
+      edges = edges,
+    )
     result.copartition(vs)
   }
 
   // Recursive helper function for the above getMeasures function.
   @tailrec private def getMeasures(
-    distance: Int, // Current diameter being checked.
-    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus], // Coreachable sets of size `diameter` for each vertex.
-    measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
-    measureFunction: MeasureFunction,
-    partitioner: Partitioner,
-    edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, (Int, Double)] = {
+      distance: Int, // Current diameter being checked.
+      hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus], // Coreachable sets of size `diameter` for each vertex.
+      measures: UniqueSortedRDD[ID, (Int, Double)], // (coreachable set size, centrality) at `diameter - 1`
+      measureFunction: MeasureFunction,
+      partitioner: Partitioner,
+      edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, (Int, Double)] = {
 
     val newHyperBallCounters = getNextHyperBalls(hyperBallCounters, partitioner, edges)
     val newMeasures = newHyperBallCounters
@@ -194,11 +194,11 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     }
   }
 
-  /** Returns hyperBallCounters for a diameter increased with 1.*/
+  /** Returns hyperBallCounters for a diameter increased with 1. */
   private def getNextHyperBalls(
-    hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus],
-    partitioner: Partitioner,
-    edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
+      hyperBallCounters: UniqueSortedRDD[ID, HyperLogLogPlus],
+      partitioner: Partitioner,
+      edges: HybridRDD[ID, ID]): UniqueSortedRDD[ID, HyperLogLogPlus] = {
     // For each vertex, add the HLL counter of every neighbor to the HLL counter
     // of the vertex. We don't need outer join because each vertex has a loop edge.
     edges
@@ -212,4 +212,3 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
   }
 
 }
-

@@ -12,8 +12,14 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
         "Aggregate to segmentation",
         Map(
           "apply_to_graph" -> ".cc",
-          "aggregate_age" -> "average", "aggregate_name" -> "count", "aggregate_gender" -> "majority_100",
-          "aggregate_id" -> "", "aggregate_location" -> "", "aggregate_income" -> ""))
+          "aggregate_age" -> "average",
+          "aggregate_name" -> "count",
+          "aggregate_gender" -> "majority_100",
+          "aggregate_id" -> "",
+          "aggregate_location" -> "",
+          "aggregate_income" -> "",
+        ),
+      )
       .project.segmentation("cc")
     val age = seg.vertexAttributes("age_average").runtimeSafeCast[Double]
     assert(age.rdd.collect.toMap.values.toSet == Set(19.25, 50.3, 2.0))

@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 @deprecated("CountEdges and ComputeMinMaxDouble are deprecated", "1.7.0")
-class DeprecatedBasicStatsTest extends FunSuite with TestGraphOp {
+class DeprecatedBasicStatsTest extends AnyFunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("compute basic stats - edge count") {
@@ -16,7 +16,7 @@ class DeprecatedBasicStatsTest extends FunSuite with TestGraphOp {
   }
 }
 
-class BasicStatsTest extends FunSuite with TestGraphOp {
+class BasicStatsTest extends AnyFunSuite with TestGraphOp {
   val g = ExampleGraph()().result
 
   test("compute basic stats - vertex count") {

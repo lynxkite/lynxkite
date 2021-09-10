@@ -47,4 +47,3 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
     assert(project2.vertexSet.rdd.count == 3)
   }
 }
-

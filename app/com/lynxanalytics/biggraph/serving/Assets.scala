@@ -1,12 +1,16 @@
 // Same as controllers.Assets, except with a custom 404 handler.
 package com.lynxanalytics.biggraph.serving
 
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 
-object Assets extends Controller {
+class Assets @javax.inject.Inject() (
+    implicit
+    ec: concurrent.ExecutionContext,
+    assets: controllers.Assets,
+    val controllerComponents: ControllerComponents)
+    extends BaseController {
   def at(path: String, file: String): Action[AnyContent] = {
-    val action = controllers.Assets.at(path, file)
+    val action = assets.at(path, file)
     Action.async { request =>
       action(request) map { result =>
         if (result.header.status == NOT_FOUND) notFound(request)

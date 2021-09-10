@@ -9,6 +9,8 @@ import org.apache.spark.ml
 import org.apache.spark.storage.StorageLevel
 
 object LogisticRegressionModelTrainer extends OpFromJson {
+  val elasticNetParamParameter = NewParameter("elasticNetParam", 0.0)
+  val regParamParameter = NewParameter("regParam", 0.0)
   class Input(numFeatures: Int) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until numFeatures).map {
@@ -16,15 +18,16 @@ object LogisticRegressionModelTrainer extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = LogisticRegressionModelTrainer(
     (j \ "maxIter").as[Int],
     (j \ "labelName").as[String],
-    (j \ "featureNames").as[List[String]])
+    (j \ "featureNames").as[List[String]],
+    elasticNetParamParameter.fromJson(j),
+    regParamParameter.fromJson(j),
+  )
 
   // Z-values, the wald test of the logistic regression, can be calculated by dividing coefficient
   // values to coefficient standard errors. See more information at http://www.real-statistics.com/
@@ -70,7 +73,10 @@ import LogisticRegressionModelTrainer._
 case class LogisticRegressionModelTrainer(
     maxIter: Int,
     labelName: String,
-    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
+    featureNames: List[String],
+    elasticNetParam: Double,
+    regParam: Double)
+    extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   override val isBinary = true
   override val generatesProbability = true
@@ -82,13 +88,15 @@ case class LogisticRegressionModelTrainer(
   override def toJson = Json.obj(
     "maxIter" -> maxIter,
     "labelName" -> labelName,
-    "featureNames" -> featureNames)
+    "featureNames" -> featureNames) ++
+    elasticNetParamParameter.toJson(elasticNetParam) ++
+    regParamParameter.toJson(regParam)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
@@ -103,6 +111,8 @@ case class LogisticRegressionModelTrainer(
     val logisticRegression = new ml.classification.LogisticRegression()
       .setMaxIter(maxIter)
       .setTol(0)
+      .setElasticNetParam(elasticNetParam)
+      .setRegParam(regParam)
       .setRawPredictionCol("rawClassification")
       .setPredictionCol("classification")
       .setProbabilityCol("probability")
@@ -118,20 +128,21 @@ case class LogisticRegressionModelTrainer(
       rowNames = Array("pseudo R-squared:", "threshold:", "F-score:"),
       columnData = Array(Array(mcfaddenR2, threshold, fMeasure)))
     val statistics = coefficientsTable + table
-    // "%18s".format("threshold: ") +
-    // f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
     val file = Model.newModelFile
     model.save(file.resolvedName)
-    output(o.model, Model(
-      method = "Logistic regression",
-      symbolicPath = file.symbolicName,
-      labelName = Some(labelName),
-      featureNames = featureNames,
-      statistics = Some(statistics)))
+    output(
+      o.model,
+      Model(
+        method = "Logistic regression",
+        symbolicPath = file.symbolicName,
+        labelName = Some(labelName),
+        featureNames = featureNames,
+        statistics = Some(statistics)),
+    )
   }
   // Helper method to find the best threshold.
   private def getFMeasureAndThreshold(
-    model: ml.classification.LogisticRegressionModel): (Double, Double) = {
+      model: ml.classification.LogisticRegressionModel): (Double, Double) = {
     val binarySummary = model.summary.asInstanceOf[ml.classification.BinaryLogisticRegressionSummary]
     val fMeasure = binarySummary.fMeasureByThreshold
     val maxFMeasure = fMeasure.select(sql.functions.max("F-Measure")).head().getDouble(0)
@@ -141,11 +152,11 @@ case class LogisticRegressionModelTrainer(
   }
   // Helper method to find the pseudo R-squared.
   private def getMcfaddenR2(
-    predictions: sql.DataFrame): Double = {
+      predictions: sql.DataFrame): Double = {
     val numData = predictions.count.toInt
     val labelSum = predictions.rdd.map(_.getAs[Double]("label")).sum
     if (labelSum == 0.0 || labelSum == numData) {
-      0.0 // In the extreme cases, all coefficients equal to 0 and R2 eqauls 0.
+      0.0 // In the extreme cases, all coefficients equal to 0 and R2 equals 0.
     } else {
       // The log likelihood of logistic regression is calculated according to the equation:
       // ll(rawPrediction) = Sigma(-log(1+e^(rawPrediction_i)) + y_i*rawPrediction_i).
@@ -168,9 +179,9 @@ case class LogisticRegressionModelTrainer(
   }
   // Helper method to get the table of coefficients and Z-values.
   private def getCoefficientsTable(
-    model: ml.classification.LogisticRegressionModel,
-    predictions: sql.DataFrame,
-    featureNames: List[String]): String = {
+      model: ml.classification.LogisticRegressionModel,
+      predictions: sql.DataFrame,
+      featureNames: List[String]): String = {
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
     val zValues: Array[Double] = computeZValues(coefficientsAndIntercept, predictions)
     val table = Tabulator.getTable(

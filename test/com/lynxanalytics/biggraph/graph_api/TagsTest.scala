@@ -2,10 +2,10 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import org.apache.commons.io.FileUtils
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import com.lynxanalytics.biggraph.TestTempDir
 
-class TagsTest extends FunSuite with TestTempDir {
+class TagsTest extends AnyFunSuite with TestTempDir {
   val storeFile = tempDir("TagsTest")
   def newRoot = {
     FileUtils.deleteDirectory(storeFile)

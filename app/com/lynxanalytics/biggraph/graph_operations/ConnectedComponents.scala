@@ -17,7 +17,7 @@ object ConnectedComponents extends OpFromJson {
   def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
 }
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
-  extends SparkOperation[GraphInput, Segmentation] {
+    extends SparkOperation[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
@@ -33,10 +33,10 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   override def toJson = Json.obj("maxEdgesProcessedLocally" -> maxEdgesProcessedLocally)
 
   def execute(
-    inputDatas: DataSet,
-    o: Segmentation,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Segmentation,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val inputEdges = inputs.es.rdd.values
       .map(edge => (edge.src, edge.dst))
@@ -61,7 +61,8 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   type ComponentId = ID
 
   def getComponents(
-    graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentId] = {
+      graph: SortedRDD[ID, Set[ID]],
+      iteration: Int): UniqueSortedRDD[ID, ComponentId] = {
     // Need to take a count of edges, and then operate on the graph.
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
@@ -90,7 +91,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
             if (rnd.nextBoolean) {
               // Host. All the neighbors are invited.
               (edges.map((_, n)) +
-                ((n, -1l))) // -1 is note to self: stay at home, host party.
+                ((n, -1L))) // -1 is note to self: stay at home, host party.
             } else { // Guest. Can always stay at home at least.
               Seq((n, n))
             }
@@ -101,7 +102,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     val moves = invitations.groupBySortedKey(partitioner).mapValuesWithKeys {
       case (n, invIt) =>
         val invSeq = invIt.toSeq.sorted
-        if (invSeq.size == 1 || invSeq.contains(-1l)) {
+        if (invSeq.size == 1 || invSeq.contains(-1L)) {
           // Nowhere to go, or we are hosting a party. Stay at home.
           n
         } else {
@@ -139,32 +140,31 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   }
 
   def getComponentsLocal(
-    graphRDD: SortedRDD[ID, Set[ID]]): UniqueSortedRDD[ID, ComponentId] = {
+      graphRDD: SortedRDD[ID, Set[ID]]): UniqueSortedRDD[ID, ComponentId] = {
     // Moves all the data to one worker and processes it there.
     val p = graphRDD.coalesce(1)
 
-    p.mapPartitions(
-      { it =>
-        val graph = it.toMap
-        val components = mutable.Map[ID, ComponentId]()
-        // Breadth-first search.
-        for (node <- graph.keys) {
-          if (!components.contains(node)) {
-            components(node) = node
-            val todo = mutable.Queue(node)
-            while (todo.size > 0) {
-              val v = todo.dequeue()
-              for (u <- graph(v)) {
-                if (!components.contains(u)) {
-                  components(u) = node
-                  todo.enqueue(u)
-                }
+    p.mapPartitions({ it =>
+      val graph = it.toMap
+      val components = mutable.Map[ID, ComponentId]()
+      // Breadth-first search.
+      for (node <- graph.keys) {
+        if (!components.contains(node)) {
+          components(node) = node
+          val todo = mutable.Queue(node)
+          while (todo.size > 0) {
+            val v = todo.dequeue()
+            for (u <- graph(v)) {
+              if (!components.contains(u)) {
+                components(u) = node
+                todo.enqueue(u)
               }
             }
           }
         }
-        assert(components.size == graph.size, s"${components.size} != ${graph.size}")
-        components.iterator
-      }).sortUnique(graphRDD.partitioner.get)
+      }
+      assert(components.size == graph.size, s"${components.size} != ${graph.size}")
+      components.iterator
+    }).sortUnique(graphRDD.partitioner.get)
   }
 }

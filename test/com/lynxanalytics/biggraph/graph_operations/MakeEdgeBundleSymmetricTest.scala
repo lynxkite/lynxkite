@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class MakeEdgeBundleSymmetricTest extends FunSuite with TestGraphOp {
+class MakeEdgeBundleSymmetricTest extends AnyFunSuite with TestGraphOp {
   test("Enhanced example graph") {
     val g = EnhancedExampleGraph()().result
     val op = MakeEdgeBundleSymmetric()

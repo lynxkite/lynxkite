@@ -14,9 +14,7 @@ object RegressionModelTrainer extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
@@ -28,7 +26,8 @@ import RegressionModelTrainer._
 case class RegressionModelTrainer(
     method: String,
     labelName: String,
-    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
+    featureNames: List[String])
+    extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
@@ -42,10 +41,10 @@ case class RegressionModelTrainer(
     "featureNames" -> featureNames)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
@@ -76,18 +75,20 @@ case class RegressionModelTrainer(
     val statistics: String = getStatistics(model, predictions, featureNames)
     val file = Model.newModelFile
     model.save(file.resolvedName)
-    output(o.model, Model(
-      method = method,
-      symbolicPath = file.symbolicName,
-      labelName = Some(labelName),
-      featureNames = featureNames,
-      statistics = Some(statistics)))
+    output(
+      o.model,
+      Model(
+        method = method,
+        symbolicPath = file.symbolicName,
+        labelName = Some(labelName),
+        featureNames = featureNames,
+        statistics = Some(statistics)))
   }
   // Helper method to compute more complex statistics.
   private def getStatistics(
-    model: ml.regression.LinearRegressionModel,
-    predictions: DataFrame,
-    featureNames: List[String]): String = {
+      model: ml.regression.LinearRegressionModel,
+      predictions: DataFrame,
+      featureNames: List[String]): String = {
     val summary = model.summary
     val r2 = summary.r2
     val MAPE = Model.getMAPE(predictions.select("prediction", "label"))

@@ -7,10 +7,12 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object RemoveNonSymmetricEdges extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val injection = edgeBundle(
-      symmetric.idSet, inputs.es.idSet, EdgeBundleProperties.embedding)
+      symmetric.idSet,
+      inputs.es.idSet,
+      EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }
@@ -23,10 +25,10 @@ case class RemoveNonSymmetricEdges() extends SparkOperation[GraphInput, Output] 
     new Output()(instance, inputs)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vsPart = inputs.vs.rdd.partitioner.get
     val es = inputs.es.rdd

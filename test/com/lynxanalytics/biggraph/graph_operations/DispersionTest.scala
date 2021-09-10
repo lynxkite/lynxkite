@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class DispersionTest extends FunSuite with TestGraphOp {
+class DispersionTest extends AnyFunSuite with TestGraphOp {
   test("two triangles sharing a common edge (both directions)") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(2, 3), 2 -> Seq(1, 3), 3 -> Seq()))().result
     val op = Dispersion()

@@ -36,10 +36,8 @@ angular.module('biggraph').factory('ViewSettings', function() {
     };
 
     scope.$on('$destroy', function() {
-      for (const item in that.drops) {
-        if (that.drops.hasOwnProperty(item)) {
-          that.drops[item].destroy();
-        }
+      for (const d of Object.values(that.drops)) {
+        d.destroy();
       }
       that.drops = {};
     });

@@ -24,9 +24,7 @@ object SampleEdgesFromSegmentation extends OpFromJson {
     val seg = vertexSet
     val belongsTo = edgeBundle(vs, seg)
   }
-  class Output(implicit
-      instance: MetaGraphOperationInstance,
-      input: Input) extends MagicOutput(instance) {
+  class Output(implicit instance: MetaGraphOperationInstance, input: Input) extends MagicOutput(instance) {
     val es = edgeBundle(input.vs.entity, input.vs.entity)
     val multiplicity = edgeAttribute[Double](es)
   }
@@ -36,7 +34,7 @@ object SampleEdgesFromSegmentation extends OpFromJson {
 }
 import SampleEdgesFromSegmentation._
 case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
-  extends SparkOperation[Input, Output] {
+    extends SparkOperation[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -48,16 +46,17 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // Takes a random sample of size numToGet from the pairs of values
   // from the vertices list. Assumes that the members of vertices are distinct.
   def sampleVertexPairs(
-    vertices: Seq[Long],
-    numToGet: Int,
-    rng: JDKRandomGenerator): Seq[(ID, ID)] = {
+      vertices: Seq[Long],
+      numToGet: Int,
+      rng: JDKRandomGenerator): Seq[(ID, ID)] = {
     if (numToGet == 0) {
       Seq()
     } else {
       val n = vertices.size.toLong * vertices.size.toLong
       assert(numToGet <= n, s"sampleVertexPairs was requested to sample $numToGet from $n")
       val uniform = new UniformIntegerDistribution(rng, 0, vertices.size - 1);
-      val set = mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
+      val set =
+        mutable.HashSet[(ID, ID)]() // ids of pairs collected so far. This is used to make sure they are distinct.
       set.sizeHint(numToGet)
       while (set.size < numToGet) {
         val id1 = uniform.sample()
@@ -70,9 +69,9 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   }
 
   def getApproximateBinomialDistributionSample(
-    n: Long,
-    p: Double,
-    rng: JDKRandomGenerator): Int = {
+      n: Long,
+      p: Double,
+      rng: JDKRandomGenerator): Int = {
     val sampler =
       if (n < Int.MaxValue) {
         new BinomialDistribution(rng, n.toInt, p)
@@ -101,8 +100,8 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // Each pair will have prob probability of being selected.
   // Assumes that the elements of vertices array are distinct.
   def sampleVertexPairs(
-    vertices: Iterable[Long],
-    rng: JDKRandomGenerator): Seq[(ID, ID)] = {
+      vertices: Iterable[Long],
+      rng: JDKRandomGenerator): Seq[(ID, ID)] = {
     // Sort the members array, because otherwise its order is non-deterministic.
     // (Depends on shuffling. This would cause a problem in getEdgeMultiplicities, where
     // the edges are joined with themselves.)
@@ -115,9 +114,9 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // Takes a sample from the set of edges that represent co-occurrences in
   // the segmentation. Each edge will have prob probability of being selected.
   def initialSampleEdges(
-    segIdAndMembersArray: SortedRDD[ID, Iterable[ID]],
-    partitioner: Partitioner,
-    seed: Long): RDD[(ID, ID)] = {
+      segIdAndMembersArray: SortedRDD[ID, Iterable[ID]],
+      partitioner: Partitioner,
+      seed: Long): RDD[(ID, ID)] = {
 
     segIdAndMembersArray.mapPartitionsWithIndex {
       case (pidx, it) =>
@@ -135,9 +134,9 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // and drop those pairs whose vertices are not present as endpoints
   // of preSelectedEdges.
   def getVertexToSegmentPairsForSampledEdges(
-    vsToSeg: RDD[(ID, ID)],
-    preSelectedEdges: RDD[(ID, ID)],
-    partitioner: Partitioner): SortedRDD[ID, ID] = {
+      vsToSeg: RDD[(ID, ID)],
+      preSelectedEdges: RDD[(ID, ID)],
+      partitioner: Partitioner): SortedRDD[ID, ID] = {
     val idSet = preSelectedEdges
       .flatMap {
         case (src, dst) => Seq(src -> (()), dst -> (()))
@@ -155,9 +154,9 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // EdgesFromSegmentation would create.)
   // Assumes that the pairs in vsToSeg are distinct.
   def getEdgeMultiplicities(
-    selectedEdges: RDD[(ID, ID)],
-    vsToSeg: RDD[(ID, ID)],
-    partitioner: Partitioner): RDD[((ID, ID), Int)] = {
+      selectedEdges: RDD[(ID, ID)],
+      vsToSeg: RDD[(ID, ID)],
+      partitioner: Partitioner): RDD[((ID, ID), Int)] = {
     val vsToSegRestricted =
       getVertexToSegmentPairsForSampledEdges(vsToSeg, selectedEdges, partitioner)
     val edgeToSrcSeg = selectedEdges
@@ -184,9 +183,9 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   // with parallel edges between them had higher probability of being
   // selected in the previous step.
   def resampleEdgesToCompensateMultiplicities(
-    preSelectedEdgesWithCounts: RDD[((ID, ID), Int)],
-    partitioner: Partitioner,
-    seed: Long): UniqueSortedRDD[ID, ((ID, ID), Int)] = {
+      preSelectedEdgesWithCounts: RDD[((ID, ID), Int)],
+      partitioner: Partitioner,
+      seed: Long): UniqueSortedRDD[ID, ((ID, ID), Int)] = {
     preSelectedEdgesWithCounts
       .mapPartitionsWithIndex {
         case (pidx, it) =>
@@ -220,10 +219,10 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val seedGenerator = new Random(seed)
@@ -237,11 +236,17 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
     val sampledEdgesPartitioner = rc.partitionerForNRows(expectedNumberOfPreSelectedEdges)
 
     val preSelectedEdges = initialSampleEdges(
-      segToMemberArray, sampledEdgesPartitioner, seedGenerator.nextLong())
+      segToMemberArray,
+      sampledEdgesPartitioner,
+      seedGenerator.nextLong())
     val preSelectedEdgesWithCounts = getEdgeMultiplicities(
-      preSelectedEdges, vsToSeg, sampledEdgesPartitioner)
+      preSelectedEdges,
+      vsToSeg,
+      sampledEdgesPartitioner)
     val filteredEdges = resampleEdgesToCompensateMultiplicities(
-      preSelectedEdgesWithCounts, sampledEdgesPartitioner, seedGenerator.nextLong())
+      preSelectedEdgesWithCounts,
+      sampledEdgesPartitioner,
+      seedGenerator.nextLong())
     output(o.es, filteredEdges.mapValues { case ((src, dst), _) => Edge(src, dst) })
     output(o.multiplicity, filteredEdges.mapValues { case (_, count) => count.toDouble })
   }

@@ -38,6 +38,7 @@ $SSH "$SU gcloud auth print-access-token | \
       $SU docker login -u oauth2accesstoken --password-stdin https://${CONTINENT}.gcr.io"
 $SSH "$SU docker pull -- $IMAGE"
 $SSH "$SU docker rm -f lynxkite || true"
+KITE_FRONTEND_CONFIG="${KITE_FRONTEND_CONFIG:-}"
 $SSH "$SU docker run \
   -d \
   --name lynxkite \
@@ -49,7 +50,7 @@ $SSH "$SU docker run \
   -e KITE_INSTANCE=$INSTANCE \
   -e KITE_TITLE=\"$KITE_TITLE\" \
   -e KITE_TAGLINE=\"$KITE_TAGLINE\" \
-  -e KITE_FRONTEND_CONFIG=${KITE_FRONTEND_CONFIG@Q:-} \
+  -e KITE_FRONTEND_CONFIG=${KITE_FRONTEND_CONFIG@Q} \
   -e KITE_DATA_COLLECTION=always \
   -e KITE_GOOGLE_CLIENT_SECRET=\"${KITE_GOOGLE_CLIENT_SECRET:-}\" \
   -e KITE_GOOGLE_CLIENT_ID=\"${KITE_GOOGLE_CLIENT_ID:-}\" \

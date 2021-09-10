@@ -3,9 +3,9 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class RandomWalkSampleTest extends FunSuite with TestGraphOp {
+class RandomWalkSampleTest extends AnyFunSuite with TestGraphOp {
   val g = SmallTestGraph(Map(
     0 -> Seq(1),
     1 -> Seq(2),

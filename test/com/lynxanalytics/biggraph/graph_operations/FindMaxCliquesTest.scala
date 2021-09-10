@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
-class FindMaxCliquesTest extends FunSuite with TestGraphOp {
+class FindMaxCliquesTest extends AnyFunSuite with TestGraphOp {
   test("triangle") {
     val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1))).result
     val op = FindMaxCliques(3, needsBothDirections = true)
@@ -27,10 +27,14 @@ class FindMaxCliquesTest extends FunSuite with TestGraphOp {
       40 -> Seq())).result
     val bTo = {
       val op = AddEdgeBundle(Seq(
-        0 -> 10, 1 -> 10, 2 -> 10,
-        1 -> 20, 2 -> 20,
+        0 -> 10,
+        1 -> 10,
+        2 -> 10,
+        1 -> 20,
+        2 -> 20,
         3 -> 30,
-        0 -> 40, 3 -> 40))
+        0 -> 40,
+        3 -> 40))
       op(op.vsA, g.vs)(op.vsB, s.vs).result
     }
     val check = {

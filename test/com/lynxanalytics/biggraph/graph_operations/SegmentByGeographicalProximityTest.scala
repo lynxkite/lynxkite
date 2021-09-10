@@ -4,9 +4,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Shapefile
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SegmentByGeographicalProximityTest extends FunSuite with TestGraphOp {
+class SegmentByGeographicalProximityTest extends AnyFunSuite with TestGraphOp {
   test("segment the ExampleGraph by geographical proximity") {
     val shapePath = getClass.getResource("/graph_operations/FindRegionTest/earth.shp").getPath
     val shapeFile = Shapefile(shapePath)

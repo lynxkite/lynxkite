@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SafeFutureTest extends FunSuite {
+class SafeFutureTest extends AnyFunSuite {
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration.Duration.Inf
 

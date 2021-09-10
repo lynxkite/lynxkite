@@ -18,7 +18,7 @@ object TripletMapping extends OpFromJson {
     val edges = edgeBundle(src, dst)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     // The list of outgoing edges.
     val srcEdges = vertexAttribute[Array[ID]](inputs.src.entity)
     // The list of incoming edges.
@@ -28,7 +28,7 @@ object TripletMapping extends OpFromJson {
 }
 // A negative sampleSize means no sampling.
 case class TripletMapping(sampleSize: Int = -1)
-  extends SparkOperation[TripletMapping.Input, TripletMapping.Output] {
+    extends SparkOperation[TripletMapping.Input, TripletMapping.Output] {
   import TripletMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -38,10 +38,10 @@ case class TripletMapping(sampleSize: Int = -1)
   override def toJson = Json.obj("sampleSize" -> sampleSize)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges =
       if (sampleSize >= 0) inputs.edges.rdd.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
@@ -98,7 +98,7 @@ object EdgeAndNeighborMapping extends OpFromJson {
     val edges = edgeBundle(src, dst)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     // The list of outgoing edges and neighbors.
     val srcEdges = vertexAttribute[EdgesAndNeighbors](inputs.src.entity)
     // The list of incoming edges and neighbors.
@@ -108,7 +108,7 @@ object EdgeAndNeighborMapping extends OpFromJson {
 }
 // A negative sampleSize means no sampling.
 case class EdgeAndNeighborMapping(sampleSize: Int = -1)
-  extends SparkOperation[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
+    extends SparkOperation[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
   import EdgeAndNeighborMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -118,10 +118,10 @@ case class EdgeAndNeighborMapping(sampleSize: Int = -1)
   override def toJson = Json.obj("sampleSize" -> sampleSize)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges =
       if (sampleSize >= 0) inputs.edges.rdd.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
@@ -136,7 +136,8 @@ case class EdgeAndNeighborMapping(sampleSize: Int = -1)
         .mapValues {
           case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
           case (_, None) => EdgesAndNeighbors.empty
-        })
+        },
+    )
 
     val dst = inputs.dst.rdd
     val byDst = edges
@@ -148,7 +149,8 @@ case class EdgeAndNeighborMapping(sampleSize: Int = -1)
         .mapValues {
           case (_, Some(it)) => EdgesAndNeighbors(it.map(_._1).toArray, it.map(_._2).toArray)
           case (_, None) => EdgesAndNeighbors.empty
-        })
+        },
+    )
   }
 }
 
@@ -163,16 +165,14 @@ object VertexToEdgeAttribute extends OpFromJson {
     val original = vertexAttribute[T](vertices)
     val target = edgeBundle(ignoredSrc, ignoredDst)
   }
-  class Output[T](implicit
-      instance: MetaGraphOperationInstance,
-      inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance, inputs: Input[T]) extends MagicOutput(instance) {
     val mappedAttribute = edgeAttribute[T](inputs.target.entity)(inputs.original.typeTag)
   }
 
   def srcAttribute[T](
-    attr: Attribute[T], edgeBundle: EdgeBundle)(
-    implicit
-    manager: MetaGraphManager): Attribute[T] = {
+      attr: Attribute[T],
+      edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): Attribute[T] = {
     import Scripting._
     val mapping = {
       val op = TripletMapping()
@@ -183,9 +183,9 @@ object VertexToEdgeAttribute extends OpFromJson {
   }
 
   def dstAttribute[T](
-    attr: Attribute[T], edgeBundle: EdgeBundle)(
-    implicit
-    manager: MetaGraphManager): Attribute[T] = {
+      attr: Attribute[T],
+      edgeBundle: EdgeBundle)(
+      implicit manager: MetaGraphManager): Attribute[T] = {
     import Scripting._
     val mapping = {
       val op = TripletMapping()
@@ -197,7 +197,7 @@ object VertexToEdgeAttribute extends OpFromJson {
   def fromJson(j: JsValue) = VertexToEdgeAttribute()
 }
 case class VertexToEdgeAttribute[T]()
-  extends SparkOperation[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
+    extends SparkOperation[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
   import VertexToEdgeAttribute._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
@@ -207,10 +207,10 @@ case class VertexToEdgeAttribute[T]()
   }
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val mapping = inputs.mapping.rdd
     val original = inputs.original.rdd
@@ -223,7 +223,8 @@ case class VertexToEdgeAttribute[T]()
       mapping.sortedJoin(original)
         .flatMap { case (vid, (edges, value)) => edges.map((_, value)) }
         .groupBySortedKey(target.partitioner.get)
-        .mapValues(values => values.head))
+        .mapValues(values => values.head),
+    )
   }
 }
 
@@ -234,20 +235,20 @@ object EdgesForVerticesFromEdgesAndNeighbors extends OpFromJson {
     val mapping = vertexAttribute[EdgesAndNeighbors](vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     // This output is None if the number of edges exceeds the threshold (maxNumEdges parameter).
     val edges = scalar[Option[Seq[(ID, Edge)]]]
   }
   def fromJson(j: JsValue) = EdgesForVerticesFromEdgesAndNeighbors(
     (j \ "srcIdSet").as[Set[ID]],
-    (j \ "dstIdSet").as[Option[Set[ID]]],
+    (j \ "dstIdSet").asOpt[Set[ID]],
     (j \ "maxNumEdges").as[Int])
 }
 case class EdgesForVerticesFromEdgesAndNeighbors(
     srcIdSet: Set[ID],
     dstIdSet: Option[Set[ID]], // Filter the edges by dst too if set.
     maxNumEdges: Int)
-  extends SparkOperation[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
+    extends SparkOperation[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
   import EdgesForVerticesFromEdgesAndNeighbors._
   @transient override lazy val inputs = new Input()
 
@@ -263,15 +264,15 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
   }
 
   override def toJson = Json.obj(
-    "srcIdSet" -> srcIdSet,
-    "dstIdSet" -> dstIdSet,
+    "srcIdSet" -> srcIdSet.toSeq.sorted,
+    "dstIdSet" -> dstIdSet.map(_.toSeq.sorted),
     "maxNumEdges" -> maxNumEdges)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val restricted = inputs.mapping.rdd.restrictToIdSet(srcIdSet.toIndexedSeq.sorted)
     val aggregatedEdges =
@@ -281,9 +282,10 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
             if (set == null) null
             else {
               val it = edgesAndNeighbors.map((edgeId, dstId) => edgeId -> Edge(srcId, dstId))
-              val byDst = if (dstIdSet.isDefined) {
-                it.filter { case (_, edge) => dstIdSet.get.contains(edge.dst) }
-              } else it
+              val byDst =
+                if (dstIdSet.isDefined) {
+                  it.filter { case (_, edge) => dstIdSet.get.contains(edge.dst) }
+                } else it
               if (set.size + byDst.size > maxNumEdges) {
                 null
               } else {
@@ -299,7 +301,8 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
               set1 ++= set2
               set1
             }
-        })
+        },
+      )
     output(
       o.edges,
       Option(aggregatedEdges).map(_.toIndexedSeq))

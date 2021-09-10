@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.apache.spark.sql.UDFRegistration
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql
 import com.lynxanalytics.biggraph.graph_operations
 
 object UDF {
@@ -26,54 +25,21 @@ object UDF {
     for (v <- set1 if set2 contains v) yield v
   }
 
-  import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
-  /**
-   * Custom aggregator for SQL queries.
-   *
-   * Computes the most frequent value in a String column.
-   * Null values are not counted.
-   */
-  class MostCommon extends UserDefinedAggregateFunction {
-    import org.apache.spark.sql.expressions.MutableAggregationBuffer
-    import org.apache.spark.sql.Row
-    import org.apache.spark.sql.types._
-    override def inputSchema: org.apache.spark.sql.types.StructType =
-      StructType(StructField("value", StringType) :: Nil)
-
-    override def bufferSchema: StructType = StructType(
-      StructField("map", MapType(StringType, LongType, valueContainsNull = false)) :: Nil)
-
-    override def dataType: DataType = StringType
-
-    override def deterministic: Boolean = true
-
-    override def initialize(buffer: MutableAggregationBuffer): Unit = {
-      buffer(0) = Map[String, Long]()
-    }
-
-    override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-      val map = buffer.getAs[Map[String, Long]](0)
-      Option(input.getString(0)) match {
-        case Some(key) =>
-          buffer(0) = map + (key -> (map.getOrElse(key, 0L) + 1L))
-        case None =>
-      }
-    }
-
-    override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
-      buffer1(0) = buffer1.getAs[Map[String, Long]](0) ++ buffer2.getAs[Map[String, Long]](0)
-    }
-
-    override def evaluate(buffer: Row): Any = {
-      // Select the max key by value first then key. This still yields deterministic results
-      // in case we have multiple elements with the same frequency.
-      val map = buffer.getAs[Map[String, Long]](0)
-      if (!map.isEmpty) {
-        map.maxBy(_.swap)._1
-      } else {
-        null
-      }
-    }
+  /** Custom aggregator for SQL queries.
+    *
+    * Computes the most frequent value in a String column. Null values are not counted.
+    */
+  private type Counts = Map[String, Long]
+  val mostCommon = new org.apache.spark.sql.expressions.Aggregator[String, Counts, String] {
+    def zero = Map[String, Long]()
+    def reduce(map: Counts, key: String): Counts =
+      if (key == null) map
+      else map + (key -> (map.getOrElse(key, 0L) + 1L))
+    def merge(map1: Counts, map2: Counts): Counts =
+      (map1.keySet ++ map2.keySet).toSeq.map(k => k -> (map1.getOrElse(k, 0L) + map2.getOrElse(k, 0L))).toMap
+    def finish(map: Counts): String = if (!map.isEmpty) map.maxBy(_.swap)._1 else null
+    def bufferEncoder: sql.Encoder[Counts] = implicitly(sql.catalyst.encoders.ExpressionEncoder[Counts])
+    def outputEncoder: sql.Encoder[String] = implicitly(sql.catalyst.encoders.ExpressionEncoder[String])
   }
 
   def java_method(): String = {
@@ -81,10 +47,10 @@ object UDF {
     "Never returned"
   }
 
-  def register(reg: UDFRegistration): Unit = {
+  def register(reg: sql.UDFRegistration): Unit = {
     reg.register("geodistance", geodistance _)
     reg.register("hash", hash _)
-    reg.register("most_common", new MostCommon)
+    reg.register("most_common", org.apache.spark.sql.functions.udaf(mostCommon))
     reg.register("string_intersect", string_intersect _)
     reg.register("java_method", java_method _)
   }

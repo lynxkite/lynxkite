@@ -12,13 +12,13 @@ object DeriveScalaScalar extends OpFromJson {
     val scalars = s.map(i => runtimeTypedScalar(Symbol(i._1), i._2.typeTag))
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance)
-    extends MagicOutput(instance) {
+      extends MagicOutput(instance) {
     val sc = scalar[T]
   }
 
   def deriveAndInferReturnType(
-    exprString: String,
-    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
+      exprString: String,
+      namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
 
     val paramTypesMap = namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
     val t = ScalaScript.compileAndGetType(exprString, paramTypesMap).returnType
@@ -28,15 +28,16 @@ object DeriveScalaScalar extends OpFromJson {
   }
 
   def derive[T: TypeTag](
-    exprString: String,
-    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
+      exprString: String,
+      namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
 
     val paramTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
     DeriveScala.checkInputTypes(paramTypes.toMap[String, TypeTag[_]], exprString)
 
     val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
     val op = DeriveScalaScalar(
-      exprString, paramTypes.map { case (k, v) => k -> SerializableType(v) })(tt)
+      exprString,
+      paramTypes.map { case (k, v) => k -> SerializableType(v) })(tt)
 
     import Scripting._
     op(op.scalars, namedScalars.map(_._2)).result.sc.runtimeSafeCast[T]
@@ -53,7 +54,7 @@ import DeriveScalaScalar._
 case class DeriveScalaScalar[T: TypeTag](
     expr: String,
     scalarParams: Seq[(String, SerializableType[_])])
-  extends SparkOperation[Input, Output[T]] {
+    extends SparkOperation[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)
@@ -69,10 +70,10 @@ case class DeriveScalaScalar[T: TypeTag](
     new Output()(tt, instance)
 
   def execute(
-    inputDatas: DataSet,
-    o: Output[T],
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
+      inputDatas: DataSet,
+      o: Output[T],
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val scalarValues = inputs.scalars.map(_.value)
     val paramTypes = scalarParams.toMap.mapValues(_.typeTag).view.force
@@ -89,4 +90,3 @@ case class DeriveScalaScalar[T: TypeTag](
     output(o.sc, result.asInstanceOf[T])
   }
 }
-

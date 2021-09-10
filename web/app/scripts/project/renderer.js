@@ -53,7 +53,6 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           // Build the scene from the given edges.
           // Geometry generation. 8 points and 12 triangles are generated for each edge.
           const n = edges.length;
-          /* globals Float32Array, Uint32Array */
           // Position of this point.
           const ps = new Float32Array(n * 8 * 3 * 3);
           // Index array.

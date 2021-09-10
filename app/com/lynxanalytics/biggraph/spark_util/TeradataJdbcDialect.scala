@@ -56,4 +56,3 @@ class TeradataDialect extends JdbcDialect {
     }
   }
 }
-

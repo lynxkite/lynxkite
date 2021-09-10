@@ -5,7 +5,7 @@
 
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
@@ -13,7 +13,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
+import com.lynxanalytics.biggraph.serving.{AccessControl, User, Utils}
 import java.io.File
 import java.util.UUID
 
@@ -58,7 +58,8 @@ case class CommonProjectState(
       scalarGUIDs.mapValues(change),
       segmentations.mapValues(_.mapGuids(change)),
       notes,
-      elementMetadata)
+      elementMetadata,
+    )
   }
   def gUID: UUID = {
     val buffer = new java.io.ByteArrayOutputStream
@@ -82,15 +83,15 @@ case class CommonProjectState(
   }
 }
 object CommonProjectState {
-  val emptyState = CommonProjectState(
-    None, Map(), None, Map(), Map(), Map(), "", Map())
+  val emptyState = CommonProjectState(None, Map(), None, Map(), Map(), Map(), "", Map())
 
   // We need to define this manually because of the cyclic reference.
   implicit val fSegmentationState = new json.Format[SegmentationState] {
     def reads(j: json.JsValue): json.JsResult[SegmentationState] = {
+      import MetaGraphManager.StringAsUUID
       json.JsSuccess(SegmentationState(
         jsonToCommonProjectState(j \ "state"),
-        (j \ "belongsToGUID").as[Option[UUID]]))
+        (j \ "belongsToGUID").asOpt[String].map(_.asUUID)))
     }
     def writes(o: SegmentationState): json.JsValue =
       Json.obj(
@@ -99,7 +100,7 @@ object CommonProjectState {
   }
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
-  private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
+  private def jsonToCommonProjectState(j: json.JsReadable): CommonProjectState =
     j.as[CommonProjectState]
 }
 
@@ -198,7 +199,10 @@ sealed trait ProjectViewer {
   private def feScalar(name: String)(implicit epm: EntityProgressManager): Option[FEScalar] = {
     if (scalars.contains(name)) {
       Some(ProjectViewer.feScalar(
-        scalars(name), name, getScalarNote(name), getElementMetadata(ScalarKind, name)))
+        scalars(name),
+        name,
+        getScalarNote(name),
+        getElementMetadata(ScalarKind, name)))
     } else {
       None
     }
@@ -216,18 +220,24 @@ sealed trait ProjectViewer {
     val eb = Option(edgeBundle).map(_.gUID.toString).getOrElse("")
 
     def feAttributeList(
-      attributes: Iterable[(String, Attribute[_])],
-      kind: ElementKind): List[FEAttribute] = {
+        attributes: Iterable[(String, Attribute[_])],
+        kind: ElementKind): List[FEAttribute] = {
       attributes.toSeq.sortBy(_._1).map {
         case (name, attr) => ProjectViewer.feAttribute(
-          attr, name, getElementNote(kind, name), getElementMetadata(kind, name))
+            attr,
+            name,
+            getElementNote(kind, name),
+            getElementMetadata(kind, name))
       }.toList
     }
 
     def feScalarList(scalars: Iterable[(String, Scalar[_])]): List[FEScalar] = {
       scalars.toSeq.sortBy(_._1).map {
         case (name, scalar) => ProjectViewer.feScalar(
-          scalar, name, getScalarNote(name), getElementMetadata(ScalarKind, name))
+            scalar,
+            name,
+            getScalarNote(name),
+            getElementMetadata(ScalarKind, name))
       }.toList
     }
 
@@ -244,22 +254,25 @@ sealed trait ProjectViewer {
       undoOp = "",
       redoOp = "",
       readACL = "",
-      writeACL = "")
+      writeACL = "",
+    )
   }
 
   def allOffspringFESegmentations(
-    rootName: String, rootRelativePath: String = "")(
-    implicit
-    epm: EntityProgressManager): List[FESegmentation] = {
+      rootName: String,
+      rootRelativePath: String = "")(
+      implicit epm: EntityProgressManager): List[FESegmentation] = {
     sortedSegmentations.flatMap { segmentation =>
       segmentation.toFESegmentation(rootName, rootRelativePath) +:
         segmentation.allOffspringFESegmentations(
-          rootName, rootRelativePath + segmentation.segmentationName + SubProject.separator)
+          rootName,
+          rootRelativePath + segmentation.segmentationName + SubProject.separator)
     }
   }
 
   protected def maybeProtoTable(
-    maybe: Any, tableName: String): Option[(String, ProtoTable)] = {
+      maybe: Any,
+      tableName: String): Option[(String, ProtoTable)] = {
     maybe match {
       case null => None
       case _ => Some(tableName -> getSingleLocalProtoTable(tableName))
@@ -313,7 +326,11 @@ sealed trait ProjectViewer {
       case BelongsToTableName =>
         throw new AssertionError("Only segmentations have a BelongsTo table")
       case _ => {
-        val correctTableNames = List(ScalarTableName, VertexTableName, EdgeTableName, EdgeAttributeTableName,
+        val correctTableNames = List(
+          ScalarTableName,
+          VertexTableName,
+          EdgeTableName,
+          EdgeAttributeTableName,
           BelongsToTableName).mkString(", ")
         throw new AssertionError(
           s"Not recognized table name '$tableName'. Correct table names: $correctTableNames")
@@ -360,11 +377,11 @@ object ProjectViewer {
     Seq(typeOf[Double]).exists(e.typeTag.tpe <:< _)
 
   def feAttribute[T](
-    e: Attribute[T],
-    name: String,
-    note: String,
-    metadata: Map[String, String],
-    isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
+      e: Attribute[T],
+      name: String,
+      note: String,
+      metadata: Map[String, String],
+      isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
     val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]], typeOf[(Double, Double)])
       .exists(e.typeTag.tpe <:< _)
@@ -382,11 +399,11 @@ object ProjectViewer {
   }
 
   def feScalar[T](
-    e: Scalar[T],
-    name: String,
-    note: String,
-    metadata: Map[String, String],
-    isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEScalar = {
+      e: Scalar[T],
+      name: String,
+      note: String,
+      metadata: Map[String, String],
+      isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEScalar = {
     implicit val tt = e.typeTag
     val state = epm.getComputedScalarValue(e)
     FEScalar(
@@ -399,13 +416,14 @@ object ProjectViewer {
       isInternal,
       state.computeProgress,
       state.error.map(Utils.formatThrowable(_)),
-      state.value.map(graph_operations.DynamicValue.convert(_)))
+      state.value.map(graph_operations.DynamicValue.convert(_)),
+    )
   }
 }
 
 // ProjectViewer for the root state.
 class RootProjectViewer(val rootState: CommonProjectState)(implicit val manager: MetaGraphManager)
-  extends ProjectViewer {
+    extends ProjectViewer {
   val state = rootState
   def rootViewer = this
   def editor: RootProjectEditor = new RootProjectEditor(state)
@@ -419,7 +437,7 @@ class RootProjectViewer(val rootState: CommonProjectState)(implicit val manager:
 
 // Specialized ProjectViewer for SegmentationStates.
 class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String)
-  extends ProjectViewer {
+    extends ProjectViewer {
 
   implicit val manager = parent.manager
   val rootState = parent.rootState
@@ -441,30 +459,40 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     val segmentationIds = graph_operations.IdAsAttribute.run(vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(aop.connectionBySrc, graph_operations.HybridEdgeBundle.byDst(belongsTo))(
-      aop.attr, segmentationIds).result.attr
+      aop.attr,
+      segmentationIds).result.attr
   }
 
   lazy val membersAttribute: Attribute[Vector[ID]] = {
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(
-      aop.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(belongsTo))(
-        aop.attr, parentIds).result.attr
+      aop.connectionBySrc,
+      graph_operations.HybridEdgeBundle.bySrc(belongsTo))(
+      aop.attr,
+      parentIds).result.attr
   }
 
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
     Some(ProjectViewer.feAttribute(
-      membersAttribute, "#members", note = "", metadata = Map(), isInternal = true))
+      membersAttribute,
+      "#members",
+      note = "",
+      metadata = Map(),
+      isInternal = true))
 
   val equivalentUIAttributeTitle = s"segmentation[$segmentationName]"
 
   def equivalentUIAttribute()(implicit epm: EntityProgressManager): FEAttribute =
     ProjectViewer.feAttribute(
-      belongsToAttribute, equivalentUIAttributeTitle, note = "", metadata = Map())
+      belongsToAttribute,
+      equivalentUIAttributeTitle,
+      note = "",
+      metadata = Map())
 
   def toFESegmentation(
-    rootName: String,
-    rootRelativePath: String = "")(implicit epm: EntityProgressManager): FESegmentation = {
+      rootName: String,
+      rootRelativePath: String = "")(implicit epm: EntityProgressManager): FESegmentation = {
     val bt =
       if (belongsTo == null) null
       else belongsTo.gUID.toString
@@ -518,12 +546,13 @@ class CheckpointRepository(val baseDir: String) {
   def checkpointFileName(checkpoint: String): File =
     new File(baseDirFile, s"${checkpointFilePrefix}${checkpoint}")
 
-  def allCheckpoints: Map[String, CheckpointObject] =
+  def allValidCheckpoints: Map[String, CheckpointObject] =
     baseDirFile
       .list
       .filter(_.startsWith(checkpointFilePrefix))
       .map(fileName => fileName.drop(checkpointFilePrefix.length))
-      .map(cp => cp -> readCheckpoint(cp))
+      // Ignore broken checkpoints.
+      .flatMap(cp => util.Try(readCheckpoint(cp)).toOption.map(cp -> _))
       .toMap
 
   def saveCheckpointedState(checkpoint: String, state: CheckpointObject): Unit = {
@@ -774,10 +803,10 @@ sealed trait ProjectEditor {
     pullBackEdges(edgeBundle, edgeAttributes.toIndexedSeq, newEB, injection)
   }
   def pullBackEdges(
-    origEdgeBundle: EdgeBundle,
-    origEAttrs: Seq[(String, Attribute[_])],
-    newEdgeBundle: EdgeBundle,
-    pullBundle: EdgeBundle): Unit = {
+      origEdgeBundle: EdgeBundle,
+      origEAttrs: Seq[(String, Attribute[_])],
+      newEdgeBundle: EdgeBundle,
+      pullBundle: EdgeBundle): Unit = {
 
     assert(
       pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
@@ -820,9 +849,12 @@ sealed trait ProjectEditor {
     if (origEB != null) {
       val iop = graph_operations.InducedEdgeBundle()
       val induction = iop(
-        iop.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
-          iop.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
-            iop.edges, origEB).result
+        iop.srcMapping,
+        graph_operations.ReverseEdges.run(pullBundle))(
+        iop.dstMapping,
+        graph_operations.ReverseEdges.run(pullBundle))(
+        iop.edges,
+        origEB).result
       pullBackEdges(origEB, origEAttrs, induction.induced, induction.embedding)
     }
 
@@ -831,16 +863,20 @@ sealed trait ProjectEditor {
       seg.segmentationState = segState
       val op = graph_operations.InducedEdgeBundle(induceDst = false)
       seg.belongsTo = op(
-        op.srcMapping, graph_operations.ReverseEdges.run(pullBundle))(
-          op.edges, seg.belongsTo).result.induced
+        op.srcMapping,
+        graph_operations.ReverseEdges.run(pullBundle))(
+        op.edges,
+        seg.belongsTo).result.induced
     }
 
     if (isSegmentation) {
       val seg = asSegmentation
       val op = graph_operations.InducedEdgeBundle(induceSrc = false)
       seg.belongsTo = op(
-        op.dstMapping, graph_operations.ReverseEdges.run(pullBundle))(
-          op.edges, origBelongsTo.get).result.induced
+        op.dstMapping,
+        graph_operations.ReverseEdges.run(pullBundle))(
+        op.edges,
+        origBelongsTo.get).result.induced
     }
   }
 
@@ -850,8 +886,8 @@ sealed trait ProjectEditor {
 // Editor that holds the state.
 class RootProjectEditor(
     initialState: CommonProjectState)(
-    implicit
-    val manager: MetaGraphManager) extends ProjectEditor {
+    implicit val manager: MetaGraphManager)
+    extends ProjectEditor {
   var rootState = initialState
 
   def state = rootState
@@ -870,7 +906,8 @@ class RootProjectEditor(
 // Specialized editor for a SegmentationState.
 class SegmentationEditor(
     val parent: ProjectEditor,
-    val segmentationName: String) extends ProjectEditor {
+    val segmentationName: String)
+    extends ProjectEditor {
 
   implicit val manager = parent.manager
 
@@ -929,8 +966,8 @@ class SegmentationEditor(
 // Represents a mutable, named workspace. It can be seen as a modifiable pointer into the
 // checkpoint tree with some additional metadata. WorkspaceFrame's data is persisted using tags.
 class WorkspaceFrame(path: SymbolPath)(
-    implicit
-    manager: MetaGraphManager) extends ObjectFrame(path) {
+    implicit manager: MetaGraphManager)
+    extends ObjectFrame(path) {
   // The farthest checkpoint available in the current redo sequence
   private def farthestCheckpoint: String = get(rootDir / "!farthestCheckpoint")
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "!farthestCheckpoint", x)
@@ -972,9 +1009,10 @@ class WorkspaceFrame(path: SymbolPath)(
   }
 
   override def toListElementFE()(implicit epm: EntityProgressManager) = {
-    val ot = if (workspace.isWizard) {
-      if (workspace.inProgress) "wizard-in-progress" else "wizard"
-    } else "workspace"
+    val ot =
+      if (workspace.isWizard) {
+        if (workspace.inProgress) "wizard-in-progress" else "wizard"
+      } else "workspace"
     FEEntryListElement(name = name, objectType = ot, icon = ot)
   }
 
@@ -1002,14 +1040,15 @@ object SubProject {
 }
 
 class SnapshotFrame(path: SymbolPath)(
-    implicit
-    manager: MetaGraphManager) extends ObjectFrame(path) {
+    implicit manager: MetaGraphManager)
+    extends ObjectFrame(path) {
   SubProject.validateName(path.last.name)
 
   def initialize(state: BoxOutputState) = {
     set(rootDir / "!objectType", "snapshot")
     checkpoint = manager.checkpointRepo.checkpointState(
-      CheckpointObject(snapshot = Some(state)), prevCheckpoint = "").checkpoint.get
+      CheckpointObject(snapshot = Some(state)),
+      prevCheckpoint = "").checkpoint.get
   }
 
   override def toListElementFE()(implicit epm: EntityProgressManager) = {
@@ -1033,8 +1072,8 @@ class SnapshotFrame(path: SymbolPath)(
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
-    implicit
-    manager: MetaGraphManager) extends DirectoryEntry(path) {
+    implicit manager: MetaGraphManager)
+    extends DirectoryEntry(path) {
   val name = path.toString
 
   // Current checkpoint of the project
@@ -1069,8 +1108,8 @@ abstract class ObjectFrame(path: SymbolPath)(
 }
 
 class Directory(path: SymbolPath)(
-    implicit
-    manager: MetaGraphManager) extends DirectoryEntry(path) {
+    implicit manager: MetaGraphManager)
+    extends DirectoryEntry(path) {
   // Returns the list of all directories contained in this directory.
   def listDirectoriesRecursively: Seq[Directory] = {
     val dirs = list.filter(_.isDirectory).map(_.asDirectory)
@@ -1102,8 +1141,8 @@ object Directory {
 
 // May be a directory a project frame or a table.
 class DirectoryEntry(val path: SymbolPath)(
-    implicit
-    manager: MetaGraphManager) extends AccessControl {
+    implicit manager: MetaGraphManager)
+    extends AccessControl {
 
   override def toString = path.toString
   override def equals(p: Any) =
@@ -1154,7 +1193,7 @@ class DirectoryEntry(val path: SymbolPath)(
   }
   def writeAllowedFrom(user: User): Boolean = {
     user.isAdmin ||
-      (transitiveReadAllowedFrom(user, parent) && transitiveWriteAllowedFrom(user, Some(this)))
+    (transitiveReadAllowedFrom(user, parent) && transitiveWriteAllowedFrom(user, Some(this)))
   }
 
   protected def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
@@ -1163,8 +1202,8 @@ class DirectoryEntry(val path: SymbolPath)(
   protected def transitiveWriteAllowedFrom(user: User, p: Option[DirectoryEntry]): Boolean = {
     // The parent of a directory is empty if and only if it is the root directory.
     p.isEmpty ||
-      (p.get.exists && p.get.localWriteAllowedFrom(user)) ||
-      (!p.get.exists && transitiveWriteAllowedFrom(user, p.get.parent))
+    (p.get.exists && p.get.localWriteAllowedFrom(user)) ||
+    (!p.get.exists && transitiveWriteAllowedFrom(user, p.get.parent))
   }
   protected def localReadAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
