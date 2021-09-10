@@ -75,8 +75,7 @@ export EXECUTOR_MEMORY=1g
 # For a YARN setup, this options is mandatory.
 # export NUM_EXECUTORS=5
 
-# Specify the number of cores per executor LynxKite should use. For local mode, you
-# can set it to * to use as many cores as available.
+# Specify the number of cores per executor LynxKite should use.
 export NUM_CORES_PER_EXECUTOR=4
 
 # Specify how much memory is available for LynxKite on the master machine in megabytes.
@@ -143,7 +142,7 @@ export KITE_EXTRA_JARS=
 # encryption. Setting this to <random> will regenerate a secret key at each restart.
 # More details can be found
 # here (https://playframework.com/documentation/latest/ApplicationSecret).
-# export KITE_APPLICATION_SECRET='<random>'
+export KITE_APPLICATION_SECRET='<random>'
 
 # Specify the port for the LynxKite HTTPS server to listen on. Must be >=1000.
 # export KITE_HTTPS_PORT=2201
