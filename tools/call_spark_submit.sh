@@ -97,6 +97,8 @@ mode=${residual_args[0]}
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
 final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
 final_java_opts="${java_opts} ${java_args[@]}"
+# Quick fix for https://github.com/lynxkite/lynxkite/issues/200.
+final_java_opts="${final_java_opts/user.dir=\/\//user.dir=\/}"
 
 # Cannot do this earlier, as the wrapping script is written in a -e hostile way. :(
 set -eo pipefail
