@@ -58,10 +58,10 @@ libraryDependencies ++= Seq(
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Generate java from proto files. Used by Sphynx.
-  "io.grpc" % "grpc-protobuf" % "1.39.0",
-  "io.grpc" % "grpc-stub" % "1.39.0",
-  "io.grpc" % "grpc-netty" % "1.39.0",
-  "com.google.protobuf" % "protobuf-java" % "3.9.2",
+  "io.grpc" % "grpc-protobuf" % "1.41.0",
+  "io.grpc" % "grpc-stub" % "1.41.0",
+  "io.grpc" % "grpc-netty" % "1.41.0",
+  "com.google.protobuf" % "protobuf-java" % "3.18.0",
   // Used for encrypted connection with Sphynx.
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
   // This indirect dependency of ours is broken on Maven.
