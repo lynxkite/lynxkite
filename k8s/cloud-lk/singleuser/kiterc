@@ -21,3 +21,4 @@ export ORDERED_SPHYNX_DATA_DIR=$HOME/.kite4/sphynx/ordered
 export UNORDERED_SPHYNX_DATA_DIR=$HOME/.kite4/sphynx/unordered
 export KITE_ALLOW_PYTHON=yes
 export KITE_DATA_COLLECTION=always
+export KITE_DEFAULT_WRITE_ACL='*'
