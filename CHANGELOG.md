@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Upgraded to PyTorch Geometric (PyG) 2.0.1. [#206](https://github.com/lynxkite/lynxkite/pull/206)
+
 ### 4.3.0
 
 - Upgraded to Apache Spark 3.1.2. This also brought us up to Scala 2.12, Java 11,
