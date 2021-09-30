@@ -322,26 +322,19 @@ class UserController @javax.inject.Inject() (
     } else {
       log.info(s"$usersFile does not exist. Starting with empty user registry.")
     }
-    // Initialize the root directory with default ACLs if not exists
-    createDirIfNotExists("", "*", "")
     // Create home directories for users who don't have it
     for (u <- users.values) {
       createHomeDirectoryIfNotExists(u.toUser)
     }
   }
 
-  private def createDirIfNotExists(dirName: String, readACL: String, writeACL: String) = {
-    val entry = DirectoryEntry.fromName(dirName)
+  private def createHomeDirectoryIfNotExists(u: User) = {
+    val entry = DirectoryEntry.fromName(u.home)
     if (!entry.exists) {
       val dir = entry.asNewDirectory()
-      dir.readACL = readACL
-      dir.writeACL = writeACL
+      dir.readACL = u.email
+      dir.writeACL = u.email
     }
-  }
-
-  private def createHomeDirectoryIfNotExists(u: User) = {
-    createDirIfNotExists(User.dir, "*", "")
-    createDirIfNotExists(u.home, u.email, u.email)
   }
 
   // Saves user data to usersFile.

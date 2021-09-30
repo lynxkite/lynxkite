@@ -11,6 +11,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.serving.{AccessControl, User, Utils}
@@ -1162,10 +1163,10 @@ class DirectoryEntry(val path: SymbolPath)(
     existing(tag).map(manager.getTag(_)).getOrElse(default)
   }
 
-  def readACL: String = get(rootDir / "!readACL", "*")
+  def readACL: String = get(rootDir / "!readACL", DirectoryEntry.defaultReadACL)
   def readACL_=(x: String): Unit = set(rootDir / "!readACL", x)
 
-  def writeACL: String = get(rootDir / "!writeACL", "*")
+  def writeACL: String = get(rootDir / "!writeACL", DirectoryEntry.defaultWriteACL)
   def writeACL_=(x: String): Unit = set(rootDir / "!writeACL", x)
 
   // Some simple ACL definitions for object creation.
@@ -1273,9 +1274,12 @@ class DirectoryEntry(val path: SymbolPath)(
   }
   def asNewDirectory(): Directory = {
     assert(!exists, s"Entry '$path' already exists")
+    for (p <- parent) {
+      if (!p.exists) p.asNewDirectory
+    }
     val res = new Directory(path)
-    res.readACL = "*"
-    res.writeACL = ""
+    res.readACL = DirectoryEntry.defaultReadACL
+    res.writeACL = DirectoryEntry.defaultWriteACL
     res
   }
 
@@ -1296,6 +1300,8 @@ class DirectoryEntry(val path: SymbolPath)(
 }
 
 object DirectoryEntry {
+  val defaultReadACL = LoggedEnvironment.envOrElse("KITE_DEFAULT_READ_ACL", "*")
+  val defaultWriteACL = LoggedEnvironment.envOrElse("KITE_DEFAULT_WRITE_ACL", "")
   val root = SymbolPath("projects")
 
   def rootDirectory(implicit metaManager: MetaGraphManager) = new Directory(SymbolPath())
