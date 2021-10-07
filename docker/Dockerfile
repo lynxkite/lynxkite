@@ -16,8 +16,8 @@ ENV ADD_TO_PYTHON_JAIL /opt/conda/lib
 # Install dependencies early so they are in a low layer.
 COPY stage/conf/SPARK_VERSION /lynxkite/conf/SPARK_VERSION
 COPY stage/tools/install_spark.sh /lynxkite/tools/install_spark.sh
-COPY stage/sphynx/python/install-dependencies.sh /lynxkite/sphynx/python/install-dependencies.sh
-RUN /lynxkite/tools/install_spark.sh /spark && /lynxkite/sphynx/python/install-dependencies.sh
+COPY stage/sphynx/python/env.yml /lynxkite/sphynx/python/env.yml
+RUN /lynxkite/tools/install_spark.sh /spark && conda env update --file /lynxkite/sphynx/python/env.yml
 
 # The user has to configure these.
 ENV KITE_MASTER_MEMORY_MB 1024

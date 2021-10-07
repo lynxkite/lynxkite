@@ -1,0 +1,36 @@
+# Install this before running "make":
+#
+#   conda update env -f conda-env.yml
+#
+channels:
+- conda-forge
+- pytorch
+- pyg
+dependencies:
+# For LynxKite backend.
+- sbt
+# For LynxKite frontend.
+- nodejs
+- yarn
+# For Sphynx.
+- go
+# For NetworKit.
+- compilers
+- swig
+- libnetworkit
+- libtlx
+# For Python and ML.
+- python>=3.8
+- numpy
+- pandas
+- scikit-learn
+- pyarrow
+- pytorch==1.9.0
+- cpuonly
+- pyg==2.0.1
+# For Python API and tools.
+- mypy
+- ruamel.yaml
+- requests
+- typed-ast
+- types-requests

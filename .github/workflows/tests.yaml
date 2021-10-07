@@ -38,14 +38,18 @@ jobs:
     - name: Cache Conda
       uses: actions/cache@v2
       with:
-        path: ~/.conda
-        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Test backend with Spark
-      uses: ./github-actions/build
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        command: make backend-test-spark
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test backend with Spark
+      shell: bash -l {0} # Sets Conda environment.
+      run: make backend-test-spark
 
   backend-test-sphynx:
     name: Backend test with Sphynx
@@ -84,14 +88,18 @@ jobs:
     - name: Cache Conda
       uses: actions/cache@v2
       with:
-        path: ~/.conda
-        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Test backend with Sphynx
-      uses: ./github-actions/build
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        command: make backend-test-sphynx
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test backend with Sphynx
+      shell: bash -l {0} # Sets Conda environment.
+      run: make backend-test-sphynx
 
   frontend-test:
     name: Frontend test
@@ -130,17 +138,21 @@ jobs:
     - name: Cache Conda
       uses: actions/cache@v2
       with:
-        path: ~/.conda
-        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Test frontend
-      uses: ./github-actions/build
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        command: xvfb-run -a make frontend-test
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test frontend
+      shell: bash -l {0} # Sets Conda environment.
+      run: xvfb-run -a make frontend-test
 
   python-test:
-    name: Python test
+    name: Python API test
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
@@ -176,11 +188,15 @@ jobs:
     - name: Cache Conda
       uses: actions/cache@v2
       with:
-        path: ~/.conda
-        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
         restore-keys: |
           ${{ runner.os }}-conda
-    - name: Test Python API
-      uses: ./github-actions/build
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        command: make remote_api-test
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test Python API
+      shell: bash -l {0} # Sets Conda environment.
+      run: make remote_api-test
