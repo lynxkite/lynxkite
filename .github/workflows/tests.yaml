@@ -97,7 +97,7 @@ jobs:
       with:
         environment-file: conda-env.yml
         use-only-tar-bz2: true # For caching.
-    - name: Test backend with Spark
+    - name: Test backend with Sphynx
       shell: bash -l {0} # Sets Conda environment.
       run: make backend-test-sphynx
 
@@ -147,7 +147,7 @@ jobs:
       with:
         environment-file: conda-env.yml
         use-only-tar-bz2: true # For caching.
-    - name: Test backend with Spark
+    - name: Test frontend
       shell: bash -l {0} # Sets Conda environment.
       run: xvfb-run -a make frontend-test
 
@@ -197,6 +197,6 @@ jobs:
       with:
         environment-file: conda-env.yml
         use-only-tar-bz2: true # For caching.
-    - name: Test backend with Spark
+    - name: Test Python API
       shell: bash -l {0} # Sets Conda environment.
       run: make remote_api-test
