@@ -49,4 +49,154 @@ jobs:
         use-only-tar-bz2: true # For caching.
     - name: Test backend with Spark
       shell: bash -l {0} # Sets Conda environment.
-      run: make #backend-test-spark
+      run: make backend-test-spark
+
+  backend-test-sphynx:
+    name: Backend test with Sphynx
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test backend with Spark
+      shell: bash -l {0} # Sets Conda environment.
+      run: make backend-test-sphynx
+
+  frontend-test:
+    name: Frontend test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test backend with Spark
+      shell: bash -l {0} # Sets Conda environment.
+      run: xvfb-run -a make frontend-test
+
+  python-test:
+    name: Python API test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm
+    - name: Cache SBT stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2
+    - name: Cache Go stuff
+      uses: actions/cache@v2
+      with:
+        path: ~/go
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go
+    - name: Cache Spark
+      uses: actions/cache@v2
+      with:
+        path: ~/spark
+        key: ${{ runner.os }}-spark-${{ hashFiles('**/SPARK_VERSION') }}
+        restore-keys: |
+          ${{ runner.os }}-spark
+    - name: Cache Conda
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-conda
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        environment-file: conda-env.yml
+        use-only-tar-bz2: true # For caching.
+    - name: Test backend with Spark
+      shell: bash -l {0} # Sets Conda environment.
+      run: make remote_api-test
