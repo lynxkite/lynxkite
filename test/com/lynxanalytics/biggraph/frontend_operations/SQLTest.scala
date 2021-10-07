@@ -409,12 +409,11 @@ class SQLTest extends OperationsTestBase {
       .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location(0)"))
       .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location(1)"))
       .box("SQL1", Map("sql" -> "select geodistance(src_lat, src_lon, dst_lat, dst_lon) from edges")).table
-    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
-      Seq(7023993.307994274), // New York / Budapest ~7k kilometers.
-      Seq(7023993.307994274),
-      Seq(1.5340398666732997e7), // New York / Singapore ~15k kilometers.
-      Seq(9507129.781908857),
-    )) // Budapest / Singapore ~ 9.5k kilometers.
+    val numbers = t.df.collect.toSeq.map(row => row.getDouble(0))
+    assert(7000e3 < numbers(0) && numbers(0) < 7100e3) // New York / Budapest ~7k kilometers.
+    assert(7000e3 < numbers(1) && numbers(1) < 7100e3)
+    assert(15000e3 < numbers(2) && numbers(2) < 16000e3) // New York / Singapore ~15k kilometers.
+    assert(9500e3 < numbers(3) && numbers(3) < 9600e3) // Budapest / Singapore ~ 9.5k kilometers.
   }
 
   test("user defined functions - dayofweek") {
