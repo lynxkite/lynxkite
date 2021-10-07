@@ -15,7 +15,7 @@ clean:
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 .build/sphynx-done: $(shell $(find) sphynx)
-	sphynx/python/install-dependencies.sh && sphynx/build.sh && touch $@
+	sphynx/build.sh && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
 	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-done
@@ -31,7 +31,7 @@ clean:
 		.build/documentation-verified .build/gulp-done
 	./test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done
-	./sphynx/python/install-dependencies.sh && tools/with_lk.sh python/remote_api/test.sh && touch $@
+	tools/with_lk.sh python/remote_api/test.sh && touch $@
 dependency-licenses/scala.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
 dependency-licenses/javascript.txt: web/package.json
