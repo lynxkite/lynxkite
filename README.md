@@ -63,7 +63,7 @@ Before the first build:
 
     tools/git/setup.sh
     tools/install_spark.sh
-    sphynx/python/install-dependencies.sh
+    conda env update --file sphynx/python/env.yml
     cp conf/kiterc_template ~/.kiterc
 
 We use `make` for building the whole project.
