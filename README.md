@@ -50,20 +50,14 @@ If you find any bugs, have any questions, feature requests or comments, please
 [file an issue](https://github.com/lynxkite/lynxkite/issues/new)
 or email us at lynxkite@lynxkite.com.
 
-To build LynxKite you will need:
-
-- [Node.js](https://nodejs.org/) 10+ with [Yarn](http://yarnpkg.org/)
-- Java 8 and [SBT](https://www.scala-sbt.org/)
-- Python 3.7+ with [Conda](https://docs.conda.io/en/latest/miniconda.html)
-- Go 1.14+
-- Swig 4.0+
-- cmake 3.5+
+You can install LynxKite's dependencies (Scala, Node.js, Go) with
+[Conda](https://docs.conda.io/en/latest/miniconda.html).
 
 Before the first build:
 
-    tools/git/setup.sh
-    tools/install_spark.sh
-    conda env update --file sphynx/python/env.yml
+    tools/git/setup.sh # Sets up pre-commit hooks.
+    conda env create --name lk --file conda-env.yml
+    conda activate lk
     cp conf/kiterc_template ~/.kiterc
 
 We use `make` for building the whole project.
