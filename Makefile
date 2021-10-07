@@ -10,11 +10,13 @@ all: backend
 clean:
 	git clean -f -X -d --exclude="!.idea/"
 
-.build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json .eslintrc.yaml
+.build/conda-done: conda-env.yml
+	conda env update -f conda-env.yml && touch $@
+.build/gulp-done: .build/conda-done $(shell $(find) web/app) web/gulpfile.js web/package.json .eslintrc.yaml
 	cd web && LC_ALL=C yarn --frozen-lockfile && npx gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
-.build/sphynx-done: $(shell $(find) sphynx)
+.build/sphynx-done: .build/conda-done $(shell $(find) sphynx)
 	sphynx/python/install-dependencies.sh && sphynx/build.sh && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
