@@ -38,8 +38,8 @@ jobs:
     - name: Cache Conda
       uses: actions/cache@v2
       with:
-        path: ~/.conda
-        key: ${{ runner.os }}-conda-${{ hashFiles('**/install-dependencies.sh') }}
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ hashFiles('conda-env.yml') }}
         restore-keys: |
           ${{ runner.os }}-conda
     - name: Install dependencies
@@ -48,4 +48,5 @@ jobs:
         environment-file: conda-env.yml
         use-only-tar-bz2: true # For caching.
     - name: Test backend with Spark
+      shell: bash -l {0} # Sets Conda environment.
       run: make #backend-test-spark
