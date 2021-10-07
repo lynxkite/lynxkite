@@ -289,8 +289,7 @@ class DeriveScalaTest extends AnyFunSuite with TestGraphOp {
     val e = intercept[org.apache.spark.SparkException] {
       derived.rdd.collect
     }
-    assert(e.getCause.getMessage.contains(
-      """access denied ("java.util.PropertyPermission" "user.dir" "read")"""))
+    assert(e.getCause.getMessage.contains("access denied"))
   }
 
   test("example graph - scalar inputs with not only on defined attrs") {
