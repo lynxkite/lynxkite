@@ -39,7 +39,9 @@ class Op:
 
   def input_vector(self, name):
     '''Reads a DoubleVectorAttribute into a Numpy array.'''
-    return np.array(self.input_arrow(name).to_pylist())
+    data = self.input_arrow(name).to_pylist()
+    assert None not in data, name + ' has missing values'
+    return np.array(data)
 
   def input(self, name):
     '''Reads the input as a Numpy Array or Pandas DataFrame.'''
