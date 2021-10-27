@@ -436,7 +436,7 @@ class ProductionJsonServer @javax.inject.Inject() (
   def getInstrumentedState = jsonGet(workspaceController.getInstrumentedState)
   def openWizard = jsonPost(workspaceController.openWizard)
 
-  val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
+  lazy val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
 
@@ -465,7 +465,7 @@ class ProductionJsonServer @javax.inject.Inject() (
   def getTableBrowserNodesForBox =
     jsonGet(sqlController.getTableBrowserNodesForBox(workspaceController))
 
-  val sparkClusterController =
+  lazy val sparkClusterController =
     new SparkClusterController(BigGraphProductionEnvironment, workspaceController)
   def longPoll = jsonFuture(sparkClusterController.longPoll)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
@@ -528,7 +528,7 @@ class ProductionJsonServer @javax.inject.Inject() (
     )
   }
 
-  val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
+  lazy val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
   def backup = jsonGet(copyController.backup)

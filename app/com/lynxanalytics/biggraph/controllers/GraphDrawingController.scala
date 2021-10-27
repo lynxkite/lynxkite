@@ -188,7 +188,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-  implicit val ec = env.sparkDomain.executionContext // TODO: Revise for single-node.
+  implicit val ec = dataManager.executionContext
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {

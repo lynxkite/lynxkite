@@ -34,8 +34,8 @@ trait SparkFreeEnvironment {
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
-  val sparkSession: spark.sql.SparkSession
-  val sparkContext: spark.SparkContext
+  def sparkSession: spark.sql.SparkSession
+  def sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
   def sparkDomain: graph_api.SparkDomain
@@ -52,9 +52,8 @@ object BigGraphEnvironmentImpl {
       .split(",").map(_.trim.toLowerCase)
     // Load the metagraph in parallel to Spark initialization.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
-    val sparkSession = sparkSessionProvider.createSparkSession
     val domains = domainPreference.flatMap {
-      case "spark" => Seq(createSparkDomain(sparkSession, repositoryDirs))
+      case "spark" => Seq(createSparkDomain(sparkSessionProvider, repositoryDirs))
       case "sphynx" =>
         val host = LoggedEnvironment.envOrError("SPHYNX_HOST", "must be set when using Sphynx.")
         val port = LoggedEnvironment.envOrError("SPHYNX_PORT", "must be set when using Sphynx.")
@@ -69,9 +68,7 @@ object BigGraphEnvironmentImpl {
       case "scala" => Seq(new graph_api.ScalaDomain)
     }
     new BigGraphEnvironmentImpl(
-      sparkSession,
       Await.result(metaGraphManagerFuture, Duration.Inf),
-      domains.collect { case d: graph_api.SparkDomain => d }.head, // TODO: Remove it someday?
       new graph_api.DataManager(domains))
   }
 
@@ -82,25 +79,27 @@ object BigGraphEnvironmentImpl {
     res
   }
 
-  def createSparkDomain(sparkSession: spark.sql.SparkSession, repositoryDirs: RepositoryDirs) = {
-    bigGraphLogger.info("Initializing data manager...")
+  def createSparkDomain(sparkSessionProvider: SparkSessionProvider, repositoryDirs: RepositoryDirs) = {
+    val sparkSession = sparkSessionProvider.createSparkSession
+    bigGraphLogger.info("Initializing Spark domain...")
     val res = new graph_api.SparkDomain(
       sparkSession,
       repositoryDirs.dataDir,
       repositoryDirs.ephemeralDataDir)
-    bigGraphLogger.info("Data manager initialized.")
+    bigGraphLogger.info("Spark domain initialized.")
     res
   }
 
 }
 
 case class BigGraphEnvironmentImpl(
-    sparkSession: spark.sql.SparkSession,
     metaGraphManager: graph_api.MetaGraphManager,
-    sparkDomain: graph_api.SparkDomain,
     dataManager: graph_api.DataManager)
     extends BigGraphEnvironment {
-  val sparkContext = sparkSession.sparkContext
+  // Try not to use these. If you need Spark, use it in an operation.
+  def sparkDomain = dataManager.domains.collect { case d: graph_api.SparkDomain => d }.head
+  def sparkSession = sparkDomain.sparkSession
+  def sparkContext = sparkSession.sparkContext
 }
 
 class RepositoryDirs(
