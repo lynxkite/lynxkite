@@ -60,7 +60,7 @@ object TableToAttributes extends OpFromJson {
       val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
       val inOrder = schema.map(f => entitiesByName(toSymbol(f)))
 
-      rc.ioContext.writeAttributes(inOrder, toNumberedLines(dataFrame, rc))
+      rc.ioContext.writeAttributes(inOrder, dataFrame)
     }
   }
 }

@@ -76,16 +76,12 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
     partitionedPath(entity) / numPartitions.toString
 
   // Writes multiple attributes and their vertex set to disk. The attributes are given in a
-  // single RDD which will be iterated over only once.
+  // single DataFrame that is ideally backed by a Parquet file.
   // It's the callers responsibility to make sure that the Seqs in data have elements of the right
-  // type, corresponding to the given attributes. For wrong types, the behavior is unspecified,
-  // it may or may not fail at write time.
-  // Don't let the AnyType type parameter fool you, it has really no significance, you can basically
-  // pass in an RDD of any kind of Seq you like. It's only needed because stupid RDDs are not
-  // covariant, so taking AttributeRDD[Seq[_]] wouldn't be generic enough.
-  def writeAttributes[AnyType](
+  // type, corresponding to the given attributes.
+  def writeAttributes(
       attributes: Seq[Attribute[_]],
-      data: AttributeRDD[Seq[AnyType]]) = {
+      df: spark.sql.DataFrame) = {
 
     val vs = attributes.head.vertexSet
     for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
@@ -98,63 +94,16 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
       assert(doesNotExist, s"Cannot delete directory of $attr")
     }
 
-    val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
-    val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
+    // XXX
 
-    val trackerId = Timestamp.toString
-    val rddId = data.id
-    val vsCount = sparkContext.longAccumulator(s"Vertex count for ${vs.gUID}")
-    val attrCounts = attributes.map {
-      attr => sparkContext.longAccumulator(s"Attribute count for ${attr.gUID}")
-    }
-    val unitSerializer = EntitySerializer.forType[Unit]
-    val serializers = attributes.map(EntitySerializer.forAttribute(_))
-    // writeShard is the function that runs on the executors. It writes out one partition of the
-    // RDD into one part-xxxx file per column, plus one for the vertex set.
-    val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
-      val collection = new IOContext.TaskFileCollection(
-        trackerId,
-        rddId,
-        hadoop.mapreduce.TaskType.REDUCE,
-        task.partitionId,
-        task.attemptNumber)
-      val files = paths.map(collection.createTaskFile(_))
-      try {
-        val verticesWriter = files.last.writer
-        for (file <- files) {
-          file.committer.setupTask(file.context)
-          file.writer // Make sure a writer is created even if the partition is empty.
-        }
-        for ((id, cols) <- iterator) {
-          vsCount.add(1)
-          val key = new hadoop.io.LongWritable(id)
-          val zipped = files.zip(serializers).zip(cols).zip(attrCounts)
-          for ((((file, serializer), col), attrCount) <- zipped if col != null) {
-            attrCount.add(1)
-            val value = serializer.unsafeSerialize(col)
-            file.writer.write(key, value)
-          }
-          verticesWriter.write(key, unitSerializer.serialize(()))
-        }
-      } finally collection.closeWriters()
-      for (file <- files) file.committer.commitTask(file.context)
-    }
-    val collection = new IOContext.TaskFileCollection(
-      trackerId,
-      rddId,
-      hadoop.mapreduce.TaskType.JOB_CLEANUP,
-      0,
-      0)
-    val files = paths.map(collection.createTaskFile(_))
-    for (file <- files) file.committer.setupJob(file.context)
-    sparkContext.runJob(data, writeShard)
-    for (file <- files) file.committer.commitJob(file.context)
     // Write metadata files.
+    /*
     val vertexSetMeta = EntityMetadata(vsCount.value, Some(unitSerializer.name))
     vertexSetMeta.write(partitionedPath(vs).forWriting)
     for (((attr, serializer), count) <- attributes.zip(serializers).zip(attrCounts)) {
       EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
     }
+     */
   }
 }
 
@@ -455,9 +404,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
       src: HadoopFile,
       dst: HadoopFile,
       partitioner: spark.Partitioner): Long = {
-    val oldRDD = src.loadEntityRawRDD(sc)
-    val newRDD = oldRDD.sort(partitioner)
-    dst.saveEntityRawRDD(newRDD)
+    ???
   }
 
   // Returns the file and the serialization format.
