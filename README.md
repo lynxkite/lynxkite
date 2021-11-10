@@ -68,7 +68,7 @@ We use `make` for building the whole project.
 
 ## Tests
 
-We have test suits for the different parts of the system:
+We have test suites for the different parts of the system:
 
 - **Backend tests** are unit tests for the Scala code. They can also be executed with Sphynx as the
   backend. If you run `make backend-test` it will do both. Or you can start `sbt` and run
