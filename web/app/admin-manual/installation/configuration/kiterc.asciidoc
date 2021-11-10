@@ -23,14 +23,14 @@ export SPARK_MASTER=local
 Specify the directory where LynxKite stores metadata about projects. The directory must be on
 the local file system. Do not forget to set up backups.
 ```
-export KITE_META_DIR=$HOME/kite_meta
+export KITE_META_DIR=$HOME/kite/meta
 ```
 
 Specify the directory of the data where graph data is stored. Should be on a distributed fs
 (HDFS, S3, etc) unless this is a `local` setup. Please note that giving the full
 URI (e.g., `file:/...`) is mandatory.
 ```
-export KITE_DATA_DIR=file:$HOME/kite_data/
+export KITE_DATA_DIR=file:$HOME/kite/data/
 ```
 
 LynxKite can use a faster ephemeral file system for data storage, with reading from the main
@@ -67,13 +67,13 @@ export KITE_ALLOW_NON_PREFIXED_PATHS=false
 
 Specify the PID file for LynxKite servers.
 ```
-export KITE_PID_FILE=$HOME/kite.pid
+export KITE_PID_FILE=$HOME/kite/pid
 ```
 
 When set, each action performed by the lynxkite script (start,stop,restart, etc.) is logged to
 this file.
 ```
-export KITE_SCRIPT_LOGS=$HOME/lynxkite.log
+export KITE_SCRIPT_LOGS=$HOME/kite/script.log
 ```
 
 Specify the YARN configuration directory. It is needed if you want to run against YARN.
@@ -286,19 +286,19 @@ If any of these is unset, no Sphynx server is assumed.
 ```
 export SPHYNX_HOST=localhost
 export SPHYNX_PORT=50051
-export SPHYNX_CERT_DIR=$HOME/sphynx_cert
+export SPHYNX_CERT_DIR=$HOME/kite/sphynx_cert
 ```
 Specify the PID file for Sphynx.
 ```
-export SPHYNX_PID_FILE=$HOME/sphynx.pid
+export SPHYNX_PID_FILE=$HOME/kite/sphynx.pid
 ```
 Specify the directory where Sphynx stores graph data.
 ```
-export ORDERED_SPHYNX_DATA_DIR=$HOME/ordered_sphynx_data
+export ORDERED_SPHYNX_DATA_DIR=$HOME/kite/data/sphynx/ordered
 ```
 Specify the directory where Sphynx stores graph data using vertex ids from the Spark world.
 ```
-export UNORDERED_SPHYNX_DATA_DIR=$HOME/unordered_sphynx_data
+export UNORDERED_SPHYNX_DATA_DIR=$HOME/kite/data/sphynx/unordered
 ```
 
 Unrestricted Python in LynxKite is a very powerful tool. Since Python execution has full access
