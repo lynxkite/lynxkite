@@ -268,26 +268,24 @@ class HadoopFile private (
   }
 
   // Saves a DataFrame.
-  // Returns the number of lines written
-  def saveEntityRawDF(data: spark.sql.DataFrame): Long = {
-    val count = data.sparkSession.sparkContext.longAccumulator("row count")
+  def saveEntityRawDF(data: spark.sql.DataFrame): Unit = {
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
     log.info(s"saving entity data to ${symbolicName}")
-    val counted = data.map(row => { count.add(1); row })(data.encoder)
-    counted.write.parquet(resolvedName)
-    count.value
+    data.write.parquet(resolvedName)
   }
 
   // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
   def saveEntityRDD[T](data: RDD[(Long, T)], tt: TypeTag[T]): (Long, String) = {
     val serializer = graph_api.io.EntitySerializer.forType(tt)
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
+    val count = data.context.longAccumulator("row count")
+    val counted = data.map(e => { count.add(1); e })
     val df = serializer.serialize(data)
-    val lines = saveEntityRawDF(df)
-    (lines, serializer.name)
+    saveEntityRawDF(df)
+    (count.value, serializer.name)
   }
 
   def +(suffix: String): HadoopFile = {
