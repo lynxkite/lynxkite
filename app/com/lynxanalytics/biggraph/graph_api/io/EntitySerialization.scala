@@ -129,5 +129,5 @@ class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("Set") {
   def deserialize(df: spark.sql.DataFrame) =
     df.rdd.map(row =>
       row.getLong(0) ->
-        RDDUtils.kryoDeserialize[Vector[DT]](row.getString(1).getBytes).toSet)
+        RDDUtils.kryoDeserialize[Vector[DT]](row.getAs[Array[Byte]](1)).toSet)
 }
