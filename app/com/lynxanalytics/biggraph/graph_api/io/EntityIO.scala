@@ -341,6 +341,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
   def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag: TypeTag[T] // The TypeTag of the values we write out.
+  def valueClassTag: reflect.ClassTag[T]
 
   def delete(): Boolean = {
     partitionedPath.forWriting.deleteIfExists()
@@ -400,11 +401,14 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
 
   // Copies and repartitions Hadoop file src to dst
   // and returns the number of lines written.
-  protected def copyAndRepartition(
+  protected def copyAndRepartition[U: TypeTag: reflect.ClassTag](
       src: HadoopFile,
       dst: HadoopFile,
       partitioner: spark.Partitioner): Long = {
-    ???
+    val typeName = EntitySerializer.forType(typeTag[U]).name
+    val oldRDD = src.loadEntityRDD(sc, typeName)
+    val newRDD = oldRDD.sort(partitioner)
+    dst.saveEntityRDD(newRDD, typeTag[U])._1
   }
 
   // Returns the file and the serialization format.
@@ -414,7 +418,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
     val pn = partitioner.numPartitions
     val src = bestPartitionedSource(entityLocation, pn)
     val dst = targetDir(pn)
-    val lines = copyAndRepartition(src, dst, partitioner)
+    val lines = copyAndRepartition[T](src, dst, partitioner)(valueTypeTag, valueClassTag)
     assert(
       entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
@@ -452,6 +456,7 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
   def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
 
   def valueTypeTag = typeTag[Unit]
+  def valueClassTag = reflect.classTag[Unit]
 }
 
 class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
@@ -478,6 +483,7 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
 
   def valueTypeTag = typeTag[Edge]
+  def valueClassTag = reflect.classTag[Edge]
 }
 
 class HybridBundleIO(entity: HybridBundle, context: IOContext)
@@ -519,11 +525,11 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     val src = bestPartitionedSource(entityLocation, pn)
     val dst = targetDir(pn)
     var lines = 0L
-    lines += copyAndRepartition(src / "small_keys_rdd", dst / "small_keys_rdd", partitioner)
+    lines += copyAndRepartition[ID](src / "small_keys_rdd", dst / "small_keys_rdd", partitioner)
     if ((src / "large_keys_rdd").exists()) {
-      lines += copyAndRepartition(src / "large_keys_rdd", dst / "large_keys_rdd", partitioner)
+      lines += copyAndRepartition[ID](src / "large_keys_rdd", dst / "large_keys_rdd", partitioner)
     }
-    copyAndRepartition(src / "larges", dst / "larges", new spark.HashPartitioner(1))
+    copyAndRepartition[Long](src / "larges", dst / "larges", new spark.HashPartitioner(1))
     assert(
       entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
@@ -548,6 +554,7 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
   def castData(data: EntityData) = data.asInstanceOf[HybridBundleData]
 
   def valueTypeTag = typeTag[ID]
+  def valueClassTag = reflect.classTag[ID]
 }
 
 class AttributeIO[T](entity: Attribute[T], context: IOContext)
@@ -576,4 +583,5 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
     data.asInstanceOf[AttributeData[_]].runtimeSafeCast(valueTypeTag)
 
   def valueTypeTag = entity.typeTag
+  def valueClassTag = entity.classTag
 }
