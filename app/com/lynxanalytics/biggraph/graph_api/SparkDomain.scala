@@ -194,11 +194,7 @@ class SparkDomain(
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data =
           if (sparkOp.isHeavy) {
-            if (sparkOp.hasCustomSaving) synchronized {
-              // Just need to remember it's already saved.
-              entitiesOnDiskCache(o.gUID) = true
-            }
-            else if (o.isInstanceOf[Scalar[_]]) {
+            if (o.isInstanceOf[Scalar[_]]) {
               // Save asynchronously, but we can use the value immediately.
               SafeFuture.async(saveToDisk(output(o.gUID)))
               set(o, output(o.gUID))
@@ -499,10 +495,6 @@ trait SparkOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider] 
   // An operation is heavy if it is faster to load its results than it is to recalculate them.
   // Heavy operation outputs are written out and loaded back on completion.
   val isHeavy: Boolean = false
-  // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
-  // instead of putting them in the OutputBuilder in execute().
-  val hasCustomSaving: Boolean = false
-  assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
   def execute(
       inputDatas: DataSet,
       outputMeta: OMDS,
@@ -649,10 +641,8 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
   }
 
   def dataMap() = {
-    if (!instance.operation.asInstanceOf[SparkOperation[_, _]].hasCustomSaving) {
-      val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
-      assert(missing.isEmpty, s"Output data missing for: $missing")
-    }
+    val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
+    assert(missing.isEmpty, s"Output data missing for: $missing")
     internalDataMap
   }
 

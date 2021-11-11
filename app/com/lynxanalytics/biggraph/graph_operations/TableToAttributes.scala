@@ -50,24 +50,11 @@ object TableToAttributes extends OpFromJson {
     val columns = schema.map {
       field => field.name -> attributeFromField(ids, field)
     }.toMap
-
-    // Methods for populating this output instance with computed output RDDs.
-    def populateOutput(
-        rc: RuntimeContext,
-        schema: types.StructType,
-        dataFrame: spark.sql.DataFrame) {
-      val entities = this.columns.values.map(_.entity)
-      val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
-      val inOrder = schema.map(f => entitiesByName(toSymbol(f)))
-
-      rc.ioContext.writeAttributes(inOrder, dataFrame)
-    }
   }
 }
 import TableToAttributes._
 case class TableToAttributes() extends SparkOperation[Input, Output] {
   override val isHeavy = true
-  override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -83,7 +70,20 @@ case class TableToAttributes() extends SparkOperation[Input, Output] {
       rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val t = inputs.t.data
-    SQLHelper.assertTableHasCorrectSchema(t.entity, t.df.schema)
-    o.populateOutput(rc, t.df.schema, t.df)
+    val df = t.df
+    SQLHelper.assertTableHasCorrectSchema(t.entity, df.schema)
+    val numRows = df.count
+    val partitioner = rc.partitionerForNRows(numRows)
+    val entities = o.columns.values.map(_.entity)
+    val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
+    import com.lynxanalytics.biggraph.spark_util.Implicits._
+    output(o.ids, df.select().rdd.map(_ => ()).randomNumbered(partitioner))
+    for (f <- df.schema) {
+      val attr = entitiesByName(toSymbol(f))
+      val rdd = df.select(f.name).rdd.map(_.get(0))
+      def outputRDD[T](attr: Attribute[T], rdd: AttributeRDD[Any]) =
+        output(attr, rdd.asInstanceOf[AttributeRDD[T]])
+      outputRDD(attr, rdd.randomNumbered(partitioner))
+    }
   }
 }

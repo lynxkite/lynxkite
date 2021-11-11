@@ -74,37 +74,6 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
 
   def partitionedPath(entity: MetaGraphEntity, numPartitions: Int): HadoopFileLike =
     partitionedPath(entity) / numPartitions.toString
-
-  // Writes multiple attributes and their vertex set to disk. The attributes are given in a
-  // single DataFrame that is ideally backed by a Parquet file.
-  // It's the callers responsibility to make sure that the Seqs in data have elements of the right
-  // type, corresponding to the given attributes.
-  def writeAttributes(
-      attributes: Seq[Attribute[_]],
-      df: spark.sql.DataFrame) = {
-
-    val vs = attributes.head.vertexSet
-    for (attr <- attributes) assert(attr.vertexSet == vs, s"$attr is not for $vs")
-
-    // Delete output directories.
-    val doesNotExist = new VertexSetIO(vs, this).delete()
-    assert(doesNotExist, s"Cannot delete directory of $vs")
-    for (attr <- attributes) {
-      val doesNotExist = new AttributeIO(attr, this).delete()
-      assert(doesNotExist, s"Cannot delete directory of $attr")
-    }
-
-    // XXX
-
-    // Write metadata files.
-    /*
-    val vertexSetMeta = EntityMetadata(vsCount.value, Some(unitSerializer.name))
-    vertexSetMeta.write(partitionedPath(vs).forWriting)
-    for (((attr, serializer), count) <- attributes.zip(serializers).zip(attrCounts)) {
-      EntityMetadata(count.value, Some(serializer.name)).write(partitionedPath(attr).forWriting)
-    }
-     */
-  }
 }
 
 object EntityIO {

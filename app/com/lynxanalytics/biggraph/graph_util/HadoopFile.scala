@@ -283,7 +283,7 @@ class HadoopFile private (
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
     val count = data.context.longAccumulator("row count")
     val counted = data.map(e => { count.add(1); e })
-    val df = serializer.serialize(data)
+    val df = serializer.serialize(counted)
     saveEntityRawDF(df)
     (count.value, serializer.name)
   }

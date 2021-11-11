@@ -92,7 +92,7 @@ class UnitDeserializer extends EntityDeserializer[Unit]("Unit") {
 
 class KryoDeserializer[T] extends EntityDeserializer[T]("Kryo") {
   def deserialize(df: spark.sql.DataFrame) =
-    df.rdd.map(row => row.getLong(0) -> RDDUtils.kryoDeserialize[T](row.getString(1).getBytes))
+    df.rdd.map(row => row.getLong(0) -> RDDUtils.kryoDeserialize[T](row.getAs[Array[Byte]](1)))
 }
 
 class StringDeserializer extends EntityDeserializer[String]("String") {
