@@ -270,13 +270,15 @@ class HadoopFile private (
   // Saves a DataFrame.
   // Returns the number of lines written
   def saveEntityRawDF(data: spark.sql.DataFrame): Long = {
+    val count = data.sparkSession.sparkContext.longAccumulator("row count")
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
     log.info(s"saving entity data to ${symbolicName}")
-    data.write.parquet(resolvedName)
-    data.sparkSession.read.parquet(resolvedName).count
+    val counted = data.map(row => { count.add(1); row })(data.encoder)
+    counted.write.parquet(resolvedName)
+    count.value
   }
 
   // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
