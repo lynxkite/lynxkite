@@ -254,17 +254,33 @@ class HadoopFile private (
     fs.mkdirs(path)
   }
 
-  // Loads a Long-keyed rdd where the values are just raw bytes
-  def loadEntityRawDF(sq: spark.sql.SQLContext): spark.sql.DataFrame = {
-    sq.read.parquet(resolvedName)
+  // Loads an entity from Parquet, without deserializing it.
+  def loadEntityRawDF(ss: spark.sql.SparkSession, numPartitions: Int): spark.sql.DataFrame = {
+    // Carefully reconstruct the original partitioning.
+    def load(n: Int) = ss.read.parquet((this / f"part-$n%05d*").resolvedName)
+    var df = load(0)
+    for (i <- 1 until numPartitions) {
+      if ((this / f"part-$i%05d*").list.nonEmpty) {
+        df = df.union(load(i))
+      } else {
+        // Spark doesn't write out the empty partitions. We fill them in.
+        df = df.union(ss.createDataFrame(
+          ss.sparkContext.parallelize(Seq[org.apache.spark.sql.Row](), 1), df.schema))
+      }
+    }
+    assert(df.rdd.getNumPartitions == numPartitions)
+    df
   }
 
   // Loads a Long-keyed rdd with deserialized values
-  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext, serializer: String): RDD[(Long, T)] = {
+  def loadEntityRDD[T: TypeTag](
+    sc: spark.SparkContext, serializer: String, numPartitions: Int): RDD[(Long, T)] = {
     val ss = spark.sql.SparkSession.builder.config(sc.getConf).getOrCreate()
-    val df = loadEntityRawDF(ss.sqlContext)
+    val df = loadEntityRawDF(ss, numPartitions)
     val deserializer = graph_api.io.EntityDeserializer.forName[T](serializer)
-    deserializer.deserialize(df)
+    val rdd = deserializer.deserialize(df)
+    assert(rdd.getNumPartitions == numPartitions)
+    rdd
   }
 
   // Saves a DataFrame.

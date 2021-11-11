@@ -359,23 +359,25 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
 
   protected def bestPartitionedSource(
       entityLocation: EntityLocationSnapshot,
-      desiredPartitionNumber: Int) = {
+      desiredPartitionNumber: Int): (Int, HadoopFile) = {
     assert(
       entityLocation.availablePartitions.nonEmpty,
       s"There should be valid sub directories in $partitionedPath")
     val ratioSorter =
       RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
-    entityLocation.availablePartitions(ratioSorter.best.get)
+    val pn = ratioSorter.best.get
+    pn -> entityLocation.availablePartitions(pn)
   }
 
   // Copies and repartitions Hadoop file src to dst
   // and returns the number of lines written.
   protected def copyAndRepartition[U: TypeTag: reflect.ClassTag](
       src: HadoopFile,
+      srcPartitions: Int,
       dst: HadoopFile,
       partitioner: spark.Partitioner): Long = {
     val typeName = EntitySerializer.forType(typeTag[U]).name
-    val oldRDD = src.loadEntityRDD(sc, typeName)
+    val oldRDD = src.loadEntityRDD(sc, typeName, srcPartitions)
     val newRDD = oldRDD.sort(partitioner)
     dst.saveEntityRDD(newRDD, typeTag[U])._1
   }
@@ -385,9 +387,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
       entityLocation: EntityLocationSnapshot,
       partitioner: spark.Partitioner): (HadoopFile, String) = {
     val pn = partitioner.numPartitions
-    val src = bestPartitionedSource(entityLocation, pn)
+    val (sn, src) = bestPartitionedSource(entityLocation, pn)
     val dst = targetDir(pn)
-    val lines = copyAndRepartition[T](src, dst, partitioner)(valueTypeTag, valueClassTag)
+    val lines = copyAndRepartition[T](src, sn, dst, partitioner)(valueTypeTag, valueClassTag)
     assert(
       entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
@@ -418,7 +420,7 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
       partitioner: spark.Partitioner,
       parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
-    val rdd = path.loadEntityRDD[Unit](sc, serialization)
+    val rdd = path.loadEntityRDD[Unit](sc, serialization, partitioner.numPartitions)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
   }
 
@@ -442,7 +444,7 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
     assert(
       partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
-    val rdd = path.loadEntityRDD[Edge](sc, serialization)
+    val rdd = path.loadEntityRDD[Edge](sc, serialization, partitioner.numPartitions)
     new EdgeBundleData(
       entity,
       rdd.asUniqueSortedRDD(partitioner),
@@ -470,13 +472,15 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     implicit val cv = classTag[ID]
     val idSerializer = EntitySerializer.forType(typeTag[ID]).name
     val longSerializer = EntitySerializer.forType(typeTag[Long]).name
-    val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](sc, idSerializer)
-    val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, longSerializer).collect.toSeq
+    val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](
+      sc, idSerializer, partitioner.numPartitions)
+    val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, longSerializer, 1).collect.toSeq
     val largeKeysRDD =
       if (largeKeysSet.isEmpty) {
         None
       } else {
-        Some((path / "large_keys_rdd").loadEntityRDD[ID](sc, idSerializer))
+        Some((path / "large_keys_rdd").loadEntityRDD[ID](
+          sc, idSerializer, partitioner.numPartitions))
       }
     new HybridBundleData(
       entity,
@@ -491,14 +495,15 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
       entityLocation: EntityLocationSnapshot,
       partitioner: spark.Partitioner): (HadoopFile, String) = {
     val pn = partitioner.numPartitions
-    val src = bestPartitionedSource(entityLocation, pn)
+    val (sn, src) = bestPartitionedSource(entityLocation, pn)
     val dst = targetDir(pn)
     var lines = 0L
-    lines += copyAndRepartition[ID](src / "small_keys_rdd", dst / "small_keys_rdd", partitioner)
+    lines += copyAndRepartition[ID](src / "small_keys_rdd", sn, dst / "small_keys_rdd", partitioner)
     if ((src / "large_keys_rdd").exists()) {
-      lines += copyAndRepartition[ID](src / "large_keys_rdd", dst / "large_keys_rdd", partitioner)
+      lines += copyAndRepartition[ID](
+        src / "large_keys_rdd", sn, dst / "large_keys_rdd", partitioner)
     }
-    copyAndRepartition[Long](src / "larges", dst / "larges", new spark.HashPartitioner(1))
+    copyAndRepartition[Long](src / "larges", 1, dst / "larges", new spark.HashPartitioner(1))
     assert(
       entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
@@ -541,7 +546,7 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
       s"Partitioner mismatch for $entity.")
     implicit val ct = entity.classTag
     implicit val tt = entity.typeTag
-    val rdd = path.loadEntityRDD[T](sc, serialization)
+    val rdd = path.loadEntityRDD[T](sc, serialization, partitioner.numPartitions)
     new AttributeData[T](
       entity,
       rdd.asUniqueSortedRDD(partitioner),
