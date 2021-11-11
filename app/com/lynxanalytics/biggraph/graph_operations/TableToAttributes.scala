@@ -80,7 +80,7 @@ case class TableToAttributes() extends SparkOperation[Input, Output] {
     output(o.ids, df.select().rdd.map(_ => ()).randomNumbered(partitioner))
     for (f <- df.schema) {
       val attr = entitiesByName(toSymbol(f))
-      val rdd = df.select(f.name).rdd.map(_.get(0))
+      val rdd = df.select(f.name).filter(df.col(f.name).isNotNull).rdd.map(_.get(0))
       def outputRDD[T](attr: Attribute[T], rdd: AttributeRDD[Any]) =
         output(attr, rdd.asInstanceOf[AttributeRDD[T]])
       outputRDD(attr, rdd.randomNumbered(partitioner))
