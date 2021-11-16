@@ -473,14 +473,18 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     val idSerializer = EntitySerializer.forType(typeTag[ID]).name
     val longSerializer = EntitySerializer.forType(typeTag[Long]).name
     val smallKeysRDD = (path / "small_keys_rdd").loadEntityRDD[ID](
-      sc, idSerializer, partitioner.numPartitions)
+      sc,
+      idSerializer,
+      partitioner.numPartitions)
     val largeKeysSet = (path / "larges").loadEntityRDD[Long](sc, longSerializer, 1).collect.toSeq
     val largeKeysRDD =
       if (largeKeysSet.isEmpty) {
         None
       } else {
         Some((path / "large_keys_rdd").loadEntityRDD[ID](
-          sc, idSerializer, partitioner.numPartitions))
+          sc,
+          idSerializer,
+          partitioner.numPartitions))
       }
     new HybridBundleData(
       entity,
@@ -501,7 +505,10 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     lines += copyAndRepartition[ID](src / "small_keys_rdd", sn, dst / "small_keys_rdd", partitioner)
     if ((src / "large_keys_rdd").exists()) {
       lines += copyAndRepartition[ID](
-        src / "large_keys_rdd", sn, dst / "large_keys_rdd", partitioner)
+        src / "large_keys_rdd",
+        sn,
+        dst / "large_keys_rdd",
+        partitioner)
     }
     copyAndRepartition[Long](src / "larges", 1, dst / "larges", new spark.HashPartitioner(1))
     assert(
