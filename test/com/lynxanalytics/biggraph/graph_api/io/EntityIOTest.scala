@@ -87,8 +87,10 @@ class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataMa
         val success = entityDir / Success
         success.deleteIfExists()
       case EntityDirStatus.CORRUPT =>
-        val corrupt = entityDir / "corruption"
-        corrupt.mkdirs() // The unexpected directory will cause the read to fail.
+        // Corrupt the file by truncating it.
+        val f = (entityDir / "part-00000*").list.head
+        f.delete
+        f.create
     }
   }
 
