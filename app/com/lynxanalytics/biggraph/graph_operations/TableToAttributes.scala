@@ -77,12 +77,20 @@ case class TableToAttributes() extends SparkOperation[Input, Output] {
     val entities = o.columns.values.map(_.entity)
     val entitiesByName = entities.map(e => (e.name, e): (scala.Symbol, Attribute[_])).toMap
     import com.lynxanalytics.biggraph.spark_util.Implicits._
+    // We rely on "df" originating from a Parquet file. As it's a column oriented format with
+    // predicate push down, we can read each attribute in a separate pass without reading the
+    // whole dataset multiple times.
+    //
+    // We select empty rows and assign vertex IDs to each row. That's the VertexSet.
     output(o.ids, df.select().rdd.map(_ => ()).randomNumbered(partitioner))
+    // Now we have to assign the same IDs to the attributes. randomNumbered is deterministic.
     for (f <- df.schema) {
       val attr = entitiesByName(toSymbol(f))
       val rdd = df.select(f.name).rdd.map(row => if (row.isNullAt(0)) None else Some(row.get(0)))
       def outputRDD[T](attr: Attribute[T], rdd: AttributeRDD[Option[Any]]) =
         output(attr, rdd.asInstanceOf[AttributeRDD[Option[T]]].flatMapValues[T](identity))
+      // Missing values are not written out, but they are still present in the DataFrame.
+      // We have to assign the IDs before filtering out the nulls.
       outputRDD(attr, rdd.randomNumbered(partitioner))
     }
   }

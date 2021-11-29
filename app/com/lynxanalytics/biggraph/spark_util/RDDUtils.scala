@@ -331,18 +331,22 @@ object Implicits {
       })
     }
 
-    // Adds unique ID numbers to rows of an RDD as a transformation.
+    // Adds unique ID numbers to rows of an RDD without a shuffle.
+    // The numbers are deterministic and only depend on the partitioning.
+    // Two RDDs will get the same ID assignment if they have the same number
+    // of rows in each partition.
     def randomNumbered(numPartitions: Int = self.partitions.size): UniqueSortedRDD[ID, T] = {
       val partitioner = new spark.HashPartitioner(numPartitions)
       randomNumbered(partitioner)
     }
 
     def randomNumbered(partitioner: spark.Partitioner): UniqueSortedRDD[ID, T] = {
-      // generate a random id for the hash
       val numPartitions = self.partitions.size
       self.mapPartitionsWithIndex({
         case (pid, it) =>
           val rnd = new scala.util.Random(pid)
+          // The IDs are hashed mod numPartitions for partitioning.
+          // We make sure the generated IDs each hash into the partition where they are.
           var uniqueId = pid.toLong - numPartitions
           it.map { value =>
             val randomId = rnd.nextInt.toLong & 0x7fffffff
