@@ -86,9 +86,9 @@ case class TableToAttributes() extends SparkOperation[Input, Output] {
     // Now we have to assign the same IDs to the attributes. randomNumbered is deterministic.
     for (f <- df.schema) {
       val attr = entitiesByName(toSymbol(f))
-      val rdd = df.select(f.name).rdd.map(row => if (row.isNullAt(0)) None else Some(row.get(0)))
-      def outputRDD[T](attr: Attribute[T], rdd: AttributeRDD[Option[Any]]) =
-        output(attr, rdd.asInstanceOf[AttributeRDD[Option[T]]].flatMapValues[T](identity))
+      val rdd = df.select(f.name).rdd
+      def outputRDD[T](attr: Attribute[T], rdd: AttributeRDD[spark.sql.Row]) =
+        output(attr, rdd.filter(!_._2.isNullAt(0)).mapValues(_.get(0).asInstanceOf[T]))
       // Missing values are not written out, but they are still present in the DataFrame.
       // We have to assign the IDs before filtering out the nulls.
       outputRDD(attr, rdd.randomNumbered(partitioner))
