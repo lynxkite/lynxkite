@@ -2008,11 +2008,3 @@ def _json_encode(obj):
 def to_simple_dicts(obj):
   '''Converts a SimpleNamespace structure (as returned from LynxKite requests) into simple dicts.'''
   return json.loads(json.dumps(obj, default=_json_encode))
-
-
-class PizzaBox(LynxKite):
-
-  def __init__(self):
-    super().__init__(address='https://pizzabox.lynxanalytics.com/')
-    assert self.oauth_token() or self.signed_token(), \
-        'Please set LYNXKITE_OAUTH_TOKEN or LYNXKITE_SIGNED_TOKEN.'
