@@ -843,6 +843,13 @@ class LynxKite:
       df.to_parquet(f.name, **kwargs)
       return self.uploadParquetNow(f.read())
 
+  def from_spark(self, df):
+    """Converts a Spark DataFrame to a LynxKite table."""
+    filename = 'DATA$/python-imports/' + datetime.datetime.now().strftime('%Y-%d-%m_%H%M%S.%f')
+    resolved = self.get_prefixed_path(filename).resolved
+    df.write.parquet(resolved)
+    return self.importParquetNow(filename=filename)
+
   def set_executors(self, count):
     return self._send('/remote/setExecutors', {'count': count})
 
@@ -954,22 +961,27 @@ class State:
     data = [[get(c, t) for (c, t) in zip(r, types)] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
+  def spark(self, spark):
+    '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
+    guid = self._get_state_id()  # The TableOutputState ID is the table GUID.
+    path = self.box.lk.get_prefixed_path('DATA$/tables/' + guid)
+    return spark.read.parquet(path.resolved)
+
   def columns(self):
     '''Returns a list of columns if this state is a table.'''
     return list(self.df(0).columns)
 
   def get_table_data(self, limit: int = -1) -> types.SimpleNamespace:
     '''Returns the "raw" table data if this state is a table.'''
-    return self.box.lk.get_table_data(self.box.lk.get_state_id(self), limit)
+    return self.box.lk.get_table_data(self._get_state_id(), limit)
 
   def get_graph(self) -> types.SimpleNamespace:
     '''Returns the graph metadata if this state is a graph.'''
-    return self.box.lk.get_graph(self.box.lk.get_state_id(self))
+    return self.box.lk.get_graph(self._get_state_id())
 
   def get_progress(self):
     '''Returns progress info about the state.'''
-    lk = self.box.lk
-    state_id = lk.get_state_id(self)
+    state_id = self._get_state_id()
     progress = lk._ask('/ajax/long-poll', dict(syncedUntil=0, stateIds=[state_id]))
     return progress.progress.__dict__[state_id]
 
@@ -979,8 +991,7 @@ class State:
     Returns the prefixed path of the exported file. This method is deprecated,
     only used in tests, where we need the export path.
     '''
-    lk = self.box.lk
-    state_id = lk.get_state_id(self)
+    state_id = self._get_state_id()
     export = lk.get_export_result(state_id)
     if export.result.computeProgress != 1:
       scalar = lk.get_graph_attribute(export.result.id)
@@ -998,16 +1009,16 @@ class State:
 
   def save_snapshot(self, path: str) -> None:
     '''Save this state as a snapshot under path.'''
-    lk = self.box.lk
-    state_id = lk.get_state_id(self)
-    lk.save_snapshot(path, state_id)
+    lk.save_snapshot(path, self._get_state_id())
 
   def save_to_sequence(self, tss, date: datetime.datetime) -> None:
     '''Save this state to the ``tss`` TableSnapshotSequence with ``date`` as
     the date of the snapshot.'''
+    tss.save_to_sequence(self._get_state_id(), date)
+
+  def _get_state_id(self):
     lk = self.box.lk
-    state_id = lk.get_state_id(self)
-    tss.save_to_sequence(state_id, date)
+    return lk.get_state_id(self)
 
 
 class Placeholder:
