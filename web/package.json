@@ -21,7 +21,7 @@
     "fuse.js": "^6.4.6",
     "jquery": "^3.6.0",
     "js-yaml": "^4.1.0",
-    "markdown-it": "^12.0.6",
+    "markdown-it": "^12.3.2",
     "sweetalert": "2.1.2",
     "tether-drop": "1.4.2",
     "three": "^0.129.0",
