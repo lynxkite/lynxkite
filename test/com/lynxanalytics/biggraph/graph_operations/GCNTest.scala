@@ -68,7 +68,7 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
   test("train GCN regressor", com.lynxanalytics.biggraph.SphynxOnly) {
     for (convOp <- Seq("GCNConv", "GatedGraphConv")) {
       val op = TrainGCNRegressor(
-        iterations = 1000,
+        iterations = 1001,
         forget = true,
         batchSize = 1,
         learningRate = 0.003,
@@ -86,8 +86,8 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
       val trainMSE = result.trainMSE.value
       assert(trainMSE < 0.1)
       val model = result.model
-      val pred = predict(model).mapValues(round(_))
-      assert(pred == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 1.0, 4 -> 1.0, 5 -> 1.0))
+      val pred = predict(model).mapValues(x => if (x < 0.5) 0 else 1)
+      assert(pred == Map(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 1, 4 -> 1, 5 -> 1))
     }
   }
 }

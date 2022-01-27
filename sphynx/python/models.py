@@ -54,35 +54,27 @@ class GCNConvNetForRegression(torch.nn.Module):
     self.conv_op = conv_op
     if self.conv_op == "GCNConv":
       self.conv_layers = []
-      sizes = [in_dim] + [hidden_size] * num_conv_layers
-      zipped_sizes = zip(sizes[:-1], sizes[1:])
-      # To make the module aware of its parameters, we set them as attributes.
-      for (i, (s1, s2)) in enumerate(zipped_sizes):
-        conv = GCNConv(s1, s2)
+      for i in range(num_conv_layers):
+        conv = GCNConv(hidden_size, hidden_size)
         self.conv_layers.append(conv)
-        self.add_module(f'conv{i}', conv)
+        self.add_module(f'conv{i}', conv) # Make the module aware of its parameters.
     elif self.conv_op == "GatedGraphConv":
       self.gated_conv = GatedGraphConv(hidden_size, num_layers=num_conv_layers)
-      self.lin1 = torch.nn.Linear(in_dim, hidden_size)
-      self.lin2 = torch.nn.Linear(hidden_size, 1)
     else:
       raise Exception(f'Unknown convolution operator: {conv_op}')
-    self.lin = torch.nn.Linear(hidden_size, 1)
+    self.lin1 = torch.nn.Linear(in_dim, hidden_size)
+    self.lin2 = torch.nn.Linear(hidden_size, 1)
 
   def forward(self, data):
     x, edge_index = data.x, data.edge_index
+    x = self.lin1(x)
+    x = F.relu(x)
     if self.conv_op == "GCNConv":
-      for conv in self.conv_layers[:-1]:
+      for conv in self.conv_layers:
         x = conv(x, edge_index)
         x = F.relu(x)
-        x = F.dropout(x, training=self.training)
-      conv = self.conv_layers[-1]
-      x = conv(x, edge_index)
-      x = F.relu(x)
-      x = self.lin(x)
     elif self.conv_op == "GatedGraphConv":
-      x = self.lin1(x)
-      x = F.relu(x)
       x = self.gated_conv(x, edge_index)
-      x = self.lin2(x)
+      x = F.relu(x)
+    x = self.lin2(x)
     return x.squeeze()

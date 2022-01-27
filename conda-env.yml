@@ -25,8 +25,8 @@ dependencies:
 - pandas
 - scikit-learn
 - pyarrow
-- pytorch==1.9.0
-- cpuonly
+- pytorch::pytorch==1.9.0
+- pytorch::cpuonly
 - pyg==2.0.1
 # For Python API and tools.
 - mypy

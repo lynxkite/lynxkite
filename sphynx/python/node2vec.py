@@ -23,21 +23,21 @@ srcs = np.concatenate((es.src, deadends)).astype('int64')
 dsts = np.concatenate((es.dst, deadends)).astype('int64')
 
 # Configure Node2Vec.
-edges = torch.tensor([srcs, dsts])
-loader = DataLoader(torch.arange(num_nodes), batch_size=128, shuffle=True)
+edges = torch.tensor([srcs, dsts]).to(device)
 model = Node2Vec(
-    num_nodes, embedding_dim=op.params['dimensions'], walk_length=op.params['walkLength'],
-    context_size=op.params['contextSize'], walks_per_node=op.params['walksPerNode'])
-model, edges = model.to(device), edges.to(device)
+    edges, num_nodes=num_nodes,
+    embedding_dim=op.params['dimensions'], walk_length=op.params['walkLength'],
+    context_size=op.params['contextSize'], walks_per_node=op.params['walksPerNode']).to(device)
+loader = model.loader(batch_size=128, shuffle=True)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 # Train model.
 for epoch in range(op.params['iterations']):
   model.train()
   total_loss = 0
-  for subset in loader:
+  for pos_rw, neg_rw in loader:
     optimizer.zero_grad()
-    loss = model.loss(edges, subset.to(device))
+    loss = model.loss(pos_rw, neg_rw)
     loss.backward()
     optimizer.step()
     total_loss += loss.item()
