@@ -24,7 +24,7 @@
     "markdown-it": "^12.3.2",
     "sweetalert": "2.1.2",
     "tether-drop": "1.4.2",
-    "three": "^0.129.0",
+    "three": "^0.137.0",
     "toposort": "^2.0.2",
     "typeface-exo-2": "^1.1.13",
     "vega": "^5.20.2",
