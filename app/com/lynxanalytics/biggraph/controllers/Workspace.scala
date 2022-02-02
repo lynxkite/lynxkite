@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import graph_api.MetaGraphManager.StringAsUUID
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 import scala.annotation.tailrec
 
@@ -207,13 +206,11 @@ case class WorkspaceExecutionContext(
   }
 }
 
-object BoxCache {
-  val maxSize = LoggedEnvironment.envOrElse("KITE_BOX_CACHE_SIZE", "100000").toInt
-  private val cache = new java.util.LinkedHashMap[String, Map[String, BoxOutputState]]() {
-    override def removeEldestEntry(
-        eldest: java.util.Map.Entry[String, Map[String, BoxOutputState]]) = {
-      size > maxSize
-    }
+class BoxCache(maxSize: Int)
+    extends java.util.LinkedHashMap[String, Map[String, BoxOutputState]]() {
+  override def removeEldestEntry(
+      eldest: java.util.Map.Entry[String, Map[String, BoxOutputState]]) = {
+    size > maxSize
   }
   def getOrElseUpdate(
       boxId: String, // Not part of the key, just for BoxOutputs.
@@ -224,12 +221,12 @@ object BoxCache {
       outputs: => Map[BoxOutput, BoxOutputState],
   ): Map[BoxOutput, BoxOutputState] = synchronized {
     val k = key(operationId, parameters, inputs, parametricParameters)
-    if (cache.containsKey(k)) {
-      val v = cache.get(k)
+    if (this.containsKey(k)) {
+      val v = this.get(k)
       v.map { case (k, v) => BoxOutput(boxId, k) -> v }
     } else {
       val v = outputs
-      cache.put(k, v.map { case (k, v) => k.id -> v })
+      this.put(k, v.map { case (k, v) => k.id -> v })
       v
     }
   }
@@ -269,7 +266,12 @@ case class Box(
   def execute(
       ctx: WorkspaceExecutionContext,
       inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    BoxCache.getOrElseUpdate(id, operationId, parameters, inputStates, parametricParameters) {
+    ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
+      id,
+      operationId,
+      parameters,
+      inputStates,
+      parametricParameters) {
       val op = getOperation(ctx, inputStates)
       op.getOutputs
     }
