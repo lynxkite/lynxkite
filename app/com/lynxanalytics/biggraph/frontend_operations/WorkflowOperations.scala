@@ -390,7 +390,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params += Code(
           "sql",
           "SQL",
-          defaultValue = s"select * from $defaultTableName limit 10\n",
+          defaultValue = s"select * from $defaultTableName\n",
           language = "sql",
           enableTableBrowser = true)
         params += Choice("persist", "Persist result", options = FEOption.noyes)
