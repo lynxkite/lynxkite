@@ -397,10 +397,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         override def summary = params("summary")
         def enabled = FEStatus.enabled
         def defaultTableName = {
-          val tableNames = this.getInputTables(renaming).keySet.toList.sorted
-          val name = Seq("vertices", inputNames.head, inputNames.head + ".vertices")
-            .find(tableNames.contains(_))
-            .getOrElse(tableNames.head)
+          val first = inputNames.head
+          val state = context.inputs(first)
+          val name =
+            if (state.isProject) {
+              if (inputNames.length == 1) "vertices"
+              else first + ".vertices"
+            } else first
           val simple = "[a-zA-Z0-9]*".r
           name match {
             case simple() => name
