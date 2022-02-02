@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import graph_api.MetaGraphManager.StringAsUUID
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 import scala.annotation.tailrec
 
@@ -206,6 +207,45 @@ case class WorkspaceExecutionContext(
   }
 }
 
+object BoxCache {
+  val maxSize = LoggedEnvironment.envOrElse("KITE_BOX_CACHE_SIZE", "100000").toInt
+  private val cache = new java.util.LinkedHashMap[String, Map[String, BoxOutputState]]() {
+    override def removeEldestEntry(
+        eldest: java.util.Map.Entry[String, Map[String, BoxOutputState]]) = {
+      size > maxSize
+    }
+  }
+  def getOrElseUpdate(
+      boxId: String, // Not part of the key, just for BoxOutputs.
+      operationId: String,
+      parameters: Map[String, String],
+      inputs: Map[String, BoxOutputState],
+      parametricParameters: Map[String, String])(
+      outputs: => Map[BoxOutput, BoxOutputState],
+  ): Map[BoxOutput, BoxOutputState] = synchronized {
+    val k = key(operationId, parameters, inputs, parametricParameters)
+    if (cache.containsKey(k)) {
+      val v = cache.get(k)
+      v.map { case (k, v) => BoxOutput(boxId, k) -> v }
+    } else {
+      val v = outputs
+      cache.put(k, v.map { case (k, v) => k.id -> v })
+      v
+    }
+  }
+  private def key(
+      operationId: String,
+      parameters: Map[String, String],
+      inputs: Map[String, BoxOutputState],
+      parametricParameters: Map[String, String]): String = {
+    val s: Seq[String] = Seq(operationId) ++
+      parameters.flatMap { case (k, v) => Seq(k, v) } ++
+      inputs.flatMap { case (k, v) => Seq(k, v.gUID.toString) } ++
+      parametricParameters.flatMap { case (k, v) => Seq(k, v) }
+    s.mkString("##")
+  }
+}
+
 case class Box(
     id: String,
     operationId: String,
@@ -229,9 +269,10 @@ case class Box(
   def execute(
       ctx: WorkspaceExecutionContext,
       inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    val op = getOperation(ctx, inputStates)
-    val outputStates = op.getOutputs
-    outputStates
+    BoxCache.getOrElseUpdate(id, operationId, parameters, inputStates, parametricParameters) {
+      val op = getOperation(ctx, inputStates)
+      op.getOutputs
+    }
   }
 
   def allOutputsWithError(
