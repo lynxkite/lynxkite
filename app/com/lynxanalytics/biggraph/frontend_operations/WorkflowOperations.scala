@@ -393,7 +393,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
           defaultValue = s"select * from $defaultTableName limit 10\n",
           language = "sql",
           enableTableBrowser = true)
-        params += Choice("persist", "Persist result", options = FEOption.yesno)
+        params += Choice("persist", "Persist result", options = FEOption.noyes)
         override def summary = params("summary")
         def enabled = FEStatus.enabled
         def defaultTableName = {
