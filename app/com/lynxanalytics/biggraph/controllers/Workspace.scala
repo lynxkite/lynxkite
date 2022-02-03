@@ -206,6 +206,9 @@ case class WorkspaceExecutionContext(
   }
 }
 
+// This cache is used to avoid re-executing boxes all the time. Execution is fairly
+// fast, because it only operates on the "meta" level. But we execute the workspace
+// on every little change (e.g., a box was moved) so latency is quite important.
 class BoxCache(maxSize: Int)
     extends java.util.LinkedHashMap[String, Map[String, BoxOutputState]]() {
   override def removeEldestEntry(
@@ -270,6 +273,9 @@ case class Box(
       ctx: WorkspaceExecutionContext,
       inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     if (ctx.ops.isCustom(operationId)) {
+      // The output of custom boxes is not entirely defined by their inputs and parameters.
+      // The backing workspace could change too! At the same time it's not important to cache
+      // them, since we will cache the atomic boxes that make them up anyway.
       getOperation(ctx, inputStates).getOutputs
     } else {
       ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
