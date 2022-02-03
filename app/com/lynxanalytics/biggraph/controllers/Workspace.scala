@@ -217,10 +217,11 @@ class BoxCache(maxSize: Int)
       operationId: String,
       parameters: Map[String, String],
       inputs: Map[String, BoxOutputState],
-      parametricParameters: Map[String, String])(
+      parametricParameters: Map[String, String],
+      workspaceParameters: Map[String, String])(
       outputs: => Map[BoxOutput, BoxOutputState],
   ): Map[BoxOutput, BoxOutputState] = synchronized {
-    val k = key(operationId, parameters, inputs, parametricParameters)
+    val k = key(operationId, parameters, inputs, parametricParameters, workspaceParameters)
     if (this.containsKey(k)) {
       val v = this.get(k)
       v.map { case (k, v) => BoxOutput(boxId, k) -> v }
@@ -234,11 +235,13 @@ class BoxCache(maxSize: Int)
       operationId: String,
       parameters: Map[String, String],
       inputs: Map[String, BoxOutputState],
-      parametricParameters: Map[String, String]): String = {
+      parametricParameters: Map[String, String],
+      workspaceParameters: Map[String, String]): String = {
     val s: Seq[String] = Seq(operationId) ++
       parameters.flatMap { case (k, v) => Seq(k, v) } ++
       inputs.flatMap { case (k, v) => Seq(k, v.gUID.toString) } ++
-      parametricParameters.flatMap { case (k, v) => Seq(k, v) }
+      parametricParameters.flatMap { case (k, v) => Seq(k, v) } ++
+      workspaceParameters.flatMap { case (k, v) => Seq(k, v) }
     s.mkString("##")
   }
 }
@@ -271,7 +274,8 @@ case class Box(
       operationId,
       parameters,
       inputStates,
-      parametricParameters) {
+      parametricParameters,
+      ctx.workspaceParameters) {
       val op = getOperation(ctx, inputStates)
       op.getOutputs
     }
