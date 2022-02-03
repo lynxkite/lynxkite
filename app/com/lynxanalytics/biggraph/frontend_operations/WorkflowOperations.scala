@@ -398,7 +398,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         def enabled = FEStatus.enabled
         def defaultTableName = {
           val first = inputNames.head
-          val state = context.inputs(first)
+          val state = context.inputs(inputs.head)
           val name =
             if (state.isProject) {
               if (inputNames.length == 1) "vertices"
