@@ -16,12 +16,15 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.controllers.BoxCache
 import com.lynxanalytics.biggraph.controllers.Workspace
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
   val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
   val repositoryRoot = new File(repositoryPath).getParent()
+  val boxCache = new BoxCache(LoggedEnvironment.envOrElse("KITE_BOX_CACHE_SIZE", "100000").toInt)
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
       operation: TypedMetaGraphOp[IS, OMDS],

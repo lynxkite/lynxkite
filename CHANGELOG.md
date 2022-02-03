@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
 - Upgraded to PyTorch Geometric (PyG) 2.0.1. [#206](https://github.com/lynxkite/lynxkite/pull/206)
+- The workspace interface is much faster now. [#220](https://github.com/lynxkite/lynxkite/pull/220)
 
 ### 4.3.0
 

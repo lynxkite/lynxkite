@@ -499,7 +499,7 @@
 │  ├─ flagged-respawn@1.0.1
 │  ├─ flat-cache@2.0.1
 │  ├─ flush-write-stream@1.1.1
-│  ├─ follow-redirects@1.14.1
+│  ├─ follow-redirects@1.14.7
 │  ├─ for-in@1.0.2
 │  ├─ for-own@1.0.0
 │  ├─ form-data@2.3.3
@@ -659,7 +659,7 @@
 │  ├─ map-cache@0.2.2
 │  ├─ map-stream@0.0.7
 │  ├─ map-visit@1.0.0
-│  ├─ markdown-it@12.0.6
+│  ├─ markdown-it@12.3.2
 │  ├─ matchdep@2.0.0
 │  ├─ mdurl@1.0.1
 │  ├─ merge-stream@2.0.0
@@ -680,7 +680,7 @@
 │  ├─ ms@2.1.3
 │  ├─ mute-stdout@1.0.1
 │  ├─ nan@2.14.2
-│  ├─ nanoid@3.1.23
+│  ├─ nanoid@3.2.0
 │  ├─ nanomatch@1.2.13
 │  ├─ natural-compare@1.4.0
 │  ├─ negotiator@0.6.2

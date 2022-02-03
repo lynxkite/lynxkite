@@ -206,6 +206,49 @@ case class WorkspaceExecutionContext(
   }
 }
 
+// This cache is used to avoid re-executing boxes all the time. Execution is fairly
+// fast, because it only operates on the "meta" level. But we execute the workspace
+// on every little change (e.g., a box was moved) so latency is quite important.
+class BoxCache(maxSize: Int)
+    extends java.util.LinkedHashMap[String, Map[String, BoxOutputState]]() {
+  override def removeEldestEntry(
+      eldest: java.util.Map.Entry[String, Map[String, BoxOutputState]]) = {
+    size > maxSize
+  }
+  def getOrElseUpdate(
+      boxId: String, // Not part of the key, just for BoxOutputs.
+      operationId: String,
+      parameters: Map[String, String],
+      inputs: Map[String, BoxOutputState],
+      parametricParameters: Map[String, String],
+      workspaceParameters: Map[String, String])(
+      outputs: => Map[BoxOutput, BoxOutputState],
+  ): Map[BoxOutput, BoxOutputState] = synchronized {
+    val k = key(operationId, parameters, inputs, parametricParameters, workspaceParameters)
+    if (this.containsKey(k)) {
+      val v = this.get(k)
+      v.map { case (k, v) => BoxOutput(boxId, k) -> v }
+    } else {
+      val v = outputs
+      this.put(k, v.map { case (k, v) => k.id -> v })
+      v
+    }
+  }
+  private def key(
+      operationId: String,
+      parameters: Map[String, String],
+      inputs: Map[String, BoxOutputState],
+      parametricParameters: Map[String, String],
+      workspaceParameters: Map[String, String]): String = {
+    val s: Seq[String] = Seq(operationId) ++
+      parameters.flatMap { case (k, v) => Seq(k, v) } ++
+      inputs.flatMap { case (k, v) => Seq(k, v.gUID.toString) } ++
+      parametricParameters.flatMap { case (k, v) => Seq(k, v) } ++
+      workspaceParameters.flatMap { case (k, v) => Seq(k, v) }
+    s.mkString("##")
+  }
+}
+
 case class Box(
     id: String,
     operationId: String,
@@ -229,9 +272,22 @@ case class Box(
   def execute(
       ctx: WorkspaceExecutionContext,
       inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    val op = getOperation(ctx, inputStates)
-    val outputStates = op.getOutputs
-    outputStates
+    if (ctx.ops.isCustom(operationId)) {
+      // The output of custom boxes is not entirely defined by their inputs and parameters.
+      // The backing workspace could change too! At the same time it's not important to cache
+      // them, since we will cache the atomic boxes that make them up anyway.
+      getOperation(ctx, inputStates).getOutputs
+    } else {
+      ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
+        id,
+        operationId,
+        parameters,
+        inputStates,
+        parametricParameters,
+        ctx.workspaceParameters) {
+        getOperation(ctx, inputStates).getOutputs
+      }
+    }
   }
 
   def allOutputsWithError(

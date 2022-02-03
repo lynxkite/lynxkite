@@ -390,17 +390,20 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params += Code(
           "sql",
           "SQL",
-          defaultValue = s"select * from $defaultTableName limit 10\n",
+          defaultValue = s"select * from $defaultTableName\n",
           language = "sql",
           enableTableBrowser = true)
-        params += Choice("persist", "Persist result", options = FEOption.yesno)
+        params += Choice("persist", "Persist result", options = FEOption.noyes)
         override def summary = params("summary")
         def enabled = FEStatus.enabled
         def defaultTableName = {
-          val tableNames = this.getInputTables(renaming).keySet.toList.sorted
-          val name = Seq("vertices", inputNames.head, inputNames.head + ".vertices")
-            .find(tableNames.contains(_))
-            .getOrElse(tableNames.head)
+          val first = inputNames.head
+          val state = context.inputs(inputs.head)
+          val name =
+            if (state.isProject) {
+              if (inputNames.length == 1) "vertices"
+              else first + ".vertices"
+            } else first
           val simple = "[a-zA-Z0-9]*".r
           name match {
             case simple() => name

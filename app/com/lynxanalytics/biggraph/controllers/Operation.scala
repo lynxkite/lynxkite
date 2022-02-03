@@ -304,6 +304,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   def getBoxMetadata(id: String) = getBox(id)._1
 
   def atomicOperationIds = atomicOperations.keys.toSeq.sorted
+  def isCustom(id: String) = !atomicOperations.contains(id)
 
   private def listFolder(user: serving.User, path: String): Seq[String] = {
     val entry = DirectoryEntry.fromName(path)
