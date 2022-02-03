@@ -374,6 +374,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.sql.types.Decimal$DecimalIsFractional$"))
     kryo.register(Class.forName("org.apache.spark.sql.execution.datasources.v2.DataWritingSparkTaskResult"))
     kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.DefaultCachedBatch"))
+    kryo.register(Class.forName("scala.math.Ordering$Reverse"))
+    kryo.register(Class.forName("org.apache.spark.sql.catalyst.InternalRow$"))
+    kryo.register(Class.forName("org.apache.spark.sql.catalyst.expressions.NullsFirst$"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
