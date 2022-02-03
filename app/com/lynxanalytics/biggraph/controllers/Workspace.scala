@@ -269,15 +269,18 @@ case class Box(
   def execute(
       ctx: WorkspaceExecutionContext,
       inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
-      id,
-      operationId,
-      parameters,
-      inputStates,
-      parametricParameters,
-      ctx.workspaceParameters) {
-      val op = getOperation(ctx, inputStates)
-      op.getOutputs
+    if (ctx.ops.isCustom(operationId)) {
+      getOperation(ctx, inputStates).getOutputs
+    } else {
+      ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
+        id,
+        operationId,
+        parameters,
+        inputStates,
+        parametricParameters,
+        ctx.workspaceParameters) {
+        getOperation(ctx, inputStates).getOutputs
+      }
     }
   }
 
