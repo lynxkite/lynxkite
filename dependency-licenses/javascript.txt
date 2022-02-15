@@ -13825,7 +13825,7 @@ The following software may be included in this product: three. A copy of the sou
 
 The MIT License
 
-Copyright © 2010-2021 three.js authors
+Copyright © 2010-2022 three.js authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

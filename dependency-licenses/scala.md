@@ -6,16 +6,16 @@ Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.fluent
 Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0) | org.scalaj # scalaj-http_2.12 # 2.4.2 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.google.android # annotations # 4.1.1.4 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.code.gson # gson # 2.8.6 | <notextile></notextile>
-Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.errorprone # error_prone_annotations # 2.4.0 | <notextile></notextile>
+Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.errorprone # error_prone_annotations # 2.9.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.squareup.okhttp3 # okhttp # 3.11.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.squareup.okio # okio # 1.14.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-api # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-context # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-core # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-netty # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf-lite # 1.39.0 | <notextile></notextile>
-Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.39.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-api # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-context # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-core # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-netty # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-protobuf-lite # 1.41.0 | <notextile></notextile>
+Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.41.0 | <notextile></notextile>
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.23.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
 Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.1.2 | <notextile></notextile>
@@ -158,7 +158,7 @@ Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LI
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-shouldmatchers_2.12 # 3.2.7 | <notextile></notextile>
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest-wordspec_2.12 # 3.2.7 | <notextile></notextile>
 Apache | [the Apache License, ASL Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.scalatest # scalatest_2.12 # 3.2.7 | <notextile></notextile>
-BSD | [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.17.2 | <notextile></notextile>
+BSD | [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.18.0 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | com.thoughtworks.paranamer # paranamer # 2.8 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | javax.measure # unit-api # 1.0 | <notextile></notextile>
 BSD | [BSD](https://github.com/sbt/test-interface/blob/master/LICENSE) | org.scala-sbt # test-interface # 1.0 | <notextile></notextile>
