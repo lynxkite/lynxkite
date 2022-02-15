@@ -9,7 +9,7 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibMo
     url: window.location.href,
     version: util.globals.version,
   };
-  $scope.debug = alert.details ? jsyaml.safeDump(debug, { sortKeys: true, skipInvalid: true }) : undefined;
+  $scope.debug = alert.details ? jsyaml.dump(debug, { sortKeys: true, skipInvalid: true }) : undefined;
   $scope.title = alert.title || 'Reporting errors';
 
   $scope.close = function() {
