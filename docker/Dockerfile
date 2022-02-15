@@ -1,7 +1,6 @@
 # Single-machine LynxKite image.
-FROM openjdk:8-jre
+FROM openjdk:11
 
-# Add system dependencies.
 RUN \
   apt-get update && \
   apt-get install -y build-essential busybox git-core && \
@@ -11,13 +10,15 @@ RUN \
   bash conda.sh -b -p /opt/conda && \
   rm conda.sh
 ENV PATH /opt/conda/bin:$PATH
-ENV ADD_TO_PYTHON_JAIL /opt/conda/lib
 
 # Install dependencies early so they are in a low layer.
-COPY stage/conf/SPARK_VERSION /lynxkite/conf/SPARK_VERSION
+COPY stage/tools/runtime-env.yml /lynxkite/tools/runtime-env.yml
+RUN conda env update -n base --file /lynxkite/tools/runtime-env.yml
 COPY stage/tools/install_spark.sh /lynxkite/tools/install_spark.sh
-COPY stage/sphynx/python/env.yml /lynxkite/sphynx/python/env.yml
-RUN /lynxkite/tools/install_spark.sh /spark && conda env update --file /lynxkite/sphynx/python/env.yml
+COPY stage/conf/SPARK_VERSION /lynxkite/conf/SPARK_VERSION
+RUN /lynxkite/tools/install_spark.sh /spark
+ENV LD_LIBRARY_PATH /opt/conda/lib
+ENV ADD_TO_PYTHON_JAIL /opt/conda/lib
 
 # The user has to configure these.
 ENV KITE_MASTER_MEMORY_MB 1024
