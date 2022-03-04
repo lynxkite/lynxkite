@@ -628,20 +628,21 @@ object PythonUtilities {
       implicit manager: MetaGraphManager): Unit = {
     val api = Seq("vs", "es", "graph_attributes")
     // Parse the input list into Fields.
-    val existingFields = project.vertexAttributes.map {
-      case (name, attr) => s"vs.$name" -> Field("vs", name, SerializableType(attr.typeTag))
+    val existingFields: Map[String, () => Field] = project.vertexAttributes.map {
+      case (name, attr) => s"vs.$name" -> (() => Field("vs", name, SerializableType(attr.typeTag)))
     }.toMap ++ project.edgeAttributes.map {
-      case (name, attr) => s"es.$name" -> Field("es", name, SerializableType(attr.typeTag))
+      case (name, attr) => s"es.$name" -> (() => Field("es", name, SerializableType(attr.typeTag)))
     }.toMap ++ project.scalars.map {
-      case (name, s) => s"graph_attributes.$name" -> Field("graph_attributes", name, SerializableType(s.typeTag))
+      case (name, s) =>
+        s"graph_attributes.$name" -> (() => Field("graph_attributes", name, SerializableType(s.typeTag)))
     }.toMap + {
-      "es.src" -> Field("es", "src", SerializableType.long)
+      "es.src" -> (() => Field("es", "src", SerializableType.long))
     } + {
-      "es.dst" -> Field("es", "dst", SerializableType.long)
+      "es.dst" -> (() => Field("es", "dst", SerializableType.long))
     }
-    val inputFields = inputs.map { i =>
+    val inputFields: Seq[Field] = inputs.map { i =>
       existingFields.get(i) match {
-        case Some(f) => f
+        case Some(f) => f()
         case None => throw new AssertionError(
             s"No available input called '$i'. Available inputs are: " +
               existingFields.keys.toSeq.sorted.mkString(", "))
