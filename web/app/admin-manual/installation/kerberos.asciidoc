@@ -3,6 +3,11 @@
 LynxKite supports running on Kerberos-secured clusters. To enable this, you will need to set
 `KERBEROS_PRINCIPAL` and `KERBEROS_KEYTAB` in your <<kiterc-file,`.kiterc`>> respectively.
 
+The Kerberos configuration (`krb5.conf`) must also be accessible on the machine where LynxKite
+is running. If LynxKite is running inside a Docker container, make sure this file is passed in,
+for example through a mount. The path to `krb5.conf` can be configured with the `KRB5_CONFIG`
+environment variable.
+
 You will need to contact your administrator to obtain the keytab file. In a typical setup, you
 could do the following to obtain a Keytab file. Start the `ktutil` shell and then enter:
 ```
