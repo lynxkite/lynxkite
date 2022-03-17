@@ -138,4 +138,18 @@ df['age_4']: float = df.age_2 ** 2
       List(6250000.0, "Bob"),
       List(16.0, "Isolated Joe")))
   }
+
+  test("unsupported types are fine if you don't use them", SphynxOnly) {
+    val p = box("Create example graph")
+      .box("Train linear regression model", Map("features" -> "age"))
+      .box("Compute in Python", Map("code" -> "vs['y']: str = vs.name"))
+      .project
+    assert(
+      get(p.vertexAttributes("y").runtimeSafeCast[String]) ==
+        Map(
+          0 -> "Adam",
+          1 -> "Eve",
+          2 -> "Bob",
+          3 -> "Isolated Joe"))
+  }
 }
