@@ -963,8 +963,10 @@ class State:
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    guid = self._get_state_id()  # The TableOutputState ID is the table GUID.
-    path = self.box.lk.get_prefixed_path('DATA$/tables/' + guid)
+    t = self.persist()
+    t.compute()
+    guid = t._get_state_id()  # The TableOutputState ID is the table GUID.
+    path = t.box.lk.get_prefixed_path('DATA$/tables/' + guid)
     return spark.read.parquet(path.resolved)
 
   def columns(self):
