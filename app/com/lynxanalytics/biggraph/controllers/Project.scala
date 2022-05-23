@@ -1188,23 +1188,22 @@ class DirectoryEntry(val path: SymbolPath)(
       parent.get.assertWriteAllowedFrom(user)
     }
   }
-  def readAllowedFrom(user: User): Boolean = {
-    user.isAdmin || (localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, parent))
-  }
-  def writeAllowedFrom(user: User): Boolean = {
-    user.isAdmin ||
-    (transitiveReadAllowedFrom(user, parent) && transitiveWriteAllowedFrom(user, Some(this)))
+  def readAllowedFrom(user: User): Boolean =
+    user.isAdmin || hasAccess(user, needsWrite = false)
+  def writeAllowedFrom(user: User): Boolean =
+    user.isAdmin || hasAccess(user, needsWrite = true)
+
+  protected def hasAccess(user: User, needsWrite: Boolean): Boolean = {
+    val path = (Seq(this) ++ parents).reverse
+    val readableUpTo = path.takeWhile(_.localReadAllowedFrom(user))
+    val writeableFrom = readableUpTo.find(_.localWriteAllowedFrom(user))
+    // If we can navigate to a directory that we have write permission for,
+    // then we have write permission for everything inside.
+    writeableFrom.isDefined ||
+    // If we can navigate to this directory, we can read it.
+    !needsWrite && readableUpTo.last == this
   }
 
-  protected def transitiveReadAllowedFrom(user: User, p: Option[Directory]): Boolean = {
-    p.isEmpty || (p.get.localReadAllowedFrom(user) && transitiveReadAllowedFrom(user, p.get.parent))
-  }
-  protected def transitiveWriteAllowedFrom(user: User, p: Option[DirectoryEntry]): Boolean = {
-    // The parent of a directory is empty if and only if it is the root directory.
-    p.isEmpty ||
-    (p.get.exists && p.get.localWriteAllowedFrom(user)) ||
-    (!p.get.exists && transitiveWriteAllowedFrom(user, p.get.parent))
-  }
   protected def localReadAllowedFrom(user: User): Boolean = {
     // Write access also implies read access.
     localWriteAllowedFrom(user) || aclContains(readACL, user)

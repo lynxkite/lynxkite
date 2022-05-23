@@ -217,7 +217,7 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
             val fname = (dst.dataDir / s.gUID.toString / "serialized_data")
             val successFile = (dst.dataDir / s.gUID.toString / "_SUCCESS")
             fname.createFromStrings(jsonString)
-            successFile.create()
+            successFile.createEmpty()
           case dst: UnorderedSphynxLocalDisk =>
             val fname = s"${dst.getGUIDPath(e)}/serialized_data"
             val successFile = s"${dst.getGUIDPath(e)}/_SUCCESS"
@@ -334,7 +334,7 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
           } catch {
             case t: Throwable => throw new AssertionError(s"Failed to relocate $e from $source", t)
           }
-          (dstDir / "_SUCCESS").create()
+          (dstDir / "_SUCCESS").createEmpty()
         })
       case source: SparkDomain => relocateFromSpark(e, source)
     }

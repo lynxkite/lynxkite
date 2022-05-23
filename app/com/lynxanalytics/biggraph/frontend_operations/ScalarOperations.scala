@@ -166,11 +166,13 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       val expr = params("expr")
       s"Derive graph attribute: $name = $expr"
     }
-    def apply() = {
+    def apply(): Unit = {
+      val output = params("output")
       val expr = params("expr")
+      if (output.isEmpty || expr.isEmpty) return
       val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val result = graph_operations.DeriveScalaScalar.deriveAndInferReturnType(expr, namedScalars)
-      project.newScalar(params("output"), result, expr + help)
+      project.newScalar(output, result, expr + help)
     }
   })
 }

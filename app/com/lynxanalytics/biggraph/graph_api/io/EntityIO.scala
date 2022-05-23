@@ -594,7 +594,7 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
         (dir / "large_keys_rdd")
           .saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
       } else { 0L }
-    (dir / Success).create()
+    (dir / Success).createEmpty
     (linesSmallKeys + linesLargeKeys, "hybrid")
   }
 

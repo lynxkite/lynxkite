@@ -161,6 +161,7 @@ class HadoopFile private (
   def open() = fs.open(path)
   // The caller is responsible for calling close().
   def create() = fs.create(path)
+  def createEmpty() = create().close()
   def exists() = fs.exists(path)
   private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
