@@ -1,24 +1,10 @@
-# Install this before running "make":
-#
-#   conda update env -f conda-env.yml
-#
-# If you add something that is a runtime dependency too,
-# don't forget to update tools/runtime-env.yml.
+# A subset of ../conda-env.yml. Suitable for deployments.
 channels:
 - conda-forge
 - pytorch
 - pyg
 dependencies:
-# For LynxKite backend.
-- sbt
-# For LynxKite frontend.
-- nodejs
-- yarn
-# For Sphynx.
-- go
 # For NetworKit.
-- compilers
-- swig
 - libnetworkit
 - libtlx
 # For Python and ML.
@@ -31,7 +17,6 @@ dependencies:
 - pytorch::cpuonly
 - pyg==2.0.1
 # For Python API and tools.
-- mypy
 - ruamel.yaml
 - requests
 - typed-ast

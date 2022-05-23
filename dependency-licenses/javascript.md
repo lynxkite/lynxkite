@@ -870,7 +870,7 @@
 │  ├─ tether@1.4.7
 │  ├─ text-table@0.2.0
 │  ├─ tfunk@4.0.0
-│  ├─ three@0.129.0
+│  ├─ three@0.137.5
 │  ├─ through@2.3.8
 │  ├─ through2-filter@3.0.0
 │  ├─ through2@2.0.5

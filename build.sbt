@@ -66,7 +66,7 @@ libraryDependencies ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
   // This indirect dependency of ours is broken on Maven.
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-  // Used for working with AVRO files. 
+  // Used for working with AVRO files.
   "org.apache.spark" %% "spark-avro" % sparkVersion.value,
   // For Neo4j import/export. Doesn't work, see https://github.com/neo4j-contrib/neo4j-spark-connector/issues/339.
   "org.neo4j" %% "neo4j-connector-apache-spark" % "4.0.2_for_spark_3",
@@ -141,6 +141,7 @@ mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
 mappings in Universal ++= Seq(
+  file("tools/runtime-env.yml") -> "tools/runtime-env.yml",
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
