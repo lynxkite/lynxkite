@@ -35,7 +35,6 @@ func init() {
 				c.Run()
 				p = c.GetPartition()
 			}
-			defer networkit.DeletePartition(p)
 			vs := &VertexSet{}
 			vs.MappingToUnordered = make([]int64, p.NumberOfSubsets())
 			mappingToOrdered := make(map[int64]SphynxId)

@@ -9,10 +9,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### 4.4.0
 
 - Upgraded to PyTorch Geometric (PyG) 2.0.1. [#206](https://github.com/lynxkite/lynxkite/pull/206)
+- Upgraded to NetworKit 10.0. [#234](https://github.com/lynxkite/lynxkite/pull/234)
 - The workspace interface is much faster now. [#220](https://github.com/lynxkite/lynxkite/pull/220)
 - Now using Conda for managing all dependencies. [#209](https://github.com/lynxkite/lynxkite/pull/209)
 - Fixed an issue with Python boxes returning errors unnecessarily. [#225](https://github.com/lynxkite/lynxkite/pull/225)
 - Fixed an issue with GCS. [#224](https://github.com/lynxkite/lynxkite/pull/224)
+- Fixed CUDA issues with GCN and Node2vec boxes. [#234](https://github.com/lynxkite/lynxkite/pull/234)
 
 ### 4.3.0
 
