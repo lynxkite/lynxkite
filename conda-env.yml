@@ -9,6 +9,8 @@ channels:
 - pytorch
 - pyg
 dependencies:
+- unzip
+- make
 # For LynxKite backend.
 - sbt
 # For LynxKite frontend.
@@ -31,6 +33,7 @@ dependencies:
 - pytorch::cpuonly
 - pyg==2.0.1
 # For Python API and tools.
+- autopep8
 - mypy
 - ruamel.yaml
 - requests
