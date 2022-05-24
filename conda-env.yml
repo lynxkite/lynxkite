@@ -22,8 +22,8 @@ dependencies:
 - compilers
 - swig
 - libstdcxx-ng
-- libnetworkit
-- libtlx
+- libnetworkit==10.0
+- libtlx==0.5.20200222
 # For Python and ML.
 - python>=3.8
 - numpy
