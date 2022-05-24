@@ -51,10 +51,6 @@ export KITE_ALLOW_NON_PREFIXED_PATHS=false
 # Specify the PID file for LynxKite servers.
 export KITE_PID_FILE=$HOME/kite/pid
 
-# When set, each action performed by the lynxkite script (start,stop,restart, etc.) is logged to
-# this file.
-export KITE_SCRIPT_LOGS=$HOME/kite/script.log
-
 # Specify the YARN configuration directory. It is needed if you want to run against YARN.
 # export YARN_CONF_DIR=/etc/hadoop/...
 
