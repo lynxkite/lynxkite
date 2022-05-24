@@ -41,7 +41,7 @@ module.exports = function(fw) {
       popup.setInstrument(1, 'sql', {
         sql: 'select gender, mean(age) as age from input group by gender' });
       popup.setInstrument(2, 'plot');
-      popup.plot.expectBarHeightsToBe([186, 140]);
+      popup.plot.expectBarHeightsToBe([140, 186]);
       popup.clearInstrument(1);
       tableIsGood(popup.table);
       popup.close();

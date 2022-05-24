@@ -9,6 +9,8 @@ channels:
 - pytorch
 - pyg
 dependencies:
+- unzip
+- make
 # For LynxKite backend.
 - sbt
 # For LynxKite frontend.
@@ -19,6 +21,7 @@ dependencies:
 # For NetworKit.
 - compilers
 - swig
+- libstdcxx-ng
 - libnetworkit
 - libtlx
 # For Python and ML.
@@ -27,10 +30,11 @@ dependencies:
 - pandas
 - scikit-learn
 - pyarrow
-- pytorch::pytorch==1.9.0
+- pytorch::pytorch==1.9.1
 - pytorch::cpuonly
-- pyg==2.0.1
+- pyg==2.0.3
 # For Python API and tools.
+- autopep8
 - mypy
 - ruamel.yaml
 - requests

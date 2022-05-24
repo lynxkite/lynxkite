@@ -74,7 +74,7 @@ class NetworKitTest extends OperationsTestBase {
   test("Create clustered random graph", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create clustered random graph", Map("seed" -> "1")).project
     assert(g.vertexSet.countScalar.value == 100)
-    assert(g.edgeBundle.countScalar.value == 343)
+    assert(g.edgeBundle.countScalar.value > 200) // Not deterministic in NetworKit 10. :(
   }
   test("Create Dorogovtsev–Mendes random graph", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create Dorogovtsev–Mendes random graph", Map("seed" -> "1")).project
@@ -138,7 +138,7 @@ class NetworKitTest extends OperationsTestBase {
     for (
       (algorithm, expected) <- Seq(
         "Pivot MDS" ->
-          Map(0 -> Vector(-0.27, -0.77), 1 -> Vector(0.8, 0.15), 2 -> Vector(-0.53, 0.62)),
+          Map(0 -> Vector(0.41, 0.7), 1 -> Vector(0.4, -0.7), 2 -> Vector(-0.82, 0.0)),
         "Maxent-Stress" ->
           Map(0 -> Vector(-0.03, 0.5), 1 -> Vector(-0.55, -0.3), 2 -> Vector(0.58, -0.2)),
       )
@@ -210,7 +210,7 @@ class NetworKitTest extends OperationsTestBase {
     for (
       (name, attr, expected) <- Seq(
         ("Compute hub dominance", "hub_dominance", Map(0 -> 1.0, 1 -> 0.71, 2 -> 1.0)),
-        ("Compute segment conductance", "conductance", Map(0 -> 1.06, 1 -> 1.0, 2 -> 1.0)),
+        ("Compute segment conductance", "conductance", Map(0 -> 0.29, 1 -> 0.25, 2 -> 0.54)),
         ("Compute segment density", "density", Map(0 -> 1.32, 1 -> 0.82, 2 -> 1.33)),
         ("Compute segment expansion", "expansion", Map(0 -> 28.0, 1 -> 15.0, 2 -> 19.0)),
         ("Compute segment fragmentation", "fragmentation", Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0)),

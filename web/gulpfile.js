@@ -14,11 +14,11 @@ const ProxyPort = 9090;
 let LynxKiteURL;
 let ProxyURL;
 if (process.env.HTTPS_PORT) {
-  LynxKiteURL = 'https://localhost:' + process.env.HTTPS_PORT;
-  ProxyURL = 'https://localhost:' + ProxyPort;
+  LynxKiteURL = 'https://127.0.0.1:' + process.env.HTTPS_PORT;
+  ProxyURL = 'https://127.0.0.1:' + ProxyPort;
 } else {
-  LynxKiteURL = 'http://localhost:' + LynxKitePort;
-  ProxyURL = 'http://localhost:' + ProxyPort;
+  LynxKiteURL = 'http://127.0.0.1:' + LynxKitePort;
+  ProxyURL = 'http://127.0.0.1:' + ProxyPort;
 }
 
 // The tools directory.

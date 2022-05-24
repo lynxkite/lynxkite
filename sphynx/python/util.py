@@ -72,8 +72,8 @@ class Op:
 
   def output(self, name, values, *, type):
     '''Writes a list or Numpy array to disk.'''
-    if hasattr(values, 'numpy'):  # Turn PyTorch Tensors into Numpy arrays.
-      values = values.numpy()
+    if hasattr(values, 'detach'):  # Turn PyTorch Tensors into Numpy arrays.
+      values = values.detach().cpu().numpy()
     if hasattr(values, 'replace'):
       # Pandas uses nan for missing values, but PyArrow uses None.
       values = values.replace({np.nan: None})
@@ -111,8 +111,8 @@ class Op:
 
   def output_es(self, name, edge_index):
     '''Writes an edge bundle specified as a 2xN matrix to disk.'''
-    if hasattr(edge_index, 'numpy'):
-      edge_index = edge_index.numpy()
+    if hasattr(edge_index, 'detach'):
+      edge_index = edge_index.detach().cpu().numpy()
     src, dst = edge_index
     self.write_columns(name, 'EdgeBundle', {
         'src': pa.array(src, pa.uint32()),
