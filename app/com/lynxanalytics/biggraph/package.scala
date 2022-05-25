@@ -25,14 +25,19 @@ package object biggraph {
     bigGraphLogger.info("Starting to initialize production Kite environment")
     def clean(s: String) = s.reverse.dropWhile(_ == '/').reverse // Drop trailing slashes.
     val repoDirs = {
-      val metaDir = clean(LoggedEnvironment.envOrError("KITE_META_DIR",
-        "Please set KITE_META_DIR and KITE_DATA_DIR."))
-      val dataDir = clean(LoggedEnvironment.envOrError("KITE_DATA_DIR",
-        "Please set KITE_DATA_DIR.", confidential = true))
+      val metaDir =
+        clean(LoggedEnvironment.envOrError(
+          "KITE_META_DIR",
+          "Please set KITE_META_DIR and KITE_DATA_DIR."))
+      val dataDir =
+        clean(LoggedEnvironment.envOrError(
+          "KITE_DATA_DIR",
+          "Please set KITE_DATA_DIR.",
+          confidential = true))
       val ephemeralDataDir =
         LoggedEnvironment.envOrNone("KITE_EPHEMERAL_DATA_DIR", confidential = true).map(clean)
       new RepositoryDirs(metaDir, standardDataPrefix, dataDir, ephemeralDataDir)
-      }
+    }
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()
 
