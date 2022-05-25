@@ -9,9 +9,6 @@ import scala.reflect.runtime.universe._
 package object biggraph {
   val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
 
-  // static<meta_dir,data_dir,ephemeral_data_dir>
-  private val staticRepoPattern = "static<(.+),(.+),(.*)>".r
-
   val standardDataPrefix = "DATA$"
 
   def registerStandardPrefixes() = {
@@ -26,16 +23,15 @@ package object biggraph {
     frameworkPackages.add("org.apache.spark.Logging")
 
     bigGraphLogger.info("Starting to initialize production Kite environment")
-    val repoDirs =
-      LoggedEnvironment.envOrNone("REPOSITORY_MODE", confidential = true) match {
-        case Some(staticRepoPattern(metaDir, dataDir, "")) =>
-          new RepositoryDirs(metaDir, standardDataPrefix, dataDir)
-        case Some(staticRepoPattern(metaDir, dataDir, ephemeralDataDir)) =>
-          new RepositoryDirs(metaDir, standardDataPrefix, dataDir, Some(ephemeralDataDir))
-        case Some(rm) =>
-          throw new AssertionError(s"Could not parse REPOSITORY_MODE ($rm)")
-        case None =>
-          throw new AssertionError("REPOSITORY_MODE is not defined")
+    def clean(s: String) = s.reverse.dropWhile(_ == '/').reverse // Drop trailing slashes.
+    val repoDirs = {
+      val metaDir = clean(LoggedEnvironment.envOrError("KITE_META_DIR",
+        "Please set KITE_META_DIR and KITE_DATA_DIR."))
+      val dataDir = clean(LoggedEnvironment.envOrError("KITE_DATA_DIR",
+        "Please set KITE_DATA_DIR.", confidential = true))
+      val ephemeralDataDir =
+        LoggedEnvironment.envOrNone("KITE_EPHEMERAL_DATA_DIR", confidential = true).map(clean)
+      new RepositoryDirs(metaDir, standardDataPrefix, dataDir, ephemeralDataDir)
       }
     repoDirs.forcePrefixRegistration()
     registerStandardPrefixes()

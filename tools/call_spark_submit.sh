@@ -103,8 +103,6 @@ final_java_opts="${final_java_opts/user.dir=\/\//user.dir=\/}"
 # Cannot do this earlier, as the wrapping script is written in a -e hostile way. :(
 set -eo pipefail
 
-export REPOSITORY_MODE="static<$KITE_META_DIR,$KITE_DATA_DIR,$KITE_EPHEMERAL_DATA_DIR>"
-
 if [ -z "${NUM_CORES_PER_EXECUTOR}" ]; then
   >&2 echo "Please define NUM_CORES_PER_EXECUTOR in the kite config file ${KITE_SITE_CONFIG}."
   exit 1
