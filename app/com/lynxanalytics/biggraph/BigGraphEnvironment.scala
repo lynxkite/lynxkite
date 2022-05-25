@@ -48,7 +48,7 @@ object BigGraphEnvironmentImpl {
       sparkSessionProvider: SparkSessionProvider): BigGraphEnvironment = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    val domainPreference = LoggedEnvironment.envOrElse("KITE_DOMAINS", "spark,sphynx,scala")
+    val domainPreference = LoggedEnvironment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
       .split(",").map(_.trim.toLowerCase)
     // Load the metagraph in parallel to Spark initialization.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
