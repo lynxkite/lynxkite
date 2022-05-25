@@ -20,4 +20,11 @@ object LoggedEnvironment {
     }
     result
   }
+
+  def envOrError(name: String, msg: String, confidential: Boolean = false) = synchronized {
+    envOrNone(name, confidential) match {
+      case Some(value) => value
+      case None => throw new AssertionError(s"$name $msg")
+    }
+  }
 }

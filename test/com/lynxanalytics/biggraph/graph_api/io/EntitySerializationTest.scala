@@ -1,14 +1,15 @@
 package com.lynxanalytics.biggraph.graph_api.io
 
+import com.lynxanalytics.biggraph.TestSparkContext
 import com.lynxanalytics.biggraph.graph_api.Edge
 import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe._
 
-class EntitySerializationTest extends AnyFunSuite {
+class EntitySerializationTest extends AnyFunSuite with TestSparkContext {
   def serde[T](values: Seq[T], s: EntitySerializer[T], d: EntityDeserializer[T]) = {
     val numbered = values.zipWithIndex.map { case (v, k) => k.toLong -> v }
-    val serialized = numbered.iterator.map { case (k, v) => k -> s.serialize(v) }
-    val deserialized = serialized.map { case (k, v) => k -> d.deserialize(v) }.toList
+    val serialized = s.serialize(sparkContext.parallelize(numbered))
+    val deserialized = d.deserialize(serialized).collect.toList
     assert(deserialized == numbered)
   }
 

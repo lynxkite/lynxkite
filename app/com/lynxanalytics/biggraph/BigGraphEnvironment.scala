@@ -34,8 +34,8 @@ trait SparkFreeEnvironment {
 }
 
 trait BigGraphEnvironment extends SparkFreeEnvironment {
-  val sparkSession: spark.sql.SparkSession
-  val sparkContext: spark.SparkContext
+  def sparkSession: spark.sql.SparkSession
+  def sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
   def sparkDomain: graph_api.SparkDomain
@@ -48,51 +48,28 @@ object BigGraphEnvironmentImpl {
       sparkSessionProvider: SparkSessionProvider): BigGraphEnvironment = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    // Initialize parts of the environment. Some of them can be initialized
-    // in parallel, hence the juggling with futures.
+    val domainPreference = LoggedEnvironment.envOrElse("KITE_DOMAINS", "spark,sphynx,scala")
+      .split(",").map(_.trim.toLowerCase)
+    // Load the metagraph in parallel to Spark initialization.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
-    val sparkSessionFuture = Future(sparkSessionProvider.createSparkSession)
-    val sparkDomainFuture = sparkSessionFuture.map(sparkSession => createSparkDomain(sparkSession, repositoryDirs))
-    val sphynxHost = LoggedEnvironment.envOrNone("SPHYNX_HOST")
-    val sphynxPort = LoggedEnvironment.envOrNone("SPHYNX_PORT")
-    val sphynxCertDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
-    val envFuture = for {
-      sparkSession <- sparkSessionFuture
-      metaGraphManager <- metaGraphManagerFuture
-      sparkDomain <- sparkDomainFuture
-    } yield {
-      val domains = {
-        (sphynxHost, sphynxPort, sphynxCertDir) match {
-          case (Some(host), Some(port), Some(certDir)) => {
-            val mixedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR")
-            val unorderedSphynxLocalDisk = mixedDataDir match {
-              case None =>
-                throw new AssertionError(
-                  "UNORDERED_SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
-              case Some(d) => new graph_api.UnorderedSphynxLocalDisk(host, port.toInt, certDir, d)
-            }
-            val unorderedSphynxSparkDisk = {
-              new graph_api.UnorderedSphynxSparkDisk(host, port.toInt, certDir, repositoryDirs.dataDir / "sphynx")
-            }
-            Seq(
-              new graph_api.OrderedSphynxDisk(host, port.toInt, certDir),
-              new graph_api.SphynxMemory(host, port.toInt, certDir),
-              unorderedSphynxLocalDisk,
-              new graph_api.ScalaDomain,
-              unorderedSphynxSparkDisk,
-              sparkDomain,
-            )
-          }
-          case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
-        }
-      }
-      new BigGraphEnvironmentImpl(
-        sparkSession,
-        metaGraphManager,
-        sparkDomain,
-        new graph_api.DataManager(domains))
+    val domains = domainPreference.flatMap {
+      case "spark" => Seq(createSparkDomain(sparkSessionProvider, repositoryDirs))
+      case "sphynx" =>
+        val host = LoggedEnvironment.envOrError("SPHYNX_HOST", "must be set when using Sphynx.")
+        val port = LoggedEnvironment.envOrError("SPHYNX_PORT", "must be set when using Sphynx.")
+        val certDir = LoggedEnvironment.envOrError("SPHYNX_CERT_DIR", "must be set when using Sphynx.")
+        val unorderedDir = LoggedEnvironment.envOrError("UNORDERED_SPHYNX_DATA_DIR", "must be set when using Sphynx.")
+        Seq(
+          new graph_api.OrderedSphynxDisk(host, port.toInt, certDir),
+          new graph_api.SphynxMemory(host, port.toInt, certDir),
+          new graph_api.UnorderedSphynxLocalDisk(host, port.toInt, certDir, unorderedDir),
+          new graph_api.UnorderedSphynxSparkDisk(host, port.toInt, certDir, repositoryDirs.dataDir / "sphynx"),
+        )
+      case "scala" => Seq(new graph_api.ScalaDomain)
     }
-    Await.result(envFuture, Duration.Inf)
+    new BigGraphEnvironmentImpl(
+      Await.result(metaGraphManagerFuture, Duration.Inf),
+      new graph_api.DataManager(domains))
   }
 
   def createMetaGraphManager(repositoryDirs: RepositoryDirs) = {
@@ -102,25 +79,27 @@ object BigGraphEnvironmentImpl {
     res
   }
 
-  def createSparkDomain(sparkSession: spark.sql.SparkSession, repositoryDirs: RepositoryDirs) = {
-    bigGraphLogger.info("Initializing data manager...")
+  def createSparkDomain(sparkSessionProvider: SparkSessionProvider, repositoryDirs: RepositoryDirs) = {
+    val sparkSession = sparkSessionProvider.createSparkSession
+    bigGraphLogger.info("Initializing Spark domain...")
     val res = new graph_api.SparkDomain(
       sparkSession,
       repositoryDirs.dataDir,
       repositoryDirs.ephemeralDataDir)
-    bigGraphLogger.info("Data manager initialized.")
+    bigGraphLogger.info("Spark domain initialized.")
     res
   }
 
 }
 
 case class BigGraphEnvironmentImpl(
-    sparkSession: spark.sql.SparkSession,
     metaGraphManager: graph_api.MetaGraphManager,
-    sparkDomain: graph_api.SparkDomain,
     dataManager: graph_api.DataManager)
     extends BigGraphEnvironment {
-  val sparkContext = sparkSession.sparkContext
+  // Try not to use these. If you need Spark, use it in an operation.
+  def sparkDomain = dataManager.domains.collect { case d: graph_api.SparkDomain => d }.head
+  def sparkSession = sparkDomain.sparkSession
+  def sparkContext = sparkSession.sparkContext
 }
 
 class RepositoryDirs(
