@@ -1,7 +1,3 @@
-info fsevents@2.3.2: The platform "linux" is incompatible with this module.
-info "fsevents@2.3.2" is an optional dependency and failed compatibility check. Excluding it from installation.
-info fsevents@1.2.13: The platform "linux" is incompatible with this module.
-info "fsevents@1.2.13" is an optional dependency and failed compatibility check. Excluding it from installation.
 THE FOLLOWING SETS FORTH ATTRIBUTION NOTICES FOR THIRD PARTY SOFTWARE THAT MAY BE CONTAINED IN PORTIONS OF THE WEB PRODUCT.
 
 -----

@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.serving.AccessControl
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
+import com.lynxanalytics.biggraph.partitioned_parquet._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
@@ -254,81 +255,43 @@ class HadoopFile private (
     fs.mkdirs(path)
   }
 
-  // Loads a Long-keyed SortedRDD, optionally with a specific partitioner.
-  // This can load the legacy format (see issue #2018).
-  // Note that this method returns a sortedRDD, as opposed to the
-  // new load methods, which return simple RDDs
-  def loadLegacyEntityRDD[T: scala.reflect.ClassTag](
-      sc: spark.SparkContext,
-      partitioner: Option[spark.Partitioner] = None): SortedRDD[Long, T] = {
-
-    val file = sc.newAPIHadoopFile(
-      resolvedNameWithNoCredentials,
-      kClass = classOf[hadoop.io.NullWritable],
-      vClass = classOf[hadoop.io.BytesWritable],
-      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.NullWritable, hadoop.io.BytesWritable]],
-      conf = hadoopConfiguration,
-    )
-    val p = partitioner.getOrElse(new spark.HashPartitioner(file.partitions.size))
-    file
-      .map { case (k, v) => RDDUtils.kryoDeserialize[(Long, T)](v.getBytes) }
-      .asUniqueSortedRDD(p)
-  }
-
-  // Loads a Long-keyed rdd where the values are just raw bytes
-  def loadEntityRawRDD(sc: spark.SparkContext): RDD[(Long, hadoop.io.BytesWritable)] = {
-    val file = sc.newAPIHadoopFile(
-      resolvedNameWithNoCredentials,
-      kClass = classOf[hadoop.io.LongWritable],
-      vClass = classOf[hadoop.io.BytesWritable],
-      fClass = classOf[WholeSequenceFileInputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
-      conf = hadoopConfiguration,
-    )
-    file.map { case (k, v) => k.get -> v }
+  // Loads an entity from Parquet, without deserializing it.
+  def loadEntityRawDF(ss: spark.sql.SparkSession, numPartitions: Int): spark.sql.DataFrame = {
+    ss.read.option("partitions", numPartitions).format(PartitionedParquet.format).load(this.resolvedName)
   }
 
   // Loads a Long-keyed rdd with deserialized values
-  def loadEntityRDD[T: TypeTag](sc: spark.SparkContext, serializer: String): RDD[(Long, T)] = {
-    val raw = loadEntityRawRDD(sc)
+  def loadEntityRDD[T: TypeTag](
+      sc: spark.SparkContext,
+      serializer: String,
+      numPartitions: Int): RDD[(Long, T)] = {
+    val ss = spark.sql.SparkSession.builder.config(sc.getConf).getOrCreate()
+    val df = loadEntityRawDF(ss, numPartitions)
     val deserializer = graph_api.io.EntityDeserializer.forName[T](serializer)
-    raw.mapValues(deserializer.deserialize(_))
+    val rdd = deserializer.deserialize(df)
+    assert(rdd.getNumPartitions == numPartitions)
+    rdd
   }
 
-  // Saves a Long-keyed rdd where the values are just raw bytes;
-  // Returns the number of lines written
-  def saveEntityRawRDD(data: RDD[(Long, hadoop.io.BytesWritable)]): Long = {
-    import hadoop.mapreduce.lib.output.SequenceFileOutputFormat
-
-    val lines = data.context.longAccumulator("Line count")
-    val hadoopData = data.map {
-      case (k, v) =>
-        lines.add(1)
-        new hadoop.io.LongWritable(k) -> v
-    }
+  // Saves a DataFrame.
+  def saveEntityRawDF(data: spark.sql.DataFrame): Unit = {
     if (fs.exists(path)) {
       log.info(s"deleting $path as it already exists (possibly as a result of a failed stage)")
       fs.delete(path, true)
     }
-    log.info(s"saving ${data.name} as object file to ${symbolicName}")
-    hadoopData.saveAsNewAPIHadoopFile(
-      resolvedNameWithNoCredentials,
-      keyClass = classOf[hadoop.io.LongWritable],
-      valueClass = classOf[hadoop.io.BytesWritable],
-      outputFormatClass =
-        classOf[SequenceFileOutputFormat[hadoop.io.LongWritable, hadoop.io.BytesWritable]],
-      conf = new hadoop.mapred.JobConf(hadoopConfiguration),
-    )
-    lines.value
+    log.info(s"saving entity data to ${symbolicName}")
+    data.write.parquet(resolvedName)
   }
 
   // Saves a Long-keyed RDD, and returns the number of lines written and the serialization format.
   def saveEntityRDD[T](data: RDD[(Long, T)], tt: TypeTag[T]): (Long, String) = {
     val serializer = graph_api.io.EntitySerializer.forType(tt)
     implicit val ct = graph_api.RuntimeSafeCastable.classTagFromTypeTag(tt)
-    val raw = data.mapValues(serializer.serialize(_))
-    raw.setName(data.name)
-    val lines = saveEntityRawRDD(raw)
-    (lines, serializer.name)
+    val count = data.context.longAccumulator("row count")
+    val counted = data.map(e => { count.add(1); e })
+    val df = serializer.serialize(counted)
+    saveEntityRawDF(df)
+    (count.value, serializer.name)
   }
 
   def +(suffix: String): HadoopFile = {

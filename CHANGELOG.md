@@ -6,6 +6,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Switched the internal storage of graph entities from custom SequenceFiles to Parquet.
+  [#237](https://github.com/lynxkite/lynxkite/pull/237)
+  This is an incompatible change, but the migration is simple: delete `$KITE_DATA/partitioned`.
+  Everything will be recomputed when it's accessed, and stored in the new format.
+
 ### 4.4.0
 
 - Upgraded to PyTorch Geometric (PyG) 2.0.1. [#206](https://github.com/lynxkite/lynxkite/pull/206)

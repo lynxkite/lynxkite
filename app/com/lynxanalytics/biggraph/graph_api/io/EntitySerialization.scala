@@ -1,9 +1,9 @@
-// Fast serialization for simple types with fallback to Kryo.
+// Parquet serialization for simple types with fallback to Kryo.
 // It can be faster than Kryo, because it knows the type for all the values up front.
 package com.lynxanalytics.biggraph.graph_api.io
 
 import java.nio.ByteBuffer
-import org.apache.hadoop.io.BytesWritable
+import org.apache.spark
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import scala.reflect.runtime.universe._
@@ -25,58 +25,37 @@ object EntitySerializer {
     forType[T](attribute.typeTag)
   }
 }
-abstract class EntitySerializer[-T](val name: String) extends Serializable {
-  // Beware: it may re-use the same BytesWritable for all calls.
-  def serialize(t: T): BytesWritable
-
-  // This can be used when the type system does not understand that t is of the right type.
-  // It still, of course, has to be of type T actually.
-  def unsafeSerialize(t: Any): BytesWritable = serialize(t.asInstanceOf[T])
+abstract class EntitySerializer[T: TypeTag](val name: String) extends Serializable {
+  def df[P <: Product: TypeTag](rdd: spark.rdd.RDD[P]): spark.sql.DataFrame = {
+    val ss = spark.sql.SparkSession.builder.config(rdd.context.getConf).getOrCreate()
+    ss.createDataFrame(rdd)
+  }
+  def serialize(rdd: spark.rdd.RDD[(Long, T)]): spark.sql.DataFrame = df(rdd)
 }
 
 class UnitSerializer extends EntitySerializer[Unit]("Unit") {
-  @transient lazy val empty = new BytesWritable()
-  def serialize(t: Unit) = empty
+  override def serialize(rdd: spark.rdd.RDD[(Long, Unit)]) = df(rdd.map { case (v, _) => Tuple1(v) })
 }
 
-class StringSerializer extends EntitySerializer[String]("String") {
-  def serialize(t: String) = new BytesWritable(t.getBytes("utf-8"))
-}
-
-class DoubleSerializer extends EntitySerializer[Double]("Double") {
-  @transient lazy val bytes = new Array[Byte](8)
-  @transient lazy val bw = new BytesWritable(bytes)
-  @transient lazy val bb = ByteBuffer.wrap(bytes)
-  def serialize(t: Double) = {
-    bb.putDouble(0, t)
-    bw
-  }
-}
+class StringSerializer extends EntitySerializer[String]("String")
+class DoubleSerializer extends EntitySerializer[Double]("Double")
 
 class EdgeSerializer extends EntitySerializer[Edge]("Edge") {
-  @transient lazy val bytes = new Array[Byte](16)
-  @transient lazy val bw = new BytesWritable(bytes)
-  @transient lazy val bb = ByteBuffer.wrap(bytes)
-  def serialize(t: Edge) = {
-    bb.putLong(0, t.src)
-    bb.putLong(8, t.dst)
-    bw
-  }
+  override def serialize(rdd: spark.rdd.RDD[(Long, Edge)]) =
+    df(rdd.map { case (e, Edge(src, dst)) => (e, src, dst) })
 }
 
 // This serializer is not for speed, but for reliability. Scala sets are complex types internally
 // and we don't know the full set of classes that we would need to register with Kryo to be sure
 // we can successfully serialize them.
 class SetSerializer extends EntitySerializer[Set[_]]("Set") {
-  def serialize(t: Set[_]) = {
-    new BytesWritable(RDDUtils.kryoSerialize(t.toVector))
-  }
+  override def serialize(rdd: spark.rdd.RDD[(Long, Set[_])]) =
+    df(rdd.mapValues(t => RDDUtils.kryoSerialize(t.toVector)))
 }
 
 class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"Kryo[${typeOf[T]}]") {
-  def serialize(t: T) = {
-    new BytesWritable(RDDUtils.kryoSerialize(t))
-  }
+  override def serialize(rdd: spark.rdd.RDD[(Long, T)]) =
+    df(rdd.map { case (k, v) => k -> RDDUtils.kryoSerialize(v) })
 }
 
 object EntityDeserializer {
@@ -103,34 +82,32 @@ object EntityDeserializer {
     d
   }
 }
-abstract class EntityDeserializer[+T](val name: String) extends Serializable {
-  def deserialize(bw: BytesWritable): T
+abstract class EntityDeserializer[T](val name: String) extends Serializable {
+  def deserialize(df: spark.sql.DataFrame): spark.rdd.RDD[(Long, T)]
 }
 
 class UnitDeserializer extends EntityDeserializer[Unit]("Unit") {
-  def deserialize(bw: BytesWritable) = ()
+  def deserialize(df: spark.sql.DataFrame) = df.rdd.map(row => (row.getLong(0), ()))
 }
 
 class KryoDeserializer[T] extends EntityDeserializer[T]("Kryo") {
-  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[T](bw.getBytes)
+  def deserialize(df: spark.sql.DataFrame) =
+    df.rdd.map(row => row.getLong(0) -> RDDUtils.kryoDeserialize[T](row.getAs[Array[Byte]](1)))
 }
 
 class StringDeserializer extends EntityDeserializer[String]("String") {
-  def deserialize(bw: BytesWritable) = new String(bw.getBytes, 0, bw.getLength, "utf-8")
+  def deserialize(df: spark.sql.DataFrame) =
+    df.rdd.map(row => row.getLong(0) -> row.getString(1))
 }
 
 class DoubleDeserializer extends EntityDeserializer[Double]("Double") {
-  def deserialize(bw: BytesWritable) = {
-    val bb = ByteBuffer.wrap(bw.getBytes)
-    bb.getDouble
-  }
+  def deserialize(df: spark.sql.DataFrame) =
+    df.rdd.map(row => row.getLong(0) -> row.getDouble(1))
 }
 
 class EdgeDeserializer extends EntityDeserializer[Edge]("Edge") {
-  def deserialize(bw: BytesWritable) = {
-    val bb = ByteBuffer.wrap(bw.getBytes)
-    Edge(bb.getLong(0), bb.getLong(8))
-  }
+  def deserialize(df: spark.sql.DataFrame) =
+    df.rdd.map(row => row.getLong(0) -> Edge(row.getLong(1), row.getLong(2)))
 }
 
 object SetDeserializer {
@@ -149,5 +126,8 @@ object SetDeserializer {
   }
 }
 class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("Set") {
-  def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[DT]](bw.getBytes).toSet
+  def deserialize(df: spark.sql.DataFrame) =
+    df.rdd.map(row =>
+      row.getLong(0) ->
+        RDDUtils.kryoDeserialize[Vector[DT]](row.getAs[Array[Byte]](1)).toSet)
 }
