@@ -37,6 +37,10 @@ class Op:
     else:
       return table
 
+  def input_cudf(self, name):
+    import cudf
+    return cudf.DataFrame.from_arrow(self.input_arrow(name))
+
   def input_vector(self, name):
     '''Reads a DoubleVectorAttribute into a Numpy array.'''
     data = self.input_arrow(name).to_pylist()
@@ -74,14 +78,14 @@ class Op:
     '''Writes a list or Numpy array to disk.'''
     if hasattr(values, 'detach'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.detach().cpu().numpy()
-    if hasattr(values, 'replace'):
-      # Pandas uses nan for missing values, but PyArrow uses None.
-      values = values.replace({np.nan: None})
-    if not isinstance(values, list):
-      values = list(values)
-    self.write_columns(name, type, {
-        'value': pa.array(values, PA_TYPES[type]),
-    })
+    if isinstance(values, pa.lib.Array):
+      if values.type != PA_TYPES[type]:
+        values = values.cast(PA_TYPES[type])
+    else:
+      if not isinstance(values, list):
+        values = list(values)
+      values = pa.array(values, type=PA_TYPES[type], from_pandas=True)
+    self.write_columns(name, type, { 'value': values })
 
   def write_type(self, path, type):
     print('writing', type, 'to', path)
