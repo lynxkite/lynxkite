@@ -984,7 +984,7 @@ class State:
   def get_progress(self):
     '''Returns progress info about the state.'''
     state_id = self._get_state_id()
-    progress = lk._ask('/ajax/long-poll', dict(syncedUntil=0, stateIds=[state_id]))
+    progress = self.box.lk._ask('/ajax/long-poll', dict(syncedUntil=0, stateIds=[state_id]))
     return progress.progress.__dict__[state_id]
 
   def run_export(self) -> str:
@@ -993,6 +993,7 @@ class State:
     Returns the prefixed path of the exported file. This method is deprecated,
     only used in tests, where we need the export path.
     '''
+    lk = self.box.lk
     state_id = self._get_state_id()
     export = lk.get_export_result(state_id)
     if export.result.computeProgress != 1:
@@ -1011,7 +1012,7 @@ class State:
 
   def save_snapshot(self, path: str) -> None:
     '''Save this state as a snapshot under path.'''
-    lk.save_snapshot(path, self._get_state_id())
+    self.box.lk.save_snapshot(path, self._get_state_id())
 
   def save_to_sequence(self, tss, date: datetime.datetime) -> None:
     '''Save this state to the ``tss`` TableSnapshotSequence with ``date`` as
@@ -1019,8 +1020,7 @@ class State:
     tss.save_to_sequence(self._get_state_id(), date)
 
   def _get_state_id(self):
-    lk = self.box.lk
-    return lk.get_state_id(self)
+    return self.box.lk.get_state_id(self)
 
 
 class Placeholder:
