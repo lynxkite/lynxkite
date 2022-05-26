@@ -2,6 +2,18 @@
 import cugraph
 from . import util
 
+def output_va(df, key):
+  df = df.sort_values('vertex')[key].to_arrow()
+  op.output('attr', df, type=util.DoubleAttribute)
+
+def output_seg(df, key):
+  df = df.sort_values('vertex')[['vertex', key]]
+  ss = df[key]
+  # This seems to hold, but is not documented.
+  assert ss.max() == ss.nunique() - 1, 'Expected partitions to be contiguously numbered.'
+  op.output_vs('partitions', ss.nunique())
+  op.output_es('belongsTo', df.values.T)
+
 op = util.Op()
 nkop = op.params['op']
 nkopt = op.params['options']
@@ -10,10 +22,17 @@ es = op.input_cudf('es')
 G = cugraph.Graph()
 G.from_cudf_edgelist(es, source='src', destination='dst')
 if nkop == 'EstimateBetweenness':
-  res = cugraph.betweenness_centrality(
+  df = cugraph.betweenness_centrality(
       G, k=int(min(G.number_of_nodes(), nkopt['samples'])))
-  key = 'betweenness_centrality'
+  output_va(df, 'betweenness_centrality')
+elif nkop == 'KatzCentrality':
+  df = cugraph.katz_centrality(G)
+  output_va(df, 'katz_centrality')
+elif nkop == 'PLM':
+  df, _ = cugraph.louvain(G, resolution=nkopt['resolution'])
+  output_seg(df, 'partition')
+elif nkop == 'CoreDecomposition':
+  df = cugraph.core_number(G)
+  output_va(df, 'core_number')
 else:
   assert False, f'Unexpected operation: {nkop}'
-res = res.sort_values('vertex')[key].to_arrow()
-op.output('attr', res, type=util.DoubleAttribute)

@@ -93,13 +93,6 @@ func init() {
 			ea.output("attr", attr)
 			return nil
 		},
-		canCompute: func(operationDescription OperationDescription) bool {
-			// When CUDA is enabled, we allow the CUDA implementation to take precedence.
-			op := operationDescription.Data["op"].(string)
-			if cudaEnabled() && preferCUDAOverNetworKit[op] {
-				return false
-			}
-			return true
-		},
+		canCompute: ifCudaDoesNotTakePrecedence,
 	}
 }

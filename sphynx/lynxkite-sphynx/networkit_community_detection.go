@@ -59,5 +59,6 @@ func init() {
 			ea.output("belongsTo", es)
 			return
 		},
+		canCompute: ifCudaDoesNotTakePrecedence,
 	}
 }
