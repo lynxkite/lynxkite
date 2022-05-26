@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -54,6 +55,8 @@ func init() {
 				points := c.GetCoordinates()
 				defer networkit.DeletePointVector(points)
 				PointsToAttribute(int(dim), points, attr)
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			ea.output("attr", attr)
 			return nil

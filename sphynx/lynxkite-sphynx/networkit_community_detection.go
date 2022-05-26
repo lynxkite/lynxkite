@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -34,6 +35,8 @@ func init() {
 				defer networkit.DeletePLP(c)
 				c.Run()
 				p = c.GetPartition()
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			vs := &VertexSet{}
 			vs.MappingToUnordered = make([]int64, p.NumberOfSubsets())

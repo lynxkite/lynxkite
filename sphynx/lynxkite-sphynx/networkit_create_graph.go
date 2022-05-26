@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -93,6 +94,8 @@ func init() {
 					o.Count("max_degree"))
 				defer networkit.DeletePubWebGenerator(g)
 				result = g.Generate()
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			vs, es := h.ToSphynx(result)
 			ea.output("vs", vs)

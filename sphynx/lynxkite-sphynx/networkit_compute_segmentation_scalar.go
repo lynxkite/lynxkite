@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -29,6 +30,8 @@ func init() {
 				c := networkit.NewModularity()
 				defer networkit.DeleteModularity(c)
 				scalar = c.GetQuality(h.GetPartition(), h.GetGraph())
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			return ea.outputScalar("sc", scalar)
 		},
