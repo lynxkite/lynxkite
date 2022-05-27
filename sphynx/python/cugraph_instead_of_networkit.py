@@ -23,8 +23,11 @@ nkopt = op.params['options']
 print(f'Running {nkop} on CUDA...')
 es = op.input_cudf('es')
 G = cugraph.Graph()
-# TODO: Weights.
-G.from_cudf_edgelist(es, source='src', destination='dst')
+if 'weight' in op.inputs:
+  es['w'] = op.input_cudf('weight')['values']
+  G.from_cudf_edgelist(es, source='src', destination='dst', edge_attr='w', renumber=False)
+else:
+  G.from_cudf_edgelist(es, source='src', destination='dst', renumber=False)
 if nkop == 'EstimateBetweenness':
   df = cugraph.betweenness_centrality(
       G, k=int(min(G.number_of_nodes(), nkopt['samples'])))

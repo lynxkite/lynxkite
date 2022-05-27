@@ -28,10 +28,14 @@ class Op:
     self.inputs = op['Inputs']
     self.outputs = op['Outputs']
 
+  def input_arrow_table(self, name):
+    '''Reads the input as a PyArrow Table.'''
+    mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
+    return pa.ipc.open_file(mmap).read_all()
+
   def input_arrow(self, name):
     '''Reads the input as a PyArrow Array or Table.'''
-    mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
-    table = pa.ipc.open_file(mmap).read_all()
+    table = self.input_arrow_table(name)
     if table.num_columns == 1:
       return table.column(0)
     else:
@@ -39,7 +43,7 @@ class Op:
 
   def input_cudf(self, name):
     import cudf
-    return cudf.DataFrame.from_arrow(self.input_arrow(name))
+    return cudf.DataFrame.from_arrow(self.input_arrow_table(name))
 
   def input_vector(self, name):
     '''Reads a DoubleVectorAttribute into a Numpy array.'''
