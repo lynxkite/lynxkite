@@ -9,7 +9,9 @@ High modularity means many edges within communities and few edges between commun
 Specifically we compare the edge counts to what we would expect if the clusters
 were chosen at random.
 
-Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PLM.html[NetworKit] implementation.
+include::{g}[tag=cugraph]
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1PLM.html[NetworKit]
+implementation otherwise.
 
 ====
 [p-name]#Save segmentation as#::

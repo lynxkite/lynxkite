@@ -23,7 +23,9 @@ is based on shortest paths between a samples of vertices.
 See https://dl.acm.org/doi/10.5555/2791204.2791213[Better approximation of betweenness centrality]
 by Geisberger et al for details of this estimation method.
 +
-Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EstimateBetweenness.html[NetworKit] implementation.
+include::{g}[tag=cugraph]
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1EstimateBetweenness.html[NetworKit]
+implementation otherwise.
 - Estimated https://en.wikipedia.org/wiki/Centrality#Closeness_centrality[closeness centrality])
 is based on shortest paths between a samples of vertices.
 (Configured with the "sample size" parameter in the advanced options.)
@@ -48,7 +50,9 @@ Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KPathCen
 - The https://en.wikipedia.org/wiki/Katz_centrality[**Katz centrality**]
 is based on the total number of walks between vertices.
 +
-Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KatzCentrality.html[NetworKit] implementation.
+include::{g}[tag=cugraph]
+Uses the https://networkit.github.io/dev-docs/cpp_api/classNetworKit_1_1KatzCentrality.html[NetworKit]
+implementation otherwise.
 - https://www.centiserver.org/?q1=centrality&q2=Lin_Centrality[**Lin's centrality**]
 of the vertex A is the square of the size of its coreachable set divided by
 the sum of the shortest paths to A.

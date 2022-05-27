@@ -31,11 +31,11 @@ func init() {
 	if !cudaEnabled() {
 		return
 	}
+	diskOperationRepository["ConnectedComponents"] = pythonOperation("cugraph_connected_components")
 	diskOperationRepository["PageRank"] = pythonOperation("cugraph_pagerank")
 	insteadOfNK := pythonOperation("cugraph_instead_of_networkit")
 	diskOperationRepository["NetworKitComputeDoubleAttribute"] = insteadOfNK
 	diskOperationRepository["NetworKitComputeDoubleEdgeAttribute"] = insteadOfNK
 	diskOperationRepository["NetworKitCommunityDetection"] = insteadOfNK
 	diskOperationRepository["NetworKitComputeVectorAttribute"] = insteadOfNK
-	diskOperationRepository["ConnectedComponents"] = pythonOperation("cugraph_connected_components")
 }

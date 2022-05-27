@@ -35,6 +35,10 @@ The algorithms offered are:
   +
   See http://yifanhu.net/PUB/maxent.pdf[A Maxent-Stress Model for Graph Layout]
   by Gansner et al for the detailed definition and analysis.
+- *ForceAtlas2* is a force-based method introduced in
+  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4051631/[ForceAtlas2, a Continuous Graph Layout Algorithm for Handy Network Visualization Designed for the Gephi Software].
+  +
+  include::{g}[tag=cugraph]
 
 [p-pivots]#Pivots#::
 The number of pivots to choose for Pivot MDS.

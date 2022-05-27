@@ -4,6 +4,7 @@ Creates a segment for every connected component of the graph.
 
 Connected components are maximal vertex sets where a path exists between each pair of vertices.
 
+include::{g}[tag=cugraph]
 
 ====
 [p-name]#Segmentation name#::

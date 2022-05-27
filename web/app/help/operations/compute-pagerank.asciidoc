@@ -10,6 +10,8 @@ PageRank means that the vertex is more likely to be the target of the informatio
 Similarly, it may be useful to identify information sources in the reversed graph.
 Simply reverse the edges before running the operation to calculate the reverse PageRank.
 
+include::{g}[tag=cugraph]
+
 ====
 [p-name]#Attribute name#::
 The new attribute will be created under this name.
