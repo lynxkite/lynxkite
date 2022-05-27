@@ -1,5 +1,8 @@
 '''Uses CuGraph to implement some operations that we otherwise do with NetworKit.'''
+import cupy
 import cugraph
+import time
+t0 = time.perf_counter()
 from . import util
 
 def output_va(df, key):
@@ -20,6 +23,7 @@ nkopt = op.params['options']
 print(f'Running {nkop} on CUDA...')
 es = op.input_cudf('es')
 G = cugraph.Graph()
+# TODO: Weights.
 G.from_cudf_edgelist(es, source='src', destination='dst')
 if nkop == 'EstimateBetweenness':
   df = cugraph.betweenness_centrality(
@@ -34,5 +38,10 @@ elif nkop == 'PLM':
 elif nkop == 'CoreDecomposition':
   df = cugraph.core_number(G)
   output_va(df, 'core_number')
+elif nkop == 'ForceAtlas2':
+  df = cugraph.force_atlas2(G)
+  df = cupy.asnumpy(df.sort_values('vertex').drop(columns='vertex').values)
+  op.output('attr', df, type=util.DoubleVectorAttribute)
 else:
   assert False, f'Unexpected operation: {nkop}'
+print(f'Finished {nkop} in {time.perf_counter() - t0} seconds.')

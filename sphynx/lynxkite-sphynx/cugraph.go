@@ -10,11 +10,10 @@ var preferCUDAOverNetworKit = map[string]bool{
 	"KatzCentrality":      true,
 	"PLM":                 true,
 	"CoreDecomposition":   true,
+	"ForceAtlas2":         true,
 }
 
 // TODO: Connected components.
-// TODO: Force atlas.
-// TODO: Hungarian.
 // TODO: SSSP.
 
 func cudaEnabled() bool {
@@ -36,10 +35,9 @@ func init() {
 		return
 	}
 	diskOperationRepository["PageRank"] = pythonOperation("cugraph_pagerank")
-	diskOperationRepository["NetworKitComputeDoubleAttribute"] =
-		pythonOperation("cugraph_instead_of_networkit")
-	diskOperationRepository["NetworKitComputeDoubleEdgeAttribute"] =
-		pythonOperation("cugraph_instead_of_networkit")
-	diskOperationRepository["NetworKitCommunityDetection"] =
-		pythonOperation("cugraph_instead_of_networkit")
+	insteadOfNK := pythonOperation("cugraph_instead_of_networkit")
+	diskOperationRepository["NetworKitComputeDoubleAttribute"] = insteadOfNK
+	diskOperationRepository["NetworKitComputeDoubleEdgeAttribute"] = insteadOfNK
+	diskOperationRepository["NetworKitCommunityDetection"] = insteadOfNK
+	diskOperationRepository["NetworKitComputeVectorAttribute"] = insteadOfNK
 }

@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
@@ -124,12 +125,20 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  val cudaEnabled = LoggedEnvironment.envOrElse("KITE_ENABLE_CUDA", "no") == "yes"
+
   register("Place vertices with edge lengths")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "New attribute name", defaultValue = "position"),
       NonNegInt("dimensions", "Dimensions", default = 2),
       Choice("length", "Edge length", options = FEOption.list("Unit length") ++ project.edgeAttrList[Double]),
-      Choice("algorithm", "Layout algorithm", options = FEOption.list("Pivot MDS", "Maxent-Stress")),
+      Choice(
+        "algorithm",
+        "Layout algorithm",
+        options =
+          if (cudaEnabled) FEOption.list("Pivot MDS", "Maxent-Stress", "ForceAtlas2")
+          else FEOption.list("Pivot MDS", "Maxent-Stress"),
+      ),
       NonNegInt("pivots", "Pivots", default = 100, group = "Pivot MDS options"),
       NonNegInt("radius", "Neighborhood radius", default = 1, group = "Maxent-Stress options"),
       NonNegDouble("tolerance", "Solver tolerance", defaultValue = "0.1", group = "Maxent-Stress options"),
@@ -157,6 +166,14 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
               "dimensions" -> params("dimensions").toInt,
               "radius" -> params("radius").toInt,
               "tolerance" -> params("tolerance").toDouble),
+            weight,
+          )
+        case "ForceAtlas2" =>
+          assert(params("dimensions").toInt == 2, "ForceAtlas2 only works in two dimensions.")
+          graph_operations.NetworKitComputeVectorAttribute.run(
+            "ForceAtlas2",
+            project.edgeBundle,
+            Map(),
             weight,
           )
       }

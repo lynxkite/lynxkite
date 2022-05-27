@@ -61,5 +61,6 @@ func init() {
 			ea.output("attr", attr)
 			return nil
 		},
+		canCompute: ifCudaDoesNotTakePrecedence,
 	}
 }
