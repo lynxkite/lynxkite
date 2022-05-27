@@ -34,6 +34,9 @@ func init() {
 	diskOperationRepository["ConnectedComponents"] = pythonOperation("cugraph_connected_components")
 	diskOperationRepository["PageRank"] = pythonOperation("cugraph_pagerank")
 	insteadOfNK := pythonOperation("cugraph_instead_of_networkit")
+	insteadOfNK.canCompute = func(od OperationDescription) bool {
+		return preferCUDAOverNetworKit[od.Data["op"].(string)]
+	}
 	diskOperationRepository["NetworKitComputeDoubleAttribute"] = insteadOfNK
 	diskOperationRepository["NetworKitComputeDoubleEdgeAttribute"] = insteadOfNK
 	diskOperationRepository["NetworKitCommunityDetection"] = insteadOfNK

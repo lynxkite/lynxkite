@@ -57,9 +57,23 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 			}
 		}
 	case "OrderedSphynxDisk":
-		_, exists = diskOperationRepository[shortOpName(opInst)]
+		op, ok := diskOperationRepository[shortOpName(opInst)]
+		if ok {
+			if op.canCompute == nil {
+				exists = true
+			} else {
+				exists = op.canCompute(opInst.Operation)
+			}
+		}
 	case "UnorderedSphynxDisk":
-		_, exists = unorderedOperationRepository[shortOpName(opInst)]
+		op, ok := unorderedOperationRepository[shortOpName(opInst)]
+		if ok {
+			if op.canCompute == nil {
+				exists = true
+			} else {
+				exists = op.canCompute(opInst.Operation)
+			}
+		}
 	}
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }

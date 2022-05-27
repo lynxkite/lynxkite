@@ -16,6 +16,8 @@ class NetworKitTest extends OperationsTestBase {
     }
   }
 
+  val cudaEnabled = java.lang.System.getenv("KITE_ENABLE_CUDA") == "yes"
+
   test("Find k-core decomposition", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph").box("Find k-core decomposition").project
     assert(get(g.vertexAttributes("core")) == Map(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 0.0))
@@ -141,7 +143,9 @@ class NetworKitTest extends OperationsTestBase {
           Map(0 -> Vector(0.41, 0.7), 1 -> Vector(0.4, -0.7), 2 -> Vector(-0.82, 0.0)),
         "Maxent-Stress" ->
           Map(0 -> Vector(-0.03, 0.5), 1 -> Vector(-0.55, -0.3), 2 -> Vector(0.58, -0.2)),
-      )
+      ) ++ (if (cudaEnabled) Seq("ForceAtlas2" ->
+              Map(0 -> Vector(-1.52, 1.29), 1 -> Vector(-0.36, -1.97), 2 -> Vector(1.88, 0.67)))
+            else Seq())
     ) {
       println(algorithm)
       val g = box("Create example graph")
