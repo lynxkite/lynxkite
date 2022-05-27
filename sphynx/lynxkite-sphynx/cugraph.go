@@ -13,9 +13,6 @@ var preferCUDAOverNetworKit = map[string]bool{
 	"ForceAtlas2":         true,
 }
 
-// TODO: Connected components.
-// TODO: SSSP.
-
 func cudaEnabled() bool {
 	return os.Getenv("KITE_ENABLE_CUDA") == "yes"
 }
@@ -40,4 +37,5 @@ func init() {
 	diskOperationRepository["NetworKitComputeDoubleEdgeAttribute"] = insteadOfNK
 	diskOperationRepository["NetworKitCommunityDetection"] = insteadOfNK
 	diskOperationRepository["NetworKitComputeVectorAttribute"] = insteadOfNK
+	diskOperationRepository["ConnectedComponents"] = pythonOperation("cugraph_connected_components")
 }
