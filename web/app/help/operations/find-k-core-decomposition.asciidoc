@@ -10,6 +10,8 @@ Read more on https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)#k-Cores[Wik
 This operation outputs the number of the highest core that each vertex belongs to
 as a vertex attribute.
 
+include::{g}[tag=cugraph]
+
 ====
 [p-name]#Attribute name#::
 The new attribute will be created under this name.

@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
@@ -61,6 +62,8 @@ func init() {
 				defer networkit.DeleteStablePartitionNodes(c)
 				c.Run()
 				copyResults(c)
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			ea.output("attr", attr)
 			return nil

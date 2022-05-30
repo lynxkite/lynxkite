@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
@@ -44,6 +45,8 @@ func init() {
 						result.Set(i, math.NaN())
 					}
 				}
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			// The NetworKit edge IDs don't correspond to the Sphynx edge IDs.
 			// We build a map to match them up by the src/dst vertex IDs.
@@ -69,5 +72,6 @@ func init() {
 			}
 			return ea.output("attr", attr)
 		},
+		canCompute: ifCudaDoesNotTakePrecedence,
 	}
 }

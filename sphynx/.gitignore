@@ -2,3 +2,4 @@ proto/*.pb.go
 *.zip
 *.pem
 /.build
+/protoc

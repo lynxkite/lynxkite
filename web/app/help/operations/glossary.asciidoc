@@ -339,3 +339,8 @@ tag::save-mode-options[]
 The following modes can be used: "error if exists", "overwrite", "append", "ignore". In
 the last case already existing data will not be modified.
 end::save-mode-options[]
+
+tag::cugraph[]
+Runs on a GPU using https://docs.rapids.ai/api/cugraph/stable/[RAPIDS cuGraph]
+if `KITE_ENABLE_CUDA=yes` is set.
+end::cugraph[]

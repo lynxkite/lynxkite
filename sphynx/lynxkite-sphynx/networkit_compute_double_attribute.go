@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
@@ -85,6 +86,8 @@ func init() {
 				defer networkit.DeleteSfigality(c)
 				c.Run()
 				result = c.Scores()
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			for i := range attr.Defined {
 				attr.Values[i] = result.Get(i)
@@ -93,5 +96,6 @@ func init() {
 			ea.output("attr", attr)
 			return nil
 		},
+		canCompute: ifCudaDoesNotTakePrecedence,
 	}
 }

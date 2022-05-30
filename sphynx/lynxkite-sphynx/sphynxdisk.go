@@ -39,7 +39,6 @@ func createEntity(typeName string) (Entity, error) {
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	typeName := e.typeName()
-	log.Printf("Writing %v %v to ordered disk.", typeName, guid)
 	dirName := fmt.Sprintf("%v/%v", dataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	typeFName := fmt.Sprintf("%v/type_name", dirName)

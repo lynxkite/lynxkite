@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lynxkite/lynxkite/sphynx/networkit"
 )
 
@@ -54,6 +55,8 @@ func init() {
 				defer networkit.DeleteAssortativity(c)
 				c.Run()
 				scalar1 = c.GetCoefficient()
+			default:
+				return fmt.Errorf("Unsupported operation: %v", h.Op)
 			}
 			if err = ea.outputScalar("scalar1", scalar1); err != nil {
 				return

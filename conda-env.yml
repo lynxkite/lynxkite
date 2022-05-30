@@ -8,6 +8,8 @@ channels:
 - conda-forge
 - pytorch
 - pyg
+- nvidia
+- rapidsai
 dependencies:
 - unzip
 - make
@@ -33,6 +35,7 @@ dependencies:
 - pytorch::pytorch==1.9.1
 - pytorch::cpuonly
 - pyg==2.0.3
+- cugraph
 # For Python API and tools.
 - autopep8
 - mypy

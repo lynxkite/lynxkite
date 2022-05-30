@@ -28,14 +28,22 @@ class Op:
     self.inputs = op['Inputs']
     self.outputs = op['Outputs']
 
+  def input_arrow_table(self, name):
+    '''Reads the input as a PyArrow Table.'''
+    mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
+    return pa.ipc.open_file(mmap).read_all()
+
   def input_arrow(self, name):
     '''Reads the input as a PyArrow Array or Table.'''
-    mmap = pa.memory_map(f'{self.datadir}/{self.inputs[name]}/data.arrow')
-    table = pa.ipc.open_file(mmap).read_all()
+    table = self.input_arrow_table(name)
     if table.num_columns == 1:
       return table.column(0)
     else:
       return table
+
+  def input_cudf(self, name):
+    import cudf
+    return cudf.DataFrame.from_arrow(self.input_arrow_table(name))
 
   def input_vector(self, name):
     '''Reads a DoubleVectorAttribute into a Numpy array.'''
@@ -74,14 +82,14 @@ class Op:
     '''Writes a list or Numpy array to disk.'''
     if hasattr(values, 'detach'):  # Turn PyTorch Tensors into Numpy arrays.
       values = values.detach().cpu().numpy()
-    if hasattr(values, 'replace'):
-      # Pandas uses nan for missing values, but PyArrow uses None.
-      values = values.replace({np.nan: None})
-    if not isinstance(values, list):
-      values = list(values)
-    self.write_columns(name, type, {
-        'value': pa.array(values, PA_TYPES[type]),
-    })
+    if isinstance(values, pa.lib.Array):
+      if values.type != PA_TYPES[type]:
+        values = values.cast(PA_TYPES[type])
+    else:
+      if not isinstance(values, list):
+        values = list(values)
+      values = pa.array(values, type=PA_TYPES[type], from_pandas=True)
+    self.write_columns(name, type, { 'value': values })
 
   def write_type(self, path, type):
     print('writing', type, 'to', path)

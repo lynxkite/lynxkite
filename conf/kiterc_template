@@ -211,6 +211,9 @@ export ORDERED_SPHYNX_DATA_DIR=$HOME/kite/data/sphynx/ordered
 # Specify the directory where Sphynx stores graph data using vertex ids from the Spark world.
 export UNORDERED_SPHYNX_DATA_DIR=$HOME/kite/data/sphynx/unordered
 
+# Enable CUDA if you have a compatible GPU and want to use it to process graphs.
+# export KITE_ENABLE_CUDA=yes
+
 # Unrestricted Python in LynxKite is a very powerful tool. Since Python execution has full access
 # to the network and file-system, it must be explicitly enabled by the administrator.
 # export KITE_ALLOW_PYTHON=yes

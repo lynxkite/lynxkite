@@ -60,7 +60,6 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	if !exists {
 		return nil, NotInCacheError("entity", guid)
 	}
-	log.Printf("Writing %v %v to unordered disk.", entity.typeName(), guid)
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)

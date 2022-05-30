@@ -155,7 +155,8 @@ type Operation struct {
 }
 
 type DiskOperation struct {
-	execute func(dataDir string, op *OperationInstance) error
+	execute    func(dataDir string, op *OperationInstance) error
+	canCompute func(operationDescription OperationDescription) bool
 }
 
 var operationRepository = map[string]Operation{}
