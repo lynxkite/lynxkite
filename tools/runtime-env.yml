@@ -3,6 +3,8 @@ channels:
 - conda-forge
 - pytorch
 - pyg
+- nvidia
+- rapidsai
 dependencies:
 # For NetworKit.
 - libstdcxx-ng
@@ -17,6 +19,7 @@ dependencies:
 - pytorch::pytorch==1.9.1
 - pytorch::cpuonly
 - pyg==2.0.3
+- cugraph
 # For Python API and tools.
 - ruamel.yaml
 - requests
