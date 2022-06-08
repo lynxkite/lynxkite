@@ -89,7 +89,7 @@ class Op:
       if not isinstance(values, list):
         values = list(values)
       values = pa.array(values, type=PA_TYPES[type], from_pandas=True)
-    self.write_columns(name, type, { 'value': values })
+    self.write_columns(name, type, {'value': values})
 
   def write_type(self, path, type):
     print('writing', type, 'to', path)

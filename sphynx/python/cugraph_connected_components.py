@@ -4,6 +4,7 @@ import time
 from . import util
 t0 = time.perf_counter()
 
+
 def output_seg(df, key):
   df = df.sort_values('vertex')[['vertex', key]]
   # Mapping to contiguous IDs.
@@ -11,6 +12,7 @@ def output_seg(df, key):
   df[key] = df[key].replace(ids)
   op.output_vs('segments', len(ids))
   op.output_es('belongsTo', df.values.T)
+
 
 print(f'Running connected components on CUDA...')
 op = util.Op()

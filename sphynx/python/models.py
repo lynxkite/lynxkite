@@ -57,7 +57,7 @@ class GCNConvNetForRegression(torch.nn.Module):
       for i in range(num_conv_layers):
         conv = GCNConv(hidden_size, hidden_size)
         self.conv_layers.append(conv)
-        self.add_module(f'conv{i}', conv) # Make the module aware of its parameters.
+        self.add_module(f'conv{i}', conv)  # Make the module aware of its parameters.
     elif self.conv_op == "GatedGraphConv":
       self.gated_conv = GatedGraphConv(hidden_size, num_layers=num_conv_layers)
     else:
