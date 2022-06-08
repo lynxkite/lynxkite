@@ -241,4 +241,20 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       project.edgeAttributes(params("name")) = attr
     }
   })
+
+  register("Compute Jaccard similarity on existing edges")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Save as", defaultValue = "similarity"),
+    )
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val name = params("name")
+      val attr = graph_operations.NetworKitComputeDoubleEdgeAttribute.run(
+        "JaccardSimilarity",
+        project.edgeBundle,
+        Map("directed" -> false),
+      )
+      project.edgeAttributes(params("name")) = attr
+    }
+  })
 }

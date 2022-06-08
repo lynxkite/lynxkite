@@ -201,6 +201,15 @@ class NetworKitTest extends OperationsTestBase {
     assertMatch(score, expected)
   }
 
+  test("Compute Jaccard similarity on existing edges", com.lynxanalytics.biggraph.SphynxOnly) {
+    val g = box("Create example graph")
+      .box("Compute Jaccard similarity on existing edges")
+      .project
+    val score = get(g.edgeAttributes("similarity").runtimeSafeCast[Double])
+    val expected = Map(0 -> 0.0, 1 -> 2.64, 2 -> 0.67, 3 -> 0.67)
+    assertMatch(score, expected)
+  }
+
   test("Find optimal spanning tree", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph")
       .box("Find optimal spanning tree", Map("optimize" -> "Minimal weight"))

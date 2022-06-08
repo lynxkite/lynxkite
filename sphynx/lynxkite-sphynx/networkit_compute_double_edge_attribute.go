@@ -31,6 +31,11 @@ func init() {
 				defer networkit.DeleteForestFireScore(c)
 				c.Run()
 				result = c.Scores()
+			case "JaccardSimilarity":
+				c := networkit.NewJaccardSimilarity(g)
+				defer networkit.DeleteJaccardSimilarity(c)
+				c.Run()
+				result = c.Scores()
 			case "RandomMaximumSpanningForest":
 				c := networkit.NewRandomMaximumSpanningForest(g)
 				defer networkit.DeleteRandomMaximumSpanningForest(c)
