@@ -417,6 +417,10 @@ include::import-csv.asciidoc[]
 
 include::import-delta.asciidoc[]
 
+include::import-from-bigquery-raw-table.asciidoc[]
+
+include::import-from-bigquery-standard-sql.asciidoc[]
+
 include::import-from-hive.asciidoc[]
 
 include::import-from-neo4j.asciidoc[]

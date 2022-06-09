@@ -1,0 +1,32 @@
+### Import from BigQuery (raw table)
+
+Import a table from BigQuery via Storage API without SQL query.
+Some BigQuery-specific datatypes like ARRAY<STRUCT> may not be fully supported within LynxKite
+More information here: https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0
+
+====
+[p-parent_project_id]#GCP project ID for billing#::
+The GCP Project ID for billing purposes. This may be different from the dataset being read.
+`roles/bigquery.readSessionUser` is required on the billed project.
+`roles/bigquery.jobUser` is additionally required if using views.
+
+[p-project_id]#GCP project ID for importing#::
+Used together with dataset ID and table ID. Defaults to service account's GCP project if unspecified.
+
+[p-dataset_id]#BigQuery dataset ID for importing#::
+Used together with table ID to import. Requires `roles/bigquery.dataEditor` on the dataset to store
+materialized tables if querying from views.
+
+[p-table_id]#BigQuery table/view ID to import#::
+The BigQuery table/view to import from. Requires `roles/bigquery.dataViewer` on the view AND underlying table.
+
+[p-credentials_file]#Path to Service Account JSON key#::
+Local path to the service account JSON key to authenticate with GCP.
+Leave this field empty if running on Dataproc or to use `GOOGLE_APPLICATION_CREDENTIALS`.
+
+[p-views_enabled]#Allow reading from BigQuery views#::
+Allow reading from BigQuery views. Preliminary support.
+See https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#reading-from-views
+
+include::{g}[tag=import-box]
+====
