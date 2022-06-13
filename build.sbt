@@ -142,6 +142,7 @@ mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
 mappings in Universal ++= Seq(
   file("tools/runtime-env.yml") -> "tools/runtime-env.yml",
+  file("tools/runtime-env-cuda.yml") -> "tools/runtime-env-cuda.yml",
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
