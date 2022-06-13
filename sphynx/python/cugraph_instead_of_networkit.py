@@ -1,13 +1,15 @@
 '''Uses CuGraph to implement some operations that we otherwise do with NetworKit.'''
+from . import util
 import cupy
 import cugraph
 import time
 t0 = time.perf_counter()
-from . import util
+
 
 def output_va(df, key):
   df = df.sort_values('vertex')[key].to_arrow()
   op.output('attr', df, type=util.DoubleAttribute)
+
 
 def output_seg(df, key):
   df = df.sort_values('vertex')[['vertex', key]]
@@ -16,6 +18,7 @@ def output_seg(df, key):
   assert ss.max() == ss.nunique() - 1, 'Expected partitions to be contiguously numbered.'
   op.output_vs('partitions', ss.nunique())
   op.output_es('belongsTo', df.values.T)
+
 
 op = util.Op()
 nkop = op.params['op']

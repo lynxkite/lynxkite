@@ -1,4 +1,62 @@
-// Assorted utilities for working with RDDs.
+// Hybrid RDDs that combine different methods when working with skewed datasets.
+//
+// # The problem
+//
+// Take PageRank for example. In each iteration we have the current PageRank and we want to multiply
+// it by the edge weights and add it up for each receiving vertex.
+//
+//   val edges = ... // src -> (dst, weight) RDD partitioned by src.
+//   // In each iteration:
+//   val incomingRank = edges.join(pageRank)
+//     .map { case (src, ((dst, weight), pr)) => dst -> pr * weight }
+//     .reduceByKey(_ + _)
+//
+// (Based on PageRank.scala.)
+//
+// The vertex and edge data (current PageRank and weight) have to meet so they can be multiplied.
+// There are two ways to do this:
+//
+//  1. Partition the edges by the source vertex IDs as in the code snippet. Then each current PageRank
+//     value needs only to be sent to one partition.
+//
+//  2. Partition the edges by the edge ID. Then the current PageRank values for all vertices have to be
+//     sent to every partition. (Every partition may contain edges for any vertex.)
+//
+// Option 1 suffers when high-degree vertices create an uneven partitioning. Partitions that include
+// edges starting from high-degree vertices will become hotspots.
+//
+// Option 2 is not generally feasible because the current PageRank values for all vertices may not
+// fit on one machine. (Also this would just move an unreasonable amount of data around.)
+//
+// # The solution
+//
+// We use option 1 for the edges of the many low-degree vertices and option 2 for the edges of the
+// few high-degree vertices.
+//
+// We draw the line by default at 20% of the partition size, but this is configurable. With our
+// default partition size this means a degree of 40,000 puts you among the high-degree vertices.
+//
+// To find the high-degree vertices, we may compute the actual degrees. But often we know that the
+// original partitioning (the edge partitioning) is even and unrelated to the vertex IDs. In that
+// case it is enough to look at a sample of the partitions, making this relatively cheap.
+//
+// The number of high-degree vertices is small (with the above settings, at most five times the
+// number of edge partitions). We can broadcast the list to create two RDDs:
+//
+//  1. One that contains the edges of low-degree vertices. We repartition this by source vertex ID.
+//  2. One that contains the edges of high-degree vertices. We leave this partitioned by edge ID.
+//
+// We can then use the normal merge join (option 1 above) on the first RDD. It no longer has
+// hotspots. We can use broadcast join (option 2 above) on the second RDD. It may include a lot of
+// edge data, but only a small number of vertices. Then we just concatenate the resulting RDDs.
+//
+// Once built, the hybrid RDD can be reused in one operation (e.g. multiple iterations of PageRank)
+// or even across multiple operations. (See HybridBundle.scala.)
+//
+// The next step in PageRank where we add up the PageRank values for each vertex
+// (“reduceByKey(_ + _)”) is well handled by Spark out of the box. Even for high-degree vertices one
+// number per partition will at most be transferred due to map-side aggregation.
+//
 package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext

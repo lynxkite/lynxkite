@@ -6,16 +6,23 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 5.0.0
+
 - Added GPU implementations of several algorithms using RAPIDS cuGraph.
   [#241](https://github.com/lynxkite/lynxkite/pull/241)
   Enable GPU usage by setting `KITE_ENABLE_CUDA=yes` in `.kiterc`.
-  The list of algorithms includes PageRank, connected components,betweenness and Katz centrality,
-  Louvain method, k-core decomposition, and ForceAtlas2, a new option in
+  The list of algorithms includes PageRank, connected components, betweenness and Katz centrality,
+  the Louvain method, k-core decomposition, and ForceAtlas2, a new option in
   _Place vertices with edge lengths_.
 - Switched the internal storage of graph entities from custom SequenceFiles to Parquet.
   [#237](https://github.com/lynxkite/lynxkite/pull/237)
   This is an incompatible change, but the migration is simple: delete `$KITE_DATA/partitioned`.
-  Everything will be recomputed when it's accessed, and stored in the new format.
+  Everything will be recomputed when accessed, and will be stored in the new format.
+- Added methods in the Python API for conversion between PySpark DataFrames and LynxKite tables.
+  [#240](https://github.com/lynxkite/lynxkite/pull/240)
+- Domain preference is now configurable. [#236](https://github.com/lynxkite/lynxkite/pull/236)
+  This is useful if you want the distributed Spark backend to take precedence over the
+  local Sphynx backend.
 
 ### 4.4.0
 

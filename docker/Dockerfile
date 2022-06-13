@@ -4,7 +4,7 @@ FROM openjdk:11
 # Add system dependencies.
 RUN \
   apt-get update && \
-  apt-get install -y build-essential busybox git-core && \
+  apt-get install -y build-essential busybox git-core libnuma-dev && \
   busybox --install && \
   rm -rf /var/lib/apt/lists/* && \
   wget -nv 'https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh' -O conda.sh && \
@@ -13,8 +13,15 @@ RUN \
 ENV PATH /opt/conda/bin:$PATH
 
 # Install dependencies early so they are in a low layer.
+# Set --build-arg KITE_ENABLE_CUDA=yes to add CUDA dependencies too.
+ARG KITE_ENABLE_CUDA=no
+ENV KITE_ENABLE_CUDA=$KITE_ENABLE_CUDA
 COPY stage/tools/runtime-env.yml /lynxkite/tools/runtime-env.yml
-RUN conda env update -n base --file /lynxkite/tools/runtime-env.yml
+COPY stage/tools/runtime-env-cuda.yml /lynxkite/tools/runtime-env-cuda.yml
+RUN conda env update -n base --file \
+ $([ $KITE_ENABLE_CUDA = yes ] && \
+   echo /lynxkite/tools/runtime-env-cuda.yml || \
+   echo /lynxkite/tools/runtime-env.yml)
 COPY stage/tools/install_spark.sh /lynxkite/tools/install_spark.sh
 COPY stage/conf/SPARK_VERSION /lynxkite/conf/SPARK_VERSION
 RUN /lynxkite/tools/install_spark.sh /spark

@@ -1,0 +1,27 @@
+# A subset of ../conda-env.yml. Suitable for deployments.
+channels:
+- conda-forge
+- pytorch
+- pyg
+- nvidia
+- rapidsai
+dependencies:
+# For NetworKit.
+- libstdcxx-ng
+- libnetworkit==10.0
+- libtlx==0.5.20200222
+# For Python and ML.
+- python>=3.8
+- numpy
+- pandas
+- scikit-learn
+- pyarrow
+- pytorch::pytorch==1.9.1
+- pytorch::cpuonly
+- pyg==2.0.3
+- cugraph
+# For Python API and tools.
+- ruamel.yaml
+- requests
+- typed-ast
+- types-requests
