@@ -1,7 +1,7 @@
 #!/bin/bash
 # This is a wrapper for lynxkite/bin/lynxkite. Should be run inside the Docker container!
 
-rm -f root/kite.pid root/sphynx.pid
+rm -f root/kite/pid root/kite/sphynx.pid
 
 # Override kiterc settings.
 export KITE_HTTP_PORT=${KITE_HTTP_PORT:-2200}
