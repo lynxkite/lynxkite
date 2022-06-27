@@ -172,8 +172,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
-      Param("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node"),
-      Param("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel"),
+      Code("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node", language = ""),
+      Code("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel", language = ""),
       ImportedDataParam(),
       new DummyParam("last_settings", ""),
     )
