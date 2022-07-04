@@ -563,7 +563,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----
 
-The following software may be included in this product: @types/clone, @types/fast-json-stable-stringify, @types/node. A copy of the source code may be downloaded from https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/clone), https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/node). This software contains the following license and notice below:
+The following software may be included in this product: @types/clone, @types/fast-json-stable-stringify, @types/long, @types/node. A copy of the source code may be downloaded from https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/clone), https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/long), https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/node). This software contains the following license and notice below:
 
 MIT License
 
@@ -589,7 +589,7 @@ MIT License
 
 -----
 
-The following software may be included in this product: @types/long, @types/selenium-webdriver. A copy of the source code may be downloaded from https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/long), https://github.com/DefinitelyTyped/DefinitelyTyped.git (@types/selenium-webdriver). This software contains the following license and notice below:
+The following software may be included in this product: @types/selenium-webdriver. A copy of the source code may be downloaded from https://github.com/DefinitelyTyped/DefinitelyTyped.git. This software contains the following license and notice below:
 
 MIT License
 
