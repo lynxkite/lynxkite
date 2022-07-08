@@ -11,6 +11,7 @@ scalacOptions ++= Seq(
   "-feature",
   "-deprecation",
   "-unchecked",
+  "-target:jvm-1.8",
   // Restrict file name length to support encrypted file systems.
   "-Xmax-classfile-name", "120",
   // TODO: Suppress warnings as necessary and enable checks.
@@ -19,6 +20,13 @@ scalacOptions ++= Seq(
   // "-Ywarn-unused-import",
   // "-Xlint:_,-adapted-args,-type-parameter-shadow,-inaccessible",
   "-Xfatal-warnings")
+
+javacOptions ++= Seq(
+  "-target",
+  "1.8",
+  "-source",
+  "1.8"
+  )
 
 version := "0.1-SNAPSHOT"
 
