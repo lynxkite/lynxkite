@@ -50,4 +50,13 @@ class AddRankAttributeOperationTest extends OperationsTestBase {
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 1.0, 1 -> 2.0, 2 -> 0.0, 3 -> 3.0))
   }
+  test("Rank attribute for edge attribute") {
+    val project = box("Create example graph")
+      .box(
+        "Add rank attribute",
+        Map("rankattr" -> "ranking", "keyattr" -> "comment", "order" -> "ascending"))
+      .project
+    val attr = project.edgeAttributes("ranking").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 0, 1 -> 3, 2 -> 1, 3 -> 2))
+  }
 }
