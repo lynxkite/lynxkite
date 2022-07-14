@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.controllers.Operation
 import com.lynxanalytics.biggraph.controllers.ProjectTransformation
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations.VertexToEdgeAttribute
 
 class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Implicits._
@@ -111,22 +112,43 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
   })
 
   register("Weighted aggregate on neighbors")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double] ++ project.edgeAttrList[Double]
     params ++= List(
-      Choice("weight", "Weight", options = project.vertexAttrList[Double]),
-      Choice("direction", "Aggregate on", options = Direction.options)) ++
-      aggregateParams(project.vertexAttributes, weighted = true, defaultPrefix = "neighborhood")
+      Choice("weight", "Weight", options = attrs),
+      Choice("direction", "Aggregate on", options = Direction.options),
+    )
+    params ++= aggregateParams(project.vertexAttributes, weighted = true, defaultPrefix = "neighborhood")
     def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes") &&
+      FEStatus.assert(attrs.nonEmpty, "No numeric vertex or edge attributes") &&
         project.hasEdgeBundle
+    //add aggregate on && weight incompatibility assert
     def apply() = {
-      val edges = Direction(params("direction"), project.edgeBundle).edgeBundle
+      val direction = Direction(params("direction"), project.edgeBundle)
+      val edges = direction.edgeBundle
       val weightName = params("weight")
-      val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
-      for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-        val result = aggregateViaConnection(
-          edges,
-          AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
-        project.newVertexAttribute(name, result)
+
+      if (project.vertexAttrList.find(_.id == params("weight")).isDefined) {
+        val weight = project.vertexAttributes(weightName).runtimeSafeCast[Double]
+        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
+          val result = aggregateViaConnection(
+            edges,
+            AttributeWithWeightedAggregator(weight, project.vertexAttributes(attr), choice))
+          project.newVertexAttribute(name, result)
+        }
+      } else {
+        val weight = direction.pull(project.edgeAttributes(weightName).runtimeSafeCast[Double])
+        for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
+          val a = VertexToEdgeAttribute.dstAttribute(project.vertexAttributes(attr), project.edgeBundle)
+          println(weight)
+          println(a)
+          val result = aggregateFromEdges(
+            edges,
+            AttributeWithWeightedAggregator(
+              weight,
+              direction.pull(a),
+              choice))
+          project.newVertexAttribute(name, result)
+        }
       }
     }
     override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
