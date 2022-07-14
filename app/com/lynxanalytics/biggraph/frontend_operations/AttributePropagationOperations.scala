@@ -112,14 +112,14 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
   })
 
   register("Weighted aggregate on neighbors")(new ProjectTransformation(_) {
-    def attrs = project.vertexAttrList[Double] ++ project.edgeAttrList[Double]
+    def weightAttrs = project.vertexAttrList[Double] ++ project.edgeAttrList[Double]
     params ++= List(
-      Choice("weight", "Weight", options = attrs),
-      Choice("direction", "Aggregate on", options = Direction.options),
-    )
-    params ++= aggregateParams(project.vertexAttributes, weighted = true, defaultPrefix = "neighborhood")
+      Choice("weight", "Weight", options = weightAttrs),
+      Choice("direction", "Aggregate on", options = Direction.options)) ++
+      aggregateParams(project.vertexAttributes, weighted = true, defaultPrefix = "neighborhood")
+
     def enabled =
-      FEStatus.assert(attrs.nonEmpty, "No numeric vertex or edge attributes") &&
+      FEStatus.assert(weightAttrs.nonEmpty, "No numeric vertex or edge attributes") &&
         project.hasEdgeBundle
     //add aggregate on && weight incompatibility assert
     def apply() = {
@@ -139,14 +139,12 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         val origWeight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
         val weight = direction.pull(origWeight)
         for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-          val a = VertexToEdgeAttribute.srcAttribute(project.vertexAttributes(attr), edges)
-          println(weight)
-          println(a)
+          val movedAttrs = VertexToEdgeAttribute.srcAttribute(project.vertexAttributes(attr), edges)
           val result = aggregateFromEdges(
             edges,
             AttributeWithWeightedAggregator(
               weight,
-              a,
+              movedAttrs,
               choice))
           project.newVertexAttribute(name, result)
         }
