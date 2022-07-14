@@ -136,16 +136,17 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
           project.newVertexAttribute(name, result)
         }
       } else {
-        val weight = direction.pull(project.edgeAttributes(weightName).runtimeSafeCast[Double])
+        val origWeight = project.edgeAttributes(weightName).runtimeSafeCast[Double]
+        val weight = direction.pull(origWeight)
         for ((attr, choice, name) <- parseAggregateParams(params, weight = weightName)) {
-          val a = VertexToEdgeAttribute.dstAttribute(project.vertexAttributes(attr), project.edgeBundle)
+          val a = VertexToEdgeAttribute.srcAttribute(project.vertexAttributes(attr), edges)
           println(weight)
           println(a)
           val result = aggregateFromEdges(
             edges,
             AttributeWithWeightedAggregator(
               weight,
-              direction.pull(a),
+              a,
               choice))
           project.newVertexAttribute(name, result)
         }
