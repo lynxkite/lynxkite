@@ -10,14 +10,15 @@ import org.apache.spark.sql.types
 
 object ImportDataFrame extends OpFromJson {
 
-  def fromJson(j: JsValue) = {
+  def schemaFromJson(j: play.api.libs.json.JsLookupResult): types.StructType = {
     // This is meta level, so we may not have a Spark session at this point.
     // But we've got to allow reading old schemas for compatibility.
     org.apache.spark.sql.internal.SQLConf.get.setConfString("spark.sql.legacy.allowNegativeScaleOfDecimal", "true")
-    new ImportDataFrame(
-      types.DataType.fromJson((j \ "schema").as[String]).asInstanceOf[types.StructType],
-      None,
-      (j \ "timestamp").as[String])
+    types.DataType.fromJson(j.as[String]).asInstanceOf[types.StructType]
+  }
+
+  def fromJson(j: JsValue) = {
+    new ImportDataFrame(schemaFromJson(j \ "schema"), None, (j \ "timestamp").as[String])
   }
 
   private def apply(df: DataFrame) = {
