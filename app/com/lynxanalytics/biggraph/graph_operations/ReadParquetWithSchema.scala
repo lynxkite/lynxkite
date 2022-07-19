@@ -8,11 +8,10 @@ import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.types
 
 object ReadParquetWithSchema extends OpFromJson {
-  def fromJson(j: JsValue) = {
-    new ReadParquetWithSchema(
-      (j \ "filename").as[String],
-      ImportDataFrame.schemaFromJson(j \ "schema"))
-  }
+  def fromJson(j: JsValue) = ReadParquetWithSchema(
+    (j \ "filename").as[String],
+    ImportDataFrame.schemaFromJson(j \ "schema"),
+  )
 
   def parseSchema(strings: Seq[String]): types.StructType = {
     val re = raw"\s*(\S+)\s*:\s*(\S+)\s*".r
@@ -30,7 +29,7 @@ object ReadParquetWithSchema extends OpFromJson {
   }
 }
 
-class ReadParquetWithSchema(
+case class ReadParquetWithSchema(
     filename: String,
     schema: types.StructType)
     extends SparkOperation[NoInput, TableOutput] {
@@ -39,7 +38,8 @@ class ReadParquetWithSchema(
   def outputMeta(instance: MetaGraphOperationInstance) = new TableOutput(schema)(instance)
   override def toJson = Json.obj(
     "filename" -> filename,
-    "schema" -> schema.prettyJson)
+    "schema" -> schema.prettyJson,
+  )
 
   def execute(
       inputDatas: DataSet,
