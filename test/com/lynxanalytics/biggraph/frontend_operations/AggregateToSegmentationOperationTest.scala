@@ -30,3 +30,24 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
   }
 
 }
+
+class WeightedAggregateToSegmentationOperationTest extends OperationsTestBase {
+  test("Weighted aggregate to segmentation") {
+    def agg[T](attribute: String, aggregator: String, weight: String): Map[Long, T] = {
+      val seg = box("Create example graph")
+        .box("Find connected components", Map("name" -> "cc", "directions" -> "require both directions"))
+        .box(
+          "Weighted aggregate to segmentation",
+          Map(
+            "weight" -> weight,
+            "apply_to_graph" -> ".cc",
+            ("aggregate_" + attribute) -> aggregator))
+        .project.segmentation("cc")
+      get(seg.vertexAttributes(attribute + "_" + aggregator + "_by_" + weight)).asInstanceOf[Map[Long, T]]
+    }
+    assert(agg[Double]("age", "weighted_average", "age").mapValues(_.round) == Map(0 -> 19, 2 -> 50, 3 -> 2))
+    assert(agg[Double]("age", "weighted_sum", "age").mapValues(_.round) == Map(0 -> 743, 2 -> 2530, 3 -> 4))
+    assert(agg[Double]("gender", "by_max_weight", "age") == Map(0 -> "Male", 2 -> "Male", 3 -> "Male"))
+    assert(agg[Double]("name", "by_min_weight", "age") == Map(0 -> "Eve", 2 -> "Bob", 3 -> "Isolated Joe"))
+  }
+}
