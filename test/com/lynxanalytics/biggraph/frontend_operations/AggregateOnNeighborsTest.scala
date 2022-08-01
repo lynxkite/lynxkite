@@ -64,7 +64,7 @@ class WeightedAggregateOnNeighborsTest extends OperationsTestBase {
             "weight" -> weight,
             ("aggregate_" + attribute) -> aggregator))
         .project
-      get(p.vertexAttributes(attribute + "_" + aggregator + "_by_" + weight)).asInstanceOf[Map[Long, T]]
+      get(p.vertexAttributes(attribute + "_" + aggregator + "_by_" + weight).runtimeSafeCast[T])
     }
     assert(agg[Double]("age", "weighted_average", "age").mapValues(_.round) == Map(0 -> 37, 1 -> 37, 2 -> 19))
     assert(agg[Double]("age", "by_max_weight", "age").mapValues(_.round) == Map(0 -> 50, 1 -> 50, 2 -> 20))

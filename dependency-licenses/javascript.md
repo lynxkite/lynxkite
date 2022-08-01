@@ -121,7 +121,7 @@
 │  ├─ d3-timer@2.0.0
 │  ├─ esquery@1.4.0
 │  ├─ fork-stream@0.0.4
-│  ├─ protobufjs@6.11.2
+│  ├─ protobufjs@6.11.3
 │  ├─ qs@6.2.3
 │  ├─ qs@6.5.2
 │  ├─ rw@1.3.3
@@ -266,8 +266,8 @@
 │  ├─ @nodelib/fs.walk@1.2.7
 │  ├─ @types/clone@2.1.0
 │  ├─ @types/fast-json-stable-stringify@2.1.0
-│  ├─ @types/long@4.0.1
-│  ├─ @types/node@15.12.2
+│  ├─ @types/long@4.0.2
+│  ├─ @types/node@17.0.38
 │  ├─ @types/q@0.0.32
 │  ├─ @types/selenium-webdriver@3.0.17
 │  ├─ accepts@1.3.7
@@ -499,7 +499,7 @@
 │  ├─ flagged-respawn@1.0.1
 │  ├─ flat-cache@2.0.1
 │  ├─ flush-write-stream@1.1.1
-│  ├─ follow-redirects@1.14.7
+│  ├─ follow-redirects@1.14.8
 │  ├─ for-in@1.0.2
 │  ├─ for-own@1.0.0
 │  ├─ form-data@2.3.3
@@ -670,7 +670,7 @@
 │  ├─ mime-types@2.1.31
 │  ├─ mime@1.4.1
 │  ├─ mimic-fn@2.1.0
-│  ├─ minimist@1.2.5
+│  ├─ minimist@1.2.6
 │  ├─ mitt@1.2.0
 │  ├─ mixin-deep@1.3.2
 │  ├─ mkdirp@0.5.5
@@ -870,7 +870,7 @@
 │  ├─ tether@1.4.7
 │  ├─ text-table@0.2.0
 │  ├─ tfunk@4.0.0
-│  ├─ three@0.137.5
+│  ├─ three@0.137.0
 │  ├─ through@2.3.8
 │  ├─ through2-filter@3.0.0
 │  ├─ through2@2.0.5

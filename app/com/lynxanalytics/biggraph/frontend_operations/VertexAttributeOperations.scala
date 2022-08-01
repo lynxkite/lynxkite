@@ -150,17 +150,24 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register("Add rank attribute")(new ProjectTransformation(_) {
-    def attrs = (
+    def eattrs = (
+      project.edgeAttrList[String] ++
+        project.edgeAttrList[Double] ++
+        project.edgeAttrList[Long] ++
+        project.edgeAttrList[Int]
+    ).sortBy(_.title)
+    def vattrs = (
       project.vertexAttrList[String] ++
         project.vertexAttrList[Double] ++
         project.vertexAttrList[Long] ++
-        project.vertexAttrList[Int]).sortBy(_.title)
+        project.vertexAttrList[Int]
+    ).sortBy(_.title)
+    def attrs = eattrs ++ vattrs
     params ++= List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
-      Choice("keyattr", "Key attribute name", options = attrs),
+      Choice("keyattr", "Key attribute name", options = eattrs ++ vattrs),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")),
     )
-
     def enabled = FEStatus.assert(attrs.nonEmpty, "No sortable vertex attributes")
     override def summary = {
       val name = params("keyattr")
@@ -171,9 +178,18 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val rankAttr = params("rankattr")
       val ascending = params("order") == "ascending"
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
-      val sortKey = project.vertexAttributes(keyAttr)
+      val sortKey =
+        if (project.vertexAttrList.find(_.id == keyAttr).isDefined) {
+          project.vertexAttributes(keyAttr)
+        } else {
+          project.edgeAttributes(keyAttr)
+        }
       val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
-      project.newVertexAttribute(rankAttr, rank, s"rank by $keyAttr" + help)
+      if (project.vertexAttrList.find(_.id == keyAttr).isDefined) {
+        project.newVertexAttribute(rankAttr, rank, s"rank by $keyAttr" + help)
+      } else {
+        project.newEdgeAttribute(rankAttr, rank, s"rank by $keyAttr" + help)
+      }
     }
   })
 
