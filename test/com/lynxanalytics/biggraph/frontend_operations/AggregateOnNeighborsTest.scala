@@ -51,3 +51,24 @@ class AggregateOnNeighborsTest extends OperationsTestBase {
       2 -> Vector(41, -74, 48, 19)))
   }
 }
+
+class WeightedAggregateOnNeighborsTest extends OperationsTestBase {
+  test("all aggregators") {
+    def agg[T](attribute: String, aggregator: String, weight: String): Map[Long, T] = {
+      val p = box("Create example graph")
+        .box(
+          "Weighted aggregate on neighbors",
+          Map(
+            "prefix" -> "",
+            "direction" -> "all edges",
+            "weight" -> weight,
+            ("aggregate_" + attribute) -> aggregator))
+        .project
+      get(p.vertexAttributes(attribute + "_" + aggregator + "_by_" + weight).runtimeSafeCast[T])
+    }
+    assert(agg[Double]("age", "weighted_average", "age").mapValues(_.round) == Map(0 -> 37, 1 -> 37, 2 -> 19))
+    assert(agg[Double]("age", "by_max_weight", "age").mapValues(_.round) == Map(0 -> 50, 1 -> 50, 2 -> 20))
+    assert(agg[Double]("age", "by_min_weight", "age").mapValues(_.round) == Map(0 -> 18, 1 -> 20, 2 -> 18))
+    assert(agg[Double]("age", "weighted_sum", "age").mapValues(_.round) == Map(0 -> 3193, 1 -> 3354, 2 -> 743))
+  }
+}
