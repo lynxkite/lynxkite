@@ -70,5 +70,9 @@ class WeightedAggregateOnNeighborsTest extends OperationsTestBase {
     assert(agg[Double]("age", "by_max_weight", "age").mapValues(_.round) == Map(0 -> 50, 1 -> 50, 2 -> 20))
     assert(agg[Double]("age", "by_min_weight", "age").mapValues(_.round) == Map(0 -> 18, 1 -> 20, 2 -> 18))
     assert(agg[Double]("age", "weighted_sum", "age").mapValues(_.round) == Map(0 -> 3193, 1 -> 3354, 2 -> 743))
+    assert(agg[Double]("age", "weighted_average", "weight").mapValues(_.round) == Map(0 -> 34, 1 -> 37, 2 -> 19))
+    assert(agg[Double]("age", "by_max_weight", "weight").mapValues(_.round) == Map(0 -> 50, 1 -> 50, 2 -> 18))
+    assert(agg[Double]("age", "by_min_weight", "weight").mapValues(_.round) == Map(0 -> 18, 1 -> 20, 2 -> 20))
+    assert(agg[Double]("age", "weighted_sum", "weight").mapValues(_.round) == Map(0 -> 205, 1 -> 262, 2 -> 134))
   }
 }
