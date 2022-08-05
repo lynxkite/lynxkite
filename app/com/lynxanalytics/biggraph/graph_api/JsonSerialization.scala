@@ -104,7 +104,9 @@ object SerializableType {
     val long = P("Long").map(_ => SerializableType.long)
     val id = P("ID").map(_ => SerializableType.id)
     val int = P("Int").map(_ => SerializableType.int)
-    val primitive = P(string | double | long | int | id)
+    val timestamp = P("Timestamp").map(_ => SerializableType.timestamp)
+    val date = P("Date").map(_ => SerializableType.date)
+    val primitive = P(string | double | long | int | id | timestamp | date)
     val vector: PS = P("Vector[" ~ stype ~ "]").map {
       inner => SerializableType.vector(inner)
     }
@@ -127,14 +129,29 @@ object SerializableType {
   val id = new SerializableType[com.lynxanalytics.biggraph.graph_api.ID]("ID")
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
-
-  // Every serializable type defines an ordering here, but we never use it for vectors.
-  class MockVectorOrdering[T: TypeTag] extends Ordering[Vector[T]] with Serializable {
-    def compare(x: Vector[T], y: Vector[T]): Int = ???
+  val timestamp = {
+    implicit val o = new TimestampOrdering
+    implicit val f = TypeTagToFormat.formatTimestamp
+    new SerializableType[java.sql.Timestamp]("Timestamp")
+  }
+  val date = {
+    implicit val o = new DateOrdering
+    implicit val f = TypeTagToFormat.formatDate
+    new SerializableType[java.sql.Date]("Date")
   }
 
-  // Every serializable type defines an ordering here, but we never use it for tuple2s.
-  class MockTuple2Ordering[T1: TypeTag, T2: TypeTag] extends Ordering[(T1, T2)] with Serializable {
+  // Custom orderings.
+  class TimestampOrdering extends Ordering[java.sql.Timestamp] with Serializable {
+    def compare(x: java.sql.Timestamp, y: java.sql.Timestamp): Int = x.compareTo(y)
+  }
+  class DateOrdering extends Ordering[java.sql.Date] with Serializable {
+    def compare(x: java.sql.Date, y: java.sql.Date): Int = x.compareTo(y)
+  }
+  // Orderings for types that should throw an error for comparisons.
+  class UnsupportedVectorOrdering[T: TypeTag] extends Ordering[Vector[T]] with Serializable {
+    def compare(x: Vector[T], y: Vector[T]): Int = ???
+  }
+  class UnsupportedTuple2Ordering[T1: TypeTag, T2: TypeTag] extends Ordering[(T1, T2)] with Serializable {
     def compare(x: (T1, T2), y: (T1, T2)): Int = ???
   }
 
@@ -194,12 +211,12 @@ class VectorSerializableType[T: TypeTag] private[graph_api] (
     extends SerializableType[Vector[T]](typename)(
       classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
       format = TypeTagToFormat.vectorToFormat(typeTag),
-      ordering = new SerializableType.MockVectorOrdering()(typeTag),
+      ordering = new SerializableType.UnsupportedVectorOrdering()(typeTag),
       typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {}
 class Tuple2SerializableType[T1: TypeTag, T2: TypeTag] private[graph_api] (
     typename: String)
     extends SerializableType[(T1, T2)](typename)(
       classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
       format = TypeTagToFormat.pairToFormat(typeTag[T1], typeTag[T2]),
-      ordering = new SerializableType.MockTuple2Ordering()(typeTag[T1], typeTag[T2]),
+      ordering = new SerializableType.UnsupportedTuple2Ordering()(typeTag[T1], typeTag[T2]),
       typeTag = TypeTagUtil.tuple2TypeTag(typeTag[T1], typeTag[T2])) {}

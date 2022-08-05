@@ -22,6 +22,8 @@ object TypeTagToFormat {
   implicit val formatUIAttributeFilter = json.Json.format[UIAttributeFilter]
   implicit val formatUICenterRequest = json.Json.format[UICenterRequest]
   implicit val formatUIStatus = json.Json.format[UIStatus]
+  implicit val formatDate = new DateFormat
+  implicit val formatTimestamp = new TimestampFormat
 
   implicit object ToJsonFormat extends json.Format[ToJson] {
     def writes(t: ToJson): JsValue = {
@@ -80,6 +82,22 @@ object TypeTagToFormat {
       }.toSeq
       JsArray(sss)
     }
+  }
+
+  class DateFormat extends json.Format[java.sql.Date] {
+    def reads(j: json.JsValue): json.JsResult[java.sql.Date] = {
+      val s = j.as[String]
+      json.JsResult.fromTry(util.Try(java.sql.Date.valueOf(s)))
+    }
+    def writes(v: java.sql.Date): json.JsValue = json.JsString(v.toString)
+  }
+
+  class TimestampFormat extends json.Format[java.sql.Timestamp] {
+    def reads(j: json.JsValue): json.JsResult[java.sql.Timestamp] = {
+      val s = j.as[String]
+      json.JsResult.fromTry(util.Try(java.sql.Timestamp.valueOf(s)))
+    }
+    def writes(v: java.sql.Timestamp): json.JsValue = json.JsString(v.toString)
   }
 
   class IDBucketsFormat[T: json.Format] extends json.Format[IDBuckets[T]] {
@@ -155,6 +173,8 @@ object TypeTagToFormat {
       else if (TypeTagUtil.isType[DynamicValue](t)) implicitly[json.Format[DynamicValue]]
       else if (TypeTagUtil.isType[UIStatus](t)) implicitly[json.Format[UIStatus]]
       else if (TypeTagUtil.isType[Edge](t)) implicitly[json.Format[Edge]]
+      else if (TypeTagUtil.isType[java.sql.Date](t)) implicitly[json.Format[java.sql.Date]]
+      else if (TypeTagUtil.isType[java.sql.Timestamp](t)) implicitly[json.Format[java.sql.Timestamp]]
       else if (TypeTagUtil.isSubtypeOf[ToJson](t)) ToJsonFormat
       else if (TypeTagUtil.isOfKind1[Option](t)) {
         val innerType = TypeTagUtil.typeArgs(tag).head
