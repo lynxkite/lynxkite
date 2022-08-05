@@ -1,8 +1,10 @@
 ### Import from BigQuery (Standard SQL result)
 
-Execute a BigQuery Standard SQL query and get the result via Storage API.
-Some BigQuery-specific datatypes like ARRAY<STRUCT> may not be fully supported within LynxKite
-More information here: https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0
+Execute a BigQuery Standard SQL query and get the result as a table. (See also <<Import from BigQuery (raw table)>>.)
+
+Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
+
+BigQuery access is provided through the https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#apache-spark-sql-connector-for-google-bigquery[Apache Spark SQL connector for Google BigQuery].
 
 ====
 [p-parent_project_id]#GCP project ID for billing#::
