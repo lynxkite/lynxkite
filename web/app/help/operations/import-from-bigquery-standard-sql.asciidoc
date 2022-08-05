@@ -18,7 +18,7 @@ Place to create temporary (24h) tables to store the results of the SQL query.
 Dataset must already exist with `roles/bigquery.dataEditor` granted on it.
 
 [p-bq_standard_sql]#BigQuery Standard SQL#::
-The SQL Query to run on BigQuery. `roles/bigquery.dataViewer` is required for SELECT.
+The SQL query to run on BigQuery. `roles/bigquery.dataViewer` is required for SELECT.
 
 [p-credentials_file]#Path to Service Account JSON key#::
 Local path to the service account JSON key to authenticate with GCP.
