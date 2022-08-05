@@ -313,6 +313,60 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
+  registerImport("Import from BigQuery (raw table)")(new ImportOperation(_) {
+    params ++= List(
+      Param("parent_project_id", "GCP project ID for billing"),
+      Param("project_id", "GCP project ID for importing"),
+      Param("dataset_id", "BigQuery dataset ID for importing"),
+      Param("table_id", "BigQuery table ID to import"),
+      Param("credentials_file", "Path to Service Account JSON key"),
+      Choice("views_enabled", "Allow reading from BigQuery views", options = FEOption.noyes),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL", language = "sql"),
+      ImportedDataParam(),
+      new DummyParam("last_settings", ""),
+    )
+
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      import com.google.cloud.spark.bigquery._
+      var df = context.read.format("bigquery")
+      if (params("credentials_file").nonEmpty) df = df.option("credentialsFile", params("credentials_file"))
+      if (params("parent_project_id").nonEmpty) df = df.option("parentProject", params("parent_project_id"))
+      if (params("project_id").nonEmpty) df = df.option("project", params("project_id"))
+      if (params("dataset_id").nonEmpty) df = df.option("dataset", params("dataset_id"))
+      if (params("views_enabled") == "yes") df = df.option("viewsEnabled", "true")
+      df.load(params("table_id"))
+    }
+  })
+
+  registerImport("Import from BigQuery (Standard SQL result)")(new ImportOperation(_) {
+    params ++= List(
+      Param("parent_project_id", "GCP project ID for billing"),
+      Param("materialization_project_id", "GCP project for materialization"),
+      Param("materialization_dataset_id", "BigQuery Dataset for materialization"),
+      Code("bq_standard_sql", "BigQuery Standard SQL", language = "sql"),
+      Param("credentials_file", "Path to Service Account JSON key"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL (in LynxKite)", language = "sql"),
+      ImportedDataParam(),
+      new DummyParam("last_settings", ""),
+    )
+
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      import com.google.cloud.spark.bigquery._
+      var df = context.read.format("bigquery")
+        .option("viewsEnabled", "true")
+        .option("materializationDataset", params("materialization_dataset_id"))
+      if (params("credentials_file").nonEmpty) df = df.option("credentialsFile", params("credentials_file"))
+      if (params("materialization_project_id").nonEmpty)
+        df = df.option("materializationProject", params("materialization_project_id"))
+      if (params("parent_project_id").nonEmpty) df = df.option("parentProject", params("parent_project_id"))
+      df.load(params("bq_standard_sql"))
+    }
+  })
+
   registerImport("Import from Hive")(new ImportOperation(_) {
     params ++= List(
       Param("hive_table", "Hive table"),
