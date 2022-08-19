@@ -1,0 +1,30 @@
+### Import from BigQuery (Standard SQL result)
+
+Execute a BigQuery Standard SQL query and get the result as a table. (See also <<Import from BigQuery (raw table)>>.)
+
+Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
+
+BigQuery access is provided through the https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#apache-spark-sql-connector-for-google-bigquery[Apache Spark SQL connector for Google BigQuery].
+
+====
+[p-parent_project_id]#GCP project ID for billing#::
+The GCP Project ID for billing purposes. This may be different from the dataset being read.
+`roles/bigquery.readSessionUser` and `roles/bigquery.jobUser` are both required on the billed project.
+
+[p-materialization_project_id]#GCP project for materialization#::
+Used together with dataset ID. Defaults to service account's GCP project if unspecified.
+Requires `roles/bigquery.dataEditor` on the dataset.
+
+[p-materialization_dataset_id]#BigQuery Dataset for materialization#::
+Place to create temporary (24h) tables to store the results of the SQL query.
+Dataset must already exist with `roles/bigquery.dataEditor` granted on it.
+
+[p-bq_standard_sql]#BigQuery Standard SQL#::
+The SQL query to run on BigQuery. `roles/bigquery.dataViewer` is required for SELECT.
+
+[p-credentials_file]#Path to Service Account JSON key#::
+Local path to the service account JSON key to authenticate with GCP.
+Leave this field empty if running on Dataproc or to use `GOOGLE_APPLICATION_CREDENTIALS`.
+
+include::{g}[tag=import-box]
+====

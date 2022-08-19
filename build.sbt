@@ -53,7 +53,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
-  // The Google Cloud Storage connector for Spark and Hive
+  // Geotools
   "org.geotools" % "gt-shapefile" % "20.0",
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
@@ -78,6 +78,8 @@ libraryDependencies ++= Seq(
   // All kinds of parsing, e.g. filters.
   "com.lihaoyi" %% "fastparse" % "1.0.0",
   "org.scalaj" %% "scalaj-http" % "2.4.2",
+  // Google Dataproc's spark-bigquery-connector allows interacting with BigQuery tables on Dataproc
+   "com.google.cloud.spark" %% "spark-bigquery-with-dependencies" % "0.25.0",
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
