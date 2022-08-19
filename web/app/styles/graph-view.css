@@ -166,7 +166,7 @@ svg .bucket.axis-label {
 .graph-view-legend .inside {
   direction: ltr;
   width: 100%;
-  color: white; /* Brand color. */
+  color: white; 
   text-shadow: 1px 0 #0008, -1px 0 #0008, 0 1px #0008, 0 -1px #0008;
   font-size: 12px;
   font-weight: bold;
