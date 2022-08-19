@@ -14,11 +14,11 @@ object ReadParquetWithSchema extends OpFromJson {
   )
 
   def parseSchema(strings: Seq[String]): types.StructType = {
-    val re = raw"\s*(\S+)\s*:\s*(\S+)\s*".r
+    val re = raw"\s*(.*?)\s*:\s*(.*?)\s*".r
     types.StructType(strings.map {
       case re(name, tpe) => types.StructField(
           name = name,
-          dataType = SQLHelper.typeTagToDataType(SerializableType.TypeParser.parse(tpe).typeTag))
+          dataType = types.DataType.fromJson('"' + tpe.toLowerCase + '"'))
       case x => throw new AssertionError(s"The schema must be listed as 'column: type'. Got '$x'.")
     })
   }

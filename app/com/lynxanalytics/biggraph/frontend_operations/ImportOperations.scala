@@ -350,7 +350,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         case "no" =>
           makeOutput(graph_operations.ReadParquetWithSchema.run(
             params("filename"),
-            splitParam("schema")))
+            splitParam("schema", delimiter = ";")))
       }
     }
   })
