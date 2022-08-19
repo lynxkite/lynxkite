@@ -167,6 +167,7 @@ svg .bucket.axis-label {
   direction: ltr;
   width: 100%;
   color: #39bcf3; /* Brand color. */
+  text-shadow: 1px 0 black, -1px 0 black, 0 1px black, 0 -1px black;
   font-size: 12px;
   font-weight: bold;
   padding: 10px;
