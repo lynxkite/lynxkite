@@ -15,10 +15,20 @@ object ReadParquetWithSchema extends OpFromJson {
 
   def parseSchema(strings: Seq[String]): types.StructType = {
     val re = raw"\s*(.*?)\s*:\s*(.*?)\s*".r
+    val reArray = raw"array of\s+(.*)".r
     types.StructType(strings.map {
       case re(name, tpe) => types.StructField(
           name = name,
-          dataType = types.DataType.fromJson('"' + tpe.toLowerCase + '"'))
+          dataType = types.DataType.fromJson {
+            tpe.toLowerCase match {
+              case "array" => throw new AssertionError(
+                  "For array types you need to specify the element type too. For example: 'array of string'")
+              case reArray(t) =>
+                s"""{"type": "array", "containsNull": true, "elementType": "$t"}"""
+              case t => s""" "$t" """
+            }
+          },
+        )
       case x => throw new AssertionError(s"The schema must be listed as 'column: type'. Got '$x'.")
     })
   }
