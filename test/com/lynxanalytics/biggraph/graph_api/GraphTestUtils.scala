@@ -122,6 +122,9 @@ object GraphTestUtils {
     }
     dm.get(res.sc)
   }
+  def get(e: Table)(implicit mm: MetaGraphManager, dm: DataManager): TableContents = {
+    dm.get(TableToScalar.run(e, -1))
+  }
   // For the sake of uniform syntax we also do it for scalars.
   def get[T](e: Scalar[T])(implicit dm: DataManager): T = dm.get(e)
 }
