@@ -106,7 +106,8 @@ object SerializableType {
     val int = P("Int").map(_ => SerializableType.int)
     val timestamp = P("Timestamp").map(_ => SerializableType.timestamp)
     val date = P("Date").map(_ => SerializableType.date)
-    val primitive = P(string | double | long | int | id | timestamp | date)
+    val boolean = P("Boolean").map(_ => SerializableType.boolean)
+    val primitive = P(string | double | long | int | id | timestamp | date | boolean)
     val vector: PS = P("Vector[" ~ stype ~ "]").map {
       inner => SerializableType.vector(inner)
     }
@@ -139,6 +140,7 @@ object SerializableType {
     implicit val f = TypeTagToFormat.formatDate
     new SerializableType[java.sql.Date]("Date")
   }
+  val boolean = new SerializableType[Boolean]("Boolean")
 
   // Custom orderings.
   class TimestampOrdering extends Ordering[java.sql.Timestamp] with Serializable {
@@ -177,6 +179,7 @@ object SerializableType {
     else if (t == typeOf[com.lynxanalytics.biggraph.graph_api.ID]) id
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
+    else if (t =:= typeOf[Boolean]) boolean
     else if (TypeTagUtil.isOfKind2[Tuple2](t)) tuple2(
       apply(t.asInstanceOf[TypeRefApi].args(0)),
       apply(t.asInstanceOf[TypeRefApi].args(1)))
