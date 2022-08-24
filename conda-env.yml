@@ -15,6 +15,7 @@ dependencies:
 - make
 # For LynxKite backend.
 - sbt
+- openjdk==11.0.15 # if left unpinned, sbt now brings in unsupported jdk17
 # For LynxKite frontend.
 - nodejs
 - yarn

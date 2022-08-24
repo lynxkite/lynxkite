@@ -46,8 +46,6 @@ class SparkSQLTest extends AnyFunSuite with TestDataManager with BeforeAndAfter 
 
     val people = sparkContext.textFile(resDir + "/people.txt")
 
-    val schemaString = "name age"
-
     // Generate the schema based on the string of schema
     val schema =
       StructType(

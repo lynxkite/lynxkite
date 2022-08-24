@@ -1,0 +1,35 @@
+### Import from Neo4j files
+
+Imports raw data from https://neo4j.com/[Neo4j] data files.
+The nodes or relationships are output as table. To reconstruct the graph,
+you can use one <<import-from-neo4j-files>> box to get the nodes, another
+to get the relationships, then the <<Use table as vertices>> and
+<<Use table as edges>> boxes to construct a graph from the two tables.
+
+**How is "Import from Neo4j files" different from "<<import-from-neo4j>>"?**
+
+<<import-from-neo4j>> talks to a running Neo4j instance and outputs a graph.
+<<import-from-neo4j-files>> (this box) requires no running Neo4j instance
+-- it reads the Neo4j storage files directly.
+And it outputs a table for nodes or relationships.
+
+<<import-from-neo4j>> is more convenient to use. But it requires both Neo4j and
+LynxKite to be provisioned sufficiently to allow building a graph from the full
+dataset. <<import-from-neo4j-files>> on the other hand avoids constructing a graph
+either on the Neo4j side or on the LynxKite side. It can run successfully with
+minimal resources. It's great for huge datasets.
+
+====
+[p-path]#Path to Neostore#::
+The path to the Neo4j storage files. E.g., `hdfs://tmp/neo4j/databases/graph.db`.
+[p-what]#What to import#::
+Whether to import nodes or relationships. The output will be a table of nodes or
+relationships accordingly.
+[p-filter]#Labels/relationship types to import#::
+Which node labels or relationship types to collect.
+It can be a comma-separated list to cover multiple types.
+Or it can be left empty to collect everything.
+[p-properties]#Properties to import#::
+A comma-separated list where each property is defined along with its type.
+E.g., `foo: String, bar: Double, names: Vector[String]`.
+====

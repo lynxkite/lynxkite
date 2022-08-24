@@ -266,6 +266,48 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
+  registerImport("Import from Neo4j files")(new ImportOperation(_) {
+    params += Param("path", "Path to Neostore")
+    params += Choice("what", "What to import", options = FEOption.list("nodes", "relationships"))
+    params("what") match {
+      // In both cases the parameter ID is "filter", so
+      // it's not becoming unrecognized when you switch.
+      case "nodes" => params += Param("filter", "Labels to import")
+      case "relationships" => params += Param("filter", "Relationship types to import")
+    }
+    params += Param("properties", "Properties to import")
+    params += ImportedDataParam()
+    params += new DummyParam("last_settings", "")
+
+    override def summary = params("what") match {
+      case "nodes" => "Import nodes from Neo4j files"
+      case "relationships" => "Import relationships from Neo4j files"
+    }
+    override def getDataFrame(context: spark.sql.SQLContext) = {
+      params("what") match {
+        case "nodes" => Neo4j.readNodes(
+            context.sparkSession,
+            params("path"),
+            splitParam("filter"),
+            properties)
+        case "relationships" => Neo4j.readRelationships(
+            context.sparkSession,
+            params("path"),
+            splitParam("filter"),
+            properties)
+      }
+    }
+    def getRawDataFrame(context: spark.sql.SQLContext) = ??? // Not used.
+
+    def properties: Seq[(String, SerializableType[_])] = {
+      val re = raw"\s*(\S+)\s*:\s*(\S+)\s*".r
+      splitParam("properties").map {
+        case re(name, tpe) => (name, SerializableType.TypeParser.parse(tpe))
+        case x => throw new AssertionError(s"Properties must be listed as 'name: type'. Got '$x'.")
+      }
+    }
+  })
+
   abstract class FileWithSchemaBase(context: Context) extends ImportOperation(context) {
     val format: String
 
