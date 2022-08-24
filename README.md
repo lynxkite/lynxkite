@@ -63,7 +63,12 @@ Before the first build:
 We use `make` for building the whole project.
 
     make
-    target/universal/stage/bin/lynxkite interactive
+
+LynxKite can be run as a fat jar started with `spark-submit`. See `run.sh` for an example of this.
+During development you can avoid building a far jar each time like this:
+
+    sbt stage # (Or run "stage" in a long-lived SBT session.)
+    target/universal/stage/bin/lynxkite
 
 
 ## Tests

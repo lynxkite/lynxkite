@@ -139,11 +139,8 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
     }
   }
 
-  def numExecutors: Option[Int] = synchronized {
-    LoggedEnvironment.envOrNone("SPARK_MASTER").get match {
-      case s if s.startsWith("local") => None
-      case _ => Some(sc.statusTracker.getExecutorInfos.size - 1)
-    }
+  private def numExecutors: Int = synchronized {
+    sc.statusTracker.getExecutorInfos.size - 1
   }
 
   private def send(): Unit = synchronized {
@@ -153,7 +150,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
         time,
         activeStages.values.toList,
         pastStages.reverseIterator.toList,
-        numExecutors,
+        Some(numExecutors),
         sys.props.get("spark.executor.instances").map(_.toInt),
         sparkWorking = !sparkStalled,
         kiteCoreWorking = kiteCoreWorking,

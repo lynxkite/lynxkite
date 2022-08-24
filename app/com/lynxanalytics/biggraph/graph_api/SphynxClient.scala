@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import _root_.io.grpc.netty.NettyChannelBuilder
-import _root_.io.grpc.netty.GrpcSslContexts
+import _root_.io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
+import _root_.io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import _root_.io.grpc.StatusRuntimeException
 import _root_.io.grpc.stub.StreamObserver
 import com.lynxanalytics.biggraph.graph_api.proto._
@@ -37,10 +37,12 @@ class SingleResponseStreamObserver[T] extends StreamObserver[T] {
 class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: ExecutionContext) {
   // Exchanges messages with Sphynx.
 
-  private val channel = NettyChannelBuilder.forAddress(host, port)
-    .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$certDir/cert.pem")).build())
-    .build();
-
+  private def sslContext =
+    GrpcSslContexts.forClient.trustManager(new File(s"$certDir/cert.pem")).build
+  private def builder = NettyChannelBuilder.forAddress(host, port)
+  private val channel =
+    if (certDir.nonEmpty) builder.sslContext(sslContext).build
+    else builder.usePlaintext.build
   private val blockingStub = SphynxGrpc.newBlockingStub(channel)
   private val asyncStub = SphynxGrpc.newStub(channel)
 

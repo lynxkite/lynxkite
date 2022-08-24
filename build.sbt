@@ -11,6 +11,7 @@ scalacOptions ++= Seq(
   "-feature",
   "-deprecation",
   "-unchecked",
+  "-target:jvm-1.8",
   // Restrict file name length to support encrypted file systems.
   "-Xmax-classfile-name", "120",
   // TODO: Suppress warnings as necessary and enable checks.
@@ -20,7 +21,12 @@ scalacOptions ++= Seq(
   // "-Xlint:_,-adapted-args,-type-parameter-shadow,-inaccessible",
   "-Xfatal-warnings")
 
-version := "0.1-SNAPSHOT"
+javacOptions ++= Seq(
+  "-target", "1.8",
+  "-source", "1.8",
+  )
+
+version := Option(System.getenv("VERSION")).getOrElse("0.1-SNAPSHOT")
 
 sources in doc in Compile := List()  // Disable doc generation.
 
@@ -58,9 +64,9 @@ libraryDependencies ++= Seq(
   "org.geotools" % "gt-epsg-hsql" % "20.0",
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Generate java from proto files. Used by Sphynx.
-  "io.grpc" % "grpc-protobuf" % "1.41.0",
-  "io.grpc" % "grpc-stub" % "1.41.0",
-  "io.grpc" % "grpc-netty" % "1.41.0",
+  "io.grpc" % "grpc-protobuf" % "1.48.0",
+  "io.grpc" % "grpc-stub" % "1.48.0",
+  "io.grpc" % "grpc-netty-shaded" % "1.48.0",
   "com.google.protobuf" % "protobuf-java" % "3.18.0",
   // Used for encrypted connection with Sphynx.
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
@@ -79,16 +85,59 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "fastparse" % "1.0.0",
   "org.scalaj" %% "scalaj-http" % "2.4.2",
   // Google Dataproc's spark-bigquery-connector allows interacting with BigQuery tables on Dataproc
-   "com.google.cloud.spark" %% "spark-bigquery-with-dependencies" % "0.25.0",
+  "com.google.cloud.spark" %% "spark-bigquery-with-dependencies" % "0.25.0",
   // For reading Neo4j database files.
   "org.neo4j" % "neo4j-community" % "3.5.2",
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.10.0",
 )
+
+excludeDependencies ++= Seq(
+  "commons-logging" % "commons-logging",
+  "javax.activation" % "activation",
+  "com.typesafe.akka" % "akka-protobuf-v3_2.12",
+)
+
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.typesafe.config.**" -> "lynxkite_shaded.com.typesafe.config.@1").inAll,
+  ShadeRule.rename("com.google.inject.**" -> "lynxkite_shaded.com.google.inject.@1").inAll,
+  ShadeRule.rename("com.google.common.**" -> "lynxkite_shaded.com.google.common.@1").inAll,
+  ShadeRule.rename("com.google.protobuf.**" -> "lynxkite_shaded.com.google.protobuf.@1").inAll,
+)
+
+mainClass in assembly := Some("com.lynxanalytics.biggraph.Main")
+fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
+assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
+
+assemblyMergeStrategy in assembly := {
+  case PathList("mime.types") => MergeStrategy.concat
+  case PathList("module-info.class") => MergeStrategy.discard
+  case PathList("rootdoc.txt") => MergeStrategy.discard
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case PathList("META-INF", "INDEX.LIST") => MergeStrategy.discard
+  case PathList("META-INF", "DEPENDENCIES") => MergeStrategy.discard
+  case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+  case x if x.contains("tec/uom/se/format/messages.properties") => MergeStrategy.concat
+  case x if x.contains("META-INF/NOTICE") => MergeStrategy.rename
+  case x if x.contains("META-INF/services") => MergeStrategy.concat
+  case x if x.contains("META-INF/") && x.contains(".DSA") => MergeStrategy.discard
+  case x if x.contains("META-INF/") && x.contains(".RSA") => MergeStrategy.discard
+  case x if x.contains("META-INF/") && x.contains(".SF") => MergeStrategy.discard
+  case x if x.contains("LICENSE") => MergeStrategy.rename
+  case x if x.contains("README") => MergeStrategy.rename
+  case x if x.contains("unused/UnusedStubClass.class") => MergeStrategy.first
+  case x if x.contains("pom.xml") => MergeStrategy.discard
+  case x if x.contains("pom.properties") => MergeStrategy.discard
+  case x if x.contains("reference.conf") => MergeStrategy.concat
+  case x if x.contains("reference-overrides.conf") => MergeStrategy.concat
+  case x => MergeStrategy.deduplicate
+}
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
 def sparkJars(version: String) = {
   val home = System.getenv("HOME")
-  val jarsDir = new java.io.File(s"$home/spark/spark-$version/jars")
+  val jarsDir = new java.io.File(
+    Option(System.getenv("SPARK_JARS_DIR")).getOrElse(s"$home/spark/spark-$version/jars"))
   (jarsDir * "*.jar").get
 }
 
@@ -126,6 +175,7 @@ Global / excludeLintKeys += testOptions in Benchmark
 
 lazy val root = project.in(file("."))
   .enablePlugins(PlayScala)
+  .disablePlugins(PlayLogback)
   .configs(Benchmark)
 
 bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
@@ -139,6 +189,9 @@ def dirContents(baseDir: File, dirs: String*) = {
   }
 }
 
+Compile / resourceDirectory := baseDirectory.value / "conf"
+Compile / unmanagedResourceDirectories += baseDirectory.value / "sphynx/.build/zip"
+
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring")
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
@@ -150,10 +203,12 @@ mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
   file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
+  file("sphynx/.build/lynxkite-sphynx/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
 sourceDirectory in Assets := new File("web/dist")
 
 mappings in Universal ~= {
   _.filterNot { case (_, relPath) => relPath == "README.md"}
 }
+
+Global / onChangedBuildSource := ReloadOnSourceChanges

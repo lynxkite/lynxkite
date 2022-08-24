@@ -2,7 +2,6 @@
 package com.lynxanalytics
 
 import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, PrefixRepository}
-import ch.qos.logback.classic.LoggerContext
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
@@ -16,12 +15,6 @@ package object biggraph {
   }
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
-    // Make sure play and spark logs contain the proper context.
-    val ctx = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
-    val frameworkPackages = ctx.getFrameworkPackages
-    frameworkPackages.add("play.api.Logger")
-    frameworkPackages.add("org.apache.spark.Logging")
-
     bigGraphLogger.info("Starting to initialize production Kite environment")
     def clean(s: String) = s.reverse.dropWhile(_ == '/').reverse // Drop trailing slashes.
     val repoDirs = {

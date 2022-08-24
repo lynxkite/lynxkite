@@ -6,7 +6,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -32,7 +31,10 @@ object ExecuteSQL extends OpFromJson {
     val functionRegistry = FunctionRegistry.builtin
     val reg = UDFHelper.udfRegistration(functionRegistry)
     UDF.register(reg)
-    val catalog = new SessionCatalog(new InMemoryCatalog, functionRegistry, sqlConf)
+    val catalog = new spark.sql.catalyst.catalog.SessionCatalog(
+      new InMemoryCatalog,
+      functionRegistry,
+      sqlConf)
     val locationPath = "file:" + System.getProperty("java.io.tmpdir") + "/lynxkite-executesql-db"
     catalog.createDatabase(
       CatalogDatabase(

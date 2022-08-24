@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	pb "github.com/lynxkite/lynxkite/sphynx/proto"
 	"google.golang.org/grpc"
@@ -220,12 +219,10 @@ func main() {
 			return http.ListenAndServe(fmt.Sprintf(":%s", debugPort), nil)
 		}()
 	}
-	keydir := flag.String(
-		"keydir", "", "directory of cert.pem and private-key.pem files (for encryption)")
-	flag.Parse()
+	keydir := os.Getenv("SPHYNX_CERT_DIR")
 	var s *grpc.Server
-	if *keydir != "" {
-		creds, err := credentials.NewServerTLSFromFile(*keydir+"/cert.pem", *keydir+"/private-key.pem")
+	if keydir != "" {
+		creds, err := credentials.NewServerTLSFromFile(keydir+"/cert.pem", keydir+"/private-key.pem")
 		if err != nil {
 			log.Fatalf("failed to read credentials: %v", err)
 		}

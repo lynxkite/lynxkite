@@ -29,11 +29,12 @@ export SPHYNX_PORT=$[ 9300 + RANDOM % 100 ]
 PID_FILE=${TMP}/pid
 SPHYNX_PID_FILE=${TMP}/sphynx_pid
 
+export SPARK_VERSION=`cat conf/SPARK_VERSION`
+. conf/kiterc_template
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
 export ORDERED_SPHYNX_DATA_DIR=$TMP/ordered_sphynx_data
 export UNORDERED_SPHYNX_DATA_DIR=$TMP/unordered_sphynx_data
-export SPHYNX_CERT_DIR=$TMP/sphynx_cert
 export SPHYNX_PORT=$SPHYNX_PORT
 export KITE_HTTP_PORT=$HTTP_PORT
 export KITE_HTTPS_PORT=$HTTPS_PORT
@@ -43,21 +44,18 @@ export KITE_PID_FILE=$PID_FILE
 export SPHYNX_PID_FILE=$SPHYNX_PID_FILE
 export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 export KITE_HTTPS_KEYSTORE_PWD=keystore-password
-
+export KITE_DOMAINS=sphynx,scala,spark
 
 # Start backend.
-KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
-$(dirname $0)/../target/universal/stage/bin/lynxkite start
-KITE_PID=`cat ${PID_FILE}`
-SPHYNX_PID=`cat ${SPHYNX_PID_FILE}`
+$SPARK_HOME/bin/spark-submit \
+  --conf "spark.driver.extraJavaOptions=-Dhttp.port=$KITE_HTTP_PORT -Dhttps.port=$KITE_HTTPS_PORT -Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST" \
+  target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar &
+KITE_PID=$!
 function kill_backend {
   echo "Shutting down server on port $HTTP_PORT"
   kill $KITE_PID || true
   while kill -0 $KITE_PID 2> /dev/null; do sleep 1; done
   rm -f "$KITE_USERS_FILE"
-  echo "Shutting down Sphynx."
-  kill $SPHYNX_PID || true
-  while kill -0 $SPHYNX_PID 2> /dev/null; do sleep 1; done
   rm -rf "$TMP"
 }
 trap kill_backend EXIT ERR
