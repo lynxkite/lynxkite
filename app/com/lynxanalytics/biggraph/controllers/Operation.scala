@@ -483,10 +483,10 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     table.schema.fieldNames.toList.map(n => FEOption(n, n))
   }
 
-  protected def splitParam(param: String): Seq[String] = {
+  protected def splitParam(param: String, delimiter: String = ","): Seq[String] = {
     val p = params(param)
     if (p.trim.isEmpty) Seq()
-    else p.split(",", -1).map(_.trim)
+    else p.split(delimiter, -1).map(_.trim)
   }
 }
 

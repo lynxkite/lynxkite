@@ -24,6 +24,7 @@ Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) |
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.9.6 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.spark # spark-bigquery-with-dependencies_2.12 # 0.25.0 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.guava # guava # 30.1-android | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | com.jamesmurty.utils # java-xmlbuilder # 1.1 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.15 | <notextile></notextile>

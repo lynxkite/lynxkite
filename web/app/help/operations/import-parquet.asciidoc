@@ -8,4 +8,16 @@ The distributed file-system path of the file. See <<prefixed-paths>> for more de
 paths.
 
 include::{g}[tag=import-box]
+
+[p-eager]#Import now or provide schema#::
+Importing data into LynxKite normally means reading the source data and writing it to
+LynxKite's storage directory as a Parquet file. The "Import now" option does this.
++
+When the source data is already a Parquet file, you have the option to avoid copying
+the data to LynxKite. In this case the schema has to be provided explicitly, so
+that you can work with the table even before LynxKite first touches it.
+
+[p-schema]#Schema#::
+A semi-colon separated list of column names and types. The types are to be specified
+using Apache Spark's syntax. For example: `col1: string; col2: int; col3: decimal(8, 2)`.
 ====

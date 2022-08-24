@@ -38,3 +38,9 @@ class ScalarOutput[T: TypeTag](implicit instance: MetaGraphOperationInstance)
     extends MagicOutput(instance) {
   val sc = scalar[T]
 }
+
+class TableOutput(schema: org.apache.spark.sql.types.StructType)(
+    implicit instance: MetaGraphOperationInstance)
+    extends MagicOutput(instance) {
+  val t = table(schema)
+}

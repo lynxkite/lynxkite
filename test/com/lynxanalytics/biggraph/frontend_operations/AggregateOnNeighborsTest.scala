@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
@@ -54,7 +55,7 @@ class AggregateOnNeighborsTest extends OperationsTestBase {
 
 class WeightedAggregateOnNeighborsTest extends OperationsTestBase {
   test("all aggregators") {
-    def agg[T](attribute: String, aggregator: String, weight: String): Map[Long, T] = {
+    def agg[T: TypeTag](attribute: String, aggregator: String, weight: String): Map[Long, T] = {
       val p = box("Create example graph")
         .box(
           "Weighted aggregate on neighbors",

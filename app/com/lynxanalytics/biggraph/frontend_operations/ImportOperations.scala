@@ -308,16 +308,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
+  abstract class FileWithSchemaBase(context: Context) extends ImportOperation(context) {
     val format: String
-    params ++= List(
-      FileParam("filename", "File"),
-      Param("imported_columns", "Columns to import"),
-      Param("limit", "Limit"),
-      Code("sql", "SQL", language = "sql"),
-      ImportedDataParam(),
-      new DummyParam("last_settings", ""),
-    )
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -332,7 +324,18 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   }
 
-  registerImport("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
+  // Also adds parameters.
+  abstract class FileWithSchema(context: Context) extends FileWithSchemaBase(context) {
+    params ++= List(
+      FileParam("filename", "File"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL", language = "sql"),
+      ImportedDataParam(),
+      new DummyParam("last_settings", ""),
+    )
+  }
+
   registerImport("Import ORC")(new FileWithSchema(_) { val format = "orc" })
   registerImport("Import JSON")(new FileWithSchema(_) { val format = "json" })
   registerImport("Import AVRO")(new FileWithSchema(_) { val format = "avro" })
@@ -351,6 +354,45 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         context.read.format(format).load(hadoopFile.resolvedName)
       } else {
         context.read.format(format).option("versionAsOf", params("version_as_of")).load(hadoopFile.resolvedName)
+      }
+    }
+  })
+
+  registerImport("Import Parquet")(new FileWithSchemaBase(_) {
+    val format = "parquet"
+    params ++= List(
+      FileParam("filename", "File"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL", language = "sql"),
+      Choice(
+        "eager",
+        "Import now or provide schema",
+        List(FEOption("yes", "Import now"), FEOption("no", "Provide schema"))),
+      new DummyParam("last_settings", ""),
+    )
+    params ++= (params("eager") match { // Hide/show import button and schema parameter.
+      case "yes" => List(
+          ImportedDataParam(),
+          new DummyParam("schema", ""),
+        )
+      case "no" => List(
+          new DummyParam("imported_table", ""),
+          Param("schema", "Schema"),
+        )
+    })
+
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      params.validate()
+      params("eager") match {
+        case "yes" =>
+          assert(params("imported_table").nonEmpty, "You have to import the data first.")
+          assert(!areSettingsStale, areSettingsStaleReplyMessage)
+          makeOutput(tableFromGuid(params("imported_table")))
+        case "no" =>
+          makeOutput(graph_operations.ReadParquetWithSchema.run(
+            params("filename"),
+            splitParam("schema", delimiter = ";")))
       }
     }
   })

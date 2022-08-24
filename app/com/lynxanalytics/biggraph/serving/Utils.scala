@@ -1,13 +1,26 @@
 package com.lynxanalytics.biggraph.serving
 
 object Utils {
-  private def rootCause(t: Throwable): Throwable = Option(t.getCause).map(rootCause(_)).getOrElse(t)
-
+  private def causes(t: Throwable): List[Throwable] = {
+    t :: (Option(t.getCause) match {
+      case None => Nil
+      case Some(t) => causes(t)
+    })
+  }
   private val assertionFailed = "^assertion failed: ".r
+  private val afterFirstLine = "(?s)\n.*".r
 
-  def formatThrowable(t: Throwable): String = rootCause(t) match {
-    // Trim "assertion failed: " from AssertionErrors.
-    case e: AssertionError => assertionFailed.replaceFirstIn(e.getMessage, "")
-    case e => e.toString
+  def formatThrowable(t: Throwable): String = {
+    val cs = causes(t)
+    val assertion = cs.collectFirst { case c: AssertionError => c }
+    assertion.map { t =>
+      // If we have an assertion, that should explain everything on its own.
+      assertionFailed.replaceFirstIn(t.getMessage, "")
+    }.getOrElse {
+      // Otherwise give a condensed version of the stack trace.
+      cs.flatMap { t =>
+        Option(t.getMessage).map { msg => afterFirstLine.replaceFirstIn(msg, "") }
+      }.mkString("\ncaused by:\n")
+    }
   }
 }
