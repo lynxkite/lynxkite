@@ -42,7 +42,7 @@ libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
   filters, // Play library for compressing HTTP responses.
   // Play and Spark depend on different Netty versions. We help them decide here.
-  "io.netty" % "netty-all" % "4.1.52.Final",
+  "io.netty" % "netty-all" % "4.1.72.Final",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.7" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
@@ -85,10 +85,13 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "fastparse" % "1.0.0",
   "org.scalaj" %% "scalaj-http" % "2.4.2",
   // Google Dataproc's spark-bigquery-connector allows interacting with BigQuery tables on Dataproc
-  "com.google.cloud.spark" %% "spark-bigquery-with-dependencies" % "0.25.0",
+  "com.google.cloud.spark" %% "spark-bigquery" % "0.25.2",
   // For reading Neo4j database files.
-  "org.neo4j" % "neo4j-community" % "3.5.2",
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.10.0",
+  "org.neo4j" % "neo4j-kernel" % "3.5.2",
+  // Spark and Play both pick some Jackson version. Settle their argument.
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.3",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3",
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.13.3",
 )
 
 excludeDependencies ++= Seq(
@@ -116,19 +119,21 @@ assemblyMergeStrategy in assembly := {
   case PathList("META-INF", "INDEX.LIST") => MergeStrategy.discard
   case PathList("META-INF", "DEPENDENCIES") => MergeStrategy.discard
   case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+  case x if x.contains("META-INF/versions/9/module-info.class") => MergeStrategy.discard
   case x if x.contains("tec/uom/se/format/messages.properties") => MergeStrategy.concat
-  case x if x.contains("META-INF/NOTICE") => MergeStrategy.rename
+  case x if x.contains("META-INF/NOTICE") => MergeStrategy.concat
   case x if x.contains("META-INF/services") => MergeStrategy.concat
   case x if x.contains("META-INF/") && x.contains(".DSA") => MergeStrategy.discard
   case x if x.contains("META-INF/") && x.contains(".RSA") => MergeStrategy.discard
   case x if x.contains("META-INF/") && x.contains(".SF") => MergeStrategy.discard
-  case x if x.contains("LICENSE") => MergeStrategy.rename
-  case x if x.contains("README") => MergeStrategy.rename
+  case x if x.contains("LICENSE") => MergeStrategy.concat
+  case x if x.contains("README") => MergeStrategy.concat
   case x if x.contains("unused/UnusedStubClass.class") => MergeStrategy.first
   case x if x.contains("pom.xml") => MergeStrategy.discard
   case x if x.contains("pom.properties") => MergeStrategy.discard
   case x if x.contains("reference.conf") => MergeStrategy.concat
   case x if x.contains("reference-overrides.conf") => MergeStrategy.concat
+  case x if x.contains("git.properties") => MergeStrategy.discard
   case x => MergeStrategy.deduplicate
 }
 
@@ -212,3 +217,4 @@ mappings in Universal ~= {
 }
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
+onLoadMessage := "" // Skip Play Framework banner.
