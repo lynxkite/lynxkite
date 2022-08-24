@@ -80,6 +80,8 @@ libraryDependencies ++= Seq(
   "org.scalaj" %% "scalaj-http" % "2.4.2",
   // Google Dataproc's spark-bigquery-connector allows interacting with BigQuery tables on Dataproc
    "com.google.cloud.spark" %% "spark-bigquery-with-dependencies" % "0.25.0",
+  // For reading Neo4j database files.
+  "org.neo4j" % "neo4j-community" % "3.5.2",
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
