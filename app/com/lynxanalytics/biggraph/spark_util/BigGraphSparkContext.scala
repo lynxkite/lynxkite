@@ -379,6 +379,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.sql.catalyst.expressions.NullsFirst$"))
     kryo.register(classOf[Array[Array[List[_]]]])
     kryo.register(classOf[Array[Array[Tuple2[_, _]]]])
+    kryo.register(org.apache.spark.sql.types.DateType.getClass)
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
