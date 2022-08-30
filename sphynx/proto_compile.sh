@@ -22,7 +22,7 @@ if [[ ! -f protoc/bin/protoc ]]; then
 fi
 
 # Generate the gRPC Java interfaces.
-GRPC_JAVA_VERSION="1.24.2"
+GRPC_JAVA_VERSION="1.48.0"
 GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-$OS_NAME-x86_64.exe
 if [[ ! -f $REPO/.build/$GRPC_JAVA ]]; then
   wget -nv -P .build https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA

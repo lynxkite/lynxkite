@@ -162,41 +162,6 @@ case class GlobalSettings(
     dataCollectionMode: String,
     defaultUIStatus: UIStatus)
 
-object AssertNotRunningAndRegisterRunning {
-  private def getPidFile(pidFilePath: String): File = {
-    val pidFile = new File(pidFilePath).getAbsoluteFile
-    if (pidFile.exists) {
-      throw new RuntimeException(s"LynxKite is already running (or delete $pidFilePath)")
-    }
-    pidFile
-  }
-
-  private def getPid(): String = {
-
-    val pidAtHostname =
-      // Returns <pid>@<hostname>
-      java.lang.management.ManagementFactory.getRuntimeMXBean.getName
-    val atSignIndex = pidAtHostname.indexOf('@')
-    pidAtHostname.take(atSignIndex)
-  }
-
-  private def writePid(pidFile: File) = {
-    val pid = getPid()
-    val output = new FileOutputStream(pidFile)
-    try output.write(pid.getBytes)
-    finally output.close()
-  }
-
-  def apply() = {
-    val pidFilePath = LoggedEnvironment.envOrNone("KITE_PID_FILE")
-    if (pidFilePath.isDefined) {
-      val pidFile = getPidFile(pidFilePath.get)
-      writePid(pidFile)
-      pidFile.deleteOnExit()
-    }
-  }
-}
-
 object FrontendJson {
 
   /** Implicit JSON inception
@@ -353,8 +318,6 @@ class ProductionJsonServer @javax.inject.Inject() (
   import FrontendJson._
   import WorkspaceJsonFormatters._
 
-  AssertNotRunningAndRegisterRunning()
-
   // File upload.
   def upload = {
     action(parse.multipartFormData) { (user, request) =>
@@ -508,7 +471,6 @@ class ProductionJsonServer @javax.inject.Inject() (
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)
-  def forceLogRotate = jsonPost(logController.forceLogRotate)
   def downloadLogFile = action(parse.anyContent) {
     (user, request) => jsonQuery(user, request)(logController.downloadLogFile)
   }

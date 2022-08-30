@@ -8,7 +8,7 @@ class EmbedVerticesTest extends OperationsTestBase {
   test("t-SNE", SphynxOnly) {
     val embedding = box("Create example graph")
       .box("Embed vertices")
-      .box("Reduce attribute dimensions", Map("method" -> "t-SNE"))
+      .box("Reduce attribute dimensions", Map("method" -> "t-SNE", "perplexity" -> "2"))
       .project.vertexAttributes("embedding").runtimeSafeCast[Vector[Double]]
     val v = get(embedding).values
     val x = v.map(_(0))

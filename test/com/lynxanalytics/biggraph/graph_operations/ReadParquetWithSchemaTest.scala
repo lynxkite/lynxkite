@@ -43,7 +43,10 @@ class ReadParquetWithSchemaTest extends AnyFunSuite with TestGraphOp {
     assertRoughlyEqual(r.getDouble(2), 0.67)
     assertRoughlyEqualDecimal(r.getDecimal(3), 0.67)
     assert(r.getDate(4) == java.sql.Date.valueOf("2022-02-15"))
-    assert(r.getTimestamp(5) == java.sql.Timestamp.valueOf("2022-02-22 22:18:00"))
+    // The file stores timestamps as instants. Then getTimestamp puts them in the default time zone.
+    // To get a reliable test we need to put it in a fixed time zone.
+    java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
+    assert(r.getTimestamp(5) == java.sql.Timestamp.valueOf("2022-02-22 21:18:00"))
     val arr = r.getSeq[Double](6)
     assert(arr.length == 3)
     assertRoughlyEqualDecimal(arr.head, 0.17)

@@ -61,7 +61,6 @@ GET  /downloadCSV      com.lynxanalytics.biggraph.serving.ProductionJsonServer.d
 
 GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
 GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
-POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forceLogRotate
 
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
 

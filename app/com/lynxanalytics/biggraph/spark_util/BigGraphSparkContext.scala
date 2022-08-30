@@ -466,7 +466,7 @@ object BigGraphSparkContext {
       forceRegistration: Boolean = false,
       master: String = "",
       settings: Iterable[(String, String)] = Map()): spark.sql.SparkSession = {
-    rotateSparkEventLogs()
+    LogController.getLogDir.mkdirs
     JdbcDialects.registerDialect(teradataDialect)
 
     val versionFound = KiteInstanceInfo.sparkVersion
@@ -477,41 +477,44 @@ object BigGraphSparkContext {
 
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
-      .set("spark.memory.useLegacyMode", "true")
-      .set("spark.io.compression.codec", "lz4")
-      .set(
-        "spark.executor.memory",
-        LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-      .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
-      // Speculative execution will start extra copies of tasks to eliminate long tail latency.
-      .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
-      .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
-      .set("spark.speculation.quantile", "0.90") // (Fraction.) This much of the stage has to complete first.
-      .set("spark.speculation.multiplier", "2") // (Ratio.) Task has to be this much slower than the median.
-      .set(
-        // Enables fair scheduling, that is tasks of all running jobs are scheduled round-robin
-        // instead of one job finishes completely first. See:
-        // http://spark.apache.org/docs/latest/job-scheduling.html
-        "spark.scheduler.mode",
-        "FAIR",
-      )
-      .set("spark.core.connection.ack.wait.timeout", "240")
-      // Combines shuffle output into a single file which improves shuffle performance and reduces
-      // number of open files for jobs with many reduce tasks. It only has some bad side effects
-      // on ext3 with >8 cores, so I think we can enable this for our usecases.
-      .set("spark.shuffle.consolidateFiles", "true")
-      .set(
-        "spark.executor.cores",
-        LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
-      .set("spark.sql.runSQLOnFiles", "false")
-      // Configure Spark event logging:
-      .set(
-        "spark.eventLog.dir",
-        "file://" + LogController.getLogDir.getAbsolutePath)
-      .set("spark.eventLog.enabled", "true")
-      .set("spark.eventLog.compress", "true")
-      // Progress bars are not great in logs.
-      .set("spark.ui.showConsoleProgress", "false")
+    if (LoggedEnvironment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {
+      sparkConf = sparkConf
+        .set("spark.memory.useLegacyMode", "true")
+        .set("spark.io.compression.codec", "lz4")
+        .set(
+          "spark.executor.memory",
+          LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
+        .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
+        // Speculative execution will start extra copies of tasks to eliminate long tail latency.
+        .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
+        .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
+        .set("spark.speculation.quantile", "0.90") // (Fraction.) This much of the stage has to complete first.
+        .set("spark.speculation.multiplier", "2") // (Ratio.) Task has to be this much slower than the median.
+        .set(
+          // Enables fair scheduling, that is tasks of all running jobs are scheduled round-robin
+          // instead of one job finishes completely first. See:
+          // http://spark.apache.org/docs/latest/job-scheduling.html
+          "spark.scheduler.mode",
+          "FAIR",
+        )
+        .set("spark.core.connection.ack.wait.timeout", "240")
+        // Combines shuffle output into a single file which improves shuffle performance and reduces
+        // number of open files for jobs with many reduce tasks. It only has some bad side effects
+        // on ext3 with >8 cores, so I think we can enable this for our usecases.
+        .set("spark.shuffle.consolidateFiles", "true")
+        .set(
+          "spark.executor.cores",
+          LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+        .set("spark.sql.runSQLOnFiles", "false")
+        // Configure Spark event logging:
+        .set(
+          "spark.eventLog.dir",
+          "file://" + LogController.getLogDir.getAbsolutePath)
+        .set("spark.eventLog.enabled", "true")
+        .set("spark.eventLog.compress", "true")
+        // Progress bars are not great in logs.
+        .set("spark.ui.showConsoleProgress", "false")
+    }
     sparkConf = if (isMonitoringEnabled) setupMonitoring(sparkConf) else sparkConf
     if (useKryo) {
       sparkConf = sparkConf
@@ -531,7 +534,7 @@ object BigGraphSparkContext {
     sparkConf = sparkConf.setAll(settings)
     log.info("Creating SparkSession with configuration:\n" + sparkConf.toDebugString)
     val sparkSession = spark.sql.SparkSession
-      .builder()
+      .builder
       .config(sparkConf)
       .enableHiveSupport
       .getOrCreate

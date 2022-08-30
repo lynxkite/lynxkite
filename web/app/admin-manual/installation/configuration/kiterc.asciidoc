@@ -275,12 +275,14 @@ or off on an instance. Accepted values are: optional, always, never
 # export KITE_DATA_COLLECTION=optional
 ```
 
-Specify where Sphynx (the single-node server) is running and where the certificate can be found.
-If any of these is unset, no Sphynx server is assumed.
+Specify where Sphynx (the single-node server) is running.
 ```
 export SPHYNX_HOST=localhost
 export SPHYNX_PORT=50051
-export SPHYNX_CERT_DIR=$HOME/kite/sphynx_cert
+```
+Certificate directory for Sphynx, if an encrypted connection is desired.
+```
+# export SPHYNX_CERT_DIR=$HOME/kite/sphynx_cert
 ```
 Specify the PID file for Sphynx.
 ```

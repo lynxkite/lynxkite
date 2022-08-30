@@ -57,7 +57,7 @@ object BigGraphEnvironmentImpl {
       case "sphynx" =>
         val host = LoggedEnvironment.envOrError("SPHYNX_HOST", "must be set when using Sphynx.")
         val port = LoggedEnvironment.envOrError("SPHYNX_PORT", "must be set when using Sphynx.")
-        val certDir = LoggedEnvironment.envOrError("SPHYNX_CERT_DIR", "must be set when using Sphynx.")
+        val certDir = LoggedEnvironment.envOrElse("SPHYNX_CERT_DIR", "")
         val unorderedDir = LoggedEnvironment.envOrError("UNORDERED_SPHYNX_DATA_DIR", "must be set when using Sphynx.")
         Seq(
           new graph_api.OrderedSphynxDisk(host, port.toInt, certDir),

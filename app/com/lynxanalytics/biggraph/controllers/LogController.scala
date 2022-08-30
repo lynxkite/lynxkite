@@ -5,7 +5,6 @@ package com.lynxanalytics.biggraph.controllers
 import java.io.File
 
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy
 import play.api.mvc
 
 import com.lynxanalytics.biggraph.serving
@@ -50,10 +49,6 @@ class LogController @javax.inject.Inject() (
     assert(logFiles.size > 0, "No application log file found")
     log.info(s"$user has downloaded the list of log files in $logDir")
     LogFiles(logFiles.toList)
-  }
-
-  def forceLogRotate(user: serving.User, req: serving.Empty): Unit = {
-    DayBasedForcibleRollingPolicy.triggerRotation()
   }
 
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
