@@ -6,6 +6,24 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Upgraded to Apache Spark 3.3.0. [#272](https://github.com/lynxkite/lynxkite/pull/272)
+- LynxKite is now started more simply, with `spark-submit`.
+  [#269](https://github.com/lynxkite/lynxkite/pull/269) This makes deployment much simpler
+  in Hadoop environments.
+- The new box _"Import from Neo4j files"_ can be used to import Neo4j data directly from files
+  instead of reading from a running Neo4j instance. This can reduce the memory requirements
+  from terabytes to gigabytes on large datasets. [#268](https://github.com/lynxkite/lynxkite/pull/268)
+- Added two new _"Import from BigQuery"_ boxes. [#245](https://github.com/lynxkite/lynxkite/pull/245)
+- Changed the font styling on legends to make them more readable over maps.
+  [#267](https://github.com/lynxkite/lynxkite/pull/267)
+- The _"Import from Parquet"_ box now has an option for using the source files directly
+  instead of pulling the data into LynxKite. [#261](https://github.com/lynxkite/lynxkite/pull/261)
+  This avoids an unnecessary copy and is more convenient to use through the Python API.
+- The _"Weighted aggregate on neighbors"_ box now supports weighting by edge attributes.
+  [#257](https://github.com/lynxkite/lynxkite/pull/257)
+- The _"Add rank attribute"_ box now supports ranking edges by edge attributes.
+  [#255](https://github.com/lynxkite/lynxkite/pull/255)
+
 ### 5.0.0
 
 - Added GPU implementations of several algorithms using RAPIDS cuGraph.
