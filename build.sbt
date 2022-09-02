@@ -80,7 +80,7 @@ libraryDependencies ++= Seq(
   "org.testcontainers" % "testcontainers" % "1.15.2" % Test,
   "org.testcontainers" % "neo4j" % "1.15.2" % Test,
   // Used for working with Delta tables.
-  "io.delta" %% "delta-core" % "0.8.0",
+  "io.delta" %% "delta-core" % "2.1.0",
   // All kinds of parsing, e.g. filters.
   "com.lihaoyi" %% "fastparse" % "1.0.0",
   "org.scalaj" %% "scalaj-http" % "2.4.2",

@@ -170,10 +170,11 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("edge_comment", "src_name", "dst_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Bob envies Adam", "Bob", "Adam"),
-      Seq("Eve loves Adam", "Eve", "Adam"),
       Seq("Adam loves Eve", "Adam", "Eve"),
-      Seq("Bob loves Eve", "Bob", "Eve")))
+      Seq("Eve loves Adam", "Eve", "Adam"),
+      Seq("Bob loves Eve", "Bob", "Eve"),
+      Seq("Bob envies Adam", "Bob", "Adam"),
+    ))
   }
 
   test("the order of the input mapping does not matter") {
@@ -261,8 +262,7 @@ class SQLTest extends OperationsTestBase {
         .box("SQL1", Map("sql" -> "select nonexistent from vertices"))
         .table
     } match {
-      case a: AssertionError =>
-        assert(a.getMessage.contains("column cannot be found"))
+      case e => assert(e.getMessage.contains("unresolved"))
     }
   }
 

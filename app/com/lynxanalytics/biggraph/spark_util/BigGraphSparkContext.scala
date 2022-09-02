@@ -384,6 +384,10 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Array[Tuple2[_, _]]]])
     kryo.register(org.apache.spark.sql.types.DateType.getClass)
     kryo.register(Class.forName("org.apache.spark.sql.execution.joins.UnsafeHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongToUnsafeRowMap"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BinaryLogisticBlockAggregator"))
+    kryo.register(Class.forName("org.apache.spark.sql.delta.stats.DeltaFileStatistics"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
