@@ -7,7 +7,7 @@ VERSION=$(cat conf/SPARK_VERSION)
 # Link to the given name or spark-$VERSION by default.
 LINK="${1:-spark-${VERSION}}"
 
-HADOOP='2.7'
+HADOOP='3'
 cd $HOME
 mkdir -p spark
 cd spark
