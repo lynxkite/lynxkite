@@ -108,10 +108,19 @@ class ScalaScriptSecurityManager extends SecurityManager {
 
 object ScalaScript {
   private def createEngine(): Scripted = {
-    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[Scripted]
-    e.intp.settings.usejavacp.value = true
-    e.intp.settings.embeddedDefaults[ScalaScriptSecurityManager]
-    e
+    val settings = new scala.tools.nsc.Settings
+    // When running with spark-submit, the classpath is made up of two parts: 1) all the jars
+    // from Spark and 2) the LynxKite jar. The Spark jars are on the normal Java classpath, but
+    // the LynxKite jar is added by Spark at runtime in the last ClassLoader. For Scala to find
+    // our classes, we add our jar to the user-specified classpath.
+    val cl = classOf[ScalaScriptSecurityManager].getClassLoader
+    cl match {
+      case cl: java.net.URLClassLoader if cl.getURLs.length == 1 =>
+        val jar = cl.getURLs.toList.head.toString
+        settings.classpath.value = jar
+      case _ => ()
+    }
+    scala.tools.nsc.interpreter.Scripted(settings = settings)
   }
 
   private var engine: Scripted = null
