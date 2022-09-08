@@ -4,11 +4,6 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <rollingPolicy class="com.lynxanalytics.biggraph.graph_util.DayBasedForcibleRollingPolicy">
-      <fileNamePattern>${KITE_LOG_DIR}/application-%d{yyyyMMdd_HHmmss}.log</fileNamePattern>
-      <maxHistory>5184000</maxHistory> <!-- 5184000 = 60 days, given in seconds -->
-      <cleanHistoryOnStart>true</cleanHistoryOnStart>
-    </rollingPolicy>
     <encoder>
         <!-- We should replace all occurrences of SECRET(...) in both message and exception.
         But then logback does not realize that the exception was in fact logged, and attaches the

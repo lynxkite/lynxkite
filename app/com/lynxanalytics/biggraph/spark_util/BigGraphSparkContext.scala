@@ -64,6 +64,9 @@ class DeadClass43
 class DeadClass44
 class DeadClass45
 class DeadClass46
+class DeadClass47
+class DeadClass48
+class DeadClass49
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -315,8 +318,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass33])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
+    kryo.register(classOf[DeadClass47])
+    kryo.register(classOf[DeadClass48])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult])
     kryo.register(classOf[DeadClass34])
     kryo.register(classOf[DeadClass35])
@@ -363,7 +366,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMax$"))
     kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMin$"))
     kryo.register(Class.forName("org.apache.spark.ml.stat.MultiClassSummarizer"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BlockLogisticAggregator"))
+    kryo.register(classOf[DeadClass49])
     kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$"))
     kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval"))
     kryo.register(Class.forName("org.apache.spark.ml.tree.HasVarianceImpurity"))
@@ -380,6 +383,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Array[List[_]]]])
     kryo.register(classOf[Array[Array[Tuple2[_, _]]]])
     kryo.register(org.apache.spark.sql.types.DateType.getClass)
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.UnsafeHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongToUnsafeRowMap"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BinaryLogisticBlockAggregator"))
+    kryo.register(Class.forName("org.apache.spark.sql.delta.stats.DeltaFileStatistics"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

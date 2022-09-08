@@ -1,18 +1,17 @@
 #!/bin/bash -xue
 # Rough automation for rolling and pushing a new release.
 
-VERSION=$1
+cd $(dirname $0)
+export VERSION=$1
 make
-rm -rf target/universal/stage/logs
-echo LynxKite $VERSION > target/universal/stage/version
-rm -rf docker/lynxkite-$VERSION*
-cp -R target/universal/stage docker/lynxkite-$VERSION
+mkdir -p docker/archive
+cp target/scala-2.12/lynxkite-$VERSION.jar docker/archive/
 cd docker
-rm -rf stage
-cp -R lynxkite-$VERSION stage
-tar czvf lynxkite-$VERSION.tgz lynxkite-$VERSION
+cp archive/lynxkite-$VERSION.jar lynxkite.jar
+cp ../tools/runtime-env.yml lynxkite-env.yml
 docker build . -t lynxkite/lynxkite:latest
 docker build . -t lynxkite/lynxkite:$VERSION
+cp ../tools/runtime-env-cuda.yml lynxkite-env.yml
 docker build . --build-arg KITE_ENABLE_CUDA=yes -t lynxkite/lynxkite:latest-cuda
 docker build . --build-arg KITE_ENABLE_CUDA=yes -t lynxkite/lynxkite:$VERSION-cuda
 docker push lynxkite/lynxkite:$VERSION
