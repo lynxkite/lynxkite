@@ -24,7 +24,8 @@ op = util.Op()
 nkop = op.params['op']
 nkopt = op.params['options']
 print(f'Running {nkop} on CUDA...')
-es = op.input_cudf('es')
+# https://github.com/rapidsai/cugraph/issues/2670
+es = op.input_cudf('es').astype({'src': 'int32', 'dst': 'int32'})
 G = cugraph.Graph()
 if 'weight' in op.inputs:
   es['w'] = op.input_cudf('weight')['values']

@@ -16,6 +16,10 @@ ENV SPHYNX_CACHED_ENTITIES_MAX_MEM_MB 1024
 VOLUME /data
 VOLUME /metadata
 
+# Add a dependency missed by Conda. (https://github.com/rapidsai/ucx-py/issues/790)
+RUN if [ $KITE_ENABLE_CUDA = yes ]; then \
+  apt-get update && apt-get install -y libnuma-dev && rm -rf /var/lib/apt/lists/*; fi
+
 # Install LynxKite.
 COPY lynxkite.jar /
 COPY run.sh /

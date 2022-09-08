@@ -16,9 +16,9 @@ def output_seg(df, key):
 
 print(f'Running connected components on CUDA...')
 op = util.Op()
-es = op.input_cudf('es')
+es = op.input_cudf('es').astype({'src': 'int32', 'dst': 'int32'})
 G = cugraph.Graph()
-G.from_cudf_edgelist(es, source='src', destination='dst')
+G.from_cudf_edgelist(es, source='src', destination='dst', renumber=False)
 df = cugraph.connected_components(G)
 output_seg(df, 'labels')
 print(f'Finished connected components in {time.perf_counter() - t0} seconds.')
