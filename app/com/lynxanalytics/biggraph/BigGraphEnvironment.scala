@@ -66,6 +66,7 @@ object BigGraphEnvironmentImpl {
           new graph_api.UnorderedSphynxSparkDisk(host, port.toInt, certDir, repositoryDirs.dataDir / "sphynx"),
         )
       case "scala" => Seq(new graph_api.ScalaDomain)
+      case other => throw new AssertionError(s"Unrecognized domain in KITE_DOMAINS: $other")
     }
     new BigGraphEnvironmentImpl(
       Await.result(metaGraphManagerFuture, Duration.Inf),
