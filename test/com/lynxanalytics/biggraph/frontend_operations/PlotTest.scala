@@ -21,7 +21,7 @@ class PlotTest extends OperationsTestBase {
     }
   },
   "data": {
-    "url": "/downloadCSV?q=%7B%22id%22:%221df989fa-d79d-31c2-8baa-69a9553266fb%22,%22sampleRows%22:10000%7D",
+    "url": "downloadCSV?q=%7B%22id%22:%221df989fa-d79d-31c2-8baa-69a9553266fb%22,%22sampleRows%22:10000%7D",
     "format": {"type": "csv"}
   }
 }"""))
