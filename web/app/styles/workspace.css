@@ -300,6 +300,10 @@ op-editor > :first-child {
   padding-top: 10px;
 }
 
+.workspace-comment {
+  display: block;
+}
+
 .workspace-comment > :first-child {
   margin-top: 0;
 }
