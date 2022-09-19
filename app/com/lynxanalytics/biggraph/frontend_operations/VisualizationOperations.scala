@@ -129,7 +129,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
             throw e
         }
       val limit = 10000
-      val tableURL = s"/downloadCSV?q=%7B%22id%22:%22${table.gUID.toString}%22,%22sampleRows%22:$limit%7D"
+      val tableURL = s"downloadCSV?q=%7B%22id%22:%22${table.gUID.toString}%22,%22sampleRows%22:$limit%7D"
       json.Json.obj("data" -> json.Json.obj(
         "url" -> tableURL,
         "format" -> json.Json.obj("type" -> "csv"))) ++ j
