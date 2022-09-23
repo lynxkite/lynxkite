@@ -5,9 +5,14 @@
 // the inputs and outputs of the operation instances. The operation instance is
 // an operation that is bound to a set of inputs.
 //
+// On this "meta" level, there is no data. It is just about identifying the entities.
+// The entities are identified by UUIDs in storage. These UUIDs (or guids) are a hash of
+// the whole tree of the metagraph leading up to the entity. This is how we track what
+// needs to be recomputed when something changes. Everything will get a different UUID
+// downstream from the change, and those UUIDs have no corresponding data yet.
+//
 // This file also includes the machinery for declaring operation input/output
-// signatures, and the "data" classes that are the actual RDDs/scalar values
-// that belong to metagraph entities.
+// signatures.
 
 package com.lynxanalytics.biggraph.graph_api
 
@@ -204,6 +209,8 @@ trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
 
+// Using MagicInputSignature we can write "val vs = vertexSet" and it declares an input called "vs".
+// The trait below solves the problem of figuring out that "input.vs" has the name "vs".
 trait FieldNaming {
   private lazy val naming: IdentityHashMap[Any, Symbol] = {
     val res = new IdentityHashMap[Any, Symbol]()
@@ -217,6 +224,7 @@ trait FieldNaming {
     }
     res
   }
+  // Returns the name of the field in this object that refers to the given object.
   def nameOf(obj: Any): Symbol = {
     val name = naming.get(obj)
     assert(
@@ -230,6 +238,9 @@ trait FieldNaming {
   }
 }
 
+// The input declarations in a MagicInputSignature are instances of EntityTemplate.
+// This class is not usually used directly. An implicit conversion to the actual
+// MetaGraphEntity is usually used to work with the actual input entity of an operation.
 trait EntityTemplate[T <: MetaGraphEntity] {
   def set(target: MetaDataSet, entity: T): MetaDataSet
   def entity(implicit instance: MetaGraphOperationInstance): T
@@ -242,6 +253,23 @@ object EntityTemplate {
       implicit instance: MetaGraphOperationInstance): T = template.entity
 }
 
+// MagicInputSignature makes it easy to declare the inputs of a MetaGraphOp. More importantly,
+// it enables compile-time checks for users of the operation.
+//
+// An example declaration:
+//
+//   class Input extends MagicInputSignature {
+//     val input1 = vertexSet
+//     val input2 = attribute[Double](input1)
+//   }
+//
+// An operation with this input signature can then be invoked as:
+//
+//   metaGraphManager.apply(op, ('input1 -> vs), ('input2 -> attr))
+//
+// But this syntax does not protect against typos in the input name or type mistakes.
+// (Such as swapping "vs" and "attr" in the example.) This is solved by the mechanism in
+// Scripting.scala in this directory. The example continues there!
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
   abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol]) extends EntityTemplate[T] {
     lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
@@ -368,6 +396,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def df(implicit dataSet: DataSet) = data.df
   }
 
+  // Everything above is the machinery to make the methods below work.
+  // Use these when declaring the inputs of your operation:
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(
@@ -429,10 +459,14 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     pairs.toMap
   }
 }
+
+// Something that can provide a MetaDataSet. In practice this is used for MagicOutput below.
 trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
 
+// The placeholders in MagicOutput are EntityContainers. The companion object provides implicit
+// conversion to MetaGraphEntity, so it can be used as an entity most of the time.
 trait EntityContainer[+T <: MetaGraphEntity] {
   def entity: T
 }
@@ -443,6 +477,21 @@ object EntityContainer {
     container.entity
 }
 
+// MagicOutput provides a nice syntax for declaring MetaGraphOp outputs and also for accessing
+// those outputs from an instance of the operation.
+//
+// For example:
+//
+//   class Output(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+//     val output1 = vertexSet
+//     val output2 = attribute[Double](output1)
+//   }
+//
+// Note the symmetry with MagicInputSignature.
+//
+// The outputs from a TypedOperationInstance can then be accessed as "op.result.output1".
+// (Which is actually an EntityContainer, but it's automatically converted to a MetaGraphEntity
+// when used as one.)
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
@@ -517,6 +566,7 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
 object MetaGraphOp {
   val UTF8 = java.nio.charset.Charset.forName("UTF-8")
 }
+// An operation that has its parameters already set, but the inputs are not yet specified.
 trait MetaGraphOp extends Serializable with ToJson {
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
@@ -542,6 +592,7 @@ object TypedMetaGraphOp {
   // A little "hint" for the type inference.
   type Type = TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
 }
+// An operation that can provide declarations of its inputs and outputs.
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
     extends MetaGraphOp {
   def inputs: IS = ???
@@ -621,7 +672,7 @@ case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaData
   override lazy val hashCode = gUID.hashCode
 }
 
-// A bundle of metadata types.
+// A bundle of named MetaGraphEntities, such as in an operation input or output.
 case class MetaDataSet(
     vertexSets: Map[Symbol, VertexSet] = Map(),
     edgeBundles: Map[Symbol, EdgeBundle] = Map(),
