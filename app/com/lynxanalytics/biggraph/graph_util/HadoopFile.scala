@@ -220,18 +220,6 @@ class HadoopFile private (
       .map(pair => pair._2.toString)
   }
 
-  def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
-    // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
-    val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
-    hadoopLines.saveAsNewAPIHadoopFile(
-      resolvedNameWithNoCredentials,
-      keyClass = classOf[hadoop.io.NullWritable],
-      valueClass = classOf[hadoop.io.Text],
-      outputFormatClass = classOf[hadoop.mapreduce.lib.output.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
-      conf = new hadoop.mapred.JobConf(hadoopConfiguration),
-    )
-  }
-
   def createFromStrings(contents: String): Unit = {
     val stream = create()
     try {
@@ -329,27 +317,4 @@ class HadoopFile private (
     aclContains(acl, user)
   }
 
-}
-
-// A SequenceFile loader that creates one partition per file.
-private[graph_util] class WholeSequenceFileInputFormat[K, V]
-    extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
-
-  // Do not allow splitting/combining files.
-  override protected def isSplitable(
-      context: hadoop.mapreduce.JobContext,
-      file: hadoop.fs.Path): Boolean = false
-
-  // Read files in order.
-  override protected def listStatus(
-      job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
-    val l = super.listStatus(job)
-    java.util.Collections.sort(
-      l,
-      new java.util.Comparator[hadoop.fs.FileStatus] {
-        def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
-          a.getPath.getName compare b.getPath.getName
-      })
-    l
-  }
 }
