@@ -6,7 +6,7 @@
 // an operation that is bound to a set of inputs.
 //
 // On this "meta" level, there is no data. It is just about identifying the entities.
-// The entities are identified by UUIDs in storage. These UUIDs (or guids) are a hash of
+// The entities are identified by UUIDs in storage. These UUIDs (or GUIDs) are a hash of
 // the whole tree of the metagraph leading up to the entity. This is how we track what
 // needs to be recomputed when something changes. Everything will get a different UUID
 // downstream from the change, and those UUIDs have no corresponding data yet.
@@ -34,6 +34,8 @@ sealed trait MetaGraphEntity extends Serializable {
   def manager = source.manager
   lazy val typeString = this.getClass.getSimpleName
 
+  // An entity is identified by the operation that produced it, which output of the operation it is,
+  // and what kind of entity it is.
   lazy val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
@@ -553,6 +555,8 @@ trait MetaGraphOp extends Serializable with ToJson {
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
+  // An operation is identified by its class, parameters, and registered version
+  // number, if any.
   val gUID = {
     val contents = play.api.libs.json.jackson.RetroSerialization(this.toTypedJson)
     val version = JsonMigration.current.version(getClass.getName)
@@ -583,6 +587,7 @@ trait MetaGraphOperationInstance {
 
   val inputs: MetaDataSet
 
+  // An operation instance is identified by the operation and all the inputs.
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
