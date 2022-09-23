@@ -1,3 +1,4 @@
+// Like a WeakHashMap uses WeakReferences, SoftHashMap uses SoftReference. Good for caches.
 package com.lynxanalytics.biggraph.graph_util
 
 import scala.ref.SoftReference

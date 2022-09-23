@@ -95,6 +95,8 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
   }
 }
 
+// SerializableType is used for representing types where persistence is needed, such as
+// operation parameters.
 object SerializableType {
   object TypeParser {
     import fastparse.all._
