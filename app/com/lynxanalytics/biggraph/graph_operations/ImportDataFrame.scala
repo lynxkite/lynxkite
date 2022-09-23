@@ -37,6 +37,10 @@ object ImportDataFrame extends OpFromJson {
   }
 }
 
+// We cannot serialize the DataFrame. For persistence purposes the timestamp will be used to
+// identify this operation and generate its GUID. This means the operation cannot be executed
+// when it's loaded from disk. It has to be executed when it's first created. If that succeeds,
+// the data will be stored on disk and we will never again try to execute it.
 class ImportDataFrame private (
     val schema: types.StructType,
     inputFrame: Option[DataFrame],
