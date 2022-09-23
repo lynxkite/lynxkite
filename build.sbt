@@ -92,6 +92,17 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.3",
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3",
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.13.3",
+  // For KNIME plugins.
+  "org.apache.xmlbeans" % "xmlbeans" % "5.0.0",
+  "ch.qos.reload4j" % "reload4j" % "1.2.21",
+  "org.eclipse.platform" % "org.eclipse.core.runtime" % "3.20.100",
+  "org.eclipse.platform" % "org.eclipse.equinox.common" % "3.14.100",
+  "org.eclipse.platform" % "org.eclipse.equinox.preferences" % "3.8.200",
+  "org.eclipse.platform" % "org.eclipse.equinox.registry" % "3.10.100",
+  "org.eclipse.platform" % "org.eclipse.osgi" % "3.16.200",
+  "org.eclipse.platform" % "org.eclipse.core.jobs" % "3.10.1100",
+  "org.eclipse.platform" % "org.eclipse.core.contenttype" % "3.7.900",
+  "io.github.classgraph" % "classgraph" % "4.8.149",
 )
 
 excludeDependencies ++= Seq(
