@@ -31,7 +31,6 @@ sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
   override def toString = s"$gUID (${name.name} of $source)"
-  lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
   def manager = source.manager
   lazy val typeString = this.getClass.getSimpleName
 
@@ -58,23 +57,6 @@ sealed trait MetaGraphEntity extends Serializable {
     .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
   private val newPrefix = "ACED00057372000C7363616C612E53796D626F6C5F4785C13785FF06"
     .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
-}
-
-case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
-  lazy val asString: String = {
-    val stuff = contents.map {
-      case (k, v) =>
-        val s = v.asString
-        val guarded = if (s.contains(" ")) s"($s)" else s
-        if (k.isEmpty) guarded else s"$k=$guarded"
-    }.mkString(" ")
-    if (stuff.isEmpty) name else s"$name of $stuff"
-  }
-  override def toString = asString
-}
-object StringStruct {
-  def apply(name: String, contents: Map[String, StringStruct]) =
-    new StringStruct(name, SortedMap[String, StringStruct]() ++ contents)
 }
 
 case class VertexSet(
@@ -576,16 +558,6 @@ trait MetaGraphOp extends Serializable with ToJson {
     val version = JsonMigration.current.version(getClass.getName)
     UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
   }
-
-  def toStringStruct = {
-    val mirror = reflect.runtime.currentMirror.reflect(this)
-    val className = mirror.symbol.name.toString
-    val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
-    def get(param: MethodSymbol) = mirror.reflectField(param).get
-    StringStruct(
-      className,
-      params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
-  }
 }
 
 object TypedMetaGraphOp {
@@ -629,37 +601,6 @@ trait MetaGraphOperationInstance {
   def entities: MetaDataSet = inputs ++ outputs
 
   override def toString = s"$gUID ($operation)"
-  lazy val toStringStruct: StringStruct = {
-    val op = operation.toStringStruct
-    val fixed = mutable.Set[UUID]()
-    val mentioned = mutable.Map[UUID, Symbol]()
-    val span = mutable.Map[String, StringStruct]()
-    def put(k: Symbol, v: MetaGraphEntity): Unit = {
-      if (!fixed.contains(v.gUID)) {
-        mentioned.get(v.gUID) match {
-          case Some(k0) =>
-            span(k.name) = StringStruct(k0.name)
-          case None =>
-            span(k.name) = v.toStringStruct
-            mentioned(v.gUID) = k
-        }
-      }
-    }
-    for ((k, v) <- inputs.edgeBundles) {
-      put(k, v)
-      fixed += v.srcVertexSet.gUID
-      fixed += v.dstVertexSet.gUID
-      fixed += v.idSet.gUID
-    }
-    for ((k, v) <- inputs.attributes) {
-      put(k, v)
-      fixed += v.vertexSet.gUID
-    }
-    for ((k, v) <- inputs.vertexSets) {
-      put(k, v)
-    }
-    StringStruct(op.name, op.contents ++ span)
-  }
 }
 
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
