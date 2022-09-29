@@ -26,6 +26,7 @@ object JsonMigration {
       if (cmp.forall(_ == 0)) 0
       else if (cmp.forall(_ <= 0)) -1
       else if (cmp.forall(_ >= 0)) 1
+      else if (a.keys.head.contains(".biggraph.")) -1 // Pre-renaming.
       else {
         assert(false, s"Incomparable versions: $a, $b")
         ???
@@ -173,7 +174,7 @@ object MetaRepositoryManager {
     log.info("Migrating operations.")
     for ((file, j) <- MetaGraphManager.loadOperations(src)) {
       try {
-        applyOperation(mm, j, guidMapping, srcVersion, migration)
+        applyOperation(mm, renameClasses(j), guidMapping, srcVersion, migration)
       } catch {
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
@@ -229,6 +230,19 @@ object MetaRepositoryManager {
     // Add outputs to the GUID mapping.
     for ((name, guid) <- (j \ "outputs").as[Map[String, String]]) {
       guidMapping(guid) = inst.outputs.all(Symbol(name)).gUID.toString
+    }
+  }
+
+  // TODO: Remove this mechanism after a few versions. It may slow down startup.
+  private def renameClasses(j: json.JsValue): json.JsValue = {
+    j match {
+      case j: json.JsString =>
+        new json.JsString(j.value.replace("com.lynxanalytics.biggraph", "com.lynxanalytics.lynxkite"))
+      case j: json.JsObject =>
+        new json.JsObject(j.value.mapValues { v => renameClasses(v) })
+      case j: json.JsArray =>
+        new json.JsArray(j.value.map { v => renameClasses(v) })
+      case _ => j
     }
   }
 }
