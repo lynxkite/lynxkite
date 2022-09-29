@@ -73,7 +73,7 @@ object HadoopFile {
   private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
   private val cache = new HadoopFileSystemCache(
-    LoggedEnvironment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong)
+    Environment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong)
 
   def fs(hadoopFile: HadoopFile) = {
     cache.fs(hadoopFile)

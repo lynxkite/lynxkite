@@ -19,7 +19,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SphynxDomain",
-      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = graph_util.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
     typeTag[String],

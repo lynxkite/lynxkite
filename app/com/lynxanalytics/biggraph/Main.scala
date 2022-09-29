@@ -2,13 +2,13 @@
 package com.lynxanalytics.biggraph
 
 import scala.sys.process._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 
 object Main {
   def main(args: Array[String]): Unit = {
     BigGraphProductionEnvironment // Initialize it here rather than risk multi-threading issues later.
     play.core.server.ProdServerStart.main(args)
-    val domainPreference = LoggedEnvironment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
+    val domainPreference = Environment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
       .split(",").map(_.trim.toLowerCase)
     if (domainPreference.contains("sphynx")) {
       extractSphynx()

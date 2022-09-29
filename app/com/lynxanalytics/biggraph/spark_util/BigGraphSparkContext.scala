@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.lynxanalytics.biggraph.controllers.LogController
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.sql.jdbc.JdbcDialects
@@ -413,12 +413,12 @@ object BigGraphSparkContext {
     myKryo
   }
   def isMonitoringEnabled =
-    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
-      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
+    Environment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
+      Environment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
 
   def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
-    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
-    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
+    val graphiteHostName = Environment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+    val graphitePort = Environment.envOrElse("GRAPHITE_MONITORING_PORT", "")
     val jvmSource = "org.apache.spark.metrics.source.JvmSource"
     // Set the keys normally defined in metrics.properties here.
     // This way it's easier to make sure that executors receive the
@@ -485,14 +485,14 @@ object BigGraphSparkContext {
 
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
-    if (LoggedEnvironment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {
+    if (Environment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {
       sparkConf = sparkConf
         .set("spark.memory.useLegacyMode", "true")
         .set("spark.io.compression.codec", "lz4")
         .set(
           "spark.executor.memory",
-          LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-        .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
+          Environment.envOrElse("EXECUTOR_MEMORY", "1700m"))
+        .set("spark.local.dir", Environment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
         // Speculative execution will start extra copies of tasks to eliminate long tail latency.
         .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
         .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
@@ -512,7 +512,7 @@ object BigGraphSparkContext {
         .set("spark.shuffle.consolidateFiles", "true")
         .set(
           "spark.executor.cores",
-          LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+          Environment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
         .set("spark.sql.runSQLOnFiles", "false")
         // Configure Spark event logging:
         .set(
@@ -559,7 +559,7 @@ object BigGraphSparkContext {
 }
 
 class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
-  val maxStageFailures = LoggedEnvironment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
+  val maxStageFailures = Environment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
   val stageFailures = collection.mutable.Map[Int, Int]()
 
   override def onStageCompleted(

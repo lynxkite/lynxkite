@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.sql
 import org.apache.spark.ml
@@ -43,7 +43,7 @@ object LogisticRegressionModelTrainer extends OpFromJson {
       // In this extreme case, all coefficients equal to 0 and the intercept equals to +inf
       Array.fill(numFeatures)(0.0) :+ Double.PositiveInfinity
     } else {
-      val sampleSizeApprox = LoggedEnvironment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
+      val sampleSizeApprox = Environment.envOrElse("KITE_ZVALUE_SAMPLE", "100000").toInt
       val fraction = (sampleSizeApprox.toDouble / predictions.count()) min 1.0
       // Compute z-value on a small sample only (since the computation is not distributed). To make the sampling
       // repeatable, an arbitrary seed is specified.

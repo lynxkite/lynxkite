@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 import scala.collection.mutable.HashSet
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
@@ -85,7 +85,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     ),
   )
 
-  private var cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
+  private var cleanerMinAgeDays = Environment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
 
   def setCleanerMinAge(user: serving.User, req: SetCleanerMinAgeRequest) = {
     assert(user.isAdmin, "Only administrators can change the protection period.")

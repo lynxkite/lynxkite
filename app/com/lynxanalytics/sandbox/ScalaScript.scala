@@ -9,7 +9,7 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
-import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, Timestamp}
+import com.lynxanalytics.biggraph.graph_util.{Environment, Timestamp}
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
@@ -138,7 +138,7 @@ object ScalaScript {
   // The value of maxRows is the maximum number of data points allowed in a chart
   def dfToSeq(df: DataFrame): Seq[Map[String, Any]] = {
     val names = df.schema.toList.map { field => field.name }
-    val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
+    val maxRows = Environment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
     SQLHelper.toSeqRDD(df).take(maxRows).map {
       row =>
         names.zip(row.toSeq.toList).groupBy(_._1).mapValues(_.map(_._2)).mapValues(_(0))

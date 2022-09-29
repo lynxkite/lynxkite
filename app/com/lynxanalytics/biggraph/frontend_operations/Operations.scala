@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(
@@ -585,7 +585,7 @@ object ScalaUtilities {
 object PythonUtilities {
   import graph_operations.DerivePython._
 
-  val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
+  val allowed = Environment.envOrElse("KITE_ALLOW_PYTHON", "") match {
     case "yes" => true
     case "no" => false
     case "" => false

@@ -7,7 +7,7 @@ import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 
 trait SparkSessionProvider {
   def createSparkSession: spark.sql.SparkSession
@@ -48,17 +48,17 @@ object BigGraphEnvironmentImpl {
       sparkSessionProvider: SparkSessionProvider): BigGraphEnvironment = {
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    val domainPreference = LoggedEnvironment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
+    val domainPreference = Environment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
       .split(",").map(_.trim.toLowerCase)
     // Load the metagraph in parallel to Spark initialization.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
     val domains = domainPreference.flatMap {
       case "spark" => Seq(createSparkDomain(sparkSessionProvider, repositoryDirs))
       case "sphynx" =>
-        val host = LoggedEnvironment.envOrError("SPHYNX_HOST", "must be set when using Sphynx.")
-        val port = LoggedEnvironment.envOrError("SPHYNX_PORT", "must be set when using Sphynx.")
-        val certDir = LoggedEnvironment.envOrElse("SPHYNX_CERT_DIR", "")
-        val unorderedDir = LoggedEnvironment.envOrError("UNORDERED_SPHYNX_DATA_DIR", "must be set when using Sphynx.")
+        val host = Environment.envOrError("SPHYNX_HOST", "must be set when using Sphynx.")
+        val port = Environment.envOrError("SPHYNX_PORT", "must be set when using Sphynx.")
+        val certDir = Environment.envOrElse("SPHYNX_CERT_DIR", "")
+        val unorderedDir = Environment.envOrError("UNORDERED_SPHYNX_DATA_DIR", "must be set when using Sphynx.")
         Seq(
           new graph_api.OrderedSphynxDisk(host, port.toInt, certDir),
           new graph_api.SphynxMemory(host, port.toInt, certDir),

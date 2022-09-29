@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.User
 import com.lynxanalytics.biggraph.spark_util
@@ -22,9 +22,9 @@ import scala.concurrent.Future
 
 object DrawingThresholds {
   private def get(suffix: String, default: Int): Int = {
-    LoggedEnvironment.envOrNone("KITE_DRAWING_" + suffix).map(_.toInt).getOrElse(default)
+    Environment.envOrNone("KITE_DRAWING_" + suffix).map(_.toInt).getOrElse(default)
   }
-  val Overall = LoggedEnvironment.envOrElse("KITE_DRAWING_OVERALL", "10000").toInt
+  val Overall = Environment.envOrElse("KITE_DRAWING_OVERALL", "10000").toInt
   val BucketSampling = get("BUCKET_SAMPLING", Overall * 5)
   val MaxSampledViewVertices = get("MAX_SAMPLED_VIEW_VERTICES", Overall)
   val MaxSampledViewEdges = get("MAX_SAMPLED_VIEW_EDGES", Overall)

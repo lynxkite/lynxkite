@@ -12,7 +12,7 @@ import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.graph_util.{HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp}
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, KiteInstanceInfo, Environment, Timestamp}
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{StructField, StructType}
@@ -479,13 +479,13 @@ class ProductionJsonServer @javax.inject.Inject() (
 
   def getGlobalSettings = jsonPublicGet {
     GlobalSettings(
-      title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "The Complete Graph Data Science Platform"),
-      frontendConfig = LoggedEnvironment.envOrElse("KITE_FRONTEND_CONFIG", "{}"),
+      title = Environment.envOrElse("KITE_TITLE", "LynxKite"),
+      tagline = Environment.envOrElse("KITE_TAGLINE", "The Complete Graph Data Science Platform"),
+      frontendConfig = Environment.envOrElse("KITE_FRONTEND_CONFIG", "{}"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version,
       graphrayEnabled = graphrayEnabled,
-      dataCollectionMode = LoggedEnvironment.envOrElse("KITE_DATA_COLLECTION", "optional"),
+      dataCollectionMode = Environment.envOrElse("KITE_DATA_COLLECTION", "optional"),
       defaultUIStatus = UIStatus.default,
     )
   }

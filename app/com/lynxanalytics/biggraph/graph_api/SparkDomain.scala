@@ -21,7 +21,7 @@ import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.graph_util.Environment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 class SparkDomain(
@@ -32,7 +32,7 @@ class SparkDomain(
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
     UDF.register(sqlContext.udf)

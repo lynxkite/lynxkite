@@ -69,7 +69,7 @@ object JDBCUtil {
   }
 
   val stringPrefixLength =
-    LoggedEnvironment.envOrElse("KITE_JDBC_STRING_PREFIX_LENGTH", "10").toInt
+    Environment.envOrElse("KITE_JDBC_STRING_PREFIX_LENGTH", "10").toInt
 
   // Creates a list of numPartitions conditions for WHERE clauses.
   // It partitions the range between minKey and maxKey by the alphabet.

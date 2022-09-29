@@ -79,9 +79,9 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
 object EntityIO {
   // These "constants" are mutable for the sake of testing.
   var verticesPerPartition =
-    LoggedEnvironment.envOrElse("KITE_VERTICES_PER_PARTITION", "200000").toInt
+    Environment.envOrElse("KITE_VERTICES_PER_PARTITION", "200000").toInt
   var tolerance =
-    LoggedEnvironment.envOrElse("KITE_VERTICES_PARTITION_TOLERANCE", "2.0").toDouble
+    Environment.envOrElse("KITE_VERTICES_PARTITION_TOLERANCE", "2.0").toDouble
 
   implicit val fEntityMetadata = json.Json.format[EntityMetadata]
   def operationPath(dataRoot: DataRoot, instance: MetaGraphOperationInstance) =
