@@ -90,7 +90,7 @@ def op(line):
   outputs = outputs[1:len(outputs) - 1].split(',')
   op = m.group(5)
 
-  if 'com.lynxanalytics.biggraph.graph_operations.ImportDataFrame' in op:
+  if 'com.lynxanalytics.lynxkite.graph_operations.ImportDataFrame' in op:
     op = 'ImportDataFrame()'
   idx = op.find('(')
   op = op[:idx]

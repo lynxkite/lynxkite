@@ -1,85 +1,85 @@
-GET  /ajax/long-poll com.lynxanalytics.biggraph.serving.ProductionJsonServer.longPoll
-POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
-POST /ajax/restartApplication com.lynxanalytics.biggraph.serving.ProductionJsonServer.restartApplication
-GET  /getThreadDump com.lynxanalytics.biggraph.serving.ProductionJsonServer.getThreadDump
-POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
+GET  /ajax/long-poll com.lynxanalytics.lynxkite.serving.ProductionJsonServer.longPoll
+POST /ajax/spark-cancel-jobs com.lynxanalytics.lynxkite.serving.ProductionJsonServer.sparkCancelJobs
+POST /ajax/restartApplication com.lynxanalytics.lynxkite.serving.ProductionJsonServer.restartApplication
+GET  /getThreadDump com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getThreadDump
+POST /ajax/jsError     com.lynxanalytics.lynxkite.serving.ProductionJsonServer.jsError
 
-POST /ajax/createDirectory         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
-POST /ajax/discardEntry            com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardEntry
-POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardAll
-GET  /ajax/entryList               com.lynxanalytics.biggraph.serving.ProductionJsonServer.entryList
-GET  /ajax/entrySearch             com.lynxanalytics.biggraph.serving.ProductionJsonServer.entrySearch
-POST /ajax/forkEntry               com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkEntry
-POST /ajax/renameEntry             com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
-POST /ajax/changeACLSettings       com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
-POST /ajax/createWorkspace         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createWorkspace
-POST /ajax/setWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.setWorkspace
-POST /ajax/setAndGetWorkspace      com.lynxanalytics.biggraph.serving.ProductionJsonServer.setAndGetWorkspace
-GET  /ajax/getWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getWorkspace
-POST /ajax/runWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.runWorkspace
-POST /ajax/undoWorkspace           com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoWorkspace
-POST /ajax/redoWorkspace           com.lynxanalytics.biggraph.serving.ProductionJsonServer.redoWorkspace
-POST /ajax/createSnapshot          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createSnapshot
-GET  /ajax/getProjectOutput        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProjectOutput
-GET  /ajax/getTableOutput          com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableOutput
-GET  /ajax/getPlotOutput           com.lynxanalytics.biggraph.serving.ProductionJsonServer.getPlotOutput
-GET  /ajax/getVisualizationOutput  com.lynxanalytics.biggraph.serving.ProductionJsonServer.getVisualizationOutput
-GET  /ajax/getOperationMeta        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta
-GET  /ajax/boxCatalog              com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
-GET  /ajax/getExportResultOutput   com.lynxanalytics.biggraph.serving.ProductionJsonServer.getExportResultOutput
-GET  /ajax/getInstrumentedState    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getInstrumentedState
-POST /ajax/triggerBox              com.lynxanalytics.biggraph.serving.ProductionJsonServer.triggerBox
-POST /ajax/openWizard              com.lynxanalytics.biggraph.serving.ProductionJsonServer.openWizard
+POST /ajax/createDirectory         com.lynxanalytics.lynxkite.serving.ProductionJsonServer.createDirectory
+POST /ajax/discardEntry            com.lynxanalytics.lynxkite.serving.ProductionJsonServer.discardEntry
+POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.lynxkite.serving.ProductionJsonServer.discardAll
+GET  /ajax/entryList               com.lynxanalytics.lynxkite.serving.ProductionJsonServer.entryList
+GET  /ajax/entrySearch             com.lynxanalytics.lynxkite.serving.ProductionJsonServer.entrySearch
+POST /ajax/forkEntry               com.lynxanalytics.lynxkite.serving.ProductionJsonServer.forkEntry
+POST /ajax/renameEntry             com.lynxanalytics.lynxkite.serving.ProductionJsonServer.renameEntry
+POST /ajax/changeACLSettings       com.lynxanalytics.lynxkite.serving.ProductionJsonServer.changeACLSettings
+POST /ajax/createWorkspace         com.lynxanalytics.lynxkite.serving.ProductionJsonServer.createWorkspace
+POST /ajax/setWorkspace            com.lynxanalytics.lynxkite.serving.ProductionJsonServer.setWorkspace
+POST /ajax/setAndGetWorkspace      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.setAndGetWorkspace
+GET  /ajax/getWorkspace            com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getWorkspace
+POST /ajax/runWorkspace            com.lynxanalytics.lynxkite.serving.ProductionJsonServer.runWorkspace
+POST /ajax/undoWorkspace           com.lynxanalytics.lynxkite.serving.ProductionJsonServer.undoWorkspace
+POST /ajax/redoWorkspace           com.lynxanalytics.lynxkite.serving.ProductionJsonServer.redoWorkspace
+POST /ajax/createSnapshot          com.lynxanalytics.lynxkite.serving.ProductionJsonServer.createSnapshot
+GET  /ajax/getProjectOutput        com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getProjectOutput
+GET  /ajax/getTableOutput          com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getTableOutput
+GET  /ajax/getPlotOutput           com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getPlotOutput
+GET  /ajax/getVisualizationOutput  com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getVisualizationOutput
+GET  /ajax/getOperationMeta        com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getOperationMeta
+GET  /ajax/boxCatalog              com.lynxanalytics.lynxkite.serving.ProductionJsonServer.boxCatalog
+GET  /ajax/getExportResultOutput   com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getExportResultOutput
+GET  /ajax/getInstrumentedState    com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getInstrumentedState
+POST /ajax/triggerBox              com.lynxanalytics.lynxkite.serving.ProductionJsonServer.triggerBox
+POST /ajax/openWizard              com.lynxanalytics.lynxkite.serving.ProductionJsonServer.openWizard
 
-GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
-GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
-GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.scalarValue
-GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.model
-GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
+GET  /ajax/complexView com.lynxanalytics.lynxkite.serving.ProductionJsonServer.complexView
+GET  /ajax/histo       com.lynxanalytics.lynxkite.serving.ProductionJsonServer.histo
+GET  /ajax/scalarValue com.lynxanalytics.lynxkite.serving.ProductionJsonServer.scalarValue
+GET  /ajax/model       com.lynxanalytics.lynxkite.serving.ProductionJsonServer.model
+GET  /ajax/center      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.center
 
-GET  /ajax/getTableBrowserNodes        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
-GET  /ajax/getTableBrowserNodesForBox  com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodesForBox
-GET  /ajax/runSQLQuery                 com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
+GET  /ajax/getTableBrowserNodes        com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getTableBrowserNodes
+GET  /ajax/getTableBrowserNodesForBox  com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getTableBrowserNodesForBox
+GET  /ajax/runSQLQuery                 com.lynxanalytics.lynxkite.serving.ProductionJsonServer.runSQLQuery
 
-POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
-POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson
-POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToParquet
-POST /ajax/exportSQLQueryToORC     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToORC
-POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJdbc
+POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.lynxkite.serving.ProductionJsonServer.exportSQLQueryToCSV
+POST /ajax/exportSQLQueryToJson    com.lynxanalytics.lynxkite.serving.ProductionJsonServer.exportSQLQueryToJson
+POST /ajax/exportSQLQueryToParquet com.lynxanalytics.lynxkite.serving.ProductionJsonServer.exportSQLQueryToParquet
+POST /ajax/exportSQLQueryToORC     com.lynxanalytics.lynxkite.serving.ProductionJsonServer.exportSQLQueryToORC
+POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.lynxkite.serving.ProductionJsonServer.exportSQLQueryToJdbc
 
-POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
+POST /ajax/importBox         com.lynxanalytics.lynxkite.serving.ProductionJsonServer.importBox
 
-GET  /ajax/getDataFilesStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getDataFilesStatus
-POST /ajax/moveToCleanerTrash    com.lynxanalytics.biggraph.serving.ProductionJsonServer.moveToCleanerTrash
-POST /ajax/emptyCleanerTrash     com.lynxanalytics.biggraph.serving.ProductionJsonServer.emptyCleanerTrash
-POST /ajax/setCleanerMinAge      com.lynxanalytics.biggraph.serving.ProductionJsonServer.setCleanerMinAge
+GET  /ajax/getDataFilesStatus    com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getDataFilesStatus
+POST /ajax/moveToCleanerTrash    com.lynxanalytics.lynxkite.serving.ProductionJsonServer.moveToCleanerTrash
+POST /ajax/emptyCleanerTrash     com.lynxanalytics.lynxkite.serving.ProductionJsonServer.emptyCleanerTrash
+POST /ajax/setCleanerMinAge      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.setCleanerMinAge
 
-POST /ajax/upload      com.lynxanalytics.biggraph.serving.ProductionJsonServer.upload
-GET  /download         com.lynxanalytics.biggraph.serving.ProductionJsonServer.oldCSVDownload
-GET  /downloadFile     com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadFile
-GET  /downloadCSV      com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadCSV
+POST /ajax/upload      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.upload
+GET  /download         com.lynxanalytics.lynxkite.serving.ProductionJsonServer.oldCSVDownload
+GET  /downloadFile     com.lynxanalytics.lynxkite.serving.ProductionJsonServer.downloadFile
+GET  /downloadCSV      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.downloadCSV
 
-GET  /getLogFiles      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getLogFiles
-GET  /downloadLogFile  com.lynxanalytics.biggraph.serving.ProductionJsonServer.downloadLogFile
+GET  /getLogFiles      com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getLogFiles
+GET  /downloadLogFile  com.lynxanalytics.lynxkite.serving.ProductionJsonServer.downloadLogFile
 
-GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck
+GET /sparkHealthCheck  com.lynxanalytics.lynxkite.serving.ProductionJsonServer.sparkHealthCheck
 
-GET /ajax/getGlobalSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getGlobalSettings
-POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer.copyEphemeral
-GET /ajax/getBackupSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getBackupSettings
-GET /ajax/backup com.lynxanalytics.biggraph.serving.ProductionJsonServer.backup
-GET /ajax/graphray com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphray
-POST /ajax/graphray com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphray
+GET /ajax/getGlobalSettings com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getGlobalSettings
+POST /ajax/copyEphemeral com.lynxanalytics.lynxkite.serving.ProductionJsonServer.copyEphemeral
+GET /ajax/getBackupSettings com.lynxanalytics.lynxkite.serving.ProductionJsonServer.getBackupSettings
+GET /ajax/backup com.lynxanalytics.lynxkite.serving.ProductionJsonServer.backup
+GET /ajax/graphray com.lynxanalytics.lynxkite.serving.ProductionJsonServer.graphray
+POST /ajax/graphray com.lynxanalytics.lynxkite.serving.ProductionJsonServer.graphray
 
-POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
-POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
-POST /remote/getParquetMetadata com.lynxanalytics.biggraph.serving.RemoteAPIServer.getParquetMetadata
-POST /remote/removeName com.lynxanalytics.biggraph.serving.RemoteAPIServer.removeName
-POST /remote/getOperationNames com.lynxanalytics.biggraph.serving.RemoteAPIServer.getOperationNames
-POST /remote/changeACL com.lynxanalytics.biggraph.serving.RemoteAPIServer.changeACL
-POST /remote/list com.lynxanalytics.biggraph.serving.RemoteAPIServer.list
-POST /remote/cleanFileSystem com.lynxanalytics.biggraph.serving.RemoteAPIServer.cleanFileSystem
-POST /remote/setExecutors com.lynxanalytics.biggraph.serving.RemoteAPIServer.setExecutors
+POST /remote/getDirectoryEntry com.lynxanalytics.lynxkite.serving.RemoteAPIServer.getDirectoryEntry
+POST /remote/getPrefixedPath com.lynxanalytics.lynxkite.serving.RemoteAPIServer.getPrefixedPath
+POST /remote/getParquetMetadata com.lynxanalytics.lynxkite.serving.RemoteAPIServer.getParquetMetadata
+POST /remote/removeName com.lynxanalytics.lynxkite.serving.RemoteAPIServer.removeName
+POST /remote/getOperationNames com.lynxanalytics.lynxkite.serving.RemoteAPIServer.getOperationNames
+POST /remote/changeACL com.lynxanalytics.lynxkite.serving.RemoteAPIServer.changeACL
+POST /remote/list com.lynxanalytics.lynxkite.serving.RemoteAPIServer.list
+POST /remote/cleanFileSystem com.lynxanalytics.lynxkite.serving.RemoteAPIServer.cleanFileSystem
+POST /remote/setExecutors com.lynxanalytics.lynxkite.serving.RemoteAPIServer.setExecutors
 
 GET  /                 controllers.Assets.at(path="/public", file="index.html")
-GET  /*file            com.lynxanalytics.biggraph.serving.Assets.at(path="/public", file)
+GET  /*file            com.lynxanalytics.lynxkite.serving.Assets.at(path="/public", file)

@@ -1,0 +1,22 @@
+package com.lynxanalytics.lynxkite.graph_operations
+
+import org.scalatest.funsuite.AnyFunSuite
+
+import com.lynxanalytics.lynxkite.graph_api._
+import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+
+class PSOGeneratorTest extends AnyFunSuite with TestGraphOp {
+  test("clustering strength test") {
+    val vs = CreateVertexSet(1000)().result.vs
+    val g = {
+      val op = PSOGenerator(2, 2, 0.6, 1337)
+      op(op.vs, vs).result
+    }
+    val out = {
+      val op = ClusteringCoefficient()
+      op(op.es, g.es).result
+    }
+    assert(out.clustering.rdd.map { case (_, clus) => clus }.reduce(_ + _) / 1000 > 0.65)
+  }
+}

@@ -1,6 +1,6 @@
 {
   "operation" : {
-    "class" : "com.lynxanalytics.biggraph.graph_api.FromVertexAttr",
+    "class" : "com.lynxanalytics.lynxkite.graph_api.FromVertexAttr",
     "data" : { }
   },
   "inputs" : {

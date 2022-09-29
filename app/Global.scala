@@ -8,9 +8,9 @@ import play.twirl.api.HtmlFormat.escape
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
-import com.lynxanalytics.biggraph.graph_util.Environment
+import com.lynxanalytics.lynxkite.serving
+import com.lynxanalytics.lynxkite.{logger => log}
+import com.lynxanalytics.lynxkite.graph_util.Environment
 
 @javax.inject.Singleton
 class ErrorHandler extends http.HttpErrorHandler {

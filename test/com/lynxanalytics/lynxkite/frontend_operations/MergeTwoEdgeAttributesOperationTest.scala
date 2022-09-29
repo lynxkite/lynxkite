@@ -1,0 +1,19 @@
+package com.lynxanalytics.lynxkite.frontend_operations
+
+import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+
+class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
+  test("Merge two edge attributes") {
+    val project = box("Create example graph")
+      .box(
+        "Derive edge attribute",
+        Map("output" -> "income_edge", "expr" -> "src$income"))
+      .box(
+        "Merge two edge attributes",
+        Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
+      .project
+    val merged = project.edgeAttributes("merged").runtimeSafeCast[Double]
+    assert(merged.rdd.values.collect.toSeq.sorted == Seq(2.0, 1000.0, 2000.0, 2000.0))
+  }
+}
