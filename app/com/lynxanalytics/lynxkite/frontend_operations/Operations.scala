@@ -7,7 +7,7 @@ import com.lynxanalytics.lynxkite.graph_api.Scripting._
 import com.lynxanalytics.lynxkite.graph_operations
 import com.lynxanalytics.lynxkite.graph_util.Scripting._
 import com.lynxanalytics.lynxkite.controllers._
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(

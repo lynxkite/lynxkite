@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 import scala.collection.mutable.HashSet
 
 import com.lynxanalytics.lynxkite.BigGraphEnvironment
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_api._
 import com.lynxanalytics.lynxkite.graph_util.HadoopFile
 import com.lynxanalytics.lynxkite.serving

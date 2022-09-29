@@ -1,7 +1,7 @@
 // Request handlers for cluster-level features.
 package com.lynxanalytics.lynxkite.controllers
 
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import org.apache.spark
 import com.lynxanalytics.lynxkite.{logger => log}
 import com.lynxanalytics.lynxkite.BigGraphEnvironment

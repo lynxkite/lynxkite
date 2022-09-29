@@ -5,7 +5,8 @@ import java.io.File
 import java.util.UUID
 import scala.collection.mutable
 
-import com.lynxanalytics.lynxkite.graph_util.{Environment, Timestamp}
+import com.lynxanalytics.lynxkite.Environment
+import com.lynxanalytics.lynxkite.graph_util.Timestamp
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {

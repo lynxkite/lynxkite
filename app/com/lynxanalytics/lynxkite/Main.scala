@@ -2,39 +2,89 @@
 package com.lynxanalytics.lynxkite
 
 import scala.sys.process._
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import play.core.{server => pcs}
 
 object Main {
   def main(args: Array[String]): Unit = {
+    start()
+    // The application ends when this thread ends. (https://github.com/apache/spark/pull/32283)
+    waitForever()
+  }
+
+  // Call start() and stop() from a Scala notebook to start and stop LynxKite.
+  def start(): Unit = synchronized {
+    assert(playServer == null, "LynxKite is already running!")
+    stopping = false
     BigGraphProductionEnvironment // Initialize it here rather than risk multi-threading issues later.
-    play.core.server.ProdServerStart.main(args)
+    playServer = pcs.ProdServerStart.start(new pcs.RealServerProcess(List()))
     val domainPreference = Environment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
       .split(",").map(_.trim.toLowerCase)
-    if (domainPreference.contains("sphynx")) {
+    haveSphynx = domainPreference.contains("sphynx")
+    if (haveSphynx) {
+      sphynxStopped = false
       extractSphynx()
-      while (true) {
-        runSphynx()
-      }
-    } else {
-      // The application ends when this thread ends. (https://github.com/apache/spark/pull/32283)
-      while (true) {
-        Thread.sleep(365L * 24 * 3600 * 1000)
+      new Thread {
+        override def run() = {
+          while (!stopping) {
+            val p = synchronized {
+              startSphynx()
+              sphynxProcess
+            }
+            // Wait for process exit.
+            p.exitValue()
+          }
+          sphynxStopped = true
+        }
+      }.start()
+    }
+  }
+
+  def stop(): Unit = synchronized {
+    if (playServer != null) {
+      stopping = true
+      playServer.stop()
+      playServer = null
+      if (haveSphynx) {
+        sphynxProcess.destroy()
+        sphynxProcess = null
+        while (!sphynxStopped) {
+          Thread.sleep(100)
+        }
       }
     }
   }
+
+  Runtime.getRuntime.addShutdownHook(new Thread() {
+    override def run() = Main.stop()
+  })
+
+  @volatile private var stopping = false
+  @volatile private var sphynxStopped = false
+  private var playServer: pcs.ReloadableServer = null
+  private var haveSphynx = false
+  private var sphynxProcess: Process = null
+
+  private def waitForever(): Unit = {
+    while (true) {
+      Thread.sleep(365L * 24 * 3600 * 1000)
+    }
+  }
+
   // Extracts Sphynx from the jar.
-  def extractSphynx(): Unit = {
+  private def extractSphynx(): Unit = {
     val cl = java.lang.Thread.currentThread.getContextClassLoader
     val resource = cl.getResourceAsStream("lynxkite-sphynx.zip")
     "rm -rf lynxkite-sphynx lynxkite-sphynx.zip".!!
     java.nio.file.Files.copy(resource, java.nio.file.Paths.get("lynxkite-sphynx.zip"))
     "unzip lynxkite-sphynx.zip".!!
   }
-  // Runs Sphynx, blocking until it exits.
-  def runSphynx(): Int = {
-    Process(
+
+  // Starts Sphynx and returns.
+  private def startSphynx(): Process = synchronized {
+    sphynxProcess = Process(
       Seq("./lynxkite-sphynx"),
       new java.io.File("lynxkite-sphynx"),
-      "LD_LIBRARY_PATH" -> ".").!
+      (Seq("LD_LIBRARY_PATH" -> ".") ++ Environment.get): _*).run()
+    sphynxProcess
   }
 }

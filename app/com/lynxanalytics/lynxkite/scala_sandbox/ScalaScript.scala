@@ -6,12 +6,13 @@ import java.security.Permission
 import java.util.UUID
 import javax.script._
 
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_api.SafeFuture
 import com.lynxanalytics.lynxkite.graph_api.ThreadUtil
 import com.lynxanalytics.lynxkite.graph_api.TypeTagUtil
-import com.lynxanalytics.lynxkite.graph_util.{Environment, Timestamp}
 import com.lynxanalytics.lynxkite.graph_util.SoftHashMap
 import com.lynxanalytics.lynxkite.spark_util.SQLHelper
+import com.lynxanalytics.lynxkite.graph_util.Timestamp
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration

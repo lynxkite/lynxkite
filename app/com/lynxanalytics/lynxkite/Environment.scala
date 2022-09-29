@@ -1,15 +1,18 @@
 // All configuration settings should be accessed through this class.
 // It provides logging and overrides.
-package com.lynxanalytics.lynxkite.graph_util
+package com.lynxanalytics.lynxkite
 
 import com.lynxanalytics.lynxkite.{logger => log}
 
 object Environment {
   private var overrides = Map[String, String]()
-  def set(settings: (String, String)*): Unit = {
+  def get: Map[String, String] = synchronized {
+    overrides
+  }
+  def set(settings: (String, String)*): Unit = synchronized {
     overrides = overrides ++ settings
   }
-  def clear: Unit = {
+  def clear: Unit = synchronized {
     overrides = Map()
   }
   def envOrElse(name: String, alt: String, confidential: Boolean = false): String = synchronized {

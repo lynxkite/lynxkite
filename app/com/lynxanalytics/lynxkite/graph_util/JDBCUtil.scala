@@ -2,7 +2,7 @@
 package com.lynxanalytics.lynxkite.graph_util
 
 import com.lynxanalytics.lynxkite.graph_api.RuntimeContext
-import com.lynxanalytics.lynxkite.{logger => log}
+import com.lynxanalytics.lynxkite.{Environment, logger => log}
 
 import java.sql
 import org.apache.spark.sql.DataFrame

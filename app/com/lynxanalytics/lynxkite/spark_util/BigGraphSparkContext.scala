@@ -3,7 +3,7 @@ package com.lynxanalytics.lynxkite.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.lynxanalytics.lynxkite.controllers.LogController
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.sql.jdbc.JdbcDialects

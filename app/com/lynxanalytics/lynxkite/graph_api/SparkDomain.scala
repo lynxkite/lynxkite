@@ -21,7 +21,7 @@ import com.lynxanalytics.lynxkite.{logger => log}
 import com.lynxanalytics.lynxkite.graph_api.io.DataRoot
 import com.lynxanalytics.lynxkite.graph_api.io.EntityIO
 import com.lynxanalytics.lynxkite.graph_util.HadoopFile
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.spark_util.UniqueSortedRDD
 
 class SparkDomain(

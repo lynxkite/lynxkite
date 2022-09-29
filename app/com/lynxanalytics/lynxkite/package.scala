@@ -1,7 +1,7 @@
 // Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
-import com.lynxanalytics.lynxkite.graph_util.{Environment, PrefixRepository}
+import com.lynxanalytics.lynxkite.graph_util.PrefixRepository
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 

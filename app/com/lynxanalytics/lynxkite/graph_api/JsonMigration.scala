@@ -3,7 +3,7 @@ package com.lynxanalytics.lynxkite.graph_api
 
 import java.io.File
 import java.util.UUID
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json

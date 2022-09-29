@@ -8,11 +8,11 @@ import play.api.mvc
 
 import scala.concurrent.Future
 import com.lynxanalytics.lynxkite.BigGraphProductionEnvironment
-import com.lynxanalytics.lynxkite.{logger => log}
+import com.lynxanalytics.lynxkite.{Environment, logger => log}
 import com.lynxanalytics.lynxkite.controllers._
 import com.lynxanalytics.lynxkite.graph_operations.DynamicValue
 import com.lynxanalytics.lynxkite.graph_util.SoftHashMap
-import com.lynxanalytics.lynxkite.graph_util.{HadoopFile, KiteInstanceInfo, Environment, Timestamp}
+import com.lynxanalytics.lynxkite.graph_util.{HadoopFile, KiteInstanceInfo, Timestamp}
 import com.lynxanalytics.lynxkite.model
 import com.lynxanalytics.lynxkite.serving
 import org.apache.spark.sql.types.{StructField, StructType}

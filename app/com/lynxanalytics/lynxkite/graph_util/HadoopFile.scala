@@ -6,7 +6,7 @@ import org.apache.hadoop
 import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import com.lynxanalytics.lynxkite.{logger => log}
+import com.lynxanalytics.lynxkite.{Environment, logger => log}
 import com.lynxanalytics.lynxkite.serving.AccessControl
 import com.lynxanalytics.lynxkite.graph_api
 import com.lynxanalytics.lynxkite.spark_util._

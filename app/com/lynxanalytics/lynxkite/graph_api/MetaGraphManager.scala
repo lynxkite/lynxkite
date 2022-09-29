@@ -18,7 +18,7 @@ import com.lynxanalytics.lynxkite.controllers.CheckpointRepository
 import com.lynxanalytics.lynxkite.controllers.DirectoryEntry
 import com.lynxanalytics.lynxkite.controllers.BoxCache
 import com.lynxanalytics.lynxkite.controllers.Workspace
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {

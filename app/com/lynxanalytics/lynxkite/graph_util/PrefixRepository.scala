@@ -4,6 +4,7 @@ package com.lynxanalytics.lynxkite.graph_util
 
 import org.apache.hadoop
 import scala.io.Source
+import com.lynxanalytics.lynxkite.Environment
 
 object PathNormalizer {
   def normalize(str: String) = {

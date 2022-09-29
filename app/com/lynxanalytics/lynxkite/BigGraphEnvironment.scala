@@ -7,7 +7,6 @@ import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.lynxkite.graph_util.HadoopFile
 import com.lynxanalytics.lynxkite.graph_util.PrefixRepository
-import com.lynxanalytics.lynxkite.graph_util.Environment
 
 trait SparkSessionProvider {
   def createSparkSession: spark.sql.SparkSession

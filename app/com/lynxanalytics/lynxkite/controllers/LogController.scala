@@ -4,7 +4,7 @@ package com.lynxanalytics.lynxkite.controllers
 
 import java.io.File
 
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import play.api.mvc
 
 import com.lynxanalytics.lynxkite.serving

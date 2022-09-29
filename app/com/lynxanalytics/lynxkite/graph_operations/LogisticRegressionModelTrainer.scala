@@ -2,7 +2,7 @@
 package com.lynxanalytics.lynxkite.graph_operations
 
 import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.model._
 import org.apache.spark.sql
 import org.apache.spark.ml

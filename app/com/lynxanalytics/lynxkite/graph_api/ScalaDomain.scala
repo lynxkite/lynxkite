@@ -5,13 +5,13 @@ package com.lynxanalytics.lynxkite.graph_api
 import java.util.UUID
 import collection.concurrent.TrieMap
 
-import com.lynxanalytics.lynxkite.graph_util
+import com.lynxanalytics.lynxkite
 
 class ScalaDomain extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "ScalaDomain",
-      maxParallelism = graph_util.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = lynxkite.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
 
   private val entityCache = TrieMap[UUID, Any]()
 

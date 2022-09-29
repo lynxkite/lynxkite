@@ -4,7 +4,7 @@
 
 package com.lynxanalytics.lynxkite.graph_api
 
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](

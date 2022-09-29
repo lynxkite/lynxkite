@@ -13,6 +13,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.lynxkite.spark_util.Implicits._
 import com.lynxanalytics.lynxkite.spark_util._
 import com.lynxanalytics.lynxkite.{logger => log}
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_api._
 import com.lynxanalytics.lynxkite.graph_util._
 

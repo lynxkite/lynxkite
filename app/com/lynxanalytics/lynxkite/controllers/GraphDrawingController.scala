@@ -12,7 +12,7 @@ import com.lynxanalytics.lynxkite.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.lynxkite.graph_operations
 import com.lynxanalytics.lynxkite.graph_operations.DynamicValue
 import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.model
 import com.lynxanalytics.lynxkite.serving.User
 import com.lynxanalytics.lynxkite.spark_util

@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 
 import com.lynxanalytics.lynxkite.serving
 import com.lynxanalytics.lynxkite.{logger => log}
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 
 @javax.inject.Singleton
 class ErrorHandler extends http.HttpErrorHandler {

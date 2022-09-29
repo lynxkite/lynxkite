@@ -4,7 +4,7 @@ import com.lynxanalytics.lynxkite.SparkFreeEnvironment
 import com.lynxanalytics.lynxkite.graph_api._
 import com.lynxanalytics.lynxkite.graph_api.Scripting._
 import com.lynxanalytics.lynxkite.graph_operations
-import com.lynxanalytics.lynxkite.graph_util.Environment
+import com.lynxanalytics.lynxkite.Environment
 import com.lynxanalytics.lynxkite.graph_util.Scripting._
 import com.lynxanalytics.lynxkite.controllers._
 import play.api.libs.json

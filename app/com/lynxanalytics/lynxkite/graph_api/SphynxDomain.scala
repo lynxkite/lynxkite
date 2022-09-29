@@ -2,7 +2,7 @@
 
 package com.lynxanalytics.lynxkite.graph_api
 
-import com.lynxanalytics.lynxkite.graph_util
+import com.lynxanalytics.lynxkite
 import play.api.libs.json.Json
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types._
@@ -19,7 +19,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SphynxDomain",
-      maxParallelism = graph_util.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = lynxkite.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
     typeTag[String],
