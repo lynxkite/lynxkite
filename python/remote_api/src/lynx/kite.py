@@ -453,7 +453,7 @@ class LynxKite:
     return _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
 
   def address(self) -> str:
-    return self._address or os.environ['LYNXKITE_ADDRESS']
+    return self._address or os.environ['LYNXKITE_ADDRESS'] or 'http://localhost:2200/'
 
   def username(self) -> str:
     username = self._username or os.environ.get('LYNXKITE_USERNAME')
