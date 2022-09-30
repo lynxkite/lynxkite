@@ -6,6 +6,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Introduced a Scala API for starting and stopping LynxKite.
+  [#291](https://github.com/lynxkite/lynxkite/pull/291)
+  Useful if you want to run LynxKite as part of a pipeline, rather than as permanent fixture.
+- Renamed some packages in Scala. We're finally living in `com.lynxanalytics.lynxkite`.
+  [#291](https://github.com/lynxkite/lynxkite/pull/291)
+- The `LynxKite()` constructor in the Python API now defaults to connecting to `http://localhost:2200`.
+  [#291](https://github.com/lynxkite/lynxkite/pull/291)
+
 ### 5.1.0
 
 - Upgraded to Apache Spark 3.3.0. [#272](https://github.com/lynxkite/lynxkite/pull/272)
