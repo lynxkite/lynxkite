@@ -193,7 +193,7 @@ if [ -n "${KITE_EXTRA_JARS}" ]; then
 fi
 
 
-className="com.lynxanalytics.lynxkite.Main"
+className="com.lynxanalytics.lynxkite.LynxKite"
 
 
 final_java_opts="${final_java_opts} -Xss${DRIVER_THREAD_STACK_SIZE}"
