@@ -393,7 +393,10 @@ class SparkDomain(
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       case source: UnorderedSphynxDisk => {
-        val srcPath = source.getGUIDPath(e)
+        val srcPath = source match {
+          case _: UnorderedSphynxLocalDisk => "file:" + source.getGUIDPath(e)
+          case _: UnorderedSphynxSparkDisk => source.getGUIDPath(e)
+        }
         import com.lynxanalytics.lynxkite.spark_util.UniqueSortedRDD
         import com.lynxanalytics.lynxkite.spark_util.Implicits._
         e match {
