@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import pyarrow as pa
 import sys
-import json
 
 
 DoubleAttribute = 'DoubleAttribute'
