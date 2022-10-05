@@ -1,13 +1,20 @@
 # Simple access to operation parameters, input, and outputs.
+library(arrow)
+library(bit64)
 library(dplyr)
 library(jsonlite)
-library(arrow)
 
 typemap <- list(
   'Long' = 'LongAttribute',
   'Double' = 'DoubleAttribute',
   'String' = 'StringAttribute',
   'ndarray' = 'DoubleVectorAttribute'
+)
+castmap <- list(
+  'Long' = as.integer64,
+  'Double' = as.numeric,
+  'String' = as.character,
+  'Vector' = identity
 )
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -22,6 +29,7 @@ input_table <- function(name) {
 }
 
 output <- function(name, values, type) {
+  values <- castmap[[type]](values)
   d <- file.path(datadir, outputs[[name]])
   dir.create(d)
   f <- file(file.path(d, 'type_name'))
