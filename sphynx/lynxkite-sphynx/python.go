@@ -20,8 +20,9 @@ func pythonOperation(module string) DiskOperation {
 			}
 			cmd := exec.Command("python", "-m", "python."+module, dataDir, string(meta))
 			var output bytes.Buffer
-			cmd.Stdout = io.MultiWriter(os.Stdout, &output)
-			cmd.Stderr = io.MultiWriter(os.Stderr, &output)
+			writer := io.MultiWriter(os.Stdout, &output)
+			cmd.Stdout = writer
+			cmd.Stderr = writer
 			if err := cmd.Run(); err != nil {
 				if output.Len() > 0 {
 					return fmt.Errorf("\n%v", output.String())

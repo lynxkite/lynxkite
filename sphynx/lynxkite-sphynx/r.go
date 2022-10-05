@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 )
 
 func rOperation(script string) DiskOperation {
@@ -20,11 +21,14 @@ func rOperation(script string) DiskOperation {
 			}
 			cmd := exec.Command("Rscript", "r/"+script, dataDir, string(meta))
 			var output bytes.Buffer
-			cmd.Stdout = io.MultiWriter(os.Stdout, &output)
-			cmd.Stderr = io.MultiWriter(os.Stderr, &output)
+			writer := io.MultiWriter(os.Stdout, &output)
+			cmd.Stdout = writer
+			cmd.Stderr = writer
 			if err := cmd.Run(); err != nil {
 				if output.Len() > 0 {
-					return fmt.Errorf("\n%v", output.String())
+					re := regexp.MustCompile(`(?s).*"RUNNING USER CODE"\n`)
+					msg := re.ReplaceAllLiteralString(output.String(), "")
+					return fmt.Errorf("\n%v", msg)
 				} else {
 					return fmt.Errorf("%v failed: %v", script, err)
 				}

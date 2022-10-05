@@ -1,4 +1,9 @@
 # Simple access to operation parameters, input, and outputs.
+options(show.error.locations = TRUE)
+options(error=function() {
+  traceback(3)
+  quit(save = 'no', status = 1, runLast = FALSE)
+})
 library(arrow)
 library(bit64)
 library(dplyr)

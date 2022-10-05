@@ -1,7 +1,4 @@
 # Run user code on a graph.
-library('stringr')
-library('tibble')
-library('dplyr')
 source('r/util.r')
 
 # Create input tables.
@@ -21,6 +18,7 @@ vs <- gettable('vs')
 es <- gettable('es')
 
 # Run user code.
+print('RUNNING USER CODE') # For log cleanup.
 code <- params[['code']]
 eval(parse(text = code))
 
