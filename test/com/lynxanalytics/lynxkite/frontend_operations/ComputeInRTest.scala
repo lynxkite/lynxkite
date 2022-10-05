@@ -18,7 +18,7 @@ vs <- vs %>%
   mutate(age_squared = age ** 2)
 es <- es %>%
   mutate(score = weight + nchar(comment)) %>%
-  mutate(names = paste('from' + vs$name[[src]], 'to', vs$name[[dst]]))
+  mutate(names = paste('from', vs$name[es$src], 'to', vs$name[es$dst]))
 graph_attributes$hello <- tolower(graph_attributes$greeting)
 graph_attributes$average_age <- mean(vs$age)
           """,

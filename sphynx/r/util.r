@@ -13,13 +13,13 @@ typemap <- list(
   'Long' = 'LongAttribute',
   'Double' = 'DoubleAttribute',
   'String' = 'StringAttribute',
-  'ndarray' = 'DoubleVectorAttribute'
+  'Vector[Double]' = 'DoubleVectorAttribute'
 )
 castmap <- list(
   'Long' = as.integer64,
   'Double' = as.numeric,
   'String' = as.character,
-  'Vector' = identity
+  'Vector[Double]' = identity
 )
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -29,11 +29,31 @@ params <- op[['Operation']][['Data']]
 inputs <- op[['Inputs']]
 outputs <- op[['Outputs']]
 
-input_table <- function(name) {
-  return(read_feather(file.path(datadir, inputs[[name]], 'data.arrow')))
+input_edges <- function(name) {
+  data <- read_feather(file.path(datadir, inputs[[name]], 'data.arrow')) %>%
+    mutate(src = src + 1) %>%
+    mutate(dst = dst + 1)
+  return(data)
 }
 
-output <- function(name, values, type) {
+input_one_table <- function(name) {
+  return(read_feather(file.path(datadir, inputs[[name]], 'data.arrow')))
+}
+input_table <- function(name) {
+  return(sapply(name, input_one_table, USE.NAMES=FALSE))
+}
+
+input_one_scalar <- function(name) {
+  f <- file(file.path(datadir, inputs[[name]], 'serialized_data'))
+  j <- readLines(f)
+  close(f)
+  return(fromJSON(j))
+}
+input_scalar <- function(name) {
+  return(sapply(name, input_one_scalar, USE.NAMES=FALSE))
+}
+
+output_one_table <- function(name, values, type) {
   values <- castmap[[type]](values)
   d <- file.path(datadir, outputs[[name]])
   dir.create(d)
@@ -44,4 +64,29 @@ output <- function(name, values, type) {
   f <- file(file.path(d, '_SUCCESS'))
   writeLines('OK', f)
   close(f)
+}
+output_table <- function(name, values, type) {
+  for (i in 1:length(name)) {
+    output_one_table(name[[i]], values[[i]], type[[i]])
+  }
+}
+
+output_one_scalar <- function(name, value) {
+  j <- toJSON(value, auto_unbox=TRUE)
+  d <- file.path(datadir, outputs[[name]])
+  dir.create(d)
+  f <- file(file.path(d, 'type_name'))
+  writeLines('Scalar', f)
+  close(f)
+  f <- file(file.path(d, 'serialized_data'))
+  writeLines(j, f)
+  close(f)
+  f <- file(file.path(d, '_SUCCESS'))
+  writeLines('OK', f)
+  close(f)
+}
+output_scalar <- function(name, value) {
+  for (i in 1:length(name)) {
+    output_one_scalar(name[[i]], value[[i]])
+  }
 }
