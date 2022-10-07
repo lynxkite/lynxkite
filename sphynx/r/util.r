@@ -43,30 +43,29 @@ inputs <- op[['Inputs']]
 outputs <- op[['Outputs']]
 
 input_edges <- function(name) {
-  data <- read_feather(file.path(datadir, inputs[[name]], 'data.arrow')) %>%
+  read_feather(file.path(datadir, inputs[[name]], 'data.arrow')) %>%
     mutate(src = src + 1) %>%
     mutate(dst = dst + 1)
-  return(data)
 }
 
 input_parquet <- function(name) {
   open_dataset(sources = file.path(datadir, inputs[[name]]), format="parquet")
 }
 input_one_table <- function(name) {
-  return(read_feather(file.path(datadir, inputs[[name]], 'data.arrow')))
+  read_feather(file.path(datadir, inputs[[name]], 'data.arrow'))
 }
 input_table <- function(name) {
-  return(sapply(name, input_one_table, USE.NAMES=FALSE))
+  sapply(name, input_one_table, USE.NAMES=FALSE)
 }
 
 input_one_scalar <- function(name) {
   f <- file(file.path(datadir, inputs[[name]], 'serialized_data'))
   j <- readLines(f)
   close(f)
-  return(fromJSON(j))
+  fromJSON(j)
 }
 input_scalar <- function(name) {
-  return(sapply(name, input_one_scalar, USE.NAMES=FALSE))
+  sapply(name, input_one_scalar, USE.NAMES=FALSE)
 }
 
 output_parquet <- function(name, values) {

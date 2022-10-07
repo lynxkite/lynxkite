@@ -12,8 +12,8 @@ gettable <- function(parent) {
     t <- tibble(!!!columns, .name_repair='minimal')
     # We set the correct column names here.
     names(t) <- ns
+    t
   }
-  return(t)
 }
 vs <- gettable('vs')
 es <- gettable('es')
@@ -26,7 +26,7 @@ getscalars <- function() {
   ns <- fields[fields$parent == 'graph_attributes', ]$name
   if (length(ns) != 0) {
     values <- input_scalar(paste('graph_attributes', ns, sep='.'))
-    return(as.list(setNames(values, ns)))
+    as.list(setNames(values, ns))
   }
 }
 graph_attributes <- getscalars()
