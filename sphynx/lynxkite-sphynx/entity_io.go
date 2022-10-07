@@ -121,17 +121,27 @@ func (eb *EdgeBundle) toOrderedRows() array.Record {
 	return array.NewRecord(edgeBundleSchema, []array.Interface{src, dst, ids}, -1)
 }
 func (eb *EdgeBundle) readFromOrdered(rec array.Record) error {
-	src := rec.Column(0).(*array.Uint32).Uint32Values()
-	dst := rec.Column(1).(*array.Uint32).Uint32Values()
 	ids := rec.Column(2).(*array.Int64).Int64Values()
-	// Make a copy because counting references is harder.
-	eb.Src = make([]SphynxId, len(src))
-	eb.Dst = make([]SphynxId, len(dst))
+	eb.Src = make([]SphynxId, len(ids))
+	eb.Dst = make([]SphynxId, len(ids))
 	eb.EdgeMapping = make([]int64, len(ids))
-	for i, id := range ids {
-		eb.Src[i] = SphynxId(src[i])
-		eb.Dst[i] = SphynxId(dst[i])
-		eb.EdgeMapping[i] = id
+	switch rec.Column(0).(type) {
+	case *array.Int64:
+		src := rec.Column(0).(*array.Int64).Int64Values()
+		dst := rec.Column(1).(*array.Int64).Int64Values()
+		for i, id := range ids {
+			eb.Src[i] = SphynxId(src[i])
+			eb.Dst[i] = SphynxId(dst[i])
+			eb.EdgeMapping[i] = id
+		}
+	case *array.Uint32:
+		src := rec.Column(0).(*array.Uint32).Uint32Values()
+		dst := rec.Column(1).(*array.Uint32).Uint32Values()
+		for i, id := range ids {
+			eb.Src[i] = SphynxId(src[i])
+			eb.Dst[i] = SphynxId(dst[i])
+			eb.EdgeMapping[i] = id
+		}
 	}
 	return nil
 }

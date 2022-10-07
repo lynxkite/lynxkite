@@ -13,7 +13,9 @@ typemap <- list(
   'Long' = 'LongAttribute',
   'Double' = 'DoubleAttribute',
   'String' = 'StringAttribute',
-  'Vector[Double]' = 'DoubleVectorAttribute'
+  'Vector[Double]' = 'DoubleVectorAttribute',
+  'VertexSet' = 'VertexSet',
+  'EdgeBundle' = 'EdgeBundle'
 )
 castmap <- list(
   'Long' = as.integer64,
@@ -23,6 +25,13 @@ castmap <- list(
     # Vectors must be stored as list columns for write_feather().
     if (typeof(c) == "list") c
     else as.list(as.data.frame(t(c)))
+  },
+  'VertexSet' = as.integer64,
+  'EdgeBundle' = function(df) {
+    df %>%
+      mutate(src = as.integer64(src - 1)) %>%
+      mutate(dst = as.integer64(dst - 1)) %>%
+      mutate(sparkId = as.integer64(sparkId))
   }
 )
 
@@ -40,6 +49,9 @@ input_edges <- function(name) {
   return(data)
 }
 
+input_parquet <- function(name) {
+  open_dataset(sources = file.path(datadir, inputs[[name]]), format="parquet")
+}
 input_one_table <- function(name) {
   return(read_feather(file.path(datadir, inputs[[name]], 'data.arrow')))
 }
@@ -57,14 +69,20 @@ input_scalar <- function(name) {
   return(sapply(name, input_one_scalar, USE.NAMES=FALSE))
 }
 
+output_parquet <- function(name, values) {
+  d <- file.path(datadir, outputs[[name]])
+  write_dataset(values, d)
+}
+
 output_one_table <- function(name, values, type) {
   values <- castmap[[type]](values)
+  t <- if (is.data.frame(values)) values else tibble(values=values)
   d <- file.path(datadir, outputs[[name]])
   dir.create(d)
   f <- file(file.path(d, 'type_name'))
   writeLines(typemap[[type]], f)
   close(f)
-  write_feather(tibble(values=values), file.path(d, 'data.arrow'), compression="uncompressed")
+  write_feather(t, file.path(d, 'data.arrow'), compression="uncompressed")
   f <- file(file.path(d, '_SUCCESS'))
   writeLines('OK', f)
   close(f)

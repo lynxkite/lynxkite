@@ -647,18 +647,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         Code("code", "R code", language = "r"),
       )
       val input = context.inputs("graph")
-      private def pythonInputs = {
-        if (params("inputs") == "<infer from code>")
-          graph_operations.DeriveR.inferInputs(params("code"), input.kind)
-        else splitParam("inputs")
-      }
-      private def pythonOutputs = {
-        if (params("outputs") == "<infer from code>")
-          graph_operations.DeriveR.inferOutputs(params("code"), input.kind)
-        else splitParam("outputs")
-      }
+      private def rInputs = splitParam("inputs")
+      private def rOutputs = splitParam("outputs")
       override def summary = {
-        val outputs = pythonOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
+        val outputs = rOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
         if (outputs.isEmpty) "Compute in R"
         else s"Compute $outputs in R"
       }
@@ -669,22 +661,20 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         input.kind match {
           case BoxOutputKind.Project =>
             val project = projectInput("graph")
-            graph_operations.DeriveR.derive(params("code"), pythonInputs, pythonOutputs, project)
+            graph_operations.DeriveR.derive(params("code"), rInputs, rOutputs, project)
             Map(context.box.output("graph") -> BoxOutputState.from(project))
           case BoxOutputKind.Table =>
             // We named the input and output before adding table support.
             // It's bad naming here, but lets us keep compatibility.
             val table = tableInput("graph")
             val outputs: Seq[String] =
-              if (params("outputs") == "<infer from code>")
-                table.schema.fields.map { f =>
-                  s"df.${f.name}: " + (f.dataType match {
-                    case org.apache.spark.sql.types.StringType => "str"
-                    case org.apache.spark.sql.types.LongType => "int"
-                    case _ => "float"
-                  })
-                } ++ pythonOutputs
-              else pythonOutputs
+              table.schema.fields.map { f =>
+                s"df.${f.name}: " + (f.dataType match {
+                  case org.apache.spark.sql.types.StringType => "character"
+                  case org.apache.spark.sql.types.LongType => "integer"
+                  case _ => "double"
+                })
+              } ++ rOutputs
             val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
             Map(context.box.output("graph") -> BoxOutputState.from(result))
         }

@@ -57,7 +57,7 @@ object DeriveR extends OpFromJson {
   // Parses the output list into Fields.
   def outputFields(outputs: Seq[String], api: Seq[String]): Seq[Field] = {
     val outputDeclaration = raw"(\w+)\.(\w+)\s*:\s*([a-zA-Z0-9.]+)".r
-    outputs.map {
+    val fields = outputs.map {
       case outputDeclaration(parent, name, tpe) =>
         assert(
           api.contains(parent),
@@ -66,6 +66,10 @@ object DeriveR extends OpFromJson {
       case output => throw new AssertionError(
           s"Output declarations must be formatted like 'vs.my_attr: str'. Got '$output'.")
     }
+    // Deduplicate. Later entry replaces earlier entry.
+    val fieldMap = fields.map(f => f.fullName -> f).toMap
+    val fullNames = fields.map(_.fullName)
+    fullNames.distinct.map(fieldMap(_))
   }
 
   def derive(

@@ -85,7 +85,8 @@ vs <- vs %>%
 df <- df %>%
   mutate(age = round(age)) %>%
   mutate(age_2 = age ** 2)
-          """),
+          """,
+        ),
       )
       // A second box to test that tables created in R can also be used in R.
       .box(
@@ -99,7 +100,7 @@ df <- df %>% mutate(age_4 = age_2 ** 2)
           """,
         ),
       )
-      .box("SQL1")
+      .box("SQL1", Map("sql" -> "select age_4, name from input"))
       .table
     val data = t.df.collect.toList.map(_.toSeq.toList)
     assert(data == List(
@@ -119,8 +120,8 @@ vs <- tibble(
   name =  c('Alice', 'Bob', 'Cecil', 'Drew')
 )
 es <- tibble(
-  src = c(0, 1, 2),
-  dst = c(0, 2, 1),
+  src = c(1, 2, 3),
+  dst = c(1, 3, 2),
   weight = c(1, 2, 3)
 )
 graph_attributes$hello <- 'hello'
