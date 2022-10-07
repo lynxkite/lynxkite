@@ -1,4 +1,17 @@
-// Convenient Hadoop file interface.
+// LynxKite data files are stored by Spark executors on some file system. This could be local disk,
+// HDFS, AWS, or something else. Spark uses the Hadoop file system library for this.
+//
+// The HadoopFile class represents a path on the storage file system and provides a lot of methods
+// for interacting with these files.
+//
+// This code is also responsible for managing "prefixed paths". These paths of the "DATA$/foo/bar"
+// format allow the system administrator of LynxKite to solve some problems that would otherwise be
+// difficult. Such as moving all the LynxKite data to a different physical location, hiding the
+// credentials used for a file system from the LynxKite users, or configuring access control for
+// a directory.
+//
+// It also has the code underlying EntityIO that saves the RDD of an entity into a Parquet file.
+
 package com.lynxanalytics.biggraph.graph_util
 
 import com.esotericsoftware.kryo
@@ -15,6 +28,9 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 
+// A cache so we can avoid creating new hadoop.fs.FileSystem objects all the time.
+// It has an expiry mechanism, because a FileSystem object may hold credentials that
+// become outdated after some time.
 class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
 
   case class FileSystemWithExpiry(fileSystem: org.apache.hadoop.fs.FileSystem, expiry: Long) {
@@ -93,6 +109,7 @@ class HadoopFile private (
   override def hashCode = (prefixSymbol + normalizedRelativePath).hashCode
 
   val symbolicName = prefixSymbol + normalizedRelativePath
+  // The path with the prefix resolved. This can be passed into other systems.
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (scheme, resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
@@ -203,18 +220,6 @@ class HadoopFile private (
       .map(pair => pair._2.toString)
   }
 
-  def saveAsTextFile(lines: spark.rdd.RDD[String]): Unit = {
-    // RDD.saveAsTextFile does not take a hadoop.conf.Configuration argument. So we struggle a bit.
-    val hadoopLines = lines.map(x => (hadoop.io.NullWritable.get(), new hadoop.io.Text(x)))
-    hadoopLines.saveAsNewAPIHadoopFile(
-      resolvedNameWithNoCredentials,
-      keyClass = classOf[hadoop.io.NullWritable],
-      valueClass = classOf[hadoop.io.Text],
-      outputFormatClass = classOf[hadoop.mapreduce.lib.output.TextOutputFormat[hadoop.io.NullWritable, hadoop.io.Text]],
-      conf = new hadoop.mapred.JobConf(hadoopConfiguration),
-    )
-  }
-
   def createFromStrings(contents: String): Unit = {
     val stream = create()
     try {
@@ -229,7 +234,7 @@ class HadoopFile private (
      * for any future deserialization operation. Basically trying to reuse a kryo instance for
      * deserialization will be orders of magnitude slower than a normal one.
      * We need to understand/fix this decently, but for now this is a stop-gap for the demo.
-     * Looks like this might be fixable with a kryo upgrade.
+     * Looks like this might be fixable with a kryo upgrade. -- 2014
      */
     val myKryo = BigGraphSparkContext.createKryoWithForcedRegistration()
     val output = new kryo.io.Output(create())
@@ -312,27 +317,4 @@ class HadoopFile private (
     aclContains(acl, user)
   }
 
-}
-
-// A SequenceFile loader that creates one partition per file.
-private[graph_util] class WholeSequenceFileInputFormat[K, V]
-    extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
-
-  // Do not allow splitting/combining files.
-  override protected def isSplitable(
-      context: hadoop.mapreduce.JobContext,
-      file: hadoop.fs.Path): Boolean = false
-
-  // Read files in order.
-  override protected def listStatus(
-      job: hadoop.mapreduce.JobContext): java.util.List[hadoop.fs.FileStatus] = {
-    val l = super.listStatus(job)
-    java.util.Collections.sort(
-      l,
-      new java.util.Comparator[hadoop.fs.FileStatus] {
-        def compare(a: hadoop.fs.FileStatus, b: hadoop.fs.FileStatus) =
-          a.getPath.getName compare b.getPath.getName
-      })
-    l
-  }
 }

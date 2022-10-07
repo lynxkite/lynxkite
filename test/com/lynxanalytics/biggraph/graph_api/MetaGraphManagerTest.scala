@@ -7,7 +7,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 
-class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
+class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager with org.scalatest.matchers.should.Matchers {
+  val GUID = "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}"
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager
 
@@ -135,18 +136,18 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
     val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
-    assert(p.vertexSet.toStringStruct.toString ==
-      "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(p.edgeBundle.toStringStruct.toString ==
-      "edges of (CreateSomeGraph of arg=migrated)")
-    assert(p.vertexAttributes("vvv").toStringStruct.toString ==
-      "vattr of (CreateSomeGraph of arg=migrated)")
-    assert(p.edgeAttributes("eee").toStringStruct.toString ==
-      "eattr of (CreateSomeGraph of arg=migrated)")
-    assert(p.segmentation("ms").vertexSet.toStringStruct.toString ==
-      "attrValues of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
-    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
-      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+    p.vertexSet.toString should fullyMatch regex
+      s"$GUID \\(vertices of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.edgeBundle.toString should fullyMatch regex
+      s"$GUID \\(edges of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.vertexAttributes("vvv").toString should fullyMatch regex
+      s"$GUID \\(vattr of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.edgeAttributes("eee").toString should fullyMatch regex
+      s"$GUID \\(eattr of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.segmentation("ms").vertexSet.toString should fullyMatch regex
+      s"$GUID \\(attrValues of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
+    p.segmentation("ms").belongsTo.toString should fullyMatch regex
+      s"$GUID \\(links of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
   }
 
   test("JSON version migration can be retried") {
@@ -202,10 +203,10 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
     val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
-    assert(p.vertexSet.toStringStruct.toString ==
-      "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
-      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+    p.vertexSet.toString should fullyMatch regex
+      s"$GUID \\(vertices of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.segmentation("ms").belongsTo.toString should fullyMatch regex
+      s"$GUID \\(links of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
   }
 
   test("JSON read errors are correctly reported") {
