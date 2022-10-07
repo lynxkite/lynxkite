@@ -24,8 +24,10 @@ if ('edges-for-es' %in% names(inputs)) {
 getscalars <- function() {
   fields <- params[['inputFields']]
   ns <- fields[fields$parent == 'graph_attributes', ]$name
-  values <- input_scalar(paste('graph_attributes', ns, sep='.'))
-  return(as.list(setNames(values, ns)))
+  if (length(ns) != 0) {
+    values <- input_scalar(paste('graph_attributes', ns, sep='.'))
+    return(as.list(setNames(values, ns)))
+  }
 }
 graph_attributes <- getscalars()
 
@@ -39,7 +41,7 @@ print('USER CODE FINISHED')
 save <- function(parent, t) {
   fields <- params[['outputFields']]
   fs <- fields[fields$parent == parent, ]
-  if (length(fs) != 0) {
+  if (nrow(fs) != 0) {
     # TODO: Good error message if output is missing.
     columns <- t[fs$name]
     output_table(paste(parent, fs$name, sep='.'), columns, fs$tpe$typename)
@@ -50,7 +52,7 @@ save('es', es)
 savescalars <- function() {
   fields <- params[['outputFields']]
   fs <- fields[fields$parent == 'graph_attributes', ]
-  if (length(fs) != 0) {
+  if (nrow(fs) != 0) {
     # TODO: Good error message if output is missing.
     values <- graph_attributes[fs$name]
     output_scalar(paste('graph_attributes', fs$name, sep='.'), values)

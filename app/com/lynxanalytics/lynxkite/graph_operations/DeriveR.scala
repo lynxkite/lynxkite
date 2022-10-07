@@ -49,7 +49,7 @@ object DeriveR extends OpFromJson {
       case "character" => SerializableType.string
       case "double" => SerializableType.double
       case "integer" => SerializableType.long
-      case "list" => SerializableType.vector(SerializableType.double)
+      case "vector" => SerializableType.vector(SerializableType.double)
       case _ => throw new AssertionError(s"Unknown type: $pythonType")
     }
   }

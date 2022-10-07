@@ -4,10 +4,10 @@ options(error=function() {
   traceback(3)
   quit(save = 'no', status = 1, runLast = FALSE)
 })
-library(arrow)
-library(bit64)
-library(dplyr)
-library(jsonlite)
+suppressPackageStartupMessages(library(arrow))
+suppressPackageStartupMessages(library(bit64))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(jsonlite))
 
 typemap <- list(
   'Long' = 'LongAttribute',
@@ -19,7 +19,11 @@ castmap <- list(
   'Long' = as.integer64,
   'Double' = as.numeric,
   'String' = as.character,
-  'Vector[Double]' = identity
+  'Vector[Double]' = function(c) {
+    # Vectors must be stored as list columns for write_feather().
+    if (typeof(c) == "list") c
+    else as.list(as.data.frame(t(c)))
+  }
 )
 
 args <- commandArgs(trailingOnly = TRUE)

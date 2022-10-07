@@ -51,10 +51,10 @@ graph_attributes$average_age <- mean(vs$age)
         "Compute in R",
         Map(
           "inputs" -> "vs.age",
-          "outputs" -> "vs.v: np.ndarray",
+          "outputs" -> "vs.v: vector",
           "code" -> """
-vs <- vs %>%>
-  mutate(v = c(1, 2) * age)
+vs <- vs %>%
+  mutate(v = outer(age, c(1, 2)))
           """),
       )
       .box(
@@ -63,7 +63,8 @@ vs <- vs %>%>
           "inputs" -> "vs.v",
           "outputs" -> "vs.s: double",
           "code" -> """
-vs <- vs %>%>
+vs <- vs %>%
+  rowwise() %>%
   mutate(s = round(sum(v)))
           """))
       .project
