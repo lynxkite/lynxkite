@@ -449,13 +449,7 @@ class SparkDomain(
           case s: Scalar[_] =>
             SafeFuture.async({
               val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
-              val jsonString = source match {
-                case source: UnorderedSphynxSparkDisk =>
-                  (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
-                case source: UnorderedSphynxLocalDisk =>
-                  val fname = s"${srcPath}/serialized_data"
-                  Source.fromFile(fname, "utf-8").getLines.mkString
-              }
+              val jsonString = (HadoopFile(srcPath) / "serialized_data").readAsString
               val value = format.reads(json.Json.parse(jsonString)).get
               new ScalarData(s, value)
             })
