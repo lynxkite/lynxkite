@@ -1,9 +1,9 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 @deprecated("CountEdges and ComputeMinMaxDouble are deprecated", "1.7.0")
 class DeprecatedBasicStatsTest extends AnyFunSuite with TestGraphOp {

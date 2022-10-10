@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
 import org.scalatest
@@ -7,17 +7,17 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.language.implicitConversions
 import org.apache.commons.io.FileUtils
 
-import com.lynxanalytics.lynxkite.{TestUtils, TestTempDir, TestSparkContext}
+import com.lynxanalytics.biggraph.{TestUtils, TestTempDir, TestSparkContext}
 
-import com.lynxanalytics.lynxkite.BigGraphEnvironment
-import com.lynxanalytics.lynxkite.graph_operations._
-import com.lynxanalytics.lynxkite.graph_util.{PrefixRepository, HadoopFile, Timestamp}
-import com.lynxanalytics.lynxkite.registerStandardPrefixes
-import com.lynxanalytics.lynxkite.standardDataPrefix
-import com.lynxanalytics.lynxkite.spark_util.SQLHelper
-import com.lynxanalytics.lynxkite.Environment
+import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_operations._
+import com.lynxanalytics.biggraph.graph_util.{PrefixRepository, HadoopFile, Timestamp}
+import com.lynxanalytics.biggraph.registerStandardPrefixes
+import com.lynxanalytics.biggraph.standardDataPrefix
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.Environment
 
-import com.lynxanalytics.lynxkite.spark_util.Implicits._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object GraphTestUtils {
   implicit class VertexSetOps[T <% VertexSetData](vs: T) {

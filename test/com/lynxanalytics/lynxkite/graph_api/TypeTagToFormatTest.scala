@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.lynxkite.controllers._
-import com.lynxanalytics.lynxkite.graph_operations.{DynamicValue, GT, VertexAttributeFilter}
-import com.lynxanalytics.lynxkite.spark_util.IDBuckets
+import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations.{DynamicValue, GT, VertexAttributeFilter}
+import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.reflect.runtime.universe._

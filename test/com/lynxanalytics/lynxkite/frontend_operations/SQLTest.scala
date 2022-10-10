@@ -1,10 +1,10 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.lynxkite.controllers.SQLTestCases
-import com.lynxanalytics.lynxkite.graph_api.{DataManager, SparkDomain, ThreadUtil}
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_util.ControlledFutures
+import com.lynxanalytics.biggraph.controllers.SQLTestCases
+import com.lynxanalytics.biggraph.graph_api.{DataManager, SparkDomain, ThreadUtil}
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}

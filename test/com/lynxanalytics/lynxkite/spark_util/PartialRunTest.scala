@@ -1,10 +1,10 @@
-package com.lynxanalytics.lynxkite.spark_util
+package com.lynxanalytics.biggraph.spark_util
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-import com.lynxanalytics.lynxkite.TestSparkContext
-import com.lynxanalytics.lynxkite.Timed
+import com.lynxanalytics.biggraph.TestSparkContext
+import com.lynxanalytics.biggraph.Timed
 
 class PartialRunTest extends AnyFunSuite with TestSparkContext {
   import Implicits._
@@ -22,7 +22,7 @@ class PartialRunTest extends AnyFunSuite with TestSparkContext {
       .reduce(_ + _)
   }
 
-  test("benchmark partial map", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark partial map", com.lynxanalytics.biggraph.Benchmark) {
     val table = "%10s | %10s | %10s | %10s | %10s"
     println(table.format("rows", "rows processed", "as", "time (ms)", "nanos / row processed"))
     for (round <- 10 to 10) {

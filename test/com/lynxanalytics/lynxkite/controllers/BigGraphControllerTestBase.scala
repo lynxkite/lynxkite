@@ -1,16 +1,16 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.BeforeAndAfterEach
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class BigGraphControllerTestBase extends AnyFunSuite with TestGraphOp with BeforeAndAfterEach {
   val controller = new BigGraphController(this)
-  val user = com.lynxanalytics.lynxkite.serving.User.singleuser
+  val user = com.lynxanalytics.biggraph.serving.User.singleuser
 
   def createDirectory(name: String, privacy: String = "public-write") = {
     controller.createDirectory(

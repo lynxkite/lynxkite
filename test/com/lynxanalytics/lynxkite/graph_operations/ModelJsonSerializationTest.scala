@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.model._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.model._
 import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib.linalg.DenseVector
 

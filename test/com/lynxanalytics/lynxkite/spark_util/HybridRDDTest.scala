@@ -1,10 +1,10 @@
-package com.lynxanalytics.lynxkite.spark_util
+package com.lynxanalytics.biggraph.spark_util
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-import com.lynxanalytics.lynxkite.graph_api.RuntimeContext
-import com.lynxanalytics.lynxkite.TestSparkContext
+import com.lynxanalytics.biggraph.graph_api.RuntimeContext
+import com.lynxanalytics.biggraph.TestSparkContext
 
 class HybridRDDTest extends AnyFunSuite with TestSparkContext {
   test("lookup operations work as expected") {

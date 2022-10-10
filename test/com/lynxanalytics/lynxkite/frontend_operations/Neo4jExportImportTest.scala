@@ -1,9 +1,9 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.lynxkite.controllers.DirectoryEntry
-import com.lynxanalytics.lynxkite.graph_api.Edge
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.graph_api.Edge
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class Neo4jContainer
     extends org.testcontainers.containers.Neo4jContainer[Neo4jContainer]("neo4j:4.0.8-enterprise")

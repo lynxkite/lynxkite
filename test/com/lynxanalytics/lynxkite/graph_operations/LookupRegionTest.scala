@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api._
 import org.scalatest.funsuite.AnyFunSuite
 
 class LookupRegionTest extends AnyFunSuite with TestGraphOp {

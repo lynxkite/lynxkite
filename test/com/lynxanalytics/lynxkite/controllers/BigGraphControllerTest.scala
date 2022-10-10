@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.serving.User
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.User
 
 class BigGraphControllerTest extends BigGraphControllerTestBase {
   // TODO: Depends on #5874.

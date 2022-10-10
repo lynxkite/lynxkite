@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class PredictFromModelTest extends ModelTestBase {
   def checkModel(method: String) {
@@ -27,7 +27,7 @@ class PredictFromModelTest extends ModelTestBase {
   }
 
   test("test decision tree regression") {
-    import com.lynxanalytics.lynxkite.graph_operations.DataForDecisionTreeTests.{trainingData, testDataForRegression}
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{trainingData, testDataForRegression}
     val m = model(
       method = "Decision tree regression",
       labelName = trainingData.labelName,

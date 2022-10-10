@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import java.sql
 import org.apache.commons.lang.ClassUtils
@@ -6,10 +6,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.runtime.universe.typeTag
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_util.JDBCUtil
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
 class TableToAttributesTest extends AnyFunSuite with TestGraphOp {
   test("dataframe import using JDBC works") {

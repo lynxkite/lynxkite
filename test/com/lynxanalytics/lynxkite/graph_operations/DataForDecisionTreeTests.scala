@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 object DataForDecisionTreeTests {
   // I love making long walks if it's not raining and the temperature is

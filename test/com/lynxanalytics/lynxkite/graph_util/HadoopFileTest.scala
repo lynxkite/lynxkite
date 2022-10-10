@@ -1,6 +1,6 @@
-package com.lynxanalytics.lynxkite.graph_util
+package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.lynxkite.TestUtils
+import com.lynxanalytics.biggraph.TestUtils
 import org.scalatest.funsuite.AnyFunSuite
 
 class HadoopFileTest extends AnyFunSuite {

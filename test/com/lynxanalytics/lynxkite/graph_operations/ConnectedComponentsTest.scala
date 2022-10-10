@@ -1,15 +1,15 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.Random
 import scala.language.implicitConversions
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.spark_util.Implicits._
-import com.lynxanalytics.lynxkite.Timed
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.spark_util.Implicits._
+import com.lynxanalytics.biggraph.Timed
 
 object ConnectedComponentsTest {
   // we want to compare Map[Int, Int] and Map[ID, ID] values as well
@@ -74,7 +74,7 @@ class ConnectedComponentsTest extends AnyFunSuite with TestGraphOp {
     assertSameComponents(getComponents(nodes, local = false), expectation)
   }
 
-  test("benchmark cc", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark cc", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(outdegree: Int, vSize: Int, seed: Int) {
       val rand = new Random(seed)
       val elementIds = Seq.range[Int](0, vSize)

@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.spark_util
+package com.lynxanalytics.biggraph.spark_util
 
 import org.scalatest.funsuite.AnyFunSuite
 

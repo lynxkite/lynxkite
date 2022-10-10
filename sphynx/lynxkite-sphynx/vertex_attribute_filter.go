@@ -184,7 +184,7 @@ func doVertexAttributeFilter(job filterJobDescription, vs *VertexSet, attr Tabul
 func extractFilterJob(params map[string]interface{}) (filterJobDescription, bool) {
 	filter := params["filter"].(map[string]interface{})
 	longOpCode := filter["class"].(string)
-	opCode := longOpCode[len("com.lynxanalytics.lynxkite.graph_operations."):]
+	opCode := longOpCode[len("com.lynxanalytics.biggraph.graph_operations."):]
 	parser, ok := parameterParsers[opCode]
 	if !ok {
 		return filterJobDescription{}, false
@@ -207,7 +207,7 @@ func getFilteredAttribute(guid GUID, filter map[string]interface{}) map[string]i
 		"attributeGUID": guid,
 	}
 	filteredAttribute := map[string]interface{}{
-		"class": "com.lynxanalytics.lynxkite.graph_operations.FilteredAttribute",
+		"class": "com.lynxanalytics.biggraph.graph_operations.FilteredAttribute",
 		"data":  data,
 	}
 	return filteredAttribute

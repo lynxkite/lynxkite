@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
 import org.scalatest.funsuite.AnyFunSuite
-import com.lynxanalytics.lynxkite.TestTempDir
+import com.lynxanalytics.biggraph.TestTempDir
 
 class JournalKeyValueStoreTest extends KeyValueStoreTest {
   def newStore = {

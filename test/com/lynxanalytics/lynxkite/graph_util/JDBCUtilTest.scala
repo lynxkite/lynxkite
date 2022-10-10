@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.graph_util
+package com.lynxanalytics.biggraph.graph_util
 
 import org.scalatest.funsuite.AnyFunSuite
 

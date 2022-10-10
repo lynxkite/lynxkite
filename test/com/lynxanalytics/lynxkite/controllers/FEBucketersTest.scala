@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_operations._
-import com.lynxanalytics.lynxkite.graph_util._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations._
+import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class FEBucketersTest extends AnyFunSuite with TestGraphOp {
   test("rare string values are not counted") {

@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.lynxkite.controllers.CommonProjectState
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.controllers.CommonProjectState
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DissectTest extends OperationsTestBase {
   test("Take segmentation as base graph") {

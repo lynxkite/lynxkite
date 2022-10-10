@@ -1,18 +1,18 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_operations
-import com.lynxanalytics.lynxkite.graph_operations.DynamicValue
-import com.lynxanalytics.lynxkite.graph_util.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util.Scripting._
 
 import scala.concurrent.{Await, duration}
 
 class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
-  val user = com.lynxanalytics.lynxkite.serving.User.singleuser
+  val user = com.lynxanalytics.biggraph.serving.User.singleuser
 
   test("get center of ExampleGraph with no filters") {
     val g = graph_operations.ExampleGraph()().result

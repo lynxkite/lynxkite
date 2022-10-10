@@ -1,6 +1,6 @@
 {
   "operation" : {
-    "class" : "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph",
+    "class" : "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph",
     "data" : { "unnecessary" : "but present" }
   },
   "inputs" : { },

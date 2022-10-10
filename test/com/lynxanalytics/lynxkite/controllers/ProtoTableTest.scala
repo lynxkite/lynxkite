@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.lynxkite.graph_api.Attribute
-import com.lynxanalytics.lynxkite.graph_operations.ExecuteSQL
+import com.lynxanalytics.biggraph.graph_api.Attribute
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
 
 object SQLTestCases {
   val allColumns = Set("age", "gender", "income", "location")
