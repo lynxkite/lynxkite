@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_operations._
-import com.lynxanalytics.lynxkite.graph_util._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations._
+import com.lynxanalytics.biggraph.graph_util._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
 class FEFiltersTest extends AnyFunSuite with TestGraphOp {
@@ -90,9 +90,9 @@ class FEFiltersTest extends AnyFunSuite with TestGraphOp {
   test("We're backward compatible") {
     def readOld(classpath: String, varName: String) = {
       val oldJson = json.Json.obj(
-        "class" -> ("com.lynxanalytics.lynxkite.graph_operations." + classpath),
+        "class" -> ("com.lynxanalytics.biggraph.graph_operations." + classpath),
         "data" -> json.Json.obj(varName -> 0.0))
-      com.lynxanalytics.lynxkite.graph_api.TypedJson.read[Any](oldJson)
+      com.lynxanalytics.biggraph.graph_api.TypedJson.read[Any](oldJson)
     }
 
     assert(readOld("DoubleLT", "bound") == LT[Double](0.0))

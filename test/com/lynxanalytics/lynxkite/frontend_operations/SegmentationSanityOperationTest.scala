@@ -1,10 +1,10 @@
 // These tests check whether various operations leave segmentations
 // in a healthy state. So, there is no single operation this class
 // is revolving around.
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class SegmentationSanityOperationTest extends OperationsTestBase {
   test("Segmentation handles belongsTo edges properly") {

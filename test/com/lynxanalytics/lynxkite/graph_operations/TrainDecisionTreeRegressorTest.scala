@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_operations.DataForDecisionTreeTests.trainingData
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.trainingData
 
 class TrainDecisionTreeRegressorTest extends ModelTestBase {
   test("test decision tree regression") {

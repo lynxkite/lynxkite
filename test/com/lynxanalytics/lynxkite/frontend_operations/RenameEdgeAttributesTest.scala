@@ -1,4 +1,4 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
 class RenameEdgeAttributesTest extends OperationsTestBase {
   test("Rename edge attributes") {

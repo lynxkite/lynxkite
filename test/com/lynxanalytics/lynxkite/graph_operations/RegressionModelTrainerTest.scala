@@ -1,9 +1,9 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.apache.spark.ml.regression.LinearRegressionModel
-import com.lynxanalytics.lynxkite.graph_util.HadoopFile
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.model._
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.model._
 
 class RegressionModelTrainerTest extends ModelTestBase {
   def checkModel(method: String) {

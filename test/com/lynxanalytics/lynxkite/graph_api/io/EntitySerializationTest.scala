@@ -1,7 +1,7 @@
-package com.lynxanalytics.lynxkite.graph_api.io
+package com.lynxanalytics.biggraph.graph_api.io
 
-import com.lynxanalytics.lynxkite.TestSparkContext
-import com.lynxanalytics.lynxkite.graph_api.Edge
+import com.lynxanalytics.biggraph.TestSparkContext
+import com.lynxanalytics.biggraph.graph_api.Edge
 import org.scalatest.funsuite.AnyFunSuite
 import scala.reflect.runtime.universe._
 

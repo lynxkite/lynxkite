@@ -28,7 +28,7 @@ func OperationInstanceFromJSON(opJSON string) OperationInstance {
 
 func shortOpName(opInst OperationInstance) string {
 	className := opInst.Operation.Class
-	return className[len("com.lynxanalytics.lynxkite.graph_operations."):]
+	return className[len("com.lynxanalytics.biggraph.graph_operations."):]
 }
 
 func NewServer() Server {

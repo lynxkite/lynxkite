@@ -1,13 +1,13 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DapcstpTest extends AnyFunSuite with TestGraphOp {
-  test("shortest path as Steiner-tree", com.lynxanalytics.lynxkite.SphynxOnly) {
+  test("shortest path as Steiner-tree", com.lynxanalytics.biggraph.SphynxOnly) {
     val graph = SmallTestGraph(
       Map(
         0 -> Seq(1, 2),

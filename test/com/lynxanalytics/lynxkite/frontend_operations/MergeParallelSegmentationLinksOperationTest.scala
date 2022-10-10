@@ -1,6 +1,6 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeParallelSegmentationLinksOperationTest extends OperationsTestBase {
   test("Merge parallel segmentation links") {

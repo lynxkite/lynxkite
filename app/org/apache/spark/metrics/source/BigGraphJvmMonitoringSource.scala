@@ -1,7 +1,7 @@
 package org.apache.spark.metrics.source
 
 import com.codahale.metrics.MetricRegistry
-import com.lynxanalytics.lynxkite.spark_util.BigGraphMetricSet
+import com.lynxanalytics.biggraph.spark_util.BigGraphMetricSet
 
 class BigGraphJvmMonitoringSource extends Source {
   override val sourceName = "biggraph_jvm"

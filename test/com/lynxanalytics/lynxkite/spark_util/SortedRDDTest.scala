@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.spark_util
+package com.lynxanalytics.biggraph.spark_util
 
 import org.apache.spark.Partitioner
 import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-import com.lynxanalytics.lynxkite.TestSparkContext
-import com.lynxanalytics.lynxkite.Timed
+import com.lynxanalytics.biggraph.TestSparkContext
+import com.lynxanalytics.biggraph.Timed
 
 import scala.reflect.ClassTag
 
@@ -105,7 +105,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     raw.zipWithUniqueId.map(_.swap).partitionBy(partitioner)
   }
 
-  test("benchmark sorting", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark sorting", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val data = genData(parts, rows, 1).cache
       data.calculate
@@ -132,7 +132,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     }
   }
 
-  ignore("benchmark groupByKey on non-partitioned RDD", com.lynxanalytics.lynxkite.Benchmark) {
+  ignore("benchmark groupByKey on non-partitioned RDD", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val vanilla = genData(7, rows, 1).values.map(x => (x, x)).cache
       vanilla.calculate
@@ -153,7 +153,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     }
   }
 
-  test("benchmark groupByKey on SortedRDD", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark groupByKey on SortedRDD", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .sort(new HashPartitioner(parts)).cache
@@ -175,7 +175,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     }
   }
 
-  test("benchmark join", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark join", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val partitioner = new HashPartitioner(parts)
       val data = genData(parts, rows, 1).sort(partitioner).cache
@@ -201,7 +201,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     }
   }
 
-  test("benchmark distinct", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark distinct", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .sort(new HashPartitioner(parts)).cache
@@ -273,7 +273,7 @@ class SortedRDDTest extends AnyFunSuite with TestSparkContext {
     assert(restricted.collect.toSeq.sorted == filtered.collect.toSeq.sorted)
   }
 
-  test("benchmark mapValues with keys", com.lynxanalytics.lynxkite.Benchmark) {
+  test("benchmark mapValues with keys", com.lynxanalytics.biggraph.Benchmark) {
     class Demo(parts: Int, rows: Int) {
       val sorted = genData(parts, rows, 1).values.map(x => (x, x))
         .sort(new HashPartitioner(parts)).cache

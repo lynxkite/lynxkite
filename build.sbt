@@ -107,7 +107,7 @@ assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.protobuf.**" -> "lynxkite_shaded.com.google.protobuf.@1").inAll,
 )
 
-mainClass in assembly := Some("com.lynxanalytics.lynxkite.LynxKite")
+mainClass in assembly := Some("com.lynxanalytics.biggraph.LynxKite")
 fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
 assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 

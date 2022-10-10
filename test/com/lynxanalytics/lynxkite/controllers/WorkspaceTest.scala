@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.funsuite.AnyFunSuite
 
 import play.api.libs.json
-import com.lynxanalytics.lynxkite._
-import com.lynxanalytics.lynxkite.graph_api.BuiltIns
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class WorkspaceTest extends AnyFunSuite with graph_api.TestGraphOp {
   val controller = new WorkspaceController(this)
@@ -419,7 +419,7 @@ class WorkspaceTest extends AnyFunSuite with graph_api.TestGraphOp {
         user,
         WorkspaceReference("test-parametric-parameters-import-CSV"))
       val workspaceParams = wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
-      val ops = new com.lynxanalytics.lynxkite.frontend_operations.Operations(this)
+      val ops = new com.lynxanalytics.biggraph.frontend_operations.Operations(this)
       val sql = new SQLController(this, ops)
       val guidFuture = sql.importBox(user, csv, workspaceParams)
       val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)

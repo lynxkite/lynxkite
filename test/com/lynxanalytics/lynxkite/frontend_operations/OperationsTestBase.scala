@@ -1,15 +1,15 @@
-package com.lynxanalytics.lynxkite.frontend_operations
+package com.lynxanalytics.biggraph.frontend_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.controllers._
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_operations
-import com.lynxanalytics.lynxkite.graph_util.PrefixRepository
-import com.lynxanalytics.lynxkite.graph_util.Timestamp
-import com.lynxanalytics.lynxkite.serving
-import com.lynxanalytics.lynxkite.graph_api.BuiltIns
+import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 
 trait OperationsTestBase extends AnyFunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString

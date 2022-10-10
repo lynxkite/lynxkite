@@ -1,9 +1,9 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.funsuite.AnyFunSuite
-import com.lynxanalytics.lynxkite.TestTempDir
+import com.lynxanalytics.biggraph.TestTempDir
 
 class TagsTest extends AnyFunSuite with TestTempDir {
   val storeFile = tempDir("TagsTest")

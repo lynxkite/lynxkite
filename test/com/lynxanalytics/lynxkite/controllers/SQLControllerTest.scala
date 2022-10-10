@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.controllers
+package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.lynxkite.frontend_operations.OperationsTestBase
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_operations.DynamicValue
-import com.lynxanalytics.lynxkite.graph_util
-import com.lynxanalytics.lynxkite.graph_util.HadoopFile
-import com.lynxanalytics.lynxkite.serving
+import com.lynxanalytics.biggraph.frontend_operations.OperationsTestBase
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

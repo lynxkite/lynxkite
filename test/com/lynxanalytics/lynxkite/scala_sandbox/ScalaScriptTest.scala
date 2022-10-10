@@ -1,10 +1,10 @@
-package com.lynxanalytics.lynxkite.scala_sandbox
+package com.lynxanalytics.biggraph.scala_sandbox
 
 import org.scalatest.funsuite.AnyFunSuite
 import java.security.AccessControlException
 
-import com.lynxanalytics.lynxkite.graph_api.TestGraphOp
-import com.lynxanalytics.lynxkite.graph_operations.ImportDataFrameTest
+import com.lynxanalytics.biggraph.graph_api.TestGraphOp
+import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
 
 import scala.reflect.runtime.universe._
 
@@ -74,7 +74,7 @@ class ScalaScriptTest extends AnyFunSuite with TestGraphOp {
   }
 
   test("Can't access biggraph classes") {
-    val code = "com.lynxanalytics.lynxkite.graph_util.Timestamp.toString"
+    val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
     val e = intercept[Exception] {
       ScalaScript.run(code)
     }

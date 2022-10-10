@@ -1,13 +1,14 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 
-class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
+class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager with org.scalatest.matchers.should.Matchers {
+  val GUID = "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}"
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager
 
@@ -113,19 +114,19 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
       dir,
       new JsonMigration(
         Map(
-          "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 1,
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
         Map(
-          "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 0 -> identity,
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
           // The input data has version 1. The upgrader for version 0 will not be called.
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
           // From version 1 to version 2 we added the "arg" argument.
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 1 -> {
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
             j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
           },
           // From version 2 to version 3 we removed the "unnecessary" argument.
           // (Unused data in JSON is fine, we only add an upgrader for this for the sake of testing.)
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 2 -> {
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2 -> {
             j => json.JsObject(j.fields.filter(_._1 != "unnecessary"))
           },
         )),
@@ -135,18 +136,18 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
     val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
-    assert(p.vertexSet.toStringStruct.toString ==
-      "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(p.edgeBundle.toStringStruct.toString ==
-      "edges of (CreateSomeGraph of arg=migrated)")
-    assert(p.vertexAttributes("vvv").toStringStruct.toString ==
-      "vattr of (CreateSomeGraph of arg=migrated)")
-    assert(p.edgeAttributes("eee").toStringStruct.toString ==
-      "eattr of (CreateSomeGraph of arg=migrated)")
-    assert(p.segmentation("ms").vertexSet.toStringStruct.toString ==
-      "attrValues of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
-    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
-      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+    p.vertexSet.toString should fullyMatch regex
+      s"$GUID \\(vertices of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.edgeBundle.toString should fullyMatch regex
+      s"$GUID \\(edges of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.vertexAttributes("vvv").toString should fullyMatch regex
+      s"$GUID \\(vattr of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.edgeAttributes("eee").toString should fullyMatch regex
+      s"$GUID \\(eattr of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.segmentation("ms").vertexSet.toString should fullyMatch regex
+      s"$GUID \\(attrValues of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
+    p.segmentation("ms").belongsTo.toString should fullyMatch regex
+      s"$GUID \\(links of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
   }
 
   test("JSON version migration can be retried") {
@@ -163,14 +164,14 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
         dir,
         new JsonMigration(
           Map(
-            "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 1,
-            "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
+            "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
           Map(
-            "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 0 -> identity,
+            "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
             // The input data has version 1. The upgrader for version 0 will not be called.
-            "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
             // Bad migration from version 1 to version 2.
-            "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 1 -> {
+            "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
               j => throw new TestException
             },
           )),
@@ -185,14 +186,14 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
       dir,
       new JsonMigration(
         Map(
-          "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 1,
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
         Map(
-          "com.lynxanalytics.lynxkite.graph_api.WorkspaceFrame" -> 0 -> identity,
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
           // The input data has version 1. The upgrader for version 0 will not be called.
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
           // Correct migration from version 1 to version 2.
-          "com.lynxanalytics.lynxkite.graph_api.CreateSomeGraph" -> 1 -> {
+          "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 1 -> {
             j => json.JsObject(j.fields ++ json.Json.obj("arg" -> "migrated").fields)
           },
         )),
@@ -202,10 +203,10 @@ class MetaGraphManagerTest extends AnyFunSuite with TestMetaGraphManager {
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
     val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
-    assert(p.vertexSet.toStringStruct.toString ==
-      "vertices of (CreateSomeGraph of arg=migrated)")
-    assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
-      "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
+    p.vertexSet.toString should fullyMatch regex
+      s"$GUID \\(vertices of $GUID \\(CreateSomeGraph\\(migrated\\)\\)\\)"
+    p.segmentation("ms").belongsTo.toString should fullyMatch regex
+      s"$GUID \\(links of $GUID \\(FromVertexAttr\\(\\)\\)\\)"
   }
 
   test("JSON read errors are correctly reported") {

@@ -1,12 +1,12 @@
-package com.lynxanalytics.lynxkite.graph_api
+package com.lynxanalytics.biggraph.graph_api
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.lynxanalytics.lynxkite.TestUtils
-import com.lynxanalytics.lynxkite.TestUtils.computeProgress
-import com.lynxanalytics.lynxkite.controllers
-import com.lynxanalytics.lynxkite.graph_operations.EnhancedExampleGraph
-import com.lynxanalytics.lynxkite.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.TestUtils.computeProgress
+import com.lynxanalytics.biggraph.controllers
+import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class SparkDomainTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {
   def newDataManager(sd: SparkDomain) = new DataManager(Seq(new ScalaDomain, sd))

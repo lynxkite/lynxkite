@@ -1,11 +1,11 @@
-package com.lynxanalytics.lynxkite.graph_api.io
+package com.lynxanalytics.biggraph.graph_api.io
 
-import com.lynxanalytics.lynxkite.TestUtils
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_operations.EnhancedExampleGraph
-import com.lynxanalytics.lynxkite.graph_operations.ExampleGraph
-import com.lynxanalytics.lynxkite.graph_operations.HybridEdgeBundle
-import com.lynxanalytics.lynxkite.graph_util.{HadoopFile, PrefixRepository}
+import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.HybridEdgeBundle
+import com.lynxanalytics.biggraph.graph_util.{HadoopFile, PrefixRepository}
 import org.scalatest.funsuite.AnyFunSuite
 
 class EntityIOTest extends AnyFunSuite with TestMetaGraphManager with TestDataManager {

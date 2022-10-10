@@ -1,12 +1,12 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers._
 import scala.util.Random
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class FindModularClusteringByTweaksTest extends AnyFunSuite with TestGraphOp {
   test("example graph") {

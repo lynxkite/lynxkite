@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class ClassifyWithModelTest extends ModelTestBase {
   test("test the k-means clustering model on larger data set with 20 attributes") {
@@ -58,7 +58,7 @@ class ClassifyWithModelTest extends ModelTestBase {
   }
 
   test("test the decision tree classification model") {
-    import com.lynxanalytics.lynxkite.graph_operations.DataForDecisionTreeTests.{
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
       trainingData,
       testDataForClassification,
     }
@@ -88,7 +88,7 @@ class ClassifyWithModelTest extends ModelTestBase {
   }
 
   test("test the decision tree classification model - string attributes") {
-    import com.lynxanalytics.lynxkite.graph_operations.DataForDecisionTreeTests.{
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
       typedTrainingData,
       typedTestDataForClassification,
     }

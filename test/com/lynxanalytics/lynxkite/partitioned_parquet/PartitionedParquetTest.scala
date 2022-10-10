@@ -1,6 +1,6 @@
-package com.lynxanalytics.lynxkite.partitioned_parquet
+package com.lynxanalytics.biggraph.partitioned_parquet
 
-import com.lynxanalytics.lynxkite.TestSparkContext
+import com.lynxanalytics.biggraph.TestSparkContext
 
 class PartitionedParquetTest extends org.scalatest.funsuite.AnyFunSuite with TestSparkContext {
   test("read") {

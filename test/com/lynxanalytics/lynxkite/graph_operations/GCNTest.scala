@@ -1,12 +1,12 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.funsuite.AnyFunSuite
 
 import Math.round
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class GCNTest extends AnyFunSuite with TestGraphOp {
   // Create graph with two disjoint triangles. The target variable is the id of
@@ -38,7 +38,7 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
     get(pred)
   }
 
-  test("train GCN classifier", com.lynxanalytics.lynxkite.SphynxOnly) {
+  test("train GCN classifier", com.lynxanalytics.biggraph.SphynxOnly) {
     for (convOp <- Seq("GCNConv", "GatedGraphConv")) {
       val op = TrainGCNClassifier(
         iterations = 1000,
@@ -65,7 +65,7 @@ class GCNTest extends AnyFunSuite with TestGraphOp {
     }
   }
 
-  test("train GCN regressor", com.lynxanalytics.lynxkite.SphynxOnly) {
+  test("train GCN regressor", com.lynxanalytics.biggraph.SphynxOnly) {
     for (convOp <- Seq("GCNConv", "GatedGraphConv")) {
       val op = TrainGCNRegressor(
         iterations = 1001,

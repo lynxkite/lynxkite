@@ -1,8 +1,8 @@
-package com.lynxanalytics.lynxkite.graph_operations
+package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.lynxkite.graph_api._
-import com.lynxanalytics.lynxkite.graph_api.Scripting._
-import com.lynxanalytics.lynxkite.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import org.scalatest.funsuite.AnyFunSuite
 
 class RandomWalkSampleTest extends AnyFunSuite with TestGraphOp {
@@ -21,7 +21,7 @@ class RandomWalkSampleTest extends AnyFunSuite with TestGraphOp {
   val numOfNodes = 11
   val numOfEdges = 16
 
-  test("one long walk", com.lynxanalytics.lynxkite.SparkOnly) {
+  test("one long walk", com.lynxanalytics.biggraph.SparkOnly) {
     val (vs, es) = run(RandomWalkSample(1, 1, 0.01, 0), g)
     assert(vs.count(_._2 < 3.0) == 3)
     assert(visited(vs) == numOfNodes)
