@@ -681,7 +681,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
       // Unused because we are overriding getOutputs.
       protected def apply(): Unit = ???
-      protected def enabled: com.lynxanalytics.lynxkite.controllers.FEStatus = ???
+      protected def enabled: com.lynxanalytics.biggraph.controllers.FEStatus = ???
     },
   )
 }
