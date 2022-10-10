@@ -1,4 +1,6 @@
 // A persistent key-value storage interface and implementation(s).
+// This is used for the LynxKite journal, which simulates a filesystem
+// where the files are (mostly) workspaces.
 package com.lynxanalytics.biggraph.graph_api
 
 import com.fasterxml.jackson.core.JsonProcessingException
