@@ -31,13 +31,15 @@ import re
 import itertools
 from collections import deque, defaultdict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, Optional, Collection)
+                    TypeVar, Optional, Collection, TYPE_CHECKING)
 import requests
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
 import shutil
 import socketserver
 import lynx.operations
+if TYPE_CHECKING:
+  from pyspark.sql import SparkSession
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
@@ -1016,7 +1018,7 @@ class State:
     data = [[get(c, t) for (c, t) in zip(r, types)] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
-  def spark(self, spark):
+  def spark(self, spark: 'SparkSession'):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
     t = self.persist()
     t.compute()
@@ -1239,7 +1241,7 @@ class InputTable:
     downloaded = self.lk_table.download()
     return pandas.read_parquet(downloaded)
 
-  def spark(self, spark):
+  def spark(self, spark: 'SparkSession'):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
     downloaded = self.lk_table.download()
     return spark.read.parquet("file://" + downloaded)
