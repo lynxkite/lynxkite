@@ -36,6 +36,7 @@ import requests
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
 import shutil
+import socketserver
 import lynx.operations
 
 
@@ -324,11 +325,14 @@ class LynxKite:
   provided, then a connection is created using the following environment variables:
   ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
   ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``, ``LYNXKITE_SIGNED_TOKEN``.
+
+  It can also be used without a running LynxKite instance. In this case pass in a SparkSession
+  as ``spark``. This class will start and stop a LynxKite instance for every computation.
   '''
 
   def __init__(self, username: str = None, password: str = None, address: str = None,
                certfile: str = None, oauth_token: str = None, signed_token: str = None,
-               box_catalog: BoxCatalog = None) -> None:
+               box_catalog: BoxCatalog = None, spark: 'SparkSession' = None) -> None:
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
@@ -353,6 +357,13 @@ class LynxKite:
         'exportVertexAttributesToNeo4j', 'exportEdgeAttributesToNeo4j',
         'exportGraphToNeo4j']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
+
+    if spark:
+      assert address is None, \
+          'Do not specify connection parameters when this class is responsible for starting LynxKite.'
+      self._lynxkite = ManagedLynxKite(spark)
+      self._address = self._lynxkite.address
+      self._lynxkite.start()
 
   def home(self) -> str:
     return f'Users/{self.username()}/'
@@ -852,6 +863,54 @@ class LynxKite:
 
   def set_executors(self, count):
     return self._send('/remote/setExecutors', {'count': count})
+
+
+def add_jar(spark_session_builder: 'SparkSession.Builder'):
+  jar = 'file:///home/darabos/lk/target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar'
+  return spark_session_builder.config("spark.jars", jar)
+
+
+def get_free_ports(n):
+  servers = [socketserver.TCPServer(('localhost', 0), None) for _ in range(n)]
+  for s in servers:
+    s.__enter__()
+  ports = [s.server_address[1] for s in servers]
+  for s in servers:
+    s.__exit__()
+  return ports
+
+
+class ManagedLynxKite:
+  def __init__(self, spark, **kwargs):
+    self.spark = spark
+    self.storage = TemporaryDirectory()
+    tmp = self.storage.name
+    kite_http_port, kite_https_port, sphynx_port = get_free_ports(3)
+    self.set_env(
+        KITE_META_DIR=f'{tmp}/meta',
+        KITE_DATA_DIR=f'file:{tmp}/data',
+        KITE_HTTP_PORT=kite_http_port,
+        KITE_HTTPS_PORT=kite_https_port,
+        SPHYNX_HOST='localhost',
+        SPHYNX_PORT=sphynx_port,
+        ORDERED_SPHYNX_DATA_DIR=f'{tmp}/sphynx/ordered',
+        UNORDERED_SPHYNX_DATA_DIR=f'{tmp}/sphynx/unordered',
+        **kwargs)
+    self.address = f'http://localhost:{kite_http_port}'
+
+  def set_env(self, **kwargs):
+    jvm = self.spark._jvm
+    cfg = jvm.java.util.ArrayList()
+    for k, v in kwargs.items():
+      cfg.append(jvm.Tuple2(k, str(v)))
+    cfg = jvm.scala.collection.JavaConversions.asScalaBuffer(cfg)
+    jvm.com.lynxanalytics.biggraph.Environment.set(cfg)
+
+  def start(self):
+    self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.start()
+
+  def stop(self):
+    self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.stop()
 
 
 class State:
