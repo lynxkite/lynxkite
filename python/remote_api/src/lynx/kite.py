@@ -865,11 +865,6 @@ class LynxKite:
     return self._send('/remote/setExecutors', {'count': count})
 
 
-def add_jar(spark_session_builder: 'SparkSession.Builder'):
-  jar = 'file:///home/darabos/lk/target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar'
-  return spark_session_builder.config("spark.jars", jar)
-
-
 def get_free_ports(n):
   servers = [socketserver.TCPServer(('localhost', 0), None) for _ in range(n)]
   for s in servers:
