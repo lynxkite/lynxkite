@@ -449,7 +449,7 @@ class SparkDomain(
           case s: Scalar[_] =>
             SafeFuture.async({
               val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
-              val jsonString = (HadoopFile(srcPath) / "serialized_data").readAsString
+              val jsonString = (new HadoopFile.DirectHadoopFile(srcPath) / "serialized_data").readAsString
               val value = format.reads(json.Json.parse(jsonString)).get
               new ScalarData(s, value)
             })

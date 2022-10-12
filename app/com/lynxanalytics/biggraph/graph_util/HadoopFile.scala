@@ -94,6 +94,13 @@ object HadoopFile {
   def fs(hadoopFile: HadoopFile) = {
     cache.fs(hadoopFile)
   }
+
+  // A subclass that circumvents the prefix system. Do not use it with user-provided paths.
+  class DirectHadoopFile(override val resolvedName: String) extends HadoopFile("", resolvedName) {
+    override def +(suffix: String): HadoopFile = {
+      new HadoopFile.DirectHadoopFile(resolvedName + suffix)
+    }
+  }
 }
 
 class HadoopFile private (
@@ -110,7 +117,7 @@ class HadoopFile private (
 
   val symbolicName = prefixSymbol + normalizedRelativePath
   // The path with the prefix resolved. This can be passed into other systems.
-  val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
+  def resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (scheme, resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
     case HadoopFile.s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
