@@ -24,7 +24,7 @@ import play.api.libs.json.JsResultException
 
 import scala.util._
 import scala.reflect.runtime.universe.typeTag
-import com.lynxanalytics.sandbox.SimpleGraphEntity
+import com.lynxanalytics.biggraph.scala_sandbox.SimpleGraphEntity
 
 class ParameterHolder(context: Operation.Context) {
   private val metas = collection.mutable.Buffer[OperationParameterMeta]()
@@ -68,7 +68,7 @@ class ParameterHolder(context: Operation.Context) {
         "edgeAttributes" -> typeTag[List[SimpleGraphEntity]],
         "graphAttributes" -> typeTag[List[SimpleGraphEntity]],
       ) ++ context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
-      val evaluator = com.lynxanalytics.sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
+      val evaluator = com.lynxanalytics.biggraph.scala_sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
       evaluator.evaluate(Map(
         "vertexAttributes" -> vertexAttributes,
         "edgeAttributes" -> edgeAttributes,

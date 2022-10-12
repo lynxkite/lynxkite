@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(
@@ -569,7 +569,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 }
 
 object ScalaUtilities {
-  import com.lynxanalytics.sandbox.ScalaScript
+  import com.lynxanalytics.biggraph.scala_sandbox.ScalaScript
 
   def collectIdentifiers[T <: MetaGraphEntity](
       holder: StateMapHolder[T],
@@ -585,7 +585,7 @@ object ScalaUtilities {
 object PythonUtilities {
   import graph_operations.DerivePython._
 
-  val allowed = LoggedEnvironment.envOrElse("KITE_ALLOW_PYTHON", "") match {
+  val allowed = Environment.envOrElse("KITE_ALLOW_PYTHON", "") match {
     case "yes" => true
     case "no" => false
     case "" => false

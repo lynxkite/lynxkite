@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-import com.lynxanalytics.sandbox.ScalaScript
+import com.lynxanalytics.biggraph.scala_sandbox.ScalaScript
 
 import org.apache.spark
 import play.api.libs.json

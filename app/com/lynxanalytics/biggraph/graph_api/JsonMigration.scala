@@ -3,13 +3,13 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.io.File
 import java.util.UUID
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.controllers._
 
 // This file is responsible for the metadata compatibility between versions.
@@ -112,7 +112,7 @@ object MetaRepositoryManager {
     } else {
       val newest = versions.head
       val forcedMigration =
-        LoggedEnvironment.envOrNone("KITE_FORCED_MIGRATION").map(_.toBoolean).getOrElse(false)
+        Environment.envOrNone("KITE_FORCED_MIGRATION").map(_.toBoolean).getOrElse(false)
       if (forcedMigration) {
         log.info("Forced migration requested.")
       }

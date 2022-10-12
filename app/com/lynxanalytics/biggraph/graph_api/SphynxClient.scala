@@ -5,7 +5,7 @@ import _root_.io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import _root_.io.grpc.StatusRuntimeException
 import _root_.io.grpc.stub.StreamObserver
 import com.lynxanalytics.biggraph.graph_api.proto._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import java.io.File
 import scala.reflect.runtime.universe._
 import scala.concurrent.{Promise, Future}

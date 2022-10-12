@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.graph_api.RuntimeContext
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{Environment, logger => log}
 
 import java.sql
 import org.apache.spark.sql.DataFrame
@@ -69,7 +69,7 @@ object JDBCUtil {
   }
 
   val stringPrefixLength =
-    LoggedEnvironment.envOrElse("KITE_JDBC_STRING_PREFIX_LENGTH", "10").toInt
+    Environment.envOrElse("KITE_JDBC_STRING_PREFIX_LENGTH", "10").toInt
 
   // Creates a list of numPartitions conditions for WHERE clauses.
   // It partitions the range between minKey and maxKey by the alphabet.

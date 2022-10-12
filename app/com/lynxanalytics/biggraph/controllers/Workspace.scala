@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import graph_api.MetaGraphManager.StringAsUUID

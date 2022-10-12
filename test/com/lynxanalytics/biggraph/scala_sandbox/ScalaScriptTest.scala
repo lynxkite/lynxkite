@@ -1,4 +1,4 @@
-package com.lynxanalytics.sandbox
+package com.lynxanalytics.biggraph.scala_sandbox
 
 import org.scalatest.funsuite.AnyFunSuite
 import java.security.AccessControlException

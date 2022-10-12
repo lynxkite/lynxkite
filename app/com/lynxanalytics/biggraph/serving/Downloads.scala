@@ -6,7 +6,7 @@ import play.api.mvc
 import scala.collection.JavaConverters._
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 
 case class DownloadFileRequest(
     path: String, // Symbolic path to directory.

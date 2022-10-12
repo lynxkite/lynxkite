@@ -5,7 +5,8 @@ import java.io.File
 import java.util.UUID
 import scala.collection.mutable
 
-import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, Timestamp}
+import com.lynxanalytics.biggraph.Environment
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class SymbolPath(val path: Iterable[Symbol]) extends Iterable[Symbol] with Ordered[SymbolPath] {
   override def equals(p: Any) = {
@@ -242,7 +243,7 @@ object TagRoot {
 
   // Creates an empty root backed in a tmp directory.
   def temporaryRoot: TagRoot = {
-    val tmpRootDir = LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp")
+    val tmpRootDir = Environment.envOrElse("KITE_LOCAL_TMP", "/tmp")
     val currentRepo = s"$tmpRootDir/$Timestamp"
     apply(currentRepo)
   }

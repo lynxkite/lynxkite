@@ -7,7 +7,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import scala.concurrent._
 import scala.util._
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 
 object SafeFuture {
   def async[T](func: => T)(implicit ec: ExecutionContext) =

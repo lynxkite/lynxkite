@@ -19,7 +19,7 @@ import org.apache.hadoop
 import org.apache.spark
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{Environment, logger => log}
 import com.lynxanalytics.biggraph.serving.AccessControl
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.spark_util._
@@ -89,10 +89,17 @@ object HadoopFile {
   private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
   private val cache = new HadoopFileSystemCache(
-    LoggedEnvironment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong)
+    Environment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong)
 
   def fs(hadoopFile: HadoopFile) = {
     cache.fs(hadoopFile)
+  }
+
+  // A subclass that circumvents the prefix system. Do not use it with user-provided paths.
+  class DirectHadoopFile(override val resolvedName: String) extends HadoopFile("", resolvedName) {
+    override def +(suffix: String): HadoopFile = {
+      new HadoopFile.DirectHadoopFile(resolvedName + suffix)
+    }
   }
 }
 
@@ -110,7 +117,7 @@ class HadoopFile private (
 
   val symbolicName = prefixSymbol + normalizedRelativePath
   // The path with the prefix resolved. This can be passed into other systems.
-  val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
+  def resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
   val (scheme, resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
     case HadoopFile.s3nWithCredentialsPattern(scheme, key, secret, relPath) =>

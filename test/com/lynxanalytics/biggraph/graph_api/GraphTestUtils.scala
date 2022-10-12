@@ -15,7 +15,7 @@ import com.lynxanalytics.biggraph.graph_util.{PrefixRepository, HadoopFile, Time
 import com.lynxanalytics.biggraph.registerStandardPrefixes
 import com.lynxanalytics.biggraph.standardDataPrefix
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -145,13 +145,13 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
   }
 
   def cleanDataManager: DataManager = {
-    val withSphynx = LoggedEnvironment.envOrElse("WITH_SPHYNX", "false").toBoolean
+    val withSphynx = Environment.envOrElse("WITH_SPHYNX", "false").toBoolean
     if (withSphynx) {
       val dataDir = cleanDataManagerDir()
       val host = "localhost"
-      val port = LoggedEnvironment.envOrNone("SPHYNX_PORT").get
-      val certDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR").get
-      val unorderedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR").get
+      val port = Environment.envOrNone("SPHYNX_PORT").get
+      val certDir = Environment.envOrNone("SPHYNX_CERT_DIR").get
+      val unorderedDataDir = Environment.envOrNone("UNORDERED_SPHYNX_DATA_DIR").get
 
       val dm = new DataManager(Seq(
         new OrderedSphynxDisk(host, port.toInt, certDir),

@@ -11,7 +11,7 @@ import org.apache.spark.rdd.ShuffledRDD
 import scala.collection.mutable
 import scala.reflect._
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.

@@ -14,7 +14,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.spark
 import scala.collection.mutable
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.FileBasedObjectCache
 import com.lynxanalytics.biggraph.spark_util.Implicits._

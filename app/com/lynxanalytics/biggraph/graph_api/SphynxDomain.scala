@@ -2,7 +2,7 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph
 import play.api.libs.json.Json
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types._
@@ -19,7 +19,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SphynxDomain",
-      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = biggraph.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   val client = new SphynxClient(host, port, certDir)
   val supportedTypes = List(
     typeTag[String],

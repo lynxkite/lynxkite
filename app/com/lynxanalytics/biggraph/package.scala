@@ -1,12 +1,12 @@
 // Package-level variables. Creates our logger and the BigGraphEnvironment.
 package com.lynxanalytics
 
-import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, PrefixRepository}
+import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import org.slf4j.LoggerFactory
 import scala.reflect.runtime.universe._
 
 package object biggraph {
-  val bigGraphLogger = LoggerFactory.getLogger("LynxKite")
+  val logger = LoggerFactory.getLogger("LynxKite")
 
   val standardDataPrefix = "DATA$"
 
@@ -15,20 +15,20 @@ package object biggraph {
   }
 
   lazy val BigGraphProductionEnvironment: BigGraphEnvironment = {
-    bigGraphLogger.info("Starting to initialize production Kite environment")
+    logger.info("Starting to initialize production Kite environment")
     def clean(s: String) = s.reverse.dropWhile(_ == '/').reverse // Drop trailing slashes.
     val repoDirs = {
       val metaDir =
-        clean(LoggedEnvironment.envOrError(
+        clean(Environment.envOrError(
           "KITE_META_DIR",
           "Please set KITE_META_DIR and KITE_DATA_DIR."))
       val dataDir =
-        clean(LoggedEnvironment.envOrError(
+        clean(Environment.envOrError(
           "KITE_DATA_DIR",
           "Please set KITE_DATA_DIR.",
           confidential = true))
       val ephemeralDataDir =
-        LoggedEnvironment.envOrNone("KITE_EPHEMERAL_DATA_DIR", confidential = true).map(clean)
+        Environment.envOrNone("KITE_EPHEMERAL_DATA_DIR", confidential = true).map(clean)
       new RepositoryDirs(metaDir, standardDataPrefix, dataDir, ephemeralDataDir)
     }
     repoDirs.forcePrefixRegistration()
@@ -37,7 +37,7 @@ package object biggraph {
     val res = BigGraphEnvironmentImpl.createStaticDirEnvironment(
       repoDirs,
       new StaticSparkSessionProvider())
-    bigGraphLogger.info("Production Kite environment initialized")
+    logger.info("Production Kite environment initialized")
     res
   }
 }

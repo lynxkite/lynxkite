@@ -5,13 +5,13 @@ package com.lynxanalytics.biggraph.graph_api
 import java.util.UUID
 import collection.concurrent.TrieMap
 
-import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph
 
 class ScalaDomain extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "ScalaDomain",
-      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = biggraph.Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
 
   private val entityCache = TrieMap[UUID, Any]()
 
