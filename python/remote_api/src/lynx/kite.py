@@ -329,7 +329,14 @@ class LynxKite:
   ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``, ``LYNXKITE_SIGNED_TOKEN``.
 
   It can also be used without a running LynxKite instance. In this case pass in a SparkSession
-  as ``spark``. This class will start and stop a LynxKite instance for every computation.
+  as ``spark``. This class will start a temporary LynxKite instance automatically.
+  The SparkSession must be configured with the LynxKite jar. There are two ways to do this::
+
+    pyspark --jars lynxkite-X.X.X.jar my_script.py
+
+  Or within your Python code::
+
+    spark = SparkSession.builder.config('spark.jars', 'lynxkite-X.X.X.jar').getOrCreate()
   '''
 
   def __init__(self, username: str = None, password: str = None, address: str = None,
