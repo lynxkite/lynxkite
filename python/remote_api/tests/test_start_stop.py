@@ -13,7 +13,7 @@ class TestStartStop(unittest.TestCase):
 
   def test_can_run_lynxkite_from_python(self):
     # Create a Spark session with the LynxKite jar.
-    spark = SparkSession.builder.config('spark.jars', 'file://' + jar).getOrCreate()
+    spark = SparkSession.builder.config('spark.jars', 'file:' + jar).getOrCreate()
     # Pass this Spark session to LynxKite.
     lk = lynx.kite.LynxKite(spark=spark)
     # Run some LynxKite operations.
