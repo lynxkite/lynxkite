@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.controllers.BoxOutputKind
+import com.lynxanalytics.biggraph.{logger => log}
 
 import Scripting._
 import DerivePython._
@@ -69,7 +70,12 @@ object DeriveR extends OpFromJson {
     // Deduplicate. Later entry replaces earlier entry.
     val fieldMap = fields.map(f => f.fullName -> f).toMap
     val fullNames = fields.map(_.fullName)
-    fullNames.distinct.map(fieldMap(_))
+    val res = fullNames.distinct.map(fieldMap(_))
+    log.error(s"outputFields - outputs: $outputs")
+    log.error(s"outputFields - fieldMap: $fieldMap")
+    log.error(s"outputFields - fullNames: $fullNames")
+    log.error(s"outputFields - res: $res")
+    res
   }
 
   def derive(

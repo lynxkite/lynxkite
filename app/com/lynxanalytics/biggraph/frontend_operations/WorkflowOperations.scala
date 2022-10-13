@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.InducedEdgeBundle
+import com.lynxanalytics.biggraph.{logger => log}
 
 class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
@@ -673,6 +674,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
                   case _ => "double"
                 })
               } ++ rOutputs
+            log.error(s"DeriveR outputs: $outputs")
             val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
             Map(context.box.output("output") -> BoxOutputState.from(result))
         }

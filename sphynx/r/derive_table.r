@@ -13,8 +13,11 @@ eval(parse(text = code))
 print("USER CODE FINISHED")
 
 # Save outputs.
+print(params[["outputFields"]])
 for (t in names(outputs)) {
+    print(t)
     fields <- params[["outputFields"]]
     fs <- fields[fields$parent == t, ]
+    print(fs$name)
     output_parquet(t, get(t)[fs$name])
 }
