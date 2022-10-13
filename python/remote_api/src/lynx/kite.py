@@ -886,6 +886,7 @@ def get_free_ports(n):
 
 class ManagedLynxKite:
   def __init__(self, spark, **kwargs):
+    self.assert_jar_is_loaded(spark)
     self.spark = spark
     self.storage = TemporaryDirectory()
     tmp = self.storage.name
@@ -901,6 +902,11 @@ class ManagedLynxKite:
         UNORDERED_SPHYNX_DATA_DIR=f'{tmp}/sphynx/unordered',
         **kwargs)
     self.address = f'http://localhost:{kite_http_port}'
+
+  def assert_jar_is_loaded(self, spark):
+    assert (
+        not isinstance(spark._jvm.com.lynxanalytics.biggraph.LynxKite, type(spark._jvm.com.nonexistent.package))), \
+        'The LynxKite jar has not been loaded in this SparkSession.'
 
   def set_env(self, **kwargs):
     jvm = self.spark._jvm
