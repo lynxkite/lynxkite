@@ -24,7 +24,7 @@ graph_attributes$average_age <- mean(vs$age)
           """,
         ),
       )
-      .project
+      .output("output").project
     assert(
       get(p.vertexAttributes("with_title").runtimeSafeCast[String]) ==
         Map(
@@ -67,7 +67,7 @@ vs <- vs %>%
   rowwise() %>%
   mutate(s = round(sum(v)))
           """))
-      .project
+      .output("output").project
     assert(
       get(p.vertexAttributes("s").runtimeSafeCast[Double]) ==
         Map(0 -> 61.0, 1 -> 55.0, 2 -> 151.0, 3 -> 6.0))

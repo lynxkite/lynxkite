@@ -638,15 +638,15 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     "Compute in R",
     defaultIcon,
     category,
-    List("graph"),
-    List("graph"),
+    List("input"),
+    List("output"),
     new SmartOperation(_) {
       params ++= List(
         Param("inputs", "Inputs", defaultValue = "<infer from code>"),
         Param("outputs", "Outputs", defaultValue = "<infer from code>"),
         Code("code", "R code", language = "r"),
       )
-      val input = context.inputs("graph")
+      val input = context.inputs("input")
       private def rInputs = splitParam("inputs")
       private def rOutputs = splitParam("outputs")
       override def summary = {
@@ -660,13 +660,11 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         graph_operations.DeriveR.assertAllowed()
         input.kind match {
           case BoxOutputKind.Project =>
-            val project = projectInput("graph")
+            val project = projectInput("input")
             graph_operations.DeriveR.derive(params("code"), rInputs, rOutputs, project)
-            Map(context.box.output("graph") -> BoxOutputState.from(project))
+            Map(context.box.output("output") -> BoxOutputState.from(project))
           case BoxOutputKind.Table =>
-            // We named the input and output before adding table support.
-            // It's bad naming here, but lets us keep compatibility.
-            val table = tableInput("graph")
+            val table = tableInput("input")
             val outputs: Seq[String] =
               table.schema.fields.map { f =>
                 s"df.${f.name}: " + (f.dataType match {
@@ -676,7 +674,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
                 })
               } ++ rOutputs
             val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
-            Map(context.box.output("graph") -> BoxOutputState.from(result))
+            Map(context.box.output("output") -> BoxOutputState.from(result))
         }
       }
       // Unused because we are overriding getOutputs.
