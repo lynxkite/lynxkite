@@ -1,0 +1,6 @@
+/.git
+/docker
+/target
+/databricks
+/web/node_modules
+.mypy_cache
