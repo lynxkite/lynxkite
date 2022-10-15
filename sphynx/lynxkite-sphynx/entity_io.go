@@ -125,6 +125,7 @@ func (eb *EdgeBundle) readFromOrdered(rec array.Record) error {
 	eb.Src = make([]SphynxId, len(ids))
 	eb.Dst = make([]SphynxId, len(ids))
 	eb.EdgeMapping = make([]int64, len(ids))
+	// These files can come from Spark, Go, Python, or R. We accept multiple formats.
 	switch rec.Column(0).(type) {
 	case *array.Int64:
 		src := rec.Column(0).(*array.Int64).Int64Values()
