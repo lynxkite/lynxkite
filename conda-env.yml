@@ -10,8 +10,10 @@ channels:
 - conda-forge
 - r
 dependencies:
+- zip
 - unzip
 - make
+- wget
 # For LynxKite backend.
 - sbt
 - openjdk==11.0.15
