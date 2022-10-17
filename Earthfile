@@ -38,6 +38,7 @@ sphynx-build:
   RUN cd sphynx; go mod download
   COPY sphynx sphynx
   RUN sphynx/build.sh
+  SAVE ARTIFACT app/com/lynxanalytics/biggraph/graph_api/proto
   SAVE ARTIFACT sphynx/.build/lynxkite-sphynx
   SAVE ARTIFACT sphynx/.build/zip/lynxkite-sphynx.zip
 
@@ -52,6 +53,7 @@ web-build:
 
 app-build:
   FROM +sbt-deps
+  COPY +sphynx-build/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY build.sbt .
   COPY project project
   COPY conf conf
@@ -105,7 +107,6 @@ frontend-test:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   RUN xvfb-run -a tools/with_lk.sh tools/e2e_test.sh
-
 
 docker:
   FROM mambaorg/micromamba:jammy
