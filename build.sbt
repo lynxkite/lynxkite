@@ -165,7 +165,7 @@ def myStage = Command.command("stage") { state =>
 commands += myStage
 
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
-testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
+testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "target/sbttest.out", "-l", "Benchmark"))
 
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
@@ -192,19 +192,7 @@ def dirContents(baseDir: File, dirs: String*) = {
 Compile / resourceDirectory := baseDirectory.value / "conf"
 Compile / unmanagedResourceDirectories += baseDirectory.value / "sphynx/.build/zip"
 
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring")
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
-mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
-mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "r")
-mappings in Universal ++= Seq(
-  file("tools/runtime-env.yml") -> "tools/runtime-env.yml",
-  file("tools/runtime-env-cuda.yml") -> "tools/runtime-env-cuda.yml",
-  file("tools/rmoperation.py") -> "tools/rmoperation.py",
-  file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
-  file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
 sourceDirectory in Assets := new File("web/dist")
 

@@ -6,10 +6,12 @@ COPY conda-env.yml .
 RUN micromamba install -y -n base -f conda-env.yml
 # Extra packages for our convenience.
 RUN micromamba install -y -n base -c conda-forge vim
-# Activate the environment for every command.
 USER root
+# Let us have Docker in the build environment.
+DO github.com/earthly/lib+INSTALL_DIND
 # activate-r-base.sh is slow or hangs.
 RUN echo > /opt/conda/etc/conda/activate.d/activate-r-base.sh
+# Activate the environment for every command.
 COPY earthly/sh /bin/sh
 USER mambauser
 
@@ -30,15 +32,18 @@ npm-deps:
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules
 
-sphynx-build:
+grpc:
   COPY sphynx/go.mod sphynx/go.sum sphynx/proto_compile.sh sphynx/sphynx_common.sh sphynx/
   COPY sphynx/proto/*.proto sphynx/proto/
   RUN mkdir app; sphynx/proto_compile.sh
+  SAVE ARTIFACT app/com/lynxanalytics/biggraph/graph_api/proto
+
+sphynx-build:
+  FROM +grpc
   # Download dependencies.
   RUN cd sphynx; go mod download
   COPY sphynx sphynx
   RUN sphynx/build.sh
-  SAVE ARTIFACT app/com/lynxanalytics/biggraph/graph_api/proto
   SAVE ARTIFACT sphynx/.build/lynxkite-sphynx
   SAVE ARTIFACT sphynx/.build/zip/lynxkite-sphynx.zip
 
@@ -53,19 +58,27 @@ web-build:
 
 app-build:
   FROM +sbt-deps
-  COPY +sphynx-build/proto app/com/lynxanalytics/biggraph/graph_api/proto
+  COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY build.sbt .
   COPY project project
   COPY conf conf
   COPY app app
+  COPY built-ins built-ins
   RUN sbt compile
 
 backend-test-spark:
   FROM +app-build
-  COPY .scalafmt.conf .
   COPY test test
   COPY test_backend.sh .
   RUN ./test_backend.sh
+
+backend-test-docker:
+  FROM +app-build
+  COPY test test
+  USER root
+  WITH DOCKER
+    RUN sbt 'testOnly -- -n RequiresDocker'
+  END
 
 backend-test-sphynx:
   FROM +app-build

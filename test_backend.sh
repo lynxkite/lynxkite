@@ -56,9 +56,9 @@ if $INTERACTIVE; then
   sbt
 else
   if $WITH_SPHYNX; then
-    sbt test:scalafmt "testOnly -- -l SparkOnly"
+    sbt "testOnly -- -l 'SparkOnly RequiresDocker'"
   else
-    sbt test:scalafmt "testOnly -- -l SphynxOnly"
+    sbt "testOnly -- -l 'SphynxOnly RequiresDocker'"
   fi
 fi
 # We'll check if the logfile contains 'future failed' lines; these
