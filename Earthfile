@@ -14,6 +14,7 @@ RUN echo > /opt/conda/etc/conda/activate.d/activate-r-base.sh
 # Activate the environment for every command.
 COPY earthly/sh /bin/sh
 USER mambauser
+SAVE IMAGE --push us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/lk-build-base:latest
 
 sbt-deps:
   # Compile an empty file, just to trigger downloading of the dependencies.
@@ -97,6 +98,11 @@ assembly:
   RUN mv target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar lynxkite.jar
   SAVE ARTIFACT lynxkite.jar
 
+bash:
+  FROM +assembly
+  COPY test test
+  RUN --interactive bash
+
 python-test:
   COPY tools/wait_for_port.sh tools/
   COPY tools/with_lk.sh tools/
@@ -105,6 +111,7 @@ python-test:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   RUN tools/with_lk.sh python/remote_api/test.sh
+  SAVE IMAGE --push us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/lk-python-test-done:latest
 
 frontend-test:
   USER root
