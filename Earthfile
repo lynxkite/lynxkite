@@ -8,6 +8,7 @@ RUN micromamba install -y -n base -f conda-env.yml
 RUN micromamba install -y -n base -c conda-forge vim
 # Activate the environment for every command.
 USER root
+# activate-r-base.sh is slow or hangs.
 RUN echo > /opt/conda/etc/conda/activate.d/activate-r-base.sh
 COPY earthly/sh /bin/sh
 USER mambauser
@@ -64,7 +65,16 @@ app-build:
   SAVE ARTIFACT lynxkite.jar
 
 docker:
-  #FROM mambaorg/micromamba:jammy
+  FROM mambaorg/micromamba:jammy
+  COPY tools/runtime-env.yml .
+  RUN micromamba install -y -n base -f runtime-env.yml
   COPY +app-build/lynxkite.jar .
   COPY conf/kiterc_template .
+  CMD ["bash", "-c", ". kiterc_template; spark-submit lynxkite.jar"]
   SAVE IMAGE lk
+
+run:
+  LOCALLY
+  WITH DOCKER --load=+docker
+    RUN docker run --rm -p2200:2200 lk
+  END
