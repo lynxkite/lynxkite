@@ -91,6 +91,22 @@ python-test:
   COPY test/localhost.self-signed.cert* test/
   RUN tools/with_lk.sh python/remote_api/test.sh
 
+frontend-test:
+  USER root
+  RUN apt-get update && apt-get install -y xvfb
+  RUN apt-get update && apt-get install -y chromium-browser
+  USER mambauser
+  COPY tools/wait_for_port.sh tools/
+  COPY tools/with_lk.sh tools/
+  COPY tools/e2e_test.sh tools/
+  COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
+  COPY +npm-deps/node_modules web/node_modules
+  COPY web web
+  COPY conf/kiterc_template conf/
+  COPY test/localhost.self-signed.cert* test/
+  RUN xvfb-run -a tools/with_lk.sh tools/e2e_test.sh
+
+
 docker:
   FROM mambaorg/micromamba:jammy
   COPY tools/runtime-env.yml .
