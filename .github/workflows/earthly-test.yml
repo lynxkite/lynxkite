@@ -3,6 +3,9 @@ on: pull_request
 
 jobs:
   backend-test-spark:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
     env:
       FORCE_COLOR: 1
@@ -31,6 +34,9 @@ jobs:
       run: earthly --ci +backend-test-spark
 
   backend-test-sphynx:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
     env:
       FORCE_COLOR: 1
@@ -59,6 +65,9 @@ jobs:
       run: earthly --ci +backend-test-sphynx
 
   python-test:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
     env:
       FORCE_COLOR: 1
