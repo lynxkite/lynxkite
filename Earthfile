@@ -57,18 +57,45 @@ app-build:
   COPY conf conf
   COPY app app
   RUN sbt compile
-  # And now the final assembly!
+
+backend-test-spark:
+  FROM +app-build
+  COPY .scalafmt.conf .
+  COPY test test
+  COPY test_backend.sh .
+  RUN ./test_backend.sh
+
+backend-test-sphynx:
+  FROM +app-build
+  COPY .scalafmt.conf .
+  COPY tools/wait_for_port.sh tools/
+  COPY test test
+  COPY test_backend.sh .
+  COPY +sphynx-build/lynxkite-sphynx sphynx/.build/lynxkite-sphynx
+  RUN ./test_backend.sh -s
+
+assembly:
+  FROM +app-build
   COPY +web-build/dist web/dist
   COPY +sphynx-build/lynxkite-sphynx.zip sphynx/.build/zip/lynxkite-sphynx.zip
   RUN sbt assembly
   RUN mv target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar lynxkite.jar
   SAVE ARTIFACT lynxkite.jar
 
+python-test:
+  COPY tools/wait_for_port.sh tools/
+  COPY tools/with_lk.sh tools/
+  COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
+  COPY python python
+  COPY conf/kiterc_template conf/
+  COPY test/localhost.self-signed.cert* test/
+  RUN tools/with_lk.sh python/remote_api/test.sh
+
 docker:
   FROM mambaorg/micromamba:jammy
   COPY tools/runtime-env.yml .
   RUN micromamba install -y -n base -f runtime-env.yml
-  COPY +app-build/lynxkite.jar .
+  COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
   CMD ["bash", "-c", ". kiterc_template; spark-submit lynxkite.jar"]
   SAVE IMAGE lk
