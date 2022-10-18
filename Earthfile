@@ -14,7 +14,7 @@ RUN echo > /opt/conda/etc/conda/activate.d/activate-r-base.sh
 # Activate the environment for every command.
 COPY earthly/sh /bin/sh
 USER mambauser
-SAVE IMAGE --push us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/lk-build-base:latest
+SAVE IMAGE --cache-hint
 
 sbt-deps:
   # Compile an empty file, just to trigger downloading of the dependencies.
@@ -23,6 +23,7 @@ sbt-deps:
   RUN mkdir dependency-licenses && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md dependency-licenses/scala.md
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT /home/mambauser/.cache/coursier
+  SAVE IMAGE --cache-hint
 
 npm-deps:
   COPY web/package.json web/yarn.lock web/
@@ -32,6 +33,7 @@ npm-deps:
   RUN cd web; yarn licenses generate-disclaimer > ../dependency-licenses/javascript.txt
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules
+  SAVE IMAGE --cache-hint
 
 grpc:
   COPY sphynx/go.mod sphynx/go.sum sphynx/proto_compile.sh sphynx/sphynx_common.sh sphynx/
@@ -47,6 +49,7 @@ sphynx-build:
   RUN sphynx/build.sh
   SAVE ARTIFACT sphynx/.build/lynxkite-sphynx
   SAVE ARTIFACT sphynx/.build/zip/lynxkite-sphynx.zip
+  SAVE IMAGE --cache-hint
 
 web-build:
   COPY +npm-deps/node_modules web/node_modules
@@ -56,6 +59,7 @@ web-build:
   COPY conf/kiterc_template conf/
   RUN cd web; npx gulp
   SAVE ARTIFACT web/dist
+  SAVE IMAGE --cache-hint
 
 app-build:
   FROM +sbt-deps
@@ -66,12 +70,14 @@ app-build:
   COPY app app
   COPY built-ins built-ins
   RUN sbt compile
+  SAVE IMAGE --cache-hint
 
 backend-test-spark:
   FROM +app-build
   COPY test test
   COPY test_backend.sh .
   RUN ./test_backend.sh
+  SAVE IMAGE --cache-hint
 
 backend-test-docker:
   FROM +app-build
@@ -89,6 +95,7 @@ backend-test-sphynx:
   COPY test_backend.sh .
   COPY +sphynx-build/lynxkite-sphynx sphynx/.build/lynxkite-sphynx
   RUN ./test_backend.sh -s
+  SAVE IMAGE --cache-hint
 
 assembly:
   FROM +app-build
@@ -111,7 +118,7 @@ python-test:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   RUN tools/with_lk.sh python/remote_api/test.sh
-  SAVE IMAGE --push us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/lk-python-test-done:latest
+  SAVE IMAGE --cache-hint
 
 frontend-test:
   USER root

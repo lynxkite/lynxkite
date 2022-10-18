@@ -17,6 +17,12 @@ jobs:
       with:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
+        token_format: 'access_token'
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: 'us-central1-docker.pkg.dev'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
     - name: Put back the git branch into git (Earthly uses it for tagging)
       run: |
         branch=""
@@ -31,7 +37,7 @@ jobs:
     - name: Earthly version
       run: earthly --version
     - name: Run backend tests on Spark
-      run: earthly --ci +backend-test-spark
+      run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +backend-test-spark
 
   backend-test-sphynx:
     permissions:
@@ -48,6 +54,12 @@ jobs:
       with:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
+        token_format: 'access_token'
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: 'us-central1-docker.pkg.dev'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
     - name: Put back the git branch into git (Earthly uses it for tagging)
       run: |
         branch=""
@@ -62,7 +74,7 @@ jobs:
     - name: Earthly version
       run: earthly --version
     - name: Run backend tests with Sphynx
-      run: earthly --ci +backend-test-sphynx
+      run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +backend-test-sphynx
 
   python-test:
     permissions:
@@ -79,6 +91,12 @@ jobs:
       with:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
+        token_format: 'access_token'
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: 'us-central1-docker.pkg.dev'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
     - name: Put back the git branch into git (Earthly uses it for tagging)
       run: |
         branch=""
@@ -93,4 +111,4 @@ jobs:
     - name: Earthly version
       run: earthly --version
     - name: Run Python test
-      run: earthly --ci +python-test
+      run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +python-test
