@@ -1,12 +1,13 @@
-name: Update Earthly cache
+name: Actions to take when a PR is merged.
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  build:
+  update-earthly-cache:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
     env:
       FORCE_COLOR: 1
@@ -18,6 +19,12 @@ jobs:
       with:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
+        token_format: 'access_token'
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: 'us-central1-docker.pkg.dev'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
     - name: Put back the git branch into git (Earthly uses it for tagging)
       run: |
         branch=""
@@ -31,5 +38,5 @@ jobs:
       run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.26/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
-    - name: Run build
-      run: earthly --ci --push +docker
+    - name: Push updated cache.
+      run: earthly --push --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +all-ci

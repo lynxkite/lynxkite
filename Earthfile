@@ -152,3 +152,11 @@ run:
   WITH DOCKER --load=+docker
     RUN docker run --rm -p2200:2200 lk
   END
+
+all-ci:
+  # Build this target with --push to update the Earthly cache.
+  BUILD +backend-test-spark
+  BUILD +backend-test-sphynx
+  BUILD +python-test
+  # TODO: Re-enable frontend tests.
+  # BUILD +frontend-test
