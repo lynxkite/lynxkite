@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
   // Play and Spark depend on different Netty versions. We help them decide here.
   "io.netty" % "netty-all" % "4.1.72.Final",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
-  "org.scalatest" %% "scalatest" % "3.2.14" % "test",
+  "org.scalatest" %% "scalatest" % "3.2.7" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   // For accessing S3 fs from local instance.
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
@@ -202,7 +202,3 @@ mappings in Universal ~= {
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 onLoadMessage := "" // Skip Play Framework banner.
-
-// Parallel execution results in spurious stack traces: https://github.com/scalatest/scalatest/issues/556
-parallelExecution in Test := false
-fork in Test := false
