@@ -96,6 +96,8 @@ backend-test-sphynx:
   COPY tools/wait_for_port.sh tools/
   COPY test test
   COPY test_backend.sh .
+  COPY sphynx/python sphynx/python
+  COPY sphynx/r sphynx/r
   COPY +sphynx-build/lynxkite-sphynx sphynx/.build/lynxkite-sphynx
   RUN ./test_backend.sh -s
   SAVE IMAGE --cache-hint
