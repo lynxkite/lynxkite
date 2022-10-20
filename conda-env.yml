@@ -1,7 +1,5 @@
-# Install this before running "make":
-#
-#   conda update env -f conda-env.yml
-#
+# The full list of Conda dependencies for building and running LynxKite.
+# For a more limited list please see conda-env.sh.
 channels:
 - rapidsai
 - pyg

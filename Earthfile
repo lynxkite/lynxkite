@@ -2,13 +2,11 @@ VERSION --use-copy-include-patterns 0.6
 FROM mambaorg/micromamba:jammy
 RUN mkdir /home/mambauser/lk
 WORKDIR /home/mambauser/lk
-COPY conda-env.yml .
-RUN micromamba install -y -n base -f conda-env.yml
+COPY conda-env.* .
+RUN ./conda-env.sh build > env.yml && micromamba install -y -n base -f env.yml
 # Extra packages for our convenience.
 RUN micromamba install -y -n base -c conda-forge vim
 USER root
-# Let us have Docker in the build environment.
-DO github.com/earthly/lib+INSTALL_DIND
 # activate-r-base.sh is slow or hangs.
 RUN echo > /opt/conda/etc/conda/activate.d/activate-r-base.sh
 # Activate the environment for every command.
@@ -64,8 +62,6 @@ web-build:
 app-build:
   FROM +sbt-deps
   COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
-  COPY build.sbt .
-  COPY project project
   COPY conf conf
   COPY app app
   COPY built-ins built-ins
@@ -80,9 +76,16 @@ backend-test-spark:
   SAVE IMAGE --cache-hint
 
 backend-test-docker:
-  FROM +app-build
-  COPY test test
+  FROM +sbt-deps
   USER root
+  DO github.com/earthly/lib+INSTALL_DIND
+  USER mambauser
+  COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
+  COPY conf conf
+  COPY app app
+  COPY built-ins built-ins
+  COPY test test
+  RUN sbt compile
   WITH DOCKER
     RUN sbt 'testOnly -- -n RequiresDocker'
   END
@@ -137,8 +140,8 @@ frontend-test:
 
 docker:
   FROM mambaorg/micromamba:jammy
-  COPY tools/runtime-env.yml .
-  RUN micromamba install -y -n base -f runtime-env.yml
+  COPY conda-env.* .
+  RUN ./conda-env.sh > env.yml && micromamba install -y -n base -f env.yml
   COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
   CMD ["bash", "-c", ". kiterc_template; spark-submit lynxkite.jar"]
