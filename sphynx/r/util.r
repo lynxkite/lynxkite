@@ -36,7 +36,12 @@ input_edges <- function(name) {
 }
 
 input_parquet <- function(name) {
-    open_dataset(sources = file.path(datadir, inputs[[name]]), format = "parquet")
+    ds <- open_dataset(sources = file.path(datadir, inputs[[name]]), format = "parquet")
+    # If the table is coming from Spark, the metadata will contain the schema.
+    # This would result in the columns added in R being invisible in Spark.
+    # So we just delete all metadata. https://issues.apache.org/jira/browse/SPARK-40873
+    ds$schema$metadata <- NULL
+    ds
 }
 input_one_table <- function(name) {
     read_feather(file.path(datadir, inputs[[name]], "data.arrow"))
@@ -56,9 +61,6 @@ input_scalar <- function(name) {
 }
 
 output_parquet <- function(name, values) {
-    print("output_parquet")
-    print(name)
-    print(values)
     d <- file.path(datadir, outputs[[name]])
     write_dataset(values, d)
 }
