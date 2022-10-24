@@ -108,7 +108,7 @@ assembly:
   COPY +sphynx-build/lynxkite-sphynx.zip sphynx/.build/zip/lynxkite-sphynx.zip
   RUN sbt assembly
   RUN mv target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar lynxkite.jar
-  SAVE ARTIFACT lynxkite.jar
+  SAVE ARTIFACT lynxkite.jar AS LOCAL lynxkite.jar
 
 bash:
   FROM +assembly
