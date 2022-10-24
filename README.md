@@ -50,7 +50,17 @@ If you find any bugs, have any questions, feature requests or comments, please
 [file an issue](https://github.com/lynxkite/lynxkite/issues/new)
 or email us at lynxkite@lynxkite.com.
 
-You can install LynxKite's dependencies (Scala, Node.js, Go) with
+### Containerized build
+
+If you build LynxKite with Earthly, you don't have to install anything on your
+system except Earthly and get really reliable builds.
+
+1. Install [**Earthly**](https://earthly.dev/get-earthly).
+2. Run `earthly +run` to build and run LynxKite. See the `Earthfile` for other targets.
+
+### Native build
+
+You can install LynxKite's dependencies (Scala, Node.js, Go) locally with
 [Conda](https://docs.conda.io/en/latest/miniconda.html).
 
 Before the first build:
@@ -65,7 +75,7 @@ We use `make` for building the whole project.
     make
 
 LynxKite can be run as a fat jar started with `spark-submit`. See `run.sh` for an example of this.
-During development you can avoid building a far jar each time like this:
+During development you can avoid building a fat jar each time like this:
 
     sbt stage # (Or run "stage" in a long-lived SBT session.)
     target/universal/stage/bin/lynxkite
