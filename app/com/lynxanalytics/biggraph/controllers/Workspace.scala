@@ -398,7 +398,7 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Plot, Some(plot))
   }
 
-  def from(
+  def exportResult(
       exportResult: graph_api.Scalar[String],
       params: Map[String, String]): BoxOutputState = {
     BoxOutputState(

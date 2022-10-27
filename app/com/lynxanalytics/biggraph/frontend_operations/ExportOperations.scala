@@ -191,7 +191,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
       params.validate()
       Map(context.box.output(
-        context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
+        context.meta.outputs(0)) -> BoxOutputState.exportResult(exportResult, params.toMap - "password"))
     }
     def getAttribute(a: String): com.lynxanalytics.biggraph.graph_api.Attribute[_]
     def exportResult() = {
@@ -290,7 +290,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
         params.validate()
         Map(context.box.output(
-          context.meta.outputs(0)) -> BoxOutputState.from(exportResult, params.toMap - "password"))
+          context.meta.outputs(0)) -> BoxOutputState.exportResult(exportResult, params.toMap - "password"))
       }
       def exportResult() = {
         val vsAttr = project.vertexAttributes.toMap +
