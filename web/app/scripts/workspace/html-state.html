@@ -1,0 +1,6 @@
+<uib-progressbar ng-if="!content.$resolved" value="100" class="progress-striped active">
+Loading...
+</uib-progressbar>
+<div class="col-sm-12" ng-show="content.$resolved">
+  <div trusted-html="content.string"></div>
+</div>

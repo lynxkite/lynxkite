@@ -620,14 +620,8 @@ object PythonUtilities {
     }
   }
 
-  def derive(
-      code: String,
-      inputs: Seq[String],
-      outputs: Seq[String],
-      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
-      implicit manager: MetaGraphManager): Unit = {
-    val api = Seq("vs", "es", "graph_attributes")
-    // Parse the input list into Fields.
+  // Parses the input list into Fields.
+  def inputFields(inputs: Seq[String], project: com.lynxanalytics.biggraph.controllers.ProjectEditor): Seq[Field] = {
     val existingFields: Map[String, () => Field] = project.vertexAttributes.map {
       case (name, attr) => s"vs.$name" -> (() => Field("vs", name, SerializableType(attr.typeTag)))
     }.toMap ++ project.edgeAttributes.map {
@@ -640,7 +634,7 @@ object PythonUtilities {
     } + {
       "es.dst" -> (() => Field("es", "dst", SerializableType.long))
     }
-    val inputFields: Seq[Field] = inputs.map { i =>
+    inputs.map { i =>
       existingFields.get(i) match {
         case Some(f) => f()
         case None => throw new AssertionError(
@@ -648,8 +642,17 @@ object PythonUtilities {
               existingFields.keys.toSeq.sorted.mkString(", "))
       }
     }
+  }
+
+  def derive(
+      code: String,
+      inputs: Seq[String],
+      outputs: Seq[String],
+      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+      implicit manager: MetaGraphManager): Unit = {
+    val api = Seq("vs", "es", "graph_attributes")
     // Run the operation.
-    val op = graph_operations.DerivePython(code, inputFields.toList, outputFields(outputs, api).toList)
+    val op = graph_operations.DerivePython(code, inputFields(inputs, project).toList, outputFields(outputs, api).toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
@@ -738,5 +741,32 @@ object PythonUtilities {
     // Run the operation.
     val op = graph_operations.DeriveTablePython(code, outputFields(outputs, api).toList)
     op(op.df, table).result.df
+  }
+
+  def deriveHTML(
+      code: String,
+      inputs: Seq[String],
+      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+      implicit manager: MetaGraphManager): Scalar[String] = {
+    val api = Seq("vs", "es", "graph_attributes")
+    // Run the operation.
+    val op = graph_operations.DeriveHTMLPython(code, inputFields(inputs, project).toList)
+    import Scripting._
+    val builder = InstanceBuilder(op)
+    for ((f, i) <- op.attrFields.zipWithIndex) {
+      val attr = f.parent match {
+        case "vs" => project.vertexAttributes(f.name)
+        case "es" => project.edgeAttributes(f.name)
+      }
+      builder(op.attrs(i), attr)
+    }
+    for (f <- op.edgeParents) {
+      builder(op.ebs(f), project.edgeBundle)
+    }
+    for ((f, i) <- op.scalarFields.zipWithIndex) {
+      builder(op.scalars(i), project.scalars(f.name))
+    }
+    builder.toInstance(manager)
+    builder.result.sc
   }
 }

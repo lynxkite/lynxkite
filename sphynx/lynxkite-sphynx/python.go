@@ -45,5 +45,6 @@ func init() {
 	diskOperationRepository["PredictWithGCN"] = pythonOperation("predict_with_GCN")
 	diskOperationRepository["DerivePython"] = pythonOperation("derive")
 	unorderedOperationRepository["DeriveTablePython"] = pythonOperation("derive_table")
+	diskOperationRepository["DeriveHTMLPython"] = pythonOperation("derive_html")
 	diskOperationRepository["CreateGraphInPython"] = pythonOperation("create_graph_in_python")
 }

@@ -360,10 +360,11 @@ object BoxOutputKind {
   val Project = "graph"
   val Table = "table"
   val ExportResult = "exportResult"
-  val Plot = "plot"
+  val HTML = "html" // HTML. For security, never allow user-controlled strings in this!
+  val Plot = "plot" // Vega-Lite plot.
   val Error = "error"
-  val Visualization = "visualization"
-  val validKinds = Set(Project, Table, Error, ExportResult, Plot, Visualization)
+  val Visualization = "visualization" // LynxKite graph visualization.
+  val validKinds = Set(Project, Table, Error, ExportResult, HTML, Plot, Visualization)
 
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
@@ -406,6 +407,10 @@ object BoxOutputState {
       Some(json.Json.obj(
         "guid" -> exportResult.gUID,
         "parameters" -> params)))
+  }
+
+  def html(html: graph_api.Scalar[String]) = {
+    BoxOutputState(BoxOutputKind.HTML, Some(json.Json.obj("guid" -> html.gUID)))
   }
 
   def error(msg: String, exception: Option[Throwable] = None): BoxOutputState = {
@@ -458,6 +463,7 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
   def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
+  def isHTML = kind == BoxOutputKind.HTML
   def isVisualization = kind == BoxOutputKind.Visualization
 
   def projectState: CommonProjectState = {
@@ -489,6 +495,12 @@ case class BoxOutputState(
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
+  def html(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    success.check()
+    assert(isHTML, s"Tried to access '$kind' as 'HTML'.")
+    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+  }
+
   def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
     import CommonProjectState._
@@ -507,6 +519,7 @@ case class BoxOutputState(
       case BoxOutputKind.Table => defaultGuidMapper(change)
       case BoxOutputKind.Plot => plotGuidMapper(change)
       case BoxOutputKind.ExportResult => defaultGuidMapper(change)
+      case BoxOutputKind.HTML => defaultGuidMapper(change)
       case BoxOutputKind.Visualization => this // Contains no GUIDs.
       case BoxOutputKind.Error => this // Has no state: thus, no GUIDs either.
     }
