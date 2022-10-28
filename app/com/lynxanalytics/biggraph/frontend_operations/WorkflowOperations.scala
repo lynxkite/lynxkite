@@ -609,8 +609,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         input.kind match {
           case BoxOutputKind.Project =>
             val project = projectInput("graph")
-            if (params("outputs") == "plot") {
-              val html = PythonUtilities.deriveHTML(params("code"), pythonInputs, project)
+            if (Seq("html", "ipywidget", "matplotlib").contains(params("outputs"))) {
+              val html = PythonUtilities.deriveHTML(params("code"), params("outputs"), pythonInputs, project)
               // The output is called "graph" to preserve compatibility.
               Map(context.box.output("graph") -> BoxOutputState.html(html))
             } else {

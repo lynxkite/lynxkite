@@ -12,34 +12,22 @@ import DerivePython._
 import org.apache.spark
 
 object DeriveHTMLPython extends OpFromJson {
-  class Input(fields: Seq[Field]) extends MagicInputSignature {
-    val (scalarFields, propertyFields) = fields.partition(_.parent == "graph_attributes")
-    val (edgeFields, attrFields) =
-      propertyFields.partition(f => f.parent == "es" && (f.name == "src" || f.name == "dst"))
-    val edgeParents = edgeFields.map(_.parent).toSet
-    val vss = propertyFields.map(f => f.parent -> vertexSet(Symbol(f.parent))).toMap
-    val attrs = attrFields.map(f =>
-      runtimeTypedVertexAttribute(vss(f.parent), f.fullName, f.tpe.typeTag))
-    val srcs = edgeParents.map(p => p -> vertexSet(Symbol("src-for-" + p))).toMap
-    val dsts = edgeParents.map(p => p -> vertexSet(Symbol("dst-for-" + p))).toMap
-    val ebs = edgeParents.map(p =>
-      p -> edgeBundle(srcs(p), dsts(p), idSet = vss(p), name = Symbol("edges-for-" + p))).toMap
-    val scalars = scalarFields.map(f => runtimeTypedScalar(f.fullName, f.tpe.typeTag))
-  }
-
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
     DeriveHTMLPython(
       (j \ "code").as[String],
+      (j \ "mode").as[String],
       (j \ "inputFields").as[List[Field]])
   }
 }
 
 case class DeriveHTMLPython private[graph_operations] (
     code: String,
+    mode: String,
     inputFields: List[Field])
     extends TypedMetaGraphOp[Input, ScalarOutput[String]] {
   override def toJson = Json.obj(
     "code" -> code,
+    "mode" -> mode,
     "inputFields" -> inputFields)
   override lazy val inputs = new Input(inputFields)
   def outputMeta(instance: MetaGraphOperationInstance) = {

@@ -5,10 +5,12 @@ state-view {
   height: 100%;
 }
 
-state-view :last-child {
+state-view> :last-child {
   flex-grow: 1;
 }
 
 .html-state-iframe {
   border: 0;
+  width: 100%;
+  height: 100%;
 }

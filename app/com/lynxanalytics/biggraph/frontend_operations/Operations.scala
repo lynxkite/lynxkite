@@ -745,12 +745,13 @@ object PythonUtilities {
 
   def deriveHTML(
       code: String,
+      mode: String,
       inputs: Seq[String],
       project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
       implicit manager: MetaGraphManager): Scalar[String] = {
     val api = Seq("vs", "es", "graph_attributes")
     // Run the operation.
-    val op = graph_operations.DeriveHTMLPython(code, inputFields(inputs, project).toList)
+    val op = graph_operations.DeriveHTMLPython(code, mode, inputFields(inputs, project).toList)
     import Scripting._
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {

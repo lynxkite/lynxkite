@@ -16,6 +16,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 - Set up an [Earthly](https://earthly.dev/get-earthly) build.
   [#296](https://github.com/lynxkite/lynxkite/pull/296) This should make builds very reliable for
   everyone.
+- _"Compute in Python"_ boxes can now output plots. Just set the output to `matplotlib`, `ipywidget`, or `html`.
+  [#297](https://github.com/lynxkite/lynxkite/pull/297)
 
 ### 5.1.0
 
