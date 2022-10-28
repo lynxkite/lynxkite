@@ -27,6 +27,10 @@
   }
 }
 
+.container-fluid-wide {
+  padding: 0 15px;
+}
+
 .tooltip {
   pointer-events: none;
 }
