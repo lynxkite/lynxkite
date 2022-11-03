@@ -65,11 +65,6 @@ Only allow this in restricted environments.
 export KITE_ALLOW_NON_PREFIXED_PATHS=false
 ```
 
-Specify the PID file for LynxKite servers.
-```
-export KITE_PID_FILE=$HOME/kite/pid
-```
-
 Specify the YARN configuration directory. It is needed if you want to run against YARN.
 ```
 # export YARN_CONF_DIR=/etc/hadoop/...
