@@ -30,7 +30,6 @@ export SPARK_HOME=$HOME/spark/spark-\${SPARK_VERSION}
 export SPARK_MASTER=local
 export KITE_META_DIR=${HERE}/meta
 export KITE_DATA_DIR=file:${HERE}/data
-export KITE_PID_FILE=${HERE}/kite.pid
 export KITE_PREFIX_DEFINITIONS=${HERE}/prefix_definitions.txt
 export KITE_USERS_FILE=${HERE}/kite_users.txt
 export NUM_CORES_PER_EXECUTOR=2
