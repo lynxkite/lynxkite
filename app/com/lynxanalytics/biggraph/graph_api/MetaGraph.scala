@@ -5,9 +5,14 @@
 // the inputs and outputs of the operation instances. The operation instance is
 // an operation that is bound to a set of inputs.
 //
+// On this "meta" level, there is no data. It is just about identifying the entities.
+// The entities are identified by UUIDs in storage. These UUIDs (or GUIDs) are a hash of
+// the whole tree of the metagraph leading up to the entity. This is how we track what
+// needs to be recomputed when something changes. Everything will get a different UUID
+// downstream from the change, and those UUIDs have no corresponding data yet.
+//
 // This file also includes the machinery for declaring operation input/output
-// signatures, and the "data" classes that are the actual RDDs/scalar values
-// that belong to metagraph entities.
+// signatures.
 
 package com.lynxanalytics.biggraph.graph_api
 
@@ -26,10 +31,11 @@ sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
   val name: Symbol
   override def toString = s"$gUID (${name.name} of $source)"
-  lazy val toStringStruct = StringStruct(name.name, Map("" -> source.toStringStruct))
   def manager = source.manager
   lazy val typeString = this.getClass.getSimpleName
 
+  // An entity is identified by the operation that produced it, which output of the operation it is,
+  // and what kind of entity it is.
   lazy val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
@@ -53,23 +59,6 @@ sealed trait MetaGraphEntity extends Serializable {
     .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
   private val newPrefix = "ACED00057372000C7363616C612E53796D626F6C5F4785C13785FF06"
     .sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toSeq
-}
-
-case class StringStruct(name: String, contents: SortedMap[String, StringStruct] = SortedMap()) {
-  lazy val asString: String = {
-    val stuff = contents.map {
-      case (k, v) =>
-        val s = v.asString
-        val guarded = if (s.contains(" ")) s"($s)" else s
-        if (k.isEmpty) guarded else s"$k=$guarded"
-    }.mkString(" ")
-    if (stuff.isEmpty) name else s"$name of $stuff"
-  }
-  override def toString = asString
-}
-object StringStruct {
-  def apply(name: String, contents: Map[String, StringStruct]) =
-    new StringStruct(name, SortedMap[String, StringStruct]() ++ contents)
 }
 
 case class VertexSet(
@@ -204,6 +193,8 @@ trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
 
+// Using MagicInputSignature we can write "val vs = vertexSet" and it declares an input called "vs".
+// The trait below solves the problem of figuring out that "input.vs" has the name "vs".
 trait FieldNaming {
   private lazy val naming: IdentityHashMap[Any, Symbol] = {
     val res = new IdentityHashMap[Any, Symbol]()
@@ -217,6 +208,7 @@ trait FieldNaming {
     }
     res
   }
+  // Returns the name of the field in this object that refers to the given object.
   def nameOf(obj: Any): Symbol = {
     val name = naming.get(obj)
     assert(
@@ -230,6 +222,9 @@ trait FieldNaming {
   }
 }
 
+// The input declarations in a MagicInputSignature are instances of EntityTemplate.
+// This class is not usually used directly. An implicit conversion to the actual
+// MetaGraphEntity is usually used to work with the actual input entity of an operation.
 trait EntityTemplate[T <: MetaGraphEntity] {
   def set(target: MetaDataSet, entity: T): MetaDataSet
   def entity(implicit instance: MetaGraphOperationInstance): T
@@ -242,6 +237,23 @@ object EntityTemplate {
       implicit instance: MetaGraphOperationInstance): T = template.entity
 }
 
+// MagicInputSignature makes it easy to declare the inputs of a MetaGraphOp. More importantly,
+// it enables compile-time checks for users of the operation.
+//
+// An example declaration:
+//
+//   class Input extends MagicInputSignature {
+//     val input1 = vertexSet
+//     val input2 = attribute[Double](input1)
+//   }
+//
+// An operation with this input signature can then be invoked as:
+//
+//   metaGraphManager.apply(op, ('input1 -> vs), ('input2 -> attr))
+//
+// But this syntax does not protect against typos in the input name or type mistakes.
+// (Such as swapping "vs" and "attr" in the example.) This is solved by the mechanism in
+// Scripting.scala in this directory. The example continues there!
 abstract class MagicInputSignature extends InputSignatureProvider with FieldNaming {
   abstract class ET[T <: MetaGraphEntity](nameOpt: Option[Symbol]) extends EntityTemplate[T] {
     lazy val name: Symbol = nameOpt.getOrElse(nameOf(this))
@@ -368,6 +380,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def df(implicit dataSet: DataSet) = data.df
   }
 
+  // Everything above is the machinery to make the methods below work.
+  // Use these when declaring the inputs of your operation:
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(
@@ -429,10 +443,14 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     pairs.toMap
   }
 }
+
+// Something that can provide a MetaDataSet. In practice this is used for MagicOutput below.
 trait MetaDataSetProvider {
   def metaDataSet: MetaDataSet
 }
 
+// The placeholders in MagicOutput are EntityContainers. The companion object provides implicit
+// conversion to MetaGraphEntity, so it can be used as an entity most of the time.
 trait EntityContainer[+T <: MetaGraphEntity] {
   def entity: T
 }
@@ -443,6 +461,21 @@ object EntityContainer {
     container.entity
 }
 
+// MagicOutput provides a nice syntax for declaring MetaGraphOp outputs and also for accessing
+// those outputs from an instance of the operation.
+//
+// For example:
+//
+//   class Output(instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+//     val output1 = vertexSet
+//     val output2 = attribute[Double](output1)
+//   }
+//
+// Note the symmetry with MagicInputSignature.
+//
+// The outputs from a TypedOperationInstance can then be accessed as "op.result.output1".
+// (Which is actually an EntityContainer, but it's automatically converted to a MetaGraphEntity
+// when used as one.)
 abstract class MagicOutput(instance: MetaGraphOperationInstance)
     extends MetaDataSetProvider with FieldNaming {
   class P[T <: MetaGraphEntity](entityConstructor: Symbol => T, nameOpt: Option[Symbol]) extends EntityContainer[T] {
@@ -517,24 +550,17 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
 object MetaGraphOp {
   val UTF8 = java.nio.charset.Charset.forName("UTF-8")
 }
+// An operation that has its parameters already set, but the inputs are not yet specified.
 trait MetaGraphOp extends Serializable with ToJson {
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
+  // An operation is identified by its class, parameters, and registered version
+  // number, if any.
   val gUID = {
     val contents = play.api.libs.json.jackson.RetroSerialization(this.toTypedJson)
     val version = JsonMigration.current.version(getClass.getName)
     UUID.nameUUIDFromBytes((contents + version).getBytes(MetaGraphOp.UTF8))
-  }
-
-  def toStringStruct = {
-    val mirror = reflect.runtime.currentMirror.reflect(this)
-    val className = mirror.symbol.name.toString
-    val params = mirror.symbol.toType.members.collect { case m: MethodSymbol if m.isCaseAccessor => m }
-    def get(param: MethodSymbol) = mirror.reflectField(param).get
-    StringStruct(
-      className,
-      params.map(p => p.name.toString -> StringStruct(get(p).toString)).toMap)
   }
 }
 
@@ -542,6 +568,7 @@ object TypedMetaGraphOp {
   // A little "hint" for the type inference.
   type Type = TypedMetaGraphOp[_ <: InputSignatureProvider, _ <: MetaDataSetProvider]
 }
+// An operation that can provide declarations of its inputs and outputs.
 trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
     extends MetaGraphOp {
   def inputs: IS = ???
@@ -560,6 +587,7 @@ trait MetaGraphOperationInstance {
 
   val inputs: MetaDataSet
 
+  // An operation instance is identified by the operation and all the inputs.
   val gUID: UUID = {
     val buffer = new ByteArrayOutputStream
     val objectStream = new ObjectOutputStream(buffer)
@@ -578,37 +606,6 @@ trait MetaGraphOperationInstance {
   def entities: MetaDataSet = inputs ++ outputs
 
   override def toString = s"$gUID ($operation)"
-  lazy val toStringStruct: StringStruct = {
-    val op = operation.toStringStruct
-    val fixed = mutable.Set[UUID]()
-    val mentioned = mutable.Map[UUID, Symbol]()
-    val span = mutable.Map[String, StringStruct]()
-    def put(k: Symbol, v: MetaGraphEntity): Unit = {
-      if (!fixed.contains(v.gUID)) {
-        mentioned.get(v.gUID) match {
-          case Some(k0) =>
-            span(k.name) = StringStruct(k0.name)
-          case None =>
-            span(k.name) = v.toStringStruct
-            mentioned(v.gUID) = k
-        }
-      }
-    }
-    for ((k, v) <- inputs.edgeBundles) {
-      put(k, v)
-      fixed += v.srcVertexSet.gUID
-      fixed += v.dstVertexSet.gUID
-      fixed += v.idSet.gUID
-    }
-    for ((k, v) <- inputs.attributes) {
-      put(k, v)
-      fixed += v.vertexSet.gUID
-    }
-    for ((k, v) <- inputs.vertexSets) {
-      put(k, v)
-    }
-    StringStruct(op.name, op.contents ++ span)
-  }
 }
 
 case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
@@ -621,7 +618,7 @@ case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaData
   override lazy val hashCode = gUID.hashCode
 }
 
-// A bundle of metadata types.
+// A bundle of named MetaGraphEntities, such as in an operation input or output.
 case class MetaDataSet(
     vertexSets: Map[Symbol, VertexSet] = Map(),
     edgeBundles: Map[Symbol, EdgeBundle] = Map(),

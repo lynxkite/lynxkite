@@ -2,7 +2,7 @@
 // we can wait for all of them to finish.
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api.{SafeFuture, ThreadUtil}
 
 import scala.concurrent.ExecutionContextExecutorService

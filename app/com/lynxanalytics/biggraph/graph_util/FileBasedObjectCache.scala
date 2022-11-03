@@ -2,7 +2,7 @@
 // workers through a distributed file system.
 package com.lynxanalytics.biggraph.graph_util
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 
 object FileBasedObjectCache {
   private val cache = new SoftHashMap[HadoopFile, AnyRef]()

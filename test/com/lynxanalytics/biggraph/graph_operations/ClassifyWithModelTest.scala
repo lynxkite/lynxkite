@@ -52,8 +52,8 @@ class ClassifyWithModelTest extends ModelTestBase {
     assert(classification(2) == 1.0 && classification(3) == 1.0)
     val probability = result.probability.rdd.values.collect
     // Check that the probability is higher if the datapoint is farther from the threshold.
-    assert(probability(0) > probability(1))
-    assert(probability(3) > probability(2))
+    assert(probability(0) >= probability(1))
+    assert(probability(3) >= probability(2))
 
   }
 

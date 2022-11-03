@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
@@ -125,7 +125,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
-  val cudaEnabled = LoggedEnvironment.envOrElse("KITE_ENABLE_CUDA", "no") == "yes"
+  val cudaEnabled = Environment.envOrElse("KITE_ENABLE_CUDA", "no") == "yes"
 
   register("Place vertices with edge lengths")(new ProjectTransformation(_) {
     params ++= List(

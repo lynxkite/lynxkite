@@ -56,7 +56,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_pedestrian_custom_box(self):
     lk = lynx.kite.LynxKite()
     i = lk.input(name='graph')
-    o = i.sql('select name from vertices').output(name='vtable')
+    o = i.sql('select name from vertices order by id').output(name='vtable')
     ws = lynx.kite.Workspace(name='allvs', terminal_boxes=[o], input_boxes=[i])
     table = ws(lk.createExampleGraph()).get_table_data()
     values = [row[0].string for row in table.data]
@@ -266,18 +266,18 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_builder_export_csv_with_generated_path(self):
     lk = lynx.kite.LynxKite()
     eg_table = (lk.createExampleGraph()
-                .sql('select name, age, income from vertices')
+                .sql('select name, age, income from vertices order by id')
                 .exportToCSV())
     path = eg_table.run_export()
     data = lk.download_file(path)
     self.assertEqual(
-        data, b'name,age,income\nAdam,20.3,1000.0\nEve,18.2,""\nBob,50.3,2000.0\nIsolated Joe,2.0,""\n')
+        data, b'name,age,income\nAdam,20.3,1000.0\nEve,18.2,\nBob,50.3,2000.0\nIsolated Joe,2.0,\n')
 
   def test_builder_export_json_with_path_parameter(self):
     lk = lynx.kite.LynxKite()
     path = 'DATA$/export_tests/name_and_age_json'
     name_and_age = (lk.createExampleGraph()
-                    .sql('select name, age from vertices where age < 30')
+                    .sql('select name, age from vertices where age < 30 order by id')
                     .exportToJSON(path=path))
     name_and_age.trigger()
     data = lk.download_file(path)
@@ -287,7 +287,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_export_with_overwrite(self):
     lk = lynx.kite.LynxKite()
     path = 'DATA$/export_tests/to_overwrite'
-    eg = lk.createExampleGraph().sql('select name, income from vertices')
+    eg = lk.createExampleGraph().sql('select name, income from vertices order by id')
     eg_export = eg.exportToJSON(path=path, save_mode="overwrite")
     eg_export.trigger()
     eg_export2 = eg.exportToJSON(path=path, version="2", save_mode="overwrite")
@@ -300,7 +300,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_export_with_append(self):
     lk = lynx.kite.LynxKite()
     path = 'DATA$/export_tests/to_append'
-    eg = lk.createExampleGraph().sql('select name from vertices limit 1')
+    eg = lk.createExampleGraph().sql('select name from vertices order by id limit 1')
     eg_export = eg.exportToJSON(path=path)
     eg_export.trigger()
     eg_export2 = eg.exportToJSON(path=path, version="2", save_mode="append")
@@ -343,7 +343,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_triggerable_boxes(self):
     lk = lynx.kite.LynxKite()
-    eg = lk.createExampleGraph().sql('select name from vertices')
+    eg = lk.createExampleGraph().sql('select name from vertices order by id')
     snapshot = eg.saveToSnapshot(path='triggered save to snasphot')
     lk.remove_name('triggered save to snasphot', force=True)
     snapshot.trigger()
@@ -356,7 +356,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_export_shorthand(self):
     lk = lynx.kite.LynxKite()
-    eg = lk.createExampleGraph().sql('select name from vertices where income > 0')
+    eg = lk.createExampleGraph().sql('select name from vertices where income > 0 order by id')
     # state.exportNow
     eg.exportToParquetNow(path='DATA$/triggered/now/parquet1')
     data = lk.importParquetNow(filename='DATA$/triggered/now/parquet1').get_table_data().data

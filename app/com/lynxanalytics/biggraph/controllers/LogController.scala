@@ -4,11 +4,11 @@ package com.lynxanalytics.biggraph.controllers
 
 import java.io.File
 
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import play.api.mvc
 
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 
 case class FileDescriptor(
     name: String,
@@ -21,7 +21,7 @@ case class DownloadLogFileRequest(name: String)
 
 object LogController {
   def getLogDir: File =
-    new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"))
+    new File(Environment.envOrElse("KITE_LOG_DIR", "logs"))
 }
 class LogController @javax.inject.Inject() (
     implicit
@@ -53,7 +53,7 @@ class LogController @javax.inject.Inject() (
 
   def downloadLogFile(user: serving.User, request: DownloadLogFileRequest) = {
     assert(user.isAdmin, "Only admins can access the server logs")
-    val logFile = new File(LoggedEnvironment.envOrElse("KITE_LOG_DIR", "logs"), request.name)
+    val logFile = new File(Environment.envOrElse("KITE_LOG_DIR", "logs"), request.name)
     assert(logFile.exists, s"Application log file not found at $logFile")
     log.info(s"$user has downloaded log file $logFile")
     mvc.Results.Ok.sendFile(logFile)

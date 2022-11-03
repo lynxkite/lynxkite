@@ -17,11 +17,11 @@ import scala.util.Success
 import reflect.runtime.universe.typeTag
 import java.nio.file.Paths
 import play.api.libs.json
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 class SparkDomain(
@@ -32,7 +32,7 @@ class SparkDomain(
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
     UDF.register(sqlContext.udf)
@@ -393,7 +393,10 @@ class SparkDomain(
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       case source: UnorderedSphynxDisk => {
-        val srcPath = source.getGUIDPath(e)
+        val srcPath = source match {
+          case _: UnorderedSphynxLocalDisk => "file:" + source.getGUIDPath(e)
+          case _: UnorderedSphynxSparkDisk => source.getGUIDPath(e)
+        }
         import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
         import com.lynxanalytics.biggraph.spark_util.Implicits._
         e match {
@@ -446,13 +449,7 @@ class SparkDomain(
           case s: Scalar[_] =>
             SafeFuture.async({
               val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
-              val jsonString = source match {
-                case source: UnorderedSphynxSparkDisk =>
-                  (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
-                case source: UnorderedSphynxLocalDisk =>
-                  val fname = s"${srcPath}/serialized_data"
-                  Source.fromFile(fname, "utf-8").getLines.mkString
-              }
+              val jsonString = (new HadoopFile.DirectHadoopFile(srcPath) / "serialized_data").readAsString
               val value = format.reads(json.Json.parse(jsonString)).get
               new ScalarData(s, value)
             })

@@ -43,6 +43,9 @@ target/
 
 # vscode specific
 .vscode
+.bloop
+.metals
+/project/metals.sbt
 
 # sbt test creates it
 metastore_db/

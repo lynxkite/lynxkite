@@ -2,7 +2,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.apache.hadoop
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving

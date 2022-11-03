@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.esotericsoftware.kryo.Kryo
 import com.lynxanalytics.biggraph.controllers.LogController
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.sql.jdbc.JdbcDialects
@@ -11,11 +11,11 @@ import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
-import com.lynxanalytics.sandbox.ScalaScriptSecurityManager
+import com.lynxanalytics.biggraph.scala_sandbox.ScalaScriptSecurityManager
 
 // Placeholders for deleted classes.
 class DeadClass1
@@ -64,6 +64,9 @@ class DeadClass43
 class DeadClass44
 class DeadClass45
 class DeadClass46
+class DeadClass47
+class DeadClass48
+class DeadClass49
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -315,8 +318,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass33])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
+    kryo.register(classOf[DeadClass47])
+    kryo.register(classOf[DeadClass48])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult])
     kryo.register(classOf[DeadClass34])
     kryo.register(classOf[DeadClass35])
@@ -363,7 +366,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMax$"))
     kryo.register(Class.forName("org.apache.spark.ml.stat.SummaryBuilderImpl$ComputeMin$"))
     kryo.register(Class.forName("org.apache.spark.ml.stat.MultiClassSummarizer"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BlockLogisticAggregator"))
+    kryo.register(classOf[DeadClass49])
     kryo.register(Class.forName("org.apache.spark.ml.param.ParamValidators$"))
     kryo.register(Class.forName("org.apache.spark.ml.param.shared.HasCheckpointInterval"))
     kryo.register(Class.forName("org.apache.spark.ml.tree.HasVarianceImpurity"))
@@ -380,6 +383,11 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Array[List[_]]]])
     kryo.register(classOf[Array[Array[Tuple2[_, _]]]])
     kryo.register(org.apache.spark.sql.types.DateType.getClass)
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.UnsafeHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongHashedRelation"))
+    kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongToUnsafeRowMap"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BinaryLogisticBlockAggregator"))
+    kryo.register(Class.forName("org.apache.spark.sql.delta.stats.DeltaFileStatistics"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
@@ -405,12 +413,12 @@ object BigGraphSparkContext {
     myKryo
   }
   def isMonitoringEnabled =
-    LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
-      LoggedEnvironment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
+    Environment.envOrNone("GRAPHITE_MONITORING_HOST").isDefined &&
+      Environment.envOrNone("GRAPHITE_MONITORING_PORT").isDefined
 
   def setupMonitoring(conf: spark.SparkConf): spark.SparkConf = {
-    val graphiteHostName = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_HOST", "")
-    val graphitePort = LoggedEnvironment.envOrElse("GRAPHITE_MONITORING_PORT", "")
+    val graphiteHostName = Environment.envOrElse("GRAPHITE_MONITORING_HOST", "")
+    val graphitePort = Environment.envOrElse("GRAPHITE_MONITORING_PORT", "")
     val jvmSource = "org.apache.spark.metrics.source.JvmSource"
     // Set the keys normally defined in metrics.properties here.
     // This way it's easier to make sure that executors receive the
@@ -477,14 +485,14 @@ object BigGraphSparkContext {
 
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
-    if (LoggedEnvironment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {
+    if (Environment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {
       sparkConf = sparkConf
         .set("spark.memory.useLegacyMode", "true")
         .set("spark.io.compression.codec", "lz4")
         .set(
           "spark.executor.memory",
-          LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-        .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
+          Environment.envOrElse("EXECUTOR_MEMORY", "1700m"))
+        .set("spark.local.dir", Environment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
         // Speculative execution will start extra copies of tasks to eliminate long tail latency.
         .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
         .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
@@ -504,7 +512,7 @@ object BigGraphSparkContext {
         .set("spark.shuffle.consolidateFiles", "true")
         .set(
           "spark.executor.cores",
-          LoggedEnvironment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
+          Environment.envOrElse("NUM_CORES_PER_EXECUTOR", "4"))
         .set("spark.sql.runSQLOnFiles", "false")
         // Configure Spark event logging:
         .set(
@@ -551,7 +559,7 @@ object BigGraphSparkContext {
 }
 
 class BigGraphSparkListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
-  val maxStageFailures = LoggedEnvironment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
+  val maxStageFailures = Environment.envOrElse("KITE_STAGE_MAX_FAILURES", "4").toInt
   val stageFailures = collection.mutable.Map[Int, Int]()
 
   override def onStageCompleted(

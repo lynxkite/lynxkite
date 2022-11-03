@@ -67,7 +67,7 @@ import org.apache.spark.TaskContext
 
 import scala.reflect._
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 
 object HybridRDD {

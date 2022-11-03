@@ -7,13 +7,13 @@ VERSION=$(cat conf/SPARK_VERSION)
 # Link to the given name or spark-$VERSION by default.
 LINK="${1:-spark-${VERSION}}"
 
-HADOOP='2.7'
+HADOOP='3'
 cd $HOME
 mkdir -p spark
 cd spark
 if [[ ! -x "$LINK" ]]; then
   wget -nv \
-    "https://archive.apache.org/dist/spark/spark-$VERSION/spark-${VERSION}-bin-hadoop2.7.tgz" \
+    "https://archive.apache.org/dist/spark/spark-$VERSION/spark-${VERSION}-bin-hadoop${HADOOP}.tgz" \
     -O "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
   tar xf "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
   rm "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"

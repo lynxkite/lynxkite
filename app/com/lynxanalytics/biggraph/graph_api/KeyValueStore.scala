@@ -1,11 +1,13 @@
 // A persistent key-value storage interface and implementation(s).
+// This is used for the LynxKite journal, which simulates a filesystem
+// where the files are (mostly) workspaces.
 package com.lynxanalytics.biggraph.graph_api
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import java.io.File
 import play.api.libs.json.Json
 
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 
 trait KeyValueStore {
   def readAll: Iterable[(String, String)]

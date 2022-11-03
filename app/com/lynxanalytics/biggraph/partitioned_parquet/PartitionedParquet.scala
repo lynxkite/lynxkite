@@ -80,6 +80,7 @@ class PartitionedParquetScan(
     readPartitionSchema: StructType,
     pushedFilters: Array[Filter],
     options: CaseInsensitiveStringMap,
+    pushedAggregate: Option[org.apache.spark.sql.connector.expressions.aggregate.Aggregation] = None,
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty)
     extends ParquetScan(
@@ -91,6 +92,7 @@ class PartitionedParquetScan(
       readPartitionSchema,
       pushedFilters,
       options,
+      pushedAggregate,
       partitionFilters,
       dataFilters) {
 

@@ -4,7 +4,7 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._

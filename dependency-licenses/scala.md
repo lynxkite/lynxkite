@@ -25,8 +25,8 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # gr
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.48.0 | <notextile></notextile>
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.25.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.1.2 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.1.2 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.3.0 | <notextile></notextile>
+Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.3.0 | <notextile></notextile>
 Apache | [Apache License V2.0](https://raw.githubusercontent.com/google/flatbuffers/master/LICENSE.txt) | com.google.flatbuffers # flatbuffers-java # 1.12.0 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
@@ -139,7 +139,8 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.16 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.16 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.1 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 0.8.0 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 2.1.0 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-storage # 2.1.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-compiler # 2.12.13 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-library # 2.12.13 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-reflect # 2.12.13 | <notextile></notextile>
@@ -152,6 +153,7 @@ Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENS
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-http-util # 0.31.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.3 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.13.3 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-databind # 2.13.3 | <notextile></notextile>
@@ -231,24 +233,19 @@ BSD | [BSD](LICENSE) | systems.uom # systems-common-java8 # 0.7.2 | <notextile><
 BSD | [BSD](LICENSE.txt) | tec.uom # uom-se # 1.0.8 | <notextile></notextile>
 BSD | [BSD](LICENSE.txt) | tec.uom.lib # uom-lib-common # 1.0.2 | <notextile></notextile>
 BSD | [BSD 2-Clause License](https://opensource.org/licenses/BSD-2-Clause) | com.github.luben # zstd-jni # 1.4.9-1 | <notextile></notextile>
-BSD | [BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)](http://www.abego-software.de/legal/apl-v10.html) | org.abego.treelayout # org.abego.treelayout.core # 1.0.3 | <notextile></notextile>
 BSD | [BSD 3-clause](https://raw.githubusercontent.com/ThreeTen/threeten-extra/master/LICENSE.txt) | org.threeten # threeten-extra # 1.7.0 | <notextile></notextile>
 BSD | [BSD 3-clause](https://raw.githubusercontent.com/ThreeTen/threetenbp/master/LICENSE.txt) | org.threeten # threetenbp # 1.6.0 | <notextile></notextile>
 BSD | [BSD License](http://jdbc.postgresql.org/license.html) | org.postgresql # postgresql # 9.3-1102-jdbc41 | <notextile></notextile>
 BSD | [BSD License for HSQL](http://svn.osgeo.org/geotools/trunk/licenses/HSQL.html) | org.geotools # gt-epsg-hsql # 20.0 | <notextile></notextile>
 BSD | [BSD New license](http://opensource.org/licenses/BSD-3-Clause) | com.google.auth # google-auth-library-credentials # 1.6.0 | <notextile></notextile>
 BSD | [BSD New license](http://opensource.org/licenses/BSD-3-Clause) | com.google.auth # google-auth-library-oauth2-http # 1.6.0 | <notextile></notextile>
-BSD | [BSD licence](http://antlr.org/license.html) | org.antlr # ST4 # 4.0.8 | <notextile></notextile>
-BSD | [BSD licence](http://antlr.org/license.html) | org.antlr # antlr-runtime # 3.5.2 | <notextile></notextile>
 BSD | [BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause) | com.google.protobuf # protobuf-java # 3.21.1 | <notextile></notextile>
 BSD | [HSQLDB License, a BSD open source license](http://hsqldb.org/web/hsqlLicense.html) | org.hsqldb # hsqldb # 2.4.1 | <notextile></notextile>
 BSD | [ISC/BSD License](null) | org.mindrot # jbcrypt # 0.3m | <notextile></notextile>
 BSD | [New BSD License](http://www.opensource.org/licenses/bsd-license.php) | org.hamcrest # hamcrest-core # 1.3 | <notextile></notextile>
-BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4 # 4.7 | <notextile></notextile>
-BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.7 | <notextile></notextile>
+BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.8 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11 | <notextile></notextile>
 CC0 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/) | org.reactivestreams # reactive-streams # 1.0.3 | <notextile></notextile>
-GPL | [                 Dual license consisting of the CDDL v1.1 and GPL v2             ](https://glassfish.java.net/public/CDDL+GPL_1_1.html) | org.glassfish # javax.json # 1.0.4 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-collections # 3.5.2 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-common # 3.5.2 | <notextile></notextile>
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-concurrent # 3.5.2 | <notextile></notextile>
@@ -297,6 +294,7 @@ MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframewo
 MIT | [The MIT License(MIT)](http://opensource.org/licenses/MIT) | net.sf.geographiclib # GeographicLib-Java # 1.49 | <notextile></notextile>
 Mozilla | [Mozilla Public License, Version 2.0](http://www.mozilla.org/MPL/2.0/index.txt) | net.sourceforge.htmlunit # htmlunit-core-js # 2.36.0 | <notextile></notextile>
 Public Domain | [Public Domain](null) | aopalliance # aopalliance # 1.0 | <notextile></notextile>
+Public Domain | [Public Domain](null) | org.tukaani # xz # 1.8 | <notextile></notextile>
 Public Domain | [Public domain](null) | net.iharder # base64 # 2.3.8 | <notextile></notextile>
 unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcpkix-jdk15on # 1.60 | <notextile></notextile>
 unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcprov-jdk15on # 1.60 | <notextile></notextile>
@@ -309,7 +307,6 @@ unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locatio
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts-core # 1.16.0 | <notextile></notextile>
 unrecognized | [JDL (Java Distribution License)](https://jai.dev.java.net/jdl-jai.pdf) | javax.media # jai_core # 1.1.3 | <notextile></notextile>
 unrecognized | [The JSON License](http://json.org/license.html) | org.json # json # 20200518 | <notextile></notextile>
-unrecognized | [Unicode/ICU License](http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE) | com.ibm.icu # icu4j # 58.2 | <notextile></notextile>
 unrecognized | [Unknown License](http://asm.ow2.org/license.html) | org.apache.xbean # xbean-asm6-shaded # 4.10 | <notextile></notextile>
 unrecognized | [none specified](none specified) | jgridshift # jgridshift # 1.0 | <notextile></notextile>
 

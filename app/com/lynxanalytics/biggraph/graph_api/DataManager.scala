@@ -4,7 +4,7 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -47,7 +47,7 @@ class DataManager(
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "DataManager",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+      maxParallelism = Environment.envOrElse("KITE_PARALLELISM", "5").toInt)
   private val futures =
     collection.mutable.Map[(java.util.UUID, Domain), SafeFuture[Unit]]()
 

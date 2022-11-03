@@ -46,7 +46,7 @@ export KITE_DOMAINS=sphynx,scala,spark
 
 # Start backend.
 $SPARK_HOME/bin/spark-submit \
-  --conf "spark.driver.extraJavaOptions=-Dhttp.port=$KITE_HTTP_PORT -Dhttps.port=$KITE_HTTPS_PORT -Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST" \
+  --conf "spark.driver.extraJavaOptions=-Dhttp.port=$KITE_HTTP_PORT -Dhttps.port=$KITE_HTTPS_PORT -Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST -Dhttps.keyStore=$KITE_HTTPS_KEYSTORE -Dhttps.keyStorePassword=$KITE_HTTPS_KEYSTORE_PWD" \
   target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar &
 KITE_PID=$!
 function kill_backend {
@@ -61,7 +61,7 @@ $(dirname $0)/wait_for_port.sh $SPHYNX_PORT
 echo "Sphynx running on port $SPHYNX_PORT"
 $(dirname $0)/wait_for_port.sh $HTTP_PORT
 $(dirname $0)/wait_for_port.sh $HTTPS_PORT
-echo "Kite running on port $HTTP_PORT (http) and port $HTTPS_PORT (https)"
+echo "LynxKite running on port $HTTP_PORT (http) and port $HTTPS_PORT (https)"
 
 # Execute command.
 "$@"

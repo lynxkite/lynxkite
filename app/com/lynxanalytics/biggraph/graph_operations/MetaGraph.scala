@@ -1,5 +1,6 @@
 // The metagraph is the graph of MetaGraphEntities and MetaGraphOperationInstances.
-// This is useful for debugging and demonstration purposes.
+// This operation outputs the metagraph as a LynxKite graph that can be inspected on the UI
+// like any other graph. This is useful for debugging and demonstration purposes.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment

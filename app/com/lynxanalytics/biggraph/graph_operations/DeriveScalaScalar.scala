@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 
 import com.lynxanalytics.biggraph.graph_api._
 
-import com.lynxanalytics.sandbox.ScalaScript
+import com.lynxanalytics.biggraph.scala_sandbox.ScalaScript
 
 object DeriveScalaScalar extends OpFromJson {
   class Input(s: Seq[(String, SerializableType[_])]) extends MagicInputSignature {

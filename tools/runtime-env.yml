@@ -1,23 +1,25 @@
-# A subset of ../conda-env.yml. Suitable for deployments.
 channels:
-- conda-forge
-- pytorch
 - pyg
+- pytorch
+- conda-forge
 dependencies:
-# For NetworKit.
+- unzip
+- openjdk==11.0.15
+- pyspark==3.3.0
 - libstdcxx-ng
 - libnetworkit==10.0
 - libtlx==0.5.20200222
-# For Python and ML.
 - python>=3.8
 - numpy
 - pandas
 - scikit-learn
 - pyarrow
-- pytorch::pytorch==1.9.1
-- pytorch::cpuonly
-- pyg==2.0.3
-# For Python API and tools.
+- pytorch::pytorch==1.11.0=*cpu*
+- pyg==2.0.4=*cpu*
+- pytorch-cluster=*=*cpu*
+- pytorch-scatter=*=*cpu*
+- pytorch-sparse=*=*cpu*
+- pytorch-spline-conv=*=*cpu*
 - ruamel.yaml
 - requests
 - typed-ast

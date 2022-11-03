@@ -9,8 +9,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.{logger => log}
+import com.lynxanalytics.biggraph.Environment
 
 @javax.inject.Singleton
 class ErrorHandler extends http.HttpErrorHandler {

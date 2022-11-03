@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_util
 
 import org.apache.hadoop
 import scala.io.Source
+import com.lynxanalytics.biggraph.Environment
 
 object PathNormalizer {
   def normalize(str: String) = {
@@ -92,7 +93,7 @@ object PrefixRepositoryImpl {
       s"path: $path should either be empty or end with a @ or with a slash.")
     // Only local clusters can reference local files
     assert(
-      LoggedEnvironment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
+      Environment.envOrElse("SPARK_MASTER", "").startsWith("local") ||
         !path.startsWith("file:"),
       s"Local file prefix resolution: ${path}. This is illegal in non-local mode.",
     )
@@ -178,9 +179,9 @@ class PrefixRepositoryImpl(inputLines: List[String], allowNonPrefixedPaths: Bool
 
 object PrefixRepository {
   val prefixRepository = {
-    val prefixDefinitionFile = LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
+    val prefixDefinitionFile = Environment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
     val nonPrefixedPathsAreAllowed =
-      LoggedEnvironment.envOrElse("KITE_ALLOW_NON_PREFIXED_PATHS", "false").toBoolean
+      Environment.envOrElse("KITE_ALLOW_NON_PREFIXED_PATHS", "false").toBoolean
     if (prefixDefinitionFile.nonEmpty)
       new PrefixRepositoryImpl(Source.fromFile(prefixDefinitionFile).getLines.toList, nonPrefixedPathsAreAllowed)
     else

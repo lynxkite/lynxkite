@@ -1,4 +1,4 @@
-package com.lynxanalytics.sandbox
+package com.lynxanalytics.biggraph.scala_sandbox
 
 import java.io.FilePermission
 import java.net.NetPermission
@@ -6,12 +6,13 @@ import java.security.Permission
 import java.util.UUID
 import javax.script._
 
+import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
-import com.lynxanalytics.biggraph.graph_util.{LoggedEnvironment, Timestamp}
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
@@ -24,7 +25,7 @@ import scala.util.DynamicVariable
 case class SimpleGraphEntity(name: String, typeName: String)
 
 object ScalaScriptSecurityManager {
-  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
+  private[scala_sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
   System.setSecurityManager(restrictedSecurityManager)
   def init() = {}
 }
@@ -98,7 +99,8 @@ class ScalaScriptSecurityManager extends SecurityManager {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (
       shouldCheck.value &&
-      (s.contains("com.lynxanalytics.biggraph") ||
+      (s.contains("com.lynxanalytics.biggraph") &&
+        s != "com.lynxanalytics.biggraph.scala_sandbox" ||
         s.contains("org.apache.spark"))
     ) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
@@ -108,10 +110,19 @@ class ScalaScriptSecurityManager extends SecurityManager {
 
 object ScalaScript {
   private def createEngine(): Scripted = {
-    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[Scripted]
-    e.intp.settings.usejavacp.value = true
-    e.intp.settings.embeddedDefaults[ScalaScriptSecurityManager]
-    e
+    val settings = new scala.tools.nsc.Settings
+    // When running with spark-submit, the classpath is made up of two parts: 1) all the jars
+    // from Spark and 2) the LynxKite jar. The Spark jars are on the normal Java classpath, but
+    // the LynxKite jar is added by Spark at runtime in the last ClassLoader. For Scala to find
+    // our classes, we add our jar to the user-specified classpath.
+    val cl = classOf[ScalaScriptSecurityManager].getClassLoader
+    cl match {
+      case cl: java.net.URLClassLoader if cl.getURLs.length == 1 =>
+        val jar = cl.getURLs.toList.head.toString
+        settings.classpath.value = jar
+      case _ => ()
+    }
+    scala.tools.nsc.interpreter.Scripted(settings = settings)
   }
 
   private var engine: Scripted = null
@@ -129,7 +140,7 @@ object ScalaScript {
   // The value of maxRows is the maximum number of data points allowed in a chart
   def dfToSeq(df: DataFrame): Seq[Map[String, Any]] = {
     val names = df.schema.toList.map { field => field.name }
-    val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
+    val maxRows = Environment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
     SQLHelper.toSeqRDD(df).take(maxRows).map {
       row =>
         names.zip(row.toSeq.toList).groupBy(_._1).mapValues(_.map(_._2)).mapValues(_(0))

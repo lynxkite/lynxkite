@@ -21,24 +21,25 @@ This edge attribute can specify the length that each edge should be.
 [p-algorithm]#Layout algorithm#::
 The algorithms offered are:
 - **Pivot MDS** picks a number of pivot vertices (spread out as much as possible) and
-  finds a solution that puts all other vertices the right distance from the pivots
-  through an iterative matrix eigendecomposition method.
-  +
-  See https://kops.uni-konstanz.de/bitstream/handle/123456789/5741/bp_empmdsld_06.pdf[Eigensolver Methods for Progressive Multidimensional Scaling of Large Data]
-  by Ulrik Brandes and Christian Pich for the detailed definition and analysis.
+finds a solution that puts all other vertices the right distance from the pivots
+through an iterative matrix eigendecomposition method.
++
+See https://kops.uni-konstanz.de/bitstream/handle/123456789/5741/bp_empmdsld_06.pdf[Eigensolver Methods for Progressive Multidimensional Scaling of Large Data]
+by Ulrik Brandes and Christian Pich for the detailed definition and analysis.
 - **Maxent-Stress** is recommended when there are many different ways to
-  satisfy the edge length constraints. (Such as in graphs with low degrees or in
-  high-dimensional spaces.) It picks from the large solution space by
-  maximizing the solution's entropy.
-  +
-  Cannot handle disconnected graphs.
-  +
-  See http://yifanhu.net/PUB/maxent.pdf[A Maxent-Stress Model for Graph Layout]
-  by Gansner et al for the detailed definition and analysis.
+satisfy the edge length constraints. (Such as in graphs with low degrees or in
+high-dimensional spaces.) It picks from the large solution space by
+maximizing the solution's entropy.
++
+Cannot handle disconnected graphs.
++
+See http://yifanhu.net/PUB/maxent.pdf[A Maxent-Stress Model for Graph Layout]
+by Gansner et al for the detailed definition and analysis.
 - *ForceAtlas2* is a force-based method introduced in
-  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4051631/[ForceAtlas2, a Continuous Graph Layout Algorithm for Handy Network Visualization Designed for the Gephi Software].
-  +
-  include::{g}[tag=cugraph]
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4051631/[ForceAtlas2, a Continuous Graph Layout Algorithm for Handy Network Visualization Designed for the Gephi Software].
++
+include::{g}[tag=cugraph]
+
 
 [p-pivots]#Pivots#::
 The number of pivots to choose for Pivot MDS.

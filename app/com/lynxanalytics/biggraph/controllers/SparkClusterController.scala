@@ -1,9 +1,9 @@
 // Request handlers for cluster-level features.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.Environment
 import org.apache.spark
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{logger => log}
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
@@ -398,7 +398,7 @@ class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceCont
   val listener = new KiteListener(sc)
   sc.addSparkListener(listener)
   environment.dataManager.setListener(listener)
-  LoggedEnvironment.envOrNone(
+  Environment.envOrNone(
     "KITE_INTERNAL_WATCHDOG_TIMEOUT_SECONDS").foreach { timeoutSecs =>
     val watchdog = new InternalWatchdogThread(
       timeoutSecs.toInt,
@@ -407,7 +407,7 @@ class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceCont
     watchdog.start()
   }
 
-  def getLongEnv(name: String): Option[Long] = LoggedEnvironment.envOrNone(name).map(_.toLong)
+  def getLongEnv(name: String): Option[Long] = Environment.envOrNone(name).map(_.toLong)
 
   val monitor = new KiteMonitorThread(
     listener,
