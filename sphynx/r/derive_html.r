@@ -1,8 +1,10 @@
-# Run user code on a graph.
+# Run user code on a graph and produce HTML output.
 source("r/util.r")
 
 ip = as.data.frame(installed.packages()[,c(1,3:4)])
 ip = ip[is.na(ip$Priority),1:2,drop=FALSE]
+print("packages")
+print(ip)
 
 # Create input tables.
 gettable <- function(parent) {
@@ -35,6 +37,11 @@ getscalars <- function() {
 }
 graph_attributes <- getscalars()
 
+if (params[["mode"]] == "plot") {
+    svgfile <- tempfile()
+    svg(svgfile)
+}
+
 # Run user code.
 print("RUNNING USER CODE")  # For log cleanup.
 code <- params[["code"]]
@@ -42,24 +49,15 @@ eval(parse(text = code))
 print("USER CODE FINISHED")
 
 # Save outputs.
-save <- function(parent, t) {
-    fields <- params[["outputFields"]]
-    fs <- fields[fields$parent == parent, ]
-    if (nrow(fs) != 0) {
-        # TODO: Good error message if output is missing.
-        columns <- t[fs$name]
-        output_table(paste(parent, fs$name, sep = "."), columns, fs$tpe$typename)
+if (params[["mode"]] == "html") {
+    if (!exists("html")) {
+        stop("Please save the output as 'html'.")
     }
+} else if (params[["mode"]] == "plot") {
+    library(openssl)
+    dev.off()
+    buf <- readBin(svgfile, raw(), file.info(svgfile)$size)
+    data <- openssl::base64_encode(buf, linebreaks = FALSE)
+    html <- paste("<img src=\"data:image/svg+xml;base64,", data, "\">")
 }
-save("vs", vs)
-save("es", es)
-savescalars <- function() {
-    fields <- params[["outputFields"]]
-    fs <- fields[fields$parent == "graph_attributes", ]
-    if (nrow(fs) != 0) {
-        # TODO: Good error message if output is missing.
-        values <- graph_attributes[fs$name]
-        output_scalar(paste("graph_attributes", fs$name, sep = "."), values)
-    }
-}
-savescalars()
+output_scalar("sc", html)

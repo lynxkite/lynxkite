@@ -84,30 +84,9 @@ object DeriveR extends OpFromJson {
       outputs: Seq[String],
       project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
       implicit manager: MetaGraphManager): Unit = {
-    val api = Seq("vs", "es", "graph_attributes")
-    // Parse the input list into Fields.
-    val existingFields: Map[String, () => Field] = project.vertexAttributes.map {
-      case (name, attr) => s"vs.$name" -> (() => Field("vs", name, SerializableType(attr.typeTag)))
-    }.toMap ++ project.edgeAttributes.map {
-      case (name, attr) => s"es.$name" -> (() => Field("es", name, SerializableType(attr.typeTag)))
-    }.toMap ++ project.scalars.map {
-      case (name, s) =>
-        s"graph_attributes.$name" -> (() => Field("graph_attributes", name, SerializableType(s.typeTag)))
-    }.toMap + {
-      "es.src" -> (() => Field("es", "src", SerializableType.long))
-    } + {
-      "es.dst" -> (() => Field("es", "dst", SerializableType.long))
-    }
-    val inputFields: Seq[Field] = inputs.map { i =>
-      existingFields.get(i) match {
-        case Some(f) => f()
-        case None => throw new AssertionError(
-            s"No available input called '$i'. Available inputs are: " +
-              existingFields.keys.toSeq.sorted.mkString(", "))
-      }
-    }
+    val inputFields = com.lynxanalytics.biggraph.frontend_operations.PythonUtilities.inputFields(inputs, project)
     // Run the operation.
-    val op = DeriveR(code, inputFields.toList, outputFields(outputs, api).toList)
+    val op = DeriveR(code, inputFields.toList, outputFields(outputs, Seq("vs", "es", "graph_attributes")).toList)
     val builder = InstanceBuilder(op)
     for ((f, i) <- op.attrFields.zipWithIndex) {
       val attr = f.parent match {
@@ -134,6 +113,34 @@ object DeriveR extends OpFromJson {
     for ((f, i) <- res.scalarFields.zipWithIndex) {
       project.newScalar(f.name, res.scalars(i))
     }
+  }
+
+  def deriveHTML(
+      code: String,
+      mode: String,
+      inputs: Seq[String],
+      project: com.lynxanalytics.biggraph.controllers.ProjectEditor)(
+      implicit manager: MetaGraphManager): Scalar[String] = {
+    val inputFields = com.lynxanalytics.biggraph.frontend_operations.PythonUtilities.inputFields(inputs, project)
+    // Run the operation.
+    val op = DeriveHTMLR(code, mode, inputFields.toList)
+    import Scripting._
+    val builder = InstanceBuilder(op)
+    for ((f, i) <- op.attrFields.zipWithIndex) {
+      val attr = f.parent match {
+        case "vs" => project.vertexAttributes(f.name)
+        case "es" => project.edgeAttributes(f.name)
+      }
+      builder(op.attrs(i), attr)
+    }
+    for (f <- op.edgeParents) {
+      builder(op.ebs(f), project.edgeBundle)
+    }
+    for ((f, i) <- op.scalarFields.zipWithIndex) {
+      builder(op.scalars(i), project.scalars(f.name))
+    }
+    builder.toInstance(manager)
+    builder.result.sc
   }
 
   def create(
@@ -235,4 +242,29 @@ case class DeriveTableR private[graph_operations] (
     "outputFields" -> outputFields)
   override lazy val inputs = new DeriveTablePython.Input
   def outputMeta(i: MetaGraphOperationInstance) = new DeriveTablePython.Output()(i, outputFields)
+}
+
+object DeriveHTMLR extends OpFromJson {
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    DeriveHTMLR(
+      (j \ "code").as[String],
+      (j \ "mode").as[String],
+      (j \ "inputFields").as[List[Field]])
+  }
+}
+
+case class DeriveHTMLR private[graph_operations] (
+    code: String,
+    mode: String,
+    inputFields: List[Field])
+    extends TypedMetaGraphOp[Input, ScalarOutput[String]] {
+  override def toJson = Json.obj(
+    "code" -> code,
+    "mode" -> mode,
+    "inputFields" -> inputFields)
+  override lazy val inputs = new Input(inputFields)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    new ScalarOutput[String]
+  }
 }
