@@ -221,6 +221,8 @@ include::compute-hyperbolic-edge-probability.asciidoc[]
 
 include::compute-in-python.asciidoc[]
 
+include::compute-in-r.asciidoc[]
+
 include::compute-inputs.asciidoc[]
 
 include::compute-modularity-of-segmentation.asciidoc[]
@@ -284,6 +286,8 @@ include::create-erd-s-r-nyi-graph.asciidoc[]
 include::create-example-graph.asciidoc[]
 
 include::create-graph-in-python.asciidoc[]
+
+include::create-graph-in-r.asciidoc[]
 
 include::create-hyperbolic-random-graph.asciidoc[]
 
