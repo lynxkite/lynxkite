@@ -969,24 +969,24 @@ export class Splash {
     this.tableBrowser = new TableBrowser(this.root);
   }
 
-  async workspace(name) {
-    return element(by.id('workspace-' + toId(name)));
+  workspace(name) {
+    return this.root.locator('#workspace-' + toId(name));
   }
 
-  async directory(name) {
-    return element(by.id('directory-' + toId(name)));
+  directory(name) {
+    return this.root.locator('#directory-' + toId(name));
   }
 
-  async table(name) {
-    return element(by.id('table-' + toId(name)));
+  table(name) {
+    return this.root.locator('#table-' + toId(name));
   }
 
-  async view(name) {
-    return element(by.id('view-' + toId(name)));
+  view(name) {
+    return this.root.locator('#view-' + toId(name));
   }
 
-  async snapshot(name) {
-    return element(by.id('snapshot-' + toId(name)));
+  snapshot(name) {
+    return this.root.locator('#snapshow-' + toId(name));
   }
 
   async expectNumWorkspaces(n) {
@@ -1101,7 +1101,7 @@ export class Splash {
   }
 
   async deleteWorkspace(name) {
-    testLib.menuClick(this.workspace(name), 'discard');
+    await menuClick(this.workspace(name), 'discard');
   }
 
   async deleteDirectory(name) {
@@ -1117,19 +1117,19 @@ export class Splash {
   }
 
   async expectWorkspaceListed(name) {
-    testLib.expectElement(this.workspace(name));
+    await expect(this.workspace(name)).toBeVisible();
   }
 
   async expectWorkspaceNotListed(name) {
-    testLib.expectNotElement(this.workspace(name));
+    await expect(this.workspace(name)).not.toBeVisible();
   }
 
   async expectDirectoryListed(name) {
-    testLib.expectElement(this.directory(name));
+    await expect(this.directory(name)).toBeVisible();
   }
 
   async expectDirectoryNotListed(name) {
-    testLib.expectNotElement(this.directory(name));
+    await expect(this.directory(name)).not.toBeVisible();
   }
 
   async expectTableListed(name) {
@@ -1229,6 +1229,13 @@ function getSelectAllKey() {
     return K.chord(K.CONTROL, 'a');
   }
 }
+
+async function menuClick(entry, action) {
+  const menu = entry.locator('.dropdown');
+  await menu.locator('a.dropdown-toggle').click();
+  await menu.locator('#menu-' + action).click();
+}
+
 
 const testLib = {
   theRandomPattern: randomPattern(),
@@ -1497,12 +1504,6 @@ const testLib = {
   expectHasText(element, text) {
     testLib.expectElement(element);
     expect(element.getText()).toBe(text);
-  },
-
-  menuClick: function (entry, action) {
-    const menu = entry.$('.dropdown');
-    menu.$('a.dropdown-toggle').click();
-    menu.element(by.id('menu-' + action)).click();
   },
 
   switchToWindow: function (pos) {
