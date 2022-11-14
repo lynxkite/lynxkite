@@ -52,6 +52,7 @@
 │  ├─ @firebase/webchannel-wrapper@0.5.0
 │  ├─ @grpc/grpc-js@1.3.2
 │  ├─ @grpc/proto-loader@0.5.6
+│  ├─ @playwright/test@1.27.1
 │  ├─ aws-sign2@0.7.0
 │  ├─ browser-sync-ui@2.26.14
 │  ├─ browser-sync@2.26.14
@@ -67,6 +68,7 @@
 │  ├─ long@4.0.0
 │  ├─ oauth-sign@0.9.0
 │  ├─ pause-stream@0.0.11
+│  ├─ playwright-core@1.27.1
 │  ├─ request@2.88.2
 │  ├─ rx@4.1.0
 │  ├─ rxjs@5.5.12
@@ -87,7 +89,7 @@
 │  ├─ estraverse@5.2.0
 │  ├─ esutils@2.0.3
 │  ├─ normalize-package-data@2.5.0
-│  ├─ terser@4.8.0
+│  ├─ terser@4.8.1
 │  └─ uri-js@4.4.1
 ├─ BSD-3-Clause
 │  ├─ @protobufjs/aspromise@1.1.2
@@ -268,6 +270,7 @@
 │  ├─ @types/fast-json-stable-stringify@2.1.0
 │  ├─ @types/long@4.0.2
 │  ├─ @types/node@17.0.38
+│  ├─ @types/node@18.11.9
 │  ├─ @types/q@0.0.32
 │  ├─ @types/selenium-webdriver@3.0.17
 │  ├─ accepts@1.3.7
@@ -360,7 +363,7 @@
 │  ├─ browserstack@1.6.1
 │  ├─ bs-snippet-injector@2.0.1
 │  ├─ buffer-equal@1.0.0
-│  ├─ buffer-from@1.1.1
+│  ├─ buffer-from@1.1.2
 │  ├─ bytes@3.1.0
 │  ├─ cache-base@1.0.1
 │  ├─ call-bind@1.0.2
@@ -827,7 +830,7 @@
 │  ├─ source-map-resolve@0.5.3
 │  ├─ source-map-resolve@0.6.0
 │  ├─ source-map-support@0.4.18
-│  ├─ source-map-support@0.5.19
+│  ├─ source-map-support@0.5.21
 │  ├─ source-map-url@0.4.1
 │  ├─ sparkles@1.0.1
 │  ├─ spdx-expression-parse@3.0.1

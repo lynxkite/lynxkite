@@ -129,6 +129,8 @@ frontend-test:
   USER root
   RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
+  COPY web/package.json web/yarn.lock web/
+  RUN cd web; npx playwright install; npx playwright install-deps
   USER mambauser
   COPY tools/wait_for_port.sh tools/
   COPY tools/with_lk.sh tools/
