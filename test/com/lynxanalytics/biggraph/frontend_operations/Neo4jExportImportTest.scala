@@ -20,7 +20,7 @@ class Neo4jExportImportTest extends OperationsTestBase {
     dataManager.get(res)
   }
 
-  test("full graph export and import") {
+  test("full graph export and import", com.lynxanalytics.biggraph.RequiresDocker) {
     server.start()
     exportExampleGraph()
     val p = importBox("Import from Neo4j", Map("url" -> server.getBoltUrl)).project
@@ -47,7 +47,7 @@ class Neo4jExportImportTest extends OperationsTestBase {
     server.stop()
   }
 
-  test("attribute export") {
+  test("attribute export", com.lynxanalytics.biggraph.RequiresDocker) {
     server.start()
     exportExampleGraph()
     val g = box("Create example graph").box("Compute PageRank").box("Compute dispersion")
@@ -65,7 +65,7 @@ class Neo4jExportImportTest extends OperationsTestBase {
     server.stop()
   }
 
-  test("export with labels and types") {
+  test("export with labels and types", com.lynxanalytics.biggraph.RequiresDocker) {
     server.start()
     val res = box("Create example graph").box(
       "Export graph to Neo4j",

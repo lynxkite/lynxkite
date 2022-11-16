@@ -2,9 +2,6 @@
 # Starts up a LynxKite instance which requires authentication on a random port
 # (exported as $HTTPS_PORT/$HTTP_PORT), runs a command, then shuts down LynxKite.
 
-# Make sure Spark is installed.
-$(dirname $0)/install_spark.sh
-
 # Create config.
 TMP=$(mktemp -d)
 KITE_USERS_FILE=$(mktemp)
@@ -28,7 +25,6 @@ export HTTPS_PORT=$[ 9200 + RANDOM % 100 ]
 export SPHYNX_PORT=$[ 9300 + RANDOM % 100 ]
 SPHYNX_PID_FILE=${TMP}/sphynx_pid
 
-export SPARK_VERSION=`cat conf/SPARK_VERSION`
 . conf/kiterc_template
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
@@ -45,7 +41,7 @@ export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 export KITE_DOMAINS=sphynx,scala,spark
 
 # Start backend.
-$SPARK_HOME/bin/spark-submit \
+spark-submit \
   --conf "spark.driver.extraJavaOptions=-Dhttp.port=$KITE_HTTP_PORT -Dhttps.port=$KITE_HTTPS_PORT -Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST -Dhttps.keyStore=$KITE_HTTPS_KEYSTORE -Dhttps.keyStorePassword=$KITE_HTTPS_KEYSTORE_PWD" \
   target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar &
 KITE_PID=$!

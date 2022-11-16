@@ -12,6 +12,11 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   Useful if you want to run LynxKite as part of a pipeline, rather than as permanent fixture.
 - The `LynxKite()` constructor in the Python API now defaults to connecting to `http://localhost:2200`.
   [#291](https://github.com/lynxkite/lynxkite/pull/291)
+- Added _"Compute in R"_ and _"Create graph in R"_ boxes that behave the same as their Python
+  counterparts, but let you use R. [#292](https://github.com/lynxkite/lynxkite/pull/292)
+- Set up an [Earthly](https://earthly.dev/get-earthly) build.
+  [#296](https://github.com/lynxkite/lynxkite/pull/296) This should make builds very reliable for
+  everyone.
 
 ### 5.1.0
 

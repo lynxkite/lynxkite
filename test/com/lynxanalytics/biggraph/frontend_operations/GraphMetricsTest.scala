@@ -15,7 +15,7 @@ class GraphMetricsTest extends OperationsTestBase {
   }
 
   // All 2 plot tests use this box
-  val plotBox = box("Create example graph")
+  def plotBox = box("Create example graph")
     .box(
       "built-ins/Graph metrics",
       Map(

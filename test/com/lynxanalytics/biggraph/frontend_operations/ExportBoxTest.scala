@@ -103,7 +103,8 @@ class ExportBoxTest extends OperationsTestBase {
     checkResult(importedAgain)
   }
 
-  test("Export to AVRO") {
+  // AVRO is an optional dependency. See https://spark.apache.org/docs/latest/sql-data-sources-avro.html.
+  ignore("Export to AVRO") {
     val path = "EXPORTTEST$/tmp/exportedAVRO"
     val exportTarget = HadoopFile(path)
     exportTarget.deleteIfExists()

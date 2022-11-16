@@ -34,7 +34,7 @@ if $WITH_SPHYNX; then
   -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
   -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=localhost"
   cd sphynx
-  LD_LIBRARY_PATH=.build .build/lynxkite-sphynx/lynxkite-sphynx &
+  .build/lynxkite-sphynx/lynxkite-sphynx &
   cd -
   $(dirname $0)/tools/wait_for_port.sh $SPHYNX_PORT
   echo "Sphynx running on port $SPHYNX_PORT"
@@ -56,9 +56,9 @@ if $INTERACTIVE; then
   sbt
 else
   if $WITH_SPHYNX; then
-    sbt test:scalafmt "testOnly -- -l SparkOnly"
+    sbt 'testOnly -- -l "SparkOnly RequiresDocker"'
   else
-    sbt test:scalafmt "testOnly -- -l SphynxOnly"
+    sbt 'testOnly -- -l "SphynxOnly RequiresDocker"'
   fi
 fi
 # We'll check if the logfile contains 'future failed' lines; these

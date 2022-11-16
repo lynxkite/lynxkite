@@ -3,9 +3,6 @@
 
 # Settings in this file can be overriden using environment variables.
 
-# Specify the directory containing your Spark installation.
-export SPARK_HOME=$HOME/spark/spark-${SPARK_VERSION}
-
 # To specify which cluster to use choose one of the following options:
 
 # - local - for single machine installs

@@ -34,10 +34,6 @@ publishArtifact in packageSrc := false  // Don't package source.
 
 scalaVersion := "2.12.13"
 
-val sparkVersion = SettingKey[String]("spark-version", "The version of Spark used for building.")
-
-sparkVersion := IO.readLines(baseDirectory.value / "conf/SPARK_VERSION")(0)
-
 libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
   filters, // Play library for compressing HTTP responses.
@@ -72,8 +68,6 @@ libraryDependencies ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final",
   // This indirect dependency of ours is broken on Maven.
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-  // Used for working with AVRO files.
-  "org.apache.spark" %% "spark-avro" % sparkVersion.value,
   // For Neo4j import/export. Doesn't work, see https://github.com/neo4j-contrib/neo4j-spark-connector/issues/339.
   "org.neo4j" %% "neo4j-connector-apache-spark" % "4.0.2_for_spark_3",
   // For Neo4j tests.
@@ -138,17 +132,18 @@ assemblyMergeStrategy in assembly := {
 }
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
-// it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
-def sparkJars(version: String) = {
-  val home = System.getenv("HOME")
-  val jarsDir = new java.io.File(
-    Option(System.getenv("SPARK_JARS_DIR")).getOrElse(s"$home/spark/spark-$version/jars"))
+// it from Maven.
+def sparkJars() = {
+  val jarsDir = new java.io.File(Option(System.getenv("SPARK_JARS_DIR")).getOrElse {
+    import sys.process._
+    Seq("python", "-c", "import pyspark as p; print(p.__file__.replace('__init__.py', 'jars'))").!!.trim
+  })
   (jarsDir * "*.jar").get
 }
 
-dependencyClasspath in Compile ++= sparkJars(sparkVersion.value)
+dependencyClasspath in Compile ++= sparkJars()
 
-dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
+dependencyClasspath in Test ++= sparkJars()
 
 resolvers ++= Seq(
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
@@ -170,7 +165,7 @@ def myStage = Command.command("stage") { state =>
 commands += myStage
 
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
-testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
+testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "target/sbttest.out", "-l", "Benchmark"))
 
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
@@ -197,19 +192,7 @@ def dirContents(baseDir: File, dirs: String*) = {
 Compile / resourceDirectory := baseDirectory.value / "conf"
 Compile / unmanagedResourceDirectories += baseDirectory.value / "sphynx/.build/zip"
 
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring")
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
-mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
-mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "r")
-mappings in Universal ++= Seq(
-  file("tools/runtime-env.yml") -> "tools/runtime-env.yml",
-  file("tools/runtime-env-cuda.yml") -> "tools/runtime-env-cuda.yml",
-  file("tools/rmoperation.py") -> "tools/rmoperation.py",
-  file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
-  file("tools/install_spark.sh") -> "tools/install_spark.sh",
-  file("sphynx/.build/lynxkite-sphynx/lynxkite-sphynx") -> "sphynx/lynxkite-sphynx")
 
 sourceDirectory in Assets := new File("web/dist")
 

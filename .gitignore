@@ -13,7 +13,6 @@ __pycache__
 /.bsp
 /dist/*
 target/
-/logs/
 /lib_managed/
 /src_managed/
 /project/boot/
