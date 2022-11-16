@@ -1,81 +1,77 @@
-<div
-  ng-repeat="state in result.states track by $index"
-  id="state-{{ $index }}" ng-if="interactive">
-  <div id="state-toolbar" class="flat-toolbar" ng-if="state.stateId">
-    <button
-      class="btn btn-default" id="save-as-snapshot-button"
-      ng-click="root.snapshotNameOpen = true; snapshotName = getDefaultSnapshotName()"
-      drop-tooltip="Save as snapshot..."
-      drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-camera"></i>
-    </button>
-    <inline-input
-      id="save-as-snapshot-box"
-      placeholder="Snapshot name..."
-      input="snapshotName"
-      onsubmit="createSnapshot(state.stateId, input, done)"
-      open="root.snapshotNameOpen"></inline-input>
+<div ng-repeat-start="state in result.states track by $index"
+  id="state-toolbar state-toolbar-{{ $index }}" class="flat-toolbar" ng-if="state.stateId && interactive">
+  <button
+    class="btn btn-default" id="save-as-snapshot-button"
+    ng-click="root.snapshotNameOpen = true; snapshotName = getDefaultSnapshotName()"
+    drop-tooltip="Save as snapshot..."
+    drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-camera"></i>
+  </button>
+  <inline-input
+    id="save-as-snapshot-box"
+    placeholder="Snapshot name..."
+    input="snapshotName"
+    onsubmit="createSnapshot(state.stateId, input, done)"
+    open="root.snapshotNameOpen"></inline-input>
 
-    <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
-    <button
-      id="clear-instrument"
-      ng-hide="$last"
-      class="btn btn-default"
-      ng-click="clearInstrument($index)"
-      drop-tooltip="Return to this state"
-      drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-remove"></i>
-    </button>
-    <button
-      id="instrument-with-sql"
-      ng-show="state.kind === 'table' || state.kind === 'graph'"
-      ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
-      class="btn btn-default"
-      ng-click="setInstrument($index, 'SQL1', {persist: 'no'})">
-      SQL
-    </button>
-    <button
-      id="instrument-with-plot"
-      ng-show="state.kind === 'table'"
-      ng-class="{ active: instruments[$index].operationId === 'Custom plot' }"
-      class="btn btn-default"
-      ng-click="setInstrument($index, 'Custom plot')">
-      Plot
-    </button>
-    <button
-      id="instrument-with-visualize"
-      ng-show="state.kind === 'graph'"
-      ng-class="{ active: instruments[$index].operationId === 'Graph visualization' }"
-      class="btn btn-default"
-      ng-click="setInstrument($index, 'Graph visualization')">
-      Visualize
-    </button>
+  <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
+  <button
+    id="clear-instrument"
+    ng-hide="$last"
+    class="btn btn-default"
+    ng-click="clearInstrument($index)"
+    drop-tooltip="Return to this state"
+    drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-remove"></i>
+  </button>
+  <button
+    id="instrument-with-sql"
+    ng-show="state.kind === 'table' || state.kind === 'graph'"
+    ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
+    class="btn btn-default"
+    ng-click="setInstrument($index, 'SQL1', {persist: 'no'})">
+    SQL
+  </button>
+  <button
+    id="instrument-with-plot"
+    ng-show="state.kind === 'table'"
+    ng-class="{ active: instruments[$index].operationId === 'Custom plot' }"
+    class="btn btn-default"
+    ng-click="setInstrument($index, 'Custom plot')">
+    Plot
+  </button>
+  <button
+    id="instrument-with-visualize"
+    ng-show="state.kind === 'graph'"
+    ng-class="{ active: instruments[$index].operationId === 'Graph visualization' }"
+    class="btn btn-default"
+    ng-click="setInstrument($index, 'Graph visualization')">
+    Visualize
+  </button>
 
-    <button
-      id="graphray-button"
-      ng-show="state.kind === 'visualization' && util.globals.graphrayEnabled"
-      class="btn btn-default btn-image"
-      ng-click="graphray()"
-      drop-tooltip="Render ray-traced image"
-      drop-tooltip-placement="bottom">
-      <img src="images/render50.png">
-    </button>
-  </div>
-
-  <div class="container-fluid">
-    <!-- "box" is faked just enough to serve <visualization-parameter>. -->
-    <op-editor
-      ng-if="!$last"
-      box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
-      box-meta="result.metas[$index]"
-      parameters="instruments[$index].parameters"
-      parametric-parameters="instruments[$index].parametricParameters"
-      on-blur="onBlur()"></op-editor>
-  </div>
+  <button
+    id="graphray-button"
+    ng-show="state.kind === 'visualization' && util.globals.graphrayEnabled"
+    class="btn btn-default btn-image"
+    ng-click="graphray()"
+    drop-tooltip="Render ray-traced image"
+    drop-tooltip-placement="bottom">
+    <img src="images/render50.png">
+  </button>
 </div>
 
+<!-- "box" is faked just enough to serve <visualization-parameter>. -->
+<op-editor
+  ng-repeat-end
+  ng-if="interactive && !$last"
+  class="container-fluid-wide"
+  id="state-editor-{{ $index }}"
+  box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
+  box-meta="result.metas[$index]"
+  parameters="instruments[$index].parameters"
+  parametric-parameters="instruments[$index].parametricParameters"
+  on-blur="onBlur()"></op-editor>
 
-<div class="clearfix">
 <project-state-view
   state-id="lastState.stateId"
   ng-if="lastState.kind === 'graph'">
@@ -84,6 +80,10 @@
   state-id="lastState.stateId"
   ng-if="lastState.kind === 'exportResult'">
 </export-result>
+<html-state
+  state-id="lastState.stateId"
+  ng-if="lastState.kind === 'html'">
+</html-state>
 <table-state-view
   state-id="lastState.stateId"
   wizard="wizard"
@@ -109,4 +109,3 @@
 <uib-progressbar
   ng-if="lastState.stateId === undefined" value="100" class="progress-striped active">
 </uib-progressbar>
-</div>

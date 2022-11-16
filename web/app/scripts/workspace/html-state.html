@@ -1,0 +1,4 @@
+<uib-progressbar ng-if="!content.$resolved" value="100" class="progress-striped active">
+Loading...
+</uib-progressbar>
+<iframe ng-if="content.$resolved" class="html-state-iframe" srcdoc="{{ content.string | trustAsHtml }}" sandbox="allow-scripts"></iframe>

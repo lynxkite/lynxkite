@@ -61,9 +61,6 @@ workspace-drawing-board > display-error > * {
   font: bold 12px sans-serif;
 }
 
-state-view {
-  display: block;
-}
 box-editor {
   display: block;
 }

@@ -479,18 +479,19 @@ State.prototype = {
   __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   setInstrument: function(index, name, params) {
-    const state = this.popup.$(`#state-${index}`);
-    state.$(`#instrument-with-${name}`).click();
+    const toolbar = this.popup.$(`#state-toolbar-${index}`);
+    const editor = this.popup.$(`#state-editor-${index}`);
+    toolbar.$(`#instrument-with-${name}`).click();
     params = params || {};
     for (const key in params) {
-      const param = state.$(`operation-parameters #param-${key} .operation-attribute-entry`);
+      const param = editor.$(`operation-parameters #param-${key} .operation-attribute-entry`);
       testLib.setParameter(param, params[key]);
     }
     $('#workspace-name').click(); // Make sure the parameters are not focused.
   },
 
   clearInstrument: function(index) {
-    this.popup.$(`#state-${index} #clear-instrument`).click();
+    this.popup.$(`#state-toolbar-${index} #clear-instrument`).click();
   },
 };
 

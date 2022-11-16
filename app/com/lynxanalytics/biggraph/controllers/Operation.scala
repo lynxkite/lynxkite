@@ -668,7 +668,7 @@ abstract class ExportOperation(context: Operation.Context) extends TriggerableOp
   protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
     val paramsToDisplay = getParamsToDisplay()
     Map(context.box.output(
-      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
+      context.meta.outputs(0)) -> BoxOutputState.exportResult(exportResult, paramsToDisplay))
   }
 
   override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {

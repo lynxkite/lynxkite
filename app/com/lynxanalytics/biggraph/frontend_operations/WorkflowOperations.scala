@@ -609,8 +609,14 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         input.kind match {
           case BoxOutputKind.Project =>
             val project = projectInput("graph")
-            PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
-            Map(context.box.output("graph") -> BoxOutputState.from(project))
+            if (Seq("html", "ipywidget", "matplotlib").contains(params("outputs"))) {
+              val html = PythonUtilities.deriveHTML(params("code"), params("outputs"), pythonInputs, project)
+              // The output is called "graph" to preserve compatibility.
+              Map(context.box.output("graph") -> BoxOutputState.html(html))
+            } else {
+              PythonUtilities.derive(params("code"), pythonInputs, pythonOutputs, project)
+              Map(context.box.output("graph") -> BoxOutputState.from(project))
+            }
           case BoxOutputKind.Table =>
             // We named the input and output before adding table support.
             // It's bad naming here, but lets us keep compatibility.

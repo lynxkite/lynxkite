@@ -284,6 +284,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.Table => List(state.table)
             case BoxOutputKind.Plot => BoxOutputState.tablesOfPlot(state.plot).toList
             case BoxOutputKind.ExportResult => List(state.exportResult)
+            case BoxOutputKind.HTML => List(state.html)
             case BoxOutputKind.Visualization =>
               visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.left) ++
                 visualizedEntitiesForSide(state.visualization, state.visualization.uiStatus.right)
