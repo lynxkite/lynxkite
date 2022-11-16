@@ -42,11 +42,7 @@ class TestExternalComputation(unittest.TestCase):
 
   def test_pyspark(self):
     lk = lynx.kite.LynxKite()
-    try:
-      from pyspark.sql import SparkSession
-    except ImportError:
-      print('Skipping PySpark test. "pip install pyspark" if you want to run it.')
-      return
+    from pyspark.sql import SparkSession
     spark = SparkSession.builder.appName('test').getOrCreate()
 
     @lynx.kite.external

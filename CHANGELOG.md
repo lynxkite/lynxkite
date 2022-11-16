@@ -6,8 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-- Introduced a Scala API for starting and stopping LynxKite.
-  [#291](https://github.com/lynxkite/lynxkite/pull/291)
+- The Python API can now be used without a running LynxKite instance. If you pass in a SparkSession
+  to LynxKite (`lk = lynx.kite.LynxKite(spark=spark)`), LynxKite will run in that SparkSession.
+  [#294](https://github.com/lynxkite/lynxkite/pull/294)
   Useful if you want to run LynxKite as part of a pipeline, rather than as permanent fixture.
 - The `LynxKite()` constructor in the Python API now defaults to connecting to `http://localhost:2200`.
   [#291](https://github.com/lynxkite/lynxkite/pull/291)
