@@ -8,6 +8,7 @@ channels:
 - nvidia
 - pytorch
 - conda-forge
+- r
 dependencies:
 - unzip
 - make
@@ -48,3 +49,7 @@ dependencies:
 - requests
 - typed-ast
 - types-requests
+# For R API and tools.
+- r
+- r-essentials
+- r-arrow

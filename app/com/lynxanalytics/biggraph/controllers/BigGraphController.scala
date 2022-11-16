@@ -27,10 +27,7 @@ object FEStatus {
   def disabled(disabledReason: String) = FEStatus(false, disabledReason)
   def from(t: Throwable) = FEStatus(
     false,
-    t match {
-      case ae: AssertionError => ae.getMessage
-      case _ => t.toString
-    },
+    com.lynxanalytics.biggraph.serving.Utils.formatThrowable(t),
     Some(t))
   def assert(condition: Boolean, disabledReason: => String) =
     if (condition) enabled else disabled(disabledReason)

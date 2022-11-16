@@ -202,6 +202,7 @@ mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring"
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "python")
+mappings in Universal ++= dirContents(baseDirectory.value, "sphynx", "r")
 mappings in Universal ++= Seq(
   file("tools/runtime-env.yml") -> "tools/runtime-env.yml",
   file("tools/runtime-env-cuda.yml") -> "tools/runtime-env-cuda.yml",

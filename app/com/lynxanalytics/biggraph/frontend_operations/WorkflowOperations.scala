@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.Environment
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_operations.InducedEdgeBundle
+import com.lynxanalytics.biggraph.{logger => log}
 
 class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
@@ -626,6 +627,56 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
               else pythonOutputs
             val result = PythonUtilities.deriveTable(params("code"), table, outputs)
             Map(context.box.output("graph") -> BoxOutputState.from(result))
+        }
+      }
+      // Unused because we are overriding getOutputs.
+      protected def apply(): Unit = ???
+      protected def enabled: com.lynxanalytics.biggraph.controllers.FEStatus = ???
+    },
+  )
+
+  registerOp(
+    "Compute in R",
+    defaultIcon,
+    category,
+    List("input"),
+    List("output"),
+    new SmartOperation(_) {
+      params ++= List(
+        Param("inputs", "Inputs"),
+        Param("outputs", "Outputs"),
+        Code("code", "R code", language = "r"),
+      )
+      val input = context.inputs("input")
+      private def rInputs = splitParam("inputs")
+      private def rOutputs = splitParam("outputs")
+      override def summary = {
+        val outputs = rOutputs.map(_.replaceFirst(":.*", "")).mkString(", ")
+        if (outputs.isEmpty) "Compute in R"
+        else s"Compute $outputs in R"
+      }
+
+      override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+        params.validate()
+        graph_operations.DeriveR.assertAllowed()
+        input.kind match {
+          case BoxOutputKind.Project =>
+            val project = projectInput("input")
+            graph_operations.DeriveR.derive(params("code"), rInputs, rOutputs, project)
+            Map(context.box.output("output") -> BoxOutputState.from(project))
+          case BoxOutputKind.Table =>
+            val table = tableInput("input")
+            val outputs: Seq[String] =
+              table.schema.fields.map { f =>
+                s"df.${f.name}: " + (f.dataType match {
+                  case org.apache.spark.sql.types.StringType => "character"
+                  case org.apache.spark.sql.types.LongType => "integer"
+                  case _ => "double"
+                })
+              } ++ rOutputs
+            log.error(s"DeriveR outputs: $outputs")
+            val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
+            Map(context.box.output("output") -> BoxOutputState.from(result))
         }
       }
       // Unused because we are overriding getOutputs.

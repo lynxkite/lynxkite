@@ -109,7 +109,7 @@ class ImportBoxTest extends OperationsTestBase {
 
     val errorMessage = feStatus.disabledReason
     val errorMessageShouldBe =
-      "assertion failed: The following import settings are stale: infer (no). Please click on " +
+      "The following import settings are stale: infer (no). Please click on " +
         "the import button to apply the changed settings or reset the changed settings to " +
         "their original values."
     assert(
