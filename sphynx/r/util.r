@@ -56,9 +56,6 @@ input_scalar <- function(name) {
 }
 
 output_parquet <- function(name, values) {
-    print("output_parquet")
-    print(name)
-    print(values)
     d <- file.path(datadir, outputs[[name]])
     write_dataset(values, d)
 }
