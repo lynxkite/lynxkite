@@ -874,7 +874,8 @@ class LynxKite:
     return self._send('/remote/setExecutors', {'count': count})
 
 
-def get_free_ports(n):
+def _get_free_ports(n):
+  '''Returns n port numbers that are currently free.'''
   servers = [socketserver.TCPServer(('localhost', 0), None) for _ in range(n)]
   for s in servers:
     s.__enter__()
@@ -885,12 +886,14 @@ def get_free_ports(n):
 
 
 class ManagedLynxKite:
+  '''Takes care of starting and stopping LynxKite in a SparkSession.'''
+
   def __init__(self, spark, **kwargs):
     self.assert_jar_is_loaded(spark)
     self.spark = spark
     self.storage = TemporaryDirectory()
     tmp = self.storage.name
-    kite_http_port, kite_https_port, sphynx_port = get_free_ports(3)
+    kite_http_port, kite_https_port, sphynx_port = _get_free_ports(3)
     self.set_env(
         KITE_META_DIR=f'{tmp}/meta',
         KITE_DATA_DIR=f'file:{tmp}/data',
@@ -917,6 +920,7 @@ class ManagedLynxKite:
     jvm.com.lynxanalytics.biggraph.Environment.set(cfg)
 
   def start(self):
+    '''Returns when LynxKite is ready to be used.'''
     self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.start()
 
   def stop(self):
