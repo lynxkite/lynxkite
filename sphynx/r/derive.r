@@ -1,4 +1,4 @@
-# Run user code on a graph.
+# Runs user code that takes a graph as input and outputs new attributes.
 source("r/util.r")
 
 ip = as.data.frame(installed.packages()[,c(1,3:4)])

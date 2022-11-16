@@ -1,4 +1,4 @@
-# Simple access to operation parameters, input, and outputs.
+# Simple access to operation parameters, inputs, and outputs.
 options(show.error.locations = TRUE)
 options(error = function() {
     traceback(3)

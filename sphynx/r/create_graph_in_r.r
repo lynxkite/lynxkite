@@ -1,4 +1,4 @@
-# Run user code on a graph.
+# Creates a new graph in R.
 source("r/util.r")
 
 vs <- tibble()
