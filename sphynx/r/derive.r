@@ -46,7 +46,6 @@ save <- function(parent, t) {
     fields <- params[["outputFields"]]
     fs <- fields[fields$parent == parent, ]
     if (nrow(fs) != 0) {
-        # TODO: Good error message if output is missing.
         columns <- t[fs$name]
         output_table(paste(parent, fs$name, sep = "."), columns, fs$tpe$typename)
     }
@@ -57,7 +56,6 @@ savescalars <- function() {
     fields <- params[["outputFields"]]
     fs <- fields[fields$parent == "graph_attributes", ]
     if (nrow(fs) != 0) {
-        # TODO: Good error message if output is missing.
         values <- graph_attributes[fs$name]
         output_scalar(paste("graph_attributes", fs$name, sep = "."), values)
     }
