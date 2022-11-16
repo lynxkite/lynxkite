@@ -649,8 +649,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     List("output"),
     new SmartOperation(_) {
       params ++= List(
-        Param("inputs", "Inputs", defaultValue = "<infer from code>"),
-        Param("outputs", "Outputs", defaultValue = "<infer from code>"),
+        Param("inputs", "Inputs"),
+        Param("outputs", "Outputs"),
         Code("code", "R code", language = "r"),
       )
       val input = context.inputs("input")

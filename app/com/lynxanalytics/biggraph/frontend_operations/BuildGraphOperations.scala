@@ -383,7 +383,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   registerProjectCreatingOp("Create graph in R")(new ProjectOutputOperation(_) {
     params ++= List(
-      Param("outputs", "Outputs", defaultValue = "<infer from code>"),
+      Param("outputs", "Outputs"),
       Code("code", "R code", language = "r"))
     def enabled = FEStatus.enabled
     private def rOutputs = splitParam("outputs")

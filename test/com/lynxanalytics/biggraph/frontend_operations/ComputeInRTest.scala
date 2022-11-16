@@ -45,6 +45,21 @@ graph_attributes$average_age <- mean(vs$age)
     assert(get(p.scalars("average_age").runtimeSafeCast[Double]).round == 23)
   }
 
+  test("error if an output is missing", SphynxOnly) {
+    val p = box("Create example graph")
+      .box(
+        "Compute in R",
+        Map(
+          "inputs" -> "vs.name",
+          "outputs" -> "vs.with_title: character",
+          "code" -> "", // Not setting vs.with_title.
+        ),
+      )
+      .output("output").project
+    val e = intercept[Exception](get(p.vertexAttributes("with_title")))
+    assert(e.getMessage.contains("Column `with_title` doesn't exist."))
+  }
+
   test("vectors", SphynxOnly) {
     val p = box("Create example graph")
       .box(
