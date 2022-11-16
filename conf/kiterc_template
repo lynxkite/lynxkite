@@ -215,6 +215,10 @@ export UNORDERED_SPHYNX_DATA_DIR=$HOME/kite/data/sphynx/unordered
 # to the network and file-system, it must be explicitly enabled by the administrator.
 # export KITE_ALLOW_PYTHON=yes
 
+# Unrestricted R execution in LynxKite is a very powerful tool. Since R execution has full access
+# to the network and file-system, it must be explicitly enabled by the administrator.
+# export KITE_ALLOW_R=yes
+
 # A simple chroot-based sandbox for executing users' Python code can improve security in a multi-user
 # environment. To be able to mount directories as read-only, this requires running LynxKite as root.
 # If it's running in a Docker container, that container must be started with the --privileged flag.

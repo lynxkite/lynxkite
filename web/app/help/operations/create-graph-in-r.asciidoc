@@ -1,0 +1,63 @@
+### Create graph in R
+
+Executes custom R code to define a graph.
+Ideal for creating complex graphs programmatically and for loading
+datasets in non-standard formats.
+
+The following example creates a small graph with some attributes.
+
+[source,r]
+----
+vs <- tibble(name = c("Alice", "Bob", "Cecil", "Drew"))
+es <- tibble(
+  src = c(0, 0, 1),
+  dst = c(1, 2, 3),
+  weight = c(1, 2, 3)
+)
+graph_attributes$band_name <- 'The Amazing Alphabet'
+----
+
+`graph_attributes` is an object you can use to get and set graph attributes.
+
+`vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
+https://tibble.tidyverse.org/reference/tibble.html[tibbles].
+You can write natural R code and use the usual APIs and packages to
+compute new attributes. Dplyr is already imported.
+`es` must have `src` and `dst` columns which are the indexes of the source and destination
+vertex for each edge.
+
+Like all operations in LynxKite, this code is executed only when the results are
+needed. But we need to know the type of the attributes even before that,
+so that we can continue building the workspace.
+To make this possible, you have to specify the type of the outputs
+through the _Inputs_ and _Outputs_ parameters.
+
+The currently supported types for outputs are:
+
+- `double` to create a `number`-typed attribute.
+- `character` to create a `String`-typed attribute.
+- `vector` to create a `Vector[number]`-typed attribute.
+
+In the previous example we would set:
+
+- Outputs: `vs.name: character, es.weight: double, graph_attributes.band_name: character`
+
+**Working with vectors**
+
+To output a vector-typed attribute, you can create a list column or a matrix:
+
+[source,r]
+----
+# Put the age and its double into a vector.
+vs$v <- outer(vs$age, c(1, 2))
+----
+
+====
+[p-code]#Code#::
+The R code you want to run. See the operation description for details.
+
+[p-outputs]#Outputs#::
+A comma-separated list of attributes that your code generates.
+These must be annotated with the type of the attribute.
+For example, `vs.my_new_attribute: character, vs.another_new_attribute: double, graph_attributes.also_new: character`.
+====

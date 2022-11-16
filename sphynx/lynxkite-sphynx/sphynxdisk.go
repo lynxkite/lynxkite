@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
 
 var arrowAllocator = memory.NewGoAllocator()
@@ -101,7 +102,8 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read type of %v: %v", dirName, err)
 	}
-	typeName := string(typeData)
+	// It may or may not have a newline.
+	typeName := strings.ReplaceAll(string(typeData), "\n", "")
 	log.Printf("Reading %v %v from ordered disk.", typeName, guid)
 	e, err := createEntity(typeName)
 	if err != nil {

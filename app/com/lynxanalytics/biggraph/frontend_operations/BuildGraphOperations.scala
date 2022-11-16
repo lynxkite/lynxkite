@@ -380,4 +380,16 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       PythonUtilities.create(params("code"), pythonOutputs, project)
     }
   })
+
+  registerProjectCreatingOp("Create graph in R")(new ProjectOutputOperation(_) {
+    params ++= List(
+      Param("outputs", "Outputs"),
+      Code("code", "R code", language = "r"))
+    def enabled = FEStatus.enabled
+    private def rOutputs = splitParam("outputs")
+    def apply() = {
+      graph_operations.DeriveR.assertAllowed()
+      graph_operations.DeriveR.create(params("code"), rOutputs, project)
+    }
+  })
 }
