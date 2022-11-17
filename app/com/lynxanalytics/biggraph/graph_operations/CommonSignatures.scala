@@ -18,6 +18,10 @@ class GraphInput extends MagicInputSignature {
   val es = edgeBundle(vs, vs)
 }
 
+class TableInput extends MagicInputSignature {
+  val df = table
+}
+
 class Segmentation(
     vs: VertexSet,
     belongsToProperties: EdgeBundleProperties = EdgeBundleProperties.default)(

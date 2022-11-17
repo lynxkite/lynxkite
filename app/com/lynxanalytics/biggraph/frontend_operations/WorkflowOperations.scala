@@ -621,18 +621,24 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             // We named the input and output before adding table support.
             // It's bad naming here, but lets us keep compatibility.
             val table = tableInput("graph")
-            val outputs: Seq[String] =
-              if (params("outputs") == "<infer from code>")
-                table.schema.fields.map { f =>
-                  s"df.${f.name}: " + (f.dataType match {
-                    case org.apache.spark.sql.types.StringType => "str"
-                    case org.apache.spark.sql.types.LongType => "int"
-                    case _ => "float"
-                  })
-                } ++ pythonOutputs
-              else pythonOutputs
-            val result = PythonUtilities.deriveTable(params("code"), table, outputs)
-            Map(context.box.output("graph") -> BoxOutputState.from(result))
+            if (Seq("html", "matplotlib").contains(params("outputs"))) {
+              val html = PythonUtilities.deriveHTML(params("code"), params("outputs"), table)
+              // The output is called "graph" to preserve compatibility.
+              Map(context.box.output("graph") -> BoxOutputState.html(html))
+            } else {
+              val outputs: Seq[String] =
+                if (params("outputs") == "<infer from code>")
+                  table.schema.fields.map { f =>
+                    s"df.${f.name}: " + (f.dataType match {
+                      case org.apache.spark.sql.types.StringType => "str"
+                      case org.apache.spark.sql.types.LongType => "int"
+                      case _ => "float"
+                    })
+                  } ++ pythonOutputs
+                else pythonOutputs
+              val result = PythonUtilities.deriveTable(params("code"), table, outputs)
+              Map(context.box.output("graph") -> BoxOutputState.from(result))
+            }
         }
       }
       // Unused because we are overriding getOutputs.

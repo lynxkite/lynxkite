@@ -11,25 +11,29 @@ if os.environ.get('SPHYNX_CHROOT_PYTHON') == 'yes':
   op.run_in_chroot()
 
 # Load inputs.
-vs = {}
-es = {}
-graph_attributes = types.SimpleNamespace()
-for fullname in op.inputs.keys():
-  if '.' not in fullname:
-    continue
-  parent, name = fullname.split('.')
-  if parent == 'vs':
-    vs[name] = op.input(fullname)
-  elif parent == 'es':
-    es[name] = op.input(fullname)
-  elif parent == 'graph_attributes':
-    setattr(graph_attributes, name, op.input_scalar(fullname))
-if 'edges-for-es' in op.inputs:
-  edges = op.input('edges-for-es')
-  es['src'] = edges.src
-  es['dst'] = edges.dst
-vs = pd.DataFrame(vs)
-es = pd.DataFrame(es)
+if op.classname.endswith('DeriveHTMLPython'):
+  vs = {}
+  es = {}
+  graph_attributes = types.SimpleNamespace()
+  for fullname in op.inputs.keys():
+    if '.' not in fullname:
+      continue
+    parent, name = fullname.split('.')
+    if parent == 'vs':
+      vs[name] = op.input(fullname)
+    elif parent == 'es':
+      es[name] = op.input(fullname)
+    elif parent == 'graph_attributes':
+      setattr(graph_attributes, name, op.input_scalar(fullname))
+  if 'edges-for-es' in op.inputs:
+    edges = op.input('edges-for-es')
+    es['src'] = edges.src
+    es['dst'] = edges.dst
+  vs = pd.DataFrame(vs)
+  es = pd.DataFrame(es)
+elif op.classname.endswith('DeriveHTMLTablePython'):
+  for name in op.inputs:
+    globals()[name] = op.input_table(name)
 
 # Execute user code.
 try:

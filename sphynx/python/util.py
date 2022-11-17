@@ -23,6 +23,7 @@ class Op:
       argv = sys.argv
     self.datadir = sys.argv[1]
     op = json.loads(sys.argv[2])
+    self.classname = op['Operation']['Class']
     self.params = op['Operation']['Data']
     self.inputs = op['Inputs']
     self.outputs = op['Outputs']

@@ -46,5 +46,6 @@ func init() {
 	diskOperationRepository["DerivePython"] = pythonOperation("derive")
 	unorderedOperationRepository["DeriveTablePython"] = pythonOperation("derive_table")
 	diskOperationRepository["DeriveHTMLPython"] = pythonOperation("derive_html")
+	unorderedOperationRepository["DeriveHTMLTablePython"] = pythonOperation("derive_html")
 	diskOperationRepository["CreateGraphInPython"] = pythonOperation("create_graph_in_python")
 }

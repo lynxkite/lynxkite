@@ -228,11 +228,11 @@ object DeriveTableR extends OpFromJson {
 case class DeriveTableR private[graph_operations] (
     code: String,
     outputFields: List[Field])
-    extends TypedMetaGraphOp[DeriveTablePython.Input, DeriveTablePython.Output]
+    extends TypedMetaGraphOp[TableInput, DeriveTablePython.Output]
     with UnorderedSphynxOperation {
   override def toJson = Json.obj(
     "code" -> code,
     "outputFields" -> outputFields)
-  override lazy val inputs = new DeriveTablePython.Input
+  override lazy val inputs = new TableInput
   def outputMeta(i: MetaGraphOperationInstance) = new DeriveTablePython.Output()(i, outputFields)
 }
