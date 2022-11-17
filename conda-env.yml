@@ -54,3 +54,4 @@ dependencies:
 - r
 - r-essentials
 - r-arrow
+- r-openssl

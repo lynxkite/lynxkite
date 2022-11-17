@@ -184,7 +184,8 @@ def subworkspace(fn: Callable):
   assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
 
   @functools.wraps(fn)
-  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], _ws_name: str = None, **kwargs):
+  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [],
+              _ws_name: Optional[str] = None, **kwargs):
     # create a new signature on every call since we will bind different arguments per call
     signature = inspect.signature(fn, follow_wrapped=False)
     # Separate workspace parameters from the normal Python parameters.
@@ -339,9 +340,9 @@ class LynxKite:
     spark = SparkSession.builder.config('spark.jars', 'lynxkite-X.X.X.jar').getOrCreate()
   '''
 
-  def __init__(self, username: str = None, password: str = None, address: str = None,
-               certfile: str = None, oauth_token: str = None, signed_token: str = None,
-               box_catalog: BoxCatalog = None, spark: 'SparkSession' = None) -> None:
+  def __init__(self, username: Optional[str] = None, password: Optional[str] = None, address: Optional[str] = None,
+               certfile: Optional[str] = None, oauth_token: Optional[str] = None, signed_token: Optional[str] = None,
+               box_catalog: Optional[BoxCatalog] = None, spark: Optional['SparkSession'] = None) -> None:
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
@@ -611,7 +612,7 @@ class LynxKite:
 
     return self._send('/remote/list', dict(path=dir)).entries
 
-  def upload(self, data: bytes, name: str = None):
+  def upload(self, data: bytes, name: Optional[str] = None):
     '''Uploads a file that can then be used in import methods.
 
       prefixed_path = lk.upload('id,name\\n1,Bob')
@@ -620,12 +621,12 @@ class LynxKite:
       name = 'remote-api-upload'  # A hash will be added anyway.
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
-  def uploadCSVNow(self, data: bytes, name: str = None):
+  def uploadCSVNow(self, data: bytes, name: Optional[str] = None):
     '''Uploads CSV data and returns a table state.'''
     filename = self.upload(data, name)
     return self.importCSVNow(filename=filename)
 
-  def uploadParquetNow(self, data: bytes, name: str = None):
+  def uploadParquetNow(self, data: bytes, name: Optional[str] = None):
     '''Uploads Parquet file and returns a table state.'''
     filename = self.upload(data, name)
     return self.importParquetNow(filename=filename)
@@ -658,7 +659,7 @@ class LynxKite:
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
   def save_workspace_recursively(self, ws: 'Workspace',
-                                 save_under_root: str = None) -> Tuple[str, str]:
+                                 save_under_root: Optional[str] = None) -> Tuple[str, str]:
     if save_under_root is None:
       ws_root = _random_ws_folder()
     else:
@@ -701,7 +702,7 @@ class LynxKite:
     return collected
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
-                                    save_under_root: str = None,
+                                    save_under_root: Optional[str] = None,
                                     ) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
     return self.fetch_states(ws.to_json(ws_root, ws.safename()))
@@ -783,9 +784,9 @@ class LynxKite:
         dict(name=path, privacy=privacy))
 
   def _workspace(self,
-                 name: str = None,
+                 name: Optional[str] = None,
                  parameters: List[WorkspaceParameter] = [],
-                 inputs: List[str] = None,
+                 inputs: Optional[List[str]] = None,
                  with_side_effects: bool = False
                  ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     se_collector = SideEffectCollector()
@@ -812,16 +813,16 @@ class LynxKite:
     return ws_decorator
 
   def workspace(self,
-                name: str = None,
+                name: Optional[str] = None,
                 parameters: List[WorkspaceParameter] = [],
-                inputs: List[str] = None,
+                inputs: Optional[List[str]] = None,
                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     return self._workspace(name, parameters, inputs, with_side_effects=False)
 
   def workspace_with_side_effects(self,
-                                  name: str = None,
+                                  name: Optional[str] = None,
                                   parameters: List[WorkspaceParameter] = [],
-                                  inputs: List[str] = None,
+                                  inputs: Optional[List[str]] = None,
                                   ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     return self._workspace(name, parameters, inputs, with_side_effects=True)
 
@@ -1292,7 +1293,7 @@ class Box:
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
                inputs: Dict[str, State], parameters: Dict[str, Any],
-               manual_box_id: str = None) -> None:
+               manual_box_id: Optional[str] = None) -> None:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
@@ -1382,7 +1383,7 @@ class AtomicBox(Box):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
                inputs: Dict[str, State], parameters: Dict[str, Any],
-               manual_box_id: str = None) -> None:
+               manual_box_id: Optional[str] = None) -> None:
     super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.operation = operation
     self.outputs = set(self.bc.outputs(operation))
@@ -1415,7 +1416,7 @@ class SingleOutputAtomicBox(AtomicBox, State):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
                inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
-               manual_box_id: str = None) -> None:
+               manual_box_id: Optional[str] = None) -> None:
     AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
@@ -1470,7 +1471,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
                inputs: List[State], parameters: Dict[str, Any],
-               fn: Callable, args: inspect.BoundArguments, manual_box_id: str = None) -> None:
+               fn: Callable, args: inspect.BoundArguments, manual_box_id: Optional[str] = None) -> None:
     SingleOutputAtomicBox.__init__(
         self, box_catalog, lk, f'externalComputation{len(inputs)}',
         {str(i + 1): inputs[i] for i in range(len(inputs))}, parameters, 'table', manual_box_id)
@@ -1529,7 +1530,7 @@ class CustomBox(Box):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
                inputs: Dict[str, State], parameters: Dict[str, Any],
-               manual_box_id: str = None) -> None:
+               manual_box_id: Optional[str] = None) -> None:
     super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.workspace = workspace
     self.outputs = set(workspace.outputs)
@@ -1580,7 +1581,7 @@ class SingleOutputCustomBox(CustomBox, State):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
                inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
-               manual_box_id: str = None) -> None:
+               manual_box_id: Optional[str] = None) -> None:
     CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
