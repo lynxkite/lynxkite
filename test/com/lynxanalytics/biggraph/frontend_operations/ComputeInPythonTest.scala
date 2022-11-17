@@ -152,4 +152,37 @@ df['age_4']: float = df.age_2 ** 2
           2 -> "Bob",
           3 -> "Isolated Joe"))
   }
+
+  test("matplotlib", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in Python",
+        Map(
+          "outputs" -> "matplotlib",
+          "code" -> """
+import matplotlib.pyplot as plt
+plt.plot(vs['age'])
+          """,
+        ),
+      )
+      .output("graph").html
+    // This is probably not enough of the SVG to confirm anything about the plot.
+    // But if we produced some SVG then the rest is mostly in Matplotlib's hands.
+    assert(get(html).startsWith("<img src=\"data:image/svg+xml;base64, PD94bWwgdmVyc2lv"))
+  }
+
+  test("html", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in Python",
+        Map(
+          "outputs" -> "html",
+          "code" -> """
+html = '<h1>hello world</h1>'
+          """,
+        ),
+      )
+      .output("graph").html
+    assert(get(html) == "<h1>hello world</h1>")
+  }
 }

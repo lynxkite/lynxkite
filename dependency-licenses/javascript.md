@@ -87,7 +87,7 @@
 │  ├─ estraverse@5.2.0
 │  ├─ esutils@2.0.3
 │  ├─ normalize-package-data@2.5.0
-│  ├─ terser@4.8.0
+│  ├─ terser@4.8.1
 │  └─ uri-js@4.4.1
 ├─ BSD-3-Clause
 │  ├─ @protobufjs/aspromise@1.1.2
@@ -360,7 +360,7 @@
 │  ├─ browserstack@1.6.1
 │  ├─ bs-snippet-injector@2.0.1
 │  ├─ buffer-equal@1.0.0
-│  ├─ buffer-from@1.1.1
+│  ├─ buffer-from@1.1.2
 │  ├─ bytes@3.1.0
 │  ├─ cache-base@1.0.1
 │  ├─ call-bind@1.0.2
@@ -820,14 +820,14 @@
 │  ├─ snapdragon@0.8.2
 │  ├─ socket.io-adapter@1.1.2
 │  ├─ socket.io-client@2.4.0
-│  ├─ socket.io-parser@3.3.2
+│  ├─ socket.io-parser@3.3.3
 │  ├─ socket.io-parser@3.4.1
 │  ├─ socket.io@2.4.0
 │  ├─ sort-keys@2.0.0
 │  ├─ source-map-resolve@0.5.3
 │  ├─ source-map-resolve@0.6.0
 │  ├─ source-map-support@0.4.18
-│  ├─ source-map-support@0.5.19
+│  ├─ source-map-support@0.5.21
 │  ├─ source-map-url@0.4.1
 │  ├─ sparkles@1.0.1
 │  ├─ spdx-expression-parse@3.0.1

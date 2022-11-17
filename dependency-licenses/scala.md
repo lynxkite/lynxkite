@@ -25,8 +25,6 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # gr
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # grpc-stub # 1.48.0 | <notextile></notextile>
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.25.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-avro_2.12 # 3.3.0 | <notextile></notextile>
-Apache | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html) | org.apache.spark # spark-tags_2.12 # 3.3.0 | <notextile></notextile>
 Apache | [Apache License V2.0](https://raw.githubusercontent.com/google/flatbuffers/master/LICENSE.txt) | com.google.flatbuffers # flatbuffers-java # 1.12.0 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
@@ -152,7 +150,6 @@ Apache | [Similar to Apache License but with the acknowledgment clause removed](
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.31.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-http-util # 0.31.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.0 | <notextile></notextile>
-Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.spark-project.spark # unused # 1.0.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.3 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.13.3 | <notextile></notextile>
@@ -294,7 +291,6 @@ MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframewo
 MIT | [The MIT License(MIT)](http://opensource.org/licenses/MIT) | net.sf.geographiclib # GeographicLib-Java # 1.49 | <notextile></notextile>
 Mozilla | [Mozilla Public License, Version 2.0](http://www.mozilla.org/MPL/2.0/index.txt) | net.sourceforge.htmlunit # htmlunit-core-js # 2.36.0 | <notextile></notextile>
 Public Domain | [Public Domain](null) | aopalliance # aopalliance # 1.0 | <notextile></notextile>
-Public Domain | [Public Domain](null) | org.tukaani # xz # 1.8 | <notextile></notextile>
 Public Domain | [Public domain](null) | net.iharder # base64 # 2.3.8 | <notextile></notextile>
 unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcpkix-jdk15on # 1.60 | <notextile></notextile>
 unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcprov-jdk15on # 1.60 | <notextile></notextile>
