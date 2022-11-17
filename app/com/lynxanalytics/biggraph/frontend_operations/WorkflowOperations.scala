@@ -668,8 +668,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         input.kind match {
           case BoxOutputKind.Project =>
             val project = projectInput("input")
-            graph_operations.DeriveR.derive(params("code"), rInputs, rOutputs, project)
-            Map(context.box.output("output") -> BoxOutputState.from(project))
+            if (Seq("html", "plot").contains(params("outputs"))) {
+              val html = graph_operations.DeriveR.deriveHTML(params("code"), params("outputs"), rInputs, project)
+              Map(context.box.output("output") -> BoxOutputState.html(html))
+            } else {
+              graph_operations.DeriveR.derive(params("code"), rInputs, rOutputs, project)
+              Map(context.box.output("output") -> BoxOutputState.from(project))
+            }
           case BoxOutputKind.Table =>
             val table = tableInput("input")
             val outputs: Seq[String] =
