@@ -1,6 +1,9 @@
 ### Compute in R
 
-Executes custom R code to define new vertex, edge, or graph attributes, or to transform a table.
+Executes custom R code to define new vertex, edge, or graph attributes, to transform a table,
+or to create plots and interactive visualizations.
+
+#### Computing new attributes
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
 two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
@@ -28,13 +31,6 @@ vertex for each edge. These can be used to index into `vs` as in the example.
 
 Assign the new columns to these same data frames to output new vertex or edge attributes.
 
-Manipulating tables works the same way, but with a single data frame called `df`:
-
-[source,r]
-----
-df$with_title <- paste("The Honorable", df$name)
-----
-
 When you write this R code, the input data may not be available yet.
 And you may want to keep building on the output of the box without having
 to wait for the R code to execute. To make this possible, LynxKite has
@@ -54,7 +50,7 @@ In the first example we would set:
 - Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting`
 - Outputs: `vs.with_title: character, vs.age_squared: double, es.score: double, es.names: character, graph_attributes.hello: character, graph_attributes.average_age: double`
 
-**Working with vectors**
+#### Working with vectors
 
 Vector-typed attributes are stored as list columns in the `vs` and `es` DataFrames.
 
@@ -87,6 +83,40 @@ vs <- vs %>%
   mutate(total_v = sum(v))
 ----
 
+#### Transforming tables
+
+Manipulating tables works the same way, but with a single data frame called `df`:
+
+[source,r]
+----
+df$with_title <- paste("The Honorable", df$name)
+----
+
+#### Creating plots
+
+Instead of outputting a modified graph or table, you can choose to output a plot
+created in R. To do this, set the outputs to `plot` or `html`.
+
+With the `plot` setting you can use ggplot2 or any library that draws
+to the current graphics device.
+The plot is produced as an SVG, so it will look crisp in any resolution.
+
+An example:
+
+[source,r]
+----
+library(tidyverse)
+ggplot(data = vs) +
+ geom_point(mapping = aes(x = income, y = age))
+----
+
+The `html` setting can be used with R packages that produce custom HTML
+visualizations. You can use libraries like Plotly to create interactive plots.
+In this case the value of your code has to be an HTML string, or an HTML widget.
+
+See the https://plotly.com/r/line-and-scatter/[Plotly] examples or the
+https://www.htmlwidgets.org/showcase_leaflet.html[htmlwidgets showcase] to get started.
+
 ====
 [p-code]#Code#::
 The R code you want to run. See the operation description for details.
@@ -99,4 +129,6 @@ For example, `vs.my_attribute, vs.another_attribute, graph_attributes.last_one`.
 A comma-separated list of attributes that your code generates.
 These must be annotated with the type of the attribute.
 For example, `vs.my_new_attribute: character, vs.another_new_attribute: double, graph_attributes.also_new: character`.
++
+Set to `plot` or `html` to output visualizations.
 ====
