@@ -143,6 +143,16 @@ object DeriveR extends OpFromJson {
     builder.result.sc
   }
 
+  def deriveHTML(
+      code: String,
+      mode: String,
+      table: Table)(
+      implicit manager: MetaGraphManager): Scalar[String] = {
+    // Run the operation.
+    val op = DeriveHTMLTableR(code, mode)
+    op(op.df, table).result.sc
+  }
+
   def create(
       code: String,
       outputs: Seq[String],
@@ -252,7 +262,6 @@ object DeriveHTMLR extends OpFromJson {
       (j \ "inputFields").as[List[Field]])
   }
 }
-
 case class DeriveHTMLR private[graph_operations] (
     code: String,
     mode: String,
@@ -263,6 +272,28 @@ case class DeriveHTMLR private[graph_operations] (
     "mode" -> mode,
     "inputFields" -> inputFields)
   override lazy val inputs = new Input(inputFields)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    new ScalarOutput[String]
+  }
+}
+
+object DeriveHTMLTableR extends OpFromJson {
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    DeriveHTMLTableR(
+      (j \ "code").as[String],
+      (j \ "mode").as[String])
+  }
+}
+case class DeriveHTMLTableR private[graph_operations] (
+    code: String,
+    mode: String)
+    extends TypedMetaGraphOp[TableInput, ScalarOutput[String]]
+    with UnorderedSphynxOperation {
+  override def toJson = Json.obj(
+    "code" -> code,
+    "mode" -> mode)
+  override lazy val inputs = new TableInput()
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     new ScalarOutput[String]

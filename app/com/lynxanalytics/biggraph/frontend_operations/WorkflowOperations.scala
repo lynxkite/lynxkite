@@ -683,17 +683,22 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             }
           case BoxOutputKind.Table =>
             val table = tableInput("input")
-            val outputs: Seq[String] =
-              table.schema.fields.map { f =>
-                s"df.${f.name}: " + (f.dataType match {
-                  case org.apache.spark.sql.types.StringType => "character"
-                  case org.apache.spark.sql.types.LongType => "integer"
-                  case _ => "double"
-                })
-              } ++ rOutputs
-            log.error(s"DeriveR outputs: $outputs")
-            val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
-            Map(context.box.output("output") -> BoxOutputState.from(result))
+            if (Seq("html", "plot").contains(params("outputs"))) {
+              val html = graph_operations.DeriveR.deriveHTML(params("code"), params("outputs"), table)
+              Map(context.box.output("output") -> BoxOutputState.html(html))
+            } else {
+              val outputs: Seq[String] =
+                table.schema.fields.map { f =>
+                  s"df.${f.name}: " + (f.dataType match {
+                    case org.apache.spark.sql.types.StringType => "character"
+                    case org.apache.spark.sql.types.LongType => "integer"
+                    case _ => "double"
+                  })
+                } ++ rOutputs
+              log.error(s"DeriveR outputs: $outputs")
+              val result = graph_operations.DeriveR.deriveTable(params("code"), table, outputs)
+              Map(context.box.output("output") -> BoxOutputState.from(result))
+            }
         }
       }
       // Unused because we are overriding getOutputs.

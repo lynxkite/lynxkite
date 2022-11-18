@@ -42,5 +42,6 @@ func init() {
 	diskOperationRepository["DeriveR"] = rOperation("derive.r")
 	diskOperationRepository["DeriveHTMLR"] = rOperation("derive_html.r")
 	unorderedOperationRepository["DeriveTableR"] = rOperation("derive_table.r")
+	unorderedOperationRepository["DeriveHTMLTableR"] = rOperation("derive_html.r")
 	diskOperationRepository["CreateGraphInR"] = rOperation("create_graph_in_r.r")
 }

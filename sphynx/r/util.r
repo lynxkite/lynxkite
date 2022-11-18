@@ -41,7 +41,8 @@ input_parquet <- function(name) {
     # This would result in the columns added in R being invisible in Spark.
     # So we just delete all metadata. https://issues.apache.org/jira/browse/SPARK-40873
     ds$schema$metadata <- NULL
-    ds
+    # We lose push-down, but it becomes easier to work with the table.
+    collect(ds)
 }
 input_one_table <- function(name) {
     read_feather(file.path(datadir, inputs[[name]], "data.arrow"))
@@ -102,5 +103,30 @@ output_one_scalar <- function(name, value) {
 output_scalar <- function(name, value) {
     for (i in 1:length(name)) {
         output_one_scalar(name[[i]], value[[i]])
+    }
+}
+
+# Utilities for derive_* operations.
+gettable <- function(parent) {
+    fields <- params[["inputFields"]]
+    if (length(fields) == 0) return()
+    special <- parent == "es" & (fields$name == "src" | fields$name == "dst")
+    ns <- fields[fields$parent == parent & !special, ]$name
+    if (length(ns) == 0) return()
+    columns <- input_table(paste(parent, ns, sep = "."))
+    # .name_repair='minimal' allows duplicate column names. They are all
+    # called 'values'.
+    t <- tibble(!!!columns, .name_repair = "minimal")
+    # We set the correct column names here.
+    names(t) <- ns
+    t
+}
+getscalars <- function() {
+    fields <- params[["inputFields"]]
+    if (length(fields) == 0) return()
+    ns <- fields[fields$parent == "graph_attributes", ]$name
+    if (length(ns) != 0) {
+        values <- input_scalar(paste("graph_attributes", ns, sep = "."))
+        as.list(setNames(values, ns))
     }
 }
