@@ -197,18 +197,34 @@ ggplot(data = df) +
     assert(get(html).startsWith("<img src=\"data:image/svg+xml;base64, PD94bWwgdmVyc2lv"))
   }
 
-  test("html", SphynxOnly) {
+  test("html simple", SphynxOnly) {
     val html = box("Create example graph")
       .box(
         "Compute in R",
         Map(
           "outputs" -> "html",
           "code" -> """
-html <- '<h1>hello world</h1>'
+'<h1>hello world</h1>'
           """,
         ),
       )
       .output("output").html
     assert(get(html) == "<h1>hello world</h1>")
+  }
+
+  test("html widget", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in R",
+        Map(
+          "outputs" -> "html",
+          "code" -> """
+library(plotly)
+plot_ly(data = iris, x = ~Sepal.Length, y = ~Petal.Length)
+          """,
+        ),
+      )
+      .output("output").html
+    assert(get(html).contains("<title>plotly</title>"))
   }
 }

@@ -23,13 +23,16 @@ if (params[["mode"]] == "plot") {
 # Run user code.
 print("RUNNING USER CODE")  # For log cleanup.
 code <- params[["code"]]
-eval(parse(text = code))
+html <- eval(parse(text = code))
 print("USER CODE FINISHED")
 
 # Save outputs.
 if (params[["mode"]] == "html") {
-    if (!exists("html")) {
-        stop("Please save the output as 'html'.")
+    if (!is.character(html)) {
+        library(htmlwidgets)
+        f <- tempfile()
+        htmlwidgets::saveWidget(html, f)
+        html <- readChar(f, file.info(f)$size)
     }
 } else if (params[["mode"]] == "plot") {
     library(openssl)

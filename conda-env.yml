@@ -54,4 +54,6 @@ dependencies:
 - r
 - r-essentials
 - r-arrow
+- r-htmlwidgets
 - r-openssl
+- r-plotly
