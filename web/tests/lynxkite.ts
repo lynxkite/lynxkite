@@ -1,6 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
 
-
 // Mirrors the "id" filter.
 function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
@@ -9,13 +8,6 @@ function toId(x) {
 // Same as element.getText() except work on offscreen elements.
 function textOf(element) {
   return element.getAttribute('textContent').then(s => s.trim());
-}
-
-// Workaround for flaky typing in frontend tests
-function safeSendKeys(input, text) {
-  let result;
-  text.split('').forEach((c) => result = input.sendKeys(c));
-  return result;
 }
 
 function safeSelectAndSendKeys(input, text) {
@@ -28,9 +20,7 @@ function isMacOS() {
   return process.platform === 'darwin';
 }
 
-
 export class Entity {
-
   constructor(side, kind, name) {
     this.side = side;
     this.kind = kind;
@@ -50,15 +40,21 @@ export class Entity {
 
   async popup() {
     this.menu.isPresent().then(present => {
-      if (!present) { this.element.click(); }
+      if (!present) {
+        this.element.click();
+      }
     });
     return this.menu;
   }
 
   async popoff() {
     this.element.isPresent().then(present => {
-      if (present) { this.element.evaluate('closeMenu()'); }
-      if (present) { this.element.evaluate('closeMenu()'); }
+      if (present) {
+        this.element.evaluate('closeMenu()');
+      }
+      if (present) {
+        this.element.evaluate('closeMenu()');
+      }
     });
   }
 
@@ -76,7 +72,9 @@ export class Entity {
     // The histogram will be automatically displayed if the attribute is already computed.
     // Click the menu item otherwise.
     histogram.isDisplayed().then(displayed => {
-      if (!displayed) { popup.$('#show-histogram').click(); }
+      if (!displayed) {
+        popup.$('#show-histogram').click();
+      }
     });
     expect(histogram.isDisplayed()).toBe(true);
     if (precise) {
@@ -120,7 +118,9 @@ export class Entity {
   }
 
   async visualizeAs(visualization) {
-    this.popup().$('#visualize-as-' + visualization).click();
+    this.popup()
+      .$('#visualize-as-' + visualization)
+      .click();
     testLib.expectElement(this.visualizedAs(visualization));
     this.popoff();
   }
@@ -130,13 +130,17 @@ export class Entity {
   }
 
   async doNotVisualizeAs(visualization) {
-    this.popup().$('#visualize-as-' + visualization).click();
+    this.popup()
+      .$('#visualize-as-' + visualization)
+      .click();
     testLib.expectNotElement(this.visualizedAs(visualization));
     this.popoff();
   }
 
   async clickMenu(id) {
-    this.popup().$('#' + id).click();
+    this.popup()
+      .$('#' + id)
+      .click();
     this.popoff();
   }
 }
@@ -177,14 +181,12 @@ export class Workspace {
   }
 
   async duplicate() {
-    browser.actions()
-      .sendKeys(K.chord(CTRL, 'c'))
-      .sendKeys(K.chord(CTRL, 'v'))
-      .perform();
+    browser.actions().sendKeys(K.chord(CTRL, 'c')).sendKeys(K.chord(CTRL, 'v')).perform();
   }
 
   async addBoxFromSelector(boxName) {
-    browser.actions()
+    browser
+      .actions()
       .sendKeys('/' + boxName + K.ENTER + K.ESCAPE)
       .perform();
   }
@@ -230,7 +232,8 @@ export class Workspace {
   // its id, and then move it to 2 other points on the screen.
   async selectArea(startBoxId, point1, point2) {
     let box = this.getBox(startBoxId);
-    browser.actions()
+    browser
+      .actions()
       .mouseMove(box, point1)
       .keyDown(K.SHIFT)
       .mouseDown()
@@ -241,11 +244,11 @@ export class Workspace {
   }
 
   async expectNumSelectedBoxes(n) {
-    return expect($$('g.box.selected').count()).toEqual(n);
+    await expect(this.root.locator('g.box.selected')).toHaveCount(n);
   }
 
   async expectNumBoxes(n) {
-    return expect($$('g.box').count()).toEqual(n);
+    await expect(this.root.locator('g.box')).toHaveCount(n);
   }
 
   async deleteBoxes(boxIds) {
@@ -354,19 +357,13 @@ export class Workspace {
     const dst = this.getInputPlug(dstBoxId, dstPlugId);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
-    browser.actions()
-      .mouseDown(src)
-      .mouseMove(dst)
-      .mouseUp()
-      .perform();
+    browser.actions().mouseDown(src).mouseMove(dst).mouseUp().perform();
     this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
   async getCustomBoxBrowserTree() {
     this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
-    return this.selector
-      .element(by.css('operation-tree'))
-      .element(by.css('operation-tree-node[id="root"]'));
+    return this.selector.element(by.css('operation-tree')).element(by.css('operation-tree-node[id="root"]'));
   }
 
   async saveWorkspaceAs(newName) {
@@ -376,8 +373,7 @@ export class Workspace {
   }
 }
 
-function PopupBase() {
-}
+function PopupBase() {}
 
 PopupBase.prototype = {
   close: function () {
@@ -386,7 +382,8 @@ PopupBase.prototype = {
 
   moveTo: function (x, y) {
     const head = this.popup.$('div.popup-head');
-    browser.actions()
+    browser
+      .actions()
       .mouseDown(head)
       // Absolute positioning of mouse. If we don't specify the first
       // argument then this becomes a relative move. If the first argument
@@ -412,8 +409,7 @@ BoxEditor.prototype = {
   },
 
   operationParameter: function (param) {
-    return this.element.$(
-      'operation-parameters #param-' + param + ' .operation-attribute-entry');
+    return this.element.$('operation-parameters #param-' + param + ' .operation-attribute-entry');
   },
 
   parametricSwitch: function (param) {
@@ -503,8 +499,9 @@ PlotState.prototype = {
     // Data is fetched outside of Angular.
     testLib.wait(protractor.ExpectedConditions.visibilityOf(bars.first()));
     // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
-    return this.canvas.$$('g.mark-rect.marks path').map(e =>
-      e.getAttribute('d').then(d => parseFloat(d.match(/v([0-9.]+)h/)[1])));
+    return this.canvas
+      .$$('g.mark-rect.marks path')
+      .map(e => e.getAttribute('d').then(d => parseFloat(d.match(/v([0-9.]+)h/)[1])));
   },
 
   expectBarHeightsToBe: function (expected) {
@@ -516,9 +513,8 @@ PlotState.prototype = {
         expect(heights[i]).toBeLessThanOrEqual(1.01 * expected[i]);
       }
     });
-  }
+  },
 };
-
 
 function TableState(popup) {
   this.popup = popup;
@@ -580,7 +576,8 @@ TableState.prototype = {
     expect(this.firstRow()).toEqual(row);
   },
 
-  clickColumn(columnId) { // for sorting
+  clickColumn(columnId) {
+    // for sorting
     const header = this.sample.$$('thead tr th#' + columnId);
     header.click();
   },
@@ -599,8 +596,6 @@ TableState.prototype = {
     const button = this.control.$('#get-sample-button');
     button.click();
   },
-
-
 };
 
 function Side(popup, direction) {
@@ -631,7 +626,9 @@ Side.prototype = {
 
   getValue: function (id) {
     const asStr = this.side.$('value#' + id + ' span.value').getText();
-    return asStr.then(function (asS) { return parseInt(asS); });
+    return asStr.then(function (asS) {
+      return parseInt(asS);
+    });
   },
 
   getWorkflowCodeEditor: function () {
@@ -784,10 +781,18 @@ Side.prototype = {
     this.side.element(by.id('save-results')).click();
   },
 
-  vertexAttribute: function (name) { return new Entity(this.side, 'vertex-attribute', name); },
-  edgeAttribute: function (name) { return new Entity(this.side, 'edge-attribute', name); },
-  scalar: function (name) { return new Entity(this.side, 'scalar', name); },
-  segmentation: function (name) { return new Entity(this.side, 'segmentation', name); },
+  vertexAttribute: function (name) {
+    return new Entity(this.side, 'vertex-attribute', name);
+  },
+  edgeAttribute: function (name) {
+    return new Entity(this.side, 'edge-attribute', name);
+  },
+  scalar: function (name) {
+    return new Entity(this.side, 'scalar', name);
+  },
+  segmentation: function (name) {
+    return new Entity(this.side, 'segmentation', name);
+  },
 };
 
 function TableBrowser(root) {
@@ -842,8 +847,7 @@ TableBrowser.prototype = {
     // because of:
     // https://github.com/angular/protractor/issues/583
     // Just doing a simple check for now.
-    const span = li.$(li.locator().value +
-      ' > span > table-browser-entry > span');
+    const span = li.$(li.locator().value + ' > span > table-browser-entry > span');
     expect(span.evaluate('draggableText')).toBe(expected);
   },
 
@@ -854,7 +858,6 @@ TableBrowser.prototype = {
   enterSearchQuery: function (query) {
     safeSelectAndSendKeys(element(by.id('table-browser-search-box')), query);
   },
-
 };
 
 function VisualizationState(popup) {
@@ -863,7 +866,6 @@ function VisualizationState(popup) {
 }
 
 VisualizationState.prototype = {
-
   elementByLabel: function (label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
   },
@@ -888,7 +890,6 @@ VisualizationState.prototype = {
     browser.waitForAngular();
     //browser.pause();
     return browser.executeScript(function () {
-
       // Vertices as simple objects.
       function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
@@ -920,7 +921,8 @@ VisualizationState.prototype = {
       // Edges as simple objects.
       function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
-        let i, byPosition = {};
+        let i,
+          byPosition = {};
         for (i = 0; i < vertices.length; ++i) {
           byPosition[vertices[i].pos.string] = i;
         }
@@ -962,7 +964,6 @@ VisualizationState.prototype = {
 };
 
 export class Splash {
-
   constructor(page) {
     this.page = page;
     this.root = page.locator('#splash');
@@ -990,23 +991,23 @@ export class Splash {
   }
 
   async expectNumWorkspaces(n) {
-    return expect($$('.workspace-entry').count()).toEqual(n);
+    await expect(this.root.locator('.workspace-entry')).toHaveCount(n);
   }
 
   async expectNumDirectories(n) {
-    return expect($$('.directory-entry').count()).toEqual(n);
+    await expect(this.root.locator('.directory-entry')).toHaveCount(n);
   }
 
   async expectSelectedCurrentDirectory(path) {
-    return expect($('#current-directory > span.lead').getText()).toEqual(path);
+    await expect(this.root.locator('#current-directory > span.lead')).toContainText(path);
   }
 
   async expectNumTables(n) {
-    return expect($$('.table-entry').count()).toEqual(n);
+    return expect($$('.table-entry')).toHaveCount(n);
   }
 
   async expectNumViews(n) {
-    return expect($$('.view-entry').count()).toEqual(n);
+    return expect($$('.view-entry')).toHaveCount(n);
   }
 
   async computeTable(name) {
@@ -1022,6 +1023,7 @@ export class Splash {
   }
 
   async openNewWorkspace(name) {
+    await this.expectWorkspaceNotListed(name);
     await this.root.locator('#new-workspace').click();
     await this.root.locator('#new-workspace-name').fill(name);
     await this.root.locator('#new-workspace button[type=submit]').click();
@@ -1072,9 +1074,10 @@ export class Splash {
   }
 
   async newDirectory(name) {
-    element(by.id('new-directory')).click();
-    safeSendKeys(element(by.id('new-directory-name')), name);
-    $('#new-directory button[type=submit]').click();
+    await this.expectDirectoryNotListed(name);
+    await this.root.locator('#new-directory').click();
+    await this.root.locator('#new-directory-name').fill(name);
+    await this.root.locator('#new-directory button[type=submit]').click();
   }
 
   async openProject(name) {
@@ -1083,21 +1086,22 @@ export class Splash {
   }
 
   async openDirectory(name) {
-    this.directory(name).click();
+    await this.directory(name).click();
   }
 
   async popDirectory() {
-    element(by.id('pop-directory-icon')).click();
+    await this.root.locator('#pop-directory-icon').click();
   }
 
-  async setDirectory(n) {
-    $('#current-directory > span.lead > span:nth-child(' + n + ') > span.path-element').click();
+  async clickBreadcrumb(name) {
+    await this.root.locator('#current-directory').getByText(name).click();
   }
 
   async renameWorkspace(name, newName) {
     const workspace = this.workspace(name);
-    testLib.menuClick(workspace, 'rename');
-    safeSelectAndSendKeys(workspace.element(by.id('renameBox')), newName).submit();
+    await menuClick(workspace, 'rename');
+    await workspace.locator('#renameBox').fill('automated-tests/' + newName);
+    await workspace.locator('#renameBox').press('Enter');
   }
 
   async deleteWorkspace(name) {
@@ -1105,7 +1109,7 @@ export class Splash {
   }
 
   async deleteDirectory(name) {
-    testLib.menuClick(this.directory(name), 'discard');
+    await menuClick(this.directory(name), 'discard');
   }
 
   async editTable(name) {
@@ -1149,11 +1153,12 @@ export class Splash {
   }
 
   async enterSearchQuery(query) {
-    safeSelectAndSendKeys(element(by.id('search-box')), query);
+    await this.root.locator('#search-box').fill(query);
+    await expect(this.root.locator('.progress.active')).not.toBeVisible();
   }
 
   async clearSearchQuery() {
-    safeSelectAndSendKeys(element(by.id('search-box')), K.BACK_SPACE);
+    await this.enterSearchQuery('');
   }
 
   async globalSqlEditor() {
@@ -1172,7 +1177,6 @@ export class Splash {
     this.setGlobalSql(sql);
     element(by.id('run-sql-button')).click();
   }
-
 
   async expectGlobalSqlResult(names, types, rows) {
     const res = element(by.id('sql-result'));
@@ -1202,7 +1206,6 @@ export class Splash {
   }
 }
 
-
 function randomPattern() {
   /* eslint-disable no-bitwise */
   const crypto = require('crypto');
@@ -1211,8 +1214,8 @@ function randomPattern() {
   let r = '';
   for (let i = 0; i < buf.length; i++) {
     const v = buf[i];
-    const lo = (v & 0xf);
-    const hi = (v >> 4);
+    const lo = v & 0xf;
+    const hi = v >> 4;
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
   return r;
@@ -1230,12 +1233,11 @@ function getSelectAllKey() {
   }
 }
 
-async function menuClick(entry, action) {
+export async function menuClick(entry, action) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
   await menu.locator('#menu-' + action).click();
 }
-
 
 const testLib = {
   theRandomPattern: randomPattern(),
@@ -1258,16 +1260,13 @@ const testLib = {
   discardAll: function () {
     function discard(defer) {
       const req = request.defaults({ jar: true });
-      req.post(
-        browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
-        { json: { fake: 1 } },
-        (error, message) => {
-          if (error || message.statusCode >= 400) {
-            defer.reject(new Error(error));
-          } else {
-            defer.fulfill();
-          }
-        });
+      req.post(browser.baseUrl + 'ajax/discardAllReallyIMeanIt', { json: { fake: 1 } }, (error, message) => {
+        if (error || message.statusCode >= 400) {
+          defer.reject(new Error(error));
+        } else {
+          defer.fulfill();
+        }
+      });
     }
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     const defer = protractor.promise.defer();
@@ -1281,7 +1280,10 @@ const testLib = {
   getACEText: function (e) {
     // getText() drops text in hidden elements. "innerText" to the rescue!
     // https://github.com/angular/protractor/issues/1794
-    return e.$('.ace_content').getAttribute('innerText').then(text => text.trim());
+    return e
+      .$('.ace_content')
+      .getAttribute('innerText')
+      .then(text => text.trim());
   },
 
   sendKeysToACE: function (e, keys) {
@@ -1294,53 +1296,58 @@ const testLib = {
 
   setParameter: function (e, value) {
     // Special parameter types need different handling.
-    e.evaluate('(param.multipleChoice ? "multi-" : "") + param.kind').then(
-      function (kind) {
-        if (kind === 'code') {
-          testLib.sendKeysToACE(e, testLib.selectAllKey + value);
-        } else if (kind === 'file') {
-          testLib.uploadIntoFileParameter(e, value);
-        } else if (kind === 'tag-list') {
-          const values = value.split(',');
-          for (let i = 0; i < values.length; ++i) {
-            e.$('.dropdown-toggle').click();
-            e.$('.dropdown-menu #' + values[i]).click();
-          }
-        } else if (kind === 'table') {
-          // You can specify a CSV file to be uploaded, or the name of an existing table.
-          if (value.indexOf('.csv') !== -1) { // CSV file.
-            e.element(by.id('import-new-table-button')).click();
-            const s = new Selector(e.element(by.id('import-wizard')));
-            s.importLocalCSVFile('test-table', value);
-          } else { // Table name.
-            // Table name options look like 'name of table (date of table creation)'.
-            // The date is unpredictable, but we are going to match to the ' (' part
-            // to minimize the chance of mathcing an other table.
-            const optionLabelPattern = value + ' (';
-            e.element(by.cssContainingText('option', optionLabelPattern)).click();
-          }
-        } else if (kind === 'choice') {
-          e.$('option[label="' + value + '"]').click();
-        } else if (kind === 'multi-choice') {
-          // The mouse events through Protractor give different results than the real
-          // mouse clicks. Keyboard selection is not flexible enough.
-          // (https://bugs.chromium.org/p/chromium/issues/detail?id=125585)
-          // So we select the requested items by injecting this script.
-          browser.executeScript(`
+    e.evaluate('(param.multipleChoice ? "multi-" : "") + param.kind').then(function (kind) {
+      if (kind === 'code') {
+        testLib.sendKeysToACE(e, testLib.selectAllKey + value);
+      } else if (kind === 'file') {
+        testLib.uploadIntoFileParameter(e, value);
+      } else if (kind === 'tag-list') {
+        const values = value.split(',');
+        for (let i = 0; i < values.length; ++i) {
+          e.$('.dropdown-toggle').click();
+          e.$('.dropdown-menu #' + values[i]).click();
+        }
+      } else if (kind === 'table') {
+        // You can specify a CSV file to be uploaded, or the name of an existing table.
+        if (value.indexOf('.csv') !== -1) {
+          // CSV file.
+          e.element(by.id('import-new-table-button')).click();
+          const s = new Selector(e.element(by.id('import-wizard')));
+          s.importLocalCSVFile('test-table', value);
+        } else {
+          // Table name.
+          // Table name options look like 'name of table (date of table creation)'.
+          // The date is unpredictable, but we are going to match to the ' (' part
+          // to minimize the chance of mathcing an other table.
+          const optionLabelPattern = value + ' (';
+          e.element(by.cssContainingText('option', optionLabelPattern)).click();
+        }
+      } else if (kind === 'choice') {
+        e.$('option[label="' + value + '"]').click();
+      } else if (kind === 'multi-choice') {
+        // The mouse events through Protractor give different results than the real
+        // mouse clicks. Keyboard selection is not flexible enough.
+        // (https://bugs.chromium.org/p/chromium/issues/detail?id=125585)
+        // So we select the requested items by injecting this script.
+        browser.executeScript(
+          `
             for (let opt of arguments[0].querySelectorAll('option')) {
               opt.selected = arguments[1].includes(opt.label);
             }
             arguments[0].dispatchEvent(new Event('change'));
-            `, e, value);
-        } else if (kind === 'multi-tag-list') {
-          for (let i = 0; i < value.length; ++i) {
-            e.$('.glyphicon-plus').click();
-            e.$('a#' + value[i]).click();
-          }
-        } else {
-          safeSelectAndSendKeys(e, value);
+            `,
+          e,
+          value
+        );
+      } else if (kind === 'multi-tag-list') {
+        for (let i = 0; i < value.length; ++i) {
+          e.$('.glyphicon-plus').click();
+          e.$('a#' + value[i]).click();
         }
-      });
+      } else {
+        safeSelectAndSendKeys(e, value);
+      }
+    });
   },
 
   // Expects a window.confirm call from the client code and overrides the user
@@ -1358,10 +1365,13 @@ const testLib = {
     // 3. Use a mockable Angular module for window.confirm from our app.
     browser.executeScript(
       'window.confirm0 = window.confirm;' +
-      'window.confirm = function() {' +
-      '  window.confirm = window.confirm0;' +
-      '  return ' + responseValue + ';' +
-      '}');
+        'window.confirm = function() {' +
+        '  window.confirm = window.confirm0;' +
+        '  return ' +
+        responseValue +
+        ';' +
+        '}'
+    );
   },
 
   checkAndCleanupDialogExpectation: function () {
@@ -1385,7 +1395,9 @@ const testLib = {
 
   // A promise of the list of error messages.
   errors: function () {
-    return $$('.top-alert-message').map(function (e) { return e.getText(); });
+    return $$('.top-alert-message').map(function (e) {
+      return e.getText();
+    });
   },
 
   // Expects that there will be a single error message and returns it as a promise.
@@ -1430,22 +1442,19 @@ const testLib = {
 
   setEnablePopups: function (enable) {
     browser.executeScript(
-      'angular.element(document.body).injector()' +
-      '.get("dropTooltipConfig").enabled = ' + enable);
-
+      'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
+    );
   },
 
   uploadIntoFileParameter: function (fileParameterElement, fileName) {
     const input = fileParameterElement.element(by.id('file'));
     // Need to unhide flowjs's secret file uploader.
-    browser.executeScript(
-      function (input) {
-        input.style.visibility = 'visible';
-        input.style.height = '1px';
-        input.style.width = '1px';
-        input.style.opacity = 1;
-      },
-      input.getWebElement());
+    browser.executeScript(function (input) {
+      input.style.visibility = 'visible';
+      input.style.height = '1px';
+      input.style.width = '1px';
+      input.style.opacity = 1;
+    }, input.getWebElement());
     // Special parameter?
     // Does not work with safeSendKeys.
     input.sendKeys(fileName);
@@ -1471,7 +1480,9 @@ const testLib = {
         return fn.match(regex);
       });
       // this will be undefined if no new element was found.
-      const result = newList.filter(function (f) { return lastDownloadList.indexOf(f) < 0; })[0];
+      const result = newList.filter(function (f) {
+        return lastDownloadList.indexOf(f) < 0;
+      })[0];
       if (result) {
         lastDownloadList = undefined;
         return testLib.protractorDownloads + '/' + result;
@@ -1507,10 +1518,9 @@ const testLib = {
   },
 
   switchToWindow: function (pos) {
-    browser.getAllWindowHandles()
-      .then(handles => {
-        browser.driver.switchTo().window(handles[pos]);
-      });
+    browser.getAllWindowHandles().then(handles => {
+      browser.driver.switchTo().window(handles[pos]);
+    });
   },
 
   showSelector: function () {
@@ -1578,9 +1588,9 @@ const testLib = {
               }
             }
             return { pass: true };
-          }
+          },
         };
-      }
+      },
     });
   },
 };
