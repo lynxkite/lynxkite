@@ -39,7 +39,7 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
 
   private def sslContext =
     GrpcSslContexts.forClient.trustManager(new File(s"$certDir/cert.pem")).build
-  private def builder = NettyChannelBuilder.forAddress(host, port)
+  private def builder = NettyChannelBuilder.forAddress(host, port).maxInboundMessageSize(100000000)
   private val channel =
     if (certDir.nonEmpty) builder.sslContext(sslContext).build
     else builder.usePlaintext.build

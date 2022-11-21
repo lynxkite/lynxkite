@@ -39,4 +39,4 @@ jobs:
     - name: Earthly version
       run: earthly --version
     - name: Push updated cache.
-      run: earthly --push --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +all-ci
+      run: earthly --push --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +assembly

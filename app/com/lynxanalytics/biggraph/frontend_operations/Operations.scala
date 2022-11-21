@@ -770,4 +770,13 @@ object PythonUtilities {
     builder.toInstance(manager)
     builder.result.sc
   }
+
+  def deriveHTML(
+      code: String,
+      mode: String,
+      table: Table)(
+      implicit manager: MetaGraphManager): Scalar[String] = {
+    val op = graph_operations.DeriveHTMLTablePython(code, mode)
+    op(op.df, table).result.sc
+  }
 }

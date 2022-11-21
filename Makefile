@@ -31,7 +31,7 @@ clean:
 		.build/documentation-verified .build/gulp-done
 	./test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done
-	tools/with_lk.sh python/remote_api/test.sh && touch $@
+	tools/with_lk.sh python/remote_api/test.sh && python/remote_api/managed_tests/run.sh && touch $@
 dependency-licenses/scala.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
 dependency-licenses/javascript.txt: web/package.json

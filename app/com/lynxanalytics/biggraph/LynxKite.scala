@@ -16,6 +16,8 @@ object LynxKite {
     assert(playServer == null, "LynxKite is already running!")
     stopping = false
     BigGraphProductionEnvironment // Initialize it here rather than risk multi-threading issues later.
+    java.lang.System.setProperty("http.port", Environment.envOrElse("KITE_HTTP_PORT", "2200"))
+    java.lang.System.setProperty("https.port", Environment.envOrElse("KITE_HTTPS_PORT", "2201"))
     playServer = pcs.ProdServerStart.start(new pcs.RealServerProcess(List()))
     val domainPreference = Environment.envOrElse("KITE_DOMAINS", "sphynx,spark,scala")
       .split(",").map(_.trim.toLowerCase)

@@ -823,7 +823,7 @@
 │  ├─ snapdragon@0.8.2
 │  ├─ socket.io-adapter@1.1.2
 │  ├─ socket.io-client@2.4.0
-│  ├─ socket.io-parser@3.3.2
+│  ├─ socket.io-parser@3.3.3
 │  ├─ socket.io-parser@3.4.1
 │  ├─ socket.io@2.4.0
 │  ├─ sort-keys@2.0.0

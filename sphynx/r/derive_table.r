@@ -1,4 +1,4 @@
-# Run user code on a table.
+# Runs user code that takes a table as input and outputs a table.
 source("r/util.r")
 
 # Create input tables.

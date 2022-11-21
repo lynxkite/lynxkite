@@ -149,12 +149,16 @@ docker:
   COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
   CMD ["bash", "-c", ". kiterc_template; spark-submit lynxkite.jar"]
+  ENV KITE_ALLOW_PYTHON yes
+  ENV KITE_ALLOW_R yes
+  ENV KITE_META_DIR /meta
+  ENV KITE_DATA_DIR file:/data
   SAVE IMAGE lk
 
 run:
   LOCALLY
   WITH DOCKER --load=+docker
-    RUN docker run --rm -p2200:2200 lk
+    RUN docker run --rm -v $HOME/kite/meta:/meta -v $HOME/kite/data:/data --name lynxkite-dev -p2200:2200 lk
   END
 
 all-ci:
