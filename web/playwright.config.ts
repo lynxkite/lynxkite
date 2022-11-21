@@ -16,7 +16,7 @@ const config: PlaywrightTestConfig = {
   reporter: 'list',
   use: {
     actionTimeout: 0,
-    baseURL: 'http://localhost:2200',
+    baseURL: process.env.LYNXKITE_ADDRESS || 'http://localhost:2200',
     trace: 'on-first-retry',
   },
   projects: [
