@@ -83,10 +83,14 @@ object LynxKite {
 
   // Starts Sphynx and returns.
   private def startSphynx(): Process = synchronized {
+    val ldLibraryPath = Environment.envOrNone("LD_LIBRARY_PATH")
+    if (!ldLibraryPath.getOrElse("").startsWith(".:")) {
+      Environment.set("LD_LIBRARY_PATH" -> ("." +: ldLibraryPath.toSeq).mkString(":"))
+    }
     sphynxProcess = Process(
       Seq("./lynxkite-sphynx"),
       new java.io.File("lynxkite-sphynx"),
-      (Seq("LD_LIBRARY_PATH" -> ".") ++ Environment.get): _*).run()
+      Environment.get.toSeq: _*).run()
     sphynxProcess
   }
 }
