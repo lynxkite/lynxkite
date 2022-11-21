@@ -29,7 +29,7 @@ clean:
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
-	./test_frontend.sh && touch $@
+	cd web && ../tools/with_lk.sh yarn playwright test --trace on && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done
 	tools/with_lk.sh python/remote_api/test.sh && python/remote_api/managed_tests/run.sh && touch $@
 dependency-licenses/scala.md: build.sbt
