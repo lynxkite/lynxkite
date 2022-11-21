@@ -24,7 +24,6 @@ import play.api.libs.json.JsResultException
 
 import scala.util._
 import scala.reflect.runtime.universe.typeTag
-import com.lynxanalytics.biggraph.scala_sandbox.SimpleGraphEntity
 
 class ParameterHolder(context: Operation.Context) {
   private val metas = collection.mutable.Buffer[OperationParameterMeta]()
@@ -45,7 +44,7 @@ class ParameterHolder(context: Operation.Context) {
 
   private def getNamesAndTypes(
       context: Operation.Context,
-      kind: String): List[SimpleGraphEntity] = {
+      kind: String): Map[String, String] = {
     context.inputs.values.flatMap {
       case state => getNamesAndGuids(state, kind)
     }.map {
@@ -53,8 +52,8 @@ class ParameterHolder(context: Operation.Context) {
         val typeName =
           if (kind == "scalarGUIDs") context.manager.scalar(guid).typeTag.tpe.toString
           else context.manager.attribute(guid).typeTag.tpe.toString
-        SimpleGraphEntity(attrName, typeName)
-    }.toList
+        attrName -> typeName
+    }.toMap
   }
 
   def apply(name: String): String = {
@@ -62,17 +61,29 @@ class ParameterHolder(context: Operation.Context) {
       val vertexAttributes = getNamesAndTypes(context, "vertexAttributeGUIDs")
       val edgeAttributes = getNamesAndTypes(context, "edgeAttributeGUIDs")
       val scalars = getNamesAndTypes(context, "scalarGUIDs")
-      val expr = "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\""
+      val prelude = """
+case class SimpleGraphEntity(name: String, typeName: String)
+val vertexAttributes = vertexAttributesMap.toList.map {
+  case (k, v) => SimpleGraphEntity(k, v)
+}
+val edgeAttributes = edgeAttributesMap.toList.map {
+  case (k, v) => SimpleGraphEntity(k, v)
+}
+val graphAttributes = graphAttributesMap.toList.map {
+  case (k, v) => SimpleGraphEntity(k, v)
+}
+"""
+      val expr = prelude + "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\""
       val paramTypes = Map(
-        "vertexAttributes" -> typeTag[List[SimpleGraphEntity]],
-        "edgeAttributes" -> typeTag[List[SimpleGraphEntity]],
-        "graphAttributes" -> typeTag[List[SimpleGraphEntity]],
+        "vertexAttributesMap" -> typeTag[Map[String, String]],
+        "edgeAttributesMap" -> typeTag[Map[String, String]],
+        "graphAttributesMap" -> typeTag[Map[String, String]],
       ) ++ context.workspaceParameters.keys.map { p => p -> typeTag[String] }.toMap
       val evaluator = com.lynxanalytics.biggraph.scala_sandbox.ScalaScript.compileAndGetEvaluator(expr, paramTypes)
       evaluator.evaluate(Map(
-        "vertexAttributes" -> vertexAttributes,
-        "edgeAttributes" -> edgeAttributes,
-        "graphAttributes" -> scalars,
+        "vertexAttributesMap" -> vertexAttributes,
+        "edgeAttributesMap" -> edgeAttributes,
+        "graphAttributesMap" -> scalars,
       ) ++ context.workspaceParameters.toMap).toString
     } else if (context.box.parameters.contains(name)) {
       context.box.parameters(name)
