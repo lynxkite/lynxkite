@@ -3,6 +3,7 @@ on: pull_request
 
 jobs:
   backend-test-spark:
+    name: Backend test with only Spark
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -40,6 +41,7 @@ jobs:
       run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +backend-test-spark
 
   backend-test-sphynx:
+    name: Backend test with Sphynx
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -77,6 +79,7 @@ jobs:
       run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +backend-test-sphynx
 
   python-test:
+    name: Python API test
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -114,6 +117,7 @@ jobs:
       run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +python-test
 
   frontend-test:
+    name: Frontend test with Playwright
     permissions:
       contents: 'read'
       id-token: 'write'
