@@ -1,4 +1,4 @@
-name: Run tests with Earthly
+name: Tests
 on: pull_request
 
 jobs:
