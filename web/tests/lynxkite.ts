@@ -196,24 +196,23 @@ export class Workspace {
     const after = boxData.after;
     const inputs = boxData.inputs;
     const params = boxData.params;
-    browser.waitForAngular();
-    browser.executeScript(`
-        $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
-          '${boxData.name}',
-          { logicalX: ${boxData.x}, logicalY: ${boxData.y} },
-          { boxId: '${boxData.id}' });
-        `);
+    await this.page.evaluate(boxData => {
+      $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+        boxData.name,
+        { logicalX: boxData.x, logicalY: boxData.y },
+        { boxId: boxData.id });
+    }, boxData);
     if (after) {
-      this.connectBoxes(after, 'graph', id, 'graph');
+      await this.connectBoxes(after, 'graph', id, 'graph');
     }
     if (inputs) {
       for (let i = 0; i < inputs.length; ++i) {
         const input = inputs[i];
-        this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
+        await this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
       }
     }
     if (params) {
-      this.editBox(id, params);
+      await this.editBox(id, params);
     }
   }
 
@@ -284,25 +283,25 @@ export class Workspace {
     return this.board.$('.popup#' + boxId).isPresent();
   }
 
-  async getBox(boxId) {
-    return this.board.$('.box#' + boxId);
+  getBox(boxId) {
+    return this.board.locator('.box#' + boxId);
   }
 
-  async getInputPlug(boxId, plugId) {
+  getInputPlug(boxId, plugId) {
     let box = this.getBox(boxId);
     if (plugId) {
-      return box.$('#inputs #' + plugId + ' circle');
+      return box.locator('#inputs #' + plugId + ' circle');
     } else {
-      return box.$$('#inputs circle').get(0);
+      return box.locator('#inputs circle').first();
     }
   }
 
-  async getOutputPlug(boxId, plugId) {
+  getOutputPlug(boxId, plugId) {
     let box = this.getBox(boxId);
     if (plugId) {
-      return box.$('#outputs #' + plugId + ' circle');
+      return box.locator('#outputs #' + plugId + ' circle');
     } else {
-      return box.$$('#outputs circle').get(0);
+      return box.locator('#outputs circle').first();
     }
   }
 
@@ -348,17 +347,17 @@ export class Workspace {
   }
 
   async expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
-    const arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
-    expect(arrow.isPresent()).toBe(true);
+    const arrow = this.board.locator(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    await expect(arrow).toBeVisible();
   }
 
   async connectBoxes(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
     const src = this.getOutputPlug(srcBoxId, srcPlugId);
     const dst = this.getInputPlug(dstBoxId, dstPlugId);
-    expect(src.isDisplayed()).toBe(true);
-    expect(dst.isDisplayed()).toBe(true);
-    browser.actions().mouseDown(src).mouseMove(dst).mouseUp().perform();
-    this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
+    await expect(src).toBeVisible();
+    await expect(dst).toBeVisible();
+    await src.dragTo(dst);
+    await this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
   async getCustomBoxBrowserTree() {

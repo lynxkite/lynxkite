@@ -1,7 +1,8 @@
 import { test, expect, Browser } from '@playwright/test';
-import * as lk from './lynxkite.ts';
+import * as lk from './lynxkite';
 
-async function newSplash(browser: Browser) {
+// Opens the LynxKite directory browser in the root.
+export async function newSplash(browser: Browser) {
   const page = await browser.newPage();
   await page.goto('/#/');
   await page.evaluate(() => {
@@ -82,7 +83,6 @@ test('a few workspaces created', async function () {
   //   grape
   // apple
   // pear
-  await page.pause();
   await page.splash.openNewWorkspace('apple');
   await page.workspace.close();
   await page.splash.openNewWorkspace('pear');
