@@ -83,15 +83,15 @@ test('a few workspaces created', async function () {
   //   grape
   // apple
   // pear
-  await splash.openNewWorkspace('apple');
+  let workspace = await splash.openNewWorkspace('apple');
   await workspace.close();
-  await splash.openNewWorkspace('pear');
+  workspace = await splash.openNewWorkspace('pear');
   await workspace.close();
   await splash.newDirectory('plum');
-  await splash.openNewWorkspace('grape');
+  workspace = await splash.openNewWorkspace('grape');
   await workspace.close();
   await splash.newDirectory('orange');
-  await splash.openNewWorkspace('kiwi');
+  workspace = await splash.openNewWorkspace('kiwi');
   await workspace.close();
   await splash.popDirectory();
   await splash.popDirectory();

@@ -42,11 +42,6 @@ async function runSQL(query) {
   return state.table;
 }
 
-async function sqlSimpleTest(query, resultNames, resultTypes, resultRows) {
-  await runSQL(query);
-  await table.expect(resultNames, resultTypes, resultRows);
-}
-
 test('SQL works for edge attributes', async () => {
   await runSQL('select edge_comment, src_name from edges order by edge_comment');
   await table.expect(
@@ -108,7 +103,7 @@ test('sql result table ordering works right with numbers', async () => {
     ]);
 });
 
-test.only('sql result table ordering works right with nulls', async () => {
+test('sql result table ordering works right with nulls', async () => {
   await runSQL('select name, income from vertices');
   await table.clickColumn('income');
   await table.expect(
@@ -138,7 +133,7 @@ test.only('sql result table ordering works right with nulls', async () => {
     }
   });
   await workspace.connectBoxes('new_attr', 'graph', 'sql', 'input');
-  table = await workspace.openStateView('sql', 'table');
+  await workspace.openStateView('sql', 'table');
   table = await runSQL('select new_attr from vertices');
   await table.clickColumn('new_attr');
   await table.expect(

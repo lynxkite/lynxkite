@@ -200,14 +200,12 @@ export class Workspace {
   }
 
   async selectBoxes(boxIds) {
-    browser.actions().keyDown(CTRL).perform();
     // Unselect all.
-    $$('g.box.selected').click();
+    await this.board.locator('g.box.selected').click({ modifiers: ['Control'] });
     // Select given boxes.
     for (let i = 0; i < boxIds.length; ++i) {
-      this.clickBox(boxIds[i]);
+      await this.clickBox(boxIds[i], { modifiers: ['Control'] });
     }
-    browser.actions().keyUp(CTRL).perform();
   }
 
   // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
@@ -234,8 +232,8 @@ export class Workspace {
   }
 
   async deleteBoxes(boxIds) {
-    this.selectBoxes(boxIds);
-    this.main.locator('#delete-selected-boxes').click();
+    await this.selectBoxes(boxIds);
+    await this.main.locator('#delete-selected-boxes').click();
   }
 
   async editBox(boxId, params) {
@@ -292,8 +290,8 @@ export class Workspace {
     this.getOutputPlug(boxId, plugId).click();
   }
 
-  async clickBox(boxId) {
-    this.getBox(boxId).locator('#click-target').click();
+  async clickBox(boxId, opts) {
+    this.getBox(boxId).locator('#click-target').click(opts);
   }
 
   async selectBox(boxId) {
@@ -316,6 +314,7 @@ export class Workspace {
     const popup = this.board.locator('.popup#' + boxId + '_' + plugId);
     await expect(popup).not.toBeVisible(); // If it is already open, use getStateView() instead.
     await this.toggleStateView(boxId, plugId);
+    await expect(popup).toBeVisible();
     return new State(popup);
   }
 
@@ -356,11 +355,13 @@ export class Workspace {
 }
 
 class PopupBase {
-  close() {
-    this.popup.locator('#close-popup').click();
+  popup: Locator;
+
+  async close() {
+    await this.popup.locator('#close-popup').click();
   }
 
-  moveTo(x, y) {
+  async moveTo(x, y) {
     const head = this.popup.locator('div.popup-head');
     browser
       .actions()
@@ -374,9 +375,14 @@ class PopupBase {
       .perform();
     return this;
   }
+
+  head() {
+    return this.popup.locator('.popup-head');
+  }
 }
 
 export class BoxEditor extends PopupBase {
+  element: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
@@ -384,7 +390,7 @@ export class BoxEditor extends PopupBase {
   }
 
   operationId() {
-    return this.popup.locator('.popup-head').getText();
+    return this.head().getText();
   }
 
   operationParameter(param) {
@@ -409,7 +415,7 @@ export class BoxEditor extends PopupBase {
     for (const key in params) {
       await setParameter(this.operationParameter(key), params[key]);
     }
-    this.element.click(); // Make sure the parameters are not focused.
+    this.head().click(); // Make sure the parameters are not focused.
   }
 
   expectParameter(paramName, expectedValue) {
@@ -1011,7 +1017,10 @@ export class Splash {
     await this.root.locator('#new-workspace').click();
     await this.root.locator('#new-workspace-name').fill(name);
     await this.root.locator('#new-workspace button[type=submit]').click();
-    return new Workspace(this.page);
+    const ws = new Workspace(this.page);
+    // This expect() waits for the workspace to load.
+    await expect(ws.getBox('anchor')).toBeVisible();
+    return ws;
   }
 
   async startTableImport() {
@@ -1284,7 +1293,6 @@ async function angularEval(e: Locator, expr: string) {
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
   const kind = await angularEval(e, '(param.multipleChoice ? "multi-" : "") + param.kind');
-  console.log('kind is', kind);
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
