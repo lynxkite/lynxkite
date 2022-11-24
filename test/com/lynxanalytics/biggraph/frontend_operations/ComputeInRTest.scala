@@ -156,4 +156,75 @@ graph_attributes$hello <- 'hello'
         Map(0 -> 1, 1 -> 2, 2 -> 3))
     assert(get(p.scalars("hello").runtimeSafeCast[String]) == "hello")
   }
+
+  test("plot with graph", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in R",
+        Map(
+          "inputs" -> "vs.age, vs.income",
+          "outputs" -> "plot",
+          "code" -> """
+library(tidyverse)
+ggplot(data = vs) +
+ geom_point(mapping = aes(x = income, y = age))
+          """,
+        ),
+      )
+      .output("output").html
+    // This is probably not enough of the SVG to confirm anything about the plot.
+    // But if we produced some SVG then the rest is mostly in Matplotlib's hands.
+    assert(get(html).startsWith("<img src=\"data:image/svg+xml;base64, PD94bWwgdmVyc2lv"))
+  }
+
+  test("plot with table", SphynxOnly) {
+    val html = box("Create example graph")
+      .box("SQL1")
+      .box(
+        "Compute in R",
+        Map(
+          "outputs" -> "plot",
+          "code" -> """
+library(tidyverse)
+ggplot(data = df) +
+ geom_point(mapping = aes(x = income, y = age))
+          """,
+        ),
+      )
+      .output("output").html
+    // This is probably not enough of the SVG to confirm anything about the plot.
+    // But if we produced some SVG then the rest is mostly in Matplotlib's hands.
+    assert(get(html).startsWith("<img src=\"data:image/svg+xml;base64, PD94bWwgdmVyc2lv"))
+  }
+
+  test("html simple", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in R",
+        Map(
+          "outputs" -> "html",
+          "code" -> """
+'<h1>hello world</h1>'
+          """,
+        ),
+      )
+      .output("output").html
+    assert(get(html) == "<h1>hello world</h1>")
+  }
+
+  test("html widget", SphynxOnly) {
+    val html = box("Create example graph")
+      .box(
+        "Compute in R",
+        Map(
+          "outputs" -> "html",
+          "code" -> """
+library(plotly)
+plot_ly(data = iris, x = ~Sepal.Length, y = ~Petal.Length)
+          """,
+        ),
+      )
+      .output("output").html
+    assert(get(html).contains("<title>plotly</title>"))
+  }
 }

@@ -1,6 +1,5 @@
 // Creates an HTML output using Python executed on Sphynx.
-// For security, this output should not be freely controlled by the user.
-// Instead it's used for returning plots encoded in HTML.
+// Mostly used for custom plots.
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
@@ -30,6 +29,29 @@ case class DeriveHTMLPython private[graph_operations] (
     "mode" -> mode,
     "inputFields" -> inputFields)
   override lazy val inputs = new Input(inputFields)
+  def outputMeta(instance: MetaGraphOperationInstance) = {
+    implicit val i = instance
+    new ScalarOutput[String]
+  }
+}
+
+// The same, but with a table input.
+object DeriveHTMLTablePython extends OpFromJson {
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    DeriveHTMLTablePython(
+      (j \ "code").as[String],
+      (j \ "mode").as[String])
+  }
+}
+case class DeriveHTMLTablePython private[graph_operations] (
+    code: String,
+    mode: String)
+    extends TypedMetaGraphOp[TableInput, ScalarOutput[String]]
+    with UnorderedSphynxOperation {
+  override def toJson = Json.obj(
+    "code" -> code,
+    "mode" -> mode)
+  override lazy val inputs = new TableInput
   def outputMeta(instance: MetaGraphOperationInstance) = {
     implicit val i = instance
     new ScalarOutput[String]

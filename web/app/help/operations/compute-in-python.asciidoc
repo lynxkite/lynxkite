@@ -1,6 +1,9 @@
 ### Compute in Python
 
-Executes custom Python code to define new vertex, edge, or graph attributes, or to transform a table.
+Executes custom Python code to define new vertex, edge, or graph attributes, to transform a table,
+or to create plots and interactive visualizations.
+
+#### Computing new attributes
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
 two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
@@ -28,13 +31,6 @@ compute new attributes. Pandas and Numpy are already imported as `pd` and `np`.
 vertex for each edge. These can be used to index into `vs` as in the example.
 
 Assign the new columns to these same DataFrames to output new vertex or edge attributes.
-
-Manipulating tables works the same way, but with a single DataFrame called `df`:
-
-[source,python]
-----
-df['with_title'] = 'The Honorable ' + df.name
-----
 
 When you write this Python code, the input data may not be available yet.
 And you may want to keep building on the output of the box without having
@@ -68,7 +64,7 @@ vs['age_squared']: float = vs.age ** 2
 cover all possibilities. Please list the inputs and outputs explicitly if the inference
 fails.)
 
-**Working with vectors**
+#### Working with vectors
 
 Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
 
@@ -98,6 +94,40 @@ To use this attribute in another Python box use `np.stack(v)`:
 vs['total_v'] = np.stack(vs.v).sum(axis=1)
 ----
 
+#### Transforming tables
+
+Manipulating tables works the same way, but with a single DataFrame called `df`:
+
+[source,python]
+----
+df['with_title'] = 'The Honorable ' + df.name
+----
+
+#### Creating plots
+
+Instead of outputting a modified graph or table, you can choose to output a plot
+created in Python. To do this, set the outputs to `matplotlib` or `html`.
+
+With the `matplotlib` setting you can use Matplotlib or any library backed by
+Matplotlib to create your plots. For example you can just write `vs.plot()`.
+The plot is produced as an SVG, so it will look crisp in any resolution.
+
+The `html` setting can be used with Python packages that produce custom HTML
+visualizations. You can use libraries like Deck.gl, Plotly, or py3Dmol to create
+interactive views of maps, molecules, and anything else.
+
+How exactly you get the HTML depends on the library. Here are a few examples:
+
+- **Deck.gl:** You can copy the code from https://pydeck.gl/gallery/grid_layer.html[an example]
+  and change the last line to `html = r.to_html(as_string=True)`.
+- **Plotly:** You can copy the code from https://plotly.com/python/3d-surface-plots/[an example]
+  and change the last line to `html = fig.to_html()`.
+- **py3Dmol:** You can copy the code from https://github.com/3dmol/3Dmol.js/tree/master/packages/py3Dmol[an example]
+  and change the last line to `html = view._make_html()`.
+
+The HTML output also allows you to safely embed any custom HTML you may produce.
+Just assign the HTML content as a string to the `html` variable.
+
 ====
 [p-code]#Code#::
 The Python code you want to run. See the operation description for details.
@@ -110,4 +140,6 @@ For example, `vs.my_attribute, vs.another_attribute, graph_attributes.last_one`.
 A comma-separated list of attributes that your code generates.
 These must be annotated with the type of the attribute.
 For example, `vs.my_new_attribute: str, vs.another_new_attribute: float, graph_attributes.also_new: str`.
++
+Set to `matplotlib` or `html` to output a visualization.
 ====

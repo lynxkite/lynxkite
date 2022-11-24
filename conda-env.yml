@@ -37,6 +37,7 @@ dependencies:
 - cugraph
 - pytorch::pytorch==1.11.0=*cuda*
 - pyg==2.0.4=*cu113*
+- matplotlib
 # PyG dependencies get confused under Mamba.
 - pytorch-cluster=*=*cu113*
 - pytorch-scatter=*=*cu113*
@@ -53,4 +54,6 @@ dependencies:
 - r
 - r-essentials
 - r-arrow
+- r-htmlwidgets
 - r-openssl
+- r-plotly
