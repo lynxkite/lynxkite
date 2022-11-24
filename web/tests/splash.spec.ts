@@ -26,7 +26,6 @@ export async function newSplash(browser: Browser) {
   return splash;
 }
 
-//test.describe.configure({ mode: 'serial' });
 let splash: Splash;
 test.beforeAll(async ({ browser }) => {
   splash = await newSplash(browser);

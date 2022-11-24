@@ -150,324 +150,318 @@ test('sql result table ordering works right with nulls', async () => {
   await workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
   await workspace.openStateView('sql', 'table');
 });
-/*
-fw.transitionTest(
-  'empty test-example workspace',
-  'SQL runs nice on belongs to reached from project and segmentation',
-  function () {
-    lib.workspace.addBox({
-      id: 'vs', name: 'Create vertices', x: 100, y: 100, params: { size: '100' }
-    });
-    lib.workspace.addBox({
-      after: 'vs',
-      id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }
-    });
-    lib.workspace.addBox({
-      after: 'rnd',
-      id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300
-    });
-    lib.workspace.addBox({
-      id: 'sql', name: 'SQL1', x: 100, y: 400
-    });
-    lib.workspace.connectBoxes('copy', 'graph', 'sql', 'input');
-    lib.workspace.openStateView('sql', 'table');
-    const table = runSQL(
-      'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
-    table.expect(['sum'], ['Double'], [['100']]);
-  }, function () { });
 
-fw.transitionTest(
-  'test-example workspace with example graph',
-  'SQL1 box table browser',
-  function () {
-    lib.workspace.addBox({
-      id: 'sql', name: 'SQL1', x: 100, y: 200
-    });
-    lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
-  }, function () {
-    const se = lib.workspace.openBoxEditor('sql');
-    const tableBrowser = se.getTableBrowser();
-    tableBrowser.toggle();
-    tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
-    tableBrowser.expectNode([1], 'edges', '`edges`');
-    tableBrowser.expectNode([2], 'graph_attributes', '`graph_attributes`');
-    tableBrowser.expectNode([3], 'input.edge_attributes', '`input.edge_attributes`');
-    tableBrowser.expectNode([4], 'input.edges', '`input.edges`');
-    tableBrowser.expectNode([5], 'input.graph_attributes', '`input.graph_attributes`');
-    tableBrowser.expectNode([6], 'input.vertices', '`input.vertices`');
-    tableBrowser.expectNode([7], 'vertices', '`vertices`');
-    tableBrowser.toggleNode([7]);
-    tableBrowser.expectNode([7, 0], '*ALL*');
-    tableBrowser.expectNode([7, 1], 'age (Double)', '`age`');
-
-    tableBrowser.toggleFullyQualify();
-    tableBrowser.expectNode([7, 1], 'age (Double)', '`vertices`.`age`');
-    tableBrowser.expectNode(
-      [7, 0],
-      '*ALL*',
-      '`vertices`.`age`,\n' +
-      '`vertices`.`gender`,\n' +
-      '`vertices`.`id`,\n' +
-      '`vertices`.`income`,\n' +
-      '`vertices`.`location`,\n' +
-      '`vertices`.`name`');
-    tableBrowser.toggleFullyQualify();
+test('SQL runs nice on belongs to reached from project and segmentation', async () => {
+  await workspace.clear();
+  await workspace.addBox({
+    id: 'vs', name: 'Create vertices', x: 100, y: 100, params: { size: '100' }
   });
-
-fw.transitionTest(
-  'test-example workspace with example graph',
-  'SQL2 box table browser',
-  function () {
-    lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
-    lib.workspace.addBox({
-      id: 'sql', name: 'SQL2', x: 100, y: 200
-    });
-    lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'one');
-    lib.workspace.connectBoxes('eg1', 'graph', 'sql', 'two');
-  }, function () {
-    const se = lib.workspace.openBoxEditor('sql');
-    const tableBrowser = se.getTableBrowser();
-    tableBrowser.toggle();
-    tableBrowser.expectNode([0], 'one.edge_attributes', '`one.edge_attributes`');
-    tableBrowser.expectNode([1], 'one.edges', '`one.edges`');
-    tableBrowser.expectNode([2], 'one.graph_attributes', '`one.graph_attributes`');
-    tableBrowser.expectNode([3], 'one.vertices', '`one.vertices`');
-    tableBrowser.expectNode([4], 'two.edge_attributes', '`two.edge_attributes`');
-    tableBrowser.expectNode([5], 'two.edges', '`two.edges`');
-    tableBrowser.expectNode([6], 'two.graph_attributes', '`two.graph_attributes`');
-    tableBrowser.expectNode([7], 'two.vertices', '`two.vertices`');
-    tableBrowser.toggleNode([3]);
-    tableBrowser.expectNode([3, 0], '*ALL*');
-    tableBrowser.expectNode([3, 1], 'age (Double)', '`age`');
+  await workspace.addBox({
+    after: 'vs',
+    id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }
   });
+  await workspace.addBox({
+    after: 'rnd',
+    id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300
+  });
+  await workspace.addBox({
+    id: 'sql', name: 'SQL1', x: 100, y: 400
+  });
+  await workspace.connectBoxes('copy', 'graph', 'sql', 'input');
+  await workspace.openStateView('sql', 'table');
+  const table = await runSQL(
+    'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
+  await table.expect(['sum'], ['Double'], [['100']]);
+});
+
+test('SQL1 box table browser', async () => {
+  await workspace.clear();
+  await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
+  await workspace.addBox({
+    id: 'sql', name: 'SQL1', x: 100, y: 200
+  });
+  await workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
+  const se = await workspace.openBoxEditor('sql');
+  const tableBrowser = se.getTableBrowser();
+  await tableBrowser.toggle();
+  await tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
+  await tableBrowser.expectNode([1], 'edges', '`edges`');
+  await tableBrowser.expectNode([2], 'graph_attributes', '`graph_attributes`');
+  await tableBrowser.expectNode([3], 'input.edge_attributes', '`input.edge_attributes`');
+  await tableBrowser.expectNode([4], 'input.edges', '`input.edges`');
+  await tableBrowser.expectNode([5], 'input.graph_attributes', '`input.graph_attributes`');
+  await tableBrowser.expectNode([6], 'input.vertices', '`input.vertices`');
+  await tableBrowser.expectNode([7], 'vertices', '`vertices`');
+  await tableBrowser.toggleNode([7]);
+  await tableBrowser.expectNode([7, 0], '*ALL*');
+  await tableBrowser.expectNode([7, 1], 'age (Double)', '`age`');
+
+  await tableBrowser.toggleFullyQualify();
+  await tableBrowser.expectNode([7, 1], 'age (Double)', '`vertices`.`age`');
+  await tableBrowser.expectNode(
+    [7, 0],
+    '*ALL*',
+    '`vertices`.`age`,\n' +
+    '`vertices`.`gender`,\n' +
+    '`vertices`.`id`,\n' +
+    '`vertices`.`income`,\n' +
+    '`vertices`.`location`,\n' +
+    '`vertices`.`name`');
+  await tableBrowser.toggleFullyQualify();
+});
+
+test('SQL2 box table browser', async () => {
+  await workspace.clear();
+  await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
+  await workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
+  await workspace.addBox({
+    id: 'sql', name: 'SQL2', x: 100, y: 200
+  });
+  await workspace.connectBoxes('eg0', 'graph', 'sql', 'one');
+  await workspace.connectBoxes('eg1', 'graph', 'sql', 'two');
+  const se = await workspace.openBoxEditor('sql');
+  const tableBrowser = se.getTableBrowser();
+  await tableBrowser.toggle();
+  await tableBrowser.expectNode([0], 'one.edge_attributes', '`one.edge_attributes`');
+  await tableBrowser.expectNode([1], 'one.edges', '`one.edges`');
+  await tableBrowser.expectNode([2], 'one.graph_attributes', '`one.graph_attributes`');
+  await tableBrowser.expectNode([3], 'one.vertices', '`one.vertices`');
+  await tableBrowser.expectNode([4], 'two.edge_attributes', '`two.edge_attributes`');
+  await tableBrowser.expectNode([5], 'two.edges', '`two.edges`');
+  await tableBrowser.expectNode([6], 'two.graph_attributes', '`two.graph_attributes`');
+  await tableBrowser.expectNode([7], 'two.vertices', '`two.vertices`');
+  await tableBrowser.toggleNode([3]);
+  await tableBrowser.expectNode([3, 0], '*ALL*');
+  await tableBrowser.expectNode([3, 1], 'age (Double)', '`age`');
+});
 
 /*
 fw.statePreservingTest(
-  'test-example project with example graph',
-  'Save SQL result as CSV works',
-  function() {
-    left.setSql('select name, age, income from vertices order by name');
+'test-example project with example graph',
+'Save SQL result as CSV works',
+function() {
+left.setSql('select name, age, income from vertices order by name');
 
-    left.startSqlSaving();
+left.startSqlSaving();
 
-    // Choose csv format.
-    left.side.$('#exportFormat option[value="csv"]').click();
+// Choose csv format.
+left.side.$('#exportFormat option[value="csv"]').click();
 
-    // And go.
-    lib.startDownloadWatch();
-    left.executeSqlSaving();
-    const downloadedFileName = lib.waitForNewDownload(/\.csv$/);
-    lib.expectFileContents(
-      downloadedFileName,
-      'name,age,income\n' +
-      'Adam,20.3,1000.0\n' +
-      'Bob,50.3,2000.0\n' +
-      'Eve,18.2,\n' +
-      'Isolated Joe,2.0,\n');
-  });
-
-fw.transitionTest(
-  'empty test-example project',
-  'table export and reimport',
-  function() {
-    left.runOperation('Create vertices', { size: '100' });
-    left.runOperation('Add random vertex attribute', { name: 'random1', seed: '1' });
-    left.runOperation('Add random vertex attribute', { name: 'random2', seed: '2' });
-    left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
-    left.runOperation('Add rank attribute', { keyattr: 'random2', rankattr: 'rank2' });
-
-    left.setSql(
-      'select cast(rank1 as string), cast(rank2 as string) from vertices');
-    left.startSqlSaving();
-    left.side.$('#exportFormat option[value="table"]').click();
-    left.side.$('#exportKiteTable').sendKeys('Random Edges');
-    left.executeSqlSaving();
-    // Test overwriting.
-    left.startSqlSaving();
-    left.executeSqlSaving();
-    lib.confirmSweetAlert('Entry already exists');
-
-    left.runOperation('Convert vertex attribute to Double', { attr: 'ordinal' });
-    left.runOperation('Convert vertex attribute to String', { attr: 'ordinal' });
-    left.runOperation(
-      'Import edges for existing vertices',
-      {
-        table: 'Random Edges',
-        attr: 'ordinal',
-        src: 'rank1',
-        dst: 'rank2',
-      });
-
-    left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
-    left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950', '4950']]);
-
-    left.runSql(
-      'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
-    left.expectSqlResult(['srcgood', 'dstgood'], ['Boolean', 'Boolean'], [['true', 'true']]);
-  },
-  function() {
-  });
+// And go.
+lib.startDownloadWatch();
+left.executeSqlSaving();
+const downloadedFileName = lib.waitForNewDownload(/\.csv$/);
+lib.expectFileContents(
+downloadedFileName,
+'name,age,income\n' +
+'Adam,20.3,1000.0\n' +
+'Bob,50.3,2000.0\n' +
+'Eve,18.2,\n' +
+'Isolated Joe,2.0,\n');
+});
 
 fw.transitionTest(
-  'table export and reimport',
-  'exported table can be edited',
-  function() {
-    lib.left.close();
-    lib.splash.editTable('Random Edges');
-    element(by.id('save-results-opener')).click();
-    element(by.id('save-results')).click();
-  },
-  function() {
-    expect(lib.errors()).toEqual([]);
-  });
+'empty test-example project',
+'table export and reimport',
+function() {
+left.runOperation('Create vertices', { size: '100' });
+left.runOperation('Add random vertex attribute', { name: 'random1', seed: '1' });
+left.runOperation('Add random vertex attribute', { name: 'random2', seed: '2' });
+left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
+left.runOperation('Add rank attribute', { keyattr: 'random2', rankattr: 'rank2' });
+
+left.setSql(
+'select cast(rank1 as string), cast(rank2 as string) from vertices');
+left.startSqlSaving();
+left.side.$('#exportFormat option[value="table"]').click();
+left.side.$('#exportKiteTable').sendKeys('Random Edges');
+left.executeSqlSaving();
+// Test overwriting.
+left.startSqlSaving();
+left.executeSqlSaving();
+lib.confirmSweetAlert('Entry already exists');
+
+left.runOperation('Convert vertex attribute to Double', { attr: 'ordinal' });
+left.runOperation('Convert vertex attribute to String', { attr: 'ordinal' });
+left.runOperation(
+'Import edges for existing vertices',
+{
+  table: 'Random Edges',
+  attr: 'ordinal',
+  src: 'rank1',
+  dst: 'rank2',
+});
+
+left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
+left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950', '4950']]);
+
+left.runSql(
+'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
+left.expectSqlResult(['srcgood', 'dstgood'], ['Boolean', 'Boolean'], [['true', 'true']]);
+},
+function() {
+});
 
 fw.transitionTest(
-  'test-example project with example graph',
-  'parquet export and reimport right from the operation',
-  function() {
-    left.setSql(
-      'select name, age, gender, income from vertices');
-    left.startSqlSaving();
-    left.side.$('#exportFormat option[value="parquet"]').click();
-    const fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
-    left.side.$('#export-parquet-path').sendKeys(fileName);
-    left.executeSqlSaving();
-
-    left.runOperation('Discard vertices');
-    left.openOperation('Import vertices');
-    const tableKind = left.operationParameter(left.toolbox, 'table');
-    tableKind.element(by.id('import-new-table-button')).click();
-    tableKind.$('#table-name input').sendKeys('example reloaded as parquet');
-    tableKind.element(by.cssContainingText('#datatype option', 'Parquet files')).click();
-    tableKind.$('#parquet-filename input[ng-model="filename"]').sendKeys(fileName);
-    tableKind.element(by.id('import-parquet-button')).click();
-    left.submitOperation(left.toolbox);
-  },
-  function() {
-    expect(lib.left.vertexCount()).toEqual(4);
-    // id, name, age, gender, income
-    expect(lib.left.attributeCount()).toEqual(5);
-  });
+'table export and reimport',
+'exported table can be edited',
+function() {
+lib.left.close();
+lib.splash.editTable('Random Edges');
+element(by.id('save-results-opener')).click();
+element(by.id('save-results')).click();
+},
+function() {
+expect(lib.errors()).toEqual([]);
+});
 
 fw.transitionTest(
-  'empty test-example project',
-  'test-example project with 100 vertices',
-  function() {
-    left.runOperation('Create vertices', { size: '100'});
-    const maxRows = left.side.element(by.css('#max-rows'));
+'test-example project with example graph',
+'parquet export and reimport right from the operation',
+function() {
+left.setSql(
+'select name, age, gender, income from vertices');
+left.startSqlSaving();
+left.side.$('#exportFormat option[value="parquet"]').click();
+const fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
+left.side.$('#export-parquet-path').sendKeys(fileName);
+left.executeSqlSaving();
 
-    maxRows.clear().sendKeys('1000');
-    left.side.element(by.id('run-sql-button')).click();
-    expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
-    maxRows.clear().sendKeys('100');
-    left.side.element(by.id('run-sql-button')).click();
-    expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
-    maxRows.clear().sendKeys('17');
-    left.side.element(by.id('run-sql-button')).click();
-    expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
-
-    // Test "Show more" button.
-    const showMore = left.side.element(by.css('#show-more'));
-    showMore.click();
-    expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(27);
-    showMore.click();
-    expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(37);
-  },
-  function() {
-  });
-
-    fw.transitionTest(
-      'segmentation opens',
-      'tables and views are saved in the project directory',
-      function() {
-        right.close();
-        left.close();
-        lib.splash.openProject('test-example');
-        left.saveProjectAs('somesubdir/someproject');
-
-        // Create new table
-        left.side.element(by.id('save-results-opener')).click();
-        left.side.element(by.css('#exportFormat > option[value=table]')).click();
-        left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
-        left.side.element(by.id('save-results')).click();
-
-        left.openSegmentation('bucketing');
-
-        // Create view for segmentation
-        right.side.element(by.id('save-results-opener')).click();
-        right.side.element(by.css('#exportFormat > option[value=view]')).click();
-        right.side.element(by.id('exportKiteTable')).sendKeys('segmview');
-        right.side.element(by.id('save-results')).click();
-      },
-      function() {
-        right.close();
-        lib.showSelector();
-        right.side.$('#directory-somesubdir').click();
-        lib.splash.expectTableListed('somesubdirtable');
-        lib.splash.expectViewListed('segmview');
-        left.close();
-        lib.splash.popDirectory();
-      });
+left.runOperation('Discard vertices');
+left.openOperation('Import vertices');
+const tableKind = left.operationParameter(left.toolbox, 'table');
+tableKind.element(by.id('import-new-table-button')).click();
+tableKind.$('#table-name input').sendKeys('example reloaded as parquet');
+tableKind.element(by.cssContainingText('#datatype option', 'Parquet files')).click();
+tableKind.$('#parquet-filename input[ng-model="filename"]').sendKeys(fileName);
+tableKind.element(by.id('import-parquet-button')).click();
+left.submitOperation(left.toolbox);
+},
+function() {
+expect(lib.left.vertexCount()).toEqual(4);
+// id, name, age, gender, income
+expect(lib.left.attributeCount()).toEqual(5);
+});
 
 fw.transitionTest(
-  'test-example project with 100 vertices',
-  'table and view export of 100 vertices',
-  function() {
-    // Create new table
-    left.side.element(by.id('save-results-opener')).click();
-    left.side.element(by.css('#exportFormat > option[value=table]')).click();
-    left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedtable');
-    left.side.element(by.id('save-results')).click();
+'empty test-example project',
+'test-example project with 100 vertices',
+function() {
+left.runOperation('Create vertices', { size: '100'});
+const maxRows = left.side.element(by.css('#max-rows'));
 
-    // Create new view
-    left.side.element(by.id('save-results-opener')).click();
-    left.side.element(by.css('#exportFormat > option[value=view]')).click();
-    left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedview');
-    left.side.element(by.id('save-results')).click();
-  },
-  function() {
-    lib.showSelector();
-    lib.splash.expectTableListed('exportedtable');
-    lib.splash.expectViewListed('exportedview');
-  });
+maxRows.clear().sendKeys('1000');
+left.side.element(by.id('run-sql-button')).click();
+expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+maxRows.clear().sendKeys('100');
+left.side.element(by.id('run-sql-button')).click();
+expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(100);
+maxRows.clear().sendKeys('17');
+left.side.element(by.id('run-sql-button')).click();
+expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
+
+// Test "Show more" button.
+const showMore = left.side.element(by.css('#show-more'));
+showMore.click();
+expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(27);
+showMore.click();
+expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(37);
+},
+function() {
+});
 
 fw.transitionTest(
-  'empty test-example project',
-  'test-example project with sql history',
-  function() {
-    lib.showSelector();
-    right.side.$('#global-sql-box').click();
+'segmentation opens',
+'tables and views are saved in the project directory',
+function() {
+  right.close();
+  left.close();
+  lib.splash.openProject('test-example');
+  left.saveProjectAs('somesubdir/someproject');
 
-    left.runSql('0');
-    right.runSql('1');
-    left.runSql('2');
-    right.runSql('3');
+  // Create new table
+  left.side.element(by.id('save-results-opener')).click();
+  left.side.element(by.css('#exportFormat > option[value=table]')).click();
+  left.side.element(by.id('exportKiteTable')).sendKeys('somesubdirtable');
+  left.side.element(by.id('save-results')).click();
 
-    // Close then reopen global sql box to synchronize its query history
-    right.side.element(by.css('#global-sql-box > .glyphicon-minus')).click();
-    right.side.element(by.id('global-sql-box')).click();
-  },
-  function() {
-    const K = protractor.Key;
+  left.openSegmentation('bucketing');
 
-    // Test synchronized sql box
-    const editor = right.sqlEditor();
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('3');
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('2');
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('1');
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('0');
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.DOWN)]);
-    expect(lib.getACEText(editor)).toBe('1');
+  // Create view for segmentation
+  right.side.element(by.id('save-results-opener')).click();
+  right.side.element(by.css('#exportFormat > option[value=view]')).click();
+  right.side.element(by.id('exportKiteTable')).sendKeys('segmview');
+  right.side.element(by.id('save-results')).click();
+},
+function() {
+  right.close();
+  lib.showSelector();
+  right.side.$('#directory-somesubdir').click();
+  lib.splash.expectTableListed('somesubdirtable');
+  lib.splash.expectViewListed('segmview');
+  left.close();
+  lib.splash.popDirectory();
+});
 
-    // Test non-synchronized sql box
-    editor = left.sqlEditor();
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('2');
-    lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
-    expect(lib.getACEText(editor)).toBe('0');
-  });
+fw.transitionTest(
+'test-example project with 100 vertices',
+'table and view export of 100 vertices',
+function() {
+// Create new table
+left.side.element(by.id('save-results-opener')).click();
+left.side.element(by.css('#exportFormat > option[value=table]')).click();
+left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedtable');
+left.side.element(by.id('save-results')).click();
+
+// Create new view
+left.side.element(by.id('save-results-opener')).click();
+left.side.element(by.css('#exportFormat > option[value=view]')).click();
+left.side.element(by.id('exportKiteTable')).clear().sendKeys('exportedview');
+left.side.element(by.id('save-results')).click();
+},
+function() {
+lib.showSelector();
+lib.splash.expectTableListed('exportedtable');
+lib.splash.expectViewListed('exportedview');
+});
+
+fw.transitionTest(
+'empty test-example project',
+'test-example project with sql history',
+function() {
+lib.showSelector();
+right.side.$('#global-sql-box').click();
+
+left.runSql('0');
+right.runSql('1');
+left.runSql('2');
+right.runSql('3');
+
+// Close then reopen global sql box to synchronize its query history
+right.side.element(by.css('#global-sql-box > .glyphicon-minus')).click();
+right.side.element(by.id('global-sql-box')).click();
+},
+function() {
+const K = protractor.Key;
+
+// Test synchronized sql box
+const editor = right.sqlEditor();
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('3');
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('2');
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('1');
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('0');
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.DOWN)]);
+expect(lib.getACEText(editor)).toBe('1');
+
+// Test non-synchronized sql box
+editor = left.sqlEditor();
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('2');
+lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
+expect(lib.getACEText(editor)).toBe('0');
+});
 */

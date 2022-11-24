@@ -5,6 +5,14 @@ function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+async function clickAll(elements: Locator, opts) {
+  const n = await elements.count();
+  // Clicking may remove them from the selector. So we start from the end.
+  for (let i = n - 1; i >= 0; --i) {
+    await elements.nth(i).click(opts);
+  }
+}
+
 export class Entity {
   side: Locator;
   kind: string;
@@ -199,9 +207,15 @@ export class Workspace {
     }
   }
 
+  async clear() {
+    // Select all.
+    await clickAll(this.board.locator('g.box:not(.selected)'), { modifiers: ['Control'] });
+    await this.board.press('Backspace');
+  }
+
   async selectBoxes(boxIds) {
     // Unselect all.
-    await this.board.locator('g.box.selected').click({ modifiers: ['Control'] });
+    await clickAll(this.board.locator('g.box.selected'), { modifiers: ['Control'] });
     // Select given boxes.
     for (let i = 0; i < boxIds.length; ++i) {
       await this.clickBox(boxIds[i], { modifiers: ['Control'] });
@@ -290,12 +304,13 @@ export class Workspace {
     this.getOutputPlug(boxId, plugId).click();
   }
 
-  async clickBox(boxId, opts) {
-    this.getBox(boxId).locator('#click-target').click(opts);
+  async clickBox(boxId, opts = {}) {
+    await this.getBox(boxId).locator('#click-target').click(opts);
   }
 
   async selectBox(boxId) {
-    this.openBoxEditor(boxId).close();
+    const box = await this.openBoxEditor(boxId);
+    await box.close();
   }
 
   getBoxEditor(boxId) {
@@ -785,70 +800,72 @@ class Side {
   }
 }
 
-function TableBrowser(root) {
-  this.root = root;
-}
+export class TableBrowser {
+  root: Locator;
+  constructor(root) {
+    this.root = root;
+  }
 
-TableBrowser.prototype = {
-  toggle: function () {
-    this.root.element(by.id('toggle-table-browser')).click();
-  },
+  async toggle() {
+    await this.root.locator('#toggle-table-browser').click();
+  }
 
-  getNode: function (posList) {
+  getNode(posList) {
     let pos = posList[0];
-    let node = this.root.locator('#table-browser-tree > ul > li').get(pos);
+    let node = this.root.locator('#table-browser-tree > ul > li').nth(pos);
     for (let i = 1; i < posList.length; ++i) {
       pos = posList[i];
-      node = node.locator(node.locator().value + ' > ul > li').get(pos);
+      node = node.locator('ul > li').nth(pos);
     }
     return node;
-  },
+  }
 
-  expectNode: function (posList, expectedName, expectedDragText) {
+  async expectNode(posList, expectedName, expectedDragText) {
     const li = this.getNode(posList);
-    expect(li.getText()).toBe(expectedName);
+    await expect(li).toHaveText(expectedName);
     if (expectedDragText) {
-      this.expectDragText(li, expectedDragText);
+      await this.expectDragText(li, expectedDragText);
     }
-  },
+  }
 
-  toggleNode: function (posList) {
+  async toggleNode(posList) {
     const li = this.getNode(posList);
-    li.locator('.glyphicon').click();
-  },
+    await li.locator('.glyphicon').click();
+  }
 
-  getColumn: function (tablePos, columnPos) {
+  getColumn(tablePos, columnPos) {
     const tableLi = this.getTable(tablePos);
-    return tableLi.locator('ul > li').get(columnPos + 1);
-  },
+    return tableLi.locator('ul > li').nth(columnPos + 1);
+  }
 
-  expectColumn: function (tablePos, columnPos, name) {
+  async expectColumn(tablePos, columnPos, name) {
     const columnLi = this.getColumn(tablePos, columnPos);
-    expect(columnLi.getText()).toBe(name);
-  },
+    await expect(columnLi).toHaveText(name);
+  }
 
-  searchTable: function (searchText) {
+  async searchTable(searchText) {
     const searchBox = this.root.locator('#search-for-tables');
-    safeSendKeys(searchBox, searchText);
-  },
+    await searchBox.fill(searchText);
+  }
 
-  expectDragText: function (li, expected) {
+  async expectDragText(li, expected) {
     // We cannot do a real drag-and-drop workflow here
     // because of:
     // https://github.com/angular/protractor/issues/583
     // Just doing a simple check for now.
-    const span = li.locator(li.locator().value + ' > span > table-browser-entry > span');
-    expect(span.evaluate('draggableText')).toBe(expected);
-  },
+    // TODO: We're no longer on Protractor! Let's try a drag & drop!
+    const span = li.locator('[draggable]');
+    expect(await angularEval(span, 'draggableText')).toBe(expected);
+  }
 
-  toggleFullyQualify: function () {
-    this.root.locator('#use-fully-qualified-names').click();
-  },
+  async toggleFullyQualify() {
+    await this.root.locator('#use-fully-qualified-names').click();
+  }
 
-  enterSearchQuery: function (query) {
-    safeSelectAndSendKeys(element(by.id('table-browser-search-box')), query);
-  },
-};
+  async enterSearchQuery(query) {
+    await this.root.locator('#table-browser-search-box').fill(query);
+  }
+}
 
 class VisualizationState {
   constructor(popup) {
