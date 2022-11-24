@@ -15,64 +15,64 @@ export async function newSplash(browser: Browser) {
     document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
   });
   await page.goto('/#/dir/');
-  page.splash = new lk.Splash(page);
-  await page.splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
-  if (await page.splash.directory('automated-tests').isVisible()) {
-    await page.splash.deleteDirectory('automated-tests');
+  const splash = new lk.Splash(page);
+  await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
+  if (await splash.directory('automated-tests').isVisible()) {
+    await splash.deleteDirectory('automated-tests');
   }
-  await page.splash.newDirectory('automated-tests');
-  await page.splash.expectNumWorkspaces(0);
-  await page.splash.expectNumDirectories(0);
-  return page;
+  await splash.newDirectory('automated-tests');
+  await splash.expectNumWorkspaces(0);
+  await splash.expectNumDirectories(0);
+  return splash;
 }
 
-test.describe.configure({ mode: 'serial' });
-let page: Page;
+//test.describe.configure({ mode: 'serial' });
+let splash: Splash;
 test.beforeAll(async ({ browser }) => {
-  page = await newSplash(browser);
+  splash = await newSplash(browser);
 });
 test.afterAll(async () => {
-  await page.close();
+  await splash.page.close();
 });
 
 test('empty test-example workspace', async function () {
-  await page.splash.openNewWorkspace('test-example');
-  await page.workspace.expectCurrentWorkspaceIs('test-example');
-  await page.workspace.close();
+  const workspace = await splash.openNewWorkspace('test-example');
+  await workspace.expectCurrentWorkspaceIs('test-example');
+  await workspace.close();
 });
 
 test('test-example renamed and moved', async function () {
-  await page.splash.expectWorkspaceListed('test-example');
+  await splash.expectWorkspaceListed('test-example');
 
   // Create directory.
-  await page.splash.newDirectory('test-dir');
-  await page.splash.expectWorkspaceNotListed('test-example');
+  await splash.newDirectory('test-dir');
+  await splash.expectWorkspaceNotListed('test-example');
 
   // Go back and move the project into the directory.
-  await page.splash.popDirectory();
-  await page.splash.expectWorkspaceListed('test-example');
-  await page.splash.renameWorkspace('test-example', 'test-dir/test-example');
-  await page.splash.expectWorkspaceNotListed('test-example');
+  await splash.popDirectory();
+  await splash.expectWorkspaceListed('test-example');
+  await splash.renameWorkspace('test-example', 'test-dir/test-example');
+  await splash.expectWorkspaceNotListed('test-example');
 
   // Open directory.
-  await page.splash.openDirectory('test-dir');
-  await page.splash.expectWorkspaceListed('test-example');
+  await splash.openDirectory('test-dir');
+  await splash.expectWorkspaceListed('test-example');
 
   // Rename project.
-  await page.splash.renameWorkspace('test-example', 'test-dir/test-renamed');
-  await page.splash.expectWorkspaceListed('test-renamed');
-  await page.splash.expectWorkspaceNotListed('test-example');
+  await splash.renameWorkspace('test-example', 'test-dir/test-renamed');
+  await splash.expectWorkspaceListed('test-renamed');
+  await splash.expectWorkspaceNotListed('test-example');
 
   // Delete project.
-  await page.splash.deleteWorkspace('test-renamed');
-  await page.splash.expectWorkspaceNotListed('test-renamed');
+  await splash.deleteWorkspace('test-renamed');
+  await splash.expectWorkspaceNotListed('test-renamed');
 
   // Go back and delete the directory.
-  await page.splash.popDirectory();
-  await page.splash.expectWorkspaceNotListed('test-renamed');
-  await page.splash.expectDirectoryListed('test-dir');
-  await page.splash.deleteDirectory('test-dir');
-  await page.splash.expectDirectoryNotListed('test-dir');
+  await splash.popDirectory();
+  await splash.expectWorkspaceNotListed('test-renamed');
+  await splash.expectDirectoryListed('test-dir');
+  await splash.deleteDirectory('test-dir');
+  await splash.expectDirectoryNotListed('test-dir');
 });
 
 test('a few workspaces created', async function () {
@@ -83,94 +83,94 @@ test('a few workspaces created', async function () {
   //   grape
   // apple
   // pear
-  await page.splash.openNewWorkspace('apple');
-  await page.workspace.close();
-  await page.splash.openNewWorkspace('pear');
-  await page.workspace.close();
-  await page.splash.newDirectory('plum');
-  await page.splash.openNewWorkspace('grape');
-  await page.workspace.close();
-  await page.splash.newDirectory('orange');
-  await page.splash.openNewWorkspace('kiwi');
-  await page.workspace.close();
-  await page.splash.popDirectory();
-  await page.splash.popDirectory();
+  await splash.openNewWorkspace('apple');
+  await workspace.close();
+  await splash.openNewWorkspace('pear');
+  await workspace.close();
+  await splash.newDirectory('plum');
+  await splash.openNewWorkspace('grape');
+  await workspace.close();
+  await splash.newDirectory('orange');
+  await splash.openNewWorkspace('kiwi');
+  await workspace.close();
+  await splash.popDirectory();
+  await splash.popDirectory();
 
   // expect
-  await page.splash.expectWorkspaceListed('apple');
-  await page.splash.expectWorkspaceListed('pear');
-  await page.splash.expectDirectoryListed('plum');
-  await page.splash.expectNumWorkspaces(2);
-  await page.splash.expectNumDirectories(1);
+  await splash.expectWorkspaceListed('apple');
+  await splash.expectWorkspaceListed('pear');
+  await splash.expectDirectoryListed('plum');
+  await splash.expectNumWorkspaces(2);
+  await splash.expectNumDirectories(1);
 
-  await page.splash.openDirectory('plum');
-  await page.splash.expectWorkspaceListed('grape');
-  await page.splash.expectDirectoryListed('orange');
-  await page.splash.expectNumWorkspaces(1);
-  await page.splash.expectNumDirectories(1);
+  await splash.openDirectory('plum');
+  await splash.expectWorkspaceListed('grape');
+  await splash.expectDirectoryListed('orange');
+  await splash.expectNumWorkspaces(1);
+  await splash.expectNumDirectories(1);
 
-  await page.splash.openDirectory('orange');
-  await page.splash.expectWorkspaceListed('kiwi');
-  await page.splash.expectNumWorkspaces(1);
-  await page.splash.expectNumDirectories(0);
+  await splash.openDirectory('orange');
+  await splash.expectWorkspaceListed('kiwi');
+  await splash.expectNumWorkspaces(1);
+  await splash.expectNumDirectories(0);
 
-  await page.splash.popDirectory();
-  await page.splash.popDirectory();
-  await page.splash.expectWorkspaceListed('apple');
+  await splash.popDirectory();
+  await splash.popDirectory();
+  await splash.expectWorkspaceListed('apple');
 });
 
 test('search works as intended', async function () {
-  await page.splash.enterSearchQuery('a');
-  await page.splash.expectDirectoryListed('orange');
-  await page.splash.expectWorkspaceListed('apple');
-  await page.splash.expectWorkspaceListed('pear');
-  await page.splash.expectWorkspaceListed('grape');
-  await page.splash.expectNumWorkspaces(3);
-  await page.splash.expectNumDirectories(1);
+  await splash.enterSearchQuery('a');
+  await splash.expectDirectoryListed('orange');
+  await splash.expectWorkspaceListed('apple');
+  await splash.expectWorkspaceListed('pear');
+  await splash.expectWorkspaceListed('grape');
+  await splash.expectNumWorkspaces(3);
+  await splash.expectNumDirectories(1);
 
-  await page.splash.enterSearchQuery('a g');
-  await page.splash.expectDirectoryListed('orange');
-  await page.splash.expectWorkspaceListed('grape');
-  await page.splash.expectNumWorkspaces(1);
-  await page.splash.expectNumDirectories(1);
+  await splash.enterSearchQuery('a g');
+  await splash.expectDirectoryListed('orange');
+  await splash.expectWorkspaceListed('grape');
+  await splash.expectNumWorkspaces(1);
+  await splash.expectNumDirectories(1);
 
-  await page.splash.enterSearchQuery('kiwi');
-  await page.splash.expectWorkspaceListed('kiwi');
-  await page.splash.expectNumWorkspaces(1);
-  await page.splash.expectNumDirectories(0);
+  await splash.enterSearchQuery('kiwi');
+  await splash.expectWorkspaceListed('kiwi');
+  await splash.expectNumWorkspaces(1);
+  await splash.expectNumDirectories(0);
 
-  await page.splash.enterSearchQuery('orange');
-  await page.splash.expectDirectoryListed('orange');
-  await page.splash.expectNumWorkspaces(0);
-  await page.splash.expectNumDirectories(1);
+  await splash.enterSearchQuery('orange');
+  await splash.expectDirectoryListed('orange');
+  await splash.expectNumWorkspaces(0);
+  await splash.expectNumDirectories(1);
 
-  await page.splash.clearSearchQuery();
-  await page.splash.openDirectory('plum');
-  await page.splash.enterSearchQuery('e');
-  await page.splash.expectDirectoryListed('orange');
-  await page.splash.expectWorkspaceListed('grape');
-  await page.splash.expectNumWorkspaces(1);
-  await page.splash.expectNumDirectories(1);
-  await page.splash.popDirectory();
+  await splash.clearSearchQuery();
+  await splash.openDirectory('plum');
+  await splash.enterSearchQuery('e');
+  await splash.expectDirectoryListed('orange');
+  await splash.expectWorkspaceListed('grape');
+  await splash.expectNumWorkspaces(1);
+  await splash.expectNumDirectories(1);
+  await splash.popDirectory();
 });
 
 test('navigate dirs by clicking on path segment', async function () {
-  await page.splash.newDirectory('red');
-  await page.splash.newDirectory('green');
-  await page.splash.newDirectory('blue');
-  await page.splash.clickBreadcrumb('green');
-  await page.splash.expectDirectoryListed('blue');
-  await page.splash.clickBreadcrumb('red');
-  await page.splash.expectDirectoryListed('green');
-  await page.splash.popDirectory();
+  await splash.newDirectory('red');
+  await splash.newDirectory('green');
+  await splash.newDirectory('blue');
+  await splash.clickBreadcrumb('green');
+  await splash.expectDirectoryListed('blue');
+  await splash.clickBreadcrumb('red');
+  await splash.expectDirectoryListed('green');
+  await splash.popDirectory();
 });
 
 test('selected directory path does not contain spaces', async function () {
-  await page.splash.newDirectory('first');
-  await page.splash.newDirectory('second');
-  await page.splash.newDirectory('last');
-  await page.splash.expectSelectedCurrentDirectory('first/second/last');
-  await page.splash.popDirectory();
-  await page.splash.popDirectory();
-  await page.splash.popDirectory();
+  await splash.newDirectory('first');
+  await splash.newDirectory('second');
+  await splash.newDirectory('last');
+  await splash.expectSelectedCurrentDirectory('first/second/last');
+  await splash.popDirectory();
+  await splash.popDirectory();
+  await splash.popDirectory();
 });

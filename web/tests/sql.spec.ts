@@ -1,26 +1,27 @@
-import { test, expect, Browser } from '@playwright/test';
-import * as lk from './lynxkite';
+import { test, expect, Browser, Page } from '@playwright/test';
+import { Workspace, TableState } from './lynxkite';
 import { newSplash } from './splash.spec';
 
 // Starts with a brand new workspace.
 export async function newWorkspace(browser: Browser) {
-  const page = await newSplash(browser);
-  await page.splash.openNewWorkspace('test-example');
-  await page.workspace.expectCurrentWorkspaceIs('test-example');
-  return page;
+  const splash = await newSplash(browser);
+  const workspace = await splash.openNewWorkspace('test-example');
+  await workspace.expectCurrentWorkspaceIs('test-example');
+  return workspace;
 }
 
-test.describe.configure({ mode: 'serial' });
-let page: Page;
+//test.describe.configure({ mode: 'serial' });
+let workspace: Workspace;
+let table: TableState;
 test.beforeAll(async ({ browser }) => {
-  page = await newWorkspace(browser);
-  await page.pause();
-  await page.workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
-  await page.workspace.addBox({
-    id: 'sql', name: 'SQL1', x: 100, y: 200 });
-  await page.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
-  // TODO: This doesn't work yet.
-  const table = await page.workspace.openStateView('sql', 'table').table;
+  workspace = await newWorkspace(browser);
+  await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
+  await workspace.addBox({
+    id: 'sql', name: 'SQL1', x: 100, y: 200
+  });
+  await workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
+  const state = await workspace.openStateView('sql', 'table');
+  table = state.table;
   await table.expect(
     ['age', 'gender', 'id', 'income', 'location', 'name'],
     ['Double', 'String', 'String', 'Double', 'Array[Double]', 'String'],
@@ -32,12 +33,13 @@ test.beforeAll(async ({ browser }) => {
     ]);
 });
 test.afterAll(async () => {
-  await page.close();
+  await workspace.page.close();
 });
 
 async function runSQL(query) {
-  await page.workspace.editBox('sql', { sql: query, persist: 'no' });
-  return await page.workspace.getStateView('sql', 'table').table;
+  await workspace.editBox('sql', { sql: query, persist: 'no' });
+  const state = await workspace.getStateView('sql', 'table');
+  return state.table;
 }
 
 async function sqlSimpleTest(query, resultNames, resultTypes, resultRows) {
@@ -48,144 +50,146 @@ async function sqlSimpleTest(query, resultNames, resultTypes, resultRows) {
 test('SQL works for edge attributes', async () => {
   await runSQL('select edge_comment, src_name from edges order by edge_comment');
   await table.expect(
-  ['edge_comment', 'src_name'],
-  ['String', 'String'],
-  [
-    [ 'Adam loves Eve', 'Adam' ],
-    [ 'Bob envies Adam', 'Bob' ],
-    [ 'Bob loves Eve', 'Bob' ],
-    [ 'Eve loves Adam', 'Eve' ],
-  ]);
+    ['edge_comment', 'src_name'],
+    ['String', 'String'],
+    [
+      ['Adam loves Eve', 'Adam'],
+      ['Bob envies Adam', 'Bob'],
+      ['Bob loves Eve', 'Bob'],
+      ['Eve loves Adam', 'Eve'],
+    ]);
+});
+
+test('"order by" works right', async () => {
+  await runSQL('select id, name from vertices order by name');
+  await table.expect(
+    ['id', 'name'],
+    ['String', 'String'],
+    [
+      ['0', 'Adam'],
+      ['2', 'Bob'],
+      ['1', 'Eve'],
+      ['3', 'Isolated Joe'],
+    ]);
+});
+
+test('sql result table ordering works right with numbers', async () => {
+  await runSQL('select age, name from vertices');
+  await table.clickColumn('age');
+  await table.expect(
+    ['age', 'name'],
+    ['Double', 'String'],
+    [
+      ['2', 'Isolated Joe'],
+      ['18.2', 'Eve'],
+      ['20.3', 'Adam'],
+      ['50.3', 'Bob'],
+    ]);
+  await table.clickColumn('name');
+  await table.expect(
+    ['age', 'name'],
+    ['Double', 'String'],
+    [
+      ['20.3', 'Adam'],
+      ['50.3', 'Bob'],
+      ['18.2', 'Eve'],
+      ['2', 'Isolated Joe'],
+    ]);
+  await table.clickColumn('age');
+  await table.clickColumn('age');
+  await table.expect(
+    ['age', 'name'],
+    ['Double', 'String'],
+    [
+      ['50.3', 'Bob'],
+      ['20.3', 'Adam'],
+      ['18.2', 'Eve'],
+      ['2', 'Isolated Joe'],
+    ]);
+});
+
+test.only('sql result table ordering works right with nulls', async () => {
+  await runSQL('select name, income from vertices');
+  await table.clickColumn('income');
+  await table.expect(
+    ['name', 'income'],
+    ['String', 'Double'],
+    [
+      ['Eve', 'null'],
+      ['Isolated Joe', 'null'],
+      ['Adam', '1000'],
+      ['Bob', '2000'],
+    ]);
+  await table.clickColumn('income');
+  await table.expect(
+    ['name', 'income'],
+    ['String', 'Double'],
+    [
+      ['Bob', '2000'],
+      ['Adam', '1000'],
+      ['Isolated Joe', 'null'],
+      ['Eve', 'null'],
+    ]);
+  await table.close();
+  await workspace.addBox({
+    id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
+      expr: 'if (income == 1000) "apple" else "orange"',
+      output: 'new_attr',
+    }
+  });
+  await workspace.connectBoxes('new_attr', 'graph', 'sql', 'input');
+  table = await workspace.openStateView('sql', 'table');
+  table = await runSQL('select new_attr from vertices');
+  await table.clickColumn('new_attr');
+  await table.expect(
+    ['new_attr'],
+    ['String'],
+    [
+      ['null'],
+      ['null'],
+      ['apple'],
+      ['orange'],
+    ]);
+  await table.close();
+  await workspace.deleteBoxes(['new_attr']);
+  await workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
+  await workspace.openStateView('sql', 'table');
 });
 /*
-sqlSimpleTest(
-  '"order by" works right',
-  'select id, name from vertices order by name',
-  ['id', 'name'],
-  ['String', 'String'],
-  [
-    [ '0', 'Adam' ],
-    [ '2', 'Bob' ],
-    [ '1', 'Eve' ],
-    [ '3', 'Isolated Joe' ],
-  ]);
-
-sqlTest(
-  'sql result table ordering works right with numbers',
-  'select age, name from vertices',
-  function(table) {
-    table.clickColumn('age');
-    table.expect(
-      ['age', 'name'],
-      ['Double', 'String'],
-      [
-        [ '2', 'Isolated Joe' ],
-        [ '18.2', 'Eve' ],
-        [ '20.3', 'Adam' ],
-        [ '50.3', 'Bob' ],
-      ]);
-    table.clickColumn('name');
-    table.expect(
-      ['age', 'name'],
-      ['Double', 'String'],
-      [
-        [ '20.3', 'Adam' ],
-        [ '50.3', 'Bob' ],
-        [ '18.2', 'Eve' ],
-        [ '2', 'Isolated Joe' ],
-      ]);
-    table.clickColumn('age');
-    table.clickColumn('age');
-    table.expect(
-      ['age', 'name'],
-      ['Double', 'String'],
-      [
-        [ '50.3', 'Bob' ],
-        [ '20.3', 'Adam' ],
-        [ '18.2', 'Eve' ],
-        [ '2', 'Isolated Joe' ],
-      ]);
-  });
-
-sqlTest(
-  'sql result table ordering works right with nulls',
-  'select name, income from vertices',
-  function(table) {
-    table.clickColumn('income');
-    table.expect(
-      ['name', 'income'],
-      ['String', 'Double'],
-      [
-        [ 'Eve', 'null' ],
-        [ 'Isolated Joe', 'null' ],
-        [ 'Adam', '1000' ],
-        [ 'Bob', '2000' ],
-      ]);
-    table.clickColumn('income');
-    table.expect(
-      ['name', 'income'],
-      ['String', 'Double'],
-      [
-        [ 'Bob', '2000' ],
-        [ 'Adam', '1000' ],
-        [ 'Isolated Joe', 'null' ],
-        [ 'Eve', 'null' ],
-      ]);
-    table.close();
-    lib.workspace.addBox({
-      id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
-        expr: 'if (income == 1000) "apple" else "orange"',
-        output: 'new_attr',
-      }
-    });
-    lib.workspace.connectBoxes('new_attr', 'graph', 'sql', 'input');
-    table = lib.workspace.openStateView('sql', 'table');
-    table = runSQL('select new_attr from vertices');
-    table.clickColumn('new_attr');
-    table.expect(
-      ['new_attr'],
-      ['String'],
-      [
-        [ 'null' ],
-        [ 'null' ],
-        [ 'apple' ],
-        [ 'orange' ],
-      ]);
-    table.close();
-    lib.workspace.deleteBoxes(['new_attr']);
-    lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
-    lib.workspace.openStateView('sql', 'table');
-  });
-
 fw.transitionTest(
   'empty test-example workspace',
   'SQL runs nice on belongs to reached from project and segmentation',
-  function() {
+  function () {
     lib.workspace.addBox({
-      id: 'vs', name: 'Create vertices', x: 100, y: 100, params: { size: '100' }});
+      id: 'vs', name: 'Create vertices', x: 100, y: 100, params: { size: '100' }
+    });
     lib.workspace.addBox({
       after: 'vs',
-      id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }});
+      id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }
+    });
     lib.workspace.addBox({
       after: 'rnd',
-      id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300 });
+      id: 'copy', name: 'Use base graph as segmentation', x: 100, y: 300
+    });
     lib.workspace.addBox({
-      id: 'sql', name: 'SQL1', x: 100, y: 400 });
+      id: 'sql', name: 'SQL1', x: 100, y: 400
+    });
     lib.workspace.connectBoxes('copy', 'graph', 'sql', 'input');
     lib.workspace.openStateView('sql', 'table');
     const table = runSQL(
       'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
     table.expect(['sum'], ['Double'], [['100']]);
-  }, function() {});
+  }, function () { });
 
 fw.transitionTest(
   'test-example workspace with example graph',
   'SQL1 box table browser',
-  function() {
+  function () {
     lib.workspace.addBox({
-      id: 'sql', name: 'SQL1', x: 100, y: 200 });
+      id: 'sql', name: 'SQL1', x: 100, y: 200
+    });
     lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'input');
-  }, function() {
+  }, function () {
     const se = lib.workspace.openBoxEditor('sql');
     const tableBrowser = se.getTableBrowser();
     tableBrowser.toggle();
@@ -207,24 +211,25 @@ fw.transitionTest(
       [7, 0],
       '*ALL*',
       '`vertices`.`age`,\n' +
-            '`vertices`.`gender`,\n' +
-            '`vertices`.`id`,\n' +
-            '`vertices`.`income`,\n' +
-            '`vertices`.`location`,\n' +
-            '`vertices`.`name`');
+      '`vertices`.`gender`,\n' +
+      '`vertices`.`id`,\n' +
+      '`vertices`.`income`,\n' +
+      '`vertices`.`location`,\n' +
+      '`vertices`.`name`');
     tableBrowser.toggleFullyQualify();
   });
 
 fw.transitionTest(
   'test-example workspace with example graph',
   'SQL2 box table browser',
-  function() {
+  function () {
     lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
     lib.workspace.addBox({
-      id: 'sql', name: 'SQL2', x: 100, y: 200 });
+      id: 'sql', name: 'SQL2', x: 100, y: 200
+    });
     lib.workspace.connectBoxes('eg0', 'graph', 'sql', 'one');
     lib.workspace.connectBoxes('eg1', 'graph', 'sql', 'two');
-  }, function() {
+  }, function () {
     const se = lib.workspace.openBoxEditor('sql');
     const tableBrowser = se.getTableBrowser();
     tableBrowser.toggle();
