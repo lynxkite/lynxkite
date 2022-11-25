@@ -145,11 +145,12 @@ frontend-test:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
+  RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
+  RUN cd web && zip -r results.zip playwright-report test-results
   TRY
-    RUN cd web && ../tools/with_lk.sh yarn playwright test
+    RUN [ ! -f web/failed ]
   FINALLY
-    SAVE ARTIFACT web/playwright-report AS LOCAL web/playwright-report
-    SAVE ARTIFACT web/test-results AS LOCAL web/test-results
+    SAVE ARTIFACT web/results.zip AS LOCAL results.zip
   END
 
 docker:
