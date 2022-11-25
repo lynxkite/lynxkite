@@ -34,7 +34,7 @@ jobs:
         fi
         git checkout -b "$branch" || true
     - name: Download latest earthly
-      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.26/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
     - name: Run backend tests on Spark
@@ -72,7 +72,7 @@ jobs:
         fi
         git checkout -b "$branch" || true
     - name: Download latest earthly
-      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.26/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
     - name: Run backend tests with Sphynx
@@ -110,7 +110,7 @@ jobs:
         fi
         git checkout -b "$branch" || true
     - name: Download latest earthly
-      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.26/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
     - name: Run Python test
@@ -148,8 +148,15 @@ jobs:
         fi
         git checkout -b "$branch" || true
     - name: Download latest earthly
-      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.26/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
     - name: Run frontend test
       run: earthly --ci --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +frontend-test
+    - name: Save test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-test-results
+        path: |
+          web/playwright-report
+          web/test-results

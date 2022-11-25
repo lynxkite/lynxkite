@@ -1,4 +1,4 @@
-VERSION --use-copy-include-patterns 0.6
+VERSION --use-copy-include-patterns --try 0.6
 FROM mambaorg/micromamba:jammy
 RUN mkdir /home/mambauser/lk
 WORKDIR /home/mambauser/lk
@@ -145,7 +145,12 @@ frontend-test:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
-  RUN cd web && ../tools/with_lk.sh yarn playwright test --trace on
+  TRY
+    RUN cd web && ../tools/with_lk.sh yarn playwright test
+  FINALLY
+    SAVE ARTIFACT web/playwright-report AS LOCAL web/playwright-report
+    SAVE ARTIFACT web/test-results AS LOCAL web/test-results
+  END
 
 docker:
   FROM mambaorg/micromamba:jammy
