@@ -1,3 +1,5 @@
+// Shared testing utilities.
+// TODO: This is being migrated from test-lib.js. We will clean it up at the end.
 import { expect, Locator, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
@@ -193,6 +195,8 @@ export class Workspace {
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
     }, boxData);
+    // Wait for the backend to save this box.
+    await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
       await this.connectBoxes(after, 'graph', id, 'graph');
     }
@@ -291,7 +295,7 @@ export class Workspace {
     }
   }
 
-  getOutputPlug(boxId, plugId) {
+  getOutputPlug(boxId, plugId?) {
     let box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
@@ -820,7 +824,7 @@ export class TableBrowser {
     return node;
   }
 
-  async expectNode(posList, expectedName, expectedDragText) {
+  async expectNode(posList, expectedName, expectedDragText?) {
     const li = this.getNode(posList);
     await expect(li).toHaveText(expectedName);
     if (expectedDragText) {
@@ -971,10 +975,11 @@ class VisualizationState {
 }
 
 export class Splash {
+  page: Page;
+  root: Locator;
   constructor(page) {
     this.page = page;
     this.root = page.locator('#splash');
-    this.tableBrowser = new TableBrowser(this.root);
   }
 
   workspace(name) {
@@ -1005,8 +1010,8 @@ export class Splash {
     await expect(this.root.locator('.directory-entry')).toHaveCount(n);
   }
 
-  async expectSelectedCurrentDirectory(path) {
-    await expect(this.root.locator('#current-directory > span.lead')).toContainText(path);
+  async expectCurrentDirectory(path) {
+    await expect(this.root.locator('#current-directory > span.lead')).toHaveText(path);
   }
 
   async expectNumTables(n) {
@@ -1085,9 +1090,12 @@ export class Splash {
 
   async newDirectory(name) {
     await this.expectDirectoryNotListed(name);
+    await expect(this.root.locator('#new-directory')).toHaveText(/New folder/);
     await this.root.locator('#new-directory').click();
     await this.root.locator('#new-directory-name').fill(name);
     await this.root.locator('#new-directory button[type=submit]').click();
+    // The terminal slash is not visible. https://github.com/microsoft/playwright/issues/19072
+    await this.expectCurrentDirectory(new RegExp('\\b' + name + '/\\s*$'));
   }
 
   async openProject(name) {

@@ -1,3 +1,4 @@
+// Tests the "splash" page where you can put workspaces in directories.
 import { test, expect, Browser } from '@playwright/test';
 import * as lk from './lynxkite';
 
@@ -168,7 +169,7 @@ test('selected directory path does not contain spaces', async function () {
   await splash.newDirectory('first');
   await splash.newDirectory('second');
   await splash.newDirectory('last');
-  await splash.expectSelectedCurrentDirectory('first/second/last');
+  await splash.expectCurrentDirectory(/first\/second\/last/);
   await splash.popDirectory();
   await splash.popDirectory();
   await splash.popDirectory();

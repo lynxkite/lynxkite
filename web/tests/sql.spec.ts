@@ -1,3 +1,4 @@
+// Tests SQL boxes and the table browser.
 import { test, expect, Browser, Page } from '@playwright/test';
 import { Workspace, TableState } from './lynxkite';
 import { newSplash } from './splash.spec';
@@ -10,7 +11,6 @@ export async function newWorkspace(browser: Browser) {
   return workspace;
 }
 
-//test.describe.configure({ mode: 'serial' });
 let workspace: Workspace;
 let table: TableState;
 test.beforeAll(async ({ browser }) => {
