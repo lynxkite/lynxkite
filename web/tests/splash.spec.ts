@@ -1,35 +1,10 @@
 // Tests the "splash" page where you can put workspaces in directories.
 import { test, expect, Browser } from '@playwright/test';
-import * as lk from './lynxkite';
-
-// Opens the LynxKite directory browser in the root.
-export async function newSplash(browser: Browser) {
-  const page = await browser.newPage();
-  await page.goto('/#/');
-  await page.evaluate(() => {
-    window.sessionStorage.clear();
-    window.localStorage.clear();
-    window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
-    window.localStorage.setItem('entry-selector tutorial done', 'true');
-    window.localStorage.setItem('allow data collection', 'false');
-    // Floating elements can overlap buttons and block clicks.
-    document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
-  });
-  await page.goto('/#/dir/');
-  const splash = new lk.Splash(page);
-  await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
-  if (await splash.directory('automated-tests').isVisible()) {
-    await splash.deleteDirectory('automated-tests');
-  }
-  await splash.newDirectory('automated-tests');
-  await splash.expectNumWorkspaces(0);
-  await splash.expectNumDirectories(0);
-  return splash;
-}
+import { Splash } from './lynxkite';
 
 let splash: Splash;
 test.beforeAll(async ({ browser }) => {
-  splash = await newSplash(browser);
+  splash = await Splash.open(browser);
 });
 test.afterAll(async () => {
   await splash.page.close();

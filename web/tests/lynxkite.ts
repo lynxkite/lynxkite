@@ -1,6 +1,6 @@
 // Shared testing utilities.
 // TODO: This is being migrated from test-lib.js. We will clean it up at the end.
-import { expect, Locator, Page } from '@playwright/test';
+import { expect, Locator, Browser, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
 function toId(x) {
@@ -148,6 +148,14 @@ export class Workspace {
     this.main = page.locator('#workspace-entry-point');
     this.selector = page.locator('.operation-selector');
     this.board = page.locator('#workspace-drawing-board');
+  }
+
+  // Starts with a brand new workspace.
+  static async empty(browser: Browser): Promise<Workspace> {
+    const splash = await Splash.open(browser);
+    const workspace = await splash.openNewWorkspace('test-example');
+    await workspace.expectCurrentWorkspaceIs('test-example');
+    return workspace;
   }
 
   async expectCurrentWorkspaceIs(name) {
@@ -980,6 +988,31 @@ export class Splash {
   constructor(page) {
     this.page = page;
     this.root = page.locator('#splash');
+  }
+
+  // Opens the LynxKite directory browser in the root.
+  static async open(browser: Browser): Promise<Splash> {
+    const page = await browser.newPage();
+    await page.goto('/#/');
+    await page.evaluate(() => {
+      window.sessionStorage.clear();
+      window.localStorage.clear();
+      window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
+      window.localStorage.setItem('entry-selector tutorial done', 'true');
+      window.localStorage.setItem('allow data collection', 'false');
+      // Floating elements can overlap buttons and block clicks.
+      document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
+    });
+    await page.goto('/#/dir/');
+    const splash = new Splash(page);
+    await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
+    if (await splash.directory('automated-tests').isVisible()) {
+      await splash.deleteDirectory('automated-tests');
+    }
+    await splash.newDirectory('automated-tests');
+    await splash.expectNumWorkspaces(0);
+    await splash.expectNumDirectories(0);
+    return splash;
   }
 
   workspace(name) {

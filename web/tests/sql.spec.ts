@@ -1,20 +1,11 @@
 // Tests SQL boxes and the table browser.
 import { test, expect, Browser, Page } from '@playwright/test';
 import { Workspace, TableState } from './lynxkite';
-import { newSplash } from './splash.spec';
-
-// Starts with a brand new workspace.
-export async function newWorkspace(browser: Browser) {
-  const splash = await newSplash(browser);
-  const workspace = await splash.openNewWorkspace('test-example');
-  await workspace.expectCurrentWorkspaceIs('test-example');
-  return workspace;
-}
 
 let workspace: Workspace;
 let table: TableState;
 test.beforeAll(async ({ browser }) => {
-  workspace = await newWorkspace(browser);
+  workspace = await Workspace.empty(browser);
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({
     id: 'sql', name: 'SQL1', x: 100, y: 200
