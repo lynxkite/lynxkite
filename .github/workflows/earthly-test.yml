@@ -19,7 +19,7 @@ jobs:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
         token_format: 'access_token'
-    - uses: 'docker/login-action@v1'
+    - uses: 'docker/login-action@v2'
       with:
         registry: 'us-central1-docker.pkg.dev'
         username: 'oauth2accesstoken'
@@ -57,7 +57,7 @@ jobs:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
         token_format: 'access_token'
-    - uses: 'docker/login-action@v1'
+    - uses: 'docker/login-action@v2'
       with:
         registry: 'us-central1-docker.pkg.dev'
         username: 'oauth2accesstoken'
@@ -95,7 +95,7 @@ jobs:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
         token_format: 'access_token'
-    - uses: 'docker/login-action@v1'
+    - uses: 'docker/login-action@v2'
       with:
         registry: 'us-central1-docker.pkg.dev'
         username: 'oauth2accesstoken'
@@ -133,7 +133,7 @@ jobs:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
         token_format: 'access_token'
-    - uses: 'docker/login-action@v1'
+    - uses: 'docker/login-action@v2'
       with:
         registry: 'us-central1-docker.pkg.dev'
         username: 'oauth2accesstoken'
