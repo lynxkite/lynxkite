@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 5.2.0
+
 - The Python API can now be used without a running LynxKite instance. If you pass in a SparkSession
   to LynxKite (`lk = lynx.kite.LynxKite(spark=spark)`), LynxKite will run in that SparkSession.
   [#294](https://github.com/lynxkite/lynxkite/pull/294)
