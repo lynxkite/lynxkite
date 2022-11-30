@@ -52,6 +52,7 @@
 │  ├─ @firebase/webchannel-wrapper@0.5.0
 │  ├─ @grpc/grpc-js@1.3.2
 │  ├─ @grpc/proto-loader@0.5.6
+│  ├─ @playwright/test@1.27.1
 │  ├─ aws-sign2@0.7.0
 │  ├─ browser-sync-ui@2.26.14
 │  ├─ browser-sync@2.26.14
@@ -67,6 +68,7 @@
 │  ├─ long@4.0.0
 │  ├─ oauth-sign@0.9.0
 │  ├─ pause-stream@0.0.11
+│  ├─ playwright-core@1.27.1
 │  ├─ request@2.88.2
 │  ├─ rx@4.1.0
 │  ├─ rxjs@5.5.12
@@ -268,6 +270,7 @@
 │  ├─ @types/fast-json-stable-stringify@2.1.0
 │  ├─ @types/long@4.0.2
 │  ├─ @types/node@17.0.38
+│  ├─ @types/node@18.11.9
 │  ├─ @types/q@0.0.32
 │  ├─ @types/selenium-webdriver@3.0.17
 │  ├─ accepts@1.3.7

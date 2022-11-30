@@ -3,7 +3,7 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
-  .directive('boxEditor', function($timeout, util) {
+  .directive('boxEditor', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
@@ -131,7 +131,7 @@ angular.module('biggraph')
         // Updates the workspace with the parameter changes after allowing for a digest loop to
         // bubble them up from the directives.
         scope.onBlur = function() {
-          $timeout(onBlurNow);
+          util.enqueue(onBlurNow);
         };
 
         scope.getBox = function() {

@@ -1,4 +1,4 @@
-VERSION --use-copy-include-patterns 0.6
+VERSION --use-copy-include-patterns --try 0.6
 FROM mambaorg/micromamba:jammy
 RUN mkdir /home/mambauser/lk
 WORKDIR /home/mambauser/lk
@@ -25,10 +25,10 @@ sbt-deps:
 
 npm-deps:
   COPY web/package.json web/yarn.lock web/
-  RUN cd web; yarn --frozen-lockfile
+  RUN cd web && yarn --frozen-lockfile
   RUN mkdir dependency-licenses
-  RUN cd web; yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../dependency-licenses/javascript.md
-  RUN cd web; yarn licenses generate-disclaimer > ../dependency-licenses/javascript.txt
+  RUN cd web && yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../dependency-licenses/javascript.md
+  RUN cd web && yarn licenses generate-disclaimer > ../dependency-licenses/javascript.txt
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules
   SAVE IMAGE --cache-hint
@@ -36,13 +36,13 @@ npm-deps:
 grpc:
   COPY sphynx/go.mod sphynx/go.sum sphynx/proto_compile.sh sphynx/sphynx_common.sh sphynx/
   COPY sphynx/proto/*.proto sphynx/proto/
-  RUN mkdir app; sphynx/proto_compile.sh
+  RUN mkdir app && sphynx/proto_compile.sh
   SAVE ARTIFACT app/com/lynxanalytics/biggraph/graph_api/proto
 
 sphynx-build:
   FROM +grpc
   # Download dependencies.
-  RUN cd sphynx; go mod download
+  RUN cd sphynx && go mod download
   COPY sphynx sphynx
   RUN sphynx/build.sh
   SAVE ARTIFACT sphynx/.build/lynxkite-sphynx
@@ -55,7 +55,7 @@ web-build:
   COPY .eslintrc.yaml .
   COPY tools/gen_templates.py tools/
   COPY conf/kiterc_template conf/
-  RUN cd web; npx gulp
+  RUN cd web && npx gulp
   SAVE ARTIFACT web/dist
   SAVE IMAGE --cache-hint
 
@@ -130,15 +130,28 @@ frontend-test:
   RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
-  COPY tools/wait_for_port.sh tools/
-  COPY tools/with_lk.sh tools/
-  COPY tools/e2e_test.sh tools/
+  COPY web/package.json web/yarn.lock web/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
+  USER root
+  # Playwright's "install-deps" wants to run "su" which asks for a password.
+  # Instead we're already root here, so we want to just run the command.
+  RUN cd web && npx playwright install-deps chromium --dry-run 2>/dev/null | sed -n 's/su root/bash/p' | bash
+  USER mambauser
+  RUN cd web && npx playwright install
+  COPY tools/wait_for_port.sh tools/
+  COPY tools/with_lk.sh tools/
   COPY web web
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
-  RUN xvfb-run -a tools/with_lk.sh tools/e2e_test.sh
+  ENV CI true
+  RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
+  RUN cd web && zip -qr results.zip test-results
+  TRY
+    RUN [ ! -f web/failed ]
+  FINALLY
+    SAVE ARTIFACT web/results.zip AS LOCAL results.zip
+  END
 
 docker:
   FROM mambaorg/micromamba:jammy
@@ -146,7 +159,7 @@ docker:
   RUN ./conda-env.sh > env.yml && micromamba install -y -n base -f env.yml
   COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
-  CMD ["bash", "-c", ". kiterc_template; spark-submit lynxkite.jar"]
+  CMD ["bash", "-c", ". kiterc_template && spark-submit lynxkite.jar"]
   ENV KITE_ALLOW_PYTHON yes
   ENV KITE_ALLOW_R yes
   ENV KITE_META_DIR /meta

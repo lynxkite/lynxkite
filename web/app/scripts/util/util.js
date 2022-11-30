@@ -6,7 +6,7 @@ angular.module('biggraph').service('environment', function() {
   this.vegaConfig = { renderer: 'canvas' }; // Canvas looks better but SVG is more accessible for tests.
 });
 angular.module('biggraph')
-  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q, $route) {
+  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q, $route, $timeout) {
     const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // DataManager computation status codes. Keep these in sync
     // with EntityProgressManager.computeProgress
@@ -503,6 +503,22 @@ angular.module('biggraph')
         $route.current = lastRoute;
         un();
       });
+    };
+
+    let queue;
+    util.enqueue = function(fn) {
+      function runQueue() {
+        for (const fn of queue) {
+          fn();
+        }
+        queue = undefined;
+      }
+      if (!queue) {
+        queue = [fn];
+        $timeout(runQueue);
+      } else {
+        queue.push(fn);
+      }
     };
 
     function randomId() {
