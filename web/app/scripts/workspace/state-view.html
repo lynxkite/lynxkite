@@ -1,5 +1,5 @@
 <div ng-repeat-start="state in result.states track by $index"
-  id="state-toolbar state-toolbar-{{ $index }}" class="flat-toolbar" ng-if="state.stateId && interactive">
+  id="state-toolbar-{{ $index }}" class="state-toolbar flat-toolbar" ng-if="state.stateId && interactive">
   <button
     class="btn btn-default" id="save-as-snapshot-button"
     ng-click="root.snapshotNameOpen = true; snapshotName = getDefaultSnapshotName()"
