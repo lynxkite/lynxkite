@@ -146,7 +146,7 @@ frontend-test:
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
   RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
-  RUN cd web && zip -r results.zip playwright-report test-results
+  RUN cd web && zip -qr results.zip test-results
   TRY
     RUN [ ! -f web/failed ]
   FINALLY

@@ -7,7 +7,7 @@ angular.module('biggraph').directive(
   'workspaceDrawingBoard',
   function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-    $location, util, longPoll, pythonCodeGenerator, $timeout) {
+    $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -284,8 +284,8 @@ angular.module('biggraph').directive(
         }
 
         function afterUpdates(fn) {
-          // Timeout to let the delayed blur events go first. Then wait for the request.
-          $timeout(() => scope.workspace.loading.then(fn));
+          // Enqueue to let the delayed blur events go first. Then wait for the request.
+          util.enqueue(() => scope.workspace.loading.then(fn));
         }
 
         scope.onMouseUpOnBox = function(box, event) {
@@ -372,7 +372,7 @@ angular.module('biggraph').directive(
             // We need to wait for the request and wait for the DOM to update.
             // Otherwise we would be replacing the box to which the tutorial is bound.
             // That would cause the "End Tour" button to not work properly.
-            req && req.then(() => $timeout(() => tutorialBoxPlaced(placedBox)));
+            req && req.then(() => util.enqueue(() => tutorialBoxPlaced(placedBox)));
           }
           scope.movedBoxes = undefined;
           scope.pulledPlug = undefined;
@@ -897,7 +897,7 @@ angular.module('biggraph').directive(
             `,
           });
           // Let the category actually open before going to the new step.
-          setTimeout(function() { scope.tutorial.next(); });
+          util.enqueue(function() { scope.tutorial.next(); });
         };
 
         function tutorialDragStart() {
