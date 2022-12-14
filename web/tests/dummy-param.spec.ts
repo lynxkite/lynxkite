@@ -1,3 +1,4 @@
+// Tests "dummy" parameters, which are just labels in the parameter list.
 import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
