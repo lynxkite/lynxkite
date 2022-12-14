@@ -1,3 +1,4 @@
+// Tests operation parameter default values.
 import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
