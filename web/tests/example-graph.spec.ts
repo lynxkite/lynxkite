@@ -1,3 +1,4 @@
+// Tests the basic operation of a LynxKite workspace.
 import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
