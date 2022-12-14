@@ -616,9 +616,18 @@ export class TableState extends PopupBase {
 class Side {
   direction: string;
   side: Locator;
+  edgeCount: Locator;
+  vertexCount: Locator;
+  segmentCount: Locator;
+  attributes: Locator;
   constructor(popup, direction) {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
+
+    this.edgeCount = this.getValue('edge-count');
+    this.vertexCount = this.getValue('vertex-count');
+    this.segmentCount = this.getValue('segment-count');
+    this.attributes = this.side.locator('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]');
   }
 
   expectCurrentProjectIs(name) {
@@ -642,10 +651,7 @@ class Side {
   }
 
   getValue(id) {
-    const asStr = this.side.locator('value#' + id + ' span.value').getText();
-    return asStr.then(function (asS) {
-      return parseInt(asS);
-    });
+    return this.side.locator('value#' + id + ' span.value');
   }
 
   getWorkflowCodeEditor() {
@@ -670,18 +676,6 @@ class Side {
 
   getWorkflowSaveButton() {
     return this.side.element(by.id('save-workflow-button'));
-  }
-
-  edgeCount() {
-    return this.getValue('edge-count');
-  }
-
-  vertexCount() {
-    return this.getValue('vertex-count');
-  }
-
-  segmentCount() {
-    return this.getValue('segment-count');
   }
 
   openOperation(name) {
@@ -729,10 +723,6 @@ class Side {
 
   undoButton() {
     return this.side.element(by.id('undo-button'));
-  }
-
-  attributeCount() {
-    return this.side.locator('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]').count();
   }
 
   setSampleRadius(radius) {
