@@ -27,28 +27,23 @@ export class Entity {
     this.kind = kind;
     this.name = name;
     this.kindName = kind + '-' + name;
-    this.element = this.side.locator('#' + this.kindName);
-    this.menu = this.side.locator('#menu-' + this.kindName);
+    this.element = side.locator('#' + this.kindName);
+    this.menu = side.page().locator('#menu-' + this.kindName);
   }
 
   async popup() {
-    this.menu.isPresent().then(present => {
-      if (!present) {
-        this.element.click();
-      }
-    });
+    if (!(await this.menu.isVisible())) {
+      this.element.click();
+    }
+    expect(this.menu).toBeVisible();
     return this.menu;
   }
 
   async popoff() {
-    this.element.isPresent().then(present => {
-      if (present) {
-        this.element.evaluate('closeMenu()');
-      }
-      if (present) {
-        this.element.evaluate('closeMenu()');
-      }
-    });
+    if (await this.element.isVisible()) {
+      angularEval(this.element, 'closeMenu()');
+    }
+    expect(this.menu).not.toBeVisible();
   }
 
   async setFilter(filterValue) {
@@ -58,55 +53,40 @@ export class Entity {
     this.popoff();
   }
 
-  async getHistogramValues(precise) {
-    precise = precise || false;
-    const popup = this.popup();
+  async openHistogram(precise: boolean = false) {
+    const popup = await this.popup();
     const histogram = popup.locator('histogram');
     // The histogram will be automatically displayed if the attribute is already computed.
     // Click the menu item otherwise.
-    histogram.isDisplayed().then(displayed => {
-      if (!displayed) {
-        popup.locator('#show-histogram').click();
-      }
-    });
-    expect(histogram.isDisplayed()).toBe(true);
+    if (await popup.locator('#show-histogram').isVisible()) {
+      await popup.locator('#show-histogram').click();
+    }
+    await expect(histogram).toBeVisible();
     if (precise) {
-      popup.locator('#precise-histogram-calculation').click();
+      await popup.locator('#precise-histogram-calculation').click();
     }
-    function allFrom(td) {
-      const toolTip = td.getAttribute('drop-tooltip');
-      const style = td.locator('.bar').getAttribute('style');
-      return protractor.promise.all([toolTip, style]).then(function (results) {
-        const toolTipMatch = results[0].match(/^(.*): (\d+)$/);
-        const styleMatch = results[1].match(/^height: (\d+)%;$/);
-        return {
-          title: toolTipMatch[1],
-          size: parseInt(styleMatch[1]),
-          value: parseInt(toolTipMatch[2]),
-        };
-      });
-    }
-    const tds = histogram.locator('.bar-container');
-    const res = tds.then(function (tds) {
-      const res = [];
-      for (let i = 0; i < tds.length; i++) {
-        res.push(allFrom(tds[i]));
-      }
-      return protractor.promise.all(res);
-    });
+    // Wait for the histogram to be loaded.
+    await expect(histogram.locator('.loading')).toHaveCount(0);
+    return histogram;
+  }
 
-    const total = histogram.locator('#histogram-total');
-    protractor.promise.all([total.getText(), res]).then(function (results) {
-      const totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
-      const values = results[1];
-      const total = parseInt(totalValue.replace(/,/g, ''));
-      let sum = 0;
-      for (let j = 0; j < values.length; j++) {
-        sum += values[j].value;
-      }
-      expect(total).toEqual(sum);
-    });
-    this.popoff();
+  async getHistogramValues(precise: boolean = false) {
+    const histogram = await this.openHistogram(precise);
+    const tds = histogram.locator('.bar-container');
+    const tdCount = await tds.count();
+    let total = 0;
+    const res = [] as { title: string, value: number, size: number }[];
+    for (let i = 0; i < tdCount; ++i) {
+      const td = tds.nth(i);
+      const toolTip = await td.getAttribute('drop-tooltip');
+      const style = await td.locator('.bar').getAttribute('style');
+      const [, title, value] = toolTip!.match(/^(.*): (\d+)$/)!;
+      const [, size] = style!.match(/^height: (\d+)%;$/)!;
+      total += parseInt(value);
+      res.push({ title, value: parseInt(value), size: parseInt(size) });
+    }
+    await expect(histogram.locator('#histogram-total')).toContainText(total.toString());
+    await this.popoff();
     return res;
   }
 
