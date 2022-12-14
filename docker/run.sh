@@ -18,6 +18,7 @@ export KITE_EXTRA_JARS=${KITE_EXTRA_JARS:-/extra_jars/*}
 touch /prefix_definitions.txt
 export KITE_PREFIX_DEFINITIONS=/prefix_definitions.txt
 export KITE_ALLOW_PYTHON=${KITE_ALLOW_PYTHON:-yes}
+export KITE_ALLOW_R=${KITE_ALLOW_R:-yes}
 export KITE_ALLOW_NON_PREFIXED_PATHS=true
 
 exec spark-submit \
