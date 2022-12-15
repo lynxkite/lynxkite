@@ -187,7 +187,8 @@ export class Workspace {
     // Wait for the backend to save this box.
     await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
-      await this.connectBoxes(after, 'graph', id, 'graph');
+      await this.connectBoxes(
+        after, await this.getOnlyOutputPlugId(after), id, await this.getOnlyInputPlugId(id));
     }
     if (inputs) {
       for (let i = 0; i < inputs.length; ++i) {
@@ -276,7 +277,7 @@ export class Workspace {
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
     } else {
-      return box.locator('#inputs circle').first();
+      return box.locator('#inputs circle');
     }
   }
 
@@ -285,7 +286,7 @@ export class Workspace {
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
     } else {
-      return box.locator('#outputs circle').first();
+      return box.locator('#outputs circle');
     }
   }
 
@@ -335,6 +336,16 @@ export class Workspace {
   async expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
     const arrow = this.board.locator(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     await expect(arrow).toBeVisible();
+  }
+
+  async getOnlyInputPlugId(box) {
+    const p = this.getInputPlug(box);
+    return await p.locator('xpath=..').getAttribute('id');
+  }
+
+  async getOnlyOutputPlugId(box) {
+    const p = this.getOutputPlug(box);
+    return await p.locator('xpath=..').getAttribute('id');
   }
 
   async connectBoxes(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
@@ -400,9 +411,8 @@ export class BoxEditor extends PopupBase {
     return this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
   }
 
-  openGroup(group) {
-    this.element.element(by.xpath(`//a[contains(.,"${group}")]`)).click();
-    return this;
+  async openGroup(group) {
+    await this.element.getByText(group).click();
   }
 
   async populateOperation(params) {
@@ -415,6 +425,10 @@ export class BoxEditor extends PopupBase {
 
   getParameter(paramName, tag = 'input') {
     return this.element.locator(`div#param-${paramName} ${tag}`);
+  }
+
+  async loadImportedTable() {
+    await this.element.locator('#param-imported_table button').click();
   }
 
   expectCodeParameter(paramName, expectedValue) {
@@ -466,31 +480,33 @@ export class State extends PopupBase {
 }
 
 class PlotState extends PopupBase {
+  canvas: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
     this.canvas = popup.locator('#plot-div svg');
   }
 
-  barHeights() {
+  async barHeights() {
     const bars = this.canvas.locator('g.mark-rect.marks path');
-    // Data is fetched outside of Angular.
-    testLib.wait(protractor.ExpectedConditions.visibilityOf(bars.first()));
-    // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
-    return this.canvas
-      .locator('g.mark-rect.marks path')
-      .map(e => e.getAttribute('d').then(d => parseFloat(d.match(/v([0-9.]+)h/)[1])));
+    await expect(bars).not.toHaveCount(0);
+    const heights: number[] = [];
+    const count = await bars.count();
+    for (let i = 0; i < count; ++i) {
+      const path = await bars.nth(i).getAttribute('d')!;
+      // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
+      heights.push(parseFloat(path.match(/v([0-9.]+)h/)![1]));
+    }
+    return heights;
   }
 
-  expectBarHeightsToBe(expected) {
+  async expectBarHeightsToBe(expected) {
     // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
-    this.barHeights().then(heights => {
-      expect(heights.length).toEqual(expected.length);
-      for (let i = 0; i < heights.length; ++i) {
-        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * expected[i]);
-        expect(heights[i]).toBeLessThanOrEqual(1.01 * expected[i]);
-      }
-    });
+    const heights = await this.barHeights()
+    await expect(heights.length).toEqual(expected.length);
+    for (let i = 0; i < heights.length; ++i) {
+      expect(heights[i]).toBeCloseTo(expected[i]);
+    }
   }
 }
 
@@ -1041,38 +1057,6 @@ export class Splash {
     importCsvButton.click();
   }
 
-  async importLocalCSVFile(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
-    safeSendKeys(this.root.locator('import-wizard #table-name input'), tableName);
-    if (columnsToImport) {
-      safeSendKeys(this.root.locator('import-wizard #columns-to-import input'), columnsToImport);
-    }
-    this.root.locator('#datatype select option[value="csv"]').click();
-    if (csvColumns) {
-      safeSendKeys(this.root.locator('import-wizard #csv-column-names input'), csvColumns);
-    }
-    const csvFileParameter = $('#csv-filename file-parameter');
-    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
-    if (view) {
-      this.root.locator('import-wizard #as-view input').click();
-    }
-    if (limit) {
-      safeSendKeys(this.root.locator('import-wizard #limit input'), limit.toString());
-    }
-    this.clickAndWaitForCsvImport();
-  }
-
-  async importJDBC(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
-    safeSendKeys(this.root.locator('import-wizard #table-name input'), tableName);
-    this.root.locator('#datatype select option[value="jdbc"]').click();
-    safeSendKeys(this.root.locator('#jdbc-url input'), jdbcUrl);
-    safeSendKeys(this.root.locator('#jdbc-table input'), jdbcTable);
-    safeSendKeys(this.root.locator('#jdbc-key-column input'), jdbcKeyColumn);
-    if (view) {
-      this.root.locator('import-wizard #as-view input').click();
-    }
-    this.root.locator('#import-jdbc-button').click();
-  }
-
   async newDirectory(name) {
     await this.expectDirectoryNotListed(name);
     await expect(this.root.locator('#new-directory')).toHaveText(/New folder/);
@@ -1258,23 +1242,6 @@ function expectNotElement(e) {
   expect(e.isPresent()).toBe(false);
 }
 
-// Deletes all projects and directories.
-function discardAll() {
-  function discard(defer) {
-    const req = request.defaults({ jar: true });
-    req.post(browser.baseUrl + 'ajax/discardAllReallyIMeanIt', { json: { fake: 1 } }, (error, message) => {
-      if (error || message.statusCode >= 400) {
-        defer.reject(new Error(error));
-      } else {
-        defer.fulfill();
-      }
-    });
-  }
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  const defer = protractor.promise.defer();
-  return discard(defer);
-}
-
 function helpPopup(helpId) {
   return $('div[help-id="' + helpId + '"]');
 }
@@ -1289,10 +1256,7 @@ function getACEText(e) {
 }
 
 async function sendKeysToACE(e, text) {
-  const aceScroller = e.locator('div.ace_scroller');
   const aceInput = e.locator('textarea.ace_text-input');
-  // The double click on the text area focuses it properly.
-  await aceScroller.dblclick();
   await aceInput.fill(text);
 }
 
@@ -1306,27 +1270,12 @@ async function setParameter(e: Locator, value) {
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
-    testLib.uploadIntoFileParameter(e, value);
+    e.locator('input.form-control').fill(value);
   } else if (kind === 'tag-list') {
     const values = value.split(',');
     for (let i = 0; i < values.length; ++i) {
       e.locator('.dropdown-toggle').click();
       e.locator('.dropdown-menu #' + values[i]).click();
-    }
-  } else if (kind === 'table') {
-    // You can specify a CSV file to be uploaded, or the name of an existing table.
-    if (value.indexOf('.csv') !== -1) {
-      // CSV file.
-      e.element(by.id('import-new-table-button')).click();
-      const s = new Selector(e.element(by.id('import-wizard')));
-      s.importLocalCSVFile('test-table', value);
-    } else {
-      // Table name.
-      // Table name options look like 'name of table (date of table creation)'.
-      // The date is unpredictable, but we are going to match to the ' (' part
-      // to minimize the chance of mathcing an other table.
-      const optionLabelPattern = value + ' (';
-      e.element(by.cssContainingText('option', optionLabelPattern)).click();
     }
   } else if (kind === 'choice') {
     await e.selectOption({ label: value });
@@ -1436,25 +1385,6 @@ function setEnablePopups(enable) {
   browser.executeScript(
     'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
   );
-}
-
-function uploadIntoFileParameter(fileParameterElement, fileName) {
-  const input = fileParameterElement.element(by.id('file'));
-  // Need to unhide flowjs's secret file uploader.
-  browser.executeScript(function (input) {
-    input.style.visibility = 'visible';
-    input.style.height = '1px';
-    input.style.width = '1px';
-    input.style.opacity = 1;
-  }, input.getWebElement());
-  // Special parameter?
-  // Does not work with safeSendKeys.
-  input.sendKeys(fileName);
-}
-
-function loadImportedTable() {
-  const loadButton = $('#param-imported_table button');
-  loadButton.click();
 }
 
 function startDownloadWatch() {
