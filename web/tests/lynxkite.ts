@@ -166,10 +166,6 @@ export class Workspace {
     browser.actions().sendKeys(K.ESCAPE).perform();
   }
 
-  async duplicate() {
-    browser.actions().sendKeys(K.chord(CTRL, 'c')).sendKeys(K.chord(CTRL, 'v')).perform();
-  }
-
   async addBoxFromSelector(boxName) {
     browser
       .actions()
@@ -254,17 +250,13 @@ export class Workspace {
   }
 
   async addWorkspaceParameter(name, kind, defaultValue) {
-    const boxEditor = this.openBoxEditor('anchor');
-    boxEditor.element.locator('#add-parameter').click();
-    const keys = name.split('');
-    let prefix = '';
-    for (let k of keys) {
-      boxEditor.element.locator('#' + prefix + '-id').sendKeys(k);
-      prefix += k;
-    }
-    safeSendKeys(boxEditor.element.locator('#' + name + '-type'), kind);
-    safeSendKeys(boxEditor.element.locator('#' + name + '-default'), defaultValue);
-    boxEditor.close();
+    const boxEditor = await this.openBoxEditor('anchor');
+    await boxEditor.element.locator('#add-parameter').click();
+    await boxEditor.element.locator('#-id').fill(name);
+    await boxEditor.element.locator('#' + name + '-type').selectOption({ label: kind });
+    await this.page.pause();
+    await boxEditor.element.locator('#' + name + '-default').fill(defaultValue);
+    await boxEditor.close();
   }
 
   async boxExists(boxId) {
