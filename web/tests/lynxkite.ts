@@ -370,17 +370,8 @@ class PopupBase {
 
   async moveTo(x, y) {
     const head = this.popup.locator('div.popup-head');
-    browser
-      .actions()
-      .mouseDown(head)
-      // Absolute positioning of mouse. If we don't specify the first
-      // argument then this becomes a relative move. If the first argument
-      // is this.board, then protractor scrolls the element of this.board
-      // to the top of the page, even though scrolling is not enabled.
-      .mouseMove($('body'), { x: x, y: y })
-      .mouseUp(head)
-      .perform();
-    return this;
+    const workspace = this.popup.page().locator('#workspace-drawing-board');
+    await head.dragTo(workspace, { targetPosition: { x, y } });
   }
 
   head() {
@@ -425,14 +416,8 @@ export class BoxEditor extends PopupBase {
     this.head().click(); // Make sure the parameters are not focused.
   }
 
-  expectParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
-
-  expectSelectParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
+  getParameter(paramName, tag = 'input') {
+    return this.element.locator(`div#param-${paramName} ${tag}`);
   }
 
   expectCodeParameter(paramName, expectedValue) {
@@ -1349,20 +1334,7 @@ async function setParameter(e: Locator, value) {
   } else if (kind === 'choice') {
     await e.selectOption({ label: value });
   } else if (kind === 'multi-choice') {
-    // The mouse events through Protractor give different results than the real
-    // mouse clicks. Keyboard selection is not flexible enough.
-    // (https://bugs.chromium.org/p/chromium/issues/detail?id=125585)
-    // So we select the requested items by injecting this script.
-    browser.executeScript(
-      `
-            for (let opt of arguments[0].querySelectorAll('option')) {
-              opt.selected = arguments[1].includes(opt.label);
-            }
-            arguments[0].dispatchEvent(new Event('change'));
-            `,
-      e,
-      value
-    );
+    await e.selectOption(value.map(label => ({ label })));
   } else if (kind === 'multi-tag-list') {
     for (let i = 0; i < value.length; ++i) {
       await e.locator('.glyphicon-plus').click();
