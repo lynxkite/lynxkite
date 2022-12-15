@@ -161,10 +161,6 @@ export class Workspace {
     browser.actions().sendKeys(K.ESCAPE).perform();
   }
 
-  async duplicate() {
-    browser.actions().sendKeys(K.chord(CTRL, 'c')).sendKeys(K.chord(CTRL, 'v')).perform();
-  }
-
   async addBoxFromSelector(boxName) {
     browser
       .actions()
