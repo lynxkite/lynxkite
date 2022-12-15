@@ -23,10 +23,12 @@ object FEBucketers {
     val bucketer =
       if (typeOf[T] =:= typeOf[String]) {
         val op = ComputeTopValues[String](numBuckets + 1, 10000)
-        val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value.map(_._1)
-        val hasOther = topVals.size == numBuckets + 1
-        (if (hasOther) StringBucketer(topVals.takeRight(numBuckets - 1), true)
-         else StringBucketer(topVals, false))
+        val topVals = op(op.attribute, attr.runtimeSafeCast[String]).result.topValues.value
+        // Sort by decreasing counts, break ties alphabetically.
+        val sorted = topVals.sortBy(_._1).sortBy(-_._2).map(_._1)
+        val hasOther = sorted.size == numBuckets + 1
+        (if (hasOther) StringBucketer(sorted.take(numBuckets - 1), true)
+         else StringBucketer(sorted, false))
           .asInstanceOf[Bucketer[T]]
       } else if (typeOf[T] =:= typeOf[Double]) {
         val stats = {
