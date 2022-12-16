@@ -212,16 +212,16 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
     assert(res.vertexSets(0).mode == "bucketed")
     assert(res.vertexSets(0).vertices.size == 4)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(1.0, 0, 0),
-      FEVertex(2.0, 0, 1),
-      FEVertex(0.0, 1, 0),
-      FEVertex(1.0, 1, 1)))
+      FEVertex(1.0, 0, 1),
+      FEVertex(2.0, 0, 0),
+      FEVertex(0.0, 1, 1),
+      FEVertex(1.0, 1, 0)))
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0),
-      FEEdge(3, 0, 1.0),
+      FEEdge(2, 0, 1.0),
       FEEdge(1, 0, 1.0),
-      FEEdge(3, 1, 1.0)))
+      FEEdge(2, 1, 1.0)))
   }
 
   test("relative edge density") {
@@ -459,8 +459,8 @@ class GraphDrawingControllerTest extends AnyFunSuite with TestGraphOp {
       sampleSize = 50000)
     val res = Await.result(controller.getHistogram(user, req), duration.Duration.Inf)
     assert(res.labelType == "bucket")
-    assert(res.labels == Seq("Female", "Male"))
-    assert(res.sizes == Seq(1, 3))
+    assert(res.labels == Seq("Male", "Female"))
+    assert(res.sizes == Seq(3, 1))
   }
 
   test("histogram for edges") {
