@@ -395,10 +395,6 @@ export class BoxEditor extends PopupBase {
     this.element = popup.locator('box-editor');
   }
 
-  operationId() {
-    return this.head().getText();
-  }
-
   operationParameter(param) {
     return this.element.locator('operation-parameters #param-' + param + ' .operation-attribute-entry');
   }
@@ -427,13 +423,12 @@ export class BoxEditor extends PopupBase {
     return this.element.locator(`div#param-${paramName} ${tag}`);
   }
 
-  async loadImportedTable() {
-    await this.element.locator('#param-imported_table button').click();
+  getCodeParameter(paramName) {
+    return this.getParameter(paramName, '.ace_content');
   }
 
-  expectCodeParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName);
-    expect(testLib.getACEText(param)).toBe(expectedValue);
+  async loadImportedTable() {
+    await this.element.locator('#param-imported_table button').click();
   }
 
   getTableBrowser() {
@@ -1244,15 +1239,6 @@ function expectNotElement(e) {
 
 function helpPopup(helpId) {
   return $('div[help-id="' + helpId + '"]');
-}
-
-function getACEText(e) {
-  // getText() drops text in hidden elements. "innerText" to the rescue!
-  // https://github.com/angular/protractor/issues/1794
-  return e
-    .locator('.ace_content')
-    .getAttribute('innerText')
-    .then(text => text.trim());
 }
 
 async function sendKeysToACE(e, text) {
