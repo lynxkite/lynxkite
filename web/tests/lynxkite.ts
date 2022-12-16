@@ -429,6 +429,8 @@ export class BoxEditor extends PopupBase {
 
   async loadImportedTable() {
     await this.element.locator('#param-imported_table button').click();
+    // TODO: Must we wait? Would users wait?
+    await expect(this.element.locator('#param-imported_table button')).toContainText('Reimport');
   }
 
   getTableBrowser() {
@@ -519,14 +521,6 @@ export class TableState extends PopupBase {
     await this.expectRowsAre(rows);
   }
 
-  rowCount() {
-    return this.sample.locator('tbody tr').count();
-  }
-
-  async expectRowCountIs(number) {
-    await expect(this.rowCount()).toBe(number);
-  }
-
   columnNames() {
     return this.sample.locator('thead tr th span.column-name');
   }
@@ -549,8 +543,8 @@ export class TableState extends PopupBase {
 
   async expectRowsAre(rows) {
     const r = this.rows();
-    const n = await r.count();
-    for (let i = 0; i < n; ++i) {
+    await expect(r).toHaveCount(rows.length);
+    for (let i = 0; i < rows.length; ++i) {
       await expect(r.nth(i).locator('td')).toHaveText(rows[i]);
     }
   }
@@ -1204,16 +1198,6 @@ function randomPattern() {
 }
 
 let lastDownloadList;
-
-function getSelectAllKey() {
-  if (isMacOS()) {
-    // The command key is not supported properly, so we work around with Shift+HOME etc.
-    // and Delete. https://github.com/angular/protractor/issues/690
-    return K.END + K.PAGE_DOWN + K.chord(K.SHIFT, K.HOME) + K.chord(K.SHIFT, K.PAGE_UP) + K.DELETE;
-  } else {
-    return K.chord(K.CONTROL, 'a');
-  }
-}
 
 export async function menuClick(entry, action) {
   const menu = entry.locator('.dropdown');
