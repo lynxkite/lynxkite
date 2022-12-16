@@ -7,6 +7,12 @@ function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
+// Same number formatting as used by LynxKite.
+export function humanize(x) {
+  return numberFormat.format(x);
+}
+
 async function clickAll(elements: Locator, opts) {
   const n = await elements.count();
   // Clicking may remove them from the selector. So we start from the end.
@@ -32,28 +38,27 @@ export class Entity {
   }
 
   async popup() {
-    if (!(await this.menu.isVisible())) {
-      this.element.click();
+    if ((await this.menu.count()) == 0) {
+      await this.element.click();
     }
-    expect(this.menu).toBeVisible();
+    await expect(this.menu).toBeVisible();
     return this.menu;
   }
 
   async popoff() {
-    if (await this.element.isVisible()) {
-      angularEval(this.element, 'closeMenu()');
+    if ((await this.element.count()) > 0) {
+      await angularEval(this.element, 'closeMenu()');
     }
-    expect(this.menu).not.toBeVisible();
+    await expect(this.menu).not.toBeVisible();
   }
 
   async setFilter(filterValue) {
-    const filterBox = this.popup().locator('#filter');
-    filterBox.clear();
-    safeSendKeys(filterBox, filterValue).submit();
-    this.popoff();
+    const filterBox = (await this.popup()).locator('#filter');
+    await filterBox.fill(filterValue);
+    await this.popoff();
   }
 
-  async openHistogram(precise: boolean = false) {
+  async openHistogram(opts?: { precise?: boolean }) {
     const popup = await this.popup();
     const histogram = popup.locator('histogram');
     // The histogram will be automatically displayed if the attribute is already computed.
@@ -62,20 +67,20 @@ export class Entity {
       await popup.locator('#show-histogram').click();
     }
     await expect(histogram).toBeVisible();
-    if (precise) {
+    if (opts?.precise) {
       await popup.locator('#precise-histogram-calculation').click();
     }
     // Wait for the histogram to be loaded.
-    await expect(histogram.locator('.loading')).toHaveCount(0);
+    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
     return histogram;
   }
 
-  async getHistogramValues(precise: boolean = false) {
-    const histogram = await this.openHistogram(precise);
+  async getHistogramValues(opts?: { precise?: boolean }) {
+    const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
     const tdCount = await tds.count();
     let total = 0;
-    const res = [] as { title: string, value: number, size: number }[];
+    const res = [] as { title: string; value: number; size: number }[];
     for (let i = 0; i < tdCount; ++i) {
       const td = tds.nth(i);
       const toolTip = await td.getAttribute('drop-tooltip');
@@ -85,7 +90,7 @@ export class Entity {
       total += parseInt(value);
       res.push({ title, value: parseInt(value), size: parseInt(size) });
     }
-    await expect(histogram.locator('#histogram-total')).toContainText(total.toString());
+    await expect(histogram.locator('#histogram-total')).toContainText(humanize(total));
     await this.popoff();
     return res;
   }
@@ -426,7 +431,7 @@ export class BoxEditor extends PopupBase {
   }
 }
 
-class State extends PopupBase {
+export class State extends PopupBase {
   popup: Locator;
   left: Side;
   right: Side;
