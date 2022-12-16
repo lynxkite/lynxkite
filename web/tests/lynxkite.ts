@@ -526,7 +526,7 @@ export class TableState extends PopupBase {
   }
 
   async expectColumnNamesAre(columnNames) {
-    await expect(this.columnNames()).toHaveText(columnNames);
+    await expect(this.columnNames()).toHaveText(columnNames, { timeout: 30_000 });
   }
 
   columnTypes() {
