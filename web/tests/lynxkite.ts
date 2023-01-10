@@ -282,14 +282,6 @@ export class Workspace {
     boxEditor.close();
   }
 
-  async boxExists(boxId) {
-    return this.board.locator('.box#' + boxId).isPresent();
-  }
-
-  async boxPopupExists(boxId) {
-    return this.board.locator('.popup#' + boxId).isPresent();
-  }
-
   getBox(boxId) {
     return this.board.locator('.box#' + boxId);
   }
@@ -462,10 +454,6 @@ export class BoxEditor extends PopupBase {
 
   getTableBrowser() {
     return new TableBrowser(this.popup);
-  }
-
-  isPresent() {
-    return this.element.isPresent();
   }
 }
 
