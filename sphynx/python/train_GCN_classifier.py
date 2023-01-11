@@ -20,7 +20,7 @@ def get_feature_matrix(train_mask, batch_size, x, y_numpy, num_classes):
   in_train_batch[train_batch] = 1
   label_known = np.copy(train_mask)
   label_known[train_batch] = 0
-  tmp_label = np.nan_to_num(y_numpy, copy=True).astype(np.int)  # Not one-hot encoded input.
+  tmp_label = np.nan_to_num(y_numpy, copy=True).astype(int)  # Not one-hot encoded input.
   label_for_input = np.zeros((tmp_label.size, num_classes))
   label_for_input[label_known, tmp_label[label_known]] = 1
   label_for_input = torch.from_numpy(label_for_input).type(torch.float32)
