@@ -1226,8 +1226,9 @@ function helpPopup(helpId) {
 }
 
 async function sendKeysToACE(e, text) {
-  const aceInput = e.locator('textarea.ace_text-input');
-  await aceInput.fill(text);
+  await e.click();
+  await e.page().keyboard.press('Control+a');
+  await e.page().keyboard.type(text);
 }
 
 async function angularEval(e: Locator, expr: string) {

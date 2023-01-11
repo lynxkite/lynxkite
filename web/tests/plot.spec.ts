@@ -1,5 +1,5 @@
 // Tests the 'Custom plot' box.
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { Workspace } from './lynxkite';
 import { resolve } from 'path';
 
@@ -12,14 +12,15 @@ test.beforeAll(async ({ browser }) => {
     x: 100, y: 100,
   });
   const editor = await workspace.openBoxEditor('ib0');
-  await editor.openGroup('Advanced settings')
+  await editor.openGroup('Advanced settings');
   await editor.populateOperation({
     filename: resolve('tests/data/plot_data.csv'),
     columns: 'product,cnt',
   });
+
   await editor.loadImportedTable();
   await editor.close();
-  await workspace.main.evaluate(e => { $(e).injector().get('environment').vegaConfig.renderer = 'svg'; })
+  await workspace.main.evaluate(e => { $(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
 });
 
 test('a bar chart', async () => {
