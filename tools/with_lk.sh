@@ -33,6 +33,7 @@ export KITE_HTTPS_KEYSTORE=$REPO/test/localhost.self-signed.cert
 export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 export KITE_DOMAINS=sphynx,scala,spark
 export LYNXKITE_ADDRESS=${LYNXKITE_ADDRESS:-http://localhost:$KITE_HTTP_PORT}
+export KITE_ALLOW_NON_PREFIXED_PATHS=true
 
 # Start backend.
 cd $REPO

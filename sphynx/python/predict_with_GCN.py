@@ -22,7 +22,7 @@ if model.forget:
   label = np.nan_to_num(y_numpy, copy=True)
   label_known = ~np.isnan(y_numpy)
   if model.is_classification:
-    label = label.astype(np.int)
+    label = label.astype(int)
     label_for_input = np.zeros((label.size, model.num_classes))
     label_for_input[label_known, label[label_known]] = 1
     label_for_input = torch.from_numpy(label_for_input).type(torch.float32)

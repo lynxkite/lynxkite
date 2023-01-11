@@ -28,7 +28,7 @@ test.afterAll(async () => {
 });
 
 async function runSQL(query) {
-  await workspace.editBox('sql', { sql: query, persist: 'no' });
+  await workspace.editBox('sql', { sql: query });
   const state = await workspace.getStateView('sql', 'table');
   return state.table;
 }
