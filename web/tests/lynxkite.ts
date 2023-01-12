@@ -7,6 +7,12 @@ function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
+// Same number formatting as used by LynxKite.
+export function humanize(x) {
+  return numberFormat.format(x);
+}
+
 async function clickAll(elements: Locator, opts) {
   const n = await elements.count();
   // Clicking may remove them from the selector. So we start from the end.
@@ -27,86 +33,65 @@ export class Entity {
     this.kind = kind;
     this.name = name;
     this.kindName = kind + '-' + name;
-    this.element = this.side.locator('#' + this.kindName);
-    this.menu = this.side.locator('#menu-' + this.kindName);
+    this.element = side.locator('#' + this.kindName);
+    this.menu = side.page().locator('#menu-' + this.kindName);
   }
 
   async popup() {
-    this.menu.isPresent().then(present => {
-      if (!present) {
-        this.element.click();
-      }
-    });
+    if ((await this.menu.count()) == 0) {
+      await this.element.click();
+    }
+    await expect(this.menu).toBeVisible();
     return this.menu;
   }
 
   async popoff() {
-    this.element.isPresent().then(present => {
-      if (present) {
-        this.element.evaluate('closeMenu()');
-      }
-      if (present) {
-        this.element.evaluate('closeMenu()');
-      }
-    });
+    if ((await this.element.count()) > 0) {
+      await angularEval(this.element, 'closeMenu()');
+    }
+    await expect(this.menu).not.toBeVisible();
   }
 
   async setFilter(filterValue) {
-    const filterBox = this.popup().locator('#filter');
-    filterBox.clear();
-    safeSendKeys(filterBox, filterValue).submit();
-    this.popoff();
+    const filterBox = (await this.popup()).locator('#filter');
+    await filterBox.fill(filterValue);
+    await this.popoff();
   }
 
-  async getHistogramValues(precise) {
-    precise = precise || false;
-    const popup = this.popup();
+  async openHistogram(opts?: { precise?: boolean }) {
+    const popup = await this.popup();
     const histogram = popup.locator('histogram');
     // The histogram will be automatically displayed if the attribute is already computed.
     // Click the menu item otherwise.
-    histogram.isDisplayed().then(displayed => {
-      if (!displayed) {
-        popup.locator('#show-histogram').click();
-      }
-    });
-    expect(histogram.isDisplayed()).toBe(true);
-    if (precise) {
-      popup.locator('#precise-histogram-calculation').click();
+    if (await popup.locator('#show-histogram').isVisible()) {
+      await popup.locator('#show-histogram').click();
     }
-    function allFrom(td) {
-      const toolTip = td.getAttribute('drop-tooltip');
-      const style = td.locator('.bar').getAttribute('style');
-      return protractor.promise.all([toolTip, style]).then(function (results) {
-        const toolTipMatch = results[0].match(/^(.*): (\d+)$/);
-        const styleMatch = results[1].match(/^height: (\d+)%;$/);
-        return {
-          title: toolTipMatch[1],
-          size: parseInt(styleMatch[1]),
-          value: parseInt(toolTipMatch[2]),
-        };
-      });
+    await expect(histogram).toBeVisible();
+    if (opts?.precise) {
+      await popup.locator('#precise-histogram-calculation').click();
     }
-    const tds = histogram.locator('.bar-container');
-    const res = tds.then(function (tds) {
-      const res = [];
-      for (let i = 0; i < tds.length; i++) {
-        res.push(allFrom(tds[i]));
-      }
-      return protractor.promise.all(res);
-    });
+    // Wait for the histogram to be loaded.
+    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
+    return histogram;
+  }
 
-    const total = histogram.locator('#histogram-total');
-    protractor.promise.all([total.getText(), res]).then(function (results) {
-      const totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
-      const values = results[1];
-      const total = parseInt(totalValue.replace(/,/g, ''));
-      let sum = 0;
-      for (let j = 0; j < values.length; j++) {
-        sum += values[j].value;
-      }
-      expect(total).toEqual(sum);
-    });
-    this.popoff();
+  async getHistogramValues(opts?: { precise?: boolean }) {
+    const histogram = await this.openHistogram(opts);
+    const tds = histogram.locator('.bar-container');
+    const tdCount = await tds.count();
+    let total = 0;
+    const res = [] as { title: string; value: number; size: number }[];
+    for (let i = 0; i < tdCount; ++i) {
+      const td = tds.nth(i);
+      const toolTip = await td.getAttribute('drop-tooltip');
+      const style = await td.locator('.bar').getAttribute('style');
+      const [, title, value] = toolTip!.match(/^(.*): (\d+)$/)!;
+      const [, size] = style!.match(/^height: (\d+)%;$/)!;
+      total += parseInt(value);
+      res.push({ title, value: parseInt(value), size: parseInt(size) });
+    }
+    await expect(histogram.locator('#histogram-total')).toContainText(humanize(total));
+    await this.popoff();
     return res;
   }
 
@@ -181,10 +166,6 @@ export class Workspace {
     browser.actions().sendKeys(K.ESCAPE).perform();
   }
 
-  async duplicate() {
-    browser.actions().sendKeys(K.chord(CTRL, 'c')).sendKeys(K.chord(CTRL, 'v')).perform();
-  }
-
   async addBoxFromSelector(boxName) {
     browser
       .actions()
@@ -206,7 +187,8 @@ export class Workspace {
     // Wait for the backend to save this box.
     await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
-      await this.connectBoxes(after, 'graph', id, 'graph');
+      await this.connectBoxes(
+        after, await this.getOnlyOutputPlugId(after), id, await this.getOnlyInputPlugId(id));
     }
     if (inputs) {
       for (let i = 0; i < inputs.length; ++i) {
@@ -269,17 +251,13 @@ export class Workspace {
   }
 
   async addWorkspaceParameter(name, kind, defaultValue) {
-    const boxEditor = this.openBoxEditor('anchor');
-    boxEditor.element.locator('#add-parameter').click();
-    const keys = name.split('');
-    let prefix = '';
-    for (let k of keys) {
-      boxEditor.element.locator('#' + prefix + '-id').sendKeys(k);
-      prefix += k;
-    }
-    safeSendKeys(boxEditor.element.locator('#' + name + '-type'), kind);
-    safeSendKeys(boxEditor.element.locator('#' + name + '-default'), defaultValue);
-    boxEditor.close();
+    const boxEditor = await this.openBoxEditor('anchor');
+    await boxEditor.element.locator('#add-parameter').click();
+    await boxEditor.element.locator('#-id').fill(name);
+    await boxEditor.element.locator('#' + name + '-type').selectOption({ label: kind });
+    await this.page.pause();
+    await boxEditor.element.locator('#' + name + '-default').fill(defaultValue);
+    await boxEditor.close();
   }
 
   getBox(boxId) {
@@ -291,7 +269,7 @@ export class Workspace {
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
     } else {
-      return box.locator('#inputs circle').first();
+      return box.locator('#inputs circle');
     }
   }
 
@@ -300,7 +278,7 @@ export class Workspace {
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
     } else {
-      return box.locator('#outputs circle').first();
+      return box.locator('#outputs circle');
     }
   }
 
@@ -352,6 +330,16 @@ export class Workspace {
     await expect(arrow).toBeVisible();
   }
 
+  async getOnlyInputPlugId(box) {
+    const p = this.getInputPlug(box);
+    return await p.locator('xpath=..').getAttribute('id');
+  }
+
+  async getOnlyOutputPlugId(box) {
+    const p = this.getOutputPlug(box);
+    return await p.locator('xpath=..').getAttribute('id');
+  }
+
   async connectBoxes(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
     const src = this.getOutputPlug(srcBoxId, srcPlugId);
     const dst = this.getInputPlug(dstBoxId, dstPlugId);
@@ -382,17 +370,8 @@ class PopupBase {
 
   async moveTo(x, y) {
     const head = this.popup.locator('div.popup-head');
-    browser
-      .actions()
-      .mouseDown(head)
-      // Absolute positioning of mouse. If we don't specify the first
-      // argument then this becomes a relative move. If the first argument
-      // is this.board, then protractor scrolls the element of this.board
-      // to the top of the page, even though scrolling is not enabled.
-      .mouseMove($('body'), { x: x, y: y })
-      .mouseUp(head)
-      .perform();
-    return this;
+    const workspace = this.popup.page().locator('#workspace-drawing-board');
+    await head.dragTo(workspace, { targetPosition: { x, y } });
   }
 
   head() {
@@ -408,10 +387,6 @@ export class BoxEditor extends PopupBase {
     this.element = popup.locator('box-editor');
   }
 
-  operationId() {
-    return this.head().getText();
-  }
-
   operationParameter(param) {
     return this.element.locator('operation-parameters #param-' + param + ' .operation-attribute-entry');
   }
@@ -424,9 +399,8 @@ export class BoxEditor extends PopupBase {
     return this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
   }
 
-  openGroup(group) {
-    this.element.element(by.xpath(`//a[contains(.,"${group}")]`)).click();
-    return this;
+  async openGroup(group) {
+    await this.element.getByText(group).click();
   }
 
   async populateOperation(params) {
@@ -437,19 +411,18 @@ export class BoxEditor extends PopupBase {
     this.head().click(); // Make sure the parameters are not focused.
   }
 
-  expectParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
+  getParameter(paramName, tag = 'input') {
+    return this.element.locator(`div#param-${paramName} ${tag}`);
   }
 
-  expectSelectParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
+  getCodeParameter(paramName) {
+    return this.getParameter(paramName, '.ace_content');
   }
 
-  expectCodeParameter(paramName, expectedValue) {
-    const param = this.element.locator('div#param-' + paramName);
-    expect(testLib.getACEText(param)).toBe(expectedValue);
+  async loadImportedTable() {
+    await this.element.locator('#param-imported_table button').click();
+    // TODO: Must we wait? Would users wait?
+    await expect(this.element.locator('#param-imported_table button')).toContainText('Reimport');
   }
 
   getTableBrowser() {
@@ -457,7 +430,7 @@ export class BoxEditor extends PopupBase {
   }
 }
 
-class State extends PopupBase {
+export class State extends PopupBase {
   popup: Locator;
   left: Side;
   right: Side;
@@ -492,31 +465,33 @@ class State extends PopupBase {
 }
 
 class PlotState extends PopupBase {
+  canvas: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
     this.canvas = popup.locator('#plot-div svg');
   }
 
-  barHeights() {
+  async barHeights() {
     const bars = this.canvas.locator('g.mark-rect.marks path');
-    // Data is fetched outside of Angular.
-    testLib.wait(protractor.ExpectedConditions.visibilityOf(bars.first()));
-    // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
-    return this.canvas
-      .locator('g.mark-rect.marks path')
-      .map(e => e.getAttribute('d').then(d => parseFloat(d.match(/v([0-9.]+)h/)[1])));
+    await expect(bars).not.toHaveCount(0);
+    const heights: number[] = [];
+    const count = await bars.count();
+    for (let i = 0; i < count; ++i) {
+      const path = await bars.nth(i).getAttribute('d')!;
+      // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
+      heights.push(parseFloat(path.match(/v([0-9.]+)h/)![1]));
+    }
+    return heights;
   }
 
-  expectBarHeightsToBe(expected) {
+  async expectBarHeightsToBe(expected) {
     // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
-    this.barHeights().then(heights => {
-      expect(heights.length).toEqual(expected.length);
-      for (let i = 0; i < heights.length; ++i) {
-        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * expected[i]);
-        expect(heights[i]).toBeLessThanOrEqual(1.01 * expected[i]);
-      }
-    });
+    const heights = await this.barHeights()
+    await expect(heights.length).toEqual(expected.length);
+    for (let i = 0; i < heights.length; ++i) {
+      expect(heights[i]).toBeCloseTo(expected[i]);
+    }
   }
 }
 
@@ -534,20 +509,12 @@ export class TableState extends PopupBase {
     await this.expectRowsAre(rows);
   }
 
-  rowCount() {
-    return this.sample.locator('tbody tr').count();
-  }
-
-  async expectRowCountIs(number) {
-    await expect(this.rowCount()).toBe(number);
-  }
-
   columnNames() {
     return this.sample.locator('thead tr th span.column-name');
   }
 
   async expectColumnNamesAre(columnNames) {
-    await expect(this.columnNames()).toHaveText(columnNames);
+    await expect(this.columnNames()).toHaveText(columnNames, { timeout: 30_000 });
   }
 
   columnTypes() {
@@ -564,8 +531,8 @@ export class TableState extends PopupBase {
 
   async expectRowsAre(rows) {
     const r = this.rows();
-    const n = await r.count();
-    for (let i = 0; i < n; ++i) {
+    await expect(r).toHaveCount(rows.length);
+    for (let i = 0; i < rows.length; ++i) {
       await expect(r.nth(i).locator('td')).toHaveText(rows[i]);
     }
   }
@@ -1067,38 +1034,6 @@ export class Splash {
     importCsvButton.click();
   }
 
-  async importLocalCSVFile(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
-    safeSendKeys(this.root.locator('import-wizard #table-name input'), tableName);
-    if (columnsToImport) {
-      safeSendKeys(this.root.locator('import-wizard #columns-to-import input'), columnsToImport);
-    }
-    this.root.locator('#datatype select option[value="csv"]').click();
-    if (csvColumns) {
-      safeSendKeys(this.root.locator('import-wizard #csv-column-names input'), csvColumns);
-    }
-    const csvFileParameter = $('#csv-filename file-parameter');
-    testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
-    if (view) {
-      this.root.locator('import-wizard #as-view input').click();
-    }
-    if (limit) {
-      safeSendKeys(this.root.locator('import-wizard #limit input'), limit.toString());
-    }
-    this.clickAndWaitForCsvImport();
-  }
-
-  async importJDBC(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
-    safeSendKeys(this.root.locator('import-wizard #table-name input'), tableName);
-    this.root.locator('#datatype select option[value="jdbc"]').click();
-    safeSendKeys(this.root.locator('#jdbc-url input'), jdbcUrl);
-    safeSendKeys(this.root.locator('#jdbc-table input'), jdbcTable);
-    safeSendKeys(this.root.locator('#jdbc-key-column input'), jdbcKeyColumn);
-    if (view) {
-      this.root.locator('import-wizard #as-view input').click();
-    }
-    this.root.locator('#import-jdbc-button').click();
-  }
-
   async newDirectory(name) {
     await this.expectDirectoryNotListed(name);
     await expect(this.root.locator('#new-directory')).toHaveText(/New folder/);
@@ -1252,16 +1187,6 @@ function randomPattern() {
 
 let lastDownloadList;
 
-function getSelectAllKey() {
-  if (isMacOS()) {
-    // The command key is not supported properly, so we work around with Shift+HOME etc.
-    // and Delete. https://github.com/angular/protractor/issues/690
-    return K.END + K.PAGE_DOWN + K.chord(K.SHIFT, K.HOME) + K.chord(K.SHIFT, K.PAGE_UP) + K.DELETE;
-  } else {
-    return K.chord(K.CONTROL, 'a');
-  }
-}
-
 export async function menuClick(entry, action) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
@@ -1284,42 +1209,14 @@ function expectNotElement(e) {
   expect(e.isPresent()).toBe(false);
 }
 
-// Deletes all projects and directories.
-function discardAll() {
-  function discard(defer) {
-    const req = request.defaults({ jar: true });
-    req.post(browser.baseUrl + 'ajax/discardAllReallyIMeanIt', { json: { fake: 1 } }, (error, message) => {
-      if (error || message.statusCode >= 400) {
-        defer.reject(new Error(error));
-      } else {
-        defer.fulfill();
-      }
-    });
-  }
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  const defer = protractor.promise.defer();
-  return discard(defer);
-}
-
 function helpPopup(helpId) {
   return $('div[help-id="' + helpId + '"]');
 }
 
-function getACEText(e) {
-  // getText() drops text in hidden elements. "innerText" to the rescue!
-  // https://github.com/angular/protractor/issues/1794
-  return e
-    .locator('.ace_content')
-    .getAttribute('innerText')
-    .then(text => text.trim());
-}
-
 async function sendKeysToACE(e, text) {
-  const aceScroller = e.locator('div.ace_scroller');
-  const aceInput = e.locator('textarea.ace_text-input');
-  // The double click on the text area focuses it properly.
-  await aceScroller.dblclick();
-  await aceInput.fill(text);
+  await e.click();
+  await e.page().keyboard.press('Control+a');
+  await e.page().keyboard.type(text);
 }
 
 async function angularEval(e: Locator, expr: string) {
@@ -1332,45 +1229,17 @@ async function setParameter(e: Locator, value) {
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
-    testLib.uploadIntoFileParameter(e, value);
+    e.locator('input.form-control').fill(value);
   } else if (kind === 'tag-list') {
     const values = value.split(',');
     for (let i = 0; i < values.length; ++i) {
       e.locator('.dropdown-toggle').click();
       e.locator('.dropdown-menu #' + values[i]).click();
     }
-  } else if (kind === 'table') {
-    // You can specify a CSV file to be uploaded, or the name of an existing table.
-    if (value.indexOf('.csv') !== -1) {
-      // CSV file.
-      e.element(by.id('import-new-table-button')).click();
-      const s = new Selector(e.element(by.id('import-wizard')));
-      s.importLocalCSVFile('test-table', value);
-    } else {
-      // Table name.
-      // Table name options look like 'name of table (date of table creation)'.
-      // The date is unpredictable, but we are going to match to the ' (' part
-      // to minimize the chance of mathcing an other table.
-      const optionLabelPattern = value + ' (';
-      e.element(by.cssContainingText('option', optionLabelPattern)).click();
-    }
   } else if (kind === 'choice') {
     await e.selectOption({ label: value });
   } else if (kind === 'multi-choice') {
-    // The mouse events through Protractor give different results than the real
-    // mouse clicks. Keyboard selection is not flexible enough.
-    // (https://bugs.chromium.org/p/chromium/issues/detail?id=125585)
-    // So we select the requested items by injecting this script.
-    browser.executeScript(
-      `
-            for (let opt of arguments[0].querySelectorAll('option')) {
-              opt.selected = arguments[1].includes(opt.label);
-            }
-            arguments[0].dispatchEvent(new Event('change'));
-            `,
-      e,
-      value
-    );
+    await e.selectOption(value.map(label => ({ label })));
   } else if (kind === 'multi-tag-list') {
     for (let i = 0; i < value.length; ++i) {
       await e.locator('.glyphicon-plus').click();
@@ -1475,25 +1344,6 @@ function setEnablePopups(enable) {
   browser.executeScript(
     'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
   );
-}
-
-function uploadIntoFileParameter(fileParameterElement, fileName) {
-  const input = fileParameterElement.element(by.id('file'));
-  // Need to unhide flowjs's secret file uploader.
-  browser.executeScript(function (input) {
-    input.style.visibility = 'visible';
-    input.style.height = '1px';
-    input.style.width = '1px';
-    input.style.opacity = 1;
-  }, input.getWebElement());
-  // Special parameter?
-  // Does not work with safeSendKeys.
-  input.sendKeys(fileName);
-}
-
-function loadImportedTable() {
-  const loadButton = $('#param-imported_table button');
-  loadButton.click();
 }
 
 function startDownloadWatch() {

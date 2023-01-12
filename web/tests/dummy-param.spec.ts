@@ -1,3 +1,4 @@
+// Tests "dummy" parameters, which are just labels in the parameter list.
 import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
@@ -16,10 +17,10 @@ test('rename vertex attributes', async () => {
         after: 'eg0',
         params: { change_age: 'new_age' }
     });
-    await workspace.clickBox('rename-vertex-attrs');
-    await expect(workspace.page.locator('#text-title')).toHaveText('The new names for each attribute:');
-    await expect(workspace.page.locator('#text-title #help-button')).toBeVisible();
-    await workspace.clickBox('rename-vertex-attrs');
+    const editor = await workspace.openBoxEditor('rename-vertex-attrs');
+    await expect(editor.element.locator('#text-title')).toHaveText('The new names for each attribute:');
+    await expect(editor.element.locator('#text-title #help-button')).toBeVisible();
+    await editor.close();
 });
 
 test('rename edge attributes', async () => {
@@ -31,7 +32,7 @@ test('rename edge attributes', async () => {
         after: 'eg0',
         params: { change_weight: 'new_weight' }
     });
-    await workspace.clickBox('rename-edge-attrs');
-    await expect(workspace.page.locator('#text-title')).toHaveText('The new names for each attribute:');
-    await expect(workspace.page.locator('#text-title #help-button')).toBeVisible();
+    const editor = await workspace.openBoxEditor('rename-edge-attrs');
+    await expect(editor.element.locator('#text-title')).toHaveText('The new names for each attribute:');
+    await expect(editor.element.locator('#text-title #help-button')).toBeVisible();
 });
