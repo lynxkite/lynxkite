@@ -865,11 +865,30 @@ class LynxKite:
       return self.uploadParquetNow(f.read())
 
   def from_spark(self, df):
-    """Converts a Spark DataFrame to a LynxKite table."""
-    filename = 'DATA$/python-imports/' + datetime.datetime.now().strftime('%Y-%d-%m_%H%M%S.%f')
-    resolved = self.get_prefixed_path(filename).resolved
-    df.write.parquet(resolved)
-    return self.importParquetNow(filename=filename)
+    '''
+    Converts a Spark DataFrame to a LynxKite table.
+    Costs almost nothing if LynxKite was started in the same SparkSession.
+    '''
+    if self._lynxkite:
+      # The DataFrame is in the same JVM! We can use it directly.
+      guid = self._lynxkite.importDataFrame(df)
+      print('guid:', guid)
+      return SingleOutputAtomicBox(
+          self.box_catalog(), self, 'importParquet', inputs={}, parameters={
+              'filename': 'from PySpark',
+              'imported_table': guid,
+              'last_settings': json.dumps({
+                  'filename': 'from PySpark',
+                  'sql': '', 'eager': 'yes', 'imported_columns': '', 'schema': '', 'limit': '',
+              }),
+          },
+          output_name='table')
+    else:
+      # Pass it through a Parquet file.
+      filename = 'DATA$/python-imports/' + datetime.datetime.now().strftime('%Y-%d-%m_%H%M%S.%f')
+      resolved = self.get_prefixed_path(filename).resolved
+      df.write.parquet(resolved)
+      return self.importParquetNow(filename=filename)
 
   def set_executors(self, count):
     return self._send('/remote/setExecutors', {'count': count})
@@ -926,6 +945,9 @@ class ManagedLynxKite:
 
   def stop(self):
     self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.stop()
+
+  def importDataFrame(self, df):
+    return self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.importDataFrame(df._jdf)
 
 
 class State:
