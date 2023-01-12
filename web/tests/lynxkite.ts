@@ -232,7 +232,7 @@ export class Workspace {
   }
 
   async expectNumSelectedBoxes(n) {
-    await expect(this.root.locator('g.box.selected')).toHaveCount(n);
+    await expect(this.page.locator('g.box.selected')).toHaveCount(n);
   }
 
   async expectNumBoxes(n) {
