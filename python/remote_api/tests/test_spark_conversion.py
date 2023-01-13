@@ -19,10 +19,10 @@ class TestSparkConversion(unittest.TestCase):
         Row(a='Bob', b='Eve', weight=4),
         Row(a='Eve', b='Adam', weight=5),
     ])
-    g = lk.from_spark(people_df).useTableAsVertices()
+    g = lk.from_spark(people_df, write_parquet=True).useTableAsVertices()
     g = lk.useTableAsEdges(
         g,
-        lk.from_spark(relationships_df),
+        lk.from_spark(relationships_df, write_parquet=True),
         attr='name', src='a', dst='b')
     self.assertEqual(3, g.sql('select count(*) from vertices').df().values[0][0])
 
