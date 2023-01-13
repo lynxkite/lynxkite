@@ -216,21 +216,6 @@ export class Workspace {
     }
   }
 
-  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
-  // its id, and then move it to 2 other points on the screen.
-  async selectArea(startBoxId, point1, point2) {
-    let box = this.getBox(startBoxId);
-    browser
-      .actions()
-      .mouseMove(box, point1)
-      .keyDown(K.SHIFT)
-      .mouseDown()
-      .mouseMove(point2)
-      .mouseUp()
-      .keyUp(K.SHIFT)
-      .perform();
-  }
-
   async expectNumSelectedBoxes(n) {
     await expect(this.page.locator('g.box.selected')).toHaveCount(n);
   }
