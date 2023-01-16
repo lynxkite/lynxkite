@@ -101,6 +101,17 @@ object LynxKite {
     implicit val mm = env.metaGraphManager
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val t = graph_operations.ImportDataFrame.run(df)
-    return t.gUID.toString
+    t.gUID.toString
+  }
+
+  def getDataFrame(guid: String): org.apache.spark.sql.DataFrame = synchronized {
+    import graph_api.MetaGraphManager.StringAsUUID
+    assert(playServer != null, "LynxKite is not running! Call start() first.")
+    val env = BigGraphProductionEnvironment
+    implicit val mm = env.metaGraphManager
+    val e = mm.table(guid.asUUID)
+    env.dataManager.ensure(e, env.sparkDomain)
+    env.dataManager.waitAllFutures()
+    env.sparkDomain.getData(e).asInstanceOf[graph_api.TableData].df
   }
 }
