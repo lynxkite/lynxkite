@@ -340,6 +340,8 @@ class LynxKite:
     spark = SparkSession.builder.config('spark.jars', 'lynxkite-X.X.X.jar').getOrCreate()
   '''
 
+  _managed = None
+
   def __init__(self, username: Optional[str] = None, password: Optional[str] = None, address: Optional[str] = None,
                certfile: Optional[str] = None, oauth_token: Optional[str] = None, signed_token: Optional[str] = None,
                box_catalog: Optional[BoxCatalog] = None, spark: Optional['SparkSession'] = None) -> None:
@@ -368,12 +370,17 @@ class LynxKite:
         'exportGraphToNeo4j']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
+    self._lynxkite = None
     if spark:
       assert address is None, \
           'Do not specify connection parameters when this class is responsible for starting LynxKite.'
-      self._lynxkite = ManagedLynxKite(spark)
+      if LynxKite._managed:
+        assert LynxKite._managed.spark == spark, 'LynxKite is already running in another Spark session.'
+      else:
+        LynxKite._managed = ManagedLynxKite(spark)
+        LynxKite._managed.start()
+      self._lynxkite = LynxKite._managed
       self._address = self._lynxkite.address
-      self._lynxkite.start()
 
   def home(self) -> str:
     return f'Users/{self.username()}/'
@@ -864,12 +871,31 @@ class LynxKite:
       df.to_parquet(f.name, **kwargs)
       return self.uploadParquetNow(f.read())
 
-  def from_spark(self, df):
-    """Converts a Spark DataFrame to a LynxKite table."""
-    filename = 'DATA$/python-imports/' + datetime.datetime.now().strftime('%Y-%d-%m_%H%M%S.%f')
-    resolved = self.get_prefixed_path(filename).resolved
-    df.write.parquet(resolved)
-    return self.importParquetNow(filename=filename)
+  def from_spark(self, df, *, write_parquet=False):
+    '''
+    Converts a Spark DataFrame to a LynxKite table.
+
+    Set "write_parquet" to pass in the DataFrame by writing it as a Parquet file.
+    This is slower, but works even if LynxKite and PySpark are in separate Spark sessions.
+    '''
+    if write_parquet:
+      filename = 'DATA$/python-imports/' + datetime.datetime.now().strftime('%Y-%d-%m_%H%M%S.%f')
+      resolved = self.get_prefixed_path(filename).resolved
+      df.write.parquet(resolved)
+      return self.importParquetNow(filename=filename)
+    else:
+      assert self._lynxkite, 'Run LynxKite in the same Spark session, or use "write_parquet".'
+      guid = self._lynxkite.importDataFrame(df)
+      return SingleOutputAtomicBox(
+          self.box_catalog(), self, 'importParquet', inputs={}, parameters={
+              'filename': 'from PySpark',
+              'imported_table': guid,
+              'last_settings': json.dumps({
+                  'filename': 'from PySpark',
+                  'sql': '', 'eager': 'yes', 'imported_columns': '', 'schema': '', 'limit': '',
+              }),
+          },
+          output_name='table')
 
   def set_executors(self, count):
     return self._send('/remote/setExecutors', {'count': count})
@@ -926,6 +952,9 @@ class ManagedLynxKite:
 
   def stop(self):
     self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.stop()
+
+  def importDataFrame(self, df):
+    return self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.importDataFrame(df._jdf)
 
 
 class State:
