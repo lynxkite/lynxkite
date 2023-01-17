@@ -127,7 +127,6 @@ python-test:
 
 frontend-test:
   USER root
-  RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
   COPY web/package.json web/yarn.lock web/
