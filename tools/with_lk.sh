@@ -39,7 +39,7 @@ export KITE_ALLOW_NON_PREFIXED_PATHS=true
 cd $REPO
 spark-submit \
   --conf "spark.driver.extraJavaOptions=-Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST -Dhttps.keyStore=$KITE_HTTPS_KEYSTORE -Dhttps.keyStorePassword=$KITE_HTTPS_KEYSTORE_PWD" \
-  target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar &
+  target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar > /dev/null 2>&1 &
 KITE_PID=$!
 cd -
 function kill_backend {
