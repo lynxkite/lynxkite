@@ -13,7 +13,7 @@ const config: PlaywrightTestConfig = {
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: process.env.CI ? [['github'], ['html']] : 'list',
+  reporter: process.env.CI ? [['github'], ['html']] : 'html',
   use: {
     actionTimeout: 0,
     baseURL: process.env.LYNXKITE_ADDRESS || 'http://localhost:2200',
