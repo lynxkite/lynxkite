@@ -13,5 +13,6 @@ test('fork workspace', async function ({ browser }) {
     await workspace.page.locator('#save-workspace-as-input #ok').click();
     await workspace.page.waitForURL('**/#/workspace/automated-tests/subdirectory/test-example-fork');
     await workspace.close();
+    await workspace.page.waitForURL('**/#/dir/automated-tests/subdirectory');
     await splash.expectWorkspaceListed('test-example-fork');
 });
