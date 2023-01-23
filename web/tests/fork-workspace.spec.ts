@@ -6,7 +6,7 @@ let splash: Splash;
 let workspace: Workspace;
 
 test('fork workspace', async function ({ browser }) {
-    splash = await Splash.open(browser);
+    splash = await Splash.open(await browser.newPage());
     workspace = await splash.openNewWorkspace('test-example');
     await workspace.page.pause();
     await workspace.page.locator('#save-workspace-as-starter-button').click();

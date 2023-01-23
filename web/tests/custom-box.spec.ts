@@ -5,7 +5,7 @@ import { Workspace } from './lynxkite';
 let workspace: Workspace;
 
 test.skip('create custom box', async function ({ browser }) {
-    workspace = await Workspace.empty(browser);
+    workspace = await Workspace.empty(await browser.newPage());
     await workspace.addWorkspaceParameter('prname', 'text', 'default_pr');
     await workspace.addBox({ id: 'in', name: 'Input', x: 100, y: 0, params: { name: 'in' } });
     await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 400, y: 0 });
