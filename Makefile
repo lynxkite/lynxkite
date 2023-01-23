@@ -17,7 +17,7 @@ clean:
 .build/sphynx-done: $(shell $(find) sphynx)
 	sphynx/build.sh && touch $@
 .build/backend-done: \
-	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
+	$(shell $(find) app project lib conf resources sphynx) \
 	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-done
 	sbt scalafmt assembly < /dev/null && touch $@
 .build/backend-test-spark-passed: $(shell $(find) app test project conf) build.sbt \

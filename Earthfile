@@ -64,7 +64,7 @@ app-build:
   COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY conf conf
   COPY app app
-  COPY built-ins built-ins
+  COPY resources resources
   RUN sbt compile
   SAVE IMAGE --cache-hint
 

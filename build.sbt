@@ -189,10 +189,9 @@ def dirContents(baseDir: File, dirs: String*) = {
   }
 }
 
-Compile / resourceDirectory := baseDirectory.value / "conf"
+Compile / resourceDirectory := baseDirectory.value / "resources"
+Compile / unmanagedResourceDirectories += baseDirectory.value / "conf"
 Compile / unmanagedResourceDirectories += baseDirectory.value / "sphynx/.build/zip"
-
-mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 
 Assets / sourceDirectory := new File("web/dist")
 
