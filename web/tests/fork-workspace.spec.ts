@@ -8,11 +8,10 @@ let workspace: Workspace;
 test('fork workspace', async function ({ browser }) {
     splash = await Splash.open(browser);
     workspace = await splash.openNewWorkspace('test-example');
-    await workspace.page.pause();
     await workspace.page.locator('#save-workspace-as-starter-button').click();
-    await workspace.page.locator('#save-workspace-as-input').locator('input').fill('test-example-fork');
-    await workspace.page.locator('#save-workspace-as-input').locator('#ok').click();
-    await workspace.page.waitForURL('**/#/workspace/test-example-fork');
+    await workspace.page.locator('#save-workspace-as-input input').fill('automated-tests/subdirectory/test-example-fork');
+    await workspace.page.locator('#save-workspace-as-input #ok').click();
+    await workspace.page.waitForURL('**/#/workspace/automated-tests/subdirectory/test-example-fork');
     await workspace.close();
     await splash.expectWorkspaceListed('test-example-fork');
 });
