@@ -210,26 +210,8 @@ angular.module('biggraph').directive('entrySelector',
         scope.objectClick = function(event, o) {
           if (scope.isWorkspace(o)) { scope.workspaceClick(event, o); }
           if (scope.isWizard(o)) { scope.wizardClick(event, o); }
-          if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
           if (scope.isSnapshot(o)) { scope.snapshotClick(event, o); }
           return;
-        };
-
-        scope.tableClick = function(event, t) {
-          // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
-          if (event.originalEvent.alreadyHandled) { return; }
-          // Ignore clicks on errored tables.
-          if (t.error) { return; }
-          const tableNameParts = t.name.split('/');
-          const tableName = tableNameParts[tableNameParts.length - 1];
-          scope.showSQL = true;
-          $timeout(
-            function() {
-              $anchorScroll('global-sql-box');
-              scope.$broadcast('fill sql-box by clicking on table or view', tableName);
-            },
-            0,
-            false); // Do not invoke apply as we don't change the scope.
         };
 
         scope.wizardClick = function(event, p) {
@@ -280,12 +262,6 @@ angular.module('biggraph').directive('entrySelector',
         };
         scope.isWizard = function(object) {
           return object.objectType.includes('wizard');
-        };
-        scope.isTable = function(object) {
-          return object.objectType === 'table';
-        };
-        scope.isView = function(object) {
-          return object.objectType === 'view';
         };
         scope.isSnapshot = function(object) {
           return object.objectType === 'snapshot';
