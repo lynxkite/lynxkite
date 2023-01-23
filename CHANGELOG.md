@@ -6,6 +6,20 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- DataFrames can now be directly passed between PySpark and LynxKite, if LynxKite is running in a
+  user-provided SparkSession. [#327](https://github.com/lynxkite/lynxkite/pull/327), [#328](https://github.com/lynxkite/lynxkite/pull/328) Example usage:
+
+  ```python
+  import lynx.kite
+  # Start LynxKite in this SparkSession.
+  lk = lynx.kite.LynxKite(spark=spark)
+  # Turn a LynxKite table into a Spark DataFrame.
+  df = lk.createExampleGraph().sql('select name, age from vertices').spark()
+  df = df.filter('age < 30')
+  # Turn a Spark DataFrame into a LynxKite table.
+  g = lk.from_spark(df).useTableAsVertices()
+  ```
+
 ### 5.2.0
 
 - The Python API can now be used without a running LynxKite instance. If you pass in a SparkSession

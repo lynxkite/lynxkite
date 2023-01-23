@@ -38,3 +38,10 @@ class TestStartStop(unittest.TestCase):
         'name': ['Adam', 'Eve'],
         'age': [23, 34],
     }))
+
+  def test_can_get_dataframe(self):
+    t = lk.createExampleGraph().sql('select name from vertices order by name')
+    df = t.spark()
+    pd.testing.assert_frame_equal(df.toPandas(), pd.DataFrame({
+        'name': ['Adam', 'Bob', 'Eve', 'Isolated Joe'],
+    }))
