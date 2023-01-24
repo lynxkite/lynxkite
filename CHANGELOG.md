@@ -19,6 +19,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   # Turn a Spark DataFrame into a LynxKite table.
   g = lk.from_spark(df).useTableAsVertices()
   ```
+- Removed the SQL interface in the directory browser. ([#332](https://github.com/lynxkite/lynxkite/pull/332))
+  It only worked with snapshots and the results could only be saved to a few file formats.
+  Loading the data in a workspace is a much more powerful alternative.
 
 ### 5.2.0
 
