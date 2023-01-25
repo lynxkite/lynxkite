@@ -97,7 +97,9 @@ object LynxKite {
   def importDataFrame(df: org.apache.spark.sql.DataFrame): String = synchronized {
     assert(playServer != null, "LynxKite is not running! Call start() first.")
     val env = BigGraphProductionEnvironment
-    assert(df.sparkSession == env.sparkSession, "The DataFrame is not from the SparkSession that was used to start LynxKite.")
+    assert(
+      df.sparkSession == env.sparkSession,
+      "The DataFrame is not from the SparkSession that was used to start LynxKite.")
     implicit val mm = env.metaGraphManager
     import com.lynxanalytics.biggraph.graph_api.Scripting._
     val t = graph_operations.ImportDataFrame.run(df)

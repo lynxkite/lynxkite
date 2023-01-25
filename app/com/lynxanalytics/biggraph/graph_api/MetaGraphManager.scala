@@ -5,6 +5,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.nio.file.{FileSystems, Files, Path}
 import java.util.UUID
 
 import play.api.libs.json
@@ -293,9 +294,9 @@ object BuiltIns {
       builtInsDir.writeACL = ""
     }
     log.info("Loading built-ins from disk...")
-    val builtInsLocalDir = getBuiltInsLocalDirectory()
+    val builtIns = loadBuiltIns(getBuiltInsResourceDirectory())
     import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
-    for ((file, json) <- loadBuiltIns(builtInsLocalDir)) {
+    for ((file, json) <- builtIns) {
       try {
         val entry = DirectoryEntry.fromName("built-ins/" + file.capitalize.replace("-", " "))
         val newWS = json.as[Workspace]
@@ -309,26 +310,29 @@ object BuiltIns {
         case e: Throwable => throw new Exception(s"Failed to create built-in for file $file.", e)
       }
     }
-    log.info("Built-ins loaded from disk.")
+    log.info(s"${builtIns.size} built-ins loaded from disk.")
   }
 
-  private def getBuiltInsLocalDirectory(): String = {
-    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
-    // In the backend-tests we don't have the KITE_STAGE_DIR environment variable set.
-    stageDir.getOrElse(".")
+  private def getBuiltInsResourceDirectory(): Path = {
+    val uri = getClass.getClassLoader.getResource("built-ins").toURI
+    if (uri.getScheme == "jar") {
+      val fs = FileSystems.newFileSystem(uri, new java.util.HashMap[String, String])
+      fs.getPath("built-ins")
+    } else {
+      java.nio.file.Paths.get(uri)
+    }
   }
 
-  private def loadBuiltIns(repo: String): Iterable[(String, json.JsValue)] = {
-    val opdir = new File(repo, "built-ins")
-    if (opdir.exists) {
-      val files = opdir.listFiles.sortBy(_.getName)
-      files.map { f =>
-        try {
-          f.getName() -> Yaml.parseJsValue(FileUtils.readFileToString(f, "utf8"))
-        } catch {
-          case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
-        }
+  private def loadBuiltIns(dir: Path): Iterable[(String, json.JsValue)] = {
+    import scala.collection.JavaConverters._
+    val files = Files.newDirectoryStream(dir).iterator.asScala.toSeq.sortBy(_.toString)
+    files.map { f =>
+      try {
+        val b = Files.readAllBytes(f)
+        f.getFileName.toString -> Yaml.parseJsValue(new String(b, "utf8"))
+      } catch {
+        case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
       }
-    } else Iterable()
+    }
   }
 }

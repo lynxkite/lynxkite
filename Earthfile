@@ -64,7 +64,7 @@ app-build:
   COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY conf conf
   COPY app app
-  COPY built-ins built-ins
+  COPY resources resources
   RUN sbt compile
   SAVE IMAGE --cache-hint
 
@@ -127,7 +127,6 @@ python-test:
 
 frontend-test:
   USER root
-  RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
   COPY web/package.json web/yarn.lock web/

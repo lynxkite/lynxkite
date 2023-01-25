@@ -52,7 +52,7 @@
 │  ├─ @firebase/webchannel-wrapper@0.5.0
 │  ├─ @grpc/grpc-js@1.3.2
 │  ├─ @grpc/proto-loader@0.5.6
-│  ├─ @playwright/test@1.27.1
+│  ├─ @playwright/test@1.28.1
 │  ├─ aws-sign2@0.7.0
 │  ├─ browser-sync-ui@2.26.14
 │  ├─ browser-sync@2.26.14
@@ -68,7 +68,7 @@
 │  ├─ long@4.0.0
 │  ├─ oauth-sign@0.9.0
 │  ├─ pause-stream@0.0.11
-│  ├─ playwright-core@1.27.1
+│  ├─ playwright-core@1.28.1
 │  ├─ request@2.88.2
 │  ├─ rx@4.1.0
 │  ├─ rxjs@5.5.12
@@ -418,7 +418,7 @@
 │  ├─ debug@4.1.1
 │  ├─ debug@4.3.1
 │  ├─ decamelize@1.2.0
-│  ├─ decode-uri-component@0.2.0
+│  ├─ decode-uri-component@0.2.2
 │  ├─ deep-is@0.1.3
 │  ├─ default-compare@1.0.0
 │  ├─ default-resolution@2.0.0
@@ -482,7 +482,7 @@
 │  ├─ fancy-log@1.3.3
 │  ├─ fast-deep-equal@3.1.3
 │  ├─ fast-glob@3.2.5
-│  ├─ fast-json-patch@3.0.0-1
+│  ├─ fast-json-patch@3.1.1
 │  ├─ fast-json-stable-stringify@2.1.0
 │  ├─ fast-levenshtein@1.1.4
 │  ├─ fast-levenshtein@2.0.6
