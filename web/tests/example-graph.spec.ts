@@ -27,7 +27,7 @@ test('workspace with reverse edges has the proper vertex count', async () => {
   const state = await workspace.openStateView('reversed-edges', 'graph');
   await expect(state.left.vertexCount).toHaveText('4');
   await expect(state.left.edgeCount).toHaveText('8');
-  await expect(state.left.attributes).toHaveCount(8);
+  await expect(state.left.vertexAttributes).toHaveCount(6);
   await state.close();
 });
 
