@@ -16,6 +16,7 @@ spark.sparkContext.setLogLevel('OFF')
 lk = LynxKite(spark=spark)
 print('LynxKite is running at', lk._address)
 os.environ['LYNXKITE_ADDRESS'] = lk._address
+del os.environ['PYSPARK_GATEWAY_PORT']  # We're not sharing this SparkSession.
 
 # Run the specified command.
 subprocess.run(sys.argv[1:], check=True)
