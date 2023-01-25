@@ -130,7 +130,7 @@ angular.module('biggraph').filter('decimal', function() {
 angular.module('biggraph').filter('id', function() {
   return function(x) {
     if (x === undefined) { return x; }
-    return x.toLowerCase().replace(/ /g, '-');
+    return x.toLowerCase().replace(/[ !?,.]/g, '-');
   };
 });
 
