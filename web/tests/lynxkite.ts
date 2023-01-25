@@ -380,8 +380,8 @@ export class BoxEditor extends PopupBase {
     return this.element.locator('operation-parameters #param-' + param + ' .parametric-switch');
   }
 
-  removeParameter(param) {
-    return this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
+  async removeParameter(param) {
+    await this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
   }
 
   async openGroup(group) {
