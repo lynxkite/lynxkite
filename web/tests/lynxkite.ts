@@ -136,8 +136,8 @@ export class Workspace {
   }
 
   // Starts with a brand new workspace.
-  static async empty(browser: Browser): Promise<Workspace> {
-    const splash = await Splash.open(browser);
+  static async empty(page: Page): Promise<Workspace> {
+    const splash = await Splash.open(page);
     const workspace = await splash.openNewWorkspace('test-example');
     await workspace.expectCurrentWorkspaceIs('test-example');
     return workspace;
@@ -921,8 +921,7 @@ export class Splash {
   }
 
   // Opens the LynxKite directory browser in the root.
-  static async open(browser: Browser): Promise<Splash> {
-    const page = await browser.newPage();
+  static async open(page: Page): Promise<Splash> {
     await page.goto('/#/');
     await page.evaluate(() => {
       window.sessionStorage.clear();

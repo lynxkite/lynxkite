@@ -5,7 +5,7 @@ import { resolve } from 'path';
 
 let workspace: Workspace;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({
     id: 'ib0',
     name: 'Import CSV',

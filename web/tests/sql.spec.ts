@@ -5,7 +5,7 @@ import { Workspace, TableState } from './lynxkite';
 let workspace: Workspace;
 let table: TableState;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({
     id: 'sql', name: 'SQL1', x: 100, y: 200
