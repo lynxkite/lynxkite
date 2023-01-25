@@ -559,7 +559,9 @@ class Side {
   edgeCount: Locator;
   vertexCount: Locator;
   segmentCount: Locator;
-  attributes: Locator;
+  vertexAttributes: Locator;
+  edgeAttributes: Locator;
+  graphAttributes: Locator;
   constructor(popup, direction) {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
@@ -567,19 +569,9 @@ class Side {
     this.edgeCount = this.getValue('edge-count');
     this.vertexCount = this.getValue('vertex-count');
     this.segmentCount = this.getValue('segment-count');
-    this.attributes = this.side.locator('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]');
-  }
-
-  expectCurrentProjectIs(name) {
-    expect(this.side.locator('.project-name').getText()).toBe(name);
-  }
-
-  close() {
-    this.side.locator('#close-project').click();
-  }
-
-  evaluate(expr) {
-    return this.side.evaluate(expr);
+    this.vertexAttributes = this.side.locator('entity[kind="vertex-attribute"]');
+    this.edgeAttributes = this.side.locator('entity[kind="edge-attribute"]');
+    this.graphAttributes = this.side.locator('entity[kind="scalar"]');
   }
 
   applyFilters() {
