@@ -19,8 +19,8 @@ test.beforeAll(async ({ browser }) => {
 
 test('copy paste boxes', async function () {
     await workspace.selectBoxes(['pr1', 'ex0']);
-    await workspace.page.keyboard.press(`Control+KeyC`);
-    await workspace.page.keyboard.press(`Control+KeyV`);
+    await workspace.page.keyboard.press(`Meta+KeyC`);
+    await workspace.page.keyboard.press(`Meta+KeyV`);
     const ex0Editor = await workspace.openBoxEditor('create-example-graph_1');
     await ex0Editor.close();
     const pr1Editor = await workspace.openBoxEditor('compute-pagerank_1');
