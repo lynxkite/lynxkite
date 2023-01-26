@@ -244,11 +244,11 @@ export class Workspace {
     await boxEditor.close();
   }
 
-  getBox(boxId) {
+  getBox(boxId: string) {
     return this.board.locator('.box#' + boxId);
   }
 
-  getInputPlug(boxId, plugId) {
+  getInputPlug(boxId: string, plugId?: string) {
     let box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
@@ -257,7 +257,7 @@ export class Workspace {
     }
   }
 
-  getOutputPlug(boxId, plugId?) {
+  getOutputPlug(boxId: string, plugId?: string) {
     let box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
@@ -266,25 +266,25 @@ export class Workspace {
     }
   }
 
-  async toggleStateView(boxId, plugId) {
-    this.getOutputPlug(boxId, plugId).click();
+  async toggleStateView(boxId: string, plugId: string) {
+    await this.getOutputPlug(boxId, plugId).click();
   }
 
-  async clickBox(boxId, opts = {}) {
+  async clickBox(boxId: string, opts = {}) {
     await this.getBox(boxId).locator('#click-target').click(opts);
   }
 
-  async selectBox(boxId) {
+  async selectBox(boxId: string) {
     const box = await this.openBoxEditor(boxId);
     await box.close();
   }
 
-  getBoxEditor(boxId) {
+  getBoxEditor(boxId: string) {
     const popup = this.board.locator('.popup#' + boxId);
     return new BoxEditor(popup);
   }
 
-  async openBoxEditor(boxId) {
+  async openBoxEditor(boxId: string) {
     await this.clickBox(boxId);
     const editor = this.getBoxEditor(boxId);
     await expect(editor.popup).toBeVisible();
