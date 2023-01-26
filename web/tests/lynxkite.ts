@@ -30,7 +30,7 @@ export class Entity {
   kindName: string;
   element: Locator;
   menu: Locator;
-  constructor(side, kind, name) {
+  constructor(side: Locator, kind: string, name: string) {
     this.side = side;
     this.kind = kind;
     this.name = name;
@@ -97,31 +97,28 @@ export class Entity {
     return res;
   }
 
-  async visualizeAs(visualization) {
-    this.popup()
-      .locator('#visualize-as-' + visualization)
-      .click();
-    testLib.expectElement(this.visualizedAs(visualization));
-    this.popoff();
+  async visualizeAs(visualization: string) {
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
+    await expect(this.visualizedAs(visualization)).toBeVisible();
+    await this.popoff();
   }
 
-  async visualizedAs(visualization) {
+  visualizedAs(visualization: string) {
     return this.element.locator('#visualized-as-' + visualization);
   }
 
   async doNotVisualizeAs(visualization) {
-    this.popup()
-      .locator('#visualize-as-' + visualization)
-      .click();
-    testLib.expectNotElement(this.visualizedAs(visualization));
-    this.popoff();
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
+    await expect(this.visualizedAs(visualization)).not.toBeVisible();
+    await this.popoff();
   }
 
-  async clickMenu(id) {
-    this.popup()
-      .locator('#' + id)
-      .click();
-    this.popoff();
+  async clickMenu(id: string) {
+    const p = await this.popup()
+    await p.locator('#' + id).click();
+    await this.popoff();
   }
 }
 
@@ -564,6 +561,7 @@ class Side {
   vertexAttributes: Locator;
   edgeAttributes: Locator;
   graphAttributes: Locator;
+  projectName: Locator;
   constructor(popup, direction) {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
@@ -574,71 +572,19 @@ class Side {
     this.vertexAttributes = this.side.locator('entity[kind="vertex-attribute"]');
     this.edgeAttributes = this.side.locator('entity[kind="edge-attribute"]');
     this.graphAttributes = this.side.locator('entity[kind="scalar"]');
+    this.projectName = this.side.locator('.project-name');
   }
 
-  applyFilters() {
-    return this.side.element(by.id('apply-filters-button')).click();
+  async close() {
+    await this.side.locator('#close-project').click();
   }
 
-  getCategorySelector(categoryTitle) {
-    return this.toolbox.locator('div.category[tooltip="' + categoryTitle + '"]');
-  }
-
-  getValue(id) {
+  getValue(id: string) {
     return this.side.locator('value#' + id + ' span.value');
   }
 
-  getWorkflowCodeEditor() {
-    return this.side.element(by.id('workflow-code-editor'));
-  }
-
-  getPythonWorkflowCodeEditor() {
-    return this.side.element(by.id('python-code-editor'));
-  }
-
-  getWorkflowDescriptionEditor() {
-    return this.side.element(by.id('workflow-description'));
-  }
-
-  getWorkflowNameEditor() {
-    return this.side.element(by.id('workflow-name'));
-  }
-
-  clickWorkflowEditButton() {
-    return this.toolbox.element(by.id('edit-operation-button')).click();
-  }
-
-  getWorkflowSaveButton() {
-    return this.side.element(by.id('save-workflow-button'));
-  }
-
-  openOperation(name) {
-    this.toolbox.element(by.id('operation-search')).click();
-    safeSendKeys(this.toolbox.element(by.id('filter')), name, K.ENTER);
-  }
-
-  closeOperation() {
-    this.toolbox.locator('div.category.active').click();
-  }
-
-  openWorkflowSavingDialog() {
-    this.side.element(by.id('save-as-workflow-button')).click();
-  }
-
-  closeWorkflowSavingDialog() {
-    this.side.element(by.id('close-workflow-button')).click();
-  }
-
-  openSegmentation(segmentationName) {
-    this.segmentation(segmentationName).clickMenu('open-segmentation');
-  }
-
-  redoButton() {
-    return this.side.element(by.id('redo-button'));
-  }
-
-  populateOperationInput(parameterId, param) {
-    safeSelectAndSendKeys(this.toolbox.element(by.id(parameterId)), param);
+  async openSegmentation(segmentationName: string) {
+    await this.segmentation(segmentationName).clickMenu('open-segmentation');
   }
 
   expectOperationScalar(name, text) {
@@ -685,53 +631,16 @@ class Side {
     this.side.element(by.id('save-as-button')).click();
   }
 
-  sqlEditor() {
-    return this.side.element(by.id('sql-editor'));
-  }
-
-  setSql(sql) {
-    testLib.sendKeysToACE(this.sqlEditor(), sql);
-  }
-
-  // If sql is left undefined then we run whatever is already in the query box.
-  runSql(sql) {
-    if (sql !== undefined) {
-      this.setSql(sql);
-    }
-    this.side.element(by.id('run-sql-button')).click();
-  }
-
-  expectSqlResult(names, types, rows) {
-    const res = this.side.locator('#sql-result');
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  startSqlSaving() {
-    this.side.element(by.id('save-results-opener')).click();
-  }
-
-  clickSqlSort(colId) {
-    const res = this.side.locator('#sql-result');
-    const header = res.locator('thead tr th').get(colId);
-    header.click();
-  }
-
-  executeSqlSaving() {
-    this.side.element(by.id('save-results')).click();
-  }
-
-  vertexAttribute(name) {
+  vertexAttribute(name: string) {
     return new Entity(this.side, 'vertex-attribute', name);
   }
-  edgeAttribute(name) {
+  edgeAttribute(name: string) {
     return new Entity(this.side, 'edge-attribute', name);
   }
-  scalar(name) {
+  scalar(name: string) {
     return new Entity(this.side, 'scalar', name);
   }
-  segmentation(name) {
+  segmentation(name: string) {
     return new Entity(this.side, 'segmentation', name);
   }
 }
@@ -1156,7 +1065,7 @@ async function setParameter(e: Locator, value) {
       e.locator('.dropdown-toggle').click();
       e.locator('.dropdown-menu #' + values[i]).click();
     }
-  } else if (kind === 'choice') {
+  } else if (kind === 'choice' || kind === 'segmentation') {
     await e.selectOption({ label: value });
   } else if (kind === 'multi-choice') {
     await e.selectOption(value.map(label => ({ label })));
