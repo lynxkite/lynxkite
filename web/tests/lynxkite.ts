@@ -338,10 +338,10 @@ export class Workspace {
     return this.selector.element(by.css('operation-tree')).element(by.css('operation-tree-node[id="root"]'));
   }
 
-  async saveWorkspaceAs(newName) {
-    this.main.locator('#save-workspace-as-starter-button').click();
-    safeSelectAndSendKeys(this.main.locator('#save-workspace-as-input input'), newName);
-    this.main.locator('#save-workspace-as-input #ok').click();
+  async saveWorkspaceAs(newName: string) {
+    await this.main.locator('#save-workspace-as-starter-button').click();
+    await this.main.locator('#save-workspace-as-input input').fill(ROOT + '/' + newName);
+    await this.main.locator('#save-workspace-as-input #ok').click();
   }
 }
 
@@ -849,23 +849,15 @@ export class Splash {
     return splash;
   }
 
-  workspace(name) {
+  workspace(name: string) {
     return this.root.locator('#workspace-' + toId(name));
   }
 
-  directory(name) {
+  directory(name: string) {
     return this.root.locator('#directory-' + toId(name));
   }
 
-  table(name) {
-    return this.root.locator('#table-' + toId(name));
-  }
-
-  view(name) {
-    return this.root.locator('#view-' + toId(name));
-  }
-
-  snapshot(name) {
+  snapshot(name: string) {
     return this.root.locator('#snapshot-' + toId(name));
   }
 
@@ -881,27 +873,7 @@ export class Splash {
     await expect(this.root.locator('#current-directory > span.lead')).toHaveText(path);
   }
 
-  async expectNumTables(n) {
-    return expect($$('.table-entry')).toHaveCount(n);
-  }
-
-  async expectNumViews(n) {
-    return expect($$('.view-entry')).toHaveCount(n);
-  }
-
-  async computeTable(name) {
-    this.table(name).element(by.css('.value-retry')).click();
-  }
-
-  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
-  async expectTableWithNumRows(name, n) {
-    const table = this.table(name);
-    // Look up the number of rows shown inside a <value>
-    // element.
-    return expect(table.locator('value').getText()).toEqual(n.toString());
-  }
-
-  async openNewWorkspace(name) {
+  async openNewWorkspace(name: string) {
     await this.expectWorkspaceNotListed(name);
     await this.root.locator('#new-workspace').click();
     await this.root.locator('#new-workspace-name').fill(name);
@@ -912,18 +884,15 @@ export class Splash {
     return ws;
   }
 
-  async startTableImport() {
-    element(by.id('import-table')).click();
+  async openWorkspace(name: string) {
+    await this.workspace(name).click();
+    const ws = new Workspace(this.page);
+    // This expect() waits for the workspace to load.
+    await expect(ws.getBox('anchor')).toBeVisible();
+    return ws;
   }
 
-  async clickAndWaitForCsvImport() {
-    const importCsvButton = element(by.id('import-csv-button'));
-    // Wait for the upload to finish.
-    testLib.waitUntilClickable(importCsvButton);
-    importCsvButton.click();
-  }
-
-  async newDirectory(name) {
+  async newDirectory(name: string) {
     await this.expectDirectoryNotListed(name);
     await expect(this.root.locator('#new-directory')).toHaveText(/New folder/);
     await this.root.locator('#new-directory').click();
@@ -933,12 +902,7 @@ export class Splash {
     await this.expectCurrentDirectory(new RegExp('\\b' + name + '/\\s*$'));
   }
 
-  async openProject(name) {
-    this.project(name).click();
-    this.hideFloatingElements();
-  }
-
-  async openDirectory(name) {
+  async openDirectory(name: string) {
     await this.directory(name).click();
   }
 
@@ -965,27 +929,19 @@ export class Splash {
     await menuClick(this.directory(name), 'discard');
   }
 
-  async editTable(name) {
-    testLib.menuClick(this.table(name), 'edit-import');
-  }
-
-  async editView(name) {
-    testLib.menuClick(this.view(name), 'edit-import');
-  }
-
-  async expectWorkspaceListed(name) {
+  async expectWorkspaceListed(name: string) {
     await expect(this.workspace(name)).toBeVisible();
   }
 
-  async expectWorkspaceNotListed(name) {
+  async expectWorkspaceNotListed(name: string) {
     await expect(this.workspace(name)).not.toBeVisible();
   }
 
-  async expectDirectoryListed(name) {
+  async expectDirectoryListed(name: string) {
     await expect(this.directory(name)).toBeVisible();
   }
 
-  async expectDirectoryNotListed(name) {
+  async expectDirectoryNotListed(name: string) {
     await expect(this.directory(name)).not.toBeVisible();
   }
 
@@ -1122,25 +1078,15 @@ function sortHistogramValues(values) {
   });
 }
 
-// A promise of the list of error messages.
-function errors() {
-  return $$('.top-alert-message').map(function (e) {
-    return e.getText();
-  });
+export function errors(page: Page) {
+  return page.locator('.top-alert-message');
 }
 
-// Expects that there will be a single error message and returns it as a promise.
-function error() {
-  return errors().then(function (errors) {
-    expect(errors.length).toBe(1);
-    return errors[0];
-  });
-}
-
-function closeErrors() {
-  $$('.top-alert').each(function (e) {
-    e.element(by.id('close-alert-button')).click();
-  });
+export async function closeErrors(page: Page) {
+  const n = await errors(page).count();
+  for (let i = 0; i < n; ++i) {
+    await page.locator('#close-alert-button').first().click();
+  }
 }
 
 // Wait indefinitely.

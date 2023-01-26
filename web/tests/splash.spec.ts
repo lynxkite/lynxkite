@@ -1,13 +1,10 @@
 // Tests the "splash" page where you can put workspaces in directories.
 import { test, expect, Browser } from '@playwright/test';
-import { Splash } from './lynxkite';
+import { Splash, errors, closeErrors, ROOT } from './lynxkite';
 
 let splash: Splash;
 test.beforeAll(async ({ browser }) => {
   splash = await Splash.open(await browser.newPage());
-});
-test.afterAll(async () => {
-  await splash.page.close();
 });
 
 test('empty test-example workspace', async function () {
@@ -148,4 +145,31 @@ test('selected directory path does not contain spaces', async function () {
   await splash.popDirectory();
   await splash.popDirectory();
   await splash.popDirectory();
+});
+
+test('save workspace as', async () => {
+  const workspace = await splash.openWorkspace('apple');
+  await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 100, y: 100 });
+  await workspace.saveWorkspaceAs('panda');
+  // We are now in a workspace with the new name.
+  await workspace.expectCurrentWorkspaceIs('panda');
+  // We kept the contents of the workspace.
+  await expect(workspace.getBox('eg')).toBeVisible();
+  // Save in a subdirectory too
+  await workspace.saveWorkspaceAs('panda-dir/apple');
+  // We are now in a workspace with the new name.
+  await workspace.expectCurrentWorkspaceIs('apple');
+  // We kept the contents of the workspace.
+  await expect(workspace.getBox('eg')).toBeVisible();
+  // If the target already exists, we get an error.
+  await workspace.saveWorkspaceAs('apple');
+  await expect(errors(splash.page)).toHaveText([`Entry '${ROOT}/apple' already exists.`]);
+  await closeErrors(splash.page);
+  await workspace.close();
+  // Check the view from outside.
+  await splash.expectCurrentDirectory(/panda-dir/);
+  await splash.expectWorkspaceListed('apple');
+  await splash.popDirectory();
+  await splash.expectWorkspaceListed('apple');
+  await splash.expectWorkspaceListed('panda');
 });
