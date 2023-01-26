@@ -1044,7 +1044,7 @@ function helpPopup(helpId) {
 
 async function sendKeysToACE(e, text) {
   await e.click();
-  await e.page().keyboard.press('Control+a');
+  await e.page().keyboard.press('Meta+a');
   await e.page().keyboard.type(text);
 }
 
