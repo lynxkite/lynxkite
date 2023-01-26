@@ -1156,19 +1156,6 @@ function expectModal(title) {
   expect(t.getText()).toEqual(title);
 }
 
-function closeModal() {
-  element(by.id('close-modal-button')).click();
-}
-
-function pythonPopup() {
-  element(by.id('save-boxes-as-python')).click();
-}
-
-function expectPythonCode(expectedCode) {
-  let pythonCode = $('#python-code').getText();
-  expect(pythonCode).toEqual(expectedCode);
-}
-
 function setEnablePopups(enable) {
   browser.executeScript(
     'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
