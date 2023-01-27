@@ -4,7 +4,7 @@ import { expect, Locator, Browser, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
 function toId(x) {
-  return x.toLowerCase().replace(/ /g, '-');
+  return x.toLowerCase().replace(/[ !?,.]/g, '-');
 }
 
 const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
@@ -20,6 +20,8 @@ async function clickAll(elements: Locator, opts) {
     await elements.nth(i).click(opts);
   }
 }
+
+export const ROOT = 'automated-tests'
 
 export class Entity {
   side: Locator;
@@ -916,16 +918,18 @@ export class Splash {
       window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
       window.localStorage.setItem('entry-selector tutorial done', 'true');
       window.localStorage.setItem('allow data collection', 'false');
+    });
+    await page.goto('/#/dir/');
+    await page.evaluate(() => {
       // Floating elements can overlap buttons and block clicks.
       document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
     });
-    await page.goto('/#/dir/');
     const splash = new Splash(page);
     await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
-    if (await splash.directory('automated-tests').isVisible()) {
-      await splash.deleteDirectory('automated-tests');
+    if (await splash.directory(ROOT).isVisible()) {
+      await splash.deleteDirectory(ROOT);
     }
-    await splash.newDirectory('automated-tests');
+    await splash.newDirectory(ROOT);
     await splash.expectNumWorkspaces(0);
     await splash.expectNumDirectories(0);
     return splash;
@@ -948,7 +952,7 @@ export class Splash {
   }
 
   snapshot(name) {
-    return this.root.locator('#snapshow-' + toId(name));
+    return this.root.locator('#snapshot-' + toId(name));
   }
 
   async expectNumWorkspaces(n) {
@@ -1035,7 +1039,7 @@ export class Splash {
   async renameWorkspace(name, newName) {
     const workspace = this.workspace(name);
     await menuClick(workspace, 'rename');
-    await workspace.locator('#renameBox').fill('automated-tests/' + newName);
+    await workspace.locator('#renameBox').fill(ROOT + '/' + newName);
     await workspace.locator('#renameBox').press('Enter');
   }
 
@@ -1071,22 +1075,6 @@ export class Splash {
     await expect(this.directory(name)).not.toBeVisible();
   }
 
-  async expectTableListed(name) {
-    testLib.expectElement(this.table(name));
-  }
-
-  async expectTableNotListed(name) {
-    testLib.expectNotElement(this.table(name));
-  }
-
-  async expectViewListed(name) {
-    testLib.expectElement(this.view(name));
-  }
-
-  async expectSnapshotListed(name) {
-    testLib.expectElement(this.snapshot(name));
-  }
-
   async enterSearchQuery(query) {
     await this.root.locator('#search-box').fill(query);
     await expect(this.root.locator('.progress.active')).not.toBeVisible();
@@ -1096,48 +1084,9 @@ export class Splash {
     await this.enterSearchQuery('');
   }
 
-  async globalSqlEditor() {
-    return element(by.id('sql-editor'));
-  }
-  async setGlobalSql(sql) {
-    testLib.sendKeysToACE(this.globalSqlEditor(), sql);
-  }
-
-  async openGlobalSqlBox() {
-    element(by.id('global-sql-box')).click();
-  }
-
-  async runGlobalSql(sql) {
-    this.openGlobalSqlBox();
-    this.setGlobalSql(sql);
-    element(by.id('run-sql-button')).click();
-  }
-
-  async expectGlobalSqlResult(names, types, rows) {
-    const res = element(by.id('sql-result'));
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  async saveGlobalSqlToCSV() {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="csv"]').click();
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToTable(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="table"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToView(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="view"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
+  snapshotState(name: string) {
+    const container = this.root.locator(`snapshot-viewer[path="${name}"]`);
+    return new State(container);
   }
 }
 
@@ -1158,7 +1107,7 @@ function randomPattern() {
 
 let lastDownloadList;
 
-export async function menuClick(entry, action) {
+export async function menuClick(entry: Locator, action: string) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
   await menu.locator('#menu-' + action).click();
@@ -1166,11 +1115,6 @@ export async function menuClick(entry, action) {
 
 const theRandomPattern = randomPattern();
 const protractorDownloads = '/tmp/protractorDownloads.' + process.pid;
-
-function viewerState(name) {
-  const container = $(`snapshot-viewer[path="${name}"]`);
-  return new State(container);
-}
 
 function expectElement(e) {
   expect(e.isDisplayed()).toBe(true);
