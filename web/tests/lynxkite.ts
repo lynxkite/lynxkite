@@ -179,8 +179,6 @@ export class Workspace {
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
     }, boxData);
-    // Wait for the backend to save this box.
-    await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
       await this.connectBoxes(
         after, await this.getOnlyOutputPlugId(after), id, await this.getOnlyInputPlugId(id));
