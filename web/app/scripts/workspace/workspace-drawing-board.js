@@ -98,6 +98,7 @@ angular.module('biggraph').directive(
           }
         }
 
+        let mouseMoved = false;
         scope.onMouseMove = function(event) {
           event.preventDefault();
           svgOffset = svgElement.offset(); // Just in case the layout changed.
@@ -109,6 +110,7 @@ angular.module('biggraph').directive(
             scope.selection.onMouseMove(event);
             scope.selectBoxesInSelection();
           }
+          mouseMoved = true;
           mouseX = event.workspaceX;
           mouseY = event.workspaceY;
 
@@ -168,6 +170,7 @@ angular.module('biggraph').directive(
           if (!leftClick) {
             return;
           }
+          mouseMoved = false;
           addDragListeners();
 
           addLogicalMousePosition(event);
@@ -289,11 +292,8 @@ angular.module('biggraph').directive(
         }
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
-            return;
-          }
           const leftButton = event.button === 0;
-          if (!leftButton || event.ctrlKey || event.shiftKey) {
+          if (mouseMoved || !leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
           afterUpdates(() => {
