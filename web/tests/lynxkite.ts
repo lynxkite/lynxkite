@@ -1045,11 +1045,12 @@ async function sendKeysToACE(e, text) {
 }
 
 async function angularEval(e: Locator, expr: string) {
-  return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
+  return await e.evaluate((e, expr) => $(e).scope().$apply(expr), expr);
 }
 
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
+  await expect(e).toBeVisible();
   const kind = await angularEval(e, '(param.multipleChoice ? "multi-" : "") + param.kind');
   if (kind === 'code') {
     await sendKeysToACE(e, value);
@@ -1070,6 +1071,14 @@ async function setParameter(e: Locator, value) {
       await e.locator('.glyphicon-plus').click();
       await e.locator('a#' + value[i]).click();
     }
+  } else if (kind === 'parameters') {
+    // TODO: This is buggy and unsets the ID parameter right away.
+    // await e.locator('#add-parameter').click();
+    // await e.locator('#-id').fill(name);
+    // await e.locator('#' + name + '-type').selectOption({ label: kind });
+    // await e.locator('#' + name + '-default').fill(defaultValue);
+    // Temporary workaround:
+    await angularEval(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
   } else {
     await e.fill(value);
   }
