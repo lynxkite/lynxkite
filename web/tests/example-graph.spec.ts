@@ -8,11 +8,15 @@ test.beforeAll(async ({ browser }) => {
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
 });
 
-test('has the proper vertex count', async () => {
+test('has the expected contents', async () => {
   const state = await workspace.openStateView('eg0', 'graph');
   await expect(state.left.vertexCount).toHaveText('4');
   await expect(state.left.edgeCount).toHaveText('4');
-  await expect(state.left.attributes).toHaveCount(8);
+  await expect(state.left.vertexAttributes.locator('.title')).toHaveText(
+    ['age', 'gender', 'id', 'income', 'location', 'name']);
+  await expect(state.left.edgeAttributes.locator('.title')).toHaveText(['comment', 'weight']);
+  await expect(state.left.graphAttributes.locator('.title')).toHaveText(['greeting']);
+  await expect(state.left.graphAttributes.locator('value')).toHaveText(['Hello world! 😀']);
   await state.close();
 });
 
@@ -23,7 +27,7 @@ test('workspace with reverse edges has the proper vertex count', async () => {
   const state = await workspace.openStateView('reversed-edges', 'graph');
   await expect(state.left.vertexCount).toHaveText('4');
   await expect(state.left.edgeCount).toHaveText('8');
-  await expect(state.left.attributes).toHaveCount(8);
+  await expect(state.left.vertexAttributes).toHaveCount(6);
   await state.close();
 });
 
