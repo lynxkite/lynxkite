@@ -230,16 +230,6 @@ export class Workspace {
     await boxEditor.close();
   }
 
-  async addWorkspaceParameter(name, kind, defaultValue) {
-    const boxEditor = await this.openBoxEditor('anchor');
-    await boxEditor.element.locator('#add-parameter').click();
-    await boxEditor.element.locator('#-id').fill(name);
-    await boxEditor.element.locator('#' + name + '-type').selectOption({ label: kind });
-    await this.page.pause();
-    await boxEditor.element.locator('#' + name + '-default').fill(defaultValue);
-    await boxEditor.close();
-  }
-
   getBox(boxId: string) {
     return this.board.locator('.box#' + boxId);
   }
@@ -329,15 +319,16 @@ export class Workspace {
     await this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
-  async getCustomBoxBrowserTree() {
-    this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
-    return this.selector.element(by.css('operation-tree')).element(by.css('operation-tree-node[id="root"]'));
-  }
-
   async saveWorkspaceAs(newName) {
     this.main.locator('#save-workspace-as-starter-button').click();
     safeSelectAndSendKeys(this.main.locator('#save-workspace-as-input input'), newName);
     this.main.locator('#save-workspace-as-input #ok').click();
+  }
+
+  async submitInlineInput(selector: string, text: string) {
+    const element = this.main.locator(selector);
+    await element.locator('input').fill(text);
+    await element.locator('#ok').click();
   }
 }
 
@@ -1240,13 +1231,6 @@ function confirmSweetAlert(expectedMessage) {
 
 function waitUntilClickable(element) {
   testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
-}
-
-function submitInlineInput(element, text) {
-  const inputBox = element.locator('input');
-  const okButton = element.locator('#ok');
-  safeSelectAndSendKeys(inputBox, text);
-  okButton.click();
 }
 
 // A matcher for lists of objects that ignores fields not present in the reference.
