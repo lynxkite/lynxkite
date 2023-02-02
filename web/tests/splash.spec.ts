@@ -4,7 +4,7 @@ import { Splash } from './lynxkite';
 
 let splash: Splash;
 test.beforeAll(async ({ browser }) => {
-  splash = await Splash.open(browser);
+  splash = await Splash.open(await browser.newPage());
 });
 test.afterAll(async () => {
   await splash.page.close();

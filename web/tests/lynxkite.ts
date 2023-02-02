@@ -4,7 +4,7 @@ import { expect, Locator, Browser, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
 function toId(x) {
-  return x.toLowerCase().replace(/ /g, '-');
+  return x.toLowerCase().replace(/[ !?,.]/g, '-');
 }
 
 const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
@@ -63,6 +63,8 @@ expect.extend({
   }
 })
 
+export const ROOT = 'automated-tests'
+
 export class Entity {
   side: Locator;
   kind: string;
@@ -70,7 +72,7 @@ export class Entity {
   kindName: string;
   element: Locator;
   menu: Locator;
-  constructor(side, kind, name) {
+  constructor(side: Locator, kind: string, name: string) {
     this.side = side;
     this.kind = kind;
     this.name = name;
@@ -138,10 +140,8 @@ export class Entity {
   }
 
   async visualizeAs(visualization: string) {
-    const popup = await this.popup();
-    await popup
-      .locator('#visualize-as-' + visualization)
-      .click();
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
     await expect(this.visualizedAs(visualization)).toBeVisible();
     await this.popoff();
   }
@@ -150,20 +150,16 @@ export class Entity {
     return this.element.locator('#visualized-as-' + visualization);
   }
 
-  async doNotVisualizeAs(visualization: string) {
-    const popup = await this.popup();
-    await popup
-      .locator('#visualize-as-' + visualization)
-      .click();
+  async doNotVisualizeAs(visualization) {
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
     await expect(this.visualizedAs(visualization)).not.toBeVisible();
     await this.popoff();
   }
 
   async clickMenu(id: string) {
-    const popup = await this.popup();
-    await popup
-      .locator('#' + id)
-      .click();
+    const p = await this.popup()
+    await p.locator('#' + id).click();
     await this.popoff();
   }
 }
@@ -181,8 +177,8 @@ export class Workspace {
   }
 
   // Starts with a brand new workspace.
-  static async empty(browser: Browser): Promise<Workspace> {
-    const splash = await Splash.open(browser);
+  static async empty(page: Page): Promise<Workspace> {
+    const splash = await Splash.open(page);
     const workspace = await splash.openNewWorkspace('test-example');
     await workspace.expectCurrentWorkspaceIs('test-example');
     return workspace;
@@ -425,8 +421,8 @@ export class BoxEditor extends PopupBase {
     return this.element.locator('operation-parameters #param-' + param + ' .parametric-switch');
   }
 
-  removeParameter(param) {
-    return this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
+  async removeParameter(param) {
+    await this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
   }
 
   async openGroup(group) {
@@ -525,6 +521,8 @@ class PlotState extends PopupBase {
 }
 
 export class TableState extends PopupBase {
+  sample: Locator;
+  control: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
@@ -558,42 +556,35 @@ export class TableState extends PopupBase {
     return this.sample.locator('tbody tr');
   }
 
+  row(n: number) {
+    return this.rows().nth(n).locator('td');
+  }
+
   async expectRowsAre(rows) {
     const r = this.rows();
     await expect(r).toHaveCount(rows.length);
     for (let i = 0; i < rows.length; ++i) {
-      await expect(r.nth(i).locator('td')).toHaveText(rows[i]);
+      await expect(this.row(i)).toHaveText(rows[i]);
     }
   }
 
-  firstRow() {
-    const row = this.sample.locator('tbody tr').first();
-    return row.locator('td');
-  }
-
-  expectFirstRowIs(row) {
-    expect(this.firstRow()).toEqual(row);
-  }
-
-  clickColumn(columnId) {
+  async clickColumn(columnId: string) {
     // for sorting
     const header = this.sample.locator('thead tr th#' + columnId);
-    header.click();
+    await header.click();
   }
 
-  clickShowMoreRows() {
-    const button = this.control.locator('#more-rows-button');
-    button.click();
+  async clickShowMoreRows() {
+    await this.control.locator('#more-rows-button').click();
   }
 
-  setRowCount(num) {
+  async setRowCount(num: number) {
     const input = this.control.locator('#sample-rows');
-    safeSelectAndSendKeys(input, num.toString());
+    await input.fill(num.toString());
   }
 
-  clickShowSample() {
-    const button = this.control.locator('#get-sample-button');
-    button.click();
+  async clickShowSample() {
+    await this.control.locator('#get-sample-button').click();
   }
 }
 
@@ -603,7 +594,10 @@ class Side {
   edgeCount: Locator;
   vertexCount: Locator;
   segmentCount: Locator;
-  attributes: Locator;
+  vertexAttributes: Locator;
+  edgeAttributes: Locator;
+  graphAttributes: Locator;
+  projectName: Locator;
   constructor(popup, direction) {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
@@ -611,84 +605,22 @@ class Side {
     this.edgeCount = this.getValue('edge-count');
     this.vertexCount = this.getValue('vertex-count');
     this.segmentCount = this.getValue('segment-count');
-    this.attributes = this.side.locator('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]');
+    this.vertexAttributes = this.side.locator('entity[kind="vertex-attribute"]');
+    this.edgeAttributes = this.side.locator('entity[kind="edge-attribute"]');
+    this.graphAttributes = this.side.locator('entity[kind="scalar"]');
+    this.projectName = this.side.locator('.project-name');
   }
 
-  expectCurrentProjectIs(name) {
-    expect(this.side.locator('.project-name').getText()).toBe(name);
+  async close() {
+    await this.side.locator('#close-project').click();
   }
 
-  close() {
-    this.side.locator('#close-project').click();
-  }
-
-  evaluate(expr) {
-    return this.side.evaluate(expr);
-  }
-
-  applyFilters() {
-    return this.side.element(by.id('apply-filters-button')).click();
-  }
-
-  getCategorySelector(categoryTitle) {
-    return this.toolbox.locator('div.category[tooltip="' + categoryTitle + '"]');
-  }
-
-  getValue(id) {
+  getValue(id: string) {
     return this.side.locator('value#' + id + ' span.value');
   }
 
-  getWorkflowCodeEditor() {
-    return this.side.element(by.id('workflow-code-editor'));
-  }
-
-  getPythonWorkflowCodeEditor() {
-    return this.side.element(by.id('python-code-editor'));
-  }
-
-  getWorkflowDescriptionEditor() {
-    return this.side.element(by.id('workflow-description'));
-  }
-
-  getWorkflowNameEditor() {
-    return this.side.element(by.id('workflow-name'));
-  }
-
-  clickWorkflowEditButton() {
-    return this.toolbox.element(by.id('edit-operation-button')).click();
-  }
-
-  getWorkflowSaveButton() {
-    return this.side.element(by.id('save-workflow-button'));
-  }
-
-  openOperation(name) {
-    this.toolbox.element(by.id('operation-search')).click();
-    safeSendKeys(this.toolbox.element(by.id('filter')), name, K.ENTER);
-  }
-
-  closeOperation() {
-    this.toolbox.locator('div.category.active').click();
-  }
-
-  openWorkflowSavingDialog() {
-    this.side.element(by.id('save-as-workflow-button')).click();
-  }
-
-  closeWorkflowSavingDialog() {
-    this.side.element(by.id('close-workflow-button')).click();
-  }
-
-  openSegmentation(segmentationName) {
-    this.segmentation(segmentationName).clickMenu('open-segmentation');
-  }
-
-  redoButton() {
-    return this.side.element(by.id('redo-button'));
-  }
-
-  populateOperationInput(parameterId, param) {
-    safeSelectAndSendKeys(this.toolbox.element(by.id(parameterId)), param);
+  async openSegmentation(segmentationName: string) {
+    await this.segmentation(segmentationName).clickMenu('open-segmentation');
   }
 
   expectOperationScalar(name, text) {
@@ -735,53 +667,16 @@ class Side {
     this.side.element(by.id('save-as-button')).click();
   }
 
-  sqlEditor() {
-    return this.side.element(by.id('sql-editor'));
-  }
-
-  setSql(sql) {
-    testLib.sendKeysToACE(this.sqlEditor(), sql);
-  }
-
-  // If sql is left undefined then we run whatever is already in the query box.
-  runSql(sql) {
-    if (sql !== undefined) {
-      this.setSql(sql);
-    }
-    this.side.element(by.id('run-sql-button')).click();
-  }
-
-  expectSqlResult(names, types, rows) {
-    const res = this.side.locator('#sql-result');
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  startSqlSaving() {
-    this.side.element(by.id('save-results-opener')).click();
-  }
-
-  clickSqlSort(colId) {
-    const res = this.side.locator('#sql-result');
-    const header = res.locator('thead tr th').get(colId);
-    header.click();
-  }
-
-  executeSqlSaving() {
-    this.side.element(by.id('save-results')).click();
-  }
-
-  vertexAttribute(name) {
+  vertexAttribute(name: string) {
     return new Entity(this.side, 'vertex-attribute', name);
   }
-  edgeAttribute(name) {
+  edgeAttribute(name: string) {
     return new Entity(this.side, 'edge-attribute', name);
   }
-  scalar(name) {
+  scalar(name: string) {
     return new Entity(this.side, 'scalar', name);
   }
-  segmentation(name) {
+  segmentation(name: string) {
     return new Entity(this.side, 'segmentation', name);
   }
 }
@@ -965,8 +860,7 @@ export class Splash {
   }
 
   // Opens the LynxKite directory browser in the root.
-  static async open(browser: Browser): Promise<Splash> {
-    const page = await browser.newPage();
+  static async open(page: Page): Promise<Splash> {
     await page.goto('/#/');
     await page.evaluate(() => {
       window.sessionStorage.clear();
@@ -974,16 +868,18 @@ export class Splash {
       window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
       window.localStorage.setItem('entry-selector tutorial done', 'true');
       window.localStorage.setItem('allow data collection', 'false');
+    });
+    await page.goto('/#/dir/');
+    await page.evaluate(() => {
       // Floating elements can overlap buttons and block clicks.
       document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
     });
-    await page.goto('/#/dir/');
     const splash = new Splash(page);
     await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
-    if (await splash.directory('automated-tests').isVisible()) {
-      await splash.deleteDirectory('automated-tests');
+    if (await splash.directory(ROOT).isVisible()) {
+      await splash.deleteDirectory(ROOT);
     }
-    await splash.newDirectory('automated-tests');
+    await splash.newDirectory(ROOT);
     await splash.expectNumWorkspaces(0);
     await splash.expectNumDirectories(0);
     return splash;
@@ -1006,7 +902,7 @@ export class Splash {
   }
 
   snapshot(name) {
-    return this.root.locator('#snapshow-' + toId(name));
+    return this.root.locator('#snapshot-' + toId(name));
   }
 
   async expectNumWorkspaces(n) {
@@ -1093,7 +989,7 @@ export class Splash {
   async renameWorkspace(name, newName) {
     const workspace = this.workspace(name);
     await menuClick(workspace, 'rename');
-    await workspace.locator('#renameBox').fill('automated-tests/' + newName);
+    await workspace.locator('#renameBox').fill(ROOT + '/' + newName);
     await workspace.locator('#renameBox').press('Enter');
   }
 
@@ -1129,22 +1025,6 @@ export class Splash {
     await expect(this.directory(name)).not.toBeVisible();
   }
 
-  async expectTableListed(name) {
-    testLib.expectElement(this.table(name));
-  }
-
-  async expectTableNotListed(name) {
-    testLib.expectNotElement(this.table(name));
-  }
-
-  async expectViewListed(name) {
-    testLib.expectElement(this.view(name));
-  }
-
-  async expectSnapshotListed(name) {
-    testLib.expectElement(this.snapshot(name));
-  }
-
   async enterSearchQuery(query) {
     await this.root.locator('#search-box').fill(query);
     await expect(this.root.locator('.progress.active')).not.toBeVisible();
@@ -1154,48 +1034,9 @@ export class Splash {
     await this.enterSearchQuery('');
   }
 
-  async globalSqlEditor() {
-    return element(by.id('sql-editor'));
-  }
-  async setGlobalSql(sql) {
-    testLib.sendKeysToACE(this.globalSqlEditor(), sql);
-  }
-
-  async openGlobalSqlBox() {
-    element(by.id('global-sql-box')).click();
-  }
-
-  async runGlobalSql(sql) {
-    this.openGlobalSqlBox();
-    this.setGlobalSql(sql);
-    element(by.id('run-sql-button')).click();
-  }
-
-  async expectGlobalSqlResult(names, types, rows) {
-    const res = element(by.id('sql-result'));
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  async saveGlobalSqlToCSV() {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="csv"]').click();
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToTable(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="table"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToView(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="view"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
+  snapshotState(name: string) {
+    const container = this.root.locator(`snapshot-viewer[path="${name}"]`);
+    return new State(container);
   }
 }
 
@@ -1216,7 +1057,7 @@ function randomPattern() {
 
 let lastDownloadList;
 
-export async function menuClick(entry, action) {
+export async function menuClick(entry: Locator, action: string) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
   await menu.locator('#menu-' + action).click();
@@ -1225,9 +1066,6 @@ export async function menuClick(entry, action) {
 const theRandomPattern = randomPattern();
 const protractorDownloads = '/tmp/protractorDownloads.' + process.pid;
 
-function viewerState(name) {
-  const container = $(`snapshot-viewer[path="${name}"]`);
-  return new State(container);
 }
 
 function helpPopup(helpId) {
@@ -1246,6 +1084,7 @@ async function angularEval(e: Locator, expr: string) {
 
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
+  await expect(e).toBeVisible();
   const kind = await angularEval(e, '(param.multipleChoice ? "multi-" : "") + param.kind');
   if (kind === 'code') {
     await sendKeysToACE(e, value);
@@ -1257,7 +1096,7 @@ async function setParameter(e: Locator, value) {
       e.locator('.dropdown-toggle').click();
       e.locator('.dropdown-menu #' + values[i]).click();
     }
-  } else if (kind === 'choice') {
+  } else if (kind === 'choice' || kind === 'segmentation') {
     await e.selectOption({ label: value });
   } else if (kind === 'multi-choice') {
     await e.selectOption(value.map(label => ({ label })));

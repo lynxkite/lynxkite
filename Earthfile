@@ -64,7 +64,7 @@ app-build:
   COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY conf conf
   COPY app app
-  COPY built-ins built-ins
+  COPY resources resources
   RUN sbt compile
   SAVE IMAGE --cache-hint
 
@@ -127,9 +127,9 @@ python-test:
 
 frontend-test:
   USER root
-  RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
+  COPY python python
   COPY web/package.json web/yarn.lock web/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
@@ -146,7 +146,7 @@ frontend-test:
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
   RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
-  RUN cd web && zip -qr results.zip test-results
+  RUN cd web && zip -qr results.zip playwright-report
   TRY
     RUN [ ! -f web/failed ]
   FINALLY
