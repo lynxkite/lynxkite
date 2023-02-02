@@ -21,6 +21,48 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
+expect.extend({
+  toConcur: function (actual, expected) {
+    function match(actual, expected) {
+      if (expected === null) {
+        return actual === null;
+      } else if (typeof expected === 'object') {
+        const keys = Object.keys(expected);
+        for (let i = 0; i < keys.length; ++i) {
+          const av = actual[keys[i]];
+          const ev = expected[keys[i]];
+          if (!match(av, ev)) {
+            return false;
+          }
+        }
+        return true;
+      } else if (typeof expected === 'string' && expected[0] === '<') {
+        return actual < parseFloat(expected.slice(1));
+      } else if (typeof expected === 'string' && expected[0] === '>') {
+        return actual > parseFloat(expected.slice(1));
+      } else {
+        return actual == expected;
+      }
+    }
+    if (actual.length !== expected.length) {
+
+      return {
+        message: () => `Arrays do not have the same length: \n${JSON.stringify(actual)}, \n !=\n${JSON.stringify(expected)}\n`,
+        pass: false
+      };
+    }
+    for (let i = 0; i < actual.length; ++i) {
+      if (!match(actual[i], expected[i])) {
+        return {
+          message: () => `Items do not concur: \n${JSON.stringify(actual[i])}, \n !=\n${JSON.stringify(expected[i])}\n`,
+          pass: false
+        };
+      }
+    }
+    return { pass: true };
+  }
+})
+
 export class Entity {
   side: Locator;
   kind: string;
@@ -95,31 +137,34 @@ export class Entity {
     return res;
   }
 
-  async visualizeAs(visualization) {
-    this.popup()
+  async visualizeAs(visualization: string) {
+    const popup = await this.popup();
+    await popup
       .locator('#visualize-as-' + visualization)
       .click();
-    testLib.expectElement(this.visualizedAs(visualization));
-    this.popoff();
+    await expect(this.visualizedAs(visualization)).toBeVisible();
+    await this.popoff();
   }
 
-  async visualizedAs(visualization) {
+  visualizedAs(visualization: string): Locator {
     return this.element.locator('#visualized-as-' + visualization);
   }
 
-  async doNotVisualizeAs(visualization) {
-    this.popup()
+  async doNotVisualizeAs(visualization: string) {
+    const popup = await this.popup();
+    await popup
       .locator('#visualize-as-' + visualization)
       .click();
-    testLib.expectNotElement(this.visualizedAs(visualization));
-    this.popoff();
+    await expect(this.visualizedAs(visualization)).not.toBeVisible();
+    await this.popoff();
   }
 
-  async clickMenu(id) {
-    this.popup()
+  async clickMenu(id: string) {
+    const popup = await this.popup();
+    await popup
       .locator('#' + id)
       .click();
-    this.popoff();
+    await this.popoff();
   }
 }
 
@@ -435,17 +480,16 @@ export class State extends PopupBase {
   async setInstrument(index, name, params) {
     const toolbar = this.popup.locator(`#state-toolbar-${index}`);
     const editor = this.popup.locator(`#state-editor-${index}`);
-    toolbar.locator(`#instrument-with-${name}`).click();
+    await toolbar.locator(`#instrument-with-${name}`).click();
     params = params || {};
     for (const key in params) {
       const param = editor.locator(`operation-parameters #param-${key} .operation-attribute-entry`);
       await setParameter(param, params[key]);
     }
-    $('#workspace-name').click(); // Make sure the parameters are not focused.
   }
 
-  clearInstrument(index) {
-    this.popup.locator(`#state-toolbar-${index} #clear-instrument`).click();
+  async clearInstrument(index) {
+    await this.popup.locator(`#state-toolbar-${index} #clear-instrument`).click();
   }
 }
 
@@ -810,7 +854,9 @@ export class TableBrowser {
 }
 
 class VisualizationState {
-  constructor(popup) {
+  svg: Locator;
+  popup: Locator;
+  constructor(popup: Locator) {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
@@ -835,14 +881,12 @@ class VisualizationState {
   }
 
   // The currently visualized graph data extracted from the SVG DOM.
-  graphData() {
-    browser.waitForAngular();
-    //browser.pause();
-    return browser.executeScript(function () {
+  async graphData() {
+    return this.popup.evaluate(async function () {
       // Vertices as simple objects.
-      function vertexData(svg) {
+      async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
-        const result = [];
+        const result: any[] = [];
         for (let i = 0; i < vertices.length; ++i) {
           const v = vertices[i];
           const touch = v.querySelector('circle.touch');
@@ -868,7 +912,7 @@ class VisualizationState {
       }
 
       // Edges as simple objects.
-      function edgeData(svg, vertices) {
+      async function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
         let i,
           byPosition = {};
@@ -877,7 +921,7 @@ class VisualizationState {
         }
 
         // Collect edges.
-        const result = [];
+        const result: any[] = [];
         const edges = svg.querySelectorAll('g.edge');
         for (i = 0; i < edges.length; ++i) {
           const e = edges[i];
@@ -899,8 +943,8 @@ class VisualizationState {
       }
 
       const svg = document.querySelector('svg.graph-view');
-      const vertices = vertexData(svg);
-      const edges = edgeData(svg, vertices);
+      const vertices = await vertexData(svg);
+      const edges = await edgeData(svg, vertices);
       return { vertices: vertices, edges: edges };
     });
   }
@@ -1186,14 +1230,6 @@ function viewerState(name) {
   return new State(container);
 }
 
-function expectElement(e) {
-  expect(e.isDisplayed()).toBe(true);
-}
-
-function expectNotElement(e) {
-  expect(e.isPresent()).toBe(false);
-}
-
 function helpPopup(helpId) {
   return $('div[help-id="' + helpId + '"]');
 }
@@ -1411,51 +1447,4 @@ function submitInlineInput(element, text) {
   const okButton = element.locator('#ok');
   safeSelectAndSendKeys(inputBox, text);
   okButton.click();
-}
-
-// A matcher for lists of objects that ignores fields not present in the reference.
-// Example use:
-//   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
-// Constraints in strings are also accepted for numerical values. E.g. '<5'.
-// Objects are recursively checked.
-function addConcurMatcher() {
-  jasmine.addMatchers({
-    toConcur: function (util, customEqualityTesters) {
-      return {
-        compare: function (actual, expected) {
-          function match(actual, expected) {
-            if (expected === null) {
-              return actual === null;
-            } else if (typeof expected === 'object') {
-              const keys = Object.keys(expected);
-              for (let i = 0; i < keys.length; ++i) {
-                const av = actual[keys[i]];
-                const ev = expected[keys[i]];
-                if (!match(av, ev)) {
-                  return false;
-                }
-              }
-              return true;
-            } else if (typeof expected === 'string' && expected[0] === '<') {
-              return actual < parseFloat(expected.slice(1));
-            } else if (typeof expected === 'string' && expected[0] === '>') {
-              return actual > parseFloat(expected.slice(1));
-            } else {
-              return util.equals(actual, expected, customEqualityTesters);
-            }
-          }
-
-          if (actual.length !== expected.length) {
-            return { pass: false };
-          }
-          for (let i = 0; i < actual.length; ++i) {
-            if (!match(actual[i], expected[i])) {
-              return { pass: false };
-            }
-          }
-          return { pass: true };
-        },
-      };
-    },
-  });
 }
