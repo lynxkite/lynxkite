@@ -3,8 +3,8 @@
 import { expect, Locator, Browser, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
-function toId(x) {
-  return x.toLowerCase().replace(/[ !?,.]/g, '-');
+export function toId(x) {
+  return x.toLowerCase().replace(/[ !?,./]/g, '-');
 }
 
 const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
@@ -293,7 +293,7 @@ export class Workspace {
     return new State(editor.popup);
   }
 
-  async expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+  async expectConnected(srcBoxId: string, srcPlugId: string, dstBoxId: string, dstPlugId: string) {
     const arrow = this.board.locator(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     await expect(arrow).toBeVisible();
   }

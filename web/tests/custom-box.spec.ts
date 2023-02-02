@@ -1,6 +1,6 @@
 // Test custom boxes and parametric parameters.
 import { test, expect } from '@playwright/test';
-import { Workspace, Splash, ROOT } from './lynxkite';
+import { Workspace, Splash, ROOT, toId } from './lynxkite';
 
 let splash: Splash;
 let workspace: Workspace;
@@ -15,7 +15,7 @@ async function setParametric(boxId: string, param: string, value: string) {
   await editor.close();
 }
 
-test.only('create custom box', async function () {
+test('create custom box', async function () {
   await splash.newDirectory('custom_boxes');
   workspace = await splash.openNewWorkspace('test-custom-box');
   await workspace.editBox('anchor', { parameters: [{ id: 'prname', kind: 'text', defaultValue: 'default_pr' }] });
@@ -29,10 +29,11 @@ test.only('create custom box', async function () {
   // Time to switch to the real input.
   await workspace.connectBoxes('in', 'input', 'pr', 'graph');
   await workspace.close();
+  await splash.popDirectory();
 });
 
 test('use custom box', async () => {
-  workspace = await splash.openNewWorkspace('test-example');
+  workspace = await splash.openNewWorkspace('test-use-custom-box');
   await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({ id: 'cb', name: ROOT + '/custom_boxes/test-custom-box', x: 100, y: 200, after: 'eg' });
   const state = await workspace.openStateView('cb', 'out');
@@ -72,11 +73,12 @@ test('dive into custom box', async () => {
   await expect(state.left.vertexAttribute('clustering_coefficient').element).not.toBeVisible();
   await expect(state.left.vertexAttribute('clustco').element).toBeVisible();
   await state.close();
+  await workspace.close();
 });
 
 test('save as custom box with parameters', async () => {
   // Set up a few connected boxes.
-  workspace = await splash.openNewWorkspace('test-for-custom-box');
+  workspace = await splash.openNewWorkspace('test-save-as-custom-box');
   await workspace.editBox('anchor', { parameters: [{ id: 'prname', kind: 'text', defaultValue: 'default_pr' }] });
   await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({ id: 'pr1', name: 'Compute PageRank', x: 100, y: 200, after: 'eg' });
@@ -109,47 +111,50 @@ test('save as custom box with parameters', async () => {
 
   // The output is still the same.
   await checkOutput();
+  await workspace.close();
 });
 
 test('save as custom box with mixed outputs', async () => {
-  await splash.openNewWorkspace('custom_boxes/test-custom-box');
+  await splash.openNewWorkspace('test-save-as-custom-box-mixed');
   await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 0, y: 200 });
   await workspace.addBox({ id: 'pr1', name: 'Compute PageRank', x: 200, y: 100, after: 'eg' });
-  await workspace.addBox({ id: 'pr2', name: 'Compute PageRank', x: 200, y: 200, after: 'eg' });
-  await workspace.addBox({ id: 'pr3', name: 'Compute PageRank', x: 400, y: 200, after: 'pr2' });
+  await workspace.addBox({ id: 'pr2', name: 'Compute PageRank', x: 200, y: 210, after: 'eg' });
+  await workspace.addBox({ id: 'pr3', name: 'Compute PageRank', x: 400, y: 220, after: 'pr2' });
   await workspace.selectBoxes(['eg', 'pr2']);
   await workspace.main.locator('#save-selection-as-custom-box').click();
-  await workspace.submitInlineInput(
-    '#save-selection-as-custom-box-input', ROOT + '/custom_boxes/custom-box-from-selection-mixed');
-  await workspace.expectConnected('my-custom-box_1', 'graph', 'pr1', 'graph');
-  await workspace.expectConnected('my-custom-box_1', 'graph-2', 'pr3', 'graph');
+  const name = ROOT + '/custom_boxes/custom-box-from-selection-mixed';
+  await workspace.submitInlineInput('#save-selection-as-custom-box-input', name);
+  await workspace.expectConnected(toId(name) + '_1', 'graph', 'pr1', 'graph');
+  await workspace.expectConnected(toId(name) + '_1', 'graph-2', 'pr3', 'graph');
   await workspace.close();
 });
 
 test('browse-custom-box', async () => {
-  await splash.openNewWorkspace('browse-custom-box-ws');
+  workspace = await splash.openNewWorkspace('test-browse-custom-box-ws');
   await workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 0, y: 200 });
+  await workspace.addBox({ id: 'eg2', name: 'Create example graph', x: 0, y: 400 });
   await workspace.selectBoxes(['eg1']);
   await workspace.main.locator('#save-selection-as-custom-box').click();
   await workspace.submitInlineInput(
     '#save-selection-as-custom-box-input', ROOT + '/custom_boxes/my-custom-box-to-browse-1');
 
-  await workspace.addBox({ id: 'eg2', name: 'Create example graph', x: 0, y: 400 });
   await workspace.selectBoxes(['eg2']);
   await workspace.main.locator('#save-selection-as-custom-box').click();
   await workspace.submitInlineInput(
     '#save-selection-as-custom-box-input', ROOT + '/browse-custom-box-dir/custom_boxes/my-custom-box-to-browse-2');
 
-  // Check top level elements.
+  // Test we only see the custom boxes when we open their directories.
   await workspace.main.locator('div[drop-tooltip="Custom boxes"]').click();
   const root = workspace.main.locator('operation-tree operation-tree-node[id="root"]');
-  const dir = root.locator('#custom_boxes');
-  await expect(dir).toBeVisible();
-  await expect(root.locator('#my-custom-box-to-browse-1')).not.toBeVisible();
-
-  // Test that the custom box in the dir is only present after click.
-  await expect(dir.locator('#my-custom-box-to-browse-2')).not.toBeVisible();
-  await dir.click();
-  await expect(dir.locator('#my-custom-box-to-browse-1')).toBeVisible();
-  await expect(dir.locator('#my-custom-box-to-browse-2')).not.toBeVisible();
+  await expect(root.getByText('my-custom-box-to-browse-1')).not.toBeVisible();
+  await root.getByText(ROOT).click();
+  await expect(root.getByText('my-custom-box-to-browse-1')).not.toBeVisible();
+  await root.getByText('custom_boxes').first().click();
+  await expect(root.getByText('my-custom-box-to-browse-1')).toBeVisible();
+  await expect(root.getByText('my-custom-box-to-browse-2')).not.toBeVisible();
+  await root.getByText('custom_boxes').first().click();
+  await root.getByText('browse-custom-box-dir').first().click();
+  await root.getByText('custom_boxes').first().click();
+  await expect(root.getByText('my-custom-box-to-browse-1')).not.toBeVisible();
+  await expect(root.getByText('my-custom-box-to-browse-2')).toBeVisible();
 });
