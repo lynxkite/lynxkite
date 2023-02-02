@@ -1066,8 +1066,6 @@ export async function menuClick(entry: Locator, action: string) {
 const theRandomPattern = randomPattern();
 const protractorDownloads = '/tmp/protractorDownloads.' + process.pid;
 
-}
-
 function helpPopup(helpId) {
   return $('div[help-id="' + helpId + '"]');
 }
