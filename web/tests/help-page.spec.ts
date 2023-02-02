@@ -1,62 +1,57 @@
 //Tests the help page
-import { test, expect } from '@playwright/test';
-import { TableBrowser, Workspace } from './lynxkite';
+import { test, expect, Page } from '@playwright/test';
 
-let workspace: Workspace;
-
-async function checkExactlyOneCurrent() {
+async function checkExactlyOneCurrent(page: Page) {
     // There is only one highlighted item:
-    await expect(await workspace.page.locator('span.find-highlight-current').count()).toBe(1);
+    await expect(page.locator('span.find-highlight-current')).toHaveCount(1);
 }
 
-async function checkCurrentHighlight(expectedPos) {
-    await checkExactlyOneCurrent();
+async function checkCurrentHighlight(page: Page, expectedPos) {
+    await checkExactlyOneCurrent(page);
     // Check correct item:
     const cssQuery = 'span.find-highlight.find-highlight-current.find-highlight-' + expectedPos;
-    await expect(workspace.page.locator(cssQuery)).toBeVisible();
+    await expect(page.locator(cssQuery)).toBeVisible();
 }
 
-test.beforeAll(async ({ browser }) => {
-    workspace = await Workspace.empty(browser);
-});
-
-test('search box in help', async () => {
-    await workspace.page.goto('#/help');
-    const field = await workspace.page.locator('#find-in-page-text');
-    await expect(field).toBeVisible;
+test('search box in help', async ({ page }) => {
+    await page.goto('#/help');
+    const field = page.locator('#find-in-page-text');
+    const help = page.locator('#whole-help');
+    expect(await help.evaluate(e => e.scrollTop)).toBe(0);
+    await expect(field).toBeVisible();
     // Search for the phrase "user".
     await field.fill('user');
     // Expect more than 5 matches.
-    await workspace.page.locator('span.find-highlight').first().waitFor();
-    await expect(await workspace.page.locator('span.find-highlight').count()).toBeGreaterThan(5);
+    await expect(page.locator('span.find-highlight').first()).toBeVisible();
+    expect(await page.locator('span.find-highlight').count()).toBeGreaterThan(5);
     // The first one is selected:
-    await checkCurrentHighlight(0);
+    await checkCurrentHighlight(page, 0);
     // Move to next:
-    await workspace.page.keyboard.press('Enter');
-    await checkCurrentHighlight(1);
+    await page.keyboard.press('Enter');
+    await checkCurrentHighlight(page, 1);
     // Move to next:
-    await workspace.page.locator('#find-in-page-next').click();
-    await checkCurrentHighlight(2);
+    await page.locator('#find-in-page-next').click();
+    await checkCurrentHighlight(page, 2);
     // Move to prev:
-    await workspace.page.locator('#find-in-page-prev').click();
-    await checkCurrentHighlight(1);
+    await page.locator('#find-in-page-prev').click();
+    await checkCurrentHighlight(page, 1);
     // Move to prev:
-    await workspace.page.locator('#find-in-page-prev').click();
-    await checkCurrentHighlight(0);
+    await page.locator('#find-in-page-prev').click();
+    await checkCurrentHighlight(page, 0);
     // Move to prev:
-    await workspace.page.locator('#find-in-page-prev').click();
-    await checkExactlyOneCurrent();
+    await page.locator('#find-in-page-prev').click();
+    await checkExactlyOneCurrent(page);
     // Move to next:
-    await workspace.page.locator('#find-in-page-next').click();
-    await checkCurrentHighlight(0);
+    await page.locator('#find-in-page-next').click();
+    await checkCurrentHighlight(page, 0);
     // Text not found:
     await field.click();
     await field.fill('qwertyui');
-    await expect(await workspace.page.locator('span.find-highlight').count()).toBe(0);
+    await expect(page.locator('span.find-highlight')).toHaveCount(0)
 });
 
-test('scroll position in help', async () => {
-    await workspace.page.goto('#/help#graph-visualization');
-    const help = await workspace.page.locator('#whole-help');
-    await expect(help).not.toHaveAttribute('scrollTop', '0');
+test('scroll position in help', async ({ page }) => {
+    await page.goto('#/help#graph-visualization');
+    const help = page.locator('#whole-help');
+    expect(await help.evaluate(e => e.scrollTop)).toBeGreaterThan(0);
 });
