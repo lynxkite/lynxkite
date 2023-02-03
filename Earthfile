@@ -125,10 +125,11 @@ python-test:
   RUN tools/with_lk.sh python/remote_api/test.sh
   SAVE IMAGE --cache-hint
 
-frontend-test:
+frontend-test-save:
   USER root
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
+  COPY python python
   COPY web/package.json web/yarn.lock web/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
@@ -145,12 +146,17 @@ frontend-test:
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
   RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
-  RUN cd web && zip -qr results.zip test-results
-  TRY
-    RUN [ ! -f web/failed ]
-  FINALLY
-    SAVE ARTIFACT web/results.zip AS LOCAL results.zip
-  END
+  # After running the tests we do a little dance to save the report even if the test failed.
+  # https://github.com/earthly/earthly/issues/2452
+  RUN cd web && zip -qr playwright-report.zip playwright-report
+  SAVE ARTIFACT web/playwright-report.zip
+frontend-test-copy:
+  LOCALLY
+  COPY +frontend-test-save/playwright-report.zip ./
+frontend-test:
+  BUILD +frontend-test-copy
+  FROM +frontend-test-save
+  RUN [ ! -f web/failed ]
 
 docker:
   FROM mambaorg/micromamba:jammy

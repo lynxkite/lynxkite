@@ -1,5 +1,5 @@
 // Test uploading a file in an import box.
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 import { resolve } from 'path';
 
@@ -12,6 +12,8 @@ test('can upload and import a simple CSV', async ({ page }) => {
   await uploadButton.click();
   const fileChooser = await fileChooserPromise;
   await fileChooser.setFiles(resolve('tests/data/upload_test.csv'));
+  // Wait for the upload to finish.
+  await expect(box.getParameter('filename').first()).toHaveValue(/UPLOAD.*upload_test.csv/);
   await box.loadImportedTable();
   const state = await workspace.openStateView('imp', 'table');
   await state.table.expect(

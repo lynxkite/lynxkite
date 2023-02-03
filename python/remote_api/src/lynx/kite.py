@@ -18,6 +18,7 @@ Example usage::
     lk = lynx.kite.LynxKite()
     lk.createExampleGraph().sql('select * from graph_attributes').df()
 '''
+import atexit
 import copy
 import functools
 import json
@@ -379,6 +380,9 @@ class LynxKite:
       else:
         LynxKite._managed = ManagedLynxKite(spark)
         LynxKite._managed.start()
+        # Play Framework runs on non-daemon threads. We have to shut it down when
+        # Python is finished.
+        atexit.register(LynxKite._managed.stop)
       self._lynxkite = LynxKite._managed
       self._address = self._lynxkite.address
 

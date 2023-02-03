@@ -32,7 +32,7 @@ class TableToAttributesTest extends AnyFunSuite with TestGraphOp {
     }
 
     assertWithType("n", "A", "B", "C")
-    assertWithType("id", 1L, 2L, 3L, 4L)
+    assertWithType("id", 1, 2, 3, 4)
     assertWithType("name", "Daniel", "Beata", "Felix")
     assertWithType("iq", 222.0, 222.3, 222.9)
     assertWithType("race condition", "Halfling", "Dwarf", "Gnome")

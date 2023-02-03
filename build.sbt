@@ -50,10 +50,8 @@ libraryDependencies ++= Seq(
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.9.6",
-  // JDBC drivers.
-  "mysql" % "mysql-connector-java" % "8.0.20",
-  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
-  "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
+  // JDBC tests use SQLite.
+  "org.xerial" % "sqlite-jdbc" % "3.40.0.0" % "test",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
   // Geotools
   "org.geotools" % "gt-shapefile" % "20.0",
