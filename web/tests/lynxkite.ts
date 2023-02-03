@@ -1031,6 +1031,9 @@ async function sendKeysToACE(e, text) {
 }
 
 async function angularEval(e: Locator, expr: string) {
+  return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
+}
+async function angularApply(e: Locator, expr: string) {
   return await e.evaluate((e, expr) => $(e).scope().$apply(expr), expr);
 }
 
@@ -1064,7 +1067,7 @@ async function setParameter(e: Locator, value) {
     // await e.locator('#' + name + '-type').selectOption({ label: kind });
     // await e.locator('#' + name + '-default').fill(defaultValue);
     // Temporary workaround:
-    await angularEval(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
+    await angularApply(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
   } else {
     await e.fill(value);
   }
