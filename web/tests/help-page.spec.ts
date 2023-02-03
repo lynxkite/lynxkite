@@ -17,7 +17,7 @@ test('search box in help', async ({ page }) => {
     await page.goto('#/help');
     const field = page.locator('#find-in-page-text');
     const help = page.locator('#whole-help');
-    expect(await help.evaluate(e => e.scrollTop)).toBe(0);
+    expect(help.evaluate(e => e.scrollTop)).toBe(0);
     await expect(field).toBeVisible();
     // Search for the phrase "user".
     await field.fill('user');
