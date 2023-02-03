@@ -21,7 +21,9 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
-export const ROOT = 'automated-tests'
+export const ROOT = 'automated-tests';
+const isMacOS = process.platform === 'darwin';
+export const CTRL = isMacOS ? 'Meta+' : 'Control+';
 
 export class Entity {
   side: Locator;
@@ -1039,7 +1041,7 @@ function helpPopup(helpId) {
 
 async function sendKeysToACE(e, text) {
   await e.click();
-  await e.page().keyboard.press('Meta+a');
+  await e.page().keyboard.press(CTRL + 'a');
   await e.page().keyboard.type(text);
 }
 
