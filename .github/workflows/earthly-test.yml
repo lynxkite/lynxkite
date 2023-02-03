@@ -152,10 +152,10 @@ jobs:
     - name: Earthly version
       run: earthly --version
     - name: Run frontend test
-      run: earthly --ci --output --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +frontend-test
+      run: earthly --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +frontend-test
     - name: Save test results
       if: ${{ always() }}
       uses: actions/upload-artifact@v3
       with:
         name: frontend-test-results
-        path: results.zip
+        path: playwright-report.zip
