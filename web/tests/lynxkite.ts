@@ -21,7 +21,9 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
-export const ROOT = 'automated-tests'
+export const ROOT = 'automated-tests';
+const isMacOS = process.platform === 'darwin';
+export const CTRL = isMacOS ? 'Meta+' : 'Control+';
 
 export class Entity {
   side: Locator;
@@ -465,6 +467,8 @@ class PlotState extends PopupBase {
 }
 
 export class TableState extends PopupBase {
+  sample: Locator;
+  control: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
@@ -498,42 +502,35 @@ export class TableState extends PopupBase {
     return this.sample.locator('tbody tr');
   }
 
+  row(n: number) {
+    return this.rows().nth(n).locator('td');
+  }
+
   async expectRowsAre(rows) {
     const r = this.rows();
     await expect(r).toHaveCount(rows.length);
     for (let i = 0; i < rows.length; ++i) {
-      await expect(r.nth(i).locator('td')).toHaveText(rows[i]);
+      await expect(this.row(i)).toHaveText(rows[i]);
     }
   }
 
-  firstRow() {
-    const row = this.sample.locator('tbody tr').first();
-    return row.locator('td');
-  }
-
-  expectFirstRowIs(row) {
-    expect(this.firstRow()).toEqual(row);
-  }
-
-  clickColumn(columnId) {
+  async clickColumn(columnId: string) {
     // for sorting
     const header = this.sample.locator('thead tr th#' + columnId);
-    header.click();
+    await header.click();
   }
 
-  clickShowMoreRows() {
-    const button = this.control.locator('#more-rows-button');
-    button.click();
+  async clickShowMoreRows() {
+    await this.control.locator('#more-rows-button').click();
   }
 
-  setRowCount(num) {
+  async setRowCount(num: number) {
     const input = this.control.locator('#sample-rows');
-    safeSelectAndSendKeys(input, num.toString());
+    await input.fill(num.toString());
   }
 
-  clickShowSample() {
-    const button = this.control.locator('#get-sample-button');
-    button.click();
+  async clickShowSample() {
+    await this.control.locator('#get-sample-button').click();
   }
 }
 
@@ -1029,7 +1026,7 @@ function helpPopup(helpId) {
 
 async function sendKeysToACE(e, text) {
   await e.click();
-  await e.page().keyboard.press('Meta+a');
+  await e.page().keyboard.press(CTRL + 'a');
   await e.page().keyboard.type(text);
 }
 

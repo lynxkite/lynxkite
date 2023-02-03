@@ -25,7 +25,7 @@ object LynxKite {
     if (haveSphynx) {
       sphynxStopped = false
       extractSphynx()
-      new Thread {
+      val t = new Thread {
         override def run() = {
           while (!stopping) {
             val p = synchronized {
@@ -37,7 +37,9 @@ object LynxKite {
           }
           sphynxStopped = true
         }
-      }.start()
+      }
+      t.setDaemon(true) // Do not block the exit if used from a script.
+      t.start()
     }
   }
 

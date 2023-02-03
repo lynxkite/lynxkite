@@ -3,7 +3,7 @@ import os
 
 setup(
     name='lynxkite-client',
-    version=os.environ.get('VERSION', 'snapshot'),
+    version=os.environ.get('VERSION', '0.1+snapshot'),
     install_requires=[
         'requests',
         'pandas',
