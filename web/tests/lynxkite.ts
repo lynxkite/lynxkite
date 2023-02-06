@@ -734,8 +734,8 @@ class VisualizationState {
   }
 
   // The currently visualized graph data extracted from the SVG DOM.
-  async graphData() {
-    return await this.popup.evaluate(async function () {
+  graphData() {
+    return this.popup.evaluate(async function () {
       // Vertices as simple objects.
       async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');

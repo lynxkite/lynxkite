@@ -20,7 +20,7 @@ test.beforeAll(async ({ browser }) => {
   await workspace.main.evaluate(e => { $(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
 });
 
-test('visualize with instrument', async function ({ browser }) {
+test('visualize with instrument', async () => {
   const popup = await workspace.openStateView('eg0', 'graph');
   await popup.setInstrument(0, 'visualize', {});
   await popup.left.vertexAttribute('name').visualizeAs('label');
@@ -34,7 +34,7 @@ test('visualize with instrument', async function ({ browser }) {
   await popup.close();
 });
 
-test('sql and plot with instrument', async function ({ browser }) {
+test('sql and plot with instrument', async () => {
   const popup = await workspace.openStateView('eg0', 'graph');
   await popup.setInstrument(0, 'sql', {});
   await tableIsGood(popup.table);
