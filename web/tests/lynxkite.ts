@@ -21,7 +21,9 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
-export const ROOT = 'automated-tests'
+export const ROOT = 'automated-tests';
+const isMacOS = process.platform === 'darwin';
+export const CTRL = isMacOS ? 'Meta+' : 'Control+';
 
 export class Entity {
   side: Locator;
@@ -244,11 +246,11 @@ export class Workspace {
     await boxEditor.close();
   }
 
-  getBox(boxId) {
+  getBox(boxId: string) {
     return this.board.locator('.box#' + boxId);
   }
 
-  getInputPlug(boxId, plugId) {
+  getInputPlug(boxId: string, plugId?: string) {
     let box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
@@ -257,7 +259,7 @@ export class Workspace {
     }
   }
 
-  getOutputPlug(boxId, plugId?) {
+  getOutputPlug(boxId: string, plugId?: string) {
     let box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
@@ -266,25 +268,25 @@ export class Workspace {
     }
   }
 
-  async toggleStateView(boxId, plugId) {
-    this.getOutputPlug(boxId, plugId).click();
+  async toggleStateView(boxId: string, plugId: string) {
+    await this.getOutputPlug(boxId, plugId).click();
   }
 
-  async clickBox(boxId, opts = {}) {
+  async clickBox(boxId: string, opts = {}) {
     await this.getBox(boxId).locator('#click-target').click(opts);
   }
 
-  async selectBox(boxId) {
+  async selectBox(boxId: string) {
     const box = await this.openBoxEditor(boxId);
     await box.close();
   }
 
-  getBoxEditor(boxId) {
+  getBoxEditor(boxId: string) {
     const popup = this.board.locator('.popup#' + boxId);
     return new BoxEditor(popup);
   }
 
-  async openBoxEditor(boxId) {
+  async openBoxEditor(boxId: string) {
     await this.clickBox(boxId);
     const editor = this.getBoxEditor(boxId);
     await expect(editor.popup).toBeVisible();
@@ -1039,7 +1041,7 @@ function helpPopup(helpId) {
 
 async function sendKeysToACE(e, text) {
   await e.click();
-  await e.page().keyboard.press('Control+a');
+  await e.page().keyboard.press(CTRL + 'a');
   await e.page().keyboard.type(text);
 }
 
@@ -1150,19 +1152,6 @@ function expectModal(title) {
   const t = $('.modal-title');
   testLib.expectElement(t);
   expect(t.getText()).toEqual(title);
-}
-
-function closeModal() {
-  element(by.id('close-modal-button')).click();
-}
-
-function pythonPopup() {
-  element(by.id('save-boxes-as-python')).click();
-}
-
-function expectPythonCode(expectedCode) {
-  let pythonCode = $('#python-code').getText();
-  expect(pythonCode).toEqual(expectedCode);
 }
 
 function setEnablePopups(enable) {
