@@ -21,48 +21,6 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
-expect.extend({
-  toConcur: function (actual, expected) {
-    function match(actual, expected) {
-      if (expected === null) {
-        return actual === null;
-      } else if (typeof expected === 'object') {
-        const keys = Object.keys(expected);
-        for (let i = 0; i < keys.length; ++i) {
-          const av = actual[keys[i]];
-          const ev = expected[keys[i]];
-          if (!match(av, ev)) {
-            return false;
-          }
-        }
-        return true;
-      } else if (typeof expected === 'string' && expected[0] === '<') {
-        return actual < parseFloat(expected.slice(1));
-      } else if (typeof expected === 'string' && expected[0] === '>') {
-        return actual > parseFloat(expected.slice(1));
-      } else {
-        return actual == expected;
-      }
-    }
-    if (actual.length !== expected.length) {
-
-      return {
-        message: () => `Arrays do not have the same length: \n${JSON.stringify(actual)}, \n !=\n${JSON.stringify(expected)}\n`,
-        pass: false
-      };
-    }
-    for (let i = 0; i < actual.length; ++i) {
-      if (!match(actual[i], expected[i])) {
-        return {
-          message: () => `Items do not concur: \n${JSON.stringify(actual[i])}, \n !=\n${JSON.stringify(expected[i])}\n`,
-          pass: false
-        };
-      }
-    }
-    return { pass: true };
-  }
-})
-
 export const ROOT = 'automated-tests'
 
 export class Entity {
@@ -515,7 +473,7 @@ class PlotState extends PopupBase {
     const heights = await this.barHeights()
     await expect(heights.length).toEqual(expected.length);
     for (let i = 0; i < heights.length; ++i) {
-      expect(heights[i]).toBeCloseTo(expected[i]);
+      expect(heights[i]).toBeCloseTo(expected[i], 0);
     }
   }
 }
@@ -777,7 +735,7 @@ class VisualizationState {
 
   // The currently visualized graph data extracted from the SVG DOM.
   async graphData() {
-    return this.popup.evaluate(async function () {
+    return await this.popup.evaluate(async function () {
       // Vertices as simple objects.
       async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
@@ -1285,3 +1243,50 @@ function submitInlineInput(element, text) {
   safeSelectAndSendKeys(inputBox, text);
   okButton.click();
 }
+
+// A matcher for lists of objects that ignores fields not present in the reference.
+// Example use:
+//   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
+// Constraints in strings are also accepted for numerical values. E.g. '<5'.
+// Objects are recursively checked.
+expect.extend({
+  toConcur: function (actual, expected) {
+    function match(actual, expected) {
+      if (expected === null) {
+        return actual === null;
+      } else if (typeof expected === 'object') {
+        const keys = Object.keys(expected);
+        for (let i = 0; i < keys.length; ++i) {
+          const av = actual[keys[i]];
+          const ev = expected[keys[i]];
+          if (!match(av, ev)) {
+            return false;
+          }
+        }
+        return true;
+      } else if (typeof expected === 'string' && expected[0] === '<') {
+        return actual < parseFloat(expected.slice(1));
+      } else if (typeof expected === 'string' && expected[0] === '>') {
+        return actual > parseFloat(expected.slice(1));
+      } else {
+        return actual == expected;
+      }
+    }
+    if (actual.length !== expected.length) {
+
+      return {
+        message: () => `Arrays do not have the same length: \n${JSON.stringify(actual)}, \n !=\n${JSON.stringify(expected)}\n`,
+        pass: false
+      };
+    }
+    for (let i = 0; i < actual.length; ++i) {
+      if (!match(actual[i], expected[i])) {
+        return {
+          message: () => `Items do not concur: \n${JSON.stringify(actual[i])}, \n !=\n${JSON.stringify(expected[i])}\n`,
+          pass: false
+        };
+      }
+    }
+    return { pass: true };
+  }
+})
