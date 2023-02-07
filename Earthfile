@@ -152,7 +152,7 @@ frontend-test-save:
   SAVE ARTIFACT web/playwright-report.zip
 frontend-test-copy:
   LOCALLY
-  COPY +frontend-test-save/playwright-report.zip ./
+  COPY --keep-ts +frontend-test-save/playwright-report.zip ./
 frontend-test:
   BUILD +frontend-test-copy
   FROM +frontend-test-save
