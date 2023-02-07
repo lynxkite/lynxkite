@@ -163,10 +163,6 @@ export class Workspace {
     this.selector.element(by.id('operation-search')).click();
   }
 
-  async closeLastPopup() {
-    browser.actions().sendKeys(K.ESCAPE).perform();
-  }
-
   async addBoxFromSelector(boxName) {
     browser
       .actions()

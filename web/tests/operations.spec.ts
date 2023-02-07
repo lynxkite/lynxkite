@@ -28,3 +28,26 @@ test('attributes are alphabetically ordered', async () => {
     .toHaveText(sortedAttributes);
   await box.close();
 });
+
+test('popup closing order with escape', async () => {
+  const popups = [
+    await workspace.openBoxEditor('eg'),
+    await workspace.openStateView('eg', 'graph'),
+    await workspace.openBoxEditor('str'),
+    await workspace.openStateView('str', 'graph'),
+  ];
+  for (const p of popups) {
+    await expect(p.popup).toBeVisible();
+  }
+  for (let i = 0; i < popups.length; ++i) {
+    await workspace.page.keyboard.press('Escape');
+    // For each press of ESC we see one more popup gone, starting from the newest.
+    for (let j = 0; j < popups.length; ++j) {
+      if (popups.length - i - 1 <= j) {
+        await expect(popups[j].popup).not.toBeVisible();
+      } else {
+        await expect(popups[j].popup).toBeVisible();
+      }
+    }
+  }
+});
