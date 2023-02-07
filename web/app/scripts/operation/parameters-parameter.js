@@ -6,6 +6,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
     restrict: 'E',
     scope: {
       model: '=',
+      onBlur: '&',
     },
     templateUrl: 'scripts/operation/parameters-parameter.html',
     link: function(scope) {
@@ -16,6 +17,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       });
       util.deepWatch(scope, 'parameters', function(parameters) {
         scope.model = JSON.stringify(parameters);
+        scope.onBlur();
       });
 
       scope.add = function() {

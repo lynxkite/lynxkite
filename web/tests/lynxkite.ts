@@ -3,8 +3,8 @@
 import { expect, Locator, Browser, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
-function toId(x) {
-  return x.toLowerCase().replace(/[ !?,.]/g, '-');
+export function toId(x) {
+  return x.toLowerCase().replace(/[ !?,./]/g, '-');
 }
 
 const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
@@ -181,8 +181,6 @@ export class Workspace {
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
     }, boxData);
-    // Wait for the backend to save this box.
-    await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
       await this.connectBoxes(
         after, await this.getOnlyOutputPlugId(after), id, await this.getOnlyInputPlugId(id));
@@ -229,16 +227,6 @@ export class Workspace {
   async editBox(boxId, params) {
     const boxEditor = await this.openBoxEditor(boxId);
     await boxEditor.populateOperation(params);
-    await boxEditor.close();
-  }
-
-  async addWorkspaceParameter(name, kind, defaultValue) {
-    const boxEditor = await this.openBoxEditor('anchor');
-    await boxEditor.element.locator('#add-parameter').click();
-    await boxEditor.element.locator('#-id').fill(name);
-    await boxEditor.element.locator('#' + name + '-type').selectOption({ label: kind });
-    await this.page.pause();
-    await boxEditor.element.locator('#' + name + '-default').fill(defaultValue);
     await boxEditor.close();
   }
 
@@ -307,7 +295,7 @@ export class Workspace {
     return new State(editor.popup);
   }
 
-  async expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+  async expectConnected(srcBoxId: string, srcPlugId: string, dstBoxId: string, dstPlugId: string) {
     const arrow = this.board.locator(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     await expect(arrow).toBeVisible();
   }
@@ -331,15 +319,16 @@ export class Workspace {
     await this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
-  async getCustomBoxBrowserTree() {
-    this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
-    return this.selector.element(by.css('operation-tree')).element(by.css('operation-tree-node[id="root"]'));
-  }
-
   async saveWorkspaceAs(newName: string) {
     await this.main.locator('#save-workspace-as-starter-button').click();
     await this.main.locator('#save-workspace-as-input input').fill(ROOT + '/' + newName);
     await this.main.locator('#save-workspace-as-input #ok').click();
+  }
+
+  async submitInlineInput(selector: string, text: string) {
+    const element = this.main.locator(selector);
+    await element.locator('input').fill(text);
+    await element.locator('#ok').click();
   }
 }
 
@@ -1000,6 +989,9 @@ async function sendKeysToACE(e, text) {
 async function angularEval(e: Locator, expr: string) {
   return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
 }
+async function angularApply(e: Locator, expr: string) {
+  return await e.evaluate((e, expr) => $(e).scope().$apply(expr), expr);
+}
 
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
@@ -1024,6 +1016,14 @@ async function setParameter(e: Locator, value) {
       await e.locator('.glyphicon-plus').click();
       await e.locator('a#' + value[i]).click();
     }
+  } else if (kind === 'parameters') {
+    // TODO: This is buggy and unsets the ID parameter right away.
+    // await e.locator('#add-parameter').click();
+    // await e.locator('#-id').fill(name);
+    // await e.locator('#' + name + '-type').selectOption({ label: kind });
+    // await e.locator('#' + name + '-default').fill(defaultValue);
+    // Temporary workaround:
+    await angularApply(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
   } else {
     await e.fill(value);
   }
@@ -1175,13 +1175,6 @@ function confirmSweetAlert(expectedMessage) {
 
 function waitUntilClickable(element) {
   testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
-}
-
-function submitInlineInput(element, text) {
-  const inputBox = element.locator('input');
-  const okButton = element.locator('#ok');
-  safeSelectAndSendKeys(inputBox, text);
-  okButton.click();
 }
 
 // A matcher for lists of objects that ignores fields not present in the reference.
