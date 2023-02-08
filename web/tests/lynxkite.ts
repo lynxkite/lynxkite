@@ -469,7 +469,6 @@ class PlotState extends PopupBase {
   }
 
   async expectBarHeightsToBe(expected) {
-    // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
     const heights = await this.barHeights()
     await expect(heights.length).toEqual(expected.length);
     for (let i = 0; i < heights.length; ++i) {
