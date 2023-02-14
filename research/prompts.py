@@ -22,6 +22,10 @@ Query: defense industry companies by ownership
 Nodes: defense industry companies
 Connected: if one is a subsidiary of the other
 ----
+Query: rivers of America and how they flow into each other
+Nodes: the rivers in the USA
+Connected: if one flows into the other
+----
 Query: QUERY
 Nodes:
 '''
@@ -77,6 +81,21 @@ Properties:
 - present in work
 
 ----
+Which WikiData entities and properties are relevant if we want to find the left-handed actresses and connect them if they played in the same movie?
+
+Entities:
+- human
+- actor
+- human female
+- left-handedness
+
+Properties:
+- occupation
+- gender
+- handedness
+- cast member
+
+----
 Which WikiData entities and properties are relevant if we want to find the NODES and connect them if EDGE_CONDITION?
 
 Entities:
@@ -130,6 +149,7 @@ WHERE
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }
 
+####
 # A SPARQL query for WikiData to find the species of pine trees
 # and collect all the data needed to connect them if they live on the same continent.
 # We use the following WikiData entities and properties:
@@ -147,6 +167,30 @@ WHERE
   ?species wdt:P31/wdt:P279* wd:Q59668787 .
   ?species wdt:P183 ?continent .
   ?continent wdt:P31 wd:Q5107 .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+
+####
+# A SPARQL query for WikiData to find the left-handed actresses
+# and collect all the data needed to connect them if they appear in the same movie.
+# We use the following WikiData entities and properties:
+# - instance of: wdt:P31
+# - subclass of: wdt:P279
+# - human: wd:Q5
+# - actor: wd:Q33999
+# - human female: wd:Q6581072
+# - left-handedness: wd:Q789447
+# - occupation: wdt:P106
+# - gender: wdt:P21
+# - handedness: wdt:P552
+# - cast member: wdt:P161
+SELECT ?actor ?actorLabel ?movie ?movieLabel
+WHERE
+{
+  ?actor wdt:P21 wd:Q6581072 .
+  ?actor wdt:P106 wd:Q33999 .
+  ?actor wdt:P552 wd:Q789447 .
+  ?movie wdt:P161 ?actor .
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }
 
