@@ -23,7 +23,7 @@ test('search box in help', async ({ page }) => {
     await field.fill('user');
     // Expect more than 5 matches.
     await expect(page.locator('span.find-highlight').first()).toBeVisible();
-    expect(await page.locator('span.find-highlight').count()).toBeGreaterThan(5);
+    await expect(page.locator('span.find-highlight').nth(6)).toBeVisible(); // We have at least 6 matches.
     // The first one is selected:
     await checkCurrentHighlight(page, 0);
     // Move to next:
