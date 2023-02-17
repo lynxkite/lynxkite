@@ -191,7 +191,7 @@ CREATE TABLE wikidata_results (character text, characterLabel text, movie text, 
 2    Q2635399             Iago  Q27188178                                            Aladdin
 */
 -- Get Disney characters:
-SELECT DISTINCT character as key, characterLabel FROM wikidata_results;
+SELECT DISTINCT `character` as key, characterLabel FROM wikidata_results;
 
 CREATE TABLE wikidata_results (birthDate text, birthPlaceLabel text, composer text, composerLabel text);
 /*
@@ -231,7 +231,7 @@ CREATE TABLE wikidata_results (character text, characterLabel text, movie text, 
 */
 -- Get all pairs of Disney characters if they appear in the same movie:
 SELECT
- a.character as a_key, b.character as b_key, a.movie as movie, a.movieLabel as movieLabel
+ a.`character` as a_key, b.`character` as b_key, a.movie as movie, a.movieLabel as movieLabel
 FROM wikidata_results a
 INNER JOIN wikidata_results b
 ON a.movie = b.movie;
