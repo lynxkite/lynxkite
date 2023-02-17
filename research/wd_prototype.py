@@ -1,4 +1,5 @@
 import backoff
+import dfsql
 import functools
 import httpx
 import os
@@ -12,6 +13,7 @@ import sys
 import prompts
 
 pd.options.display.max_columns = None
+pd.options.display.width = 1000
 shelf = shelve.open("wd.cache")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 sparql = SPARQLWrapper.SPARQLWrapper('https://query.wikidata.org/sparql')
@@ -25,7 +27,8 @@ def if_fails(msg):
       try:
         return func(*args, **kwargs)
       except BaseException:
-        pprint(args, kwargs)
+        pprint(args)
+        pprint(kwargs)
         raise Exception(msg)
     return wrapper
   return if_fails
@@ -44,7 +47,7 @@ def openai_complete(**kwargs):
 def openai_text(prompt, **kwargs):
   return openai_complete(
       model="text-davinci-003",
-      prompt=prompt,
+      prompt=prompt.strip(),
       temperature=0,
       max_tokens=500,
       **kwargs,
@@ -54,7 +57,7 @@ def openai_text(prompt, **kwargs):
 def openai_code(prompt, **kwargs):
   return openai_complete(
       model="code-davinci-002",
-      prompt=prompt,
+      prompt=prompt.strip(),
       temperature=0,
       max_tokens=500,
       **kwargs,
@@ -108,7 +111,7 @@ def run_sparkql(query):
 def get_sparql(nodes, edge_condition, ids):
   ids_formatted = "\n".join(f"# - {e}: {id}" for (e, id) in ids)
   print(ids_formatted)
-  return openai_code(
+  return 'SELECT ' + openai_code(
       prompts.SPARQL.replace("NODES", nodes)
       .replace("EDGE_CONDITION", edge_condition)
       .replace("IDS", ids_formatted),
@@ -116,7 +119,54 @@ def get_sparql(nodes, edge_condition, ids):
   ).strip()
 
 
-def get_graph(nodes, edge_condition, limit):
+@if_fails('Failed to create SQL query to extract the nodes from the WikiData results.')
+def get_nodes_sql(nodes, df):
+  schema = ', '.join(c + ' text' for c in df.columns)
+  sample = str(df.head(3))
+  return 'SELECT ' + openai_code(
+      prompts.NODES_SQL.replace('NODES', nodes)
+      .replace('SCHEMA', schema)
+      .replace('SAMPLE', sample),
+      stop='CREATE TABLE')
+
+
+@if_fails('Failed to create SQL query to extract the edges from the WikiData results.')
+def get_edges_sql(nodes, edge_condition, df):
+  schema = ', '.join(c + ' text' for c in df.columns)
+  sample = str(df.head(3))
+  return 'SELECT ' + openai_code(
+      prompts.EDGES_SQL.replace('NODES', nodes)
+      .replace('EDGE_CONDITION', edge_condition)
+      .replace('SCHEMA', schema)
+      .replace('SAMPLE', sample),
+      stop='CREATE TABLE')
+
+
+def table_to_graph(nodes, edge_condition, df):
+  df = df.replace('http://www.wikidata.org/entity/', '', regex=True)
+  df = df[sorted(df.columns)]
+  nodes_sql = get_nodes_sql(nodes, df)
+  print(nodes_sql)
+  vs = dfsql.sql_query(nodes_sql, wikidata_results=df)
+  edges_sql = get_edges_sql(nodes, edge_condition, df)
+  print(edges_sql)
+  es = dfsql.sql_query(edges_sql, wikidata_results=df)
+  return to_lynxkite(vs, es)
+
+
+def to_lynxkite(vs, es):
+  vs = vs.reset_index(drop=True)
+  vsid = pd.DataFrame({'key': vs['key'], 'id': vs.index})
+  es = pd.merge(es, vsid.add_suffix('_src'), left_on='a_key', right_on='key_src')
+  es = pd.merge(es, vsid.add_suffix('_dst'), left_on='b_key', right_on='key_dst')
+  es = es.drop(columns=['key_src', 'key_dst', 'a_key', 'b_key'])
+  es = es.rename(columns={'id_src': 'src', 'id_dst': 'dst'})
+  # Discard loop edges.
+  es = es[es['src'] != es['dst']]
+  return vs, es
+
+
+def get_graph_split(nodes, edge_condition, limit):
   entities, properties = extract_entities(nodes, edge_condition)
   print(entities)
   print(properties)
@@ -124,8 +174,8 @@ def get_graph(nodes, edge_condition, limit):
       (e, 'wdt:' + search("property", e)) for e in properties
   ]
   sparql = get_sparql(nodes, edge_condition, ids)
-  df = run_sparkql(f'SELECT {sparql}' + (f'\nLIMIT {limit}' if limit else ''))
-  print(df)
+  df = run_sparkql(sparql + (f'\nLIMIT {limit}' if limit else ''))
+  return table_to_graph(nodes, edge_condition, df)
 
 
 @if_fails('Failed to understand what nodes and edges correspond to the query.')
@@ -136,11 +186,14 @@ def split_query(query):
   return nodes, edge_condition
 
 
-def easy_get_graph(query, limit):
+def get_graph(query, limit):
   nodes, edge_condition = split_query(query)
-  return get_graph(nodes, edge_condition, limit)
+  return get_graph_split(nodes, edge_condition, limit)
 
 
-# get_graph("defense industry companies", "one is a subsidiary of the other")
-# easy_get_graph("Disney characters by movies", 10)
-easy_get_graph(' '.join(sys.argv[1:]), 10)
+if __name__ == '__main__':
+  vs, es = get_graph(' '.join(sys.argv[1:]), 1000)
+  print(vs)
+  print(es)
+  vs.to_csv('vs.csv', index=False)
+  es.to_csv('es.csv', index=False)
