@@ -163,6 +163,10 @@ def to_lynxkite(vs, es):
   es = es.rename(columns={'id_src': 'src', 'id_dst': 'dst'})
   # Discard loop edges.
   es = es[es['src'] != es['dst']]
+  print('vs schema:')
+  print(', '.join(c + ': str' for c in vs.columns))
+  print('es schema:')
+  print(', '.join(c + ': str' for c in es.columns if c not in ['src', 'dst']))
   return vs, es
 
 
