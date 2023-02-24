@@ -30,6 +30,15 @@ if 'edges-for-es' in op.inputs:
 vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
+
+def ai(query, output_schema):
+  # TODO: Add a DeriveTableFromGraph operation.
+  print(query, output_schema)
+  from .llm_pandas_on_graph import pandas_on_graph
+  df = pandas_on_graph(nodes=vs, edges=es, query=query, output_schema=output_schema)
+  print(df)
+
+
 # Execute user code.
 try:
   code = compile(op.params['code'], 'user code', 'exec')
