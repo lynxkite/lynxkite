@@ -62,32 +62,42 @@ def assert_no_extra(columns, name):
     sys.exit(1)
 
 
-assert_no_extra(vs.columns, 'vs')
-assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
-assert_no_extra(graph_attributes.__dict__.keys(), 'graph_attributes')
 # Save outputs.
-typenames = {
-    f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
-typemapping = {
-    'String': util.StringAttribute,
-    'Double': util.DoubleAttribute,
-    'Vector[Double]': util.DoubleVectorAttribute,
-}
-for fullname in op.outputs.keys():
-  if '.' not in fullname:
-    continue
-  parent, name = fullname.split('.')
-  try:
-    if parent == 'vs':
-      assert name in vs.columns, f'vs does not have a column named "{name}"'
-      op.output(fullname, vs[name], type=typemapping[typenames[fullname]])
-    elif parent == 'es':
-      assert name in es.columns, f'es does not have a column named "{name}"'
-      op.output(fullname, es[name], type=typemapping[typenames[fullname]])
-    elif parent == 'graph_attributes':
-      assert hasattr(graph_attributes, name), f'graph_attributes.{name} is not defined'
-      op.output_scalar(fullname, getattr(graph_attributes, name))
-  except BaseException:
-    import sys
-    print(f'\nCould not output {fullname}:\n', file=sys.stderr)
-    raise
+if op.classname.endswith('.DerivePython'):
+  assert_no_extra(vs.columns, 'vs')
+  assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
+  assert_no_extra(graph_attributes.__dict__.keys(), 'graph_attributes')
+  typenames = {
+      f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
+  typemapping = {
+      'String': util.StringAttribute,
+      'Double': util.DoubleAttribute,
+      'Vector[Double]': util.DoubleVectorAttribute,
+  }
+  for fullname in op.outputs.keys():
+    if '.' not in fullname:
+      continue
+    parent, name = fullname.split('.')
+    try:
+      if parent == 'vs':
+        assert name in vs.columns, f'vs does not have a column named "{name}"'
+        op.output(fullname, vs[name], type=typemapping[typenames[fullname]])
+      elif parent == 'es':
+        assert name in es.columns, f'es does not have a column named "{name}"'
+        op.output(fullname, es[name], type=typemapping[typenames[fullname]])
+      elif parent == 'graph_attributes':
+        assert hasattr(graph_attributes, name), f'graph_attributes.{name} is not defined'
+        op.output_scalar(fullname, getattr(graph_attributes, name))
+    except BaseException:
+      import sys
+      print(f'\nCould not output {fullname}:\n', file=sys.stderr)
+      raise
+
+elif op.classname.endswith('.DeriveTableFromGraphPython'):
+  for name in op.outputs:
+    cols = [col['name'] for col in op.params['outputFields'] if col['parent'] == name]
+    assert name in globals(), f'You have to put the results in a variable called "{name}"'
+    op.output_table(name, globals()[name][cols])
+
+else:
+  raise Exception(f'Unimplemented: {op.classname}')

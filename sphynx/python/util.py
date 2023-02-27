@@ -155,7 +155,9 @@ class Op:
 
   def output_table(self, name, df):
     '''Writes a Pandas DataFrame as a table.'''
-    path = self.datadir + '/' + self.outputs[name]
+    # Tables are always stored the unordered domain.
+    datadir = os.environ.get('UNORDERED_SPHYNX_DATA_DIR', self.datadir)
+    path = datadir + '/' + self.outputs[name]
     os.makedirs(path, exist_ok=True)
     df.to_parquet(path + '/data.parquet')
     with open(path + '/_SUCCESS', 'w') as f:
