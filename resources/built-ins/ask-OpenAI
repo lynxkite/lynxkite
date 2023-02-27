@@ -1,0 +1,61 @@
+boxes:
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Uses OpenAI to generate code that implements your query.
+
+
+      The output table is created by running the AI-generated code on your data.
+
+      There is no guarantee that the generated code perfectly implements your
+      intention.
+    icon: https://openai.com/favicon.png
+    parameters: >-
+      [{"kind":"text","id":"Query","defaultValue":"","$$hashKey":"object:580"},{"kind":"text","id":"Result
+      schema","defaultValue":"","$$hashKey":"object:631"}]
+  parametricParameters: {}
+  x: 0
+  y: 0
+- id: Compute-in-Python_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Compute in Python
+  parameters: {}
+  parametricParameters:
+    code: |-
+      ai(
+        '''
+      ${Query}
+        '''.strip(),
+        '''
+      ${`Result schema`}
+        '''.strip())
+    inputs: >-
+      ${vertexAttributes.map("vs."+_.name).mkString(",")},
+      ${edgeAttributes.map("es."+_.name).mkString(",")}, es.src, es.dst
+    outputs: ${`Result schema`.split(",").map(e => "df." + e.strip()).mkString(",")}
+  x: 200
+  y: 150
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 0
+  y: 150
+- id: output-graph
+  inputs:
+    output:
+      boxId: Compute-in-Python_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 400
+  y: 150

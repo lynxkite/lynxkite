@@ -32,7 +32,7 @@ es = pd.DataFrame(es)
 
 
 def ai(query, output_schema):
-  # TODO: Add a DeriveTableFromGraph operation.
+  global df
   print(query, output_schema)
   from .llm_pandas_on_graph import pandas_on_graph
   df = pandas_on_graph(nodes=vs, edges=es, query=query, output_schema=output_schema)
