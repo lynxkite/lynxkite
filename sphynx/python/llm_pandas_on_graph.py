@@ -183,9 +183,7 @@ full_prompt = langchain.FewShotPromptTemplate(
 )
 
 
-def pandas_on_graph(*, nodes, edges, query, output_schema):
-  print(query, output_schema)
-  prompt = full_prompt.format(nodes=nodes, edges=edges, query=query, output_schema=output_schema)
+def generate_code(prompt):
   print(prompt)
   print('waiting for OpenAI...')
   response = openai.Completion.create(
@@ -200,7 +198,35 @@ def pandas_on_graph(*, nodes, edges, query, output_schema):
   )
   code = response['choices'][0]['text']
   print(code)
+  return code
+
+
+def pandas_on_graph(*, nodes, edges, query, output_schema):
+  print(query, output_schema)
+  pd.options.display.max_rows = 3 if len(nodes.columns) > 5 or len(edges.columns) > 5 else 10
+  pd.options.display.max_columns = 100
+  pd.options.display.width = 1000
+  prompt = full_prompt.format(nodes=nodes, edges=edges, query=query, output_schema=output_schema)
+  code = generate_code(prompt)
+  df = run_code(nodes=nodes, edges=edges, code=code)
+  if matches_schema(df, output_schema):
+    return df
+  clue = '  # Make sure the result has columns: ' + output_schema
+  prompt = '\n'.join((prompt + code).split('\n')[:-1] + [clue])
+  code = generate_code(prompt)
   return run_code(nodes=nodes, edges=edges, code=code)
+
+
+def matches_schema(df, schema):
+  for col in schema.split(','):
+    [name, type] = [x.strip() for x in col.split(':')]
+    if name not in df:
+      return False
+    if type == 'str':
+      type = 'O'
+    if df[name].dtype != type:
+      return False
+  return True
 
 
 if __name__ == '__main__':
