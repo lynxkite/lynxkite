@@ -11,7 +11,7 @@ boxes:
 
       There is no guarantee that the generated code perfectly implements your
       intention.
-    icon: https://openai.com/favicon.png
+    icon: https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/800px-OpenAI_Logo.svg.png
     parameters: >-
       [{"kind":"text","id":"Query","defaultValue":"","$$hashKey":"object:580"},{"kind":"text","id":"Result
       schema","defaultValue":"","$$hashKey":"object:631"}]
