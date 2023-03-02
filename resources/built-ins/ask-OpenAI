@@ -11,6 +11,18 @@ boxes:
 
       There is no guarantee that the generated code perfectly implements your
       intention.
+
+
+      "Query" can be a free-form natural language query. English works best.
+
+      For example, you could type `the 10 most important cities`.
+
+
+      "Result schema" is the schema of the output you want to see.
+
+      This is a comma-separated list of columns. For each column the type is indicated after a colon.
+
+      For example, it could be `city: str, importance: float`.
     icon: https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/800px-OpenAI_Logo.svg.png
     parameters: >-
       [{"kind":"text","id":"Query","defaultValue":"","$$hashKey":"object:580"},{"kind":"text","id":"Result
