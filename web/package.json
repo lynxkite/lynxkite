@@ -27,7 +27,7 @@
     "three": "^0.137.0",
     "toposort": "^2.0.2",
     "typeface-exo-2": "^1.1.13",
-    "vega": "^5.20.2",
+    "vega": "^5.23.0",
     "vega-embed": "^6.18.2",
     "vega-lite": "^5.1.0"
   },
