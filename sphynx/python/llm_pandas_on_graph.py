@@ -201,8 +201,16 @@ def generate_code(prompt):
   return code
 
 
+def cleanup(df):
+  '''Make sure the DataFrame can be used based on its printed form.'''
+  for c in df.columns:
+    df = df.rename(columns={c: c.strip()})
+  return df
+
+
 def pandas_on_graph(*, nodes, edges, query, output_schema):
-  print(query, output_schema)
+  nodes = cleanup(nodes)
+  edges = cleanup(edges)
   pd.options.display.max_rows = 3 if len(nodes.columns) > 5 or len(edges.columns) > 5 else 10
   pd.options.display.max_columns = 100
   pd.options.display.width = 1000
