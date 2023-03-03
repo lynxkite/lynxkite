@@ -11,7 +11,7 @@ clean:
 	git clean -f -X -d --exclude="!.idea/"
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json .eslintrc.yaml
-	cd web && LC_ALL=C yarn --frozen-lockfile && npx gulp && cd - && touch $@
+	cd web && npm i && npx gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 .build/sphynx-done: $(shell $(find) sphynx)
@@ -29,15 +29,15 @@ clean:
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
-	cd web && ../tools/with_lk.sh yarn playwright test --trace on && touch $@
+	cd web && ../tools/with_lk.sh npx playwright test --trace on && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done
 	tools/with_lk.sh python/remote_api/test.sh && python/remote_api/managed_tests/run.sh && touch $@
 dependency-licenses/scala.md: build.sbt
 	sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md $@
 dependency-licenses/javascript.txt: web/package.json
-	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
+	cd web && LC_ALL=C python full_licenses.py > ../$@
 dependency-licenses/javascript.md: web/package.json
-	cd web && LC_ALL=C yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../$@
+	cd web && npx license-checker --summary > ../$@ && LC_ALL=C npx license-checker --production >> ../$@
 .build/licenses-done: dependency-licenses/scala.md dependency-licenses/javascript.txt dependency-licenses/javascript.md
 	touch $@
 

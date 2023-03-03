@@ -24,11 +24,11 @@ sbt-deps:
   SAVE IMAGE --cache-hint
 
 npm-deps:
-  COPY web/package.json web/yarn.lock web/
-  RUN cd web && yarn --frozen-lockfile
+  COPY web/package.json web/package-lock.json web/full_licenses.py web/
+  RUN cd web && npm i
   RUN mkdir dependency-licenses
-  RUN cd web && yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../dependency-licenses/javascript.md
-  RUN cd web && yarn licenses generate-disclaimer > ../dependency-licenses/javascript.txt
+  RUN cd web && npx license-checker > ../dependency-licenses/javascript.md
+  RUN cd web && python full_licenses.py > ../dependency-licenses/javascript.txt
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules
   SAVE IMAGE --cache-hint
@@ -130,7 +130,7 @@ frontend-test-save:
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
   COPY python python
-  COPY web/package.json web/yarn.lock web/
+  COPY web/package.json web/package-lock.json web/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
   USER root
@@ -145,7 +145,7 @@ frontend-test-save:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
-  RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
+  RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
   # After running the tests we do a little dance to save the report even if the test failed.
   # https://github.com/earthly/earthly/issues/2452
   RUN cd web && zip -qr playwright-report.zip playwright-report
