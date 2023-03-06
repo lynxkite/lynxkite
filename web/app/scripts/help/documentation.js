@@ -15,7 +15,6 @@ angular.module('biggraph').factory('documentation', ["$http", function($http) {
   function load(name) {
     const html = $http.get(name + '/index.html', { cache: true });
     const dom = html.then(function success(response) {
-      /* global $ */
       const dom = $($.parseHTML(
         '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
 

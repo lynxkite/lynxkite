@@ -83,7 +83,6 @@ angular.module('biggraph')
         scope.isEmpty = function() {
           return !popup.text();
         };
-        /* global Drop */
         const drop = new Drop({
           target: button,
           content: popup[0],

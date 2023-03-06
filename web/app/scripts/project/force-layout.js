@@ -1,7 +1,6 @@
 // The 2D graph layout algoritm used in sampled mode.
 'use strict';
 
-/* eslint-disable no-unused-vars */
 const lib = {};
 // Options:
 //   attraction:      force/distance ratio along edges

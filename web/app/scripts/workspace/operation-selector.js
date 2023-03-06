@@ -102,7 +102,6 @@ angular.module('biggraph').directive('operationSelector', ["$timeout", "$rootSco
 
       scope.filterAndSort = function(boxes, opFilter) {
         if (opFilter) {
-          /* global Fuse */
           // Case insensitive by default.
           const options = {
             shouldSort: true,

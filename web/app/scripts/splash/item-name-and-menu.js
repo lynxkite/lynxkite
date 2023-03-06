@@ -53,7 +53,6 @@ angular.module('biggraph').directive('itemNameAndMenu', ["$timeout", "util", "$l
         $location.url('/workspace/' + scope.object.name);
       };
 
-      /* global ClipboardJS */
       const clippy = new ClipboardJS('#menu-copy-to-clipboard');
       scope.$on('$destroy', () => clippy.destroy());
     },

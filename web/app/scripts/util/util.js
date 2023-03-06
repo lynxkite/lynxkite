@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import reportErrorTemplate from '../report-error.html?url';
+import firebase from 'firebase';
 
 angular.module('biggraph').service('environment', function() {
   this.protractor = false; // If we want to handle tests specially somewhere.
@@ -583,7 +584,6 @@ angular.module('biggraph')
           appId: '1:422846954881:web:53c06b4ed052166db7bc80',
           measurementId: 'G-5NDZSKY669',
         };
-        /* global firebase */
         firebase.initializeApp(firebaseConfig);
         analytics = firebase.analytics();
       }

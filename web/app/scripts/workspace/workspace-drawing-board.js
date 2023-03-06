@@ -9,6 +9,7 @@ import './selection-model';
 import './workspace-wrapper';
 import './python-code-generator';
 import templateUrl from './workspace-drawing-board.html?url';
+import jsyaml from 'js-yaml';
 
 // The drawing board where the user can create and modify a boxes and
 // arrows diagram.
@@ -478,7 +479,6 @@ angular.module('biggraph').directive(
           return ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.tagName) !== -1;
         }
 
-        /* global jsyaml */
         scope.copyBoxes = function(e) {
           if (inputBoxFocused() || window.getSelection().toString()) {
             return;
@@ -777,7 +777,6 @@ angular.module('biggraph').directive(
           const filters = {};
           for (let i = 0; i < colors.length; ++i) {
             const name = colors[i][0];
-            /* global chroma */
             const rgb = chroma(colors[i][1]).rgb();
             filters[name] = (
               (rgb[0] / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
@@ -834,7 +833,6 @@ angular.module('biggraph').directive(
           if (util.user.wizardOnly || localStorage.getItem('workspace-drawing-board tutorial done')) {
             return;
           }
-          /* global Tour */
           scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',

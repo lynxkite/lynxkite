@@ -295,7 +295,6 @@ angular.module('biggraph').directive('entrySelector',
             && localStorage.getItem('allow data collection')) {
             return;
           }
-          /* global Tour */
           scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',

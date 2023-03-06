@@ -2,6 +2,7 @@
 import '../app';
 import '../util/util';
 import templateUrl from './snapshot-viewer.html?url';
+import $ from 'jquery';
 
 // Viewer of a snapshot in the entry selector.
 
@@ -16,7 +17,6 @@ angular.module('biggraph')
       },
       link: function(scope) {
         function getWidth() {
-          /* global $ */
           return $('.entry-list').innerWidth();
         }
         function setWidth() {

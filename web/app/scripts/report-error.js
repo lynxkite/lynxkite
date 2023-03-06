@@ -2,9 +2,10 @@
 'use strict';
 import './app';
 import './util/util';
+import jsyaml from 'js-yaml';
+import ClipboardJS from 'clipboard';
 
 angular.module('biggraph').controller('ReportErrorCtrl', ["$scope", "$uibModalInstance", "alert", "util", function($scope, $uibModalInstance, alert, util) {
-  /* global jsyaml */
   const debug = {
     message: alert.message,
     details: alert.details,
@@ -18,7 +19,6 @@ angular.module('biggraph').controller('ReportErrorCtrl', ["$scope", "$uibModalIn
     $uibModalInstance.dismiss('close');
   };
 
-  /* global ClipboardJS */
   const clippy = new ClipboardJS('#copy-debug-to-clipboard');
   $scope.$on('$destroy', () => clippy.destroy());
 }]);

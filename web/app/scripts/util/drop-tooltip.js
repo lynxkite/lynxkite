@@ -18,7 +18,6 @@ angular.module('biggraph').directive('dropTooltip', ["dropTooltipConfig", functi
       let drop;
       const defaultPosition = 'bottom center';
       scope.createDrop = function() {
-      /* global Drop */
         return new Drop({
           target: element[0],
           content: scope.dropTooltip,

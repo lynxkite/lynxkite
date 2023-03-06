@@ -11,7 +11,6 @@ angular.module('biggraph').factory('ViewSettings', function() {
       if (!e.id) { return; }
       const menu = element.find('#menu-' + e.id);
       if (!menu.length) { return; }
-      /* global Drop */
       const drop = new Drop({
         target: e,
         content: menu[0],
