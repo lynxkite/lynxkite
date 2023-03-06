@@ -7,7 +7,7 @@ import templateUrl from './project-state-view.html?url';
 // Viewer of a project state.
 
 angular.module('biggraph')
-  .directive('projectStateView', function(util, side) {
+  .directive('projectStateView', ["util", "side", function(util, side) {
     return {
       restrict: 'E',
       templateUrl,
@@ -45,4 +45,4 @@ angular.module('biggraph')
           });
       },
     };
-  });
+  }]);

@@ -7,7 +7,7 @@ import '../util/util';
 import templateUrl from './entry-selector.html?url';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
+  ["util", "hotkeys", "$timeout", "$anchorScroll", "$location", "$routeParams", function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
       templateUrl,
@@ -403,7 +403,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       },
     };
-  });
+  }]);
 
 // We store this in a global variable because the checkbox is outside of Angular.
 let dataCollectionCheckboxChecked;

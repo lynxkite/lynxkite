@@ -6,7 +6,7 @@ import templateUrl from './table-state-view.html?url';
 // Viewer of a table state.
 
 angular.module('biggraph')
-  .directive('tableStateView', function(util) {
+  .directive('tableStateView', ["util", function(util) {
     return {
       restrict: 'E',
       templateUrl,
@@ -72,4 +72,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);

@@ -3,7 +3,7 @@
 import './app';
 import './util/util';
 
-angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibModalInstance, alert, util) {
+angular.module('biggraph').controller('ReportErrorCtrl', ["$scope", "$uibModalInstance", "alert", "util", function($scope, $uibModalInstance, alert, util) {
   /* global jsyaml */
   const debug = {
     message: alert.message,
@@ -21,4 +21,4 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibMo
   /* global ClipboardJS */
   const clippy = new ClipboardJS('#copy-debug-to-clipboard');
   $scope.$on('$destroy', () => clippy.destroy());
-});
+}]);

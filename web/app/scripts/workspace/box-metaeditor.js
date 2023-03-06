@@ -4,7 +4,7 @@ import '../app';
 import templateUrl from './box-metaeditor.html?url';
 
 angular.module('biggraph')
-  .directive('boxMetaeditor', function($timeout) {
+  .directive('boxMetaeditor', ["$timeout", function($timeout) {
     return {
       restrict: 'E',
       templateUrl,
@@ -66,4 +66,4 @@ angular.module('biggraph')
         });
       },
     };
-  });
+  }]);

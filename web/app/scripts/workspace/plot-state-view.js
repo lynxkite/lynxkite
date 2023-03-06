@@ -6,7 +6,7 @@ import templateUrl from './plot-state-view.html?url';
 // Viewer of a plot state.
 
 angular.module('biggraph')
-  .directive('plotStateView', function(environment, util) {
+  .directive('plotStateView', ["environment", "util", function(environment, util) {
     return {
       restrict: 'E',
       templateUrl,
@@ -36,4 +36,4 @@ angular.module('biggraph')
         scope.$watch('plotJSON', embedPlot, true);
       },
     };
-  });
+  }]);

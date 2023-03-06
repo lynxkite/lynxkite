@@ -15,7 +15,7 @@ import templateUrl from './workspace-drawing-board.html?url';
 
 angular.module('biggraph').directive(
   'workspaceDrawingBoard',
-  function(
+  ["environment", "hotkeys", "PopupModel", "SelectionModel", "WorkspaceWrapper", "$rootScope", "$q", "$location", "util", "longPoll", "pythonCodeGenerator", function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
     $location, util, longPoll, pythonCodeGenerator) {
     return {
@@ -993,4 +993,4 @@ angular.module('biggraph').directive(
         scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       }
     };
-  });
+  }]);

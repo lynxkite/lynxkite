@@ -6,7 +6,7 @@ import templateUrl from './display-error.html?url';
 // Viewer of an error on the UI.
 
 angular.module('biggraph')
-  .directive('displayError', function(util) {
+  .directive('displayError', ["util", function(util) {
     return {
       restrict: 'E',
       templateUrl,
@@ -35,4 +35,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);

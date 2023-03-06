@@ -4,7 +4,7 @@ import './app';
 import './util/util';
 
 angular.module('biggraph')
-  .controller('CleanerCtrl', function ($scope, util) {
+  .controller('CleanerCtrl', ["$scope", "util", function ($scope, util) {
     $scope.inProgress = 1;
     $scope.getDataFilesStatus = function() {
       $scope.fileStatus = util.nocache('/ajax/getDataFilesStatus');
@@ -37,4 +37,4 @@ angular.module('biggraph')
     $scope.asScalar = function(value) {
       return util.asScalar(value);
     };
-  });
+  }]);

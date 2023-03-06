@@ -23,7 +23,7 @@ angular.module('biggraph', [
   'cfp.hotkeys',
 ]);
 
-angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
+angular.module('biggraph').config(["$routeProvider", "$locationProvider", function ($routeProvider, $locationProvider) {
   $locationProvider.hashPrefix(''); // https://docs.angularjs.org/guide/migration#commit-aa077e8
   function docTemplate(doc, title) {
     return { template: `
@@ -83,12 +83,12 @@ angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
   for (let k in docs) {
     $routeProvider.when('/' + k, docTemplate(k, docs[k]));
   }
-});
+}]);
 
-angular.module('biggraph').config(function($httpProvider) {
+angular.module('biggraph').config(["$httpProvider", function($httpProvider) {
   // Identify requests from JavaScript by a header.
   $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-});
+}]);
 
 // selectFields adds a new $selection attribute to the objects, that is a newline-delimited
 // concatenation of the selected fields. This can be used to filter by searching in multiple
@@ -108,9 +108,9 @@ angular.module('biggraph').filter('selectFields', function() {
   };
 });
 
-angular.module('biggraph').filter('trustAsHtml', function($sce) {
+angular.module('biggraph').filter('trustAsHtml', ["$sce", function($sce) {
   return $sce.trustAsHtml;
-});
+}]);
 
 angular.module('biggraph').filter('decimal', function() {
   return function(x) {

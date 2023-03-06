@@ -5,7 +5,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './table-browser.html?url';
 
-angular.module('biggraph').directive('tableBrowser', function(util) {
+angular.module('biggraph').directive('tableBrowser', ["util", function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -181,4 +181,4 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       }
     }
   };
-});
+}]);

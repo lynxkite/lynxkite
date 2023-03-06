@@ -5,7 +5,7 @@ import '../util/util';
 import './get-center';
 
 angular.module('biggraph')
-  .factory('side', function (util, $rootScope, getCenter) {
+  .factory('side', ["util", "$rootScope", "getCenter", function (util, $rootScope, getCenter) {
     function defaultSideState() {
       // Get a deep copy of the default UI state.
       // util.globals will always be resolved by the time execution
@@ -718,4 +718,4 @@ angular.module('biggraph')
     };
 
     return { Side: Side };
-  });
+  }]);

@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './model-details.html?url';
 
-angular.module('biggraph').directive('modelDetails', function(util) {
+angular.module('biggraph').directive('modelDetails', ["util", function(util) {
   return {
     restrict: 'E',
     scope: { scalarId: '=' },
@@ -21,4 +21,4 @@ angular.module('biggraph').directive('modelDetails', function(util) {
       };
     },
   };
-});
+}]);

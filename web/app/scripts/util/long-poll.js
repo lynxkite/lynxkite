@@ -6,7 +6,7 @@ import '../app';
 import './util';
 
 angular.module('biggraph')
-  .service('longPoll', function($timeout, util, $rootScope) {
+  .service('longPoll', ["$timeout", "util", "$rootScope", function($timeout, util, $rootScope) {
     const that = this;
 
     // Contents of the last update.
@@ -53,4 +53,4 @@ angular.module('biggraph')
         });
     }
     load();
-  });
+  }]);

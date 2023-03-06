@@ -3,7 +3,7 @@
 import $ from 'jquery';
 import '../app';
 
-angular.module('biggraph').factory('documentation', function($http) {
+angular.module('biggraph').factory('documentation', ["$http", function($http) {
   const cache = {};
   function documentation(name) {
     if (cache[name] === undefined) {
@@ -57,9 +57,9 @@ angular.module('biggraph').factory('documentation', function($http) {
     return dom;
   }
   return documentation;
-});
+}]);
 
-angular.module('biggraph').directive('documentation', function(documentation, $compile, $anchorScroll, util) {
+angular.module('biggraph').directive('documentation', ["documentation", "$compile", "$anchorScroll", "util", function(documentation, $compile, $anchorScroll, util) {
   return {
     scope: { documentation: '@', title: '@' },
     link: function(scope, element) {
@@ -74,4 +74,4 @@ angular.module('biggraph').directive('documentation', function(documentation, $c
       });
     },
   };
-});
+}]);

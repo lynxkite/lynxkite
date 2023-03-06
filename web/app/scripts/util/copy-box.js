@@ -5,7 +5,7 @@ import '../app';
 import './util';
 import templateUrl from './copy-box.html?url';
 
-angular.module('biggraph').directive('copyBox', function(util) {
+angular.module('biggraph').directive('copyBox', ["util", function(util) {
   return {
     restrict: 'E',
     scope: { data: '@', description: '@' },
@@ -23,4 +23,4 @@ angular.module('biggraph').directive('copyBox', function(util) {
       });
     },
   };
-});
+}]);

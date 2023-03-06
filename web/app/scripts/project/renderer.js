@@ -2,7 +2,7 @@
 'use strict';
 import '../app';
 
-angular.module('biggraph').directive('renderer', function($timeout) {
+angular.module('biggraph').directive('renderer', ["$timeout", function($timeout) {
   /* global THREE */
   return {
     restrict: 'E',
@@ -152,4 +152,4 @@ angular.module('biggraph').directive('renderer', function($timeout) {
       });
     },
   };
-});
+}]);

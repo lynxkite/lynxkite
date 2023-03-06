@@ -3,7 +3,7 @@
 import '../app';
 import pythonCodeTemplate from '../python-code.html?url';
 
-angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
+angular.module('biggraph').factory('pythonCodeGenerator', ["$uibModal", function($uibModal) {
 
   function saveAsPython (workspace, selectedBoxIds) {
 
@@ -200,4 +200,4 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
   }
 
   return { saveAsPython };
-});
+}]);

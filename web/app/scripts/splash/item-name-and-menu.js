@@ -5,7 +5,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './item-name-and-menu.html?url';
 
-angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util, $location) {
+angular.module('biggraph').directive('itemNameAndMenu', ["$timeout", "util", "$location", function($timeout, util, $location) {
   return {
     restrict: 'E',
     scope: { object: '=', reload: '&' },
@@ -58,4 +58,4 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util,
       scope.$on('$destroy', () => clippy.destroy());
     },
   };
-});
+}]);

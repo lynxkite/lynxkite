@@ -4,7 +4,7 @@ import '../app';
 import './util';
 import templateUrl from './user-menu.html?url';
 
-angular.module('biggraph').directive('userMenu', function($window, util, $rootScope) {
+angular.module('biggraph').directive('userMenu', ["$window", "util", "$rootScope", function($window, util, $rootScope) {
   return {
     restrict: 'E',
     scope: {
@@ -35,4 +35,4 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
       };
     },
   };
-});
+}]);

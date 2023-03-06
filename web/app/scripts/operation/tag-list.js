@@ -5,7 +5,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './tag-list.html?url';
 
-angular.module('biggraph').directive('tagList', function(util) {
+angular.module('biggraph').directive('tagList', ["util", function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -44,4 +44,4 @@ angular.module('biggraph').directive('tagList', function(util) {
       util.deepWatch(scope, 'options', function() { scope.tags = getTags(); });
     },
   };
-});
+}]);

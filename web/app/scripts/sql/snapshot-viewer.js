@@ -6,7 +6,7 @@ import templateUrl from './snapshot-viewer.html?url';
 // Viewer of a snapshot in the entry selector.
 
 angular.module('biggraph')
-  .directive('snapshotViewer', function(util, $window) {
+  .directive('snapshotViewer', ["util", "$window", function(util, $window) {
     return {
       restrict: 'E',
       templateUrl,
@@ -58,4 +58,4 @@ angular.module('biggraph')
         });
       },
     };
-  });
+  }]);

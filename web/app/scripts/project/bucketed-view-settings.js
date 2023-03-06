@@ -4,7 +4,7 @@ import '../app';
 import './view-settings';
 import templateUrl from './bucketed-view-settings.html?url';
 
-angular.module('biggraph').directive('bucketedViewSettings', function(ViewSettings) {
+angular.module('biggraph').directive('bucketedViewSettings', ["ViewSettings", function(ViewSettings) {
   return {
     scope: { side: '=' },
     restrict: 'E',
@@ -13,4 +13,4 @@ angular.module('biggraph').directive('bucketedViewSettings', function(ViewSettin
       new ViewSettings(scope, element);
     },
   };
-});
+}]);

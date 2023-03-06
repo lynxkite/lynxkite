@@ -6,7 +6,7 @@ import chroma from 'chroma-js';
 import templateUrl from './spark-status.html?url';
 
 angular.module('biggraph')
-  .directive('sparkStatus', function(util, longPoll) {
+  .directive('sparkStatus', ["util", "longPoll", function(util, longPoll) {
     return {
       restrict: 'E',
       scope: {},
@@ -73,4 +73,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);
