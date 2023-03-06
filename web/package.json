@@ -25,7 +25,7 @@
     "markdown-it": "^12.3.2",
     "sweetalert": "2.1.2",
     "tether-drop": "1.4.2",
-    "three": "^0.137.5",
+    "three": "^0.150.1",
     "toposort": "^2.0.2",
     "typeface-exo-2": "^1.1.13",
     "vega": "^5.23.0",
@@ -36,16 +36,20 @@
     "@playwright/test": "^1.31.2",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
-    "asciidoctor.js": "1.5.9",
+    "asciidoctor": "^2.2.6",
     "eslint": "^8.35.0",
     "typescript": "^4.9.5",
     "vite": "^4.1.0"
   },
   "scripts": {
     "test": "playwright test",
-    "dev": "vite serve --host",
-    "build": "vite build --emptyOutDir",
+    "start": "vite serve --host",
+    "build-js": "vite build --emptyOutDir",
+    "build": "npm run build-js && npm run build-docs",
     "preview": "vite preview --host",
-    "eslint": "eslint app/scripts tests"
+    "eslint": "eslint app/scripts tests",
+    "genhelp": "asciidoctor --safe-mode=safe --base-dir=app/help --no-header-footer app/help/index.asciidoc",
+    "genadmin": "asciidoctor --safe-mode=safe --base-dir=app/admin-manual --no-header-footer app/admin-manual/index.asciidoc",
+    "build-docs": "npm run genhelp && npm run genadmin && mv app/help/index.html dist/help.html && mv app/admin-manual/index.html dist/admin-manual.html"
   }
 }

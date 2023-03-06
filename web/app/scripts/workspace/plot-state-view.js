@@ -2,7 +2,7 @@
 import '../app';
 import '../util/util';
 import templateUrl from './plot-state-view.html?url';
-import vega from 'vega';
+import * as vega from 'vega';
 import vegaEmbed from 'vega-embed';
 
 // Viewer of a plot state.

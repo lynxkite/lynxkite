@@ -1,7 +1,8 @@
 // 3D graph visualization.
 'use strict';
 import '../app';
-import THREE from 'three';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 angular.module('biggraph').directive('renderer', ['$timeout', function($timeout) {
   return {
@@ -19,7 +20,7 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
         const H = element.height();
         const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 10000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        const controls = new OrbitControls(camera, renderer.domElement);
         controls.autoRotate = true;
         controls.autoRotateSpeed = 2.0;
         camera.position.set(10, 5, 120);

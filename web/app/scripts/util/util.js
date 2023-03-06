@@ -2,7 +2,8 @@
 'use strict';
 import '../app';
 import reportErrorTemplate from '../report-error.html?url';
-import firebase from 'firebase';
+import firebase from 'firebase/app';
+import 'firebase/analytics';
 
 angular.module('biggraph').service('environment', function() {
   this.protractor = false; // If we want to handle tests specially somewhere.
