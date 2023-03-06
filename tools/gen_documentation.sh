@@ -15,18 +15,18 @@ fi
 
 echo 'Starting LynxKite...'
 cd "$(dirname $0)/../web"
-npx gulp serve &
+npm run dev &
 LYNXKITE_PID=$!
 cd ..
 npm install puppeteer
-function kill_grunt {
+function kill_dev_server {
   echo 'Shutting down LynxKite...'
   kill $LYNXKITE_PID
 }
-trap kill_grunt EXIT
-# Wait until Grunt is up.
-tools/wait_for_port.sh 9090
-echo # Add new-line after Grunt output.
+trap kill_dev_server EXIT
+# Wait until the dev server is up.
+tools/wait_for_port.sh 5173
+echo # Add new-line after dev server output.
 
 echo 'Generating User Manual...'
 node tools/chrome_print_pdf.js 'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
