@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './parameters-parameter.html?url';
 
 angular.module('biggraph').directive('parametersParameter', function(util) {
   return {
@@ -10,7 +11,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       model: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/parameters-parameter.template',
+    templateUrl,
     link: function(scope) {
       scope.validKinds = util.globals.workspaceParameterKinds;
 

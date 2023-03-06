@@ -8,6 +8,7 @@ import './popup-model';
 import './selection-model';
 import './workspace-wrapper';
 import './python-code-generator';
+import templateUrl from './workspace-drawing-board.html?url';
 
 // The drawing board where the user can create and modify a boxes and
 // arrows diagram.
@@ -19,7 +20,7 @@ angular.module('biggraph').directive(
     $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-drawing-board.template',
+      templateUrl,
       scope: {
         boxCatalog: '=',
         workspaceName: '=',

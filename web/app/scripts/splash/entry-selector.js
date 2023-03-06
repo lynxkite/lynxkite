@@ -4,12 +4,13 @@ import md from "markdown-it";
 import Tour from "bootstrap-tourist";
 import '../app';
 import '../util/util';
+import templateUrl from './entry-selector.html?url';
 
 angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/splash/entry-selector.template',
+      templateUrl,
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {

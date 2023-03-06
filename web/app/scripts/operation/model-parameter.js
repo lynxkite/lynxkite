@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './model-parameter.html?url';
 
 angular.module('biggraph').directive('modelParameter', function(util) {
   return {
@@ -11,7 +12,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       modelJson: '=', // Input/output: Model configuration in JSON.
       onBlur: '&', // Function to call on changes.
     },
-    templateUrl: 'scripts/operation/model-parameter.template',
+    templateUrl,
     link: function(scope) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.

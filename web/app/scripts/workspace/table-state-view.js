@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './table-state-view.html?url';
 
 // Viewer of a table state.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('tableStateView', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/table-state-view.template',
+      templateUrl,
       scope: {
         stateId: '=',
         wizard: '=?',

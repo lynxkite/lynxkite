@@ -1,6 +1,7 @@
 // A browser tree for operations to be browsed as a directory tree, e.g. custom boxes.
 'use strict';
 import '../app';
+import templateUrl from './operation-tree.html?url';
 
 angular.module('biggraph').directive('operationTree', function() {
   return {
@@ -9,7 +10,7 @@ angular.module('biggraph').directive('operationTree', function() {
       ops: '=', // The flattened list of operations to be converted to a tree.
       ondrag: '&',
     },
-    templateUrl: 'scripts/workspace/operation-tree.template',
+    templateUrl,
     link: function(scope) {
       scope.node = {
         dirs: {},

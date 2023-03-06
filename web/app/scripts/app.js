@@ -3,11 +3,18 @@ import chroma from 'chroma-js';
 import './util/jq-global';
 import "angular"
 import "angular-cookies"
-import "angular-hotkeys"
+import "angular-hotkeys";
 import "angular-route"
 import "angular-sanitize"
 import "angular-ui-bootstrap"
 import "angular-ui-ace"
+import splashTemplate from './splash/splash.html?url';
+import workspaceTemplate from './workspace/workspace-entry-point.html?url';
+import wizardTemplate from './wizard/wizard.html?url';
+import logsTemplate from './logs.html?url';
+import backupTemplate from './backup.html?url';
+import demoModeTemplate from './demo-mode.html?url';
+import cleanerTemplate from './cleaner.html?url';
 
 angular.module('biggraph', [
   'ngRoute',
@@ -34,35 +41,35 @@ angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'scripts/splash/splash.template',
+      templateUrl: splashTemplate,
       controller: 'SplashCtrl',
     })
     .when('/dir:directoryName*', {
-      templateUrl: 'scripts/splash/splash.template',
+      templateUrl: splashTemplate,
       controller: 'SplashCtrl',
     })
     .when('/workspace/:workspaceName*', {
-      templateUrl: 'scripts/workspace/workspace-entry-point.template',
+      templateUrl: workspaceTemplate,
       controller: 'WorkspaceEntryPointCtrl',
     })
     .when('/wizard/:name*', {
-      templateUrl: 'scripts/wizard/wizard.template',
+      templateUrl: wizardTemplate,
       controller: 'WizardCtrl',
     })
     .when('/demo-mode', {
-      templateUrl: 'scripts/demo-mode.template',
+      templateUrl: demoModeTemplate,
       controller: 'DemoModeCtrl',
     })
     .when('/cleaner', {
-      templateUrl: 'scripts/cleaner.template',
+      templateUrl: cleanerTemplate,
       controller: 'CleanerCtrl',
     })
     .when('/backup', {
-      templateUrl: 'scripts/backup.template',
+      templateUrl: backupTemplate,
       controller: 'BackupCtrl',
     })
     .when('/logs', {
-      templateUrl: 'scripts/logs.template',
+      templateUrl: logsTemplate,
       controller: 'LogsCtrl',
     })
     .otherwise({

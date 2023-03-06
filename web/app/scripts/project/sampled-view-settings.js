@@ -2,12 +2,13 @@
 'use strict';
 import '../app';
 import './view-settings';
+import templateUrl from './sampled-view-settings.html?url';
 
 angular.module('biggraph').directive('sampledViewSettings', function(ViewSettings) {
   return {
     scope: { side: '=' },
     restrict: 'E',
-    templateUrl: 'scripts/project/sampled-view-settings.template',
+    templateUrl,
     link: function(scope, element) {
       new ViewSettings(scope, element);
     },

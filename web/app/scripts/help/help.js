@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import Drop from "tether-drop";
+import templateUrl from './help-popup.html?url';
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
 angular.module('biggraph').directive('helpId',
@@ -72,7 +73,7 @@ angular.module('biggraph')
         fallbackText: '@',
         container: '@',
       },
-      templateUrl: 'scripts/help/help-popup.template',
+      templateUrl,
       link: function(scope, element) {
         const button = element.find('#help-button')[0];
         const popup = element.find('#help-popup');

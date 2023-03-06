@@ -2,13 +2,14 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './histogram.html?url';
 
 angular.module('biggraph').directive('histogram', function($timeout, util) {
   return {
     restrict: 'E',
     scope: { model: '=' },
     replace: false,
-    templateUrl: 'scripts/project/histogram.template',
+    templateUrl,
     link: function(scope) {
       function maxSize() {
         let max = 1;

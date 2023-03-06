@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import './util';
+import templateUrl from './value.html?url';
 
 angular.module('biggraph').directive('value', function(util) {
   return {
@@ -10,7 +11,7 @@ angular.module('biggraph').directive('value', function(util) {
       ref: '=', // Input. Scalar request to display.
       details: '=', // Input. Extra details for error reporting.
     },
-    templateUrl: 'scripts/util/value.template',
+    templateUrl,
     link: function(scope) {
       scope.util = util;
       scope.human = true;

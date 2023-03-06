@@ -1,6 +1,7 @@
 // Provides utility functions, most importantly the Ajax IO functions.
 'use strict';
 import '../app';
+import reportErrorTemplate from '../report-error.html?url';
 
 angular.module('biggraph').service('environment', function() {
   this.protractor = false; // If we want to handle tests specially somewhere.
@@ -292,7 +293,7 @@ angular.module('biggraph')
 
       reportError: function(alert) {
         $uibModal.open({
-          templateUrl: 'scripts/report-error.template',
+          templateUrl: reportErrorTemplate,
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
           animation: false, // Protractor does not like the animation.
@@ -474,7 +475,7 @@ angular.module('biggraph')
     util.reloadUser = function() {
       util.user = {
         $resolved: true,
-        then: f => f(),
+        then: f => f({}),
       }
     };
     util.reloadUser();

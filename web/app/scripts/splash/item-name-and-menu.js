@@ -3,12 +3,13 @@
 import ClipboardJS from 'clipboard';
 import '../app';
 import '../util/util';
+import templateUrl from './item-name-and-menu.html?url';
 
 angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util, $location) {
   return {
     restrict: 'E',
     scope: { object: '=', reload: '&' },
-    templateUrl: 'scripts/splash/item-name-and-menu.template',
+    templateUrl,
     link: function(scope, element) {
       scope.util = util;
 

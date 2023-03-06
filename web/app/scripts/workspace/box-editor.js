@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './box-editor.html?url';
 
 // Viewer and editor of a box instance.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('boxEditor', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/box-editor.template',
+      templateUrl,
       scope: {
         workspace: '=',
         wizard: '=',

@@ -3,6 +3,7 @@
 'use strict';
 import '../app';
 import Fuse from "fuse.js";
+import templateUrl from './operation-selector.html?url';
 
 angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope) {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
       onopen: '&',
       boxCatalog: '=', // (Input.) List of available boxes.
     },
-    templateUrl: 'scripts/workspace/operation-selector.template',
+    templateUrl,
 
     link: function(scope, elem) {
       scope.editMode = true;

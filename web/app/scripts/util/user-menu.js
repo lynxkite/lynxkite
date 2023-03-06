@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import './util';
+import templateUrl from './user-menu.html?url';
 
 angular.module('biggraph').directive('userMenu', function($window, util, $rootScope) {
   return {
@@ -10,7 +11,7 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
       direction: '@', // Class selector for the dropup menu: "dropup" or "dropdown".
       anonymousUsageStats: '=?',
     },
-    templateUrl: 'scripts/util/user-menu.template',
+    templateUrl,
     link: function(scope) {
       scope.util = util;
 

@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './plot-state-view.html?url';
 
 // Viewer of a plot state.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('plotStateView', function(environment, util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/plot-state-view.template',
+      templateUrl,
       scope: {
         stateId: '=',
         popupModel: '=',

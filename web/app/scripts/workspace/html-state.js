@@ -1,13 +1,14 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './html-state.html?url';
 
 // Viewer of an HTML state.
 angular.module('biggraph')
   .directive('htmlState', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/html-state.template',
+      templateUrl,
       scope: {
         stateId: '=',
       },

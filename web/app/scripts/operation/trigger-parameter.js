@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './trigger-parameter.html?url';
 
 angular.module('biggraph').directive('triggerParameter', function(util) {
   return {
@@ -9,7 +10,7 @@ angular.module('biggraph').directive('triggerParameter', function(util) {
       box: '=',
       param: '=',
     },
-    templateUrl: 'scripts/operation/trigger-parameter.template',
+    templateUrl,
     link: function(scope) {
       scope.disabled = false;
       scope.computed = false;

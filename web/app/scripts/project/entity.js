@@ -4,6 +4,7 @@ import '../app';
 import '../util/util';
 import Drop from "tether-drop";
 import chroma from 'chroma-js';
+import templateUrl from './entity.html?url';
 
 angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
   return {
@@ -13,7 +14,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       kind: '@',
       side: '=',
     },
-    templateUrl: 'scripts/project/entity.template',
+    templateUrl,
     link: function(scope, element) {
       /* global Drop */
       // Angular element for easier access of popup elements.

@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './file-parameter.html?url';
 
 angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       // Function to call on "blur".
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/file-parameter.template',
+    templateUrl,
     link: function(scope, element) {
       const input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {

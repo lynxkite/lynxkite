@@ -4,6 +4,7 @@
 import '../app';
 import '../util/util';
 import './load-graph';
+import templateUrl from './project-graph.html?url';
 
 angular.module('biggraph').directive('projectGraph', function (util, loadGraph) {
   return {
@@ -17,7 +18,7 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
       rightToLeftBundle: '=',
       contextMenu: '=' },
     replace: false,
-    templateUrl: 'scripts/project/project-graph.template',
+    templateUrl,
     link: function(scope) {
       scope.graph = new loadGraph.Graph();
       function updateGraph() {

@@ -5,6 +5,7 @@
 //    user drags this entry into a text editor field.
 'use strict';
 import '../app';
+import templateUrl from './table-browser-entry.html?url';
 
 angular.module('biggraph').directive('tableBrowserEntry', function() {
   return {
@@ -13,7 +14,7 @@ angular.module('biggraph').directive('tableBrowserEntry', function() {
       text: '=',
       draggableText: '=',
     },
-    templateUrl: 'scripts/sql/table-browser-entry.template',
+    templateUrl,
     link: function(scope, element) {
       element.bind('dragstart', function(event) {
         event.originalEvent.dataTransfer.setData(

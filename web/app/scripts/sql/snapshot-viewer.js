@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './snapshot-viewer.html?url';
 
 // Viewer of a snapshot in the entry selector.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('snapshotViewer', function(util, $window) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/sql/snapshot-viewer.template',
+      templateUrl,
       scope: {
         path: '@',
         type: '@',

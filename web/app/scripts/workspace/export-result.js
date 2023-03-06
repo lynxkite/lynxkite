@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './export-result.html?url';
 
 // Viewer of an exportResult state.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('exportResult', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/export-result.template',
+      templateUrl,
       scope: {
         stateId: '=',
       },

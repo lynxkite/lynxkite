@@ -1,5 +1,6 @@
 'use strict';
 import '../app';
+import templateUrl from './workspace-popup.html?url';
 
 // A movable popup window that lives on the drawing board.
 // It can contain either a box editor or a state viewer.
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('workspacePopup', function() {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-popup.template',
+      templateUrl,
       scope: {
         popupModel: '=',
         workspace: '=',

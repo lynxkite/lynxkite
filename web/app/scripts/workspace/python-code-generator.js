@@ -1,6 +1,7 @@
 // Generates Python API code for selected boxes or for the whole workspace.
 'use strict';
 import '../app';
+import pythonCodeTemplate from '../python-code.html?url';
 
 angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
 
@@ -188,7 +189,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
     const pythonCode = generatedCode.join('\n');
 
     $uibModal.open({
-      templateUrl: 'scripts/python-code.template',
+      templateUrl: pythonCodeTemplate,
       controller: 'PythonCodeCtrl',
       resolve: { code: function() { return pythonCode; } },
       animation: false, // Protractor does not like the animation.

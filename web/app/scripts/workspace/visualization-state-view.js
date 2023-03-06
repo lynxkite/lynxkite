@@ -4,12 +4,13 @@
 import '../app';
 import '../util/util';
 import '../project/side';
+import templateUrl from './visualization-state-view.html?url';
 
 angular.module('biggraph')
   .directive('visualizationStateView', function(util, side, $q) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/visualization-state-view.template',
+      templateUrl,
       scope: {
         stateId: '=',
         popupModel: '=',

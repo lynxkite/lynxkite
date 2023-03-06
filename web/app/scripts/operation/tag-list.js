@@ -3,6 +3,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './tag-list.html?url';
 
 angular.module('biggraph').directive('tagList', function(util) {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('tagList', function(util) {
       options: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/tag-list.template',
+    templateUrl,
     link: function(scope) {
       scope.addTag = function(id) {
         scope.removeTag(id);

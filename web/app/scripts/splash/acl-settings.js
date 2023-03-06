@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './acl-settings.html?url';
 
 angular.module('biggraph').directive('aclSettings', function(util) {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('aclSettings', function(util) {
       entity: '=',
     },
     replace: false,
-    templateUrl: 'scripts/splash/acl-settings.template',
+    templateUrl,
     link: function(scope) {
       scope.$watch('entity.readACL', function(value) {
         scope.readACL = value;

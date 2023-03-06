@@ -2,6 +2,7 @@
 // Can be used to provide a name when forking, for example.
 'use strict';
 import '../app';
+import templateUrl from './inline-input.html?url';
 
 angular.module('biggraph').directive('inlineInput', function() {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('inlineInput', function() {
       placeholder: '@',
       open: '=',
     },
-    templateUrl: 'scripts/util/inline-input.template',
+    templateUrl,
     link: function(scope, element) {
       scope.enabled = true;
       scope.done = function() {

@@ -3,13 +3,14 @@
 import '../app';
 import './util';
 import chroma from 'chroma-js';
+import templateUrl from './spark-status.html?url';
 
 angular.module('biggraph')
   .directive('sparkStatus', function(util, longPoll) {
     return {
       restrict: 'E',
       scope: {},
-      templateUrl: 'scripts/util/spark-status.template',
+      templateUrl,
       link: function(scope) {
         scope.status = longPoll.lastUpdate.sparkStatus;
         longPoll.onUpdate(scope, function(status) { scope.status = status.sparkStatus; });

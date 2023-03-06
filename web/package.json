@@ -39,8 +39,8 @@
   },
   "scripts": {
     "test": "playwright test",
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite serve --host",
+    "build": "vite build --emptyOutDir",
+    "preview": "vite preview --host"
   }
 }

@@ -2,6 +2,7 @@
 import '../app';
 import '../util/util';
 import '../project/side';
+import templateUrl from './project-state-view.html?url';
 
 // Viewer of a project state.
 
@@ -9,7 +10,7 @@ angular.module('biggraph')
   .directive('projectStateView', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/project-state-view.template',
+      templateUrl,
       scope: {
         stateId: '=',
       },

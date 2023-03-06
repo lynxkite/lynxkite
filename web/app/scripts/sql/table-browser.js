@@ -3,6 +3,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './table-browser.html?url';
 
 angular.module('biggraph').directive('tableBrowser', function(util) {
   return {
@@ -13,7 +14,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       box: '=', // Set box for table browser in the workspace.
       editor: '=',
     },
-    templateUrl: 'scripts/sql/table-browser.template',
+    templateUrl,
     link: function(scope) {
       // Create a root node. Its path is the base path in which this
       // browser is operating. (Same as the path of the SQL box.)

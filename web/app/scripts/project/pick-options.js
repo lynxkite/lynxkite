@@ -57,11 +57,12 @@
 
 'use strict';
 import '../app';
+import templateUrl from './pick-options.html?url';
 
 angular.module('biggraph').directive('pickOptions', function() {
   return {
     scope: { side: '=' },
-    templateUrl: 'scripts/project/pick-options.template',
+    templateUrl,
     link: function(scope) {
       scope.count = '1';
       scope.editedOffset = '';

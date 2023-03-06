@@ -2,11 +2,12 @@
 'use strict';
 import '../app';
 import './util';
+import templateUrl from './top-alerts.html?url';
 
 angular.module('biggraph').directive('topAlerts', function(util) {
   return {
     restrict: 'E',
-    templateUrl: 'scripts/util/top-alerts.template',
+    templateUrl,
     link: function(scope) {
       scope.alerts = [];
       scope.$on('topAlert', function(evt, msg) {

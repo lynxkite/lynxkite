@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import './util';
+import templateUrl from './display-error.html?url';
 
 // Viewer of an error on the UI.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('displayError', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/util/display-error.template',
+      templateUrl,
       scope: {
         caption: '@', // Caption to display on the UI.
         request: '=', // The request which may result in an error. Takes precedence over 'error'.

@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './table-kind.html?url';
 
 angular.module('biggraph').directive('tableKind', function(util) {
   return {
@@ -12,7 +13,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       workspaceReference: '&',
       onBlur: '&',
     },
-    templateUrl: 'scripts/sql/table-kind.template',
+    templateUrl,
     link: function(scope) {
       scope.importBox = function() {
         scope.inProgress = true;

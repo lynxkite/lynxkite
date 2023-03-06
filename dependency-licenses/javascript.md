@@ -1,29 +1,19 @@
-├─ MIT: 687
-├─ ISC: 87
-├─ BSD-3-Clause: 77
-├─ Apache-2.0: 58
-├─ BSD-2-Clause: 11
-├─ MIT*: 5
-├─ CC0-1.0: 2
-├─ 0BSD: 2
-├─ (MIT OR CC0-1.0): 2
+├─ MIT: 116
+├─ BSD-3-Clause: 53
+├─ ISC: 52
+├─ Apache-2.0: 45
+├─ BSD-2-Clause: 4
 ├─ (CC-BY-4.0 AND OFL-1.1 AND MIT): 1
 ├─ Python-2.0: 1
-├─ (MIT OR Apache-2.0): 1
-├─ CC-BY-4.0: 1
 ├─ (BSD-3-Clause AND Apache-2.0): 1
-├─ Apache 2.0: 1
-├─ BSD*: 1
-├─ AFLv2.1,BSD: 1
-├─ (MIT OR GPL-3.0-or-later): 1
-├─ (MIT AND Zlib): 1
-├─ (WTFPL OR MIT): 1
-├─ MIT,Apache2: 1
+├─ MIT*: 1
+├─ Unlicense: 1
 ├─ CC-BY-3.0: 1
+├─ CC0-1.0: 1
 ├─ (MIT AND CC-BY-3.0): 1
-└─ Unlicense: 1
+└─ 0BSD: 1
 
-├─ @firebase/analytics-types@0.4.0
+├─ @firebase/analytics-types@0.6.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -31,7 +21,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/analytics-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/analytics-types/README.md
-├─ @firebase/analytics@0.6.12
+├─ @firebase/analytics@0.6.18
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -47,7 +37,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check-interop-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check-interop-types/README.md
-├─ @firebase/app-check-types@0.1.0
+├─ @firebase/app-check-types@0.3.1
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -55,7 +45,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check-types/README.md
-├─ @firebase/app-check@0.1.3
+├─ @firebase/app-check@0.3.2
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -63,7 +53,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check/README.md
-├─ @firebase/app-types@0.6.2
+├─ @firebase/app-types@0.6.3
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -71,7 +61,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-types/README.md
-├─ @firebase/app@0.6.26
+├─ @firebase/app@0.6.30
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -95,7 +85,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/auth-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/auth-types/README.md
-├─ @firebase/auth@0.16.6
+├─ @firebase/auth@0.16.8
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -103,7 +93,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/auth
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/auth/LICENSE
-├─ @firebase/component@0.5.2
+├─ @firebase/component@0.5.6
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -111,7 +101,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/component
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/component/README.md
-├─ @firebase/database-types@0.7.2
+├─ @firebase/database-types@0.8.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -119,7 +109,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/database-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/database-types/README.md
-├─ @firebase/database@0.10.4
+├─ @firebase/database@0.11.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -127,7 +117,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/database
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/database/README.md
-├─ @firebase/firestore-types@2.3.0
+├─ @firebase/firestore-types@2.4.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -135,7 +125,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/firestore-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/firestore-types/README.md
-├─ @firebase/firestore@2.3.6
+├─ @firebase/firestore@2.4.1
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -151,7 +141,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/functions-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/functions-types/README.md
-├─ @firebase/functions@0.6.11
+├─ @firebase/functions@0.6.16
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -166,7 +156,7 @@
 │  ├─ email: firebase-support@google.com
 │  ├─ url: https://firebase.google.com/
 │  └─ path: /home/darabos/lk/web/node_modules/@firebase/installations-types
-├─ @firebase/installations@0.4.28
+├─ @firebase/installations@0.4.32
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -189,7 +179,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/messaging-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/messaging-types/README.md
-├─ @firebase/messaging@0.7.12
+├─ @firebase/messaging@0.8.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -204,7 +194,7 @@
 │  ├─ email: firebase-support@google.com
 │  ├─ url: https://firebase.google.com/
 │  └─ path: /home/darabos/lk/web/node_modules/@firebase/performance-types
-├─ @firebase/performance@0.4.14
+├─ @firebase/performance@0.4.18
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -228,7 +218,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/remote-config-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/remote-config-types/README.md
-├─ @firebase/remote-config@0.1.39
+├─ @firebase/remote-config@0.1.43
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -236,7 +226,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/remote-config
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/remote-config/README.md
-├─ @firebase/storage-types@0.4.1
+├─ @firebase/storage-types@0.5.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -244,7 +234,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/storage-types
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/storage-types/README.md
-├─ @firebase/storage@0.5.4
+├─ @firebase/storage@0.7.1
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -252,7 +242,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/storage
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/storage/README.md
-├─ @firebase/util@1.1.0
+├─ @firebase/util@1.3.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -260,7 +250,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/util
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/util/README.md
-├─ @firebase/webchannel-wrapper@0.5.0
+├─ @firebase/webchannel-wrapper@0.5.1
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -268,7 +258,7 @@
 │  ├─ url: https://firebase.google.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/@firebase/webchannel-wrapper
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/webchannel-wrapper/README.md
-├─ @fortawesome/fontawesome-free@5.15.3
+├─ @fortawesome/fontawesome-free@5.15.4
 │  ├─ licenses: (CC-BY-4.0 AND OFL-1.1 AND MIT)
 │  ├─ repository: https://github.com/FortAwesome/Font-Awesome
 │  ├─ publisher: Dave Gandy
@@ -276,18 +266,24 @@
 │  ├─ url: http://twitter.com/davegandy
 │  ├─ path: /home/darabos/lk/web/node_modules/@fortawesome/fontawesome-free
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@fortawesome/fontawesome-free/LICENSE.txt
-├─ @grpc/grpc-js@1.3.2
+├─ @grpc/grpc-js@1.8.11
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/grpc/grpc-node/tree/master/packages/grpc-js
 │  ├─ publisher: Google Inc.
 │  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/LICENSE
-├─ @grpc/proto-loader@0.5.6
+├─ @grpc/proto-loader@0.6.13
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/grpc/grpc-node
 │  ├─ publisher: Google Inc.
 │  ├─ path: /home/darabos/lk/web/node_modules/@grpc/proto-loader
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/proto-loader/LICENSE
+├─ @grpc/proto-loader@0.7.5
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/grpc/grpc-node
+│  ├─ publisher: Google Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader/LICENSE
 ├─ @protobufjs/aspromise@1.1.2
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/dcodeIO/protobuf.js
@@ -358,21 +354,27 @@
 │  ├─ email: dcode+protobufjs@dcode.io
 │  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/utf8
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/utf8/LICENSE
-├─ @types/clone@2.1.0
+├─ @types/clone@2.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/darabos/lk/web/node_modules/@types/clone
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/clone/LICENSE
-├─ @types/fast-json-stable-stringify@2.1.0
+├─ @types/estree@1.0.0
 │  ├─ licenses: MIT
-│  ├─ path: /home/darabos/lk/web/node_modules/@types/fast-json-stable-stringify
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/fast-json-stable-stringify/LICENSE
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/estree
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/estree/LICENSE
+├─ @types/geojson@7946.0.10
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/geojson
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/geojson/LICENSE
 ├─ @types/long@4.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/darabos/lk/web/node_modules/@types/long
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/long/LICENSE
-├─ @types/node@17.0.38
+├─ @types/node@18.14.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/darabos/lk/web/node_modules/@types/node
@@ -428,21 +430,21 @@
 │  ├─ publisher: https://github.com/angular-ui/bootstrap/graphs/contributors
 │  ├─ path: /home/darabos/lk/web/node_modules/angular-ui-bootstrap
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-ui-bootstrap/LICENSE
-├─ angular@1.8.2
+├─ angular@1.8.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/angular/angular.js
 │  ├─ publisher: Angular Core Team
 │  ├─ email: angular-core+npm@google.com
 │  ├─ path: /home/darabos/lk/web/node_modules/angular
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/angular/LICENSE.md
-├─ ansi-regex@5.0.0
+├─ ansi-regex@5.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/ansi-regex
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/strip-ansi/node_modules/ansi-regex
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/strip-ansi/node_modules/ansi-regex/license
+│  ├─ path: /home/darabos/lk/web/node_modules/string-width/node_modules/ansi-regex
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/node_modules/ansi-regex/license
 ├─ ansi-styles@3.2.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/ansi-styles
@@ -472,13 +474,6 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/darabos/lk/web/node_modules/array-find-index
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/array-find-index/license
-├─ array-flat-polyfill@1.0.1
-│  ├─ licenses: CC0-1.0
-│  ├─ repository: https://github.com/jonathantneal/array-flat-polyfill
-│  ├─ publisher: Jonathan Neal
-│  ├─ email: jonathantneal@hotmail.com
-│  ├─ path: /home/darabos/lk/web/node_modules/array-flat-polyfill
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/array-flat-polyfill/LICENSE.md
 ├─ asap@2.0.6
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/kriskowal/asap
@@ -517,7 +512,7 @@
 │  ├─ repository: https://github.com/chalk/chalk
 │  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/chalk
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/chalk/license
-├─ chroma-js@2.1.2
+├─ chroma-js@2.4.2
 │  ├─ licenses: (BSD-3-Clause AND Apache-2.0)
 │  ├─ repository: https://github.com/gka/chroma.js
 │  ├─ publisher: Gregor Aisch
@@ -533,8 +528,15 @@
 │  ├─ repository: https://github.com/yargs/cliui
 │  ├─ publisher: Ben Coe
 │  ├─ email: ben@npmjs.com
-│  ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/cliui
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/node_modules/cliui/LICENSE.txt
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/cliui
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/cliui/LICENSE.txt
+├─ cliui@8.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/cliui
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/cliui
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/cliui/LICENSE.txt
 ├─ clone@2.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/pvorb/node-clone
@@ -578,6 +580,13 @@
 │  ├─ email: tj@vision-media.ca
 │  ├─ path: /home/darabos/lk/web/node_modules/commander
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/commander/LICENSE
+├─ commander@7.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/tj/commander.js
+│  ├─ publisher: TJ Holowaychuk
+│  ├─ email: tj@vision-media.ca
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/commander
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/commander/LICENSE
 ├─ concat-map@0.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/node-concat-map
@@ -591,142 +600,127 @@
 │  ├─ repository: https://github.com/zloirock/core-js
 │  ├─ path: /home/darabos/lk/web/node_modules/core-js
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/core-js/LICENSE
-├─ cross-env@6.0.3
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/kentcdodds/cross-env
-│  ├─ publisher: Kent C. Dodds
-│  ├─ email: kent@doddsfamily.us
-│  ├─ url: http://kentcdodds.com/
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/LICENSE
-├─ cross-spawn@7.0.3
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/moxystudio/node-cross-spawn
-│  ├─ publisher: André Cruz
-│  ├─ email: andre@moxy.studio
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env/node_modules/cross-spawn
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/node_modules/cross-spawn/LICENSE
-├─ d3-array@2.12.1
-│  ├─ licenses: BSD-3-Clause
+├─ d3-array@3.2.2
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-array
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-array
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-array/LICENSE
-├─ d3-color@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-color@3.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-color
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-color
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-color/LICENSE
-├─ d3-delaunay@5.3.0
+├─ d3-delaunay@6.0.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-delaunay
 │  ├─ publisher: Mike Bostock
 │  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-delaunay
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-delaunay/LICENSE
-├─ d3-dispatch@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-dispatch@3.0.1
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-dispatch
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-dispatch
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dispatch/LICENSE
-├─ d3-dsv@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-dsv@3.0.1
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-dsv
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/LICENSE
-├─ d3-force@2.1.1
-│  ├─ licenses: BSD-3-Clause
+├─ d3-force@3.0.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-force
 │  ├─ publisher: Mike Bostock
-│  ├─ url: http://bost.ocks.org/mike
+│  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-force
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-force/LICENSE
-├─ d3-format@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-format@3.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-format
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-format
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-format/LICENSE
-├─ d3-geo-projection@3.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-geo-projection@4.0.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-geo-projection
 │  ├─ publisher: Mike Bostock
 │  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-geo-projection
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-geo-projection/LICENSE
-├─ d3-geo@2.0.2
-│  ├─ licenses: BSD-3-Clause
+├─ d3-geo@3.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-geo
 │  ├─ publisher: Mike Bostock
 │  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-geo
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-geo/LICENSE
-├─ d3-hierarchy@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-hierarchy@3.1.2
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-hierarchy
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-hierarchy
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-hierarchy/LICENSE
-├─ d3-interpolate@2.0.1
-│  ├─ licenses: BSD-3-Clause
+├─ d3-interpolate@3.0.1
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-interpolate
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-interpolate
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-interpolate/LICENSE
-├─ d3-path@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-path@3.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-path
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-path
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-path/LICENSE
-├─ d3-quadtree@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-quadtree@3.0.1
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-quadtree
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-quadtree
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-quadtree/LICENSE
-├─ d3-scale@3.3.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-scale@4.0.2
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-scale
 │  ├─ publisher: Mike Bostock
-│  ├─ url: http://bost.ocks.org/mike
+│  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-scale
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-scale/LICENSE
-├─ d3-shape@2.1.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-shape@3.2.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-shape
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-shape
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-shape/LICENSE
-├─ d3-time-format@3.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-time-format@4.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-time-format
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-time-format
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-time-format/LICENSE
-├─ d3-time@2.1.1
-│  ├─ licenses: BSD-3-Clause
+├─ d3-time@3.1.0
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-time
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/d3-time
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-time/LICENSE
-├─ d3-timer@2.0.0
-│  ├─ licenses: BSD-3-Clause
+├─ d3-timer@3.0.1
+│  ├─ licenses: ISC
 │  ├─ repository: https://github.com/d3/d3-timer
 │  ├─ publisher: Mike Bostock
 │  ├─ url: http://bost.ocks.org/mike
@@ -746,7 +740,7 @@
 │  ├─ email: sam@strongloop.com
 │  ├─ path: /home/darabos/lk/web/node_modules/debuglog
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/debuglog/LICENSE
-├─ delaunator@4.0.1
+├─ delaunator@5.0.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/mapbox/delaunator
 │  ├─ publisher: Vladimir Agafonkin
@@ -820,8 +814,8 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/escape-string-regexp
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/escape-string-regexp/license
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/escape-string-regexp
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/escape-string-regexp/license
 ├─ fast-deep-equal@3.1.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/epoberezkin/fast-deep-equal
@@ -852,7 +846,7 @@
 │  ├─ url: http://jcoglan.com/
 │  ├─ path: /home/darabos/lk/web/node_modules/faye-websocket
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/faye-websocket/LICENSE.md
-├─ firebase@8.6.7
+├─ firebase@8.10.1
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/firebase/firebase-js-sdk
 │  ├─ publisher: Firebase
@@ -875,7 +869,7 @@
 │  ├─ email: raynos2@gmail.com
 │  ├─ path: /home/darabos/lk/web/node_modules/function-bind
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/function-bind/LICENSE
-├─ fuse.js@6.4.6
+├─ fuse.js@6.6.2
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/krisk/Fuse
 │  ├─ publisher: Kiro Risk
@@ -902,7 +896,7 @@
 │  ├─ repository: https://github.com/zenorocha/good-listener
 │  ├─ path: /home/darabos/lk/web/node_modules/good-listener
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/good-listener/readme.md
-├─ graceful-fs@4.2.6
+├─ graceful-fs@4.2.10
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/node-graceful-fs
 │  ├─ path: /home/darabos/lk/web/node_modules/graceful-fs
@@ -913,8 +907,8 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/has-flag
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/has-flag/license
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/has-flag
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/has-flag/license
 ├─ has@1.0.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/tarruda/has
@@ -930,20 +924,20 @@
 │  ├─ url: http://re-becca.org
 │  ├─ path: /home/darabos/lk/web/node_modules/hosted-git-info
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/hosted-git-info/LICENSE
-├─ http-parser-js@0.5.3
+├─ http-parser-js@0.5.8
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/creationix/http-parser-js
 │  ├─ publisher: Tim Caswell
 │  ├─ url: https://github.com/creationix
 │  ├─ path: /home/darabos/lk/web/node_modules/http-parser-js
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/http-parser-js/LICENSE.md
-├─ iconv-lite@0.4.24
+├─ iconv-lite@0.6.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/ashtuchkin/iconv-lite
 │  ├─ publisher: Alexander Shtuchkin
 │  ├─ email: ashtuchkin@gmail.com
-│  ├─ path: /home/darabos/lk/web/node_modules/iconv-lite
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/iconv-lite/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/iconv-lite
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/iconv-lite/LICENSE
 ├─ idb@3.0.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/jakearchibald/indexeddb-promised
@@ -963,14 +957,14 @@
 │  ├─ repository: https://github.com/isaacs/inherits
 │  ├─ path: /home/darabos/lk/web/node_modules/inherits
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/inherits/LICENSE
-├─ internmap@1.0.1
+├─ internmap@2.0.3
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/mbostock/internmap
 │  ├─ publisher: Mike Bostock
 │  ├─ url: https://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/internmap
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/internmap/LICENSE
-├─ is-core-module@2.4.0
+├─ is-core-module@2.11.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/inspect-js/is-core-module
 │  ├─ publisher: Jordan Harband
@@ -983,21 +977,13 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/string-width/node_modules/is-fullwidth-code-point
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/node_modules/is-fullwidth-code-point/license
-├─ isexe@2.0.0
-│  ├─ licenses: ISC
-│  ├─ repository: https://github.com/isaacs/isexe
-│  ├─ publisher: Isaac Z. Schlueter
-│  ├─ email: i@izs.me
-│  ├─ url: http://blog.izs.me/
-│  ├─ path: /home/darabos/lk/web/node_modules/isexe
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/isexe/LICENSE
-├─ jquery@3.6.0
+│  ├─ path: /home/darabos/lk/web/node_modules/is-fullwidth-code-point
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/is-fullwidth-code-point/license
+├─ jquery@3.6.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jquery/jquery
 │  ├─ publisher: OpenJS Foundation and other contributors
-│  ├─ url: https://github.com/jquery/jquery/blob/3.6.0/AUTHORS.txt
+│  ├─ url: https://github.com/jquery/jquery/blob/3.6.3/AUTHORS.txt
 │  ├─ path: /home/darabos/lk/web/node_modules/jquery
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/jquery/LICENSE.txt
 ├─ js-yaml@4.1.0
@@ -1027,7 +1013,7 @@
 │  ├─ email: davglass@gmail.com
 │  ├─ path: /home/darabos/lk/web/node_modules/license-checker
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/LICENSE
-├─ linkify-it@3.0.2
+├─ linkify-it@3.0.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/markdown-it/linkify-it
 │  ├─ path: /home/darabos/lk/web/node_modules/linkify-it
@@ -1047,6 +1033,13 @@
 │  ├─ email: dcode@dcode.io
 │  ├─ path: /home/darabos/lk/web/node_modules/long
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/long/LICENSE
+├─ long@5.2.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/dcodeIO/long.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/node_modules/long
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/node_modules/long/LICENSE
 ├─ lru-cache@6.0.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/node-lru-cache
@@ -1064,7 +1057,7 @@
 │  ├─ repository: https://github.com/markdown-it/mdurl
 │  ├─ path: /home/darabos/lk/web/node_modules/mdurl
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/mdurl/LICENSE
-├─ minimatch@3.0.4
+├─ minimatch@3.1.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/minimatch
 │  ├─ publisher: Isaac Z. Schlueter
@@ -1072,15 +1065,15 @@
 │  ├─ url: http://blog.izs.me
 │  ├─ path: /home/darabos/lk/web/node_modules/minimatch
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/minimatch/LICENSE
-├─ minimist@1.2.6
+├─ minimist@1.2.8
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/substack/minimist
+│  ├─ repository: https://github.com/minimistjs/minimist
 │  ├─ publisher: James Halliday
 │  ├─ email: mail@substack.net
 │  ├─ url: http://substack.net
 │  ├─ path: /home/darabos/lk/web/node_modules/minimist
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/minimist/LICENSE
-├─ mkdirp@0.5.5
+├─ mkdirp@0.5.6
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/node-mkdirp
 │  ├─ publisher: James Halliday
@@ -1093,7 +1086,7 @@
 │  ├─ repository: https://github.com/vercel/ms
 │  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/ms
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/ms/license.md
-├─ node-fetch@2.6.1
+├─ node-fetch@2.6.7
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/bitinn/node-fetch
 │  ├─ publisher: David Frank
@@ -1162,14 +1155,6 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/darabos/lk/web/node_modules/path-is-absolute
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/path-is-absolute/license
-├─ path-key@3.1.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/sindresorhus/path-key
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env/node_modules/path-key
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/node_modules/path-key/license
 ├─ path-parse@1.0.7
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jbgutierrez/path-parse
@@ -1181,14 +1166,14 @@
 │  ├─ licenses: MIT
 │  ├─ repository: git+https://taylorhakes@github.com/taylorhakes/promise-polyfill
 │  ├─ publisher: Taylor Hakes
-│  ├─ path: /home/darabos/lk/web/node_modules/promise-polyfill
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/promise-polyfill/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/sweetalert/node_modules/promise-polyfill
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/sweetalert/node_modules/promise-polyfill/LICENSE
 ├─ promise-polyfill@8.1.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/taylorhakes/promise-polyfill
 │  ├─ publisher: Taylor Hakes
-│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/polyfill/node_modules/promise-polyfill
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/polyfill/node_modules/promise-polyfill/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/promise-polyfill
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/promise-polyfill/LICENSE
 ├─ protobufjs@6.11.3
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/protobufjs/protobuf.js
@@ -1196,6 +1181,13 @@
 │  ├─ email: dcode+protobufjs@dcode.io
 │  ├─ path: /home/darabos/lk/web/node_modules/protobufjs
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/protobufjs/LICENSE
+├─ protobufjs@7.2.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/protobufjs/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/LICENSE
 ├─ read-installed@4.0.3
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/read-installed
@@ -1228,7 +1220,7 @@
 │  ├─ url: http://github.com/troygoode/
 │  ├─ path: /home/darabos/lk/web/node_modules/require-directory
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/require-directory/LICENSE
-├─ resolve@1.20.0
+├─ resolve@1.22.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/browserify/resolve
 │  ├─ publisher: James Halliday
@@ -1236,6 +1228,12 @@
 │  ├─ url: http://substack.net
 │  ├─ path: /home/darabos/lk/web/node_modules/resolve
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/resolve/LICENSE
+├─ robust-predicates@3.0.1
+│  ├─ licenses: Unlicense
+│  ├─ repository: https://github.com/mourner/robust-predicates
+│  ├─ publisher: Vladimir Agafonkin
+│  ├─ path: /home/darabos/lk/web/node_modules/robust-predicates
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/robust-predicates/LICENSE
 ├─ rw@1.3.3
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/mbostock/rw
@@ -1243,12 +1241,12 @@
 │  ├─ url: http://bost.ocks.org/mike
 │  ├─ path: /home/darabos/lk/web/node_modules/rw
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/rw/LICENSE
-├─ safe-buffer@5.2.1
+├─ safe-buffer@5.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/feross/safe-buffer
 │  ├─ publisher: Feross Aboukhadijeh
 │  ├─ email: feross@feross.org
-│  ├─ url: https://feross.org
+│  ├─ url: http://feross.org
 │  ├─ path: /home/darabos/lk/web/node_modules/safe-buffer
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/safe-buffer/LICENSE
 ├─ safer-buffer@2.1.2
@@ -1267,29 +1265,14 @@
 ├─ semver@5.7.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/node-semver
-│  ├─ path: /home/darabos/lk/web/node_modules/semver
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/semver/LICENSE
-├─ semver@7.3.5
+│  ├─ path: /home/darabos/lk/web/node_modules/normalize-package-data/node_modules/semver
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/normalize-package-data/node_modules/semver/LICENSE
+├─ semver@7.3.8
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/node-semver
+│  ├─ publisher: GitHub Inc.
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-embed/node_modules/semver
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-embed/node_modules/semver/LICENSE
-├─ shebang-command@2.0.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/kevva/shebang-command
-│  ├─ publisher: Kevin Mårtensson
-│  ├─ email: kevinmartensson@gmail.com
-│  ├─ url: github.com/kevva
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env/node_modules/shebang-command
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/node_modules/shebang-command/license
-├─ shebang-regex@3.0.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/sindresorhus/shebang-regex
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env/node_modules/shebang-regex
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/node_modules/shebang-regex/license
 ├─ slide@1.1.6
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/slide-flow-control
@@ -1328,7 +1311,7 @@
 │  ├─ url: https://kemitchell.com
 │  ├─ path: /home/darabos/lk/web/node_modules/spdx-expression-parse
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-expression-parse/LICENSE
-├─ spdx-license-ids@3.0.9
+├─ spdx-license-ids@3.0.12
 │  ├─ licenses: CC0-1.0
 │  ├─ repository: https://github.com/jslicense/spdx-license-ids
 │  ├─ publisher: Shinnosuke Watanabe
@@ -1349,7 +1332,7 @@
 │  ├─ url: https://kemitchell.com
 │  ├─ path: /home/darabos/lk/web/node_modules/spdx-satisfies
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-satisfies/LICENSE
-├─ string-width@4.2.2
+├─ string-width@4.2.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/string-width
 │  ├─ publisher: Sindre Sorhus
@@ -1357,14 +1340,14 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/darabos/lk/web/node_modules/string-width
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/license
-├─ strip-ansi@6.0.0
+├─ strip-ansi@6.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/strip-ansi
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/strip-ansi
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/strip-ansi/license
+│  ├─ path: /home/darabos/lk/web/node_modules/string-width/node_modules/strip-ansi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/node_modules/strip-ansi/license
 ├─ supports-color@5.5.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/supports-color
@@ -1373,6 +1356,13 @@
 │  ├─ url: sindresorhus.com
 │  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/supports-color
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/supports-color/license
+├─ supports-preserve-symlinks-flag@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/inspect-js/node-supports-preserve-symlinks-flag
+│  ├─ publisher: Jordan Harband
+│  ├─ email: ljharb@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/supports-preserve-symlinks-flag
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/supports-preserve-symlinks-flag/LICENSE
 ├─ sweetalert@2.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/t4t5/sweetalert
@@ -1391,7 +1381,7 @@
 │  ├─ repository: https://github.com/HubSpot/tether
 │  ├─ path: /home/darabos/lk/web/node_modules/tether
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/tether/LICENSE
-├─ three@0.137.0
+├─ three@0.137.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mrdoob/three.js
 │  ├─ publisher: mrdoob
@@ -1417,6 +1407,12 @@
 │  ├─ email: mklehr@gmx.net
 │  ├─ path: /home/darabos/lk/web/node_modules/toposort
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/toposort/License
+├─ tr46@0.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Sebmaster/tr46.js
+│  ├─ publisher: Sebastian Mayr
+│  ├─ email: npm@smayr.name
+│  └─ path: /home/darabos/lk/web/node_modules/tr46
 ├─ treeify@1.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/notatestuser/treeify
@@ -1424,7 +1420,7 @@
 │  ├─ email: notatestuser@gmail.com
 │  ├─ path: /home/darabos/lk/web/node_modules/treeify
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/treeify/LICENSE
-├─ tslib@2.2.0
+├─ tslib@2.5.0
 │  ├─ licenses: 0BSD
 │  ├─ repository: https://github.com/Microsoft/tslib
 │  ├─ publisher: Microsoft Corp.
@@ -1455,146 +1451,153 @@
 │  ├─ url: https://kemitchell.com
 │  ├─ path: /home/darabos/lk/web/node_modules/validate-npm-package-license
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/validate-npm-package-license/LICENSE
-├─ vega-canvas@1.2.6
+├─ vega-canvas@1.2.7
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-canvas
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-canvas/LICENSE
-├─ vega-crossfilter@4.0.5
+├─ vega-crossfilter@4.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-crossfilter
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-crossfilter/LICENSE
-├─ vega-dataflow@5.7.4
+├─ vega-dataflow@5.7.5
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-dataflow
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-dataflow/LICENSE
-├─ vega-embed@6.18.2
+├─ vega-embed@6.21.3
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega-embed
 │  ├─ publisher: UW Interactive Data Lab
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-embed
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-embed/LICENSE
-├─ vega-encode@4.8.3
+├─ vega-encode@4.9.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-encode
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-encode/LICENSE
-├─ vega-event-selector@2.0.6
+├─ vega-event-selector@3.0.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Arvind Satyanarayan
 │  ├─ url: http://arvindsatya.com
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-event-selector
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-event-selector/LICENSE
-├─ vega-expression@4.0.1
+├─ vega-expression@5.0.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-expression
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-expression/LICENSE
-├─ vega-force@4.0.7
+├─ vega-force@4.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-force
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-force/LICENSE
-├─ vega-format@1.0.4
+├─ vega-format@1.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-format
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-format/LICENSE
-├─ vega-functions@5.12.0
+├─ vega-functions@5.13.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-functions
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-functions/LICENSE
-├─ vega-geo@4.3.8
+├─ vega-geo@4.4.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-geo
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-geo/LICENSE
-├─ vega-hierarchy@4.0.9
+├─ vega-hierarchy@4.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-hierarchy
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-hierarchy/LICENSE
-├─ vega-label@1.0.0
+├─ vega-interpreter@1.0.5
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-interpreter
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-interpreter/LICENSE
+├─ vega-label@1.2.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: UW Interactive Data Lab
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-label
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-label/LICENSE
-├─ vega-lite@5.1.0
+├─ vega-lite@5.6.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega-lite
 │  ├─ publisher: Dominik Moritz, Kanit "Ham" Wongsuphasawat, Arvind Satyanarayan, Jeffrey Heer
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-lite
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/LICENSE
-├─ vega-loader@4.4.0
+├─ vega-loader@4.5.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-loader
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-loader/LICENSE
-├─ vega-parser@6.1.3
+├─ vega-parser@6.2.0
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-parser
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-parser/LICENSE
-├─ vega-projection@1.4.5
+├─ vega-projection@1.6.0
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-projection
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-projection/LICENSE
-├─ vega-regression@1.0.9
+├─ vega-regression@1.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-regression
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-regression/LICENSE
-├─ vega-runtime@6.1.3
+├─ vega-runtime@6.1.4
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-runtime
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-runtime/LICENSE
-├─ vega-scale@7.1.1
+├─ vega-scale@7.3.0
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-scale
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-scale/LICENSE
-├─ vega-scenegraph@4.9.4
+├─ vega-scenegraph@4.10.2
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
@@ -1608,97 +1611,105 @@
 │  ├─ email: domoritz@gmail.com
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-schema-url-parser
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-schema-url-parser/LICENSE
-├─ vega-selections@5.3.0
+├─ vega-selections@5.4.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Arvind Satyanarayan
 │  ├─ url: http://arvindsatya.com
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-selections
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-selections/LICENSE
-├─ vega-statistics@1.7.9
+├─ vega-statistics@1.8.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-statistics
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-statistics/LICENSE
-├─ vega-themes@2.10.0
+├─ vega-themes@2.12.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega-themes
 │  ├─ publisher: UW Interactive Data Lab
 │  ├─ url: https://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-themes
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-themes/LICENSE
-├─ vega-time@2.0.4
+├─ vega-time@2.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-time
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-time/LICENSE
-├─ vega-tooltip@0.25.1
+├─ vega-tooltip@0.30.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega-tooltip
 │  ├─ publisher: UW Interactive Data Lab
 │  ├─ url: https://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-tooltip
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-tooltip/LICENSE
-├─ vega-transforms@4.9.4
+├─ vega-transforms@4.10.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-transforms
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-transforms/LICENSE
-├─ vega-typings@0.21.0
+├─ vega-typings@0.23.0
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Dominik Moritz
 │  ├─ email: domoritz@gmail.com
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-typings
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-typings/LICENSE
-├─ vega-util@1.16.1
+├─ vega-util@1.17.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-util
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-util/LICENSE
-├─ vega-view-transforms@4.5.8
+├─ vega-view-transforms@4.5.9
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-view-transforms
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-view-transforms/LICENSE
-├─ vega-view@5.10.1
+├─ vega-view@5.11.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-view
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-view/LICENSE
-├─ vega-voronoi@4.1.5
+├─ vega-voronoi@4.2.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-voronoi
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-voronoi/LICENSE
-├─ vega-wordcloud@4.1.3
+├─ vega-wordcloud@4.1.4
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: Jeffrey Heer
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega-wordcloud
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-wordcloud/LICENSE
-├─ vega@5.20.2
+├─ vega@5.23.0
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/vega/vega
 │  ├─ publisher: UW Interactive Data Lab
 │  ├─ url: http://idl.cs.washington.edu
 │  ├─ path: /home/darabos/lk/web/node_modules/vega
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/vega/LICENSE
+├─ webidl-conversions@3.0.1
+│  ├─ licenses: BSD-2-Clause
+│  ├─ repository: https://github.com/jsdom/webidl-conversions
+│  ├─ publisher: Domenic Denicola
+│  ├─ email: d@domenic.me
+│  ├─ url: https://domenic.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/webidl-conversions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/webidl-conversions/LICENSE.md
 ├─ websocket-driver@0.7.4
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/faye/websocket-driver-node
@@ -1720,22 +1731,21 @@
 │  ├─ repository: https://github.com/github/fetch
 │  ├─ path: /home/darabos/lk/web/node_modules/whatwg-fetch
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/whatwg-fetch/LICENSE
-├─ which@2.0.2
-│  ├─ licenses: ISC
-│  ├─ repository: https://github.com/isaacs/node-which
-│  ├─ publisher: Isaac Z. Schlueter
-│  ├─ email: i@izs.me
-│  ├─ url: http://blog.izs.me
-│  ├─ path: /home/darabos/lk/web/node_modules/cross-env/node_modules/which
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/cross-env/node_modules/which/LICENSE
+├─ whatwg-url@5.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jsdom/whatwg-url
+│  ├─ publisher: Sebastian Mayr
+│  ├─ email: github@smayr.name
+│  ├─ path: /home/darabos/lk/web/node_modules/whatwg-url
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/whatwg-url/LICENSE.txt
 ├─ wrap-ansi@7.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/wrap-ansi
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: https://sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/wrap-ansi
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/node_modules/wrap-ansi/license
+│  ├─ path: /home/darabos/lk/web/node_modules/wrap-ansi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/wrap-ansi/license
 ├─ wrappy@1.0.2
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/wrappy
@@ -1756,8 +1766,8 @@
 │  ├─ repository: https://github.com/yargs/y18n
 │  ├─ publisher: Ben Coe
 │  ├─ email: bencoe@gmail.com
-│  ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/y18n
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/node_modules/y18n/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/y18n
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/y18n/LICENSE
 ├─ yallist@4.0.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/yallist
@@ -1766,14 +1776,26 @@
 │  ├─ url: http://blog.izs.me/
 │  ├─ path: /home/darabos/lk/web/node_modules/yallist
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/yallist/LICENSE
-├─ yargs-parser@20.2.7
+├─ yargs-parser@20.2.9
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/yargs/yargs-parser
 │  ├─ publisher: Ben Coe
 │  ├─ email: ben@npmjs.com
-│  ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/yargs-parser
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/node_modules/yargs-parser/LICENSE.txt
-└─ yargs@16.2.0
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs-parser/LICENSE.txt
+├─ yargs-parser@21.1.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/yargs-parser
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs-parser/LICENSE.txt
+├─ yargs@16.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/yargs/yargs
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs/LICENSE
+└─ yargs@17.6.2
    ├─ licenses: MIT
    ├─ repository: https://github.com/yargs/yargs
    ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/yargs

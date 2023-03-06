@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './state-view.html?url';
 
 // Viewer of a state at an output of a box.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('stateView', function(util, $timeout, $rootScope) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/state-view.template',
+      templateUrl,
       scope: {
         workspace: '=',
         plug: '=',

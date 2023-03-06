@@ -2,6 +2,7 @@
 // the workspace drawing board.
 'use strict';
 import '../app';
+import templateUrl from './operation-selector-entry.html?url';
 
 angular.module('biggraph').directive('operationSelectorEntry', function() {
   return {
@@ -11,6 +12,6 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
       op: '=', // The actual underlying operation.
       name: '=', // Name to display on the UI.
     },
-    templateUrl: 'scripts/workspace/operation-selector-entry.template',
+    templateUrl,
   };
 });

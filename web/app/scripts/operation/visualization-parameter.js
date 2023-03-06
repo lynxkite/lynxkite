@@ -1,6 +1,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './visualization-parameter.html?url';
 
 // Editor for a visualization state stored in a parameter string.
 
@@ -8,7 +9,7 @@ angular.module('biggraph')
   .directive('visualizationParameter', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/operation/visualization-parameter.template',
+      templateUrl,
       scope: {
         projectStateId: '=',
         uiState: '=',

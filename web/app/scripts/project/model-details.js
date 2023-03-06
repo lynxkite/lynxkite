@@ -2,12 +2,13 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './model-details.html?url';
 
 angular.module('biggraph').directive('modelDetails', function(util) {
   return {
     restrict: 'E',
     scope: { scalarId: '=' },
-    templateUrl: 'scripts/project/model-details.template',
+    templateUrl,
     link: function(scope) {
       scope.showSQL = false;
 

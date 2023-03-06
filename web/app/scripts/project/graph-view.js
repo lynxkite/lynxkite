@@ -6,13 +6,13 @@ import * as svg from './svg-util';
 import common from '../util/common-util';
 import force from './force-layout';
 import chroma from 'chroma-js';
+import templateUrl from './graph-view.html?url';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   const directive = {
     restrict: 'E',
-    templateUrl: 'scripts/project/graph-view.template',
+    templateUrl,
     scope: { graph: '=', menu: '=', width: '=', height: '=' },
-    replace: true,
     link: function(scope, element) {
       element = angular.element(element);
       scope.gv = new GraphView(scope, element);

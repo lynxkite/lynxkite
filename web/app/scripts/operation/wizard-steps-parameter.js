@@ -2,6 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
+import templateUrl from './wizard-steps-parameter.html?url';
 
 angular.module('biggraph').directive('wizardStepsParameter', function(util) {
   return {
@@ -10,7 +11,7 @@ angular.module('biggraph').directive('wizardStepsParameter', function(util) {
       workspace: '=',
       model: '=',
     },
-    templateUrl: 'scripts/operation/wizard-steps-parameter.template',
+    templateUrl,
     link: function(scope) {
       scope.$watch('model', function(model) {
         scope.steps = JSON.parse(model);

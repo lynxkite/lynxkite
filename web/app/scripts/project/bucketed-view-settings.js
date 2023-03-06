@@ -2,12 +2,13 @@
 'use strict';
 import '../app';
 import './view-settings';
+import templateUrl from './bucketed-view-settings.html?url';
 
 angular.module('biggraph').directive('bucketedViewSettings', function(ViewSettings) {
   return {
     scope: { side: '=' },
     restrict: 'E',
-    templateUrl: 'scripts/project/bucketed-view-settings.template',
+    templateUrl,
     link: function(scope, element) {
       new ViewSettings(scope, element);
     },

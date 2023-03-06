@@ -1,6 +1,7 @@
 // Displays dummy parameter.
 'use strict';
 import '../app';
+import templateUrl from './dummy-parameter.html?url';
 
 angular.module('biggraph').directive('dummyParameter',
   function() {
@@ -10,7 +11,7 @@ angular.module('biggraph').directive('dummyParameter',
         param: '=',
         htmlId: '='
       },
-      templateUrl: 'scripts/operation/dummy-parameter.template'
+      templateUrl,
     };
   }
 );

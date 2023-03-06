@@ -3,6 +3,7 @@
 'use strict';
 import '../app';
 import './util';
+import templateUrl from './inline-loading.html?url';
 
 angular.module('biggraph').directive('inlineLoading', function(util) {
   return {
@@ -11,7 +12,7 @@ angular.module('biggraph').directive('inlineLoading', function(util) {
       ref: '=', // The resource we are loading.
       details: '=', // Additional information for the error report.
     },
-    templateUrl: 'scripts/util/inline-loading.template',
+    templateUrl,
     link: function(scope) {
       scope.util = util;
       scope.reportError = function() {

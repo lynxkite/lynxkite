@@ -3,12 +3,13 @@
 import ClipboardJS from 'clipboard';
 import '../app';
 import './util';
+import templateUrl from './copy-box.html?url';
 
 angular.module('biggraph').directive('copyBox', function(util) {
   return {
     restrict: 'E',
     scope: { data: '@', description: '@' },
-    templateUrl: 'scripts/util/copy-box.template',
+    templateUrl,
     link: function(scope, element) {
       /* global ClipboardJS */
       const client = new ClipboardJS(element.find('.clicky')[0]);
