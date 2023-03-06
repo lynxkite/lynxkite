@@ -1,5 +1,7 @@
 // The "/logs" page for accessing LynxKite logs.
 'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph')
   .controller('LogsCtrl', function ($scope, util) {

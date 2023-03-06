@@ -1,5 +1,6 @@
 // Shows whether something has been computed already.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('computeProgress', function() {
   return {

@@ -1,6 +1,9 @@
 // Viewer of a visualization state.
 
 'use strict';
+import '../app';
+import '../util/util';
+import '../project/side';
 
 angular.module('biggraph')
   .directive('visualizationStateView', function(util, side, $q) {

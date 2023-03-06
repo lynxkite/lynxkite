@@ -1,5 +1,9 @@
 // The list of entries.
 'use strict';
+import * as md from "markdown-it";
+import * as Tour from "bootstrap-tourist";
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
@@ -7,7 +11,6 @@ angular.module('biggraph').directive('entrySelector',
       restrict: 'E',
       templateUrl: 'scripts/splash/entry-selector.html',
       link: function(scope, element) {
-        const md = window.markdownit();
         scope.util = util;
         function defaultSettings() {
           return { privacy: 'public-read' };

@@ -1,5 +1,6 @@
 // 3D graph visualization.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('renderer', function($timeout) {
   /* global THREE */

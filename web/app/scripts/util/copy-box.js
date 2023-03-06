@@ -1,5 +1,7 @@
 // A button that pops up a textbox with the specified contents selected and ready to be copied.
 'use strict';
+import '../app';
+import './util';
 
 angular.module('biggraph').directive('copyBox', function(util) {
   return {

@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import './util';
 
 // Viewer of an error on the UI.
 

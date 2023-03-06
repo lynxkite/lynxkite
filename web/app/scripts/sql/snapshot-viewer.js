@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Viewer of a snapshot in the entry selector.
 

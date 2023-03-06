@@ -2,7 +2,7 @@
 'use strict';
 
 /* eslint-disable no-unused-vars */
-const COMMON_UTIL = {
+export default {
   minmax: function(xs) {
     const Inf = parseFloat('Infinity');
     let min = Inf, max = -Inf;

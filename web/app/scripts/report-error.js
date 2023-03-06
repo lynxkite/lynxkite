@@ -1,5 +1,7 @@
 // The modal dialog for error reporting.
 'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibModalInstance, alert, util) {
   /* global jsyaml */

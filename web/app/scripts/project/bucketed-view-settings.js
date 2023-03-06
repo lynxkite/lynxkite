@@ -1,5 +1,7 @@
 // Visualization settings in bucketed view.
 'use strict';
+import '../app';
+import './view-settings';
 
 angular.module('biggraph').directive('bucketedViewSettings', function(ViewSettings) {
   return {

@@ -1,5 +1,7 @@
 // The "/demo-mode" page allows toggling the demo mode.
 'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph')
   .controller('DemoModeCtrl', function ($scope, util) {

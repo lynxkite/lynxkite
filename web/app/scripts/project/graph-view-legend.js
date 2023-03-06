@@ -1,5 +1,6 @@
 // One legend panel for graph visualizations.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('graphViewLegend', function() {
   return {

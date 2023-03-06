@@ -56,6 +56,7 @@
 // Have fun!
 
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('pickOptions', function() {
   return {

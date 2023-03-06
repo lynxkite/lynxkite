@@ -1,5 +1,7 @@
 // The links at the bottom of every page, such as "logout".
 'use strict';
+import '../app';
+import './util';
 
 angular.module('biggraph').directive('userMenu', function($window, util, $rootScope) {
   return {

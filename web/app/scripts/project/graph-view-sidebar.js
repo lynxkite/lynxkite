@@ -1,5 +1,7 @@
 // The sidebar for graph visualization. It holds the brightness/contrast controls, etc.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {

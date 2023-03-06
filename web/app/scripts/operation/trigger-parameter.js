@@ -1,5 +1,7 @@
 // UI for the "trigger" parameter kind.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('triggerParameter', function(util) {
   return {

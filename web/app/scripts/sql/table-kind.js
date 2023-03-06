@@ -1,5 +1,7 @@
 // UI for the "table" parameter kind.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('tableKind', function(util) {
   return {

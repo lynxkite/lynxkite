@@ -1,5 +1,7 @@
 // Loads and preprocesses a documentation page.
 'use strict';
+import * as $ from 'jquery';
+import '../app';
 
 angular.module('biggraph').factory('documentation', function($http) {
   const cache = {};

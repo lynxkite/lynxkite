@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Viewer of a plot state.
 

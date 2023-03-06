@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Viewer and editor of a box instance.
 

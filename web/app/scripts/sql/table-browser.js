@@ -1,6 +1,8 @@
 // A tree-view based browser for directories, projects, views,
 // tables and their columns.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('tableBrowser', function(util) {
   return {

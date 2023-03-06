@@ -1,5 +1,7 @@
 // UI for defining wizard steps.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('wizardStepsParameter', function(util) {
   return {

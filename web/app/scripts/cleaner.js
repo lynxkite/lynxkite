@@ -1,5 +1,7 @@
 // The "/cleaner" page for LynxKite cleanup utilities.
 'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph')
   .controller('CleanerCtrl', function ($scope, util) {

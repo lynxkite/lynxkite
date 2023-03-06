@@ -1,5 +1,13 @@
 // Creates the "biggraph" Angular module, sets the routing table, provides utility filters.
-'use strict';
+import * as chroma from 'chroma-js';
+import './util/jq-global';
+import "angular"
+import "angular-cookies"
+import "angular-hotkeys"
+import "angular-route"
+import "angular-sanitize"
+import "angular-ui-bootstrap"
+import "angular-ui-ace"
 
 angular.module('biggraph', [
   'ngRoute',

@@ -1,5 +1,6 @@
 // Renders dynamic content that may contain Angular directives.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('trustedHtml', function($compile) {
   return {

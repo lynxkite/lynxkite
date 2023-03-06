@@ -1,5 +1,7 @@
 // Presents a DynamicValue response from a scalar request.
 'use strict';
+import '../app';
+import './util';
 
 angular.module('biggraph').directive('value', function(util) {
   return {

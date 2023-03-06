@@ -1,5 +1,7 @@
 // UI for defining workspace parameters. In other words, the parameters of a custom operation.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('parametersParameter', function(util) {
   return {

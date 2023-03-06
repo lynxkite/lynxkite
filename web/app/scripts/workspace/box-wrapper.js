@@ -1,4 +1,7 @@
 'use strict';
+import * as md from "markdown-it";
+import '../app';
+import './plug-wrapper';
 
 // Creates a box object for a workspace.
 // This object wraps the actual box data representation and
@@ -12,7 +15,6 @@
 
 angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   function getComment(metadata, instance) {
-    const md = window.markdownit();
     let comment;
     if (metadata.operationId === 'Comment') {
       comment = instance.parameters.comment;

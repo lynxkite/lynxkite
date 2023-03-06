@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Viewer of a state at an output of a box.
 

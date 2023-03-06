@@ -1,5 +1,6 @@
 // Box metadata editor.
 'use strict';
+import '../app';
 
 angular.module('biggraph')
   .directive('boxMetaeditor', function($timeout) {

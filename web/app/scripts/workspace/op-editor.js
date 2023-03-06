@@ -1,5 +1,6 @@
 // Editor of operation parameters.
 'use strict';
+import '../app';
 
 angular.module('biggraph')
   .directive('opEditor', function() {

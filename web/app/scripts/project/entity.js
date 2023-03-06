@@ -1,5 +1,9 @@
 // The entry for an attribute/scalar/segmentation in the project view.
 'use strict';
+import '../app';
+import '../util/util';
+import * as Drop from "tether-drop";
+import * as chroma from 'chroma-js';
 
 angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
   /* globals chroma */

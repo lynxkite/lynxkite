@@ -1,5 +1,7 @@
 // Project-level settings, including ACLs.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('aclSettings', function(util) {
   return {

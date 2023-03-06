@@ -1,5 +1,7 @@
 // Provides a class that can construct and send diagram requests.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').factory('loadGraph', function (util) {
   function Graph() {

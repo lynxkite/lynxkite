@@ -1,10 +1,13 @@
 // Graph visualization. Generates the SVG contents.
 'use strict';
+import '../app';
+import '../util/util';
+import svg from './svg-util';
+import common from '../util/common-util';
+import force from './force-layout';
+import * as chroma from 'chroma-js';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, chroma */
-  const svg = SVG_UTIL;
-  const common = COMMON_UTIL;
   const directive = {
     restrict: 'E',
     templateUrl: 'scripts/project/graph-view.html',
@@ -1358,7 +1361,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       return opts;
     }
 
-    const engine = new FORCE_LAYOUT.Engine(getLayoutOpts());
+    const engine = new force.Engine(getLayoutOpts());
     let lastLayoutStyle = engine.opts.style;
     engine.initForSeconds(vertices, 2);
     let animating = false;

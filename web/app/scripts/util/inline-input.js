@@ -1,6 +1,7 @@
 // A small text box that can pop open inside a button.
 // Can be used to provide a name when forking, for example.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('inlineInput', function() {
   return {

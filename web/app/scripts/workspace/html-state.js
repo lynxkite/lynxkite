@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Viewer of an HTML state.
 angular.module('biggraph')

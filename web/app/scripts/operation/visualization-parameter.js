@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 // Editor for a visualization state stored in a parameter string.
 

@@ -1,5 +1,8 @@
 // The Side object represents one project in the project view.
 'use strict';
+import '../app';
+import '../util/util';
+import './get-center';
 
 angular.module('biggraph')
   .factory('side', function (util, $rootScope, getCenter) {

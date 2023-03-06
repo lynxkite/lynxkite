@@ -1,5 +1,8 @@
 // The Spark status indicator cogwheel in the bottom left.
 'use strict';
+import '../app';
+import './util';
+import * as chroma from 'chroma-js';
 
 angular.module('biggraph')
   .directive('sparkStatus', function(util, longPoll) {

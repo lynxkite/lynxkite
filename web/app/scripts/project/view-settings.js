@@ -1,5 +1,7 @@
 // Visualization settings shared code.
 'use strict';
+import * as Drop from "tether-drop";
+import '../app';
 
 angular.module('biggraph').factory('ViewSettings', function() {
   return function(scope, element) {

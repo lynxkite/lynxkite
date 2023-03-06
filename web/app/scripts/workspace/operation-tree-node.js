@@ -1,5 +1,6 @@
 // A directory in the directory tree based operation browser.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('operationTreeNode', function() {
   return {

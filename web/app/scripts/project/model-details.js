@@ -1,5 +1,7 @@
 // The entry for a model in the project view.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('modelDetails', function(util) {
   return {

@@ -2,7 +2,7 @@
 'use strict';
 
 /* exported  SVG_UTIL */
-const SVG_UTIL = {
+export default {
   // JQuery addClass/removeClass does not work on SVG elements. (They are in
   // another namespace, but the "class" attribute is in the default namespace.)
   classesOf: function(e) {

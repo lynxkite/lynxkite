@@ -1,4 +1,9 @@
 'use strict';
+import '../app';
+import './box-wrapper';
+import './plug-wrapper';
+import '../util/util';
+import '../util/long-poll';
 
 // Creates a workspace wrapper object. A workspace is a set of boxes and arrows.
 // This object wraps the actual workspace data representation and

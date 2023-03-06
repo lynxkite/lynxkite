@@ -1,5 +1,6 @@
 // Generates Python API code for selected boxes or for the whole workspace.
 'use strict';
+import '../app';
 
 angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
 

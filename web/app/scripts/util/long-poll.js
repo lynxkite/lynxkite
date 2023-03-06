@@ -2,6 +2,8 @@
 // communications to avoid taking up more than one connection indefinitely.
 // This service is mocked out in tests.
 'use strict';
+import '../app';
+import './util';
 
 angular.module('biggraph')
   .service('longPoll', function($timeout, util, $rootScope) {

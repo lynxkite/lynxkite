@@ -1,5 +1,6 @@
 // Displays dummy parameter.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('dummyParameter',
   function() {

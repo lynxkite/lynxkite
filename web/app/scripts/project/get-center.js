@@ -1,5 +1,7 @@
 // Sends center requests with pagination support.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').factory('getCenter', function(util) {
   function getCenter(resolvedParams) {

@@ -1,5 +1,7 @@
 // Visualization settings in sampled view.
 'use strict';
+import '../app';
+import './view-settings';
 
 angular.module('biggraph').directive('sampledViewSettings', function(ViewSettings) {
   return {

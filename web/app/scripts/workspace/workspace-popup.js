@@ -1,4 +1,5 @@
 'use strict';
+import '../app';
 
 // A movable popup window that lives on the drawing board.
 // It can contain either a box editor or a state viewer.

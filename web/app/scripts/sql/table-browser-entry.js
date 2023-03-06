@@ -4,6 +4,7 @@
 //  draggableText: This is the text that will be copied if the
 //    user drags this entry into a text editor field.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('tableBrowserEntry', function() {
   return {

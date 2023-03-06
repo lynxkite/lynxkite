@@ -1,4 +1,13 @@
 'use strict';
+import * as chroma from 'chroma-js';
+import * as Tour from "bootstrap-tourist";
+import '../app';
+import '../util/util';
+import '../util/long-poll';
+import './popup-model';
+import './selection-model';
+import './workspace-wrapper';
+import './python-code-generator';
 
 // The drawing board where the user can create and modify a boxes and
 // arrows diagram.
@@ -30,6 +39,11 @@ angular.module('biggraph').directive(
         scope.mouseLogical = { x: 300, y: 300 };
         scope.popups = [];
         scope.movedPopup = undefined;
+
+        scope.getLastPart = function(path) {
+          if (path === undefined) { return undefined; }
+          return path.split('/').slice(-1)[0];
+        };
 
         scope.$watch(
           'workspaceName',
@@ -783,11 +797,6 @@ angular.module('biggraph').directive(
           if (path === undefined) { return undefined; }
           const dir = path.split('/').slice(0, -1);
           return dir.length === 0 ? '' : dir.join('/') + '/';
-        };
-
-        scope.getLastPart = function(path) {
-          if (path === undefined) { return undefined; }
-          return path.split('/').slice(-1)[0];
         };
 
         scope.closeWorkspace = function() {

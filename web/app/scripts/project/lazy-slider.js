@@ -1,5 +1,6 @@
 // A slider (input[type=range]) that only updates the model when the mouse is released.
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('lazySlider', function() {
   return {

@@ -1,4 +1,6 @@
 'use strict';
+import '../app';
+import '../util/util';
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 

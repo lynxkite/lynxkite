@@ -1,5 +1,6 @@
 // Provides utility functions, most importantly the Ajax IO functions.
 'use strict';
+import '../app';
 
 angular.module('biggraph').service('environment', function() {
   this.protractor = false; // If we want to handle tests specially somewhere.

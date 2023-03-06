@@ -1,5 +1,7 @@
 // Operation parameter for kind=model.
 'use strict';
+import '../app';
+import '../util/util';
 
 angular.module('biggraph').directive('modelParameter', function(util) {
   return {

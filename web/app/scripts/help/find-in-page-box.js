@@ -1,4 +1,5 @@
 'use strict';
+import '../app';
 
 angular.module('biggraph').directive('findInPageBox', function() {
   return {
