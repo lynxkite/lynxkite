@@ -6,7 +6,6 @@ import * as Drop from "tether-drop";
 import * as chroma from 'chroma-js';
 
 angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
-  /* globals chroma */
   return {
     restrict: 'E',
     scope: {

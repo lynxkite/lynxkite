@@ -2,7 +2,7 @@
 'use strict';
 import '../app';
 import '../util/util';
-import svg from './svg-util';
+import * as svg from './svg-util';
 import common from '../util/common-util';
 import force from './force-layout';
 import * as chroma from 'chroma-js';

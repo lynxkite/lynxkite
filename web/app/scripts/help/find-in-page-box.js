@@ -1,4 +1,5 @@
 'use strict';
+import * as $ from 'jquery';
 import '../app';
 
 angular.module('biggraph').directive('findInPageBox', function() {
@@ -7,7 +8,6 @@ angular.module('biggraph').directive('findInPageBox', function() {
     scope: {},
     templateUrl: 'scripts/help/find-in-page-box.template',
     link: function(scope) {
-      /* globals $ */
       // The position of the found result which is focused.
       // (Orange color, scrolled into view.)
       let focusedResultPos = 0;
