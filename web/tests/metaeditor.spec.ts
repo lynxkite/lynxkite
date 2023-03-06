@@ -29,7 +29,7 @@ test('metaeditor can change box kind and id', async () => {
   await expect(box.getCodeParameter('delimiter')).toHaveText(',');
 
   // Restore.
-  toggle();
+  await toggle();
   await expect(id()).toHaveValue('new-id');
   await expect(operation()).toHaveValue('Import CSV');
   await id().fill('eg0');

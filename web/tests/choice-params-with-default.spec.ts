@@ -29,7 +29,7 @@ test('pagerank default choice values', async () => {
   const defaultHistogram = await state.left.vertexAttribute('page_rank_default').getHistogramValues();
   const incomingHistogram = await state.left.vertexAttribute('page_rank_incoming').getHistogramValues();
   expect(defaultHistogram).not.toEqual(incomingHistogram);
-  state.close();
+  await state.close();
 });
 
 test('editing pagerank default choice values', async () => {

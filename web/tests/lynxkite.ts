@@ -359,7 +359,7 @@ export class BoxEditor extends PopupBase {
     for (const key in params) {
       await setParameter(this.operationParameter(key), params[key]);
     }
-    this.head().click(); // Make sure the parameters are not focused.
+    await this.head().click(); // Make sure the parameters are not focused.
   }
 
   getParameter(paramName, tag = 'input') {
@@ -890,12 +890,12 @@ async function setParameter(e: Locator, value) {
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
-    e.locator('input.form-control').fill(value);
+    await e.locator('input.form-control').fill(value);
   } else if (kind === 'tag-list') {
     const values = value.split(',');
     for (let i = 0; i < values.length; ++i) {
-      e.locator('.dropdown-toggle').click();
-      e.locator('.dropdown-menu #' + values[i]).click();
+      await e.locator('.dropdown-toggle').click();
+      await e.locator('.dropdown-menu #' + values[i]).click();
     }
   } else if (kind === 'choice' || kind === 'segmentation') {
     await e.selectOption({ label: value });

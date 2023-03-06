@@ -57,7 +57,7 @@ test('undo delete', async () => {
 });
 
 test('redo delete', async () => {
-  redo.click();
+  await redo.click();
   await expect(undo).not.toBeDisabled();
   await expect(redo).toBeDisabled();
   await expect(await workspace.getBox('ex0')).not.toBeVisible();
