@@ -83,20 +83,6 @@ angular.module('biggraph').config(function($httpProvider) {
   $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 });
 
-angular.module('biggraph').factory('$exceptionHandler', function($log, $injector) {
-  return function(error) {
-    // Log as usual.
-    $log.error.apply($log, arguments);
-    // Send to server.
-    // (The injector is used to avoid the circular dependency detection.)
-    $injector.get('util').post('/ajax/jsError', {
-      url: window.location.href,
-      stack: error.stack || '',
-      reportErrors: false,
-    });
-  };
-});
-
 // selectFields adds a new $selection attribute to the objects, that is a newline-delimited
 // concatenation of the selected fields. This can be used to filter by searching in multiple
 // fields. For example to search in p.name and p.notes at the same time:
