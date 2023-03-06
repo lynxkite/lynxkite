@@ -406,7 +406,6 @@ angular.module('biggraph').directive('entrySelector',
 
 // We store this in a global variable because the checkbox is outside of Angular.
 let dataCollectionCheckboxChecked;
-/* eslint-disable no-unused-vars */ // This is used by the tutorial.
-function dataCollectionCheckboxChanged(e) {
+window.dataCollectionCheckboxChanged = (e) => {
   dataCollectionCheckboxChecked = e.checked;
-}
+};

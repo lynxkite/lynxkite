@@ -80,13 +80,11 @@ angular.module('biggraph').factory('PopupModel', ['$window', 'environment', func
   };
 
   PopupModel.prototype.isOpen = function() {
-    const that = this;
-    return this.owner.popups.find(function(p) { return p.id === that.id; }) !== undefined;
+    return this.owner.popups.find((p) => p.id === this.id) !== undefined;
   };
 
   PopupModel.prototype.close = function() {
-    const that = this;
-    this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
+    this.owner.popups = this.owner.popups.filter((p) => p.id !== this.id);
     lastPositions[this.id] = { x: this.x, y: this.y, width: this.width, height: this.height };
   };
 

@@ -194,10 +194,11 @@ angular.module('biggraph').factory('pythonCodeGenerator', ['$uibModal', function
       resolve: { code: function() { return pythonCode; } },
       animation: false, // Protractor does not like the animation.
       size: 'lg',
-    }).result.then(function() {}, function() {});
-
-
+    }).result.then(function() {
+      // Ignore value.
+    }, function() {
+      // Ignore errors.
+    });
   }
-
   return { saveAsPython };
 }]);

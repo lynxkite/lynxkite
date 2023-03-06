@@ -34,8 +34,9 @@ angular.module('biggraph')
             function() {
               scope.changed = false;
               scope.applyVisualizationData();
-            }, function() {}
-          );
+            }, function() {
+              // Ignore errors.
+            });
         });
 
         scope.applyVisualizationData = function() {

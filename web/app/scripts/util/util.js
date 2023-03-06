@@ -43,8 +43,7 @@ angular.module('biggraph')
             queuing.reject({ config: config, statusText: 'Abandoned.' });
           };
         }
-        const that = this;
-        req.finally(function() { that.finished(req); });
+        req.finally(() => this.finished(req));
         this.queue.push(req);
         return req;
       },

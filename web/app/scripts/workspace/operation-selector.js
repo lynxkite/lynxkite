@@ -66,7 +66,7 @@ angular.module('biggraph').directive('operationSelector', ['$timeout', '$rootSco
         } else if (e.keyCode === 27) { // ESCAPE
           scope.searching = undefined;
           scope.op = undefined;
-        } else if (e.keyCode === 13) { //ENTER
+        } else if (e.keyCode === 13) { // ENTER
           const selectedBox = scope.filterAndSort(
             scope.boxes, scope.opFilter)[scope.searchSelection];
           $rootScope.$broadcast('create box under mouse', selectedBox.operationId);

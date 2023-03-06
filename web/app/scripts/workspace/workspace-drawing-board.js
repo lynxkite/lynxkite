@@ -599,10 +599,10 @@ angular.module('biggraph').directive(
         const hk = hotkeys.bindTo(scope);
         hk.add({
         // Only here for the tooltip.
-          combo: 'mod+c', description: 'Copy boxes', callback: function() {} });
+          combo: 'mod+c', description: 'Copy boxes' });
         hk.add({
         // Only here for the tooltip.
-          combo: 'mod+v', description: 'Paste boxes', callback: function() {} });
+          combo: 'mod+v', description: 'Paste boxes' });
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });

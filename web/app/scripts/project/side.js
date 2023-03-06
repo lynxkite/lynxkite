@@ -186,53 +186,52 @@ angular.module('biggraph')
       };
 
       vd.centers = this.state.centers || [];
-      const that = this;
-      vd.setCenter = function(id) { that.state.centers = [id]; };
-      vd.setCenters = function(ids) { that.state.centers = ids; };
+      vd.setCenter = (id) => { this.state.centers = [id]; };
+      vd.setCenters = (ids) => { this.state.centers = ids; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
       vd.edgeStyle = this.state.edgeStyle;
 
-      vd.hasParent = function() {
-        return that.getParentSide() !== undefined;
+      vd.hasParent = () => {
+        return this.getParentSide() !== undefined;
       };
-      vd.parentFilters = function() {
-        return that.getParentSide().state.filters.vertex;
+      vd.parentFilters = () => {
+        return this.getParentSide().state.filters.vertex;
       };
-      vd.parentFilterName = function() {
-        return that.getParentSide().getSegmentationEntry(that).equivalentAttribute.title;
+      vd.parentFilterName = () => {
+        return this.getParentSide().getSegmentationEntry(this).equivalentAttribute.title;
       };
-      vd.filterValue = function(id) {
+      vd.filterValue = (id) => {
         return 'exists(' + id + ')';
       };
-      vd.filterParentToSegment = function(segmentId) {
+      vd.filterParentToSegment = (segmentId) => {
         vd.parentFilters()[vd.parentFilterName()] = vd.filterValue(segmentId);
       };
-      vd.isParentFilteredToSegment = function(segmentId) {
+      vd.isParentFilteredToSegment = (segmentId) => {
         return vd.parentFilters()[vd.parentFilterName()] === vd.filterValue(segmentId);
       };
-      vd.deleteParentsSegmentFilter = function() {
+      vd.deleteParentsSegmentFilter = () => {
         delete vd.parentFilters()[vd.parentFilterName()];
       };
 
-      vd.hasSegmentation = function() {
-        return that.getSegmentationSide() !== undefined;
+      vd.hasSegmentation = () => {
+        return this.getSegmentationSide() !== undefined;
       };
-      vd.segmentationFilters = function() {
-        return that.getSegmentationSide().state.filters.vertex;
+      vd.segmentationFilters = () => {
+        return this.getSegmentationSide().state.filters.vertex;
       };
-      vd.filterSegmentationToParent = function(parentId) {
+      vd.filterSegmentationToParent = (parentId) => {
         vd.segmentationFilters()['#members'] = vd.filterValue(parentId);
       };
-      vd.isSegmentationFilteredToParent = function(parentId) {
+      vd.isSegmentationFilteredToParent = (parentId) => {
         return vd.segmentationFilters()['#members'] === vd.filterValue(parentId);
       };
-      vd.deleteSegmentationsParentFilter = function() {
+      vd.deleteSegmentationsParentFilter = () => {
         delete vd.segmentationFilters()['#members'];
       };
 
-      vd.setVertexFilter = function(title, value) {
-        that.state.filters.vertex[title] = value;
+      vd.setVertexFilter = (title, value) => {
+        this.state.filters.vertex[title] = value;
       };
 
       this.viewData = vd;
@@ -260,14 +259,13 @@ angular.module('biggraph')
       return resolvedParams;
     };
     Side.prototype.sendCenterRequest = function(params) {
-      const that = this;
       const resolvedParams = this.resolveCenterRequestParams(params);
       this.centerRequest = getCenter(resolvedParams);
       this.centerRequest.then(
-        function(centers) {
-          that.state.centers = centers;
-          that.state.lastCentersRequest = params;
-          that.state.lastCentersResponse = centers;
+        (centers) => {
+          this.state.centers = centers;
+          this.state.lastCentersRequest = params;
+          this.state.lastCentersResponse = centers;
         });
     };
 
@@ -301,13 +299,12 @@ angular.module('biggraph')
       // this.pendingProject and only copy into this.project on completion.
       this.pendingProject = undefined;
       if (this.stateId !== undefined && this.state.projectPath !== undefined) {
-        const that = this;
-        that.pendingProject = this.load();
-        return that.pendingProject.finally(function () {
-          if (!angular.equals(that.project, that.pendingProject)) {
+        this.pendingProject = this.load();
+        return this.pendingProject.finally(() => {
+          if (!angular.equals(this.project, this.pendingProject)) {
             // This check is to avoid DOM-rebuild of entity drop popups.
-            that.project = that.pendingProject;
-            that.onProjectLoaded();
+            this.project = this.pendingProject;
+            this.onProjectLoaded();
           }
         });
       } else {
@@ -365,10 +362,9 @@ angular.module('biggraph')
     };
 
     Side.prototype.filterApplied = function(settings, value) {
-      const that = this;
       const applied = [];
       for (let i = 0; i < settings.length; ++i) {
-        if (that.state.attributeTitles[settings[i]] === value) {
+        if (this.state.attributeTitles[settings[i]] === value) {
           applied.push(settings[i]);
         }
       }
@@ -417,23 +413,21 @@ angular.module('biggraph')
     };
 
     Side.prototype.saveAs = function(newName) {
-      const that = this;
       util.post('/ajax/forkEntry',
         {
           from: this.state.projectName,
           to: newName,
-        }).then(function() {
-        that.state.projectName = newName;
+        }).then(() => {
+        this.state.projectName = newName;
       });
     };
 
     Side.prototype.saveNotes = function() {
-      const that = this;
       this.savingNotes = true;
       this.applyOp('Change-project-notes', { notes: this.project.notes })
-        .then(function() {
-          that.unsavedNotes = false;
-          that.savingNotes = false;
+        .then(() => {
+          this.unsavedNotes = false;
+          this.savingNotes = false;
         });
     };
 
@@ -517,28 +511,25 @@ angular.module('biggraph')
               this.nonEmptyVertexFilterNames().length !== 0);
     };
     Side.prototype.applyFiltersEnabled = function() {
-      const that = this;
       return this.nonEmptyVertexFilterNames().every(
-        function(filter) { return !that.isInternalVertexFilter(filter.attributeName); });
+        (filter) => !this.isInternalVertexFilter(filter.attributeName));
     };
 
     Side.prototype.applyFilters = function() {
-      const that = this;
       util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
           edgeFilters: this.nonEmptyEdgeFilterNames(),
           vertexFilters: this.nonEmptyVertexFilterNames(),
-        }).then(function() {
-        that.clearFilters();
-        that.reload();
+        }).then(() => {
+        this.clearFilters();
+        this.reload();
       });
     };
     Side.prototype.clearFilters = function() {
       this.state.filters = { edge: {}, vertex: {} };
     };
     Side.prototype.filterSummary = function() {
-      const that = this;
       const NBSP = '\u00a0';
       const res = [];
       function addNonEmpty(value, key) {
@@ -546,12 +537,12 @@ angular.module('biggraph')
           res.push(' ' + key + NBSP + value);
         }
       }
-      function addProblematic(value, key) {
-        if (that.isInternalVertexFilter(key)) {
+      const addProblematic = (value, key) => {
+        if (this.isInternalVertexFilter(key)) {
           const note = ' Cannot' + NBSP + 'apply' + NBSP + key + NBSP + 'here';
           res.push(note);
         }
-      }
+      };
       angular.forEach(this.state.filters.vertex, addProblematic);
       angular.forEach(this.state.filters.vertex, addNonEmpty);
       angular.forEach(this.state.filters.edge, addNonEmpty);

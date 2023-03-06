@@ -119,7 +119,6 @@ angular.module('biggraph').directive('tableBrowser', ['util', function(util) {
           // searchQuery is optional and used for searching for
           // a subset of directories.
           fetchList: function(searchQuery) {
-            const that = this;
             let promise;
             if (scope.box) {
               promise = util.nocache(
@@ -138,19 +137,19 @@ angular.module('biggraph').directive('tableBrowser', ['util', function(util) {
                   'isImplicitTable': this.objectType === 'table'
                 });
             }
-            promise.then(function(result) {
+            promise.then((result) => {
               const srcList = result.list || [];
-              that.list = [];
+              this.list = [];
               for (let i = 0; i < srcList.length; ++i) {
-                that.list[i] = createNode(
-                  that,
+                this.list[i] = createNode(
+                  this,
                   srcList[i].name,
                   srcList[i].absolutePath,
                   srcList[i].objectType,
                   srcList[i].columnType);
               }
-            }, function(error) {
-              that.error = util.responseToErrorMessage(error);
+            }, (error) => {
+              this.error = util.responseToErrorMessage(error);
             });
           },
 
