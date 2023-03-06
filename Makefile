@@ -10,8 +10,8 @@ all: backend
 clean:
 	git clean -f -X -d --exclude="!.idea/"
 
-.build/frontend-done: $(shell $(find) web/app) web/vite.config.js web/package.json .eslintrc.yaml
-	cd web && npm i && npm run build && cd - && touch $@
+.build/frontend-done: $(shell $(find) web/app) web/vite.config.js web/package.json web/.eslintrc.yaml
+	cd web && npm i && npm run eslint && npm run build && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/frontend-done
 	./tools/check_documentation.sh && touch $@
 .build/sphynx-done: $(shell $(find) sphynx)

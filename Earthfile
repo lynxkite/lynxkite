@@ -52,10 +52,9 @@ sphynx-build:
 web-build:
   COPY +npm-deps/node_modules web/node_modules
   COPY web web
-  COPY .eslintrc.yaml .
   COPY tools/gen_templates.py tools/
   COPY conf/kiterc_template conf/
-  RUN cd web && npx gulp
+  RUN cd web && npm run eslint && npm run build
   SAVE ARTIFACT web/dist
   SAVE IMAGE --cache-hint
 

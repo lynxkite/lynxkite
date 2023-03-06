@@ -43,6 +43,6 @@
     "dev": "vite serve --host",
     "build": "vite build --emptyOutDir",
     "preview": "vite preview --host",
-    "lint": "eslint app/scripts"
+    "eslint": "eslint app/scripts tests"
   }
 }
