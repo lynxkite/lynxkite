@@ -24,7 +24,7 @@ for png in os.scandir(NOTO_EMOJI + '/png/128'):
             'asterisk' in name):
       continue
     files.append((size, code, png.name, name))
-  except:
+  except BaseException:
     pass
 
 files.sort()
