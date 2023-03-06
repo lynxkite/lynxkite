@@ -3,6 +3,7 @@ import '../app';
 import '../util/util';
 import '../project/side';
 import templateUrl from './project-state-view.html?url';
+import sideUrl from '../project/side.html?url';
 
 // Viewer of a project state.
 
@@ -15,6 +16,7 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
+        scope.sideUrl = sideUrl;
         scope.sides = [];
         scope.left = new side.Side(scope.sides, 'left');
         scope.left.state.projectPath = '';

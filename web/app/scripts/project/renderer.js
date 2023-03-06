@@ -70,7 +70,7 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
 
           const geom = new THREE.BufferGeometry();
           geom.setIndex(new THREE.BufferAttribute(is, 1));
-          geom.addAttribute('position', new THREE.BufferAttribute(ps, 3));
+          geom.setAttribute('position', new THREE.BufferAttribute(ps, 3));
           geom.computeVertexNormals();
           const mat = new THREE.MeshPhongMaterial({
             color: 0x807050,

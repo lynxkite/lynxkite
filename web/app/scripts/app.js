@@ -7,6 +7,7 @@ import 'angular-hotkeys';
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-ui-bootstrap';
+import 'ace-builds';
 import 'angular-ui-ace';
 import splashTemplate from './splash/splash.html?url';
 import workspaceTemplate from './workspace/workspace-entry-point.html?url';

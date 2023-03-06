@@ -2,6 +2,7 @@
 import '../app';
 import '../util/util';
 import templateUrl from './visualization-parameter.html?url';
+import sideUrl from '../project/side.html?url';
 
 // Editor for a visualization state stored in a parameter string.
 
@@ -16,6 +17,7 @@ angular.module('biggraph')
         onUiStateChanged: '&',
       },
       link: function(scope) {
+        scope.sideUrl = sideUrl;
         scope.sides = [];
         scope.left = new side.Side(scope.sides, 'left');
         scope.left.enableVisualizationUI = true;

@@ -1,4 +1,6 @@
-export default {
+import { defineConfig } from 'vite';
+
+export default defineConfig({
   root: 'app',
   build: {
     chunkSizeWarningLimit: 1_000_000,
@@ -11,4 +13,4 @@ export default {
       '/ajax': 'http://localhost:2200',
     },
   },
-};
+});
