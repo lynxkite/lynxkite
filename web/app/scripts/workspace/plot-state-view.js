@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('plotStateView', function(environment, util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/plot-state-view.html',
+      templateUrl: 'scripts/workspace/plot-state-view.template',
       scope: {
         stateId: '=',
         popupModel: '=',

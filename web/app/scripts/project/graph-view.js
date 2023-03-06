@@ -10,7 +10,7 @@ import * as chroma from 'chroma-js';
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   const directive = {
     restrict: 'E',
-    templateUrl: 'scripts/project/graph-view.html',
+    templateUrl: 'scripts/project/graph-view.template',
     scope: { graph: '=', menu: '=', width: '=', height: '=' },
     replace: true,
     link: function(scope, element) {

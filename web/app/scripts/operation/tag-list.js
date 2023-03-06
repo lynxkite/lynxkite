@@ -12,7 +12,7 @@ angular.module('biggraph').directive('tagList', function(util) {
       options: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/tag-list.html',
+    templateUrl: 'scripts/operation/tag-list.template',
     link: function(scope) {
       scope.addTag = function(id) {
         scope.removeTag(id);

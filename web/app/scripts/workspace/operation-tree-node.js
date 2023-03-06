@@ -8,6 +8,6 @@ angular.module('biggraph').directive('operationTreeNode', function() {
     scope: {
       node: '=', // Browser tree node representing a dir.
     },
-    templateUrl: 'scripts/workspace/operation-tree-node.html',
+    templateUrl: 'scripts/workspace/operation-tree-node.template',
   };
 });

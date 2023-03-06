@@ -6,7 +6,7 @@ angular.module('biggraph')
   .directive('boxMetaeditor', function($timeout) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/box-metaeditor.html',
+      templateUrl: 'scripts/workspace/box-metaeditor.template',
       scope: {
         workspace: '=',
         boxId: '=',

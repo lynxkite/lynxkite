@@ -9,7 +9,7 @@ angular.module('biggraph').directive('operationTree', function() {
       ops: '=', // The flattened list of operations to be converted to a tree.
       ondrag: '&',
     },
-    templateUrl: 'scripts/workspace/operation-tree.html',
+    templateUrl: 'scripts/workspace/operation-tree.template',
     link: function(scope) {
       scope.node = {
         dirs: {},

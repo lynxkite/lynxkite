@@ -12,7 +12,7 @@ angular.module('biggraph').directive('inlineInput', function() {
       placeholder: '@',
       open: '=',
     },
-    templateUrl: 'scripts/util/inline-input.html',
+    templateUrl: 'scripts/util/inline-input.template',
     link: function(scope, element) {
       scope.enabled = true;
       scope.done = function() {

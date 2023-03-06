@@ -72,7 +72,7 @@ angular.module('biggraph')
         fallbackText: '@',
         container: '@',
       },
-      templateUrl: 'scripts/help/help-popup.html',
+      templateUrl: 'scripts/help/help-popup.template',
       link: function(scope, element) {
         const button = element.find('#help-button')[0];
         const popup = element.find('#help-popup');

@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('displayError', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/util/display-error.html',
+      templateUrl: 'scripts/util/display-error.template',
       scope: {
         caption: '@', // Caption to display on the UI.
         request: '=', // The request which may result in an error. Takes precedence over 'error'.

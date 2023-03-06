@@ -10,7 +10,7 @@ angular.module('biggraph').directive('value', function(util) {
       ref: '=', // Input. Scalar request to display.
       details: '=', // Input. Extra details for error reporting.
     },
-    templateUrl: 'scripts/util/value.html',
+    templateUrl: 'scripts/util/value.template',
     link: function(scope) {
       scope.util = util;
       scope.human = true;

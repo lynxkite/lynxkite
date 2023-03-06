@@ -11,7 +11,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       modelJson: '=', // Input/output: Model configuration in JSON.
       onBlur: '&', // Function to call on changes.
     },
-    templateUrl: 'scripts/operation/model-parameter.html',
+    templateUrl: 'scripts/operation/model-parameter.template',
     link: function(scope) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.

@@ -19,7 +19,7 @@ angular.module('biggraph').directive(
     $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-drawing-board.html',
+      templateUrl: 'scripts/workspace/workspace-drawing-board.template',
       scope: {
         boxCatalog: '=',
         workspaceName: '=',

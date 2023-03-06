@@ -16,7 +16,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       wizard: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/operation-parameters.html',
+    templateUrl: 'scripts/operation/operation-parameters.template',
     link: function(scope, element) {
       element.on('focusout', function() { scope.onBlur(); });
 

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('graphViewLegend', function() {
       data: '=', // List of lines to show.
       side: '@', // left or right
     },
-    templateUrl: 'scripts/project/graph-view-legend.html',
+    templateUrl: 'scripts/project/graph-view-legend.template',
     link: function(scope) {
       scope.format = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format;
     },

@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('visualizationParameter', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/operation/visualization-parameter.html',
+      templateUrl: 'scripts/operation/visualization-parameter.template',
       scope: {
         projectStateId: '=',
         uiState: '=',

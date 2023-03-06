@@ -8,7 +8,7 @@ angular.module('biggraph').directive('dirEntryIcon',
       scope: {
         objectType: '='
       },
-      templateUrl: 'scripts/splash/dir-entry-icon.html',
+      templateUrl: 'scripts/splash/dir-entry-icon.template',
     };
   }
 );

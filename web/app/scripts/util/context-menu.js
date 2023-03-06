@@ -7,7 +7,7 @@ angular.module('biggraph').directive('contextMenu', function($timeout) {
     replace: true,
     restrict: 'E',
     scope: { model: '=' },
-    templateUrl: 'scripts/util/context-menu.html',
+    templateUrl: 'scripts/util/context-menu.template',
     link: function(scope, element) {
       scope.isEmpty = function(o) { return !o || angular.equals(o, {}); };
       scope.$watch('model.enabled', function(enabled) {

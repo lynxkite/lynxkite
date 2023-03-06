@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('stateView', function(util, $timeout, $rootScope) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/state-view.html',
+      templateUrl: 'scripts/workspace/state-view.template',
       scope: {
         workspace: '=',
         plug: '=',

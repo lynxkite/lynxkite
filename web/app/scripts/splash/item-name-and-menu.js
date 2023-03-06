@@ -7,7 +7,7 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util,
   return {
     restrict: 'E',
     scope: { object: '=', reload: '&' },
-    templateUrl: 'scripts/splash/item-name-and-menu.html',
+    templateUrl: 'scripts/splash/item-name-and-menu.template',
     link: function(scope, element) {
       scope.util = util;
 

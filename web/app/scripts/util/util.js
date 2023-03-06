@@ -292,7 +292,7 @@ angular.module('biggraph')
 
       reportError: function(alert) {
         $uibModal.open({
-          templateUrl: 'scripts/report-error.html',
+          templateUrl: 'scripts/report-error.template',
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
           animation: false, // Protractor does not like the animation.

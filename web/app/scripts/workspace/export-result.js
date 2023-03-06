@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('exportResult', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/export-result.html',
+      templateUrl: 'scripts/workspace/export-result.template',
       scope: {
         stateId: '=',
       },

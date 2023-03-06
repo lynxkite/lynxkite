@@ -7,7 +7,7 @@ angular.module('biggraph').directive('modelDetails', function(util) {
   return {
     restrict: 'E',
     scope: { scalarId: '=' },
-    templateUrl: 'scripts/project/model-details.html',
+    templateUrl: 'scripts/project/model-details.template',
     link: function(scope) {
       scope.showSQL = false;
 

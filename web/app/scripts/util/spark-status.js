@@ -9,7 +9,7 @@ angular.module('biggraph')
     return {
       restrict: 'E',
       scope: {},
-      templateUrl: 'scripts/util/spark-status.html',
+      templateUrl: 'scripts/util/spark-status.template',
       link: function(scope) {
         scope.status = longPoll.lastUpdate.sparkStatus;
         longPoll.onUpdate(scope, function(status) { scope.status = status.sparkStatus; });

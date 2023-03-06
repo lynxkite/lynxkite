@@ -188,7 +188,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
     const pythonCode = generatedCode.join('\n');
 
     $uibModal.open({
-      templateUrl: 'scripts/python-code.html',
+      templateUrl: 'scripts/python-code.template',
       controller: 'PythonCodeCtrl',
       resolve: { code: function() { return pythonCode; } },
       animation: false, // Protractor does not like the animation.

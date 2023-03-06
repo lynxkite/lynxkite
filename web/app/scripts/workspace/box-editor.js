@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('boxEditor', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/box-editor.html',
+      templateUrl: 'scripts/workspace/box-editor.template',
       scope: {
         workspace: '=',
         wizard: '=',

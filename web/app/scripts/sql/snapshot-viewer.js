@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('snapshotViewer', function(util, $window) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/sql/snapshot-viewer.html',
+      templateUrl: 'scripts/sql/snapshot-viewer.template',
       scope: {
         path: '@',
         type: '@',

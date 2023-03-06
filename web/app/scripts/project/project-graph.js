@@ -17,7 +17,7 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
       rightToLeftBundle: '=',
       contextMenu: '=' },
     replace: false,
-    templateUrl: 'scripts/project/project-graph.html',
+    templateUrl: 'scripts/project/project-graph.template',
     link: function(scope) {
       scope.graph = new loadGraph.Graph();
       function updateGraph() {

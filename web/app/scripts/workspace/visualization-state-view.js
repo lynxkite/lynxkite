@@ -9,7 +9,7 @@ angular.module('biggraph')
   .directive('visualizationStateView', function(util, side, $q) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/visualization-state-view.html',
+      templateUrl: 'scripts/workspace/visualization-state-view.template',
       scope: {
         stateId: '=',
         popupModel: '=',

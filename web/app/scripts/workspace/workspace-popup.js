@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('workspacePopup', function() {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-popup.html',
+      templateUrl: 'scripts/workspace/workspace-popup.template',
       scope: {
         popupModel: '=',
         workspace: '=',

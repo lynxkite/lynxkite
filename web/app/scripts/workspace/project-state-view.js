@@ -9,7 +9,7 @@ angular.module('biggraph')
   .directive('projectStateView', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/project-state-view.html',
+      templateUrl: 'scripts/workspace/project-state-view.template',
       scope: {
         stateId: '=',
       },

@@ -11,6 +11,6 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
       op: '=', // The actual underlying operation.
       name: '=', // Name to display on the UI.
     },
-    templateUrl: 'scripts/workspace/operation-selector-entry.html',
+    templateUrl: 'scripts/workspace/operation-selector-entry.template',
   };
 });

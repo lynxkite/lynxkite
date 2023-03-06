@@ -10,7 +10,7 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
       direction: '@', // Class selector for the dropup menu: "dropup" or "dropdown".
       anonymousUsageStats: '=?',
     },
-    templateUrl: 'scripts/util/user-menu.html',
+    templateUrl: 'scripts/util/user-menu.template',
     link: function(scope) {
       scope.util = util;
 

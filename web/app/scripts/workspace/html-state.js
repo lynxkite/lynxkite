@@ -7,7 +7,7 @@ angular.module('biggraph')
   .directive('htmlState', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/html-state.html',
+      templateUrl: 'scripts/workspace/html-state.template',
       scope: {
         stateId: '=',
       },

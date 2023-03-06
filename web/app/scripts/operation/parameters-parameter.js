@@ -10,7 +10,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       model: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/parameters-parameter.html',
+    templateUrl: 'scripts/operation/parameters-parameter.template',
     link: function(scope) {
       scope.validKinds = util.globals.workspaceParameterKinds;
 

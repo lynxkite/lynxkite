@@ -7,7 +7,7 @@ angular.module('biggraph').directive('sampledViewSettings', function(ViewSetting
   return {
     scope: { side: '=' },
     restrict: 'E',
-    templateUrl: 'scripts/project/sampled-view-settings.html',
+    templateUrl: 'scripts/project/sampled-view-settings.template',
     link: function(scope, element) {
       new ViewSettings(scope, element);
     },

@@ -7,7 +7,7 @@ angular.module('biggraph').directive('copyBox', function(util) {
   return {
     restrict: 'E',
     scope: { data: '@', description: '@' },
-    templateUrl: 'scripts/util/copy-box.html',
+    templateUrl: 'scripts/util/copy-box.template',
     link: function(scope, element) {
       /* global ClipboardJS */
       const client = new ClipboardJS(element.find('.clicky')[0]);

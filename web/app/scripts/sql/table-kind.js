@@ -12,7 +12,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       workspaceReference: '&',
       onBlur: '&',
     },
-    templateUrl: 'scripts/sql/table-kind.html',
+    templateUrl: 'scripts/sql/table-kind.template',
     link: function(scope) {
       scope.importBox = function() {
         scope.inProgress = true;

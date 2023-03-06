@@ -10,7 +10,7 @@ angular.module('biggraph').directive('dummyParameter',
         param: '=',
         htmlId: '='
       },
-      templateUrl: 'scripts/operation/dummy-parameter.html'
+      templateUrl: 'scripts/operation/dummy-parameter.template'
     };
   }
 );

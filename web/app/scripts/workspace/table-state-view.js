@@ -8,7 +8,7 @@ angular.module('biggraph')
   .directive('tableStateView', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/table-state-view.html',
+      templateUrl: 'scripts/workspace/table-state-view.template',
       scope: {
         stateId: '=',
         wizard: '=?',

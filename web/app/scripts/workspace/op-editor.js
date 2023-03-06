@@ -6,7 +6,7 @@ angular.module('biggraph')
   .directive('opEditor', function() {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/op-editor.html',
+      templateUrl: 'scripts/workspace/op-editor.template',
       scope: {
         box: '=?',
         boxMeta: '=',

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('triggerParameter', function(util) {
       box: '=',
       param: '=',
     },
-    templateUrl: 'scripts/operation/trigger-parameter.html',
+    templateUrl: 'scripts/operation/trigger-parameter.template',
     link: function(scope) {
       scope.disabled = false;
       scope.computed = false;

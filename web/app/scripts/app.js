@@ -34,35 +34,35 @@ angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'scripts/splash/splash.html',
+      templateUrl: 'scripts/splash/splash.template',
       controller: 'SplashCtrl',
     })
     .when('/dir:directoryName*', {
-      templateUrl: 'scripts/splash/splash.html',
+      templateUrl: 'scripts/splash/splash.template',
       controller: 'SplashCtrl',
     })
     .when('/workspace/:workspaceName*', {
-      templateUrl: 'scripts/workspace/workspace-entry-point.html',
+      templateUrl: 'scripts/workspace/workspace-entry-point.template',
       controller: 'WorkspaceEntryPointCtrl',
     })
     .when('/wizard/:name*', {
-      templateUrl: 'scripts/wizard/wizard.html',
+      templateUrl: 'scripts/wizard/wizard.template',
       controller: 'WizardCtrl',
     })
     .when('/demo-mode', {
-      templateUrl: 'scripts/demo-mode.html',
+      templateUrl: 'scripts/demo-mode.template',
       controller: 'DemoModeCtrl',
     })
     .when('/cleaner', {
-      templateUrl: 'scripts/cleaner.html',
+      templateUrl: 'scripts/cleaner.template',
       controller: 'CleanerCtrl',
     })
     .when('/backup', {
-      templateUrl: 'scripts/backup.html',
+      templateUrl: 'scripts/backup.template',
       controller: 'BackupCtrl',
     })
     .when('/logs', {
-      templateUrl: 'scripts/logs.html',
+      templateUrl: 'scripts/logs.template',
       controller: 'LogsCtrl',
     })
     .otherwise({

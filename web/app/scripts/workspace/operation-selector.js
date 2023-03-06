@@ -12,7 +12,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
       onopen: '&',
       boxCatalog: '=', // (Input.) List of available boxes.
     },
-    templateUrl: 'scripts/workspace/operation-selector.html',
+    templateUrl: 'scripts/workspace/operation-selector.template',
 
     link: function(scope, elem) {
       scope.editMode = true;

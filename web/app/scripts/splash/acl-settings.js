@@ -12,7 +12,7 @@ angular.module('biggraph').directive('aclSettings', function(util) {
       entity: '=',
     },
     replace: false,
-    templateUrl: 'scripts/splash/acl-settings.html',
+    templateUrl: 'scripts/splash/acl-settings.template',
     link: function(scope) {
       scope.$watch('entity.readACL', function(value) {
         scope.readACL = value;

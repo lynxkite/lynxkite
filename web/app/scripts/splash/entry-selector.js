@@ -9,7 +9,7 @@ angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/splash/entry-selector.html',
+      templateUrl: 'scripts/splash/entry-selector.template',
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {

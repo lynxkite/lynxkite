@@ -10,7 +10,7 @@ angular.module('biggraph').directive('wizardStepsParameter', function(util) {
       workspace: '=',
       model: '=',
     },
-    templateUrl: 'scripts/operation/wizard-steps-parameter.html',
+    templateUrl: 'scripts/operation/wizard-steps-parameter.template',
     link: function(scope) {
       scope.$watch('model', function(model) {
         scope.steps = JSON.parse(model);

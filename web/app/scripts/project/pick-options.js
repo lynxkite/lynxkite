@@ -61,7 +61,7 @@ import '../app';
 angular.module('biggraph').directive('pickOptions', function() {
   return {
     scope: { side: '=' },
-    templateUrl: 'scripts/project/pick-options.html',
+    templateUrl: 'scripts/project/pick-options.template',
     link: function(scope) {
       scope.count = '1';
       scope.editedOffset = '';
