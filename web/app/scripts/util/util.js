@@ -472,7 +472,10 @@ angular.module('biggraph')
     util.frontendConfig = util.globals.then(g => JSON.parse(g.frontendConfig || '{}'));
 
     util.reloadUser = function() {
-      util.user = util.nocache('/ajax/getUserData');
+      util.user = {
+        $resolved: true,
+        then: f => f(),
+      }
     };
     util.reloadUser();
 
