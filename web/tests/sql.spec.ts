@@ -1,5 +1,5 @@
 // Tests SQL boxes and the table browser.
-import { test, expect, Browser, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 import { Workspace, TableState } from './lynxkite';
 
 let workspace: Workspace;

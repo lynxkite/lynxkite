@@ -1,4 +1,4 @@
-//Tests copy-paste of the boxes
+// Tests copy-paste of the boxes
 import { test, expect } from '@playwright/test';
 import { Workspace, CTRL } from './lynxkite';
 

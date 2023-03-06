@@ -48,7 +48,7 @@ test('multi-choice default values', async () => {
   await workspace.addBox({
     id: 'discard', name: 'Discard vertex attributes', x: 100, y: 200, after: 'ex'
   });
-  const box = await workspace.openBoxEditor('discard')
+  const box = await workspace.openBoxEditor('discard');
   await box.moveTo(500, 100);
   const state = await workspace.openStateView('discard', 'graph');
   await state.moveTo(500, 400);

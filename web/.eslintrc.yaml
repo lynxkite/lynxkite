@@ -35,6 +35,7 @@ rules:
   space-before-blocks: [error]
   space-in-parens: [error]
   space-infix-ops: [error]
+  spaced-comment: error
   arrow-spacing: [error, {before: true, after: true}]
   no-var: [error]
   no-undef: [error]
