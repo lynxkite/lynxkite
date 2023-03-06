@@ -6,7 +6,7 @@ import templateUrl from './visualization-parameter.html?url';
 // Editor for a visualization state stored in a parameter string.
 
 angular.module('biggraph')
-  .directive('visualizationParameter', ["util", "side", function(util, side) {
+  .directive('visualizationParameter', ['util', 'side', function(util, side) {
     return {
       restrict: 'E',
       templateUrl,

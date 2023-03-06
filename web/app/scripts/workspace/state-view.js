@@ -6,7 +6,7 @@ import templateUrl from './state-view.html?url';
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', ["util", "$timeout", "$rootScope", function(util, $timeout, $rootScope) {
+  .directive('stateView', ['util', '$timeout', '$rootScope', function(util, $timeout, $rootScope) {
     return {
       restrict: 'E',
       templateUrl,

@@ -8,7 +8,7 @@ import force from './force-layout';
 import chroma from 'chroma-js';
 import templateUrl from './graph-view.html?url';
 
-angular.module('biggraph').directive('graphView', ["util", "$compile", "$timeout", function(util, $compile, $timeout) {
+angular.module('biggraph').directive('graphView', ['util', '$compile', '$timeout', function(util, $compile, $timeout) {
   const directive = {
     restrict: 'E',
     templateUrl,

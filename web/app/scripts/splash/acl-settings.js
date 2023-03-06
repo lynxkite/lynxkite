@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './acl-settings.html?url';
 
-angular.module('biggraph').directive('aclSettings', ["util", function(util) {
+angular.module('biggraph').directive('aclSettings', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {

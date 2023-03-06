@@ -4,7 +4,7 @@ import '../util/util';
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 
-angular.module('biggraph').factory('PopupModel', ["$window", "environment", function($window, environment) {
+angular.module('biggraph').factory('PopupModel', ['$window', 'environment', function($window, environment) {
   // Creates a new popup model data structure.
   // id: Unique key.
   // content: Description of content to render.

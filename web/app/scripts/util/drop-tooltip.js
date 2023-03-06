@@ -1,12 +1,12 @@
 // A tooltip based on the "Drop" popup library.
 'use strict';
-import Drop from "tether-drop";
+import Drop from 'tether-drop';
 import '../app';
 
 angular.module('biggraph').service('dropTooltipConfig', function() {
   this.enabled = true;
 });
-angular.module('biggraph').directive('dropTooltip', ["dropTooltipConfig", function(dropTooltipConfig) {
+angular.module('biggraph').directive('dropTooltip', ['dropTooltipConfig', function(dropTooltipConfig) {
   return {
     restrict: 'A',
     scope: {

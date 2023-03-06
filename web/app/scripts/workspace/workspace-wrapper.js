@@ -22,7 +22,7 @@ import '../util/long-poll';
 // 5. this._build() is invoked again
 
 angular.module('biggraph')
-  .factory('WorkspaceWrapper', ["BoxWrapper", "PlugWrapper", "util", "longPoll", function(BoxWrapper, PlugWrapper, util, longPoll) {
+  .factory('WorkspaceWrapper', ['BoxWrapper', 'PlugWrapper', 'util', 'longPoll', function(BoxWrapper, PlugWrapper, util, longPoll) {
     function WorkspaceWrapper(name, boxCatalog) {
       this.boxCatalog = boxCatalog; // Updated for the sake of the operation palette.
       this._boxCatalogMap = undefined;

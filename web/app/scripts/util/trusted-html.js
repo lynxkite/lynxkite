@@ -2,7 +2,7 @@
 'use strict';
 import '../app';
 
-angular.module('biggraph').directive('trustedHtml', ["$compile", function($compile) {
+angular.module('biggraph').directive('trustedHtml', ['$compile', function($compile) {
   return {
     restrict: 'A',
     scope: { trustedHtml: '=' },

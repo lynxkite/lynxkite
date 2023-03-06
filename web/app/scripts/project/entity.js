@@ -2,11 +2,11 @@
 'use strict';
 import '../app';
 import '../util/util';
-import Drop from "tether-drop";
+import Drop from 'tether-drop';
 import chroma from 'chroma-js';
 import templateUrl from './entity.html?url';
 
-angular.module('biggraph').directive('entity', ["$timeout", "axisOptions", "util", function($timeout, axisOptions, util) {
+angular.module('biggraph').directive('entity', ['$timeout', 'axisOptions', 'util', function($timeout, axisOptions, util) {
   return {
     restrict: 'E',
     scope: {

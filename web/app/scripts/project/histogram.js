@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './histogram.html?url';
 
-angular.module('biggraph').directive('histogram', ["$timeout", "util", function($timeout, util) {
+angular.module('biggraph').directive('histogram', ['$timeout', 'util', function($timeout, util) {
   return {
     restrict: 'E',
     scope: { model: '=' },

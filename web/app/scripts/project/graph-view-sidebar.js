@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './graph-view-sidebar.html?url';
 
-angular.module('biggraph').directive('graphViewSidebar', ["util", function (util) {
+angular.module('biggraph').directive('graphViewSidebar', ['util', function (util) {
   return {
     restrict: 'E',
     scope: {

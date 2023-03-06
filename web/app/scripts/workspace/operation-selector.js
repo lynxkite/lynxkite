@@ -2,10 +2,10 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 import '../app';
-import Fuse from "fuse.js";
+import Fuse from 'fuse.js';
 import templateUrl from './operation-selector.html?url';
 
-angular.module('biggraph').directive('operationSelector', ["$timeout", "$rootScope", function($timeout, $rootScope) {
+angular.module('biggraph').directive('operationSelector', ['$timeout', '$rootScope', function($timeout, $rootScope) {
   return {
     restrict: 'E',
     scope: {

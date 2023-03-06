@@ -5,7 +5,7 @@ import templateUrl from './html-state.html?url';
 
 // Viewer of an HTML state.
 angular.module('biggraph')
-  .directive('htmlState', ["util", function(util) {
+  .directive('htmlState', ['util', function(util) {
     return {
       restrict: 'E',
       templateUrl,

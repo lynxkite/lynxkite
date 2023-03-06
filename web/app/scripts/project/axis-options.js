@@ -3,7 +3,7 @@
 import '../app';
 import '../util/util';
 
-angular.module('biggraph').factory('axisOptions', ["util", function axisOptionsFactory(util) {
+angular.module('biggraph').factory('axisOptions', ['util', function axisOptionsFactory(util) {
   return {
     // Binds axisOptions into the current scope as "variable".
     // This is tricky because we cannot pre-initialize axisOptions in the state.

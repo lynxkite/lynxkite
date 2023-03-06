@@ -2,7 +2,7 @@
 'use strict';
 import './app';
 
-angular.module('biggraph').controller('PythonCodeCtrl', ["$scope", "$uibModalInstance", "code", function($scope, $uibModalInstance, code) {
+angular.module('biggraph').controller('PythonCodeCtrl', ['$scope', '$uibModalInstance', 'code', function($scope, $uibModalInstance, code) {
   $scope.code = code;
 
   $scope.selectAll = function() {

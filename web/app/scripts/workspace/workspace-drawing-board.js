@@ -1,6 +1,6 @@
 'use strict';
 import chroma from 'chroma-js';
-import Tour from "bootstrap-tourist";
+import Tour from 'bootstrap-tourist';
 import '../app';
 import '../util/util';
 import '../util/long-poll';
@@ -16,7 +16,7 @@ import jsyaml from 'js-yaml';
 
 angular.module('biggraph').directive(
   'workspaceDrawingBoard',
-  ["environment", "hotkeys", "PopupModel", "SelectionModel", "WorkspaceWrapper", "$rootScope", "$q", "$location", "util", "longPoll", "pythonCodeGenerator", function(
+  ['environment', 'hotkeys', 'PopupModel', 'SelectionModel', 'WorkspaceWrapper', '$rootScope', '$q', '$location', 'util', 'longPoll', 'pythonCodeGenerator', function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
     $location, util, longPoll, pythonCodeGenerator) {
     return {

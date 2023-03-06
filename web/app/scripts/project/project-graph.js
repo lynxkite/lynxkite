@@ -6,7 +6,7 @@ import '../util/util';
 import './load-graph';
 import templateUrl from './project-graph.html?url';
 
-angular.module('biggraph').directive('projectGraph', ["util", "loadGraph", function (util, loadGraph) {
+angular.module('biggraph').directive('projectGraph', ['util', 'loadGraph', function (util, loadGraph) {
   return {
     restrict: 'E',
     scope: {

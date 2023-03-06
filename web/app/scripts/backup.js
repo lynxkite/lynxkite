@@ -4,7 +4,7 @@ import './app';
 import './util/util';
 
 angular.module('biggraph')
-  .controller('BackupCtrl', ["$scope", "util", function ($scope, util) {
+  .controller('BackupCtrl', ['$scope', 'util', function ($scope, util) {
     $scope.inProgress = false;
     $scope.statusMessage = '';
     $scope.success = false;

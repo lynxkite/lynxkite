@@ -3,7 +3,7 @@
 import '../app';
 import THREE from 'three';
 
-angular.module('biggraph').directive('renderer', ["$timeout", function($timeout) {
+angular.module('biggraph').directive('renderer', ['$timeout', function($timeout) {
   return {
     restrict: 'E',
     link: function(scope, element) {

@@ -1,13 +1,13 @@
 // The list of entries.
 'use strict';
-import md from "markdown-it";
-import Tour from "bootstrap-tourist";
+import md from 'markdown-it';
+import Tour from 'bootstrap-tourist';
 import '../app';
 import '../util/util';
 import templateUrl from './entry-selector.html?url';
 
 angular.module('biggraph').directive('entrySelector',
-  ["util", "hotkeys", "$timeout", "$anchorScroll", "$location", "$routeParams", function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
+  ['util', 'hotkeys', '$timeout', '$anchorScroll', '$location', '$routeParams', function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
       templateUrl,

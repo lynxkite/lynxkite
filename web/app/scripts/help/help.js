@@ -1,12 +1,12 @@
 // Displays help content by ID.
 'use strict';
 import '../app';
-import Drop from "tether-drop";
+import Drop from 'tether-drop';
 import templateUrl from './help-popup.html?url';
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
 angular.module('biggraph').directive('helpId',
-  ["documentation", "$compile", function(documentation, $compile) {
+  ['documentation', '$compile', function(documentation, $compile) {
     return {
       restrict: 'A',
       scope: {
@@ -64,7 +64,7 @@ angular.module('biggraph').directive('helpId',
 
 // A button that displays a help snippet on hover/click.
 angular.module('biggraph')
-  .directive('helpPopup', ["dropTooltipConfig", function(dropTooltipConfig) {
+  .directive('helpPopup', ['dropTooltipConfig', function(dropTooltipConfig) {
 
     return {
       restrict: 'E',

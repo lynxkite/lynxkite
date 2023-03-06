@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './file-parameter.html?url';
 
-angular.module('biggraph').directive('fileParameter', ["util", "$timeout", function(util, $timeout) {
+angular.module('biggraph').directive('fileParameter', ['util', '$timeout', function(util, $timeout) {
   return {
     restrict: 'E',
     scope: {

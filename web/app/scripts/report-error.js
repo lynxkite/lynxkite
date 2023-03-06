@@ -5,7 +5,7 @@ import './util/util';
 import jsyaml from 'js-yaml';
 import ClipboardJS from 'clipboard';
 
-angular.module('biggraph').controller('ReportErrorCtrl', ["$scope", "$uibModalInstance", "alert", "util", function($scope, $uibModalInstance, alert, util) {
+angular.module('biggraph').controller('ReportErrorCtrl', ['$scope', '$uibModalInstance', 'alert', 'util', function($scope, $uibModalInstance, alert, util) {
   const debug = {
     message: alert.message,
     details: alert.details,

@@ -1,13 +1,13 @@
 // Creates the "biggraph" Angular module, sets the routing table, provides utility filters.
 import chroma from 'chroma-js';
 import './util/jq-global';
-import "angular"
-import "angular-cookies"
-import "angular-hotkeys";
-import "angular-route"
-import "angular-sanitize"
-import "angular-ui-bootstrap"
-import "angular-ui-ace"
+import 'angular';
+import 'angular-cookies';
+import 'angular-hotkeys';
+import 'angular-route';
+import 'angular-sanitize';
+import 'angular-ui-bootstrap';
+import 'angular-ui-ace';
 import splashTemplate from './splash/splash.html?url';
 import workspaceTemplate from './workspace/workspace-entry-point.html?url';
 import wizardTemplate from './wizard/wizard.html?url';
@@ -23,7 +23,7 @@ angular.module('biggraph', [
   'cfp.hotkeys',
 ]);
 
-angular.module('biggraph').config(["$routeProvider", "$locationProvider", function ($routeProvider, $locationProvider) {
+angular.module('biggraph').config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
   $locationProvider.hashPrefix(''); // https://docs.angularjs.org/guide/migration#commit-aa077e8
   function docTemplate(doc, title) {
     return { template: `
@@ -85,7 +85,7 @@ angular.module('biggraph').config(["$routeProvider", "$locationProvider", functi
   }
 }]);
 
-angular.module('biggraph').config(["$httpProvider", function($httpProvider) {
+angular.module('biggraph').config(['$httpProvider', function($httpProvider) {
   // Identify requests from JavaScript by a header.
   $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 }]);
@@ -108,7 +108,7 @@ angular.module('biggraph').filter('selectFields', function() {
   };
 });
 
-angular.module('biggraph').filter('trustAsHtml', ["$sce", function($sce) {
+angular.module('biggraph').filter('trustAsHtml', ['$sce', function($sce) {
   return $sce.trustAsHtml;
 }]);
 

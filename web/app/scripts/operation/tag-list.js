@@ -5,7 +5,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './tag-list.html?url';
 
-angular.module('biggraph').directive('tagList', ["util", function(util) {
+angular.module('biggraph').directive('tagList', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {

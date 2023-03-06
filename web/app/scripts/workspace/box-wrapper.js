@@ -1,5 +1,5 @@
 'use strict';
-import md from "markdown-it";
+import md from 'markdown-it';
 import '../app';
 import './plug-wrapper';
 
@@ -13,7 +13,7 @@ import './plug-wrapper';
 //   coordinates on the workspace and everything related to this
 //   box instance that have to be saved.
 
-angular.module('biggraph').factory('BoxWrapper', ["PlugWrapper", function(PlugWrapper) {
+angular.module('biggraph').factory('BoxWrapper', ['PlugWrapper', function(PlugWrapper) {
   function getComment(metadata, instance) {
     let comment;
     if (metadata.operationId === 'Comment') {

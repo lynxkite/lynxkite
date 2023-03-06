@@ -4,7 +4,7 @@ import '../app';
 import './view-settings';
 import templateUrl from './sampled-view-settings.html?url';
 
-angular.module('biggraph').directive('sampledViewSettings', ["ViewSettings", function(ViewSettings) {
+angular.module('biggraph').directive('sampledViewSettings', ['ViewSettings', function(ViewSettings) {
   return {
     scope: { side: '=' },
     restrict: 'E',

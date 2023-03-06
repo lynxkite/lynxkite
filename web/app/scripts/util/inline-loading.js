@@ -5,7 +5,7 @@ import '../app';
 import './util';
 import templateUrl from './inline-loading.html?url';
 
-angular.module('biggraph').directive('inlineLoading', ["util", function(util) {
+angular.module('biggraph').directive('inlineLoading', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {

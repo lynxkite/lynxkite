@@ -3,7 +3,7 @@
 import '../app';
 import templateUrl from './context-menu.html?url';
 
-angular.module('biggraph').directive('contextMenu', ["$timeout", function($timeout) {
+angular.module('biggraph').directive('contextMenu', ['$timeout', function($timeout) {
   return {
     restrict: 'E',
     scope: { model: '=' },

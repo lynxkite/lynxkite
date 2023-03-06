@@ -4,7 +4,7 @@ import '../app';
 import './util';
 import templateUrl from './value.html?url';
 
-angular.module('biggraph').directive('value', ["util", function(util) {
+angular.module('biggraph').directive('value', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {

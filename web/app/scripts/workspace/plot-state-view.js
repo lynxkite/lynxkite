@@ -8,7 +8,7 @@ import vegaEmbed from 'vega-embed';
 // Viewer of a plot state.
 
 angular.module('biggraph')
-  .directive('plotStateView', ["environment", "util", function(environment, util) {
+  .directive('plotStateView', ['environment', 'util', function(environment, util) {
     return {
       restrict: 'E',
       templateUrl,

@@ -7,7 +7,7 @@ import '../project/side';
 import templateUrl from './visualization-state-view.html?url';
 
 angular.module('biggraph')
-  .directive('visualizationStateView', ["util", "side", "$q", function(util, side, $q) {
+  .directive('visualizationStateView', ['util', 'side', '$q', function(util, side, $q) {
     return {
       restrict: 'E',
       templateUrl,

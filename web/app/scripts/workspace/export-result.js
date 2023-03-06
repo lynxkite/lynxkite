@@ -6,7 +6,7 @@ import templateUrl from './export-result.html?url';
 // Viewer of an exportResult state.
 
 angular.module('biggraph')
-  .directive('exportResult', ["util", function(util) {
+  .directive('exportResult', ['util', function(util) {
     return {
       restrict: 'E',
       templateUrl,

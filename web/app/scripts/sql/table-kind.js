@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './table-kind.html?url';
 
-angular.module('biggraph').directive('tableKind', ["util", function(util) {
+angular.module('biggraph').directive('tableKind', ['util', function(util) {
   return {
     scope: {
       box: '=',

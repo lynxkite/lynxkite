@@ -4,7 +4,7 @@ import './app';
 import './util/util';
 
 angular.module('biggraph')
-  .controller('DemoModeCtrl', ["$scope", "util", function ($scope, util) {
+  .controller('DemoModeCtrl', ['$scope', 'util', function ($scope, util) {
     $scope.status = util.nocache('/ajax/demoModeStatus', {fake: 0});
 
     function exitReq() {

@@ -4,7 +4,7 @@ import '../app';
 import '../util/util';
 import templateUrl from './trigger-parameter.html?url';
 
-angular.module('biggraph').directive('triggerParameter', ["util", function(util) {
+angular.module('biggraph').directive('triggerParameter', ['util', function(util) {
   return {
     scope: {
       box: '=',

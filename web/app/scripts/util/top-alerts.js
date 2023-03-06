@@ -4,7 +4,7 @@ import '../app';
 import './util';
 import templateUrl from './top-alerts.html?url';
 
-angular.module('biggraph').directive('topAlerts', ["util", function(util) {
+angular.module('biggraph').directive('topAlerts', ['util', function(util) {
   return {
     restrict: 'E',
     templateUrl,

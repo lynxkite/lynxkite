@@ -3,7 +3,7 @@
 import '../app';
 import '../util/util';
 
-angular.module('biggraph').factory('loadGraph', ["util", function (util) {
+angular.module('biggraph').factory('loadGraph', ['util', function (util) {
   function Graph() {
     this.request = undefined;
   }
