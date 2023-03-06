@@ -5,7 +5,7 @@ import '../util/util';
 import * as svg from './svg-util';
 import common from '../util/common-util';
 import force from './force-layout';
-import * as chroma from 'chroma-js';
+import chroma from 'chroma-js';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   const directive = {

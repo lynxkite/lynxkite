@@ -150,6 +150,6 @@ code {
     content: '';
     display: block;
     height: 100px;
-    background: url(images/logo.png) center / contain no-repeat #004165 !important; /* Brand color. */
+    background: url(/images/logo.png) center / contain no-repeat #004165 !important; /* Brand color. */
   }
 }

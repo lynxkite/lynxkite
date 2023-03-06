@@ -1,5 +1,5 @@
 'use strict';
-import * as $ from 'jquery';
+import $ from 'jquery';
 import '../app';
 
 angular.module('biggraph').directive('findInPageBox', function() {

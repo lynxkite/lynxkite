@@ -1,5 +1,5 @@
 // Creates the "biggraph" Angular module, sets the routing table, provides utility filters.
-import * as chroma from 'chroma-js';
+import chroma from 'chroma-js';
 import './util/jq-global';
 import "angular"
 import "angular-cookies"

@@ -1,6 +1,6 @@
 'use strict';
-import * as chroma from 'chroma-js';
-import * as Tour from "bootstrap-tourist";
+import chroma from 'chroma-js';
+import Tour from "bootstrap-tourist";
 import '../app';
 import '../util/util';
 import '../util/long-poll';

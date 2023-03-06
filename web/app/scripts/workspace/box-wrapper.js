@@ -1,5 +1,5 @@
 'use strict';
-import * as md from "markdown-it";
+import md from "markdown-it";
 import '../app';
 import './plug-wrapper';
 

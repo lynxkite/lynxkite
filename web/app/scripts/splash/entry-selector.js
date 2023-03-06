@@ -1,7 +1,7 @@
 // The list of entries.
 'use strict';
-import * as md from "markdown-it";
-import * as Tour from "bootstrap-tourist";
+import md from "markdown-it";
+import Tour from "bootstrap-tourist";
 import '../app';
 import '../util/util';
 

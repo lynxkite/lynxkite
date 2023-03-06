@@ -1,7 +1,7 @@
 // Displays help content by ID.
 'use strict';
 import '../app';
-import * as Drop from "tether-drop";
+import Drop from "tether-drop";
 
 // Finds a snippet from the help pages by its ID. Replaces the first <hr> with a "read more" link.
 angular.module('biggraph').directive('helpId',
