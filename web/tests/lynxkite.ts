@@ -437,7 +437,7 @@ class PlotState extends PopupBase {
 
   async expectBarHeightsToBe(expected) {
     const heights = await this.barHeights();
-    await expect(heights.length).toEqual(expected.length);
+    expect(heights.length).toEqual(expected.length);
     for (let i = 0; i < heights.length; ++i) {
       expect(heights[i]).toBeCloseTo(expected[i], 0);
     }
