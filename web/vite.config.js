@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   root: 'app',
   build: {
-    chunkSizeWarningLimit: 1_000_000,
+    chunkSizeWarningLimit: 2_000, // in kBs
     outDir: '../dist',
     sourcemap: true,
   },

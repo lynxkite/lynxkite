@@ -7,13 +7,6 @@ import 'angular-hotkeys';
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-ui-bootstrap';
-import 'brace';
-import 'brace/mode/json';
-import 'brace/mode/markdown';
-import 'brace/mode/plain_text';
-import 'brace/mode/python';
-import 'brace/mode/scala';
-import 'brace/mode/sql';
 import 'angular-ui-ace';
 import splashTemplate from './splash/splash.html?url';
 import workspaceTemplate from './workspace/workspace-entry-point.html?url';
@@ -22,6 +15,18 @@ import logsTemplate from './logs.html?url';
 import backupTemplate from './backup.html?url';
 import demoModeTemplate from './demo-mode.html?url';
 import cleanerTemplate from './cleaner.html?url';
+
+// We import these modules to load the ACE editor. It doesn't have to block the page load.
+async function importACE() {
+  await import('brace');
+  import('brace/mode/json');
+  import('brace/mode/markdown');
+  import('brace/mode/plain_text');
+  import('brace/mode/python');
+  import('brace/mode/scala');
+  import('brace/mode/sql');
+}
+importACE();
 
 angular.module('biggraph', [
   'ngRoute',
