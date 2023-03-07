@@ -1,5 +1,4 @@
 // The modal dialog for error reporting.
-'use strict';
 import './app';
 import './util/util';
 import jsyaml from 'js-yaml';

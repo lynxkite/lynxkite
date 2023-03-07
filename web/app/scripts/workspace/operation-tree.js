@@ -1,5 +1,4 @@
 // A browser tree for operations to be browsed as a directory tree, e.g. custom boxes.
-'use strict';
 import '../app';
 import templateUrl from './operation-tree.html?url';
 

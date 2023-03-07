@@ -1,5 +1,4 @@
 // A list of error messages that hover over the page.
-'use strict';
 import '../app';
 import './util';
 import templateUrl from './top-alerts.html?url';

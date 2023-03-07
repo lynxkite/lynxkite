@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 
 // Creates a plug object for a workspace. A plug is an input or an output of a box

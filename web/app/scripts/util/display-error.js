@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 import './util';
 import templateUrl from './display-error.html?url';

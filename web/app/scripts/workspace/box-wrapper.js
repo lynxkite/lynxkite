@@ -1,4 +1,3 @@
-'use strict';
 import md from 'markdown-it';
 import '../app';
 import './plug-wrapper';

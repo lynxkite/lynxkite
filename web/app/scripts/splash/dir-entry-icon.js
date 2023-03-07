@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 import templateUrl from './dir-entry-icon.html?url';
 

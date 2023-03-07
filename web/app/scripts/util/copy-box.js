@@ -1,5 +1,4 @@
 // A button that pops up a textbox with the specified contents selected and ready to be copied.
-'use strict';
 import ClipboardJS from 'clipboard';
 import '../app';
 import './util';

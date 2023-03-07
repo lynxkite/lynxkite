@@ -1,5 +1,4 @@
 // Displays help content by ID.
-'use strict';
 import '../app';
 import Drop from 'tether-drop';
 import templateUrl from './help-popup.html?url';

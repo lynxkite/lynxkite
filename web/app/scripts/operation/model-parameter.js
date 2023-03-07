@@ -1,5 +1,4 @@
 // Operation parameter for kind=model.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './model-parameter.html?url';

@@ -1,5 +1,4 @@
 // Loads and preprocesses a documentation page.
-'use strict';
 import $ from 'jquery';
 import '../app';
 

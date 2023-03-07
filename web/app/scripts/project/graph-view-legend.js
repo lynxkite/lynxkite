@@ -1,5 +1,4 @@
 // One legend panel for graph visualizations.
-'use strict';
 import '../app';
 import templateUrl from './graph-view-legend.html?url';
 

@@ -1,5 +1,4 @@
 // The wizard interface for workspaces.
-'use strict';
 import md from 'markdown-it';
 import '../app';
 import '../util/util';

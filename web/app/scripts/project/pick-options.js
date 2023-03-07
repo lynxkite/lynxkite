@@ -55,7 +55,6 @@
 //
 // Have fun!
 
-'use strict';
 import '../app';
 import templateUrl from './pick-options.html?url';
 

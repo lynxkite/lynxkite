@@ -1,4 +1,3 @@
-'use strict';
 import $ from 'jquery';
 import '../app';
 import templateUrl from './find-in-page-box.html?url';

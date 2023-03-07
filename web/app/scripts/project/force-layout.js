@@ -1,5 +1,4 @@
 // The 2D graph layout algoritm used in sampled mode.
-'use strict';
 
 const lib = {};
 // Options:

@@ -1,5 +1,4 @@
 // Provides a class that can construct and send diagram requests.
-'use strict';
 import '../app';
 import '../util/util';
 

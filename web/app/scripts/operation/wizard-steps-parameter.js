@@ -1,5 +1,4 @@
 // UI for defining wizard steps.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './wizard-steps-parameter.html?url';

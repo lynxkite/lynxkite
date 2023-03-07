@@ -1,5 +1,4 @@
 // Project-level settings, including ACLs.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './acl-settings.html?url';

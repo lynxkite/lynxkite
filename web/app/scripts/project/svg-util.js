@@ -1,5 +1,4 @@
 // Utility functions for SVG building.
-'use strict';
 
 // JQuery addClass/removeClass does not work on SVG elements. (They are in
 // another namespace, but the "class" attribute is in the default namespace.)

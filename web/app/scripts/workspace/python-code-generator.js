@@ -1,5 +1,4 @@
 // Generates Python API code for selected boxes or for the whole workspace.
-'use strict';
 import '../app';
 import pythonCodeTemplate from '../python-code.html?url';
 

@@ -1,6 +1,5 @@
 // An entry in the operation selector list. Supports dragging operations from here into
 // the workspace drawing board.
-'use strict';
 import '../app';
 import templateUrl from './operation-selector-entry.html?url';
 

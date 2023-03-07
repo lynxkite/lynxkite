@@ -1,5 +1,4 @@
 // Displays dummy parameter.
-'use strict';
 import '../app';
 import templateUrl from './dummy-parameter.html?url';
 

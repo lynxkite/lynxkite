@@ -1,5 +1,4 @@
 // A slider (input[type=range]) that only updates the model when the mouse is released.
-'use strict';
 import '../app';
 import templateUrl from './lazy-slider.html?url';
 

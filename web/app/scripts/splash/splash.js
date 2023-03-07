@@ -1,5 +1,4 @@
 // The "/" page displays branding and the project list.
-'use strict';
 import '../app';
 import '../util/util';
 

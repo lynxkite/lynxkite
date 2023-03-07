@@ -1,6 +1,5 @@
 // A tree-view based browser for directories, projects, views,
 // tables and their columns.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './table-browser.html?url';

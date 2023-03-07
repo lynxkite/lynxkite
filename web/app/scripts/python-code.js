@@ -1,5 +1,4 @@
 // The modal dialog for generated Python code
-'use strict';
 import './app';
 
 angular.module('biggraph').controller('PythonCodeCtrl', ['$scope', '$uibModalInstance', 'code', function($scope, $uibModalInstance, code) {

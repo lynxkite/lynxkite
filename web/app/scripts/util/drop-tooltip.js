@@ -1,5 +1,4 @@
 // A tooltip based on the "Drop" popup library.
-'use strict';
 import Drop from 'tether-drop';
 import '../app';
 

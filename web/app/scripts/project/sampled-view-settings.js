@@ -1,5 +1,4 @@
 // Visualization settings in sampled view.
-'use strict';
 import '../app';
 import './view-settings';
 import templateUrl from './sampled-view-settings.html?url';

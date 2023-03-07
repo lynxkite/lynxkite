@@ -1,6 +1,5 @@
 // The '/workspace/WorkSpaceName' page.
 
-'use strict';
 import '../app';
 
 angular.module('biggraph')

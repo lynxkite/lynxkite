@@ -1,5 +1,4 @@
 // Displays a histogram. The data comes from the "histogram-button" directive.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './histogram.html?url';

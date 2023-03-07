@@ -1,6 +1,5 @@
 // Simple loading animation and error handling for inline elements, such as scalars.
 // Does not generate any DOM once successfully loaded.
-'use strict';
 import '../app';
 import './util';
 import templateUrl from './inline-loading.html?url';

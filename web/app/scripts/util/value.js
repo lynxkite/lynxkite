@@ -1,5 +1,4 @@
 // Presents a DynamicValue response from a scalar request.
-'use strict';
 import '../app';
 import './util';
 import templateUrl from './value.html?url';

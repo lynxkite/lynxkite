@@ -1,5 +1,4 @@
 // Visualization settings in bucketed view.
-'use strict';
 import '../app';
 import './view-settings';
 import templateUrl from './bucketed-view-settings.html?url';

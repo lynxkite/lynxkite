@@ -1,5 +1,4 @@
 // A context menu for graph vertices.
-'use strict';
 import '../app';
 import templateUrl from './context-menu.html?url';
 

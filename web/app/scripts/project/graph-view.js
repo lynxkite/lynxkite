@@ -1,5 +1,4 @@
 // Graph visualization. Generates the SVG contents.
-'use strict';
 import '../app';
 import '../util/util';
 import * as svg from './svg-util';

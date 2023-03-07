@@ -1,5 +1,4 @@
 // Provides utility functions, most importantly the Ajax IO functions.
-'use strict';
 import '../app';
 import reportErrorTemplate from '../report-error.html?url';
 import firebase from 'firebase/app';

@@ -1,5 +1,4 @@
 // The "/logs" page for accessing LynxKite logs.
-'use strict';
 import './app';
 import './util/util';
 

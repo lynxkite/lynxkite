@@ -1,6 +1,5 @@
 // Presents the parameters of an operation. It picks the right presentation
 // (text box, dropdown, etc) based on the parameter metadata.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './operation-parameters.html?url';

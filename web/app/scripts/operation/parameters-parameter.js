@@ -1,5 +1,4 @@
 // UI for defining workspace parameters. In other words, the parameters of a custom operation.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './parameters-parameter.html?url';

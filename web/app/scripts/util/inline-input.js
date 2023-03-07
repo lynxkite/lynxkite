@@ -1,6 +1,5 @@
 // A small text box that can pop open inside a button.
 // Can be used to provide a name when forking, for example.
-'use strict';
 import '../app';
 import templateUrl from './inline-input.html?url';
 

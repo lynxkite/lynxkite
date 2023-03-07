@@ -1,5 +1,4 @@
 // UI for the "trigger" parameter kind.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './trigger-parameter.html?url';

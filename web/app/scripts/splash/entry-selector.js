@@ -1,5 +1,4 @@
 // The list of entries.
-'use strict';
 import md from 'markdown-it';
 import Tour from 'bootstrap-tourist';
 import '../app';

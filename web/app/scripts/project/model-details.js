@@ -1,5 +1,4 @@
 // The entry for a model in the project view.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './model-details.html?url';

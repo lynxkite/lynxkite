@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 import './box-wrapper';
 import './plug-wrapper';

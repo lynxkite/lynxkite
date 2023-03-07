@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 import templateUrl from './workspace-popup.html?url';
 

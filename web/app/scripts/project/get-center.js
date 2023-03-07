@@ -1,5 +1,4 @@
 // Sends center requests with pagination support.
-'use strict';
 import '../app';
 import '../util/util';
 

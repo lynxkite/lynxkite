@@ -1,5 +1,4 @@
 // UI for the "table" parameter kind.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './table-kind.html?url';

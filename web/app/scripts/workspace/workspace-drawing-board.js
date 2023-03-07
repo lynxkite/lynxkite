@@ -1,4 +1,3 @@
-'use strict';
 import chroma from 'chroma-js';
 import Tour from 'bootstrap-tourist';
 import '../app';

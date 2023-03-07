@@ -1,5 +1,4 @@
 // The entry for an attribute/scalar/segmentation in the project view.
-'use strict';
 import '../app';
 import '../util/util';
 import Drop from 'tether-drop';

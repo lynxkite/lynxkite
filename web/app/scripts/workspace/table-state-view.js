@@ -1,4 +1,3 @@
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './table-state-view.html?url';

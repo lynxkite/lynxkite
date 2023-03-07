@@ -1,5 +1,4 @@
 // The sidebar for graph visualization. It holds the brightness/contrast controls, etc.
-'use strict';
 import '../app';
 import '../util/util';
 import templateUrl from './graph-view-sidebar.html?url';

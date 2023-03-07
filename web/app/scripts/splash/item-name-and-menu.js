@@ -1,5 +1,4 @@
 // An item name with a drop-down menu providing "rename", "discard", and "duplicate" operations.
-'use strict';
 import ClipboardJS from 'clipboard';
 import '../app';
 import '../util/util';

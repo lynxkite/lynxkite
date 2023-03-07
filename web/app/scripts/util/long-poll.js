@@ -1,7 +1,6 @@
 // Long poll communication with the backend. A single long poll channel is used for all
 // communications to avoid taking up more than one connection indefinitely.
 // This service is mocked out in tests.
-'use strict';
 import '../app';
 import './util';
 

@@ -1,5 +1,4 @@
 // Box metadata editor.
-'use strict';
 import '../app';
 import templateUrl from './box-metaeditor.html?url';
 

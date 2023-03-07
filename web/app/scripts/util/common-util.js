@@ -1,5 +1,4 @@
 // Assorted utility functions.
-'use strict';
 
 /* eslint-disable no-unused-vars */
 export default {

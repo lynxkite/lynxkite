@@ -1,6 +1,5 @@
 // The toolbox shows the list of operation categories and the operations.
 // Operation can be dragged to the workspace drawing board to create boxes.
-'use strict';
 import '../app';
 import Fuse from 'fuse.js';
 import templateUrl from './operation-selector.html?url';

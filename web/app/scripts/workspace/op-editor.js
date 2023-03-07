@@ -1,5 +1,4 @@
 // Editor of operation parameters.
-'use strict';
 import '../app';
 import templateUrl from './op-editor.html?url';
 
