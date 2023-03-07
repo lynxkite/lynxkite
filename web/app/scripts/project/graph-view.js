@@ -201,6 +201,12 @@ angular.module('biggraph').directive('graphView', ['util', '$compile', '$timeout
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
     this.svgDoubleClickListeners = [];
+    // Delete 3D views.
+    const oldRenderers = this.rootElement.children('renderer');
+    if (oldRenderers.length > 0) {
+      oldRenderers.scope()?.$destroy();
+      oldRenderers.remove();
+    }
   };
 
   GraphView.prototype.loading = function() {
@@ -383,12 +389,6 @@ angular.module('biggraph').directive('graphView', ['util', '$compile', '$timeout
         vsi += 1;
         sideIndices.push(i);
       }
-    }
-    // Drop 3D views. We will either create new ones or go with 2D.
-    const oldRenderers = this.rootElement.children('renderer');
-    if (oldRenderers.length > 0) {
-      oldRenderers.scope().$destroy();
-      oldRenderers.remove();
     }
     let side;
     for (let i = 0; i < data.edgeBundles.length; ++i) {

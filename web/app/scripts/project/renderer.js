@@ -1,8 +1,6 @@
 // 3D graph visualization.
 'use strict';
 import '../app';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 angular.module('biggraph').directive('renderer', ['$timeout', function($timeout) {
   return {
@@ -14,12 +12,24 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
       let disposed;
 
       // Wait for layout.
-      $timeout(function() {
+      $timeout(async function() {
+        let renderer;
+        // Clean up when the directive is destroyed.
+        scope.$on('$destroy', function() {
+          renderer?.dispose();
+          disposed = true;
+        });
+
+        const THREE = await import('three');
+        const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+        if (disposed) {
+          return;
+        }
         // Create the canvas.
         const W = element.width();
         const H = element.height();
         const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 10000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.autoRotate = true;
         controls.autoRotateSpeed = 2.0;
@@ -31,12 +41,6 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
         // Stop auto-rotate on mousedown.
         element.mousedown(function() {
           controls.autoRotate = false;
-        });
-
-        // Clean up when the directive is destroyed.
-        scope.$on('$destroy', function() {
-          renderer.dispose();
-          disposed = true;
         });
 
         // Set basic scene.
@@ -150,6 +154,7 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
 
         const scene = buildScene(scope.edges, scope.layout3D);
         animate();
+        // scope.$digest();
       });
     },
   };
