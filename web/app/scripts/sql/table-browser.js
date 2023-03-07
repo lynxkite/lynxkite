@@ -3,6 +3,7 @@
 import '../app';
 import '../util/util';
 import templateUrl from './table-browser.html?url';
+import nodeUrl from './table-browser-node.html?url';
 
 angular.module('biggraph').directive('tableBrowser', ['util', function(util) {
   return {
@@ -15,6 +16,7 @@ angular.module('biggraph').directive('tableBrowser', ['util', function(util) {
     },
     templateUrl,
     link: function(scope) {
+      scope.nodeUrl = nodeUrl;
       // Create a root node. Its path is the base path in which this
       // browser is operating. (Same as the path of the SQL box.)
       if (scope.box) {

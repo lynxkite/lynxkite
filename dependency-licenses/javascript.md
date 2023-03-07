@@ -1,8 +1,9 @@
-├─ MIT: 116
-├─ BSD-3-Clause: 53
-├─ ISC: 52
-├─ Apache-2.0: 45
-├─ BSD-2-Clause: 4
+├─ MIT: 200
+├─ ISC: 59
+├─ BSD-3-Clause: 54
+├─ Apache-2.0: 51
+├─ BSD-2-Clause: 14
+├─ 0BSD: 2
 ├─ (CC-BY-4.0 AND OFL-1.1 AND MIT): 1
 ├─ Python-2.0: 1
 ├─ (BSD-3-Clause AND Apache-2.0): 1
@@ -11,7 +12,7 @@
 ├─ CC-BY-3.0: 1
 ├─ CC0-1.0: 1
 ├─ (MIT AND CC-BY-3.0): 1
-└─ 0BSD: 1
+└─ (MIT OR CC0-1.0): 1
 
 ├─ @firebase/analytics-types@0.6.0
 │  ├─ licenses: Apache-2.0
@@ -386,11 +387,6 @@
 │  ├─ email: i@izs.me
 │  ├─ path: /home/darabos/lk/web/node_modules/abbrev
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/abbrev/LICENSE
-├─ ace-builds@1.4.12
-│  ├─ licenses: BSD-3-Clause
-│  ├─ repository: https://github.com/ajaxorg/ace-builds
-│  ├─ path: /home/darabos/lk/web/node_modules/ace-builds
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/ace-builds/LICENSE
 ├─ angular-cookies@1.8.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/angular/angular.js
@@ -443,8 +439,8 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/string-width/node_modules/ansi-regex
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/node_modules/ansi-regex/license
+│  ├─ path: /home/darabos/lk/web/node_modules/ansi-regex
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/ansi-regex/license
 ├─ ansi-styles@3.2.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/ansi-styles
@@ -507,6 +503,14 @@
 │  ├─ url: http://juliangruber.com
 │  ├─ path: /home/darabos/lk/web/node_modules/brace-expansion
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/brace-expansion/LICENSE
+├─ brace@0.11.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/thlorenz/brace
+│  ├─ publisher: Thorsten Lorenz
+│  ├─ email: thlorenz@gmx.de
+│  ├─ url: http://thlorenz.com
+│  ├─ path: /home/darabos/lk/web/node_modules/brace
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/brace/LICENSE
 ├─ chalk@2.4.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/chalk
@@ -528,8 +532,8 @@
 │  ├─ repository: https://github.com/yargs/cliui
 │  ├─ publisher: Ben Coe
 │  ├─ email: ben@npmjs.com
-│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/cliui
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/cliui/LICENSE.txt
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs/node_modules/cliui
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/node_modules/cliui/LICENSE.txt
 ├─ cliui@8.0.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/yargs/cliui
@@ -1271,8 +1275,8 @@
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/node-semver
 │  ├─ publisher: GitHub Inc.
-│  ├─ path: /home/darabos/lk/web/node_modules/vega-embed/node_modules/semver
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-embed/node_modules/semver/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/semver
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/semver/LICENSE
 ├─ slide@1.1.6
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/slide-flow-control
@@ -1346,8 +1350,8 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-│  ├─ path: /home/darabos/lk/web/node_modules/string-width/node_modules/strip-ansi
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/node_modules/strip-ansi/license
+│  ├─ path: /home/darabos/lk/web/node_modules/strip-ansi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/strip-ansi/license
 ├─ supports-color@5.5.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/chalk/supports-color
@@ -1381,7 +1385,7 @@
 │  ├─ repository: https://github.com/HubSpot/tether
 │  ├─ path: /home/darabos/lk/web/node_modules/tether
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/tether/LICENSE
-├─ three@0.137.5
+├─ three@0.150.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mrdoob/three.js
 │  ├─ publisher: mrdoob
@@ -1781,8 +1785,8 @@
 │  ├─ repository: https://github.com/yargs/yargs-parser
 │  ├─ publisher: Ben Coe
 │  ├─ email: ben@npmjs.com
-│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs-parser
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs-parser/LICENSE.txt
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs/node_modules/yargs-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/node_modules/yargs-parser/LICENSE.txt
 ├─ yargs-parser@21.1.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/yargs/yargs-parser
@@ -1793,8 +1797,8 @@
 ├─ yargs@16.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/yargs/yargs
-│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs
-│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/yargs/LICENSE
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/LICENSE
 └─ yargs@17.6.2
    ├─ licenses: MIT
    ├─ repository: https://github.com/yargs/yargs

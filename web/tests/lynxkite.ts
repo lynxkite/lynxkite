@@ -159,8 +159,8 @@ export class Workspace {
     const inputs = boxData.inputs;
     const params = boxData.params;
     await this.page.evaluate(boxData => {
-      /* global $ */
-      $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+      /* global jQuery */
+      jQuery(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
         boxData.name,
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
@@ -620,7 +620,7 @@ class VisualizationState {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
-/*
+  /*
   elementByLabel(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
   }
@@ -639,6 +639,7 @@ class VisualizationState {
   graphView() {
     return this.svg.evaluate('graph.view');
   }
+  */
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData() {
@@ -646,7 +647,7 @@ class VisualizationState {
       // Vertices as simple objects.
       async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
-        const result: any[] = [];
+        const result: object[] = [];
         for (let i = 0; i < vertices.length; ++i) {
           const v = vertices[i];
           const touch = v.querySelector('circle.touch');
@@ -674,16 +675,15 @@ class VisualizationState {
       // Edges as simple objects.
       async function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
-        let i,
-          byPosition = {};
-        for (i = 0; i < vertices.length; ++i) {
+        const byPosition = {};
+        for (let i = 0; i < vertices.length; ++i) {
           byPosition[vertices[i].pos.string] = i;
         }
 
         // Collect edges.
-        const result: any[] = [];
+        const result: object[] = [];
         const edges = svg.querySelectorAll('g.edge');
-        for (i = 0; i < edges.length; ++i) {
+        for (let i = 0; i < edges.length; ++i) {
           const e = edges[i];
           const arc = e.querySelector('path.edge-arc');
           const [, srcPos, dstPos] = arc.getAttribute('d').match(/^M (.*? .*?) .* (.*? .*?)$/);
@@ -709,6 +709,7 @@ class VisualizationState {
     });
   }
 
+  /*
   vertexCounts(index) {
     return this.graphView().then(function (gv) {
       return gv.vertexSets[index].vertices.length;
@@ -875,12 +876,12 @@ async function sendKeysToACE(e, text) {
 }
 
 async function angularEval(e: Locator, expr: string) {
-  /* global $ */
-  return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$eval(expr), expr);
 }
 async function angularApply(e: Locator, expr: string) {
-  /* global $ */
-  return await e.evaluate((e, expr) => $(e).scope().$apply(expr), expr);
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$apply(expr), expr);
 }
 
 async function setParameter(e: Locator, value) {

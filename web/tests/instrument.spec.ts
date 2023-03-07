@@ -17,8 +17,8 @@ async function tableIsGood(t) {
 test.beforeAll(async ({ browser }) => {
   workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
-  /* global $ */
-  await workspace.main.evaluate(e => { $(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
+  /* global jQuery */
+  await workspace.main.evaluate(e => { jQuery(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
 });
 
 test('visualize with instrument', async () => {
