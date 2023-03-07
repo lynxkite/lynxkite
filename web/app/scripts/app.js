@@ -8,6 +8,7 @@ import 'angular-route';
 import 'angular-sanitize';
 import 'angular-ui-bootstrap';
 import 'brace';
+import 'brace/mode/json';
 import 'brace/mode/markdown';
 import 'brace/mode/plain_text';
 import 'brace/mode/python';

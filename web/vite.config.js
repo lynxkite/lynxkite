@@ -11,6 +11,7 @@ export default defineConfig({
     hmr: false,
     proxy: {
       '/ajax': 'http://localhost:2200',
+      '/download': 'http://localhost:2200',
     },
   },
 });
