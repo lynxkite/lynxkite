@@ -20,7 +20,8 @@ test.beforeAll(async ({ browser }) => {
 
   await editor.loadImportedTable();
   await editor.close();
-  await workspace.main.evaluate(e => { $(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
+  /* global jQuery */
+  await workspace.main.evaluate(e => { jQuery(e).injector().get('environment').vegaConfig.renderer = 'svg'; });
 });
 
 test('a bar chart', async () => {

@@ -1,5 +1,5 @@
 // Tests the "splash" page where you can put workspaces in directories.
-import { test, expect, Browser } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { Splash, errors, closeErrors, ROOT } from './lynxkite';
 
 let splash: Splash;

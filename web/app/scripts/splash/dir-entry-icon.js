@@ -1,4 +1,5 @@
-'use strict';
+import '../app';
+import templateUrl from './dir-entry-icon.html?url';
 
 angular.module('biggraph').directive('dirEntryIcon',
   function() {
@@ -7,7 +8,7 @@ angular.module('biggraph').directive('dirEntryIcon',
       scope: {
         objectType: '='
       },
-      templateUrl: 'scripts/splash/dir-entry-icon.html',
+      templateUrl,
     };
   }
 );

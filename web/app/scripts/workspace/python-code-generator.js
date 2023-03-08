@@ -1,7 +1,8 @@
 // Generates Python API code for selected boxes or for the whole workspace.
-'use strict';
+import '../app';
+import pythonCodeTemplate from '../python-code.html?url';
 
-angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
+angular.module('biggraph').factory('pythonCodeGenerator', ['$uibModal', function($uibModal) {
 
   function saveAsPython (workspace, selectedBoxIds) {
 
@@ -187,15 +188,16 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($uibModal) {
     const pythonCode = generatedCode.join('\n');
 
     $uibModal.open({
-      templateUrl: 'scripts/python-code.html',
+      templateUrl: pythonCodeTemplate,
       controller: 'PythonCodeCtrl',
       resolve: { code: function() { return pythonCode; } },
       animation: false, // Protractor does not like the animation.
       size: 'lg',
-    }).result.then(function() {}, function() {});
-
-
+    }).result.then(function() {
+      // Ignore value.
+    }, function() {
+      // Ignore errors.
+    });
   }
-
   return { saveAsPython };
-});
+}]);

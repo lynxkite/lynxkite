@@ -29,9 +29,9 @@ test('sorting and "show more rows" are working on table state view', async () =>
   await table.clickColumn('country');
   await table.clickColumn('country');
   await expect(table.row(0)).toHaveText(['Åland Islands', 'AX', '29013', '1580', 'EUR']);
-  table.clickShowMoreRows();
+  await table.clickShowMoreRows();
   await expect(table.rows()).toHaveCount(20);
-  table.clickShowMoreRows();
+  await table.clickShowMoreRows();
   await expect(table.rows()).toHaveCount(30);
   await table.setRowCount(7);
   await table.clickShowSample();

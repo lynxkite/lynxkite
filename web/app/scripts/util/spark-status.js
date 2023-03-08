@@ -1,12 +1,15 @@
 // The Spark status indicator cogwheel in the bottom left.
-'use strict';
+import '../app';
+import './util';
+import chroma from 'chroma-js';
+import templateUrl from './spark-status.html?url';
 
 angular.module('biggraph')
-  .directive('sparkStatus', function(util, longPoll) {
+  .directive('sparkStatus', ['util', 'longPoll', function(util, longPoll) {
     return {
       restrict: 'E',
       scope: {},
-      templateUrl: 'scripts/util/spark-status.html',
+      templateUrl,
       link: function(scope) {
         scope.status = longPoll.lastUpdate.sparkStatus;
         longPoll.onUpdate(scope, function(status) { scope.status = status.sparkStatus; });
@@ -26,7 +29,6 @@ angular.module('biggraph')
         scope.hashToColor = function(active, hash) {
           hash = Math.abs(hash);
           if (!(hash in hashColors)) {
-          /* global chroma */
             hashColors[hash] = {
               true: chroma({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
               false: chroma({ h: hash % 360, s: 1.0, l: 0.9 }).toString() };
@@ -69,4 +71,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);

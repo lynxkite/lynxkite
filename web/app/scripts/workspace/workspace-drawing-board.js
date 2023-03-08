@@ -1,16 +1,26 @@
-'use strict';
+import chroma from 'chroma-js';
+import Tour from 'bootstrap-tourist';
+import '../app';
+import '../util/util';
+import '../util/long-poll';
+import './popup-model';
+import './selection-model';
+import './workspace-wrapper';
+import './python-code-generator';
+import templateUrl from './workspace-drawing-board.html?url';
+import jsyaml from 'js-yaml';
 
 // The drawing board where the user can create and modify a boxes and
 // arrows diagram.
 
 angular.module('biggraph').directive(
   'workspaceDrawingBoard',
-  function(
+  ['environment', 'hotkeys', 'PopupModel', 'SelectionModel', 'WorkspaceWrapper', '$rootScope', '$q', '$location', 'util', 'longPoll', 'pythonCodeGenerator', function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
     $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/workspace-drawing-board.html',
+      templateUrl,
       scope: {
         boxCatalog: '=',
         workspaceName: '=',
@@ -30,6 +40,11 @@ angular.module('biggraph').directive(
         scope.mouseLogical = { x: 300, y: 300 };
         scope.popups = [];
         scope.movedPopup = undefined;
+
+        scope.getLastPart = function(path) {
+          if (path === undefined) { return undefined; }
+          return path.split('/').slice(-1)[0];
+        };
 
         scope.$watch(
           'workspaceName',
@@ -463,7 +478,6 @@ angular.module('biggraph').directive(
           return ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.tagName) !== -1;
         }
 
-        /* global jsyaml */
         scope.copyBoxes = function(e) {
           if (inputBoxFocused() || window.getSelection().toString()) {
             return;
@@ -584,10 +598,10 @@ angular.module('biggraph').directive(
         const hk = hotkeys.bindTo(scope);
         hk.add({
         // Only here for the tooltip.
-          combo: 'mod+c', description: 'Copy boxes', callback: function() {} });
+          combo: 'mod+c', description: 'Copy boxes' });
         hk.add({
         // Only here for the tooltip.
-          combo: 'mod+v', description: 'Paste boxes', callback: function() {} });
+          combo: 'mod+v', description: 'Paste boxes' });
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
@@ -762,7 +776,6 @@ angular.module('biggraph').directive(
           const filters = {};
           for (let i = 0; i < colors.length; ++i) {
             const name = colors[i][0];
-            /* global chroma */
             const rgb = chroma(colors[i][1]).rgb();
             filters[name] = (
               (rgb[0] / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
@@ -783,11 +796,6 @@ angular.module('biggraph').directive(
           if (path === undefined) { return undefined; }
           const dir = path.split('/').slice(0, -1);
           return dir.length === 0 ? '' : dir.join('/') + '/';
-        };
-
-        scope.getLastPart = function(path) {
-          if (path === undefined) { return undefined; }
-          return path.split('/').slice(-1)[0];
         };
 
         scope.closeWorkspace = function() {
@@ -824,7 +832,6 @@ angular.module('biggraph').directive(
           if (util.user.wizardOnly || localStorage.getItem('workspace-drawing-board tutorial done')) {
             return;
           }
-          /* global Tour */
           scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',
@@ -983,4 +990,4 @@ angular.module('biggraph').directive(
         scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       }
     };
-  });
+  }]);

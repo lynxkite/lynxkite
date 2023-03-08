@@ -1,19 +1,21 @@
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './snapshot-viewer.html?url';
+import $ from 'jquery';
 
 // Viewer of a snapshot in the entry selector.
 
 angular.module('biggraph')
-  .directive('snapshotViewer', function(util, $window) {
+  .directive('snapshotViewer', ['util', '$window', function(util, $window) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/sql/snapshot-viewer.html',
+      templateUrl,
       scope: {
         path: '@',
         type: '@',
       },
       link: function(scope) {
         function getWidth() {
-          /* global $ */
           return $('.entry-list').innerWidth();
         }
         function setWidth() {
@@ -55,4 +57,4 @@ angular.module('biggraph')
         });
       },
     };
-  });
+  }]);

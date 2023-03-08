@@ -1,13 +1,16 @@
 // The list of entries.
-'use strict';
+import md from 'markdown-it';
+import Tour from 'bootstrap-tourist';
+import '../app';
+import '../util/util';
+import templateUrl from './entry-selector.html?url';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
+  ['util', 'hotkeys', '$timeout', '$anchorScroll', '$location', '$routeParams', function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/splash/entry-selector.html',
+      templateUrl,
       link: function(scope, element) {
-        const md = window.markdownit();
         scope.util = util;
         function defaultSettings() {
           return { privacy: 'public-read' };
@@ -291,7 +294,6 @@ angular.module('biggraph').directive('entrySelector',
             && localStorage.getItem('allow data collection')) {
             return;
           }
-          /* global Tour */
           scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',
@@ -399,11 +401,10 @@ angular.module('biggraph').directive('entrySelector',
         scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       },
     };
-  });
+  }]);
 
 // We store this in a global variable because the checkbox is outside of Angular.
 let dataCollectionCheckboxChecked;
-/* eslint-disable no-unused-vars */ // This is used by the tutorial.
-function dataCollectionCheckboxChanged(e) {
+window.dataCollectionCheckboxChanged = (e) => {
   dataCollectionCheckboxChecked = e.checked;
-}
+};

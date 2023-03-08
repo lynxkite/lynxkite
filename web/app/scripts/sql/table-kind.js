@@ -1,7 +1,9 @@
 // UI for the "table" parameter kind.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './table-kind.html?url';
 
-angular.module('biggraph').directive('tableKind', function(util) {
+angular.module('biggraph').directive('tableKind', ['util', function(util) {
   return {
     scope: {
       box: '=',
@@ -10,7 +12,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       workspaceReference: '&',
       onBlur: '&',
     },
-    templateUrl: 'scripts/sql/table-kind.html',
+    templateUrl,
     link: function(scope) {
       scope.importBox = function() {
         scope.inProgress = true;
@@ -48,4 +50,4 @@ angular.module('biggraph').directive('tableKind', function(util) {
       };
     },
   };
-});
+}]);

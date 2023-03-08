@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+import contextlib
 import subprocess
 import sys
 import hashlib
@@ -48,38 +48,47 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
+
+@contextlib.contextmanager
+def watch_files(files, context):
+  before = get_hashes(files)
+  yield
+  after = get_hashes(files)
+  different = [f[0] for f in zip(files, before, after) if f[1] != f[2]]
+  if len(different) > 0:
+    warn(f'Files altered by {context}, please restage.')
+    warn('Altered files:')
+    warn(', '.join(different))
+
+
 for proj in ['web', 'shell_ui']:
   prefix = proj + '/'
   javascripts = [fn for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
   if javascripts:
-    before = get_hashes(javascripts)
-    localpaths = [fn[len(prefix):] for fn in javascripts]
-    cmd = ['npm', 'run', 'eslint', '--', '--fix'] + localpaths
-    if subprocess.call(cmd, cwd=proj):
-      warn('ESLint failed.')
-    after = get_hashes(javascripts)
-    different = [f[0] for f in zip(javascripts, before, after) if f[1] != f[2]]
-    if len(different) > 0:
-      warn('Files altered by eslint, please restage.')
-      warn('Altered files:')
-      warn(', '.join(different))
+    with watch_files(javascripts, 'eslint'):
+      localpaths = [fn[len(prefix):] for fn in javascripts]
+      cmd = ['npm', 'run', 'eslint', '--', '--fix'] + localpaths
+      if subprocess.call(cmd, cwd=proj):
+        warn('ESLint failed.')
 
 
 def linter(extension, command):
   matched = [fn for fn in files if fn.endswith(extension)]
   if matched:
-    before = get_hashes(matched)
-    subprocess.call(command + matched)
-    after = get_hashes(matched)
-    different = [f[0] for f in zip(matched, before, after) if f[1] != f[2]]
-    if len(different) > 0:
-      warn(f'Files altered by { " ".join(command) }, please restage.')
-      warn('Altered files:')
-      warn(', '.join(different))
+    with watch_files(javascripts, ' '.join(command)):
+      subprocess.call(command + matched)
+
+
+def check_templates():
+  if [f for f in files if f.endswith('kiterc.asciidoc')
+          or f.endswith('prefix_definitions.asciidoc')]:
+    with watch_files(['conf/kiterc_template', 'conf/prefix_definitions_template.txt'], 'gen_templates.py'):
+      subprocess.call(['tools/gen_templates.py'])
 
 
 linter('.py', ['autopep8', '-ia'])
 linter('.go', ['go', 'fmt'])
+check_templates()
 
 if warned:
   sys.exit(1)

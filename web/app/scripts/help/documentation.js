@@ -1,7 +1,8 @@
 // Loads and preprocesses a documentation page.
-'use strict';
+import $ from 'jquery';
+import '../app';
 
-angular.module('biggraph').factory('documentation', function($http) {
+angular.module('biggraph').factory('documentation', ['$http', function($http) {
   const cache = {};
   function documentation(name) {
     if (cache[name] === undefined) {
@@ -11,9 +12,8 @@ angular.module('biggraph').factory('documentation', function($http) {
   }
 
   function load(name) {
-    const html = $http.get(name + '/index.html', { cache: true });
+    const html = $http.get(name + '.html', { cache: true });
     const dom = html.then(function success(response) {
-      /* global $ */
       const dom = $($.parseHTML(
         '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
 
@@ -55,9 +55,9 @@ angular.module('biggraph').factory('documentation', function($http) {
     return dom;
   }
   return documentation;
-});
+}]);
 
-angular.module('biggraph').directive('documentation', function(documentation, $compile, $anchorScroll, util) {
+angular.module('biggraph').directive('documentation', ['documentation', '$compile', '$anchorScroll', 'util', function(documentation, $compile, $anchorScroll, util) {
   return {
     scope: { documentation: '@', title: '@' },
     link: function(scope, element) {
@@ -72,4 +72,4 @@ angular.module('biggraph').directive('documentation', function(documentation, $c
       });
     },
   };
-});
+}]);

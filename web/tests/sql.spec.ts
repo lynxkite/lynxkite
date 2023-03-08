@@ -1,5 +1,5 @@
 // Tests SQL boxes and the table browser.
-import { test, expect, Browser, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 import { Workspace, TableState } from './lynxkite';
 
 let workspace: Workspace;
@@ -29,7 +29,7 @@ test.afterAll(async () => {
 
 async function runSQL(query) {
   await workspace.editBox('sql', { sql: query });
-  const state = await workspace.getStateView('sql', 'table');
+  const state = workspace.getStateView('sql', 'table');
   return state.table;
 }
 

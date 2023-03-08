@@ -41,9 +41,9 @@ test('delete boxes', async () => {
 });
 
 test('undo delete', async () => {
-  await expect(await workspace.getBox('ex0')).not.toBeVisible();
-  await expect(await workspace.getBox('pr1')).not.toBeVisible();
-  await expect(await workspace.getBox('pr2')).toBeVisible();
+  await expect(workspace.getBox('ex0')).not.toBeVisible();
+  await expect(workspace.getBox('pr1')).not.toBeVisible();
+  await expect(workspace.getBox('pr2')).toBeVisible();
   await expect(undo).not.toBeDisabled();
   await expect(redo).toBeDisabled();
 
@@ -51,16 +51,16 @@ test('undo delete', async () => {
 
   await expect(undo).not.toBeDisabled();
   await expect(redo).not.toBeDisabled();
-  await expect(await workspace.getBox('ex0')).toBeVisible();
-  await expect(await workspace.getBox('pr1')).toBeVisible();
-  await expect(await workspace.getBox('pr2')).toBeVisible();
+  await expect(workspace.getBox('ex0')).toBeVisible();
+  await expect(workspace.getBox('pr1')).toBeVisible();
+  await expect(workspace.getBox('pr2')).toBeVisible();
 });
 
 test('redo delete', async () => {
-  redo.click();
+  await redo.click();
   await expect(undo).not.toBeDisabled();
   await expect(redo).toBeDisabled();
-  await expect(await workspace.getBox('ex0')).not.toBeVisible();
-  await expect(await workspace.getBox('pr1')).not.toBeVisible();
-  await expect(await workspace.getBox('pr2')).toBeVisible();
+  await expect(workspace.getBox('ex0')).not.toBeVisible();
+  await expect(workspace.getBox('pr1')).not.toBeVisible();
+  await expect(workspace.getBox('pr2')).toBeVisible();
 });

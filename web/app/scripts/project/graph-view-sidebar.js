@@ -1,14 +1,16 @@
 // The sidebar for graph visualization. It holds the brightness/contrast controls, etc.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './graph-view-sidebar.html?url';
 
-angular.module('biggraph').directive('graphViewSidebar', function (util) {
+angular.module('biggraph').directive('graphViewSidebar', ['util', function (util) {
   return {
     restrict: 'E',
     scope: {
       graph: '=', // The graph to visualize.
       mapFilters: '=', // (Output) Filter settings for the map tiles.
     },
-    templateUrl: 'scripts/project/graph-view-sidebar.html',
+    templateUrl,
     link: function(scope, element) {
       scope.$watch('graph.view', updateTSV);
       scope.$watch('graph.view.$resolved', updateTSV);
@@ -186,4 +188,4 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       };
     },
   };
-});
+}]);
