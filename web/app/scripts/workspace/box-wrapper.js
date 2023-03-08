@@ -1,4 +1,5 @@
-import md from 'markdown-it';
+import MarkdownIt from 'markdown-it';
+const md = new MarkdownIt();
 import '../app';
 import './plug-wrapper';
 
