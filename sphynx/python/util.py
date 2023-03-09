@@ -192,9 +192,12 @@ class Op:
     jail = tempfile.mkdtemp()
     ADD_TO_PYTHON_JAIL = os.environ.get('ADD_TO_PYTHON_JAIL')
     user_path = ADD_TO_PYTHON_JAIL.split(':') if ADD_TO_PYTHON_JAIL else []
-    for pdir in user_path + sorted(sys.path):
-      if os.path.isdir(pdir) and pdir.startswith('/'):
+    for pdir in user_path + sorted(sys.path) + ['/lib']:
+      if os.path.isdir(pdir) and pdir.startswith('/') and pdir != '/':
         mount(pdir, jail + pdir)
+    # We add /lib and /etc/resolv.conf to enable DNS lookups.
+    subprocess.run(['mkdir', '-p', jail + '/etc'], check=True)
+    subprocess.run(['cp', '/etc/resolv.conf', jail + '/etc'], check=True)
     for e in self.inputs.values():
       mount(f'{self.datadir}/{e}', f'{jail}/data/{e}')
     # Fork and jail the child.
@@ -203,6 +206,7 @@ class Op:
       os.chroot(jail)
       os.chdir('/')
       self.datadir = '/data'
+      os.environ['UNORDERED_SPHYNX_DATA_DIR'] = '/data/tables'
     else:  # Parent. Wait for child and finish the work.
       _, error_and_reason = os.waitpid(pid, 0)
       if error_and_reason:
@@ -210,7 +214,11 @@ class Op:
         sys.exit(error)
       for m in mounts:
         subprocess.run(['umount', '-f', m], check=True)
+      tabledir = os.environ.get('UNORDERED_SPHYNX_DATA_DIR', self.datadir)
       for e in self.outputs.values():
-        shutil.move(f'{jail}/data/{e}', f'{self.datadir}/{e}')
+        if os.path.exists(f'{jail}/data/tables/{e}'):
+          shutil.move(f'{jail}/data/tables/{e}', f'{tabledir}/{e}')
+        else:
+          shutil.move(f'{jail}/data/{e}', f'{self.datadir}/{e}')
       subprocess.run(['rm', '-rf', jail], check=True)
       sys.exit(0)
