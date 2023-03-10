@@ -473,9 +473,11 @@ angular.module('biggraph')
     util.frontendConfig = util.globals.then(g => JSON.parse(g.frontendConfig || '{}'));
 
     util.reloadUser = function() {
+      // A placeholder user instead of a request.
       util.user = {
         $resolved: true,
-        then: f => f({}),
+        email: 'single-user',
+        then: f => f(util.user),
       };
     };
     util.reloadUser();
