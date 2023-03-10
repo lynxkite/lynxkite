@@ -428,7 +428,7 @@ class PlotState extends PopupBase {
     const heights: number[] = [];
     const count = await bars.count();
     for (let i = 0; i < count; ++i) {
-      const path = await bars.nth(i).getAttribute('d')!;
+      const path = await bars.nth(i).getAttribute('d');
       // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
       heights.push(parseFloat(path!.match(/v([0-9.]+)h/)![1]));
     }
