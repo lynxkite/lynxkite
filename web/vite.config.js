@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '', // Use relative paths.
   root: 'app',
   build: {
     chunkSizeWarningLimit: 2_000, // in kBs
