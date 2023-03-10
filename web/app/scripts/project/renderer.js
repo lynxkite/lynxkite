@@ -1,7 +1,7 @@
 // 3D graph visualization.
 import '../app';
 
-angular.module('biggraph').directive('renderer', ['$timeout', function($timeout) {
+angular.module('biggraph').directive('renderer', function() {
   return {
     restrict: 'E',
     link: function(scope, element) {
@@ -11,7 +11,7 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
       let disposed;
 
       // Wait for layout.
-      $timeout(async function() {
+      setTimeout(async function() {
         let renderer;
         // Clean up when the directive is destroyed.
         scope.$on('$destroy', function() {
@@ -153,8 +153,7 @@ angular.module('biggraph').directive('renderer', ['$timeout', function($timeout)
 
         const scene = buildScene(scope.edges, scope.layout3D);
         animate();
-        // scope.$digest();
       });
     },
   };
-}]);
+});
