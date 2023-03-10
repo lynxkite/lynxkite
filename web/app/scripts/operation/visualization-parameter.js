@@ -1,5 +1,6 @@
 import '../app';
 import '../util/util';
+import '../project/side';
 import templateUrl from './visualization-parameter.html?url';
 import sideUrl from '../project/side.html?url';
 

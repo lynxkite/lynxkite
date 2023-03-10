@@ -1,6 +1,7 @@
 // The entry for an attribute/scalar/segmentation in the project view.
 import '../app';
 import '../util/util';
+import './axis-options';
 import Drop from 'tether-drop';
 import chroma from 'chroma-js';
 import templateUrl from './entity.html?url';

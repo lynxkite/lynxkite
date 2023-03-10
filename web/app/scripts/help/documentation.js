@@ -1,6 +1,7 @@
 // Loads and preprocesses a documentation page.
 import $ from 'jquery';
 import '../app';
+import '../util/util';
 
 angular.module('biggraph').factory('documentation', ['$http', function($http) {
   const cache = {};

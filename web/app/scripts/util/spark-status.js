@@ -1,6 +1,7 @@
 // The Spark status indicator cogwheel in the bottom left.
 import '../app';
 import './util';
+import './long-poll';
 import chroma from 'chroma-js';
 import templateUrl from './spark-status.html?url';
 
