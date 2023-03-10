@@ -1,12 +1,12 @@
 // A context menu for graph vertices.
-'use strict';
+import '../app';
+import templateUrl from './context-menu.html?url';
 
-angular.module('biggraph').directive('contextMenu', function($timeout) {
+angular.module('biggraph').directive('contextMenu', ['$timeout', function($timeout) {
   return {
-    replace: true,
     restrict: 'E',
     scope: { model: '=' },
-    templateUrl: 'scripts/util/context-menu.html',
+    templateUrl,
     link: function(scope, element) {
       scope.isEmpty = function(o) { return !o || angular.equals(o, {}); };
       scope.$watch('model.enabled', function(enabled) {
@@ -22,4 +22,4 @@ angular.module('biggraph').directive('contextMenu', function($timeout) {
       };
     },
   };
-});
+}]);

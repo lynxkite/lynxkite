@@ -1,8 +1,9 @@
 // The "/demo-mode" page allows toggling the demo mode.
-'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph')
-  .controller('DemoModeCtrl', function ($scope, util) {
+  .controller('DemoModeCtrl', ['$scope', 'util', function ($scope, util) {
     $scope.status = util.nocache('/ajax/demoModeStatus', {fake: 0});
 
     function exitReq() {
@@ -17,4 +18,4 @@ angular.module('biggraph')
         $scope.status = util.nocache('/ajax/demoModeStatus', {fake: 0});
       });
     };
-  });
+  }]);

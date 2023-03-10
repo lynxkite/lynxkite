@@ -1,12 +1,15 @@
 // Provides utility functions, most importantly the Ajax IO functions.
-'use strict';
+import '../app';
+import reportErrorTemplate from '../report-error.html?url';
+import firebase from 'firebase/app';
+import 'firebase/analytics';
 
 angular.module('biggraph').service('environment', function() {
   this.protractor = false; // If we want to handle tests specially somewhere.
   this.vegaConfig = { renderer: 'canvas' }; // Canvas looks better but SVG is more accessible for tests.
 });
 angular.module('biggraph')
-  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q, $route, $timeout) {
+  .factory('util', ['$location', '$window', '$http', '$rootScope', '$uibModal', '$q', '$route', '$timeout', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q, $route, $timeout) {
     const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // DataManager computation status codes. Keep these in sync
     // with EntityProgressManager.computeProgress
@@ -40,8 +43,7 @@ angular.module('biggraph')
             queuing.reject({ config: config, statusText: 'Abandoned.' });
           };
         }
-        const that = this;
-        req.finally(function() { that.finished(req); });
+        req.finally(() => this.finished(req));
         this.queue.push(req);
         return req;
       },
@@ -291,7 +293,7 @@ angular.module('biggraph')
 
       reportError: function(alert) {
         $uibModal.open({
-          templateUrl: 'scripts/report-error.html',
+          templateUrl: reportErrorTemplate,
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
           animation: false, // Protractor does not like the animation.
@@ -471,7 +473,12 @@ angular.module('biggraph')
     util.frontendConfig = util.globals.then(g => JSON.parse(g.frontendConfig || '{}'));
 
     util.reloadUser = function() {
-      util.user = util.nocache('/ajax/getUserData');
+      // A placeholder user instead of a request.
+      util.user = {
+        $resolved: true,
+        email: 'single-user',
+        then: f => f(util.user),
+      };
     };
     util.reloadUser();
 
@@ -578,7 +585,6 @@ angular.module('biggraph')
           appId: '1:422846954881:web:53c06b4ed052166db7bc80',
           measurementId: 'G-5NDZSKY669',
         };
-        /* global firebase */
         firebase.initializeApp(firebaseConfig);
         analytics = firebase.analytics();
       }
@@ -597,4 +603,4 @@ angular.module('biggraph')
     }
 
     return util;
-  });
+  }]);

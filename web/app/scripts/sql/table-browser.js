@@ -1,8 +1,11 @@
 // A tree-view based browser for directories, projects, views,
 // tables and their columns.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './table-browser.html?url';
+import nodeUrl from './table-browser-node.html?url';
 
-angular.module('biggraph').directive('tableBrowser', function(util) {
+angular.module('biggraph').directive('tableBrowser', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -11,8 +14,9 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       box: '=', // Set box for table browser in the workspace.
       editor: '=',
     },
-    templateUrl: 'scripts/sql/table-browser.html',
+    templateUrl,
     link: function(scope) {
+      scope.nodeUrl = nodeUrl;
       // Create a root node. Its path is the base path in which this
       // browser is operating. (Same as the path of the SQL box.)
       if (scope.box) {
@@ -116,7 +120,6 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // searchQuery is optional and used for searching for
           // a subset of directories.
           fetchList: function(searchQuery) {
-            const that = this;
             let promise;
             if (scope.box) {
               promise = util.nocache(
@@ -135,19 +138,19 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                   'isImplicitTable': this.objectType === 'table'
                 });
             }
-            promise.then(function(result) {
+            promise.then((result) => {
               const srcList = result.list || [];
-              that.list = [];
+              this.list = [];
               for (let i = 0; i < srcList.length; ++i) {
-                that.list[i] = createNode(
-                  that,
+                this.list[i] = createNode(
+                  this,
                   srcList[i].name,
                   srcList[i].absolutePath,
                   srcList[i].objectType,
                   srcList[i].columnType);
               }
-            }, function(error) {
-              that.error = util.responseToErrorMessage(error);
+            }, (error) => {
+              this.error = util.responseToErrorMessage(error);
             });
           },
 
@@ -178,4 +181,4 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       }
     }
   };
-});
+}]);

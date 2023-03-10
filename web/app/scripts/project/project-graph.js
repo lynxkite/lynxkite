@@ -1,8 +1,11 @@
 // Constructs and sends the diagram request.
 // The result is then rendered by the "graph-view" directive.
-'use strict';
+import '../app';
+import '../util/util';
+import './load-graph';
+import templateUrl from './project-graph.html?url';
 
-angular.module('biggraph').directive('projectGraph', function (util, loadGraph) {
+angular.module('biggraph').directive('projectGraph', ['util', 'loadGraph', function (util, loadGraph) {
   return {
     restrict: 'E',
     scope: {
@@ -14,7 +17,7 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
       rightToLeftBundle: '=',
       contextMenu: '=' },
     replace: false,
-    templateUrl: 'scripts/project/project-graph.html',
+    templateUrl,
     link: function(scope) {
       scope.graph = new loadGraph.Graph();
       function updateGraph() {
@@ -33,4 +36,4 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
       };
     },
   };
-});
+}]);

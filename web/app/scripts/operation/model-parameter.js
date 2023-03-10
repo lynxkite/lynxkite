@@ -1,7 +1,9 @@
 // Operation parameter for kind=model.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './model-parameter.html?url';
 
-angular.module('biggraph').directive('modelParameter', function(util) {
+angular.module('biggraph').directive('modelParameter', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -9,7 +11,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       modelJson: '=', // Input/output: Model configuration in JSON.
       onBlur: '&', // Function to call on changes.
     },
-    templateUrl: 'scripts/operation/model-parameter.html',
+    templateUrl,
     link: function(scope) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.
@@ -63,4 +65,4 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       }
     },
   };
-});
+}]);

@@ -1,18 +1,23 @@
-'use strict';
+import '../app';
+import '../util/util';
+import '../project/side';
+import templateUrl from './visualization-parameter.html?url';
+import sideUrl from '../project/side.html?url';
 
 // Editor for a visualization state stored in a parameter string.
 
 angular.module('biggraph')
-  .directive('visualizationParameter', function(util, side) {
+  .directive('visualizationParameter', ['util', 'side', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/operation/visualization-parameter.html',
+      templateUrl,
       scope: {
         projectStateId: '=',
         uiState: '=',
         onUiStateChanged: '&',
       },
       link: function(scope) {
+        scope.sideUrl = sideUrl;
         scope.sides = [];
         scope.left = new side.Side(scope.sides, 'left');
         scope.left.enableVisualizationUI = true;
@@ -77,4 +82,4 @@ angular.module('biggraph')
           });
       },
     };
-  });
+  }]);

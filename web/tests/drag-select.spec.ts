@@ -1,5 +1,5 @@
-//Tests drag selection
-import { test, expect } from '@playwright/test';
+// Tests drag selection
+import { test } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
 let workspace: Workspace;

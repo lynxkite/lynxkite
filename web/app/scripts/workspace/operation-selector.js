@@ -1,8 +1,10 @@
 // The toolbox shows the list of operation categories and the operations.
 // Operation can be dragged to the workspace drawing board to create boxes.
-'use strict';
+import '../app';
+import Fuse from 'fuse.js';
+import templateUrl from './operation-selector.html?url';
 
-angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope) {
+angular.module('biggraph').directive('operationSelector', ['$timeout', '$rootScope', function($timeout, $rootScope) {
   return {
     restrict: 'E',
     scope: {
@@ -10,7 +12,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
       onopen: '&',
       boxCatalog: '=', // (Input.) List of available boxes.
     },
-    templateUrl: 'scripts/workspace/operation-selector.html',
+    templateUrl,
 
     link: function(scope, elem) {
       scope.editMode = true;
@@ -63,7 +65,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         } else if (e.keyCode === 27) { // ESCAPE
           scope.searching = undefined;
           scope.op = undefined;
-        } else if (e.keyCode === 13) { //ENTER
+        } else if (e.keyCode === 13) { // ENTER
           const selectedBox = scope.filterAndSort(
             scope.boxes, scope.opFilter)[scope.searchSelection];
           $rootScope.$broadcast('create box under mouse', selectedBox.operationId);
@@ -99,7 +101,6 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
 
       scope.filterAndSort = function(boxes, opFilter) {
         if (opFilter) {
-          /* global Fuse */
           // Case insensitive by default.
           const options = {
             shouldSort: true,
@@ -127,4 +128,4 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
     },
 
   };
-});
+}]);

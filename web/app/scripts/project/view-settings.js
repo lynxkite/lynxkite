@@ -1,15 +1,14 @@
 // Visualization settings shared code.
-'use strict';
+import Drop from 'tether-drop';
+import '../app';
 
 angular.module('biggraph').factory('ViewSettings', function() {
   return function(scope, element) {
-    const that = this;
     this.drops = {};
-    element.find('.token').each(function(i, e) {
+    element.find('.token').each((i, e) => {
       if (!e.id) { return; }
       const menu = element.find('#menu-' + e.id);
       if (!menu.length) { return; }
-      /* global Drop */
       const drop = new Drop({
         target: e,
         content: menu[0],
@@ -21,7 +20,7 @@ angular.module('biggraph').factory('ViewSettings', function() {
           constraints: [{ to: 'window', attachment: 'together', pin: true, }],
         },
       });
-      that.drops['menu-' + e.id] = drop;
+      this.drops['menu-' + e.id] = drop;
     });
 
     this.getDrop = function(e) {
@@ -35,11 +34,11 @@ angular.module('biggraph').factory('ViewSettings', function() {
       }
     };
 
-    scope.$on('$destroy', function() {
-      for (const d of Object.values(that.drops)) {
+    scope.$on('$destroy', () => {
+      for (const d of Object.values(this.drops)) {
         d.destroy();
       }
-      that.drops = {};
+      this.drops = {};
     });
   };
 });

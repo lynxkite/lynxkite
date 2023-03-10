@@ -1,949 +1,1807 @@
-├─ (BSD-3-Clause AND Apache-2.0)
-│  └─ chroma-js@2.1.2
-├─ (CC-BY-4.0 AND OFL-1.1 AND MIT)
-│  └─ @fortawesome/fontawesome-free@5.15.3
-├─ (MIT AND Zlib)
-│  └─ pako@1.0.11
-├─ (MIT or Apache-2.0)
-│  └─ dom-storage@2.1.0
-├─ (MIT OR Apache-2.0)
-│  └─ atob@2.1.2
-├─ (MIT OR CC0-1.0)
-│  ├─ type-fest@0.21.3
-│  └─ type-fest@0.8.1
-├─ (MIT OR GPL-3.0-or-later)
-│  └─ jszip@3.7.1
-├─ (WTFPL OR MIT)
-│  └─ path-is-inside@1.0.2
-├─ 0BSD
-│  ├─ tslib@1.14.1
-│  └─ tslib@2.2.0
-├─ Apache-2.0
-│  ├─ @firebase/analytics-types@0.4.0
-│  ├─ @firebase/analytics@0.6.12
-│  ├─ @firebase/app-check-interop-types@0.1.0
-│  ├─ @firebase/app-check-types@0.1.0
-│  ├─ @firebase/app-check@0.1.3
-│  ├─ @firebase/app-types@0.6.2
-│  ├─ @firebase/app@0.6.26
-│  ├─ @firebase/auth-interop-types@0.1.6
-│  ├─ @firebase/auth-types@0.10.3
-│  ├─ @firebase/auth@0.16.6
-│  ├─ @firebase/component@0.5.2
-│  ├─ @firebase/database-types@0.7.2
-│  ├─ @firebase/database@0.10.4
-│  ├─ @firebase/firestore-types@2.3.0
-│  ├─ @firebase/firestore@2.3.6
-│  ├─ @firebase/functions-types@0.4.0
-│  ├─ @firebase/functions@0.6.11
-│  ├─ @firebase/installations-types@0.3.4
-│  ├─ @firebase/installations@0.4.28
-│  ├─ @firebase/logger@0.2.6
-│  ├─ @firebase/messaging-types@0.5.0
-│  ├─ @firebase/messaging@0.7.12
-│  ├─ @firebase/performance-types@0.0.13
-│  ├─ @firebase/performance@0.4.14
-│  ├─ @firebase/polyfill@0.3.36
-│  ├─ @firebase/remote-config-types@0.1.9
-│  ├─ @firebase/remote-config@0.1.39
-│  ├─ @firebase/storage-types@0.4.1
-│  ├─ @firebase/storage@0.5.4
-│  ├─ @firebase/util@1.1.0
-│  ├─ @firebase/webchannel-wrapper@0.5.0
-│  ├─ @grpc/grpc-js@1.3.2
-│  ├─ @grpc/proto-loader@0.5.6
-│  ├─ @playwright/test@1.28.1
-│  ├─ aws-sign2@0.7.0
-│  ├─ browser-sync-ui@2.26.14
-│  ├─ browser-sync@2.26.14
-│  ├─ caseless@0.12.0
-│  ├─ doctrine@3.0.0
-│  ├─ easy-extender@2.3.4
-│  ├─ eazy-logger@3.1.0
-│  ├─ eslint-visitor-keys@1.3.0
-│  ├─ faye-websocket@0.11.3
-│  ├─ firebase@8.6.7
-│  ├─ forever-agent@0.6.1
-│  ├─ fuse.js@6.4.6
-│  ├─ long@4.0.0
-│  ├─ oauth-sign@0.9.0
-│  ├─ pause-stream@0.0.11
-│  ├─ playwright-core@1.28.1
-│  ├─ request@2.88.2
-│  ├─ rx@4.1.0
-│  ├─ rxjs@5.5.12
-│  ├─ rxjs@6.6.7
-│  ├─ selenium-webdriver@3.6.0
-│  ├─ spdx-correct@3.1.1
-│  ├─ tunnel-agent@0.6.0
-│  ├─ validate-npm-package-license@3.0.4
-│  ├─ websocket-driver@0.7.4
-│  └─ websocket-extensions@0.1.4
-├─ BSD-2-Clause
-│  ├─ entities@2.1.0
-│  ├─ eslint-scope@5.1.1
-│  ├─ espree@6.2.1
-│  ├─ esprima@4.0.1
-│  ├─ esrecurse@4.3.0
-│  ├─ estraverse@4.3.0
-│  ├─ estraverse@5.2.0
-│  ├─ esutils@2.0.3
-│  ├─ normalize-package-data@2.5.0
-│  ├─ terser@4.8.1
-│  └─ uri-js@4.4.1
-├─ BSD-3-Clause
-│  ├─ @protobufjs/aspromise@1.1.2
-│  ├─ @protobufjs/base64@1.1.2
-│  ├─ @protobufjs/codegen@2.0.4
-│  ├─ @protobufjs/eventemitter@1.1.0
-│  ├─ @protobufjs/fetch@1.1.0
-│  ├─ @protobufjs/float@1.0.2
-│  ├─ @protobufjs/inquire@1.1.0
-│  ├─ @protobufjs/path@1.1.2
-│  ├─ @protobufjs/pool@1.1.0
-│  ├─ @protobufjs/utf8@1.1.0
-│  ├─ ace-builds@1.4.12
-│  ├─ bcrypt-pbkdf@1.0.2
-│  ├─ d3-array@2.12.1
-│  ├─ d3-color@2.0.0
-│  ├─ d3-dispatch@2.0.0
-│  ├─ d3-dsv@2.0.0
-│  ├─ d3-force@2.1.1
-│  ├─ d3-format@2.0.0
-│  ├─ d3-geo-projection@3.0.0
-│  ├─ d3-geo@2.0.2
-│  ├─ d3-hierarchy@2.0.0
-│  ├─ d3-interpolate@2.0.1
-│  ├─ d3-path@2.0.0
-│  ├─ d3-quadtree@2.0.0
-│  ├─ d3-scale@3.3.0
-│  ├─ d3-shape@2.1.0
-│  ├─ d3-time-format@3.0.0
-│  ├─ d3-time@2.1.1
-│  ├─ d3-timer@2.0.0
-│  ├─ esquery@1.4.0
-│  ├─ fork-stream@0.0.4
-│  ├─ protobufjs@6.11.3
-│  ├─ qs@6.2.3
-│  ├─ qs@6.5.2
-│  ├─ rw@1.3.3
-│  ├─ source-map-js@0.6.2
-│  ├─ source-map@0.5.7
-│  ├─ source-map@0.6.1
-│  ├─ sprintf-js@1.0.3
-│  ├─ stream-throttle@0.1.3
-│  ├─ table@5.4.6
-│  ├─ tough-cookie@2.5.0
-│  ├─ vega-canvas@1.2.6
-│  ├─ vega-crossfilter@4.0.5
-│  ├─ vega-dataflow@5.7.4
-│  ├─ vega-embed@6.18.2
-│  ├─ vega-encode@4.8.3
-│  ├─ vega-event-selector@2.0.6
-│  ├─ vega-expression@4.0.1
-│  ├─ vega-force@4.0.7
-│  ├─ vega-format@1.0.4
-│  ├─ vega-functions@5.12.0
-│  ├─ vega-geo@4.3.8
-│  ├─ vega-hierarchy@4.0.9
-│  ├─ vega-label@1.0.0
-│  ├─ vega-lite@5.1.0
-│  ├─ vega-loader@4.4.0
-│  ├─ vega-parser@6.1.3
-│  ├─ vega-projection@1.4.5
-│  ├─ vega-regression@1.0.9
-│  ├─ vega-runtime@6.1.3
-│  ├─ vega-scale@7.1.1
-│  ├─ vega-scenegraph@4.9.4
-│  ├─ vega-schema-url-parser@2.2.0
-│  ├─ vega-selections@5.3.0
-│  ├─ vega-statistics@1.7.9
-│  ├─ vega-themes@2.10.0
-│  ├─ vega-time@2.0.4
-│  ├─ vega-tooltip@0.25.1
-│  ├─ vega-transforms@4.9.4
-│  ├─ vega-typings@0.21.0
-│  ├─ vega-util@1.16.1
-│  ├─ vega-view-transforms@4.5.8
-│  ├─ vega-view@5.10.1
-│  ├─ vega-voronoi@4.1.5
-│  ├─ vega-wordcloud@4.1.3
-│  └─ vega@5.20.2
-├─ BSD*
-│  └─ json-schema@0.2.3
-├─ CC-BY-3.0
-│  └─ spdx-exceptions@2.3.0
-├─ CC-BY-4.0
-│  └─ caniuse-lite@1.0.30001236
-├─ CC0-1.0
-│  ├─ array-flat-polyfill@1.0.1
-│  └─ spdx-license-ids@3.0.9
-├─ ISC
-│  ├─ anymatch@2.0.0
-│  ├─ anymatch@3.1.2
-│  ├─ browser-sync-client@2.26.14
-│  ├─ bs-recipes@1.3.4
-│  ├─ cli-width@3.0.0
-│  ├─ cliui@3.2.0
-│  ├─ cliui@6.0.0
-│  ├─ cliui@7.0.4
-│  ├─ color-support@1.1.3
-│  ├─ concat-with-sourcemaps@1.1.0
-│  ├─ d@1.0.1
-│  ├─ d3-delaunay@5.3.0
-│  ├─ delaunator@4.0.1
-│  ├─ electron-to-chromium@1.3.752
-│  ├─ es5-ext@0.10.53
-│  ├─ es6-symbol@3.1.3
-│  ├─ es6-weak-map@2.0.3
-│  ├─ ext@1.4.0
-│  ├─ fastq@1.11.0
-│  ├─ flatted@2.0.2
-│  ├─ fs.realpath@1.0.0
-│  ├─ get-caller-file@1.0.3
-│  ├─ get-caller-file@2.0.5
-│  ├─ glob-parent@3.1.0
-│  ├─ glob-parent@5.1.2
-│  ├─ glob@6.0.4
-│  ├─ glob@7.1.7
-│  ├─ graceful-fs@4.2.6
-│  ├─ gulp-sourcemaps@3.0.0
-│  ├─ har-schema@2.0.0
-│  ├─ hosted-git-info@2.8.9
-│  ├─ idb@3.0.2
-│  ├─ inflight@1.0.6
-│  ├─ inherits@2.0.3
-│  ├─ inherits@2.0.4
-│  ├─ ini@1.3.8
-│  ├─ internmap@1.0.1
-│  ├─ is-number-like@1.0.8
-│  ├─ isexe@2.0.0
-│  ├─ json-stringify-safe@5.0.1
-│  ├─ lru-cache@6.0.0
-│  ├─ memoizee@0.4.15
-│  ├─ minimatch@3.0.4
-│  ├─ mute-stream@0.0.8
-│  ├─ next-tick@1.1.0
-│  ├─ once@1.4.0
-│  ├─ remove-trailing-separator@1.1.0
-│  ├─ require-main-filename@1.0.1
-│  ├─ require-main-filename@2.0.0
-│  ├─ rimraf@2.6.3
-│  ├─ rimraf@2.7.1
-│  ├─ rimraf@3.0.2
-│  ├─ sax@1.2.4
-│  ├─ semver@5.7.1
-│  ├─ semver@6.3.0
-│  ├─ semver@7.3.5
-│  ├─ server-destroy@1.0.1
-│  ├─ set-blocking@2.0.0
-│  ├─ setprototypeof@1.1.0
-│  ├─ setprototypeof@1.1.1
-│  ├─ signal-exit@3.0.3
-│  ├─ timers-ext@0.1.7
-│  ├─ topojson-client@3.1.0
-│  ├─ type@1.2.0
-│  ├─ type@2.5.0
-│  ├─ vinyl-sourcemaps-apply@0.2.1
-│  ├─ which-module@1.0.0
-│  ├─ which-module@2.0.0
-│  ├─ which@1.3.1
-│  ├─ which@2.0.2
-│  ├─ wrappy@1.0.2
-│  ├─ y18n@3.2.2
-│  ├─ y18n@4.0.3
-│  ├─ y18n@5.0.8
-│  ├─ yallist@4.0.0
-│  ├─ yargs-parser@18.1.3
-│  ├─ yargs-parser@20.2.7
-│  └─ yargs-parser@5.0.1
-├─ MIT
-│  ├─ @babel/code-frame@7.14.5
-│  ├─ @babel/helper-validator-identifier@7.14.5
-│  ├─ @babel/highlight@7.14.5
-│  ├─ @gulp-sourcemaps/identity-map@2.0.1
-│  ├─ @gulp-sourcemaps/map-sources@1.0.0
-│  ├─ @nodelib/fs.scandir@2.1.5
-│  ├─ @nodelib/fs.stat@2.0.5
-│  ├─ @nodelib/fs.walk@1.2.7
-│  ├─ @types/clone@2.1.0
-│  ├─ @types/fast-json-stable-stringify@2.1.0
-│  ├─ @types/long@4.0.2
-│  ├─ @types/node@17.0.38
-│  ├─ @types/node@18.11.9
-│  ├─ @types/q@0.0.32
-│  ├─ @types/selenium-webdriver@3.0.17
-│  ├─ accepts@1.3.7
-│  ├─ acorn-jsx@5.3.1
-│  ├─ acorn@6.4.2
-│  ├─ acorn@7.4.1
-│  ├─ adm-zip@0.4.16
-│  ├─ after@0.8.2
-│  ├─ agent-base@4.3.0
-│  ├─ aggregate-error@3.1.0
-│  ├─ ajv@6.12.6
-│  ├─ angular-cookies@1.8.2
-│  ├─ angular-hotkeys@1.7.0
-│  ├─ angular-mocks@1.8.2
-│  ├─ angular-route@1.8.2
-│  ├─ angular-sanitize@1.8.2
-│  ├─ angular-ui-ace@0.2.3
-│  ├─ angular-ui-bootstrap@2.5.6
-│  ├─ angular@1.8.2
-│  ├─ ansi-colors@1.1.0
-│  ├─ ansi-colors@4.1.1
-│  ├─ ansi-cyan@0.1.1
-│  ├─ ansi-escapes@4.3.2
-│  ├─ ansi-gray@0.1.1
-│  ├─ ansi-red@0.1.1
-│  ├─ ansi-regex@2.1.1
-│  ├─ ansi-regex@4.1.0
-│  ├─ ansi-regex@5.0.0
-│  ├─ ansi-styles@2.2.1
-│  ├─ ansi-styles@3.2.1
-│  ├─ ansi-styles@4.3.0
-│  ├─ ansi-wrap@0.1.0
-│  ├─ any-promise@1.3.0
-│  ├─ append-buffer@1.0.2
-│  ├─ archy@1.0.0
-│  ├─ argparse@1.0.10
-│  ├─ arr-diff@1.1.0
-│  ├─ arr-diff@4.0.0
-│  ├─ arr-filter@1.1.2
-│  ├─ arr-flatten@1.1.0
-│  ├─ arr-map@2.0.2
-│  ├─ arr-union@2.1.0
-│  ├─ arr-union@3.1.0
-│  ├─ array-each@1.0.1
-│  ├─ array-initial@1.1.0
-│  ├─ array-last@1.3.0
-│  ├─ array-slice@0.2.3
-│  ├─ array-slice@1.1.0
-│  ├─ array-sort@1.0.0
-│  ├─ array-union@1.0.2
-│  ├─ array-union@2.1.0
-│  ├─ array-uniq@1.0.3
-│  ├─ array-unique@0.3.2
-│  ├─ arraybuffer.slice@0.0.7
-│  ├─ arrify@1.0.1
-│  ├─ arrify@2.0.1
-│  ├─ asciidoctor.js@1.5.9
-│  ├─ asn1@0.2.4
-│  ├─ assert-plus@1.0.0
-│  ├─ assign-symbols@1.0.0
-│  ├─ astral-regex@1.0.0
-│  ├─ async-done@1.3.2
-│  ├─ async-each-series@0.1.1
-│  ├─ async-each@1.0.3
-│  ├─ async-settle@1.0.0
-│  ├─ async@1.5.2
-│  ├─ asynckit@0.4.0
-│  ├─ autoprefixer@10.2.6
-│  ├─ aws4@1.11.0
-│  ├─ axios@0.21.1
-│  ├─ bach@1.2.0
-│  ├─ backo2@1.0.2
-│  ├─ balanced-match@1.0.2
-│  ├─ base@0.11.2
-│  ├─ base64-arraybuffer@0.1.4
-│  ├─ base64id@2.0.0
-│  ├─ batch@0.6.1
-│  ├─ binary-extensions@1.13.1
-│  ├─ binary-extensions@2.2.0
-│  ├─ bindings@1.5.0
-│  ├─ blob@0.0.5
-│  ├─ blocking-proxy@1.0.1
-│  ├─ bootstrap-tourist@0.3.2
-│  ├─ bootstrap@3.4.1
-│  ├─ brace-expansion@1.1.11
-│  ├─ braces@2.3.2
-│  ├─ braces@3.0.2
-│  ├─ brotli-size@4.0.0
-│  ├─ browserslist@4.16.6
-│  ├─ browserstack@1.6.1
-│  ├─ bs-snippet-injector@2.0.1
-│  ├─ buffer-equal@1.0.0
-│  ├─ buffer-from@1.1.2
-│  ├─ bytes@3.1.0
-│  ├─ cache-base@1.0.1
-│  ├─ call-bind@1.0.2
-│  ├─ callsites@3.1.0
-│  ├─ camelcase@3.0.0
-│  ├─ camelcase@5.3.1
-│  ├─ chalk@1.1.3
-│  ├─ chalk@2.4.2
-│  ├─ chalk@4.1.1
-│  ├─ chardet@0.7.0
-│  ├─ chokidar@2.1.8
-│  ├─ chokidar@3.5.1
-│  ├─ class-utils@0.3.6
-│  ├─ clean-stack@2.2.0
-│  ├─ cli-cursor@3.1.0
-│  ├─ clipboard@2.0.8
-│  ├─ clone-buffer@1.0.0
-│  ├─ clone-stats@1.0.0
-│  ├─ clone@2.1.2
-│  ├─ cloneable-readable@1.1.3
-│  ├─ code-point-at@1.1.0
-│  ├─ collection-map@1.0.0
-│  ├─ collection-visit@1.0.0
-│  ├─ color-convert@1.9.3
-│  ├─ color-convert@2.0.1
-│  ├─ color-name@1.1.3
-│  ├─ color-name@1.1.4
-│  ├─ colorette@1.2.2
-│  ├─ combined-stream@1.0.8
-│  ├─ commander@2.20.3
-│  ├─ component-emitter@1.2.1
-│  ├─ component-emitter@1.3.0
-│  ├─ concat-map@0.0.1
-│  ├─ concat-stream@1.6.2
-│  ├─ connect-history-api-fallback@1.6.0
-│  ├─ connect@3.6.6
-│  ├─ convert-source-map@1.7.0
-│  ├─ cookie@0.4.1
-│  ├─ copy-descriptor@0.1.1
-│  ├─ copy-props@2.0.5
-│  ├─ core-js@3.6.5
-│  ├─ core-util-is@1.0.2
-│  ├─ cross-env@6.0.3
-│  ├─ cross-spawn@6.0.5
-│  ├─ cross-spawn@7.0.3
-│  ├─ css@3.0.0
-│  ├─ dashdash@1.14.1
-│  ├─ debug-fabulous@1.1.0
-│  ├─ debug@2.6.9
-│  ├─ debug@3.1.0
-│  ├─ debug@3.2.7
-│  ├─ debug@4.1.1
-│  ├─ debug@4.3.1
-│  ├─ decamelize@1.2.0
-│  ├─ decode-uri-component@0.2.2
-│  ├─ deep-is@0.1.3
-│  ├─ default-compare@1.0.0
-│  ├─ default-resolution@2.0.0
-│  ├─ define-properties@1.1.3
-│  ├─ define-property@0.2.5
-│  ├─ define-property@1.0.0
-│  ├─ define-property@2.0.2
-│  ├─ del@2.2.2
-│  ├─ del@6.0.0
-│  ├─ delayed-stream@1.0.0
-│  ├─ delegate@3.2.0
-│  ├─ depd@1.1.2
-│  ├─ destroy@1.0.4
-│  ├─ detect-file@1.0.0
-│  ├─ detect-newline@2.1.0
-│  ├─ dev-ip@1.0.1
-│  ├─ dir-glob@3.0.1
-│  ├─ dlv@1.1.3
-│  ├─ duplexer@0.1.1
-│  ├─ duplexer@0.1.2
-│  ├─ duplexify@3.7.1
-│  ├─ duplexify@4.1.1
-│  ├─ each-props@1.3.2
-│  ├─ ecc-jsbn@0.1.2
-│  ├─ ee-first@1.1.1
-│  ├─ emoji-regex@7.0.3
-│  ├─ emoji-regex@8.0.0
-│  ├─ encodeurl@1.0.2
-│  ├─ end-of-stream@1.4.4
-│  ├─ engine.io-client@3.5.2
-│  ├─ engine.io-parser@2.2.1
-│  ├─ engine.io@3.5.0
-│  ├─ error-ex@1.3.2
-│  ├─ es5-shim@4.5.15
-│  ├─ es6-iterator@2.0.3
-│  ├─ es6-object-assign@1.1.0
-│  ├─ es6-promise@4.2.8
-│  ├─ es6-promisify@5.0.0
-│  ├─ es6-shim@0.35.6
-│  ├─ escalade@3.1.1
-│  ├─ escape-html@1.0.3
-│  ├─ escape-string-regexp@1.0.5
-│  ├─ escape-string-regexp@2.0.0
-│  ├─ eslint-utils@1.4.3
-│  ├─ eslint@6.8.0
-│  ├─ etag@1.8.1
-│  ├─ event-emitter@0.3.5
-│  ├─ event-stream@4.0.1
-│  ├─ eventemitter3@4.0.7
-│  ├─ exit@0.1.2
-│  ├─ expand-brackets@2.1.4
-│  ├─ expand-tilde@2.0.2
-│  ├─ extend-shallow@1.1.4
-│  ├─ extend-shallow@2.0.1
-│  ├─ extend-shallow@3.0.2
-│  ├─ extend@3.0.2
-│  ├─ external-editor@3.1.0
-│  ├─ extglob@2.0.4
-│  ├─ extsprintf@1.3.0
-│  ├─ extsprintf@1.4.0
-│  ├─ fancy-log@1.3.3
-│  ├─ fast-deep-equal@3.1.3
-│  ├─ fast-glob@3.2.5
-│  ├─ fast-json-patch@3.1.1
-│  ├─ fast-json-stable-stringify@2.1.0
-│  ├─ fast-levenshtein@1.1.4
-│  ├─ fast-levenshtein@2.0.6
-│  ├─ figures@3.2.0
-│  ├─ file-entry-cache@5.0.1
-│  ├─ file-uri-to-path@1.0.0
-│  ├─ fill-range@4.0.0
-│  ├─ fill-range@7.0.1
-│  ├─ finalhandler@1.1.0
-│  ├─ find-up@1.1.2
-│  ├─ find-up@4.1.0
-│  ├─ findup-sync@2.0.0
-│  ├─ findup-sync@3.0.0
-│  ├─ findup-sync@4.0.0
-│  ├─ fined@1.2.0
-│  ├─ first-chunk-stream@2.0.0
-│  ├─ flagged-respawn@1.0.1
-│  ├─ flat-cache@2.0.1
-│  ├─ flush-write-stream@1.1.1
-│  ├─ follow-redirects@1.14.8
-│  ├─ for-in@1.0.2
-│  ├─ for-own@1.0.0
-│  ├─ form-data@2.3.3
-│  ├─ fraction.js@4.1.1
-│  ├─ fragment-cache@0.2.1
-│  ├─ fresh@0.5.2
-│  ├─ from@0.1.7
-│  ├─ fs-extra@3.0.1
-│  ├─ fs-mkdirp-stream@1.0.0
-│  ├─ function-bind@1.1.1
-│  ├─ functional-red-black-tree@1.0.1
-│  ├─ get-intrinsic@1.1.1
-│  ├─ get-value@2.0.6
-│  ├─ get-value@3.0.1
-│  ├─ getpass@0.1.7
-│  ├─ glob-stream@6.1.0
-│  ├─ glob-watcher@5.0.5
-│  ├─ global-modules@1.0.0
-│  ├─ global-prefix@1.0.2
-│  ├─ globals@12.4.0
-│  ├─ globby@11.0.3
-│  ├─ globby@5.0.0
-│  ├─ glogg@1.0.2
-│  ├─ good-listener@1.2.2
-│  ├─ group-array@1.0.0
-│  ├─ gulp-autoprefixer@8.0.0
-│  ├─ gulp-cli@2.3.0
-│  ├─ gulp-concat@2.6.1
-│  ├─ gulp-eslint@6.0.0
-│  ├─ gulp-if@3.0.0
-│  ├─ gulp-inject@5.0.5
-│  ├─ gulp-load-plugins@2.0.7
-│  ├─ gulp-match@1.1.0
-│  ├─ gulp-rename@2.0.0
-│  ├─ gulp-rev-replace@0.4.4
-│  ├─ gulp-rev@9.0.0
-│  ├─ gulp-size@4.0.0
-│  ├─ gulp-touch-cmd@0.0.1
-│  ├─ gulp-uglify-es@2.0.0
-│  ├─ gulp-useref@5.0.0
-│  ├─ gulp@4.0.2
-│  ├─ gulplog@1.0.0
-│  ├─ gzip-size@6.0.0
-│  ├─ har-validator@5.1.5
-│  ├─ has-ansi@2.0.0
-│  ├─ has-binary2@1.0.3
-│  ├─ has-cors@1.1.0
-│  ├─ has-flag@3.0.0
-│  ├─ has-flag@4.0.0
-│  ├─ has-gulplog@0.1.0
-│  ├─ has-symbols@1.0.2
-│  ├─ has-value@0.3.1
-│  ├─ has-value@1.0.0
-│  ├─ has-values@0.1.4
-│  ├─ has-values@1.0.0
-│  ├─ has@1.0.3
-│  ├─ homedir-polyfill@1.0.3
-│  ├─ http-errors@1.6.3
-│  ├─ http-errors@1.7.3
-│  ├─ http-parser-js@0.5.3
-│  ├─ http-proxy@1.18.1
-│  ├─ http-signature@1.2.0
-│  ├─ https-proxy-agent@2.2.4
-│  ├─ iconv-lite@0.4.24
-│  ├─ ignore@4.0.6
-│  ├─ ignore@5.1.8
-│  ├─ immediate@3.0.6
-│  ├─ immutable@3.8.2
-│  ├─ import-fresh@3.3.0
-│  ├─ imurmurhash@0.1.4
-│  ├─ indent-string@4.0.0
-│  ├─ inquirer@7.3.3
-│  ├─ interpret@1.4.0
-│  ├─ invert-kv@1.0.0
-│  ├─ is-absolute@1.0.0
-│  ├─ is-accessor-descriptor@0.1.6
-│  ├─ is-accessor-descriptor@1.0.0
-│  ├─ is-arrayish@0.2.1
-│  ├─ is-binary-path@1.0.1
-│  ├─ is-binary-path@2.1.0
-│  ├─ is-buffer@1.1.6
-│  ├─ is-core-module@2.4.0
-│  ├─ is-data-descriptor@0.1.4
-│  ├─ is-data-descriptor@1.0.0
-│  ├─ is-descriptor@0.1.6
-│  ├─ is-descriptor@1.0.2
-│  ├─ is-extendable@0.1.1
-│  ├─ is-extendable@1.0.1
-│  ├─ is-extglob@2.1.1
-│  ├─ is-fullwidth-code-point@1.0.0
-│  ├─ is-fullwidth-code-point@2.0.0
-│  ├─ is-fullwidth-code-point@3.0.0
-│  ├─ is-glob@3.1.0
-│  ├─ is-glob@4.0.1
-│  ├─ is-negated-glob@1.0.0
-│  ├─ is-number@3.0.0
-│  ├─ is-number@4.0.0
-│  ├─ is-number@7.0.0
-│  ├─ is-path-cwd@1.0.0
-│  ├─ is-path-cwd@2.2.0
-│  ├─ is-path-in-cwd@1.0.1
-│  ├─ is-path-inside@1.0.1
-│  ├─ is-path-inside@3.0.3
-│  ├─ is-plain-obj@1.1.0
-│  ├─ is-plain-object@2.0.4
-│  ├─ is-plain-object@5.0.0
-│  ├─ is-promise@2.2.2
-│  ├─ is-relative@1.0.0
-│  ├─ is-typedarray@1.0.0
-│  ├─ is-unc-path@1.0.0
-│  ├─ is-utf8@0.2.1
-│  ├─ is-valid-glob@1.0.0
-│  ├─ is-windows@1.0.2
-│  ├─ is-wsl@1.1.0
-│  ├─ isarray@1.0.0
-│  ├─ isarray@2.0.1
-│  ├─ isobject@2.1.0
-│  ├─ isobject@3.0.1
-│  ├─ isstream@0.1.2
-│  ├─ jasmine-core@2.8.0
-│  ├─ jasmine@2.8.0
-│  ├─ jasminewd2@2.2.0
-│  ├─ jquery@3.6.0
-│  ├─ js-tokens@4.0.0
-│  ├─ js-yaml@3.14.1
-│  ├─ js-yaml@4.1.0
-│  ├─ jsbn@0.1.1
-│  ├─ json-schema-traverse@0.4.1
-│  ├─ json-stable-stringify-without-jsonify@1.0.1
-│  ├─ json-stringify-pretty-compact@3.0.0
-│  ├─ jsonfile@3.0.1
-│  ├─ jsprim@1.4.1
-│  ├─ just-debounce@1.1.0
-│  ├─ kind-of@1.1.0
-│  ├─ kind-of@3.2.2
-│  ├─ kind-of@4.0.0
-│  ├─ kind-of@5.1.0
-│  ├─ kind-of@6.0.3
-│  ├─ last-run@1.1.1
-│  ├─ lazypipe@1.0.2
-│  ├─ lazystream@1.0.0
-│  ├─ lcid@1.0.0
-│  ├─ lead@1.0.0
-│  ├─ levn@0.3.0
-│  ├─ lie@3.3.0
-│  ├─ liftoff@3.1.0
-│  ├─ limiter@1.1.5
-│  ├─ linkify-it@3.0.2
-│  ├─ load-json-file@1.1.0
-│  ├─ localtunnel@2.0.1
-│  ├─ locate-path@5.0.0
-│  ├─ lodash.camelcase@4.3.0
-│  ├─ lodash.isfinite@3.3.2
-│  ├─ lodash@4.17.21
-│  ├─ lru-queue@0.1.0
-│  ├─ make-iterator@1.0.1
-│  ├─ map-cache@0.2.2
-│  ├─ map-stream@0.0.7
-│  ├─ map-visit@1.0.0
-│  ├─ markdown-it@12.3.2
-│  ├─ matchdep@2.0.0
-│  ├─ mdurl@1.0.1
-│  ├─ merge-stream@2.0.0
-│  ├─ merge2@1.4.1
-│  ├─ micromatch@3.1.10
-│  ├─ micromatch@4.0.4
-│  ├─ mime-db@1.48.0
-│  ├─ mime-types@2.1.31
-│  ├─ mime@1.4.1
-│  ├─ mimic-fn@2.1.0
-│  ├─ minimist@1.2.6
-│  ├─ mitt@1.2.0
-│  ├─ mixin-deep@1.3.2
-│  ├─ mkdirp@0.5.5
-│  ├─ modify-filename@1.1.0
-│  ├─ ms@2.0.0
-│  ├─ ms@2.1.2
-│  ├─ ms@2.1.3
-│  ├─ mute-stdout@1.0.1
-│  ├─ nan@2.14.2
-│  ├─ nanoid@3.2.0
-│  ├─ nanomatch@1.2.13
-│  ├─ natural-compare@1.4.0
-│  ├─ negotiator@0.6.2
-│  ├─ next-tick@1.0.0
-│  ├─ nice-try@1.0.5
-│  ├─ node-fetch@2.6.1
-│  ├─ node-releases@1.1.73
-│  ├─ normalize-path@2.1.1
-│  ├─ normalize-path@3.0.0
-│  ├─ normalize-range@0.1.2
-│  ├─ now-and-later@2.0.1
-│  ├─ number-is-nan@1.0.1
-│  ├─ o-stream@0.2.2
-│  ├─ object-assign@4.1.1
-│  ├─ object-copy@0.1.0
-│  ├─ object-keys@1.1.1
-│  ├─ object-visit@1.0.1
-│  ├─ object.assign@4.1.2
-│  ├─ object.defaults@1.1.0
-│  ├─ object.map@1.0.1
-│  ├─ object.pick@1.3.0
-│  ├─ object.reduce@1.0.1
-│  ├─ on-finished@2.3.0
-│  ├─ onetime@5.1.2
-│  ├─ opal-runtime@1.0.11
-│  ├─ openurl@1.1.1
-│  ├─ opn@5.3.0
-│  ├─ optionator@0.8.3
-│  ├─ ordered-read-streams@1.0.1
-│  ├─ os-locale@1.4.0
-│  ├─ os-tmpdir@1.0.2
-│  ├─ p-limit@2.3.0
-│  ├─ p-locate@4.1.0
-│  ├─ p-map@4.0.0
-│  ├─ p-try@2.2.0
-│  ├─ parent-module@1.0.1
-│  ├─ parse-filepath@1.0.2
-│  ├─ parse-json@2.2.0
-│  ├─ parse-node-version@1.0.1
-│  ├─ parse-passwd@1.0.0
-│  ├─ parseqs@0.0.6
-│  ├─ parseuri@0.0.6
-│  ├─ parseurl@1.3.3
-│  ├─ pascalcase@0.1.1
-│  ├─ path-dirname@1.0.2
-│  ├─ path-exists@2.1.0
-│  ├─ path-exists@4.0.0
-│  ├─ path-is-absolute@1.0.1
-│  ├─ path-key@2.0.1
-│  ├─ path-key@3.1.1
-│  ├─ path-parse@1.0.7
-│  ├─ path-root-regex@0.1.2
-│  ├─ path-root@0.1.1
-│  ├─ path-type@1.1.0
-│  ├─ path-type@4.0.0
-│  ├─ performance-now@2.1.0
-│  ├─ picomatch@2.3.0
-│  ├─ pify@2.3.0
-│  ├─ pinkie-promise@2.0.1
-│  ├─ pinkie@2.0.4
-│  ├─ plugin-error@0.1.2
-│  ├─ plugin-error@1.0.1
-│  ├─ portscanner@2.1.1
-│  ├─ posix-character-classes@0.1.1
-│  ├─ postcss-value-parser@4.1.0
-│  ├─ postcss@7.0.36
-│  ├─ postcss@8.3.2
-│  ├─ prelude-ls@1.1.2
-│  ├─ pretty-bytes@5.6.0
-│  ├─ pretty-hrtime@1.0.3
-│  ├─ process-nextick-args@2.0.1
-│  ├─ progress@2.0.3
-│  ├─ promise-polyfill@6.1.0
-│  ├─ promise-polyfill@8.1.3
-│  ├─ protractor@7.0.0
-│  ├─ psl@1.8.0
-│  ├─ pump@2.0.1
-│  ├─ pumpify@1.5.1
-│  ├─ punycode@2.1.1
-│  ├─ q@1.4.1
-│  ├─ q@1.5.1
-│  ├─ queue-microtask@1.2.3
-│  ├─ range-parser@1.2.1
-│  ├─ raw-body@2.4.1
-│  ├─ read-pkg-up@1.0.1
-│  ├─ read-pkg@1.1.0
-│  ├─ readable-stream@2.3.7
-│  ├─ readable-stream@3.6.0
-│  ├─ readdirp@2.2.1
-│  ├─ readdirp@3.5.0
-│  ├─ rechoir@0.6.2
-│  ├─ regex-not@1.0.2
-│  ├─ regexpp@2.0.1
-│  ├─ remove-bom-buffer@3.0.0
-│  ├─ remove-bom-stream@1.2.0
-│  ├─ repeat-element@1.1.4
-│  ├─ repeat-string@1.6.1
-│  ├─ replace-ext@1.0.1
-│  ├─ replace-homedir@1.0.0
-│  ├─ require-directory@2.1.1
-│  ├─ requires-port@1.0.0
-│  ├─ resolve-dir@1.0.1
-│  ├─ resolve-from@4.0.0
-│  ├─ resolve-options@1.1.0
-│  ├─ resolve-url@0.2.1
-│  ├─ resolve@1.20.0
-│  ├─ resp-modifier@6.0.2
-│  ├─ restore-cursor@3.1.0
-│  ├─ ret@0.1.15
-│  ├─ reusify@1.0.4
-│  ├─ rev-hash@2.0.0
-│  ├─ rev-path@2.0.0
-│  ├─ run-async@2.4.1
-│  ├─ run-parallel@1.2.0
-│  ├─ run-sequence@2.2.1
-│  ├─ safe-buffer@5.1.2
-│  ├─ safe-buffer@5.2.1
-│  ├─ safe-regex@1.1.0
-│  ├─ safer-buffer@2.1.2
-│  ├─ saucelabs@1.5.0
-│  ├─ select@1.1.2
-│  ├─ semver-greatest-satisfied-range@1.1.0
-│  ├─ send@0.16.2
-│  ├─ serve-index@1.9.1
-│  ├─ serve-static@1.13.2
-│  ├─ set-immediate-shim@1.0.1
-│  ├─ set-value@2.0.1
-│  ├─ set-value@3.0.2
-│  ├─ shebang-command@1.2.0
-│  ├─ shebang-command@2.0.0
-│  ├─ shebang-regex@1.0.0
-│  ├─ shebang-regex@3.0.0
-│  ├─ slash@3.0.0
-│  ├─ slice-ansi@2.1.0
-│  ├─ snapdragon-node@2.1.1
-│  ├─ snapdragon-util@3.0.1
-│  ├─ snapdragon@0.8.2
-│  ├─ socket.io-adapter@1.1.2
-│  ├─ socket.io-client@2.4.0
-│  ├─ socket.io-parser@3.3.3
-│  ├─ socket.io-parser@3.4.1
-│  ├─ socket.io@2.4.0
-│  ├─ sort-keys@2.0.0
-│  ├─ source-map-resolve@0.5.3
-│  ├─ source-map-resolve@0.6.0
-│  ├─ source-map-support@0.4.18
-│  ├─ source-map-support@0.5.21
-│  ├─ source-map-url@0.4.1
-│  ├─ sparkles@1.0.1
-│  ├─ spdx-expression-parse@3.0.1
-│  ├─ split-string@3.1.0
-│  ├─ split-string@6.1.0
-│  ├─ split@1.0.1
-│  ├─ sshpk@1.16.1
-│  ├─ stack-trace@0.0.10
-│  ├─ static-extend@0.1.2
-│  ├─ statuses@1.3.1
-│  ├─ statuses@1.4.0
-│  ├─ statuses@1.5.0
-│  ├─ stream-combiner@0.2.2
-│  ├─ stream-counter@1.0.0
-│  ├─ stream-exhaust@1.0.2
-│  ├─ stream-shift@1.0.1
-│  ├─ stream-to-array@2.3.0
-│  ├─ string_decoder@1.1.1
-│  ├─ string_decoder@1.3.0
-│  ├─ string-width@1.0.2
-│  ├─ string-width@3.1.0
-│  ├─ string-width@4.2.2
-│  ├─ strip-ansi@3.0.1
-│  ├─ strip-ansi@5.2.0
-│  ├─ strip-ansi@6.0.0
-│  ├─ strip-bom-buf@1.0.0
-│  ├─ strip-bom-stream@2.0.0
-│  ├─ strip-bom-string@1.0.0
-│  ├─ strip-bom@2.0.0
-│  ├─ strip-json-comments@3.1.1
-│  ├─ supports-color@2.0.0
-│  ├─ supports-color@5.5.0
-│  ├─ supports-color@6.1.0
-│  ├─ supports-color@7.2.0
-│  ├─ sver-compat@1.5.0
-│  ├─ sweetalert@2.1.2
-│  ├─ symbol-observable@1.0.1
-│  ├─ ternary-stream@3.0.0
-│  ├─ tether-drop@1.4.2
-│  ├─ tether@1.4.7
-│  ├─ text-table@0.2.0
-│  ├─ tfunk@4.0.0
-│  ├─ three@0.137.0
-│  ├─ through@2.3.8
-│  ├─ through2-filter@3.0.0
-│  ├─ through2@2.0.5
-│  ├─ through2@3.0.2
-│  ├─ through2@4.0.2
-│  ├─ time-stamp@1.1.0
-│  ├─ tiny-emitter@2.1.0
-│  ├─ tmp@0.0.30
-│  ├─ tmp@0.0.33
-│  ├─ to-absolute-glob@2.0.2
-│  ├─ to-array@0.1.4
-│  ├─ to-object-path@0.3.0
-│  ├─ to-regex-range@2.1.1
-│  ├─ to-regex-range@5.0.1
-│  ├─ to-regex@3.0.2
-│  ├─ to-through@2.0.0
-│  ├─ toidentifier@1.0.0
-│  ├─ toposort@2.0.2
-│  ├─ type-check@0.3.2
-│  ├─ typedarray@0.0.6
-│  ├─ typeface-exo-2@1.1.13
-│  ├─ ua-parser-js@0.7.28
-│  ├─ uc.micro@1.0.6
-│  ├─ unc-path-regex@0.1.2
-│  ├─ undertaker-registry@1.0.1
-│  ├─ undertaker@1.3.0
-│  ├─ union-value@1.0.1
-│  ├─ union-value@2.0.1
-│  ├─ unique-stream@2.3.1
-│  ├─ universalify@0.1.2
-│  ├─ unpipe@1.0.0
-│  ├─ unset-value@1.0.0
-│  ├─ upath@1.2.0
-│  ├─ urix@0.1.0
-│  ├─ use@3.1.1
-│  ├─ useref@1.4.3
-│  ├─ util-deprecate@1.0.2
-│  ├─ utils-merge@1.0.1
-│  ├─ uuid@3.4.0
-│  ├─ v8-compile-cache@2.3.0
-│  ├─ v8flags@3.2.0
-│  ├─ value-or-function@3.0.0
-│  ├─ verror@1.10.0
-│  ├─ vinyl-file@3.0.0
-│  ├─ vinyl-fs@3.0.3
-│  ├─ vinyl-sourcemap@1.1.0
-│  ├─ vinyl@2.2.1
-│  ├─ webdriver-js-extender@2.1.0
-│  ├─ webdriver-manager@12.1.8
-│  ├─ whatwg-fetch@2.0.4
-│  ├─ word-wrap@1.2.3
-│  ├─ wrap-ansi@2.1.0
-│  ├─ wrap-ansi@6.2.0
-│  ├─ wrap-ansi@7.0.0
-│  ├─ write@1.0.3
-│  ├─ ws@7.4.6
-│  ├─ xml2js@0.4.23
-│  ├─ xmlbuilder@11.0.1
-│  ├─ xmlhttprequest-ssl@1.6.3
-│  ├─ xmlhttprequest@1.8.0
-│  ├─ xtend@4.0.2
-│  ├─ yargs@15.4.1
-│  ├─ yargs@16.2.0
-│  ├─ yargs@7.1.2
-│  └─ yeast@0.1.2
-├─ MIT*
-│  ├─ component-bind@1.0.0
-│  ├─ component-inherit@0.0.3
-│  └─ indexof@0.0.1
-├─ Python-2.0
-│  └─ argparse@2.0.1
-└─ Unlicense
-   └─ tweetnacl@0.14.5
+├─ MIT: 200
+├─ ISC: 59
+├─ BSD-3-Clause: 54
+├─ Apache-2.0: 51
+├─ BSD-2-Clause: 14
+├─ 0BSD: 2
+├─ (CC-BY-4.0 AND OFL-1.1 AND MIT): 1
+├─ Python-2.0: 1
+├─ (BSD-3-Clause AND Apache-2.0): 1
+├─ MIT*: 1
+├─ Unlicense: 1
+├─ CC-BY-3.0: 1
+├─ CC0-1.0: 1
+├─ (MIT AND CC-BY-3.0): 1
+└─ (MIT OR CC0-1.0): 1
+
+├─ @firebase/analytics-types@0.6.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/analytics-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/analytics-types/README.md
+├─ @firebase/analytics@0.6.18
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/analytics
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/analytics/README.md
+├─ @firebase/app-check-interop-types@0.1.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check-interop-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check-interop-types/README.md
+├─ @firebase/app-check-types@0.3.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check-types/README.md
+├─ @firebase/app-check@0.3.2
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-check
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-check/README.md
+├─ @firebase/app-types@0.6.3
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app-types/README.md
+├─ @firebase/app@0.6.30
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/app
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/app/README.md
+├─ @firebase/auth-interop-types@0.1.6
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/auth-interop-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/auth-interop-types/README.md
+├─ @firebase/auth-types@0.10.3
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/auth-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/auth-types/README.md
+├─ @firebase/auth@0.16.8
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/auth
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/auth/LICENSE
+├─ @firebase/component@0.5.6
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/component
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/component/README.md
+├─ @firebase/database-types@0.8.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/database-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/database-types/README.md
+├─ @firebase/database@0.11.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/database
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/database/README.md
+├─ @firebase/firestore-types@2.4.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/firestore-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/firestore-types/README.md
+├─ @firebase/firestore@2.4.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/firestore
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/firestore/README.md
+├─ @firebase/functions-types@0.4.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/functions-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/functions-types/README.md
+├─ @firebase/functions@0.6.16
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/functions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/functions/README.md
+├─ @firebase/installations-types@0.3.4
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  └─ path: /home/darabos/lk/web/node_modules/@firebase/installations-types
+├─ @firebase/installations@0.4.32
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  └─ path: /home/darabos/lk/web/node_modules/@firebase/installations
+├─ @firebase/logger@0.2.6
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/logger
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/logger/README.md
+├─ @firebase/messaging-types@0.5.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/messaging-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/messaging-types/README.md
+├─ @firebase/messaging@0.8.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/messaging
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/messaging/README.md
+├─ @firebase/performance-types@0.0.13
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  └─ path: /home/darabos/lk/web/node_modules/@firebase/performance-types
+├─ @firebase/performance@0.4.18
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/performance
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/performance/README.md
+├─ @firebase/polyfill@0.3.36
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/polyfill
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/polyfill/README.md
+├─ @firebase/remote-config-types@0.1.9
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/remote-config-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/remote-config-types/README.md
+├─ @firebase/remote-config@0.1.43
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/remote-config
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/remote-config/README.md
+├─ @firebase/storage-types@0.5.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/storage-types
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/storage-types/README.md
+├─ @firebase/storage@0.7.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/storage
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/storage/README.md
+├─ @firebase/util@1.3.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/util
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/util/README.md
+├─ @firebase/webchannel-wrapper@0.5.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/@firebase/webchannel-wrapper
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@firebase/webchannel-wrapper/README.md
+├─ @fortawesome/fontawesome-free@5.15.4
+│  ├─ licenses: (CC-BY-4.0 AND OFL-1.1 AND MIT)
+│  ├─ repository: https://github.com/FortAwesome/Font-Awesome
+│  ├─ publisher: Dave Gandy
+│  ├─ email: dave@fontawesome.com
+│  ├─ url: http://twitter.com/davegandy
+│  ├─ path: /home/darabos/lk/web/node_modules/@fortawesome/fontawesome-free
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@fortawesome/fontawesome-free/LICENSE.txt
+├─ @grpc/grpc-js@1.8.11
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/grpc/grpc-node/tree/master/packages/grpc-js
+│  ├─ publisher: Google Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/LICENSE
+├─ @grpc/proto-loader@0.6.13
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/grpc/grpc-node
+│  ├─ publisher: Google Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/proto-loader
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/proto-loader/LICENSE
+├─ @grpc/proto-loader@0.7.5
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/grpc/grpc-node
+│  ├─ publisher: Google Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader/LICENSE
+├─ @protobufjs/aspromise@1.1.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/aspromise
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/aspromise/LICENSE
+├─ @protobufjs/base64@1.1.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/base64
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/base64/LICENSE
+├─ @protobufjs/codegen@2.0.4
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/codegen
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/codegen/LICENSE
+├─ @protobufjs/eventemitter@1.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/eventemitter
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/eventemitter/LICENSE
+├─ @protobufjs/fetch@1.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/fetch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/fetch/LICENSE
+├─ @protobufjs/float@1.0.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/float
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/float/LICENSE
+├─ @protobufjs/inquire@1.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/inquire
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/inquire/LICENSE
+├─ @protobufjs/path@1.1.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/path
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/path/LICENSE
+├─ @protobufjs/pool@1.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/pool
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/pool/LICENSE
+├─ @protobufjs/utf8@1.1.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/dcodeIO/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@protobufjs/utf8
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@protobufjs/utf8/LICENSE
+├─ @types/clone@2.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/clone
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/clone/LICENSE
+├─ @types/estree@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/estree
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/estree/LICENSE
+├─ @types/geojson@7946.0.10
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/geojson
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/geojson/LICENSE
+├─ @types/long@4.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/long
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/long/LICENSE
+├─ @types/node@18.14.5
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+│  ├─ path: /home/darabos/lk/web/node_modules/@types/node
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/node/LICENSE
+├─ abbrev@1.1.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/abbrev-js
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ path: /home/darabos/lk/web/node_modules/abbrev
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/abbrev/LICENSE
+├─ angular-cookies@1.8.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular/angular.js
+│  ├─ publisher: Angular Core Team
+│  ├─ email: angular-core+npm@google.com
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-cookies
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-cookies/LICENSE.md
+├─ angular-hotkeys@1.7.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chieffancypants/angular-hotkeys
+│  ├─ publisher: Wes Cruver
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-hotkeys
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-hotkeys/LICENSE
+├─ angular-route@1.8.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular/angular.js
+│  ├─ publisher: Angular Core Team
+│  ├─ email: angular-core+npm@google.com
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-route
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-route/LICENSE.md
+├─ angular-sanitize@1.8.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular/angular.js
+│  ├─ publisher: Angular Core Team
+│  ├─ email: angular-core+npm@google.com
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-sanitize
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-sanitize/LICENSE.md
+├─ angular-ui-ace@0.2.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular-ui/ui-ace
+│  ├─ publisher: https://github.com/angular-ui/ui-ace/graphs/contributors
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-ui-ace
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-ui-ace/LICENSE
+├─ angular-ui-bootstrap@2.5.6
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular-ui/bootstrap
+│  ├─ publisher: https://github.com/angular-ui/bootstrap/graphs/contributors
+│  ├─ path: /home/darabos/lk/web/node_modules/angular-ui-bootstrap
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular-ui-bootstrap/LICENSE
+├─ angular@1.8.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/angular/angular.js
+│  ├─ publisher: Angular Core Team
+│  ├─ email: angular-core+npm@google.com
+│  ├─ path: /home/darabos/lk/web/node_modules/angular
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/angular/LICENSE.md
+├─ ansi-regex@5.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/ansi-regex
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/ansi-regex
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/ansi-regex/license
+├─ ansi-styles@3.2.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/ansi-styles
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/ansi-styles
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/ansi-styles/license
+├─ ansi-styles@4.3.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/ansi-styles
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/ansi-styles
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/ansi-styles/license
+├─ argparse@2.0.1
+│  ├─ licenses: Python-2.0
+│  ├─ repository: https://github.com/nodeca/argparse
+│  ├─ path: /home/darabos/lk/web/node_modules/argparse
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/argparse/LICENSE
+├─ array-find-index@1.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/array-find-index
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/array-find-index
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/array-find-index/license
+├─ asap@2.0.6
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/kriskowal/asap
+│  ├─ path: /home/darabos/lk/web/node_modules/asap
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/asap/LICENSE.md
+├─ balanced-match@1.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/juliangruber/balanced-match
+│  ├─ publisher: Julian Gruber
+│  ├─ email: mail@juliangruber.com
+│  ├─ url: http://juliangruber.com
+│  ├─ path: /home/darabos/lk/web/node_modules/balanced-match
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/balanced-match/LICENSE.md
+├─ bootstrap-tourist@0.3.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/IGreatlyDislikeJavascript/bootstrap-tourist
+│  ├─ publisher: IGreatlyDislikeJavascript
+│  ├─ path: /home/darabos/lk/web/node_modules/bootstrap-tourist
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/bootstrap-tourist/README.md
+├─ bootstrap@3.4.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/twbs/bootstrap
+│  ├─ publisher: Twitter, Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/bootstrap
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/bootstrap/LICENSE
+├─ brace-expansion@1.1.11
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/juliangruber/brace-expansion
+│  ├─ publisher: Julian Gruber
+│  ├─ email: mail@juliangruber.com
+│  ├─ url: http://juliangruber.com
+│  ├─ path: /home/darabos/lk/web/node_modules/brace-expansion
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/brace-expansion/LICENSE
+├─ brace@0.11.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/thlorenz/brace
+│  ├─ publisher: Thorsten Lorenz
+│  ├─ email: thlorenz@gmx.de
+│  ├─ url: http://thlorenz.com
+│  ├─ path: /home/darabos/lk/web/node_modules/brace
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/brace/LICENSE
+├─ chalk@2.4.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/chalk
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/chalk
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/chalk/license
+├─ chroma-js@2.4.2
+│  ├─ licenses: (BSD-3-Clause AND Apache-2.0)
+│  ├─ repository: https://github.com/gka/chroma.js
+│  ├─ publisher: Gregor Aisch
+│  ├─ path: /home/darabos/lk/web/node_modules/chroma-js
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/chroma-js/LICENSE
+├─ clipboard@2.0.8
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/zenorocha/clipboard.js
+│  ├─ path: /home/darabos/lk/web/node_modules/clipboard
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/clipboard/LICENSE
+├─ cliui@7.0.4
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/cliui
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs/node_modules/cliui
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/node_modules/cliui/LICENSE.txt
+├─ cliui@8.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/cliui
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/cliui
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/cliui/LICENSE.txt
+├─ clone@2.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/pvorb/node-clone
+│  ├─ publisher: Paul Vorbach
+│  ├─ email: paul@vorba.ch
+│  ├─ url: http://paul.vorba.ch/
+│  ├─ path: /home/darabos/lk/web/node_modules/clone
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/clone/LICENSE
+├─ color-convert@1.9.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Qix-/color-convert
+│  ├─ publisher: Heather Arthur
+│  ├─ email: fayearthur@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/color-convert
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/color-convert/LICENSE
+├─ color-convert@2.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Qix-/color-convert
+│  ├─ publisher: Heather Arthur
+│  ├─ email: fayearthur@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/color-convert
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/color-convert/LICENSE
+├─ color-name@1.1.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/dfcreative/color-name
+│  ├─ publisher: DY
+│  ├─ email: dfcreative@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/color-name
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/color-name/LICENSE
+├─ color-name@1.1.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/colorjs/color-name
+│  ├─ publisher: DY
+│  ├─ email: dfcreative@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/color-name
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/color-name/LICENSE
+├─ commander@2.20.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/tj/commander.js
+│  ├─ publisher: TJ Holowaychuk
+│  ├─ email: tj@vision-media.ca
+│  ├─ path: /home/darabos/lk/web/node_modules/commander
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/commander/LICENSE
+├─ commander@7.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/tj/commander.js
+│  ├─ publisher: TJ Holowaychuk
+│  ├─ email: tj@vision-media.ca
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/commander
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/commander/LICENSE
+├─ concat-map@0.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/substack/node-concat-map
+│  ├─ publisher: James Halliday
+│  ├─ email: mail@substack.net
+│  ├─ url: http://substack.net
+│  ├─ path: /home/darabos/lk/web/node_modules/concat-map
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/concat-map/LICENSE
+├─ core-js@3.6.5
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/zloirock/core-js
+│  ├─ path: /home/darabos/lk/web/node_modules/core-js
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/core-js/LICENSE
+├─ d3-array@3.2.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-array
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-array
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-array/LICENSE
+├─ d3-color@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-color
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-color
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-color/LICENSE
+├─ d3-delaunay@6.0.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-delaunay
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-delaunay
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-delaunay/LICENSE
+├─ d3-dispatch@3.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-dispatch
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dispatch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dispatch/LICENSE
+├─ d3-dsv@3.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-dsv
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/LICENSE
+├─ d3-force@3.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-force
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-force
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-force/LICENSE
+├─ d3-format@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-format
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-format
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-format/LICENSE
+├─ d3-geo-projection@4.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-geo-projection
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-geo-projection
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-geo-projection/LICENSE
+├─ d3-geo@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-geo
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-geo
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-geo/LICENSE
+├─ d3-hierarchy@3.1.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-hierarchy
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-hierarchy
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-hierarchy/LICENSE
+├─ d3-interpolate@3.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-interpolate
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-interpolate
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-interpolate/LICENSE
+├─ d3-path@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-path
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-path
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-path/LICENSE
+├─ d3-quadtree@3.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-quadtree
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-quadtree
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-quadtree/LICENSE
+├─ d3-scale@4.0.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-scale
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-scale
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-scale/LICENSE
+├─ d3-shape@3.2.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-shape
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-shape
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-shape/LICENSE
+├─ d3-time-format@4.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-time-format
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-time-format
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-time-format/LICENSE
+├─ d3-time@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-time
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-time
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-time/LICENSE
+├─ d3-timer@3.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/d3/d3-timer
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-timer
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-timer/LICENSE
+├─ debug@3.2.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/visionmedia/debug
+│  ├─ publisher: TJ Holowaychuk
+│  ├─ email: tj@vision-media.ca
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/debug
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/debug/LICENSE
+├─ debuglog@1.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sam-github/node-debuglog
+│  ├─ publisher: Sam Roberts
+│  ├─ email: sam@strongloop.com
+│  ├─ path: /home/darabos/lk/web/node_modules/debuglog
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/debuglog/LICENSE
+├─ delaunator@5.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/mapbox/delaunator
+│  ├─ publisher: Vladimir Agafonkin
+│  ├─ path: /home/darabos/lk/web/node_modules/delaunator
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/delaunator/LICENSE
+├─ delegate@3.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/zenorocha/delegate
+│  ├─ path: /home/darabos/lk/web/node_modules/delegate
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/delegate/readme.md
+├─ dezalgo@1.0.4
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/dezalgo
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/dezalgo
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/dezalgo/LICENSE
+├─ dom-storage@2.1.0
+│  ├─ licenses: MIT*
+│  ├─ repository: git://git.coolaj86.com/coolaj86/dom-storage.js
+│  ├─ publisher: AJ ONeal
+│  ├─ email: coolaj86@gmail.com
+│  ├─ url: https://coolaj86.com
+│  ├─ path: /home/darabos/lk/web/node_modules/dom-storage
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/dom-storage/LICENSE
+├─ emoji-regex@8.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mathiasbynens/emoji-regex
+│  ├─ publisher: Mathias Bynens
+│  ├─ url: https://mathiasbynens.be/
+│  ├─ path: /home/darabos/lk/web/node_modules/emoji-regex
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/emoji-regex/LICENSE-MIT.txt
+├─ entities@2.1.0
+│  ├─ licenses: BSD-2-Clause
+│  ├─ repository: https://github.com/fb55/entities
+│  ├─ publisher: Felix Boehm
+│  ├─ email: me@feedic.com
+│  ├─ path: /home/darabos/lk/web/node_modules/entities
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/entities/LICENSE
+├─ es5-shim@4.5.15
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/es-shims/es5-shim
+│  ├─ path: /home/darabos/lk/web/node_modules/es5-shim
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/es5-shim/LICENSE
+├─ es6-object-assign@1.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/rubennorte/es6-object-assign
+│  ├─ publisher: Rubén Norte
+│  ├─ email: rubennorte@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/es6-object-assign
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/es6-object-assign/LICENSE
+├─ es6-shim@0.35.6
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/paulmillr/es6-shim
+│  ├─ publisher: Paul Miller
+│  ├─ url: http://paulmillr.com
+│  ├─ path: /home/darabos/lk/web/node_modules/es6-shim
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/es6-shim/LICENSE
+├─ escalade@3.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/lukeed/escalade
+│  ├─ publisher: Luke Edwards
+│  ├─ email: luke.edwards05@gmail.com
+│  ├─ url: https://lukeed.com
+│  ├─ path: /home/darabos/lk/web/node_modules/escalade
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/escalade/license
+├─ escape-string-regexp@1.0.5
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/escape-string-regexp
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/escape-string-regexp
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/escape-string-regexp/license
+├─ fast-deep-equal@3.1.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/epoberezkin/fast-deep-equal
+│  ├─ publisher: Evgeny Poberezkin
+│  ├─ path: /home/darabos/lk/web/node_modules/fast-deep-equal
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/fast-deep-equal/LICENSE
+├─ fast-json-patch@3.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Starcounter-Jack/JSON-Patch
+│  ├─ publisher: Joachim Wester
+│  ├─ email: joachimwester@me.com
+│  ├─ url: http://www.starcounter.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/fast-json-patch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/fast-json-patch/LICENSE.txt
+├─ fast-json-stable-stringify@2.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/epoberezkin/fast-json-stable-stringify
+│  ├─ publisher: James Halliday
+│  ├─ email: mail@substack.net
+│  ├─ url: http://substack.net
+│  ├─ path: /home/darabos/lk/web/node_modules/fast-json-stable-stringify
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/fast-json-stable-stringify/LICENSE
+├─ faye-websocket@0.11.3
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/faye/faye-websocket-node
+│  ├─ publisher: James Coglan
+│  ├─ email: jcoglan@gmail.com
+│  ├─ url: http://jcoglan.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/faye-websocket
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/faye-websocket/LICENSE.md
+├─ firebase@8.10.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/firebase/firebase-js-sdk
+│  ├─ publisher: Firebase
+│  ├─ email: firebase-support@google.com
+│  ├─ url: https://firebase.google.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/firebase
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/firebase/README.md
+├─ fs.realpath@1.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/fs.realpath
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/fs.realpath
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/fs.realpath/LICENSE
+├─ function-bind@1.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Raynos/function-bind
+│  ├─ publisher: Raynos
+│  ├─ email: raynos2@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/function-bind
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/function-bind/LICENSE
+├─ fuse.js@6.6.2
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/krisk/Fuse
+│  ├─ publisher: Kiro Risk
+│  ├─ email: kirollos@gmail.com
+│  ├─ url: http://kiro.me
+│  ├─ path: /home/darabos/lk/web/node_modules/fuse.js
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/fuse.js/LICENSE
+├─ get-caller-file@2.0.5
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/stefanpenner/get-caller-file
+│  ├─ publisher: Stefan Penner
+│  ├─ path: /home/darabos/lk/web/node_modules/get-caller-file
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/get-caller-file/LICENSE.md
+├─ glob@7.1.7
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/node-glob
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/glob
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/glob/LICENSE
+├─ good-listener@1.2.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/zenorocha/good-listener
+│  ├─ path: /home/darabos/lk/web/node_modules/good-listener
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/good-listener/readme.md
+├─ graceful-fs@4.2.10
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/node-graceful-fs
+│  ├─ path: /home/darabos/lk/web/node_modules/graceful-fs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/graceful-fs/LICENSE
+├─ has-flag@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/has-flag
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/has-flag
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/has-flag/license
+├─ has@1.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/tarruda/has
+│  ├─ publisher: Thiago de Arruda
+│  ├─ email: tpadilha84@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/has
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/has/LICENSE-MIT
+├─ hosted-git-info@2.8.9
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/hosted-git-info
+│  ├─ publisher: Rebecca Turner
+│  ├─ email: me@re-becca.org
+│  ├─ url: http://re-becca.org
+│  ├─ path: /home/darabos/lk/web/node_modules/hosted-git-info
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/hosted-git-info/LICENSE
+├─ http-parser-js@0.5.8
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/creationix/http-parser-js
+│  ├─ publisher: Tim Caswell
+│  ├─ url: https://github.com/creationix
+│  ├─ path: /home/darabos/lk/web/node_modules/http-parser-js
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/http-parser-js/LICENSE.md
+├─ iconv-lite@0.6.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/ashtuchkin/iconv-lite
+│  ├─ publisher: Alexander Shtuchkin
+│  ├─ email: ashtuchkin@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/iconv-lite
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/d3-dsv/node_modules/iconv-lite/LICENSE
+├─ idb@3.0.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/jakearchibald/indexeddb-promised
+│  ├─ publisher: Jake Archibald
+│  ├─ path: /home/darabos/lk/web/node_modules/idb
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/idb/LICENSE
+├─ inflight@1.0.6
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/inflight
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/inflight
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/inflight/LICENSE
+├─ inherits@2.0.4
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/inherits
+│  ├─ path: /home/darabos/lk/web/node_modules/inherits
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/inherits/LICENSE
+├─ internmap@2.0.3
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/mbostock/internmap
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/internmap
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/internmap/LICENSE
+├─ is-core-module@2.11.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/inspect-js/is-core-module
+│  ├─ publisher: Jordan Harband
+│  ├─ email: ljharb@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/is-core-module
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/is-core-module/LICENSE
+├─ is-fullwidth-code-point@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/is-fullwidth-code-point
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/is-fullwidth-code-point
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/is-fullwidth-code-point/license
+├─ jquery@3.6.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jquery/jquery
+│  ├─ publisher: OpenJS Foundation and other contributors
+│  ├─ url: https://github.com/jquery/jquery/blob/3.6.3/AUTHORS.txt
+│  ├─ path: /home/darabos/lk/web/node_modules/jquery
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/jquery/LICENSE.txt
+├─ js-yaml@4.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/nodeca/js-yaml
+│  ├─ publisher: Vladimir Zapparov
+│  ├─ email: dervus.grim@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/js-yaml
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/js-yaml/LICENSE
+├─ json-parse-even-better-errors@2.3.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/npm/json-parse-even-better-errors
+│  ├─ publisher: Kat Marchán
+│  ├─ email: kzm@zkat.tech
+│  ├─ path: /home/darabos/lk/web/node_modules/json-parse-even-better-errors
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/json-parse-even-better-errors/LICENSE.md
+├─ json-stringify-pretty-compact@3.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/lydell/json-stringify-pretty-compact
+│  ├─ publisher: Simon Lydell
+│  ├─ path: /home/darabos/lk/web/node_modules/json-stringify-pretty-compact
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/json-stringify-pretty-compact/LICENSE
+├─ license-checker@25.0.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/davglass/license-checker
+│  ├─ publisher: Dav Glass
+│  ├─ email: davglass@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/LICENSE
+├─ linkify-it@3.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/markdown-it/linkify-it
+│  ├─ path: /home/darabos/lk/web/node_modules/linkify-it
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/linkify-it/LICENSE
+├─ lodash.camelcase@4.3.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/lodash/lodash
+│  ├─ publisher: John-David Dalton
+│  ├─ email: john.david.dalton@gmail.com
+│  ├─ url: http://allyoucanleet.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/lodash.camelcase
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/lodash.camelcase/LICENSE
+├─ long@4.0.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/dcodeIO/long.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/long
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/long/LICENSE
+├─ long@5.2.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/dcodeIO/long.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/node_modules/long
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/node_modules/long/LICENSE
+├─ lru-cache@6.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/node-lru-cache
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ path: /home/darabos/lk/web/node_modules/lru-cache
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/lru-cache/LICENSE
+├─ markdown-it@12.3.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/markdown-it/markdown-it
+│  ├─ path: /home/darabos/lk/web/node_modules/markdown-it
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/markdown-it/LICENSE
+├─ mdurl@1.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/markdown-it/mdurl
+│  ├─ path: /home/darabos/lk/web/node_modules/mdurl
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/mdurl/LICENSE
+├─ minimatch@3.1.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/minimatch
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me
+│  ├─ path: /home/darabos/lk/web/node_modules/minimatch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/minimatch/LICENSE
+├─ minimist@1.2.8
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/minimistjs/minimist
+│  ├─ publisher: James Halliday
+│  ├─ email: mail@substack.net
+│  ├─ url: http://substack.net
+│  ├─ path: /home/darabos/lk/web/node_modules/minimist
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/minimist/LICENSE
+├─ mkdirp@0.5.6
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/substack/node-mkdirp
+│  ├─ publisher: James Halliday
+│  ├─ email: mail@substack.net
+│  ├─ url: http://substack.net
+│  ├─ path: /home/darabos/lk/web/node_modules/mkdirp
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/mkdirp/LICENSE
+├─ ms@2.1.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/vercel/ms
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/ms
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/ms/license.md
+├─ node-fetch@2.6.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/bitinn/node-fetch
+│  ├─ publisher: David Frank
+│  ├─ path: /home/darabos/lk/web/node_modules/node-fetch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/node-fetch/LICENSE.md
+├─ nopt@4.0.3
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/nopt
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/nopt
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/nopt/LICENSE
+├─ normalize-package-data@2.5.0
+│  ├─ licenses: BSD-2-Clause
+│  ├─ repository: https://github.com/npm/normalize-package-data
+│  ├─ publisher: Meryn Stol
+│  ├─ email: merynstol@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/normalize-package-data
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/normalize-package-data/LICENSE
+├─ npm-normalize-package-bin@1.0.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/npm-normalize-package-bin
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: https://izs.me
+│  ├─ path: /home/darabos/lk/web/node_modules/npm-normalize-package-bin
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/npm-normalize-package-bin/LICENSE
+├─ once@1.4.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/once
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/once
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/once/LICENSE
+├─ os-homedir@1.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/os-homedir
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/os-homedir
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/os-homedir/license
+├─ os-tmpdir@1.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/os-tmpdir
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/os-tmpdir
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/os-tmpdir/license
+├─ osenv@0.1.5
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/osenv
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/osenv
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/osenv/LICENSE
+├─ path-is-absolute@1.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/path-is-absolute
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/path-is-absolute
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/path-is-absolute/license
+├─ path-parse@1.0.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jbgutierrez/path-parse
+│  ├─ publisher: Javier Blanco
+│  ├─ email: http://jbgutierrez.info
+│  ├─ path: /home/darabos/lk/web/node_modules/path-parse
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/path-parse/LICENSE
+├─ promise-polyfill@6.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: git+https://taylorhakes@github.com/taylorhakes/promise-polyfill
+│  ├─ publisher: Taylor Hakes
+│  ├─ path: /home/darabos/lk/web/node_modules/sweetalert/node_modules/promise-polyfill
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/sweetalert/node_modules/promise-polyfill/LICENSE
+├─ promise-polyfill@8.1.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/taylorhakes/promise-polyfill
+│  ├─ publisher: Taylor Hakes
+│  ├─ path: /home/darabos/lk/web/node_modules/promise-polyfill
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/promise-polyfill/LICENSE
+├─ protobufjs@6.11.3
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/protobufjs/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/protobufjs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/protobufjs/LICENSE
+├─ protobufjs@7.2.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/protobufjs/protobuf.js
+│  ├─ publisher: Daniel Wirtz
+│  ├─ email: dcode+protobufjs@dcode.io
+│  ├─ path: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/@grpc/grpc-js/node_modules/protobufjs/LICENSE
+├─ read-installed@4.0.3
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/read-installed
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/read-installed
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/read-installed/LICENSE
+├─ read-package-json@2.1.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/read-package-json
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/read-package-json
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/read-package-json/LICENSE
+├─ readdir-scoped-modules@1.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/readdir-scoped-modules
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/readdir-scoped-modules
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/readdir-scoped-modules/LICENSE
+├─ require-directory@2.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/troygoode/node-require-directory
+│  ├─ publisher: Troy Goode
+│  ├─ email: troygoode@gmail.com
+│  ├─ url: http://github.com/troygoode/
+│  ├─ path: /home/darabos/lk/web/node_modules/require-directory
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/require-directory/LICENSE
+├─ resolve@1.22.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/browserify/resolve
+│  ├─ publisher: James Halliday
+│  ├─ email: mail@substack.net
+│  ├─ url: http://substack.net
+│  ├─ path: /home/darabos/lk/web/node_modules/resolve
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/resolve/LICENSE
+├─ robust-predicates@3.0.1
+│  ├─ licenses: Unlicense
+│  ├─ repository: https://github.com/mourner/robust-predicates
+│  ├─ publisher: Vladimir Agafonkin
+│  ├─ path: /home/darabos/lk/web/node_modules/robust-predicates
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/robust-predicates/LICENSE
+├─ rw@1.3.3
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/mbostock/rw
+│  ├─ publisher: Mike Bostock
+│  ├─ url: http://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/rw
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/rw/LICENSE
+├─ safe-buffer@5.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/feross/safe-buffer
+│  ├─ publisher: Feross Aboukhadijeh
+│  ├─ email: feross@feross.org
+│  ├─ url: http://feross.org
+│  ├─ path: /home/darabos/lk/web/node_modules/safe-buffer
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/safe-buffer/LICENSE
+├─ safer-buffer@2.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/ChALkeR/safer-buffer
+│  ├─ publisher: Nikita Skovoroda
+│  ├─ email: chalkerx@gmail.com
+│  ├─ url: https://github.com/ChALkeR
+│  ├─ path: /home/darabos/lk/web/node_modules/safer-buffer
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/safer-buffer/LICENSE
+├─ select@1.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/zenorocha/select
+│  ├─ path: /home/darabos/lk/web/node_modules/select
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/select/readme.md
+├─ semver@5.7.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/node-semver
+│  ├─ path: /home/darabos/lk/web/node_modules/normalize-package-data/node_modules/semver
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/normalize-package-data/node_modules/semver/LICENSE
+├─ semver@7.3.8
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/node-semver
+│  ├─ publisher: GitHub Inc.
+│  ├─ path: /home/darabos/lk/web/node_modules/semver
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/semver/LICENSE
+├─ slide@1.1.6
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/slide-flow-control
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/slide
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/slide/LICENSE
+├─ spdx-compare@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/kemitchell/spdx-compare.js
+│  ├─ publisher: Kyle E. Mitchell
+│  ├─ email: kyle@kemitchell.com
+│  ├─ url: https://kemitchell.com
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-compare
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-compare/LICENSE.md
+├─ spdx-correct@3.1.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/jslicense/spdx-correct.js
+│  ├─ publisher: Kyle E. Mitchell
+│  ├─ email: kyle@kemitchell.com
+│  ├─ url: https://kemitchell.com
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-correct
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-correct/LICENSE
+├─ spdx-exceptions@2.3.0
+│  ├─ licenses: CC-BY-3.0
+│  ├─ repository: https://github.com/kemitchell/spdx-exceptions.json
+│  ├─ publisher: The Linux Foundation
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-exceptions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-exceptions/README.md
+├─ spdx-expression-parse@3.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jslicense/spdx-expression-parse.js
+│  ├─ publisher: Kyle E. Mitchell
+│  ├─ email: kyle@kemitchell.com
+│  ├─ url: https://kemitchell.com
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-expression-parse
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-expression-parse/LICENSE
+├─ spdx-license-ids@3.0.12
+│  ├─ licenses: CC0-1.0
+│  ├─ repository: https://github.com/jslicense/spdx-license-ids
+│  ├─ publisher: Shinnosuke Watanabe
+│  ├─ url: https://github.com/shinnn
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-license-ids
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-license-ids/README.md
+├─ spdx-ranges@2.1.1
+│  ├─ licenses: (MIT AND CC-BY-3.0)
+│  ├─ repository: https://github.com/kemitchell/spdx-ranges.js
+│  ├─ publisher: The Linux Foundation
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-ranges
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-ranges/LICENSE.md
+├─ spdx-satisfies@4.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/kemitchell/spdx-satisfies.js
+│  ├─ publisher: Kyle E. Mitchell
+│  ├─ email: kyle@kemitchell.com
+│  ├─ url: https://kemitchell.com
+│  ├─ path: /home/darabos/lk/web/node_modules/spdx-satisfies
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/spdx-satisfies/LICENSE
+├─ string-width@4.2.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/string-width
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/string-width
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/string-width/license
+├─ strip-ansi@6.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/strip-ansi
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/strip-ansi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/strip-ansi/license
+├─ supports-color@5.5.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/supports-color
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/license-checker/node_modules/supports-color
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/license-checker/node_modules/supports-color/license
+├─ supports-preserve-symlinks-flag@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/inspect-js/node-supports-preserve-symlinks-flag
+│  ├─ publisher: Jordan Harband
+│  ├─ email: ljharb@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/supports-preserve-symlinks-flag
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/supports-preserve-symlinks-flag/LICENSE
+├─ sweetalert@2.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/t4t5/sweetalert
+│  ├─ publisher: Tristan Edwards
+│  ├─ email: tristan.edwards@me.com
+│  ├─ url: https://tristanedwards.me
+│  ├─ path: /home/darabos/lk/web/node_modules/sweetalert
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/sweetalert/LICENSE.md
+├─ tether-drop@1.4.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/HubSpot/drop
+│  ├─ path: /home/darabos/lk/web/node_modules/tether-drop
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/tether-drop/LICENSE
+├─ tether@1.4.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/HubSpot/tether
+│  ├─ path: /home/darabos/lk/web/node_modules/tether
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/tether/LICENSE
+├─ three@0.150.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mrdoob/three.js
+│  ├─ publisher: mrdoob
+│  ├─ path: /home/darabos/lk/web/node_modules/three
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/three/LICENSE
+├─ tiny-emitter@2.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/scottcorgan/tiny-emitter
+│  ├─ publisher: Scott Corgan
+│  ├─ path: /home/darabos/lk/web/node_modules/tiny-emitter
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/tiny-emitter/LICENSE
+├─ topojson-client@3.1.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/topojson/topojson-client
+│  ├─ publisher: Mike Bostock
+│  ├─ url: https://bost.ocks.org/mike
+│  ├─ path: /home/darabos/lk/web/node_modules/topojson-client
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/topojson-client/LICENSE
+├─ toposort@2.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/marcelklehr/toposort
+│  ├─ publisher: Marcel Klehr
+│  ├─ email: mklehr@gmx.net
+│  ├─ path: /home/darabos/lk/web/node_modules/toposort
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/toposort/License
+├─ tr46@0.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Sebmaster/tr46.js
+│  ├─ publisher: Sebastian Mayr
+│  ├─ email: npm@smayr.name
+│  └─ path: /home/darabos/lk/web/node_modules/tr46
+├─ treeify@1.1.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/notatestuser/treeify
+│  ├─ publisher: Luke Plaster
+│  ├─ email: notatestuser@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/treeify
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/treeify/LICENSE
+├─ tslib@2.5.0
+│  ├─ licenses: 0BSD
+│  ├─ repository: https://github.com/Microsoft/tslib
+│  ├─ publisher: Microsoft Corp.
+│  ├─ path: /home/darabos/lk/web/node_modules/tslib
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/tslib/LICENSE.txt
+├─ typeface-exo-2@1.1.13
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/KyleAMathews/typefaces/tree/master/packages/exo-2
+│  ├─ publisher: Kyle Mathews
+│  ├─ email: mathews.kyle@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/typeface-exo-2
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/typeface-exo-2/README.md
+├─ uc.micro@1.0.6
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/markdown-it/uc.micro
+│  ├─ path: /home/darabos/lk/web/node_modules/uc.micro
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/uc.micro/LICENSE.txt
+├─ util-extend@1.0.3
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/isaacs/util-extend
+│  ├─ path: /home/darabos/lk/web/node_modules/util-extend
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/util-extend/LICENSE
+├─ validate-npm-package-license@3.0.4
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/kemitchell/validate-npm-package-license.js
+│  ├─ publisher: Kyle E. Mitchell
+│  ├─ email: kyle@kemitchell.com
+│  ├─ url: https://kemitchell.com
+│  ├─ path: /home/darabos/lk/web/node_modules/validate-npm-package-license
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/validate-npm-package-license/LICENSE
+├─ vega-canvas@1.2.7
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-canvas
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-canvas/LICENSE
+├─ vega-crossfilter@4.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-crossfilter
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-crossfilter/LICENSE
+├─ vega-dataflow@5.7.5
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-dataflow
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-dataflow/LICENSE
+├─ vega-embed@6.21.3
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega-embed
+│  ├─ publisher: UW Interactive Data Lab
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-embed
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-embed/LICENSE
+├─ vega-encode@4.9.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-encode
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-encode/LICENSE
+├─ vega-event-selector@3.0.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Arvind Satyanarayan
+│  ├─ url: http://arvindsatya.com
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-event-selector
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-event-selector/LICENSE
+├─ vega-expression@5.0.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-expression
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-expression/LICENSE
+├─ vega-force@4.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-force
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-force/LICENSE
+├─ vega-format@1.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-format
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-format/LICENSE
+├─ vega-functions@5.13.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-functions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-functions/LICENSE
+├─ vega-geo@4.4.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-geo
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-geo/LICENSE
+├─ vega-hierarchy@4.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-hierarchy
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-hierarchy/LICENSE
+├─ vega-interpreter@1.0.5
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-interpreter
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-interpreter/LICENSE
+├─ vega-label@1.2.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: UW Interactive Data Lab
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-label
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-label/LICENSE
+├─ vega-lite@5.6.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega-lite
+│  ├─ publisher: Dominik Moritz, Kanit "Ham" Wongsuphasawat, Arvind Satyanarayan, Jeffrey Heer
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-lite
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/LICENSE
+├─ vega-loader@4.5.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-loader
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-loader/LICENSE
+├─ vega-parser@6.2.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-parser/LICENSE
+├─ vega-projection@1.6.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-projection
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-projection/LICENSE
+├─ vega-regression@1.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-regression
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-regression/LICENSE
+├─ vega-runtime@6.1.4
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-runtime
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-runtime/LICENSE
+├─ vega-scale@7.3.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-scale
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-scale/LICENSE
+├─ vega-scenegraph@4.10.2
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-scenegraph
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-scenegraph/LICENSE
+├─ vega-schema-url-parser@2.2.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/schema
+│  ├─ publisher: Dominik Moritz
+│  ├─ email: domoritz@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-schema-url-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-schema-url-parser/LICENSE
+├─ vega-selections@5.4.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Arvind Satyanarayan
+│  ├─ url: http://arvindsatya.com
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-selections
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-selections/LICENSE
+├─ vega-statistics@1.8.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-statistics
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-statistics/LICENSE
+├─ vega-themes@2.12.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega-themes
+│  ├─ publisher: UW Interactive Data Lab
+│  ├─ url: https://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-themes
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-themes/LICENSE
+├─ vega-time@2.1.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-time
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-time/LICENSE
+├─ vega-tooltip@0.30.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega-tooltip
+│  ├─ publisher: UW Interactive Data Lab
+│  ├─ url: https://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-tooltip
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-tooltip/LICENSE
+├─ vega-transforms@4.10.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-transforms
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-transforms/LICENSE
+├─ vega-typings@0.23.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Dominik Moritz
+│  ├─ email: domoritz@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-typings
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-typings/LICENSE
+├─ vega-util@1.17.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-util
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-util/LICENSE
+├─ vega-view-transforms@4.5.9
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-view-transforms
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-view-transforms/LICENSE
+├─ vega-view@5.11.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-view
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-view/LICENSE
+├─ vega-voronoi@4.2.1
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-voronoi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-voronoi/LICENSE
+├─ vega-wordcloud@4.1.4
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: Jeffrey Heer
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega-wordcloud
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega-wordcloud/LICENSE
+├─ vega@5.23.0
+│  ├─ licenses: BSD-3-Clause
+│  ├─ repository: https://github.com/vega/vega
+│  ├─ publisher: UW Interactive Data Lab
+│  ├─ url: http://idl.cs.washington.edu
+│  ├─ path: /home/darabos/lk/web/node_modules/vega
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/vega/LICENSE
+├─ webidl-conversions@3.0.1
+│  ├─ licenses: BSD-2-Clause
+│  ├─ repository: https://github.com/jsdom/webidl-conversions
+│  ├─ publisher: Domenic Denicola
+│  ├─ email: d@domenic.me
+│  ├─ url: https://domenic.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/webidl-conversions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/webidl-conversions/LICENSE.md
+├─ websocket-driver@0.7.4
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/faye/websocket-driver-node
+│  ├─ publisher: James Coglan
+│  ├─ email: jcoglan@gmail.com
+│  ├─ url: http://jcoglan.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/websocket-driver
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/websocket-driver/LICENSE.md
+├─ websocket-extensions@0.1.4
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/faye/websocket-extensions-node
+│  ├─ publisher: James Coglan
+│  ├─ email: jcoglan@gmail.com
+│  ├─ url: http://jcoglan.com/
+│  ├─ path: /home/darabos/lk/web/node_modules/websocket-extensions
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/websocket-extensions/LICENSE.md
+├─ whatwg-fetch@2.0.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/github/fetch
+│  ├─ path: /home/darabos/lk/web/node_modules/whatwg-fetch
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/whatwg-fetch/LICENSE
+├─ whatwg-url@5.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/jsdom/whatwg-url
+│  ├─ publisher: Sebastian Mayr
+│  ├─ email: github@smayr.name
+│  ├─ path: /home/darabos/lk/web/node_modules/whatwg-url
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/whatwg-url/LICENSE.txt
+├─ wrap-ansi@7.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/chalk/wrap-ansi
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: https://sindresorhus.com
+│  ├─ path: /home/darabos/lk/web/node_modules/wrap-ansi
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/wrap-ansi/license
+├─ wrappy@1.0.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/wrappy
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/wrappy
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/wrappy/LICENSE
+├─ xmlhttprequest@1.8.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/driverdan/node-XMLHttpRequest
+│  ├─ publisher: Dan DeFelippi
+│  ├─ url: http://driverdan.com
+│  ├─ path: /home/darabos/lk/web/node_modules/xmlhttprequest
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/xmlhttprequest/LICENSE
+├─ y18n@5.0.8
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/y18n
+│  ├─ publisher: Ben Coe
+│  ├─ email: bencoe@gmail.com
+│  ├─ path: /home/darabos/lk/web/node_modules/y18n
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/y18n/LICENSE
+├─ yallist@4.0.0
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/yallist
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me/
+│  ├─ path: /home/darabos/lk/web/node_modules/yallist
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yallist/LICENSE
+├─ yargs-parser@20.2.9
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/yargs-parser
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs/node_modules/yargs-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/node_modules/yargs-parser/LICENSE.txt
+├─ yargs-parser@21.1.1
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/yargs/yargs-parser
+│  ├─ publisher: Ben Coe
+│  ├─ email: ben@npmjs.com
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs-parser
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs-parser/LICENSE.txt
+├─ yargs@16.2.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/yargs/yargs
+│  ├─ path: /home/darabos/lk/web/node_modules/yargs
+│  └─ licenseFile: /home/darabos/lk/web/node_modules/yargs/LICENSE
+└─ yargs@17.6.2
+   ├─ licenses: MIT
+   ├─ repository: https://github.com/yargs/yargs
+   ├─ path: /home/darabos/lk/web/node_modules/vega-lite/node_modules/yargs
+   └─ licenseFile: /home/darabos/lk/web/node_modules/vega-lite/node_modules/yargs/LICENSE
+

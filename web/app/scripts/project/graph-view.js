@@ -1,15 +1,17 @@
 // Graph visualization. Generates the SVG contents.
-'use strict';
+import '../app';
+import '../util/util';
+import * as svg from './svg-util';
+import common from '../util/common-util';
+import force from './force-layout';
+import chroma from 'chroma-js';
+import templateUrl from './graph-view.html?url';
 
-angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, chroma */
-  const svg = SVG_UTIL;
-  const common = COMMON_UTIL;
+angular.module('biggraph').directive('graphView', ['util', '$compile', '$timeout', function(util, $compile, $timeout) {
   const directive = {
     restrict: 'E',
-    templateUrl: 'scripts/project/graph-view.html',
+    templateUrl,
     scope: { graph: '=', menu: '=', width: '=', height: '=' },
-    replace: true,
     link: function(scope, element) {
       element = angular.element(element);
       scope.gv = new GraphView(scope, element);
@@ -74,19 +76,18 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
   Offsetter.prototype.rule = function(element) {
     this.elements.push(element);
-    const that = this;
     element.offsetter = this;
-    element.screenX = function() {
-      return element.x * that.zoom + that.xOff;
+    element.screenX = () => {
+      return element.x * this.zoom + this.xOff;
     };
-    element.screenY = function() {
-      return element.y * that.zoom + that.yOff;
+    element.screenY = () => {
+      return element.y * this.zoom + this.yOff;
     };
-    element.activateMenu = function(menuData, x, y) {
-      that.menu.x = x;
-      that.menu.y = y;
-      that.menu.data = menuData;
-      that.menu.enabled = true;
+    element.activateMenu = (menuData, x, y) => {
+      this.menu.x = x;
+      this.menu.y = y;
+      this.menu.data = menuData;
+      this.menu.enabled = true;
     };
     element.reDraw();
   };
@@ -98,13 +99,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Offsetter.prototype.reDraw = function() {
     if (!this.drawing) {
       this.drawing = true;
-      const that = this;
       // Call the actual drawing asynchronously.
-      $timeout(function() {
-        for (let i = 0; i < that.elements.length; ++i) {
-          that.elements[i].reDraw();
+      $timeout(() => {
+        for (let i = 0; i < this.elements.length; ++i) {
+          this.elements[i].reDraw();
         }
-        that.drawing = false;
+        this.drawing = false;
       });
     }
   };
@@ -125,24 +125,23 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svg.append(this.root);
     // Top-level mouse/touch listeners.
     this.svgMouseDownListeners = [];
-    const that = this;
-    this.svg.on('mousedown touchstart', function(e) {
-      for (let i = 0; i < that.svgMouseDownListeners.length; ++i) {
-        that.svgMouseDownListeners[i](e);
+    this.svg.on('mousedown touchstart', (e) => {
+      for (let i = 0; i < this.svgMouseDownListeners.length; ++i) {
+        this.svgMouseDownListeners[i](e);
       }
     });
     this.svgMouseWheelListeners = [];
-    this.svg.on('wheel', function(e) {
-      for (let i = 0; i < that.svgMouseWheelListeners.length; ++i) {
-        that.svgMouseWheelListeners[i](e);
+    this.svg.on('wheel', (e) => {
+      for (let i = 0; i < this.svgMouseWheelListeners.length; ++i) {
+        this.svgMouseWheelListeners[i](e);
       }
     });
     this.svgDoubleClickListeners = [];
-    function doubleClick(e) {
-      for (let i = 0; i < that.svgDoubleClickListeners.length; ++i) {
-        that.svgDoubleClickListeners[i](e);
+    const doubleClick = (e) => {
+      for (let i = 0; i < this.svgDoubleClickListeners.length; ++i) {
+        this.svgDoubleClickListeners[i](e);
       }
-    }
+    };
     this.svg.on('dblclick', doubleClick);
     // Handle right double-clicks too. This disables the default context
     // menu, which is actually a good thing too.
@@ -201,6 +200,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
     this.svgDoubleClickListeners = [];
+    // Delete 3D views.
+    const oldRenderers = this.rootElement.children('renderer');
+    if (oldRenderers.length > 0) {
+      oldRenderers.scope()?.$destroy();
+      oldRenderers.remove();
+    }
   };
 
   GraphView.prototype.loading = function() {
@@ -263,11 +268,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       es: edges,
       quality: opts.quality,
     };
-    let that = this;
     util.post('/ajax/graphray', JSON.stringify(config))
-      .then(function(hash) {
+      .then((hash) => {
         const href = '/ajax/graphray?q=' + hash;
-        that.scope.graphray = href;
+        this.scope.graphray = href;
       });
   };
 
@@ -384,12 +388,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         vsi += 1;
         sideIndices.push(i);
       }
-    }
-    // Drop 3D views. We will either create new ones or go with 2D.
-    const oldRenderers = this.rootElement.children('renderer');
-    if (oldRenderers.length > 0) {
-      oldRenderers.scope().$destroy();
-      oldRenderers.remove();
     }
     let side;
     for (let i = 0; i < data.edgeBundles.length; ++i) {
@@ -1196,8 +1194,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.key = 'AIzaSyBcML5zQetjkRFuqpSSG6EmhS2vSWRssZ4'; // big-graph-gc1 API key.
     this.images = [];
     this.vertices.offsetter.rule(this);
-    const that = this;
-    const unwatch = util.deepWatch(this.gv.scope, 'mapFilters', function() { that.update(); });
+    const unwatch = util.deepWatch(this.gv.scope, 'mapFilters', () => { this.update(); });
     this.gv.unregistration.push(function() {
       unwatch();
     });
@@ -1235,8 +1232,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.lastXOff = offsetter.xOff;
       this.lastYOff = offsetter.yOff;
       $timeout.cancel(this.refresh);
-      const that = this;
-      this.refresh = $timeout(function() { that.update(); }, this.NAVIGATION_DELAY);
+      this.refresh = $timeout(() => this.update(), this.NAVIGATION_DELAY);
     }
   };
   Map.prototype.update = function() {
@@ -1358,7 +1354,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       return opts;
     }
 
-    const engine = new FORCE_LAYOUT.Engine(getLayoutOpts());
+    const engine = new force.Engine(getLayoutOpts());
     let lastLayoutStyle = engine.opts.style;
     engine.initForSeconds(vertices, 2);
     let animating = false;
@@ -1369,8 +1365,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         window.requestAnimationFrame(vertices.step);
       }
     };
-    const that = this;
-    vertices.step = function() {
+    vertices.step = () => {
       const animate = vertices.side.animate;
       // This also ends up getting called when the side is closed due to the deep watch.
       // Accept this silently.
@@ -1388,7 +1383,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           v.forceOY = v.y;
         }
         engine.initForSeconds(vertices, 2);
-        that.initView(vertices, 1);
+        this.initView(vertices, 1);
       }
       if (animating && animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
@@ -1753,9 +1748,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.arc.attr({ style: 'stroke: ' + color });
       this.arrow && this.arrow.attr({ style: 'fill: ' + color });
     }
-    const that = this;
-    src.addMoveListener(function() { that.reposition(); });
-    dst.addMoveListener(function() { that.reposition(); });
+    src.addMoveListener(() => this.reposition());
+    dst.addMoveListener(() => this.reposition());
     this.reposition();
     src.edgesOut.push(this);
     dst.edgesIn.push(this);
@@ -1804,4 +1798,4 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   return directive;
-});
+}]);

@@ -39,7 +39,7 @@ test('load snapshot in a new workspace', async () => {
 test('view snapshot in the directory browser', async () => {
   // Open the snapshot.
   await splash.snapshot(snapshotName).click();
-  const state = await splash.snapshotState(ROOT + '/' + snapshotName);
+  const state = splash.snapshotState(ROOT + '/' + snapshotName);
   await expect(state.popup).toBeVisible();
   await expect(state.left.vertexCount).toHaveText('4');
   await expect(state.left.edgeCount).toHaveText('4');

@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 done
 cfg=$(cat conda-env.yml)
 if [[ $include_build == 'false' ]]; then
-  cfg=$(echo "$cfg" | grep -Pv -- '^#|- (make|sbt|nodejs|yarn|go|compilers|swig|autopep8|mypy|zip|wget)\b')
+  cfg=$(echo "$cfg" | grep -Pv -- '^#|- (make|sbt|nodejs|go|compilers|swig|autopep8|mypy|zip|wget)\b')
 fi
 if [[ $include_cuda == 'false' ]]; then
   cfg=$(echo "$cfg" | grep -Pv -- '- (rapidsai|nvidia|cugraph|cudatoolkit)\b' | sed 's/cuda\|cu113/cpu/g')

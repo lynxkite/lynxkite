@@ -1,8 +1,10 @@
 // Presents the parameters of an operation. It picks the right presentation
 // (text box, dropdown, etc) based on the parameter metadata.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './operation-parameters.html?url';
 
-angular.module('biggraph').directive('operationParameters', function(util) {
+angular.module('biggraph').directive('operationParameters', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -14,7 +16,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       wizard: '=',
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/operation-parameters.html',
+    templateUrl,
     link: function(scope, element) {
       element.on('focusout', function() { scope.onBlur(); });
 
@@ -141,4 +143,4 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       };
     }
   };
-});
+}]);

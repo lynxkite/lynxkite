@@ -1,11 +1,13 @@
 // The entry for a model in the project view.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './model-details.html?url';
 
-angular.module('biggraph').directive('modelDetails', function(util) {
+angular.module('biggraph').directive('modelDetails', ['util', function(util) {
   return {
     restrict: 'E',
     scope: { scalarId: '=' },
-    templateUrl: 'scripts/project/model-details.html',
+    templateUrl,
     link: function(scope) {
       scope.showSQL = false;
 
@@ -18,4 +20,4 @@ angular.module('biggraph').directive('modelDetails', function(util) {
       };
     },
   };
-});
+}]);

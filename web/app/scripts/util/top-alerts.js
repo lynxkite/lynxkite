@@ -1,10 +1,12 @@
 // A list of error messages that hover over the page.
-'use strict';
+import '../app';
+import './util';
+import templateUrl from './top-alerts.html?url';
 
-angular.module('biggraph').directive('topAlerts', function(util) {
+angular.module('biggraph').directive('topAlerts', ['util', function(util) {
   return {
     restrict: 'E',
-    templateUrl: 'scripts/util/top-alerts.html',
+    templateUrl,
     link: function(scope) {
       scope.alerts = [];
       scope.$on('topAlert', function(evt, msg) {
@@ -25,4 +27,4 @@ angular.module('biggraph').directive('topAlerts', function(util) {
       scope.reportError = util.reportError;
     }
   };
-});
+}]);
