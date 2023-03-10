@@ -71,32 +71,27 @@ export class Entity {
       await popup.locator('#show-histogram').click();
     }
     await expect(histogram).toBeVisible();
-    if (opts?.precise) {
-      await popup.locator('#precise-histogram-calculation').click();
-    }
+    await popup.locator('#precise-histogram-calculation').setChecked(opts?.precise ?? false);
     // Wait for the histogram to be loaded.
     await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
     return histogram;
   }
 
-  async getHistogramValues(opts?: { precise?: boolean }) {
+  async expectHistogramValues(
+    expected: {title: string, size: number, value: number}[], opts?: { precise?: boolean }) {
     const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
-    const tdCount = await tds.count();
+    await expect(tds).toHaveCount(expected.length);
     let total = 0;
-    const res = [] as { title: string; value: number; size: number }[];
-    for (let i = 0; i < tdCount; ++i) {
+    for (let i = 0; i < expected.length; ++i) {
       const td = tds.nth(i);
-      const toolTip = await td.getAttribute('drop-tooltip');
-      const style = await td.locator('.bar').getAttribute('style');
-      const [, title, value] = toolTip!.match(/^(.*): (\d+)$/)!;
-      const [, size] = style!.match(/^height: (\d+)%;$/)!;
-      total += parseInt(value);
-      res.push({ title, value: parseInt(value), size: parseInt(size) });
+      const exp = expected[i];
+      await expect(td).toHaveAttribute('drop-tooltip', `${exp.title}: ${exp.value}`);
+      await expect(td.locator('.bar')).toHaveAttribute('style', `height: ${exp.size}%;`);
+      total += exp.value;
     }
     await expect(histogram.locator('#histogram-total')).toContainText(humanize(total));
     await this.popoff();
-    return res;
   }
 
   async visualizeAs(visualization: string) {

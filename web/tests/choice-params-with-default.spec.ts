@@ -25,10 +25,21 @@ test('pagerank default choice values', async () => {
     after: 'pr1',
     params: { name: 'page_rank_incoming', direction: 'incoming edges', iterations: '1' },
   });
-  const state = await workspace.openStateView('pr2', 'graph');
-  const defaultHistogram = await state.left.vertexAttribute('page_rank_default').getHistogramValues();
-  const incomingHistogram = await state.left.vertexAttribute('page_rank_incoming').getHistogramValues();
-  expect(defaultHistogram).not.toEqual(incomingHistogram);
+
+  await workspace.addBox({
+    id: 'sql', name: 'SQL1', x: 100, y: 400, after: 'pr2',
+    params: { sql: 'select name, page_rank_default, page_rank_incoming from vertices' },
+  });
+  const state = await workspace.openStateView('sql', 'table');
+  await state.table.expect(
+    ['name', 'page_rank_default', 'page_rank_incoming'],
+    ['String', 'Double', 'Double'],
+    [
+      ['Adam', '1.6375', '1'],
+      ['Eve', '1.6375', '1'],
+      ['Bob', '0.3625', '1.425'],
+      ['Isolated Joe', '0.3625', '0.575'],
+    ]);
   await state.close();
 });
 

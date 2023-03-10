@@ -7,7 +7,7 @@ const config: PlaywrightTestConfig = {
   timeout: 60_000,
   expect: {
     // Maximum time expect() should wait for the condition to be met.
-    timeout: 30_000,
+    timeout: process.env.CI ? 30_000 : 5_000,
   },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
