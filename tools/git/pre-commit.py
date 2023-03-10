@@ -80,8 +80,11 @@ def linter(extension, command):
 
 
 def check_templates():
-  if [f for f in files if f.endswith('kiterc.asciidoc')
-          or f.endswith('prefix_definitions.asciidoc')]:
+  if [f for f in files if
+      f.endswith('kiterc.asciidoc') or
+      f.endswith('prefix_definitions.asciidoc') or
+      f.endswith('kiterc_template') or
+          f.endswith('prefix_definitions_template.txt')]:
     with watch_files(['conf/kiterc_template', 'conf/prefix_definitions_template.txt'], 'gen_templates.py'):
       subprocess.call(['tools/gen_templates.py'])
 
