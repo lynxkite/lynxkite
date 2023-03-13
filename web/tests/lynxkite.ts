@@ -577,8 +577,8 @@ class Side {
     this.side.element(by.id('sampled-mode-button')).click();
   }
 
-  toggleBucketedVisualization() {
-    this.side.element(by.id('bucketed-mode-button')).click();
+  async toggleBucketedVisualization() {
+    await this.side.locator('#bucketed-mode-button').click();
   }
 
   undoButton() {
@@ -709,7 +709,7 @@ class VisualizationState {
   }
 
   asTSV() {
-    const copyButton = $('.graph-sidebar [data-clipboard-text');
+    const copyButton = this.popup.locator('.graph-sidebar [data-clipboard-text');
     // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
     return copyButton.getAttribute('data-clipboard-text');
   }
