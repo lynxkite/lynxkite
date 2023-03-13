@@ -1,12 +1,14 @@
 // Displays a histogram. The data comes from the "histogram-button" directive.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './histogram.html?url';
 
-angular.module('biggraph').directive('histogram', function($timeout, util) {
+angular.module('biggraph').directive('histogram', ['$timeout', 'util', function($timeout, util) {
   return {
     restrict: 'E',
     scope: { model: '=' },
     replace: false,
-    templateUrl: 'scripts/project/histogram.html',
+    templateUrl,
     link: function(scope) {
       function maxSize() {
         let max = 1;
@@ -98,4 +100,4 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
       };
     },
   };
-});
+}]);

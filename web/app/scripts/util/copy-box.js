@@ -1,13 +1,15 @@
 // A button that pops up a textbox with the specified contents selected and ready to be copied.
-'use strict';
+import ClipboardJS from 'clipboard';
+import '../app';
+import './util';
+import templateUrl from './copy-box.html?url';
 
-angular.module('biggraph').directive('copyBox', function(util) {
+angular.module('biggraph').directive('copyBox', ['util', function(util) {
   return {
     restrict: 'E',
     scope: { data: '@', description: '@' },
-    templateUrl: 'scripts/util/copy-box.html',
+    templateUrl,
     link: function(scope, element) {
-      /* global ClipboardJS */
       const client = new ClipboardJS(element.find('.clicky')[0]);
       client.on('error', function(event) {
         /* eslint-disable no-console */
@@ -19,4 +21,4 @@ angular.module('biggraph').directive('copyBox', function(util) {
       });
     },
   };
-});
+}]);

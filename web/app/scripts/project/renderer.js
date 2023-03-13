@@ -1,8 +1,7 @@
 // 3D graph visualization.
-'use strict';
+import '../app';
 
-angular.module('biggraph').directive('renderer', function($timeout) {
-  /* global THREE */
+angular.module('biggraph').directive('renderer', function() {
   return {
     restrict: 'E',
     link: function(scope, element) {
@@ -12,13 +11,25 @@ angular.module('biggraph').directive('renderer', function($timeout) {
       let disposed;
 
       // Wait for layout.
-      $timeout(function() {
+      setTimeout(async function() {
+        let renderer;
+        // Clean up when the directive is destroyed.
+        scope.$on('$destroy', function() {
+          renderer?.dispose();
+          disposed = true;
+        });
+
+        const THREE = await import('three');
+        const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+        if (disposed) {
+          return;
+        }
         // Create the canvas.
         const W = element.width();
         const H = element.height();
         const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 10000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        const controls = new OrbitControls(camera, renderer.domElement);
         controls.autoRotate = true;
         controls.autoRotateSpeed = 2.0;
         camera.position.set(10, 5, 120);
@@ -29,12 +40,6 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         // Stop auto-rotate on mousedown.
         element.mousedown(function() {
           controls.autoRotate = false;
-        });
-
-        // Clean up when the directive is destroyed.
-        scope.$on('$destroy', function() {
-          renderer.dispose();
-          disposed = true;
         });
 
         // Set basic scene.
@@ -68,7 +73,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
 
           const geom = new THREE.BufferGeometry();
           geom.setIndex(new THREE.BufferAttribute(is, 1));
-          geom.addAttribute('position', new THREE.BufferAttribute(ps, 3));
+          geom.setAttribute('position', new THREE.BufferAttribute(ps, 3));
           geom.computeVertexNormals();
           const mat = new THREE.MeshPhongMaterial({
             color: 0x807050,

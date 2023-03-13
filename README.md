@@ -75,10 +75,6 @@ We use `make` for building the whole project.
     make
 
 LynxKite can be run as a fat jar started with `spark-submit`. See `run.sh` for an example of this.
-During development you can avoid building a fat jar each time like this:
-
-    sbt stage # (Or run "stage" in a long-lived SBT session.)
-    target/universal/stage/bin/lynxkite
 
 
 ## Tests
@@ -90,12 +86,11 @@ We have test suites for the different parts of the system:
   `testOnly *SomethingTest` to run just one test. Run `./test_backend.sh -si` to start `sbt` with
   Sphynx as the backend.
 
-- **Frontend tests** use [Protractor](https://www.protractortest.org/) to simulate a user's actions
+- **Frontend tests** use [Playwright](https://playwright.dev/) to simulate a user's actions
   on the UI. `make frontend-test` will build everything, start a temporary LynxKite instance and run
-  the tests against that. Use `xvfb-run` for headless execution. If you already have a running
-  LynxKite instance and you don't mind erasing all data from it, run `npx gulp test` in the `web`
-  directory. You can start up a dev proxy that watches the frontend source code for changes with
-  `npx gulp serve`. Run the test suite against the dev proxy with `npx gulp test:serve`.
+  the tests against that. If you already have a running run `npm test` in the `web`
+  directory. You can start up a dev server that proxies backend requests to LynxKite with
+  `npm start`.
 
 - **Python API tests** are started with `make remote_api-test`. If you already have a running
   LynxKite that is okay to test on, run `python/remote_api/test.sh`. This script can also run a

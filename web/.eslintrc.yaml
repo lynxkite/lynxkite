@@ -1,9 +1,17 @@
 ---
-extends: eslint:recommended
+extends:
+- eslint:recommended
+- 'plugin:@typescript-eslint/recommended'
+parser: '@typescript-eslint/parser'
+plugins: ['@typescript-eslint']
+root: true
 env:
+  es2021: true
   browser: true
   node: true
   es6: true
+  commonjs: true
+  jest: true
 rules:
   brace-style: [error, 1tbs, { allowSingleLine: true }]
   comma-spacing: [error]
@@ -27,11 +35,13 @@ rules:
   space-before-blocks: [error]
   space-in-parens: [error]
   space-infix-ops: [error]
+  spaced-comment: error
   arrow-spacing: [error, {before: true, after: true}]
   no-var: [error]
   no-undef: [error]
 parserOptions:
-  ecmaVersion: 2018
+  ecmaVersion: latest
+  sourceType: module
 globals:
   # "false" means overwriting is disallowed.
   angular: false

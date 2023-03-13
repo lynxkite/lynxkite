@@ -1,7 +1,8 @@
 // Sends center requests with pagination support.
-'use strict';
+import '../app';
+import '../util/util';
 
-angular.module('biggraph').factory('getCenter', function(util) {
+angular.module('biggraph').factory('getCenter', ['util', function(util) {
   function getCenter(resolvedParams) {
     let offset = resolvedParams.offset || 0; // Default value.
     delete resolvedParams.offset; // This parameter is just for getCenter.
@@ -38,4 +39,4 @@ angular.module('biggraph').factory('getCenter', function(util) {
   }
 
   return getCenter;
-});
+}]);

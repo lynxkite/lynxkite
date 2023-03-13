@@ -1,6 +1,6 @@
 // Shared testing utilities.
 // TODO: This is being migrated from test-lib.js. We will clean it up at the end.
-import { expect, Locator, Browser, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
 export function toId(x) {
@@ -42,7 +42,7 @@ export class Entity {
   }
 
   async popup() {
-    if ((await this.menu.count()) == 0) {
+    if ((await this.menu.count()) === 0) {
       await this.element.click();
     }
     await expect(this.menu).toBeVisible();
@@ -71,32 +71,27 @@ export class Entity {
       await popup.locator('#show-histogram').click();
     }
     await expect(histogram).toBeVisible();
-    if (opts?.precise) {
-      await popup.locator('#precise-histogram-calculation').click();
-    }
+    await popup.locator('#precise-histogram-calculation').setChecked(opts?.precise ?? false);
     // Wait for the histogram to be loaded.
     await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
     return histogram;
   }
 
-  async getHistogramValues(opts?: { precise?: boolean }) {
+  async expectHistogramValues(
+    expected: {title: string, size: number, value: number}[], opts?: { precise?: boolean }) {
     const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
-    const tdCount = await tds.count();
+    await expect(tds).toHaveCount(expected.length);
     let total = 0;
-    const res = [] as { title: string; value: number; size: number }[];
-    for (let i = 0; i < tdCount; ++i) {
+    for (let i = 0; i < expected.length; ++i) {
       const td = tds.nth(i);
-      const toolTip = await td.getAttribute('drop-tooltip');
-      const style = await td.locator('.bar').getAttribute('style');
-      const [, title, value] = toolTip!.match(/^(.*): (\d+)$/)!;
-      const [, size] = style!.match(/^height: (\d+)%;$/)!;
-      total += parseInt(value);
-      res.push({ title, value: parseInt(value), size: parseInt(size) });
+      const exp = expected[i];
+      await expect(td).toHaveAttribute('drop-tooltip', `${exp.title}: ${exp.value}`);
+      await expect(td.locator('.bar')).toHaveAttribute('style', `height: ${exp.size}%;`);
+      total += exp.value;
     }
     await expect(histogram.locator('#histogram-total')).toContainText(humanize(total));
     await this.popoff();
-    return res;
   }
 
   async visualizeAs(visualization: string) {
@@ -118,7 +113,7 @@ export class Entity {
   }
 
   async clickMenu(id: string) {
-    const p = await this.popup()
+    const p = await this.popup();
     await p.locator('#' + id).click();
     await this.popoff();
   }
@@ -153,30 +148,14 @@ export class Workspace {
     await this.main.locator('#close-workspace').click();
   }
 
-  async openOperation(name) {
-    this.selector.element(by.id('operation-search')).click();
-    safeSendKeys(this.selector.element(by.id('filter')), name + K.ENTER);
-    return this.selector.locator('operation-selector-entry').get(0);
-  }
-
-  async closeOperationSelector() {
-    this.selector.element(by.id('operation-search')).click();
-  }
-
-  async addBoxFromSelector(boxName) {
-    browser
-      .actions()
-      .sendKeys('/' + boxName + K.ENTER + K.ESCAPE)
-      .perform();
-  }
-
   async addBox(boxData) {
     const id = boxData.id;
     const after = boxData.after;
     const inputs = boxData.inputs;
     const params = boxData.params;
     await this.page.evaluate(boxData => {
-      $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+      /* global jQuery */
+      jQuery(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
         boxData.name,
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
@@ -215,10 +194,6 @@ export class Workspace {
     await expect(this.page.locator('g.box.selected')).toHaveCount(n);
   }
 
-  async expectNumBoxes(n) {
-    await expect(this.root.locator('g.box')).toHaveCount(n);
-  }
-
   async deleteBoxes(boxIds) {
     await this.selectBoxes(boxIds);
     await this.main.locator('#delete-selected-boxes').click();
@@ -235,7 +210,7 @@ export class Workspace {
   }
 
   getInputPlug(boxId: string, plugId?: string) {
-    let box = this.getBox(boxId);
+    const box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
     } else {
@@ -244,7 +219,7 @@ export class Workspace {
   }
 
   getOutputPlug(boxId: string, plugId?: string) {
-    let box = this.getBox(boxId);
+    const box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
     } else {
@@ -379,7 +354,7 @@ export class BoxEditor extends PopupBase {
     for (const key in params) {
       await setParameter(this.operationParameter(key), params[key]);
     }
-    this.head().click(); // Make sure the parameters are not focused.
+    await this.head().click(); // Make sure the parameters are not focused.
   }
 
   getParameter(paramName, tag = 'input') {
@@ -448,16 +423,16 @@ class PlotState extends PopupBase {
     const heights: number[] = [];
     const count = await bars.count();
     for (let i = 0; i < count; ++i) {
-      const path = await bars.nth(i).getAttribute('d')!;
+      const path = await bars.nth(i).getAttribute('d');
       // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
-      heights.push(parseFloat(path.match(/v([0-9.]+)h/)![1]));
+      heights.push(parseFloat(path!.match(/v([0-9.]+)h/)![1]));
     }
     return heights;
   }
 
   async expectBarHeightsToBe(expected) {
-    const heights = await this.barHeights()
-    await expect(heights.length).toEqual(expected.length);
+    const heights = await this.barHeights();
+    expect(heights.length).toEqual(expected.length);
     for (let i = 0; i < heights.length; ++i) {
       expect(heights[i]).toBeCloseTo(expected[i], 0);
     }
@@ -658,21 +633,6 @@ export class TableBrowser {
     await li.locator('.glyphicon').click();
   }
 
-  getColumn(tablePos, columnPos) {
-    const tableLi = this.getTable(tablePos);
-    return tableLi.locator('ul > li').nth(columnPos + 1);
-  }
-
-  async expectColumn(tablePos, columnPos, name) {
-    const columnLi = this.getColumn(tablePos, columnPos);
-    await expect(columnLi).toHaveText(name);
-  }
-
-  async searchTable(searchText) {
-    const searchBox = this.root.locator('#search-for-tables');
-    await searchBox.fill(searchText);
-  }
-
   async expectDragText(li, expected) {
     // We cannot do a real drag-and-drop workflow here
     // because of:
@@ -699,7 +659,7 @@ class VisualizationState {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
-
+  /*
   elementByLabel(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
   }
@@ -718,6 +678,7 @@ class VisualizationState {
   graphView() {
     return this.svg.evaluate('graph.view');
   }
+  */
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData() {
@@ -725,7 +686,7 @@ class VisualizationState {
       // Vertices as simple objects.
       async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
-        const result: any[] = [];
+        const result: object[] = [];
         for (let i = 0; i < vertices.length; ++i) {
           const v = vertices[i];
           const touch = v.querySelector('circle.touch');
@@ -753,16 +714,15 @@ class VisualizationState {
       // Edges as simple objects.
       async function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
-        let i,
-          byPosition = {};
-        for (i = 0; i < vertices.length; ++i) {
+        const byPosition = {};
+        for (let i = 0; i < vertices.length; ++i) {
           byPosition[vertices[i].pos.string] = i;
         }
 
         // Collect edges.
-        const result: any[] = [];
+        const result: object[] = [];
         const edges = svg.querySelectorAll('g.edge');
-        for (i = 0; i < edges.length; ++i) {
+        for (let i = 0; i < edges.length; ++i) {
           const e = edges[i];
           const arc = e.querySelector('path.edge-arc');
           const [, srcPos, dstPos] = arc.getAttribute('d').match(/^M (.*? .*?) .* (.*? .*?)$/);
@@ -788,11 +748,13 @@ class VisualizationState {
     });
   }
 
+  /*
   vertexCounts(index) {
     return this.graphView().then(function (gv) {
       return gv.vertexSets[index].vertices.length;
     });
   }
+  */
 }
 
 export class Splash {
@@ -940,34 +902,10 @@ export class Splash {
   }
 }
 
-function randomPattern() {
-  /* eslint-disable no-bitwise */
-  const crypto = require('crypto');
-  const buf = crypto.randomBytes(16);
-  const sixteenLetters = 'abcdefghijklmnop';
-  let r = '';
-  for (let i = 0; i < buf.length; i++) {
-    const v = buf[i];
-    const lo = v & 0xf;
-    const hi = v >> 4;
-    r += sixteenLetters[lo] + sixteenLetters[hi];
-  }
-  return r;
-}
-
-let lastDownloadList;
-
 export async function menuClick(entry: Locator, action: string) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
   await menu.locator('#menu-' + action).click();
-}
-
-const theRandomPattern = randomPattern();
-const protractorDownloads = '/tmp/protractorDownloads.' + process.pid;
-
-function helpPopup(helpId) {
-  return $('div[help-id="' + helpId + '"]');
 }
 
 async function sendKeysToACE(e, text) {
@@ -977,10 +915,12 @@ async function sendKeysToACE(e, text) {
 }
 
 async function angularEval(e: Locator, expr: string) {
-  return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$eval(expr), expr);
 }
 async function angularApply(e: Locator, expr: string) {
-  return await e.evaluate((e, expr) => $(e).scope().$apply(expr), expr);
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$apply(expr), expr);
 }
 
 async function setParameter(e: Locator, value) {
@@ -990,12 +930,12 @@ async function setParameter(e: Locator, value) {
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
-    e.locator('input.form-control').fill(value);
+    await e.locator('input.form-control').fill(value);
   } else if (kind === 'tag-list') {
     const values = value.split(',');
     for (let i = 0; i < values.length; ++i) {
-      e.locator('.dropdown-toggle').click();
-      e.locator('.dropdown-menu #' + values[i]).click();
+      await e.locator('.dropdown-toggle').click();
+      await e.locator('.dropdown-menu #' + values[i]).click();
     }
   } else if (kind === 'choice' || kind === 'segmentation') {
     await e.selectOption({ label: value });
@@ -1019,49 +959,6 @@ async function setParameter(e: Locator, value) {
   }
 }
 
-// Expects a window.confirm call from the client code and overrides the user
-// response.
-function expectDialogAndRespond(responseValue) {
-  // I am not particularly happy with this solution. The problem with the nice
-  // solution is that there is a short delay before the alert actually shows up
-  // and protractor does not wait for it. (Error: NoSuchAlertError: no alert open)
-  // See: https://github.com/angular/protractor/issues/1486
-  // Other possible options:
-  // 1. browser.wait for the alert to appear. This introduces a hard timout
-  // and potential flakiness.
-  // 2. Use Jasmine's spyOn. The difficulty there is in getting hold of a
-  // window object from inside the browser, if at all ppossible.
-  // 3. Use a mockable Angular module for window.confirm from our app.
-  browser.executeScript(
-    'window.confirm0 = window.confirm;' +
-    'window.confirm = function() {' +
-    '  window.confirm = window.confirm0;' +
-    '  return ' +
-    responseValue +
-    ';' +
-    '}'
-  );
-}
-
-function checkAndCleanupDialogExpectation() {
-  // Fail if there was no alert.
-  expect(browser.executeScript('return window.confirm === window.confirm0')).toBe(true);
-  browser.executeScript('window.confirm = window.confirm0;');
-}
-
-// Warning, this also sorts the given array parameter in place.
-function sortHistogramValues(values) {
-  return values.sort(function (b1, b2) {
-    if (b1.title < b2.title) {
-      return -1;
-    } else if (b1.title > b2.title) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-}
-
 export function errors(page: Page) {
   return page.locator('.top-alert-message');
 }
@@ -1071,100 +968,6 @@ export async function closeErrors(page: Page) {
   for (let i = 0; i < n; ++i) {
     await page.locator('#close-alert-button').first().click();
   }
-}
-
-// Wait indefinitely.
-// WebDriver 2.45 changed browser.wait() to default to a 0 timeout. This was reverted in 2.46.
-// But the current Protractor version uses 2.45, so we have this wrapper.
-function wait(condition) {
-  return browser.wait(condition, 99999999);
-}
-
-function expectModal(title) {
-  const t = $('.modal-title');
-  testLib.expectElement(t);
-  expect(t.getText()).toEqual(title);
-}
-
-function setEnablePopups(enable) {
-  browser.executeScript(
-    'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
-  );
-}
-
-function startDownloadWatch() {
-  browser.controlFlow().execute(function () {
-    expect(lastDownloadList).toBe(undefined);
-    lastDownloadList = fs.readdirSync(testLib.protractorDownloads);
-  });
-}
-
-// Waits for a new downloaded file matching regex and returns its name.
-// Pattern match is needed as chrome first creates some weird temp file.
-function waitForNewDownload(regex) {
-  return testLib.wait(function () {
-    const newList = fs.readdirSync(testLib.protractorDownloads).filter(function (fn) {
-      return fn.match(regex);
-    });
-    // this will be undefined if no new element was found.
-    const result = newList.filter(function (f) {
-      return lastDownloadList.indexOf(f) < 0;
-    })[0];
-    if (result) {
-      lastDownloadList = undefined;
-      return testLib.protractorDownloads + '/' + result;
-    } else {
-      return false;
-    }
-  });
-}
-
-function expectFileContents(filename, expectedContents) {
-  filename.then(function (fn) {
-    expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
-  });
-}
-
-function expectHasClass(element, cls) {
-  expect(element.getAttribute('class')).toBeDefined();
-  element.getAttribute('class').then(function (classes) {
-    expect(classes.split(' ').indexOf(cls)).not.toBe(-1);
-  });
-}
-
-function expectNoClass(element, cls) {
-  expect(element.getAttribute('class')).toBeDefined();
-  element.getAttribute('class').then(function (classes) {
-    expect(classes.split(' ').indexOf(cls)).toBe(-1);
-  });
-}
-
-function expectHasText(element, text) {
-  testLib.expectElement(element);
-  expect(element.getText()).toBe(text);
-}
-
-function switchToWindow(pos) {
-  browser.getAllWindowHandles().then(handles => {
-    browser.driver.switchTo().window(handles[pos]);
-  });
-}
-
-function showSelector() {
-  $('#show-selector-button').click();
-}
-
-function confirmSweetAlert(expectedMessage) {
-  // SweetAlert is not an Angular library. We need to wait until it pops in and out.
-  const EC = protractor.ExpectedConditions;
-  testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
-  expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
-  $('.sweet-alert button.confirm').click();
-  testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
-}
-
-function waitUntilClickable(element) {
-  testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
 }
 
 // A matcher for lists of objects that ignores fields not present in the reference.
@@ -1192,7 +995,7 @@ expect.extend({
       } else if (typeof expected === 'string' && expected[0] === '>') {
         return actual > parseFloat(expected.slice(1));
       } else {
-        return actual == expected;
+        return actual === expected;
       }
     }
     if (actual.length !== expected.length) {
@@ -1212,4 +1015,4 @@ expect.extend({
     }
     return { pass: true };
   }
-})
+});

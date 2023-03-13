@@ -1,7 +1,9 @@
 // Operation parameter for kind=file. Supports file upload.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './file-parameter.html?url';
 
-angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
+angular.module('biggraph').directive('fileParameter', ['util', '$timeout', function(util, $timeout) {
   return {
     restrict: 'E',
     scope: {
@@ -10,7 +12,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       // Function to call on "blur".
       onBlur: '&',
     },
-    templateUrl: 'scripts/operation/file-parameter.html',
+    templateUrl,
     link: function(scope, element) {
       const input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {
@@ -54,4 +56,4 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       });
     },
   };
-});
+}]);

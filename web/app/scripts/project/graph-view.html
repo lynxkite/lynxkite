@@ -1,19 +1,17 @@
-<div style="height: 100%">
-  <svg class="graph-view"
-    version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
-  <!-- TODO: This could be shared across graph-view instances. -->
-  <div id="svg-icons" ng-include="'icons.svg'" onload="updateGraph()"></div>
-  <graph-view-sidebar map-filters="mapFilters" graph="graph" ng-hide="graphray">
-  </graph-view-sidebar>
-  <graph-view-legend data="gv.legend.left" side="left"></graph-view-legend>
-  <graph-view-legend data="gv.legend.right" side="right"></graph-view-legend>
-  <div style="height: 100%" ng-show="graphray">
-    <div class="flat-toolbar">
-      <button class="btn btn-default" ng-click="finalRender()">Render in high quality</button>
-      <button class="btn btn-default" ng-click="updateGraph()">Back to 2D view</button>
-    </div>
-    <div id="graphray-container" style="height: 100%">
-      <img ng-src="{{ graphray }}">
-    </div>
+<svg class="graph-view"
+  version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+<!-- TODO: This could be shared across graph-view instances. -->
+<div id="svg-icons" ng-include="'icons.svg'" onload="updateGraph()"></div>
+<graph-view-sidebar map-filters="mapFilters" graph="graph" ng-hide="graphray">
+</graph-view-sidebar>
+<graph-view-legend data="gv.legend.left" side="left"></graph-view-legend>
+<graph-view-legend data="gv.legend.right" side="right"></graph-view-legend>
+<div style="height: 100%" ng-show="graphray">
+  <div class="flat-toolbar">
+    <button class="btn btn-default" ng-click="finalRender()">Render in high quality</button>
+    <button class="btn btn-default" ng-click="updateGraph()">Back to 2D view</button>
+  </div>
+  <div id="graphray-container" style="height: 100%">
+    <img ng-src="{{ graphray }}">
   </div>
 </div>

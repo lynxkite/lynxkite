@@ -1,5 +1,5 @@
 // Tests generating Python code from a selection of boxes.
-import { test, expect, Browser } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { Splash, Workspace } from './lynxkite';
 
 let workspace: Workspace;

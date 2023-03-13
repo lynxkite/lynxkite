@@ -1,14 +1,16 @@
 // UI for defining wizard steps.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './wizard-steps-parameter.html?url';
 
-angular.module('biggraph').directive('wizardStepsParameter', function(util) {
+angular.module('biggraph').directive('wizardStepsParameter', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {
       workspace: '=',
       model: '=',
     },
-    templateUrl: 'scripts/operation/wizard-steps-parameter.html',
+    templateUrl,
     link: function(scope) {
       scope.$watch('model', function(model) {
         scope.steps = JSON.parse(model);
@@ -57,4 +59,4 @@ angular.module('biggraph').directive('wizardStepsParameter', function(util) {
       };
     },
   };
-});
+}]);

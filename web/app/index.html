@@ -5,59 +5,11 @@
     <meta charset="utf-8">
     <title>LynxKite</title>
     <meta name="viewport" content="width=device-width">
-    <!-- build:css(node_modules) styles/vendor.css -->
-    <link rel="stylesheet" href="angular-hotkeys/build/hotkeys.min.css" />
-    <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.css" />
-    <link rel="stylesheet" href="@fortawesome/fontawesome-free/css/all.css" />
-    <link rel="stylesheet" href="typeface-exo-2/index.css">
-    <link rel="stylesheet" href="bootstrap-tourist/bootstrap-tourist.css">
-    <!-- endbuild -->
-    <!-- build:css(.tmp) styles/biggraph.css -->
-    <!-- inject:css -->
-    <!-- endinject -->
-    <!-- endbuild -->
     <link rel="icon" type="image/png" href="favicon.png">
   </head>
   <body>
     <div ng-view></div>
     <top-alerts></top-alerts>
-
-    <!-- build:js(node_modules) scripts/vendor.js -->
-    <script src="jquery/dist/jquery.js"></script>
-    <script src="angular/angular.js"></script>
-    <script src="angular-cookies/angular-cookies.js"></script>
-    <script src="angular-hotkeys/build/hotkeys.js"></script>
-    <script src="bootstrap-tourist/bootstrap-tourist.js"></script>
-    <script src="angular-route/angular-route.js"></script>
-    <script src="angular-sanitize/angular-sanitize.js"></script>
-    <script src="angular-ui-bootstrap/dist/ui-bootstrap-tpls.js"></script>
-    <script src="ace-builds/src-min-noconflict/ace.js"></script>
-    <script src="ace-builds/src-min-noconflict/mode-markdown.js"></script>
-    <script src="ace-builds/src-min-noconflict/mode-python.js"></script>
-    <script src="ace-builds/src-min-noconflict/mode-scala.js"></script>
-    <script src="ace-builds/src-min-noconflict/mode-sql.js"></script>
-    <script src="angular-ui-ace/src/ui-ace.js"></script>
-    <script src="bootstrap/dist/js/bootstrap.js"></script>
-    <script src="chroma-js/chroma.js"></script>
-    <script src="clipboard/dist/clipboard.js"></script>
-    <script src="tether/dist/js/tether.js"></script>
-    <script src="tether-drop/dist/js/drop.js"></script>
-    <script src="es5-shim/es5-shim.js"></script>
-    <script src="es6-shim/es6-shim.js"></script>
-    <script src="firebase/firebase-app.js"></script>
-    <script src="firebase/firebase-analytics.js"></script>
-    <script src="fuse.js/dist/fuse.js"></script>
-    <script src="js-yaml/dist/js-yaml.js"></script>
-    <script src="sweetalert/dist/sweetalert.min.js"></script>
-    <script src="three/build/three.js"></script>
-    <script src="vega/build/vega.js"></script>
-    <script src="vega-lite/build/vega-lite.js"></script>
-    <script src="vega-embed/build/vega-embed.js"></script>
-    <script src="markdown-it/dist/markdown-it.js"></script>
-    <!-- endbuild -->
-    <!-- build:js(.tmp) scripts/biggraph.js -->
-    <!-- inject:js -->
-    <!-- endinject -->
-    <!-- endbuild -->
+    <script type="module" src="/index.js"></script>
   </body>
 </html>

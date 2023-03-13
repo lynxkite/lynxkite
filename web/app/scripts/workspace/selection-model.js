@@ -1,4 +1,4 @@
-'use strict';
+import '../app';
 
 angular.module('biggraph').factory('SelectionModel', function() {
   const SelectionModel = function() {

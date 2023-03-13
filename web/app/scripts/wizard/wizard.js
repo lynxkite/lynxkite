@@ -1,9 +1,11 @@
 // The wizard interface for workspaces.
-'use strict';
+import md from 'markdown-it';
+import '../app';
+import '../util/util';
+import '../workspace/workspace-wrapper';
 
 angular.module('biggraph')
-  .controller('WizardCtrl', function ($scope, $routeParams, util, WorkspaceWrapper, $location, $window, $timeout) {
-    const md = window.markdownit();
+  .controller('WizardCtrl', ['$scope', '$routeParams', 'util', 'WorkspaceWrapper', '$location', '$window', '$timeout', function ($scope, $routeParams, util, WorkspaceWrapper, $location, $window, $timeout) {
     const path = $routeParams.name.split('/');
     if (path.includes('In progress wizards')) { // These have a timestamp that we hide.
       $scope.name = path[path.length - 2];
@@ -59,4 +61,4 @@ angular.module('biggraph')
       const p = $scope.workspace.getOutputPlug(step.box, step.popup);
       return p.kind === 'visualization';
     };
-  });
+  }]);
