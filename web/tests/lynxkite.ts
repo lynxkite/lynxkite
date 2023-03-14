@@ -78,7 +78,7 @@ export class Entity {
   }
 
   async expectHistogramValues(
-    expected: {title: string, size: number, value: number}[], opts?: { precise?: boolean }) {
+    expected: { title: string, size: number, value: number }[], opts?: { precise?: boolean }) {
     const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
     await expect(tds).toHaveCount(expected.length);
@@ -560,8 +560,8 @@ class Side {
     return this.side.element(by.id('undo-button'));
   }
 
-  setSampleRadius(radius) {
-    this.side.locator('#setting-sample-radius').click();
+  async setSampleRadius(radius) {
+    await this.side.locator('#setting-sample-radius').click();
     const slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function (value) {
       let diff = radius - value;
@@ -666,17 +666,6 @@ class VisualizationState {
 
   clickMenu(item) {
     $('.context-menu #menu-' + item).click();
-  }
-
-  asTSV() {
-    const copyButton = this.popup.locator('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
-    return copyButton.getAttribute('data-clipboard-text');
-  }
-
-  // The visualization response received from the server.
-  graphView() {
-    return this.svg.evaluate('graph.view');
   }
   */
 

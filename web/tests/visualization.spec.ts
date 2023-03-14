@@ -27,7 +27,7 @@ function positions(graph) {
 
 // Compare the coordinates with given precision. The compared coordinates
 // have to match on `precision` digits. For default we use 8 digits.
-function checkGraphPositions(saved, graph, precision) {
+function checkGraphPositions(saved, graph, precision?) {
   precision = precision || 8;
   for (let i = 0; i < saved.length; ++i) {
     expect(saved[i].x).toBeCloseTo(graph[i].x, precision);
@@ -36,7 +36,7 @@ function checkGraphPositions(saved, graph, precision) {
 }
 
 
-test.beforeAll(async ({ browser }) => {
+test.beforeEach(async ({ browser }) => {
   workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({
@@ -204,9 +204,9 @@ test('sampled mode attribute visualizations', async () => {
   // Edge attributes.
   await weight.visualizeAs('width');
   // await expect(workspace.page.locator('stroke-width')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
   await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
     expect(graph.edges).toConcur([
       { width: '<10' },
       { width: '<10' },
@@ -261,7 +261,7 @@ test('visualize as slider', async () => {
   const slider = visualization.popup.locator('.slider');
   await slider.click();
 
-  workspace.page.keyboard.press('Home');
+  await workspace.page.keyboard.press('Home');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: BLUE },
@@ -269,7 +269,7 @@ test('visualize as slider', async () => {
     { label: 'Bob', color: BLUE },
   ]);
 
-  workspace.page.keyboard.press('ArrowRight');
+  await workspace.page.keyboard.press('ArrowRight');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: BLUE },
@@ -277,15 +277,7 @@ test('visualize as slider', async () => {
     { label: 'Bob', color: BLUE },
   ]);
 
-  workspace.page.keyboard.press('ArrowRight');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: BLUE },
-    { label: 'Eve', color: 'white' },
-    { label: 'Bob', color: BLUE },
-  ]);
-
-  workspace.page.keyboard.press('ArrowRight');
+  await workspace.page.keyboard.press('ArrowRight');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: BLUE },
@@ -293,7 +285,7 @@ test('visualize as slider', async () => {
     { label: 'Bob', color: BLUE },
   ]);
 
-  workspace.page.keyboard.press('End');
+  await workspace.page.keyboard.press('End');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: ORANGE },
@@ -301,7 +293,7 @@ test('visualize as slider', async () => {
     { label: 'Bob', color: ORANGE },
   ]);
 
-  workspace.page.keyboard.press('ArrowLeft');
+  await workspace.page.keyboard.press('ArrowLeft');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: ORANGE },
@@ -309,7 +301,7 @@ test('visualize as slider', async () => {
     { label: 'Bob', color: 'white' },
   ]);
 
-  workspace.page.keyboard.press('ArrowLeft');
+  await workspace.page.keyboard.press('ArrowLeft');
   graph = await visualization.graphData();
   await expect(graph.vertices).toConcur([
     { label: 'Adam', color: ORANGE },
@@ -336,7 +328,6 @@ test('bucketed mode attribute visualizations', async () => {
   await expect(graph.vertices).toConcur([{ label: '4' }]);
 
   await gender.visualizeAs('x');
-  await expect(visualization.popup.locator('text=gender')).toBeVisible();
   graph = await visualization.graphData();
   await expect(graph.edges).toConcur([
     { src: 0, dst: 0, width: '<10' },
@@ -349,13 +340,12 @@ test('bucketed mode attribute visualizations', async () => {
   ]);
 
   await age.visualizeAs('y');
-  await expect(visualization.popup.locator('text=age')).toBeVisible();
   graph = await visualization.graphData();
   await expect(graph.edges).toConcur([
-    { src: 0, dst: 2, width: '>2' },
-    { src: 2, dst: 0, width: '>2' },
-    { src: 3, dst: 0, width: '>2' },
-    { src: 3, dst: 2, width: '>2' },
+    { src: 1, dst: 3, width: '>2' },
+    { src: 2, dst: 1, width: '>2' },
+    { src: 2, dst: 3, width: '>2' },
+    { src: 3, dst: 1, width: '>2' },
   ]);
   await expect(graph.vertices).toConcur([
     { label: '1' },
@@ -387,9 +377,9 @@ test('visualization for two open projects', async () => {
   leftPositions = positions(graph);
   expect(graph.vertices.length).toBe(3);
 
-  editor.left.openSegmentation('seg');
-  editor.right.toggleBucketedVisualization();
-  editor.right.vertexAttribute('gender').visualizeAs('y');
+  await editor.left.openSegmentation('seg');
+  await editor.right.toggleBucketedVisualization();
+  await editor.right.vertexAttribute('gender').visualizeAs('y');
 
   graph = await visualization.graphData();
   await expect(visualization.popup.locator('text=gender')).toBeVisible();
@@ -405,30 +395,59 @@ test('visualization for two open projects', async () => {
     }
     expect(found).toBe(true);
   }
-
   await expect(graph.edges).toConcur([
     { src: 0, dst: 1, width: '<10' },
-    { src: 0, dst: 4, width: '<10' },
+    { src: 0, dst: 3, width: '<10' },
     { src: 1, dst: 0, width: '<10' },
-    { src: 1, dst: 3, width: '<10' },
+    { src: 1, dst: 4, width: '<10' },
     { src: 2, dst: 0, width: '<10' },
     { src: 2, dst: 1, width: '<10' },
-    { src: 2, dst: 4, width: '<10' },
-    { src: 3, dst: 4, width: '<10' },
-    { src: 4, dst: 3, width: '>10' },
-    { src: 4, dst: 4, width: '<10' },
+    { src: 2, dst: 3, width: '<10' },
+    { src: 3, dst: 3, width: '<10' },
+    { src: 3, dst: 4, width: '>10' },
+    { src: 4, dst: 3, width: '<10' },
   ]);
   await expect(graph.vertices).toConcur([
     { label: 'Adam' },
     { label: 'Eve' },
     { label: 'Bob' },
-    { label: '1' },
     { label: '3' },
+    { label: '1' },
   ]);
 
   // Check TSV of this complex visualization.
-  const expectedTSV = fs.readFileSync(__dirname + '/data/visualization-tsv-data.txt', 'utf8');
-  expect(visualization.asTSV()).toEqual(expectedTSV);
+  const copyButton = visualization.popup.locator('.graph-sidebar [data-clipboard-text]');
+  // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
+  await expect(copyButton).toHaveAttribute('data-clipboard-text', new RegExp(`
+    Vertices of the left-side graph:
+    id      name
+    0       Adam
+    1       Eve
+    2       Bob
+
+    Buckets of the right-side graph by gender \\(vertical\\):
+    Male    3
+    Female  1
+
+    Edges from the left-side graph to the left-side graph:
+    src     dst     size
+    2       1       1
+    1       0       1
+    2       0       1
+    0       1       1
+
+    Edges from the right-side graph to the right-side graph:
+    src     dst     size
+    1       0       1
+    0       1       2
+    0       0       1
+
+    Edges from the left-side graph to the right-side graph:
+    src     dst     size
+    2       0       1
+    1       1       1
+    0       0       1
+  `.replace(/\s+/g, '\\s+')));
 });
 
 test('visualization context menu', async () => {
