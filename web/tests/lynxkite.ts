@@ -32,6 +32,7 @@ export class Entity {
   kindName: string;
   element: Locator;
   menu: Locator;
+  value: Locator;
   constructor(side: Locator, kind: string, name: string) {
     this.side = side;
     this.kind = kind;
@@ -39,6 +40,7 @@ export class Entity {
     this.kindName = kind + '-' + name;
     this.element = side.locator('#' + this.kindName);
     this.menu = side.page().locator('#menu-' + this.kindName);
+    this.value = this.element.locator('span.value');
   }
 
   async popup() {
