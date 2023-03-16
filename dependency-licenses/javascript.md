@@ -375,7 +375,7 @@
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/darabos/lk/web/node_modules/@types/long
 │  └─ licenseFile: /home/darabos/lk/web/node_modules/@types/long/LICENSE
-├─ @types/node@18.14.5
+├─ @types/node@18.15.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 │  ├─ path: /home/darabos/lk/web/node_modules/@types/node
