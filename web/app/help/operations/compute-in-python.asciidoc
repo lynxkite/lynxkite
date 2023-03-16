@@ -94,14 +94,20 @@ To use this attribute in another Python box use `np.stack(v)`:
 vs['total_v'] = np.stack(vs.v).sum(axis=1)
 ----
 
-#### Transforming tables
+#### Working with tables
 
-Manipulating tables works the same way, but with a single DataFrame called `df`:
+If the input of the box is a table, the output will be a transformed table.
+It works the same way as with graphs, but with a single DataFrame called `df`:
 
 [source,python]
 ----
 df['with_title'] = 'The Honorable ' + df.name
 ----
+
+With graphs you can only change attributes, but cannot add or remove nodes and
+edges. There is no such limitation with tables.
+
+It's also possible to output a table when your input is a graph.
 
 #### Creating plots
 

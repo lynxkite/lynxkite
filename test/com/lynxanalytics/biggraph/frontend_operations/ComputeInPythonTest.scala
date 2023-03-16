@@ -201,4 +201,25 @@ html = '<h1>hello world</h1>'
       .output("graph").html
     assert(get(html) == "<h1>hello world</h1>")
   }
+
+  test("graph to table", SphynxOnly) {
+    val t = box("Create example graph")
+      .box(
+        "Compute in Python",
+        Map(
+          "inputs" -> "vs.gender, es.src",
+          "outputs" -> "df.gender: str, df.avg_degree: float",
+          "code" -> """
+vs['avg_degree'] = es.groupby('src').size()
+df = vs.groupby('gender').mean().reset_index()
+          """,
+        ),
+      )
+      .box("SQL1")
+      .table
+    val data = t.df.collect.toList.map(_.toSeq.toList)
+    assert(data == List(
+      List("Female", 1.0),
+      List("Male", 1.5)))
+  }
 }

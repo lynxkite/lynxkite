@@ -1,5 +1,6 @@
 // The wizard interface for workspaces.
-import md from 'markdown-it';
+import MarkdownIt from 'markdown-it';
+const md = new MarkdownIt();
 import '../app';
 import '../util/util';
 import '../workspace/workspace-wrapper';
