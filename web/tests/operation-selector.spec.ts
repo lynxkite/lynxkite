@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
 test('adding a box', async ({ page }) => {
-  const ws = await Workspace.empty(page, 'operation-selector');
+  await Workspace.empty(page, 'operation-selector');
   await expect(page.locator('g.box')).toHaveCount(1);
   await page.keyboard.type('/examp');
   await page.keyboard.press('Enter');
