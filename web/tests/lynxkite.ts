@@ -521,9 +521,9 @@ class Side {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
 
-    this.edgeCount = this.graphAttribute('edge-count').value;
-    this.vertexCount = this.graphAttribute('vertex-count').value;
-    this.segmentCount = this.graphAttribute('segment-count').value;
+    this.edgeCount = this.getValue('edge-count');
+    this.vertexCount = this.getValue('vertex-count');
+    this.segmentCount = this.getValue('segment-count');
     this.vertexAttributes = this.side.locator('entity[kind="vertex-attribute"]');
     this.edgeAttributes = this.side.locator('entity[kind="edge-attribute"]');
     this.graphAttributes = this.side.locator('entity[kind="scalar"]');
@@ -532,6 +532,10 @@ class Side {
 
   async close() {
     await this.side.locator('#close-project').click();
+  }
+
+  getValue(id: string) {
+    return this.side.locator('value#' + id + ' span.value');
   }
 
   async openSegmentation(segmentationName: string) {
