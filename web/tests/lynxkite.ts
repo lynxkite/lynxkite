@@ -132,11 +132,9 @@ export class Workspace {
   }
 
   // Starts with a brand new workspace.
-  static async empty(page: Page): Promise<Workspace> {
+  static async empty(page: Page, workspaceName?: string): Promise<Workspace> {
     const splash = await Splash.open(page);
-    const workspace = await splash.openNewWorkspace('test-example');
-    await workspace.expectCurrentWorkspaceIs('test-example');
-    return workspace;
+    return await splash.openNewWorkspace(workspaceName ?? 'test-example');
   }
 
   async expectCurrentWorkspaceIs(name) {
@@ -548,7 +546,7 @@ class Side {
   edgeAttribute(name: string) {
     return new Entity(this.side, 'edge-attribute', name);
   }
-  scalar(name: string) {
+  graphAttribute(name: string) {
     return new Entity(this.side, 'scalar', name);
   }
   segmentation(name: string) {
@@ -779,6 +777,7 @@ export class Splash {
     const ws = new Workspace(this.page);
     // This expect() waits for the workspace to load.
     await expect(ws.getBox('anchor')).toBeVisible();
+    await ws.expectCurrentWorkspaceIs(name);
     return ws;
   }
 
