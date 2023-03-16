@@ -67,9 +67,9 @@ test('segmentation size reporting - no empty segments', async () => {
   });
   const state = await workspace.openStateView('copy', 'graph');
   await state.left.openSegmentation('self');
-  await expect(state.right.getValue('segment-count')).toHaveText('4');
-  await expect(state.right.getValue('total-segment-size')).toHaveText('4');
-  await expect(state.right.getValue('total-segment-coverage')).toHaveText('4');
+  await expect(state.right.graphAttribute('segment-count').value).toHaveText('4');
+  await expect(state.right.graphAttribute('total-segment-size').value).toHaveText('4');
+  await expect(state.right.graphAttribute('total-segment-coverage').value).toHaveText('4');
   await state.close();
 });
 
@@ -80,9 +80,9 @@ test('segmentation size reporting - has empty segments', async () => {
   });
   const state = await workspace.openStateView('filter-op', 'graph');
   await state.left.openSegmentation('self');
-  await expect(state.right.getValue('segment-count')).toHaveText('4');
-  await expect(state.right.getValue('total-segment-size')).toHaveText('2');
-  await expect(state.right.getValue('total-segment-coverage')).toHaveText('2');
-  await expect(state.right.getValue('non-empty-segment-count')).toHaveText('2');
+  await expect(state.right.graphAttribute('segment-count').value).toHaveText('4');
+  await expect(state.right.graphAttribute('total-segment-size').value).toHaveText('2');
+  await expect(state.right.graphAttribute('total-segment-coverage').value).toHaveText('2');
+  await expect(state.right.graphAttribute('non-empty-segment-count').value).toHaveText('2');
   await state.close();
 });
