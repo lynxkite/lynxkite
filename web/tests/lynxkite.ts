@@ -542,48 +542,28 @@ class Side {
     await this.segmentation(segmentationName).clickMenu('open-segmentation');
   }
 
-  expectOperationScalar(name, text) {
-    const cssSelector = 'value[ref="scalars[\'' + name + '\']"';
-    const valueElement = this.toolbox.locator(cssSelector);
-    expect(valueElement.getText()).toBe(text);
-  }
-
-  toggleSampledVisualization() {
-    this.side.locator('#sampled-mode-button').click();
+  async toggleSampledVisualization() {
+    await this.side.locator('#sampled-mode-button').click();
   }
 
   async toggleBucketedVisualization() {
     await this.side.locator('#bucketed-mode-button').click();
   }
 
-  undoButton() {
-    return this.side.element(by.id('undo-button'));
-  }
-
-  async setSampleRadius(radius) {
+  async setSampleRadius(radius: number) {
     await this.side.locator('#setting-sample-radius').click();
-    const slider = $('#sample-radius-slider');
-    slider.getAttribute('value').then(function (value) {
-      let diff = radius - value;
-      while (diff > 0) {
-        slider.sendKeys(K.RIGHT);
-        diff -= 1;
-      }
-      while (diff < 0) {
-        slider.sendKeys(K.LEFT);
-        diff += 1;
-      }
-    });
-  }
-
-  scalarValue(name) {
-    return this.side.element(by.id('scalar-value-' + toId(name)));
-  }
-
-  saveProjectAs(newName) {
-    this.side.element(by.id('save-as-starter-button')).click();
-    safeSelectAndSendKeys(this.side.element(by.id('save-as-input')), newName);
-    this.side.element(by.id('save-as-button')).click();
+    // Playwright can't deal with sliders. https://github.com/microsoft/playwright/issues/4231
+    const slider = this.side.page().locator('#sample-radius-slider');
+    const value = parseInt(await slider.inputValue());
+    let diff = radius - value;
+    while (diff > 0) {
+      await slider.press('ArrowRight');
+      diff -= 1;
+    }
+    while (diff < 0) {
+      await slider.press('ArrowLeft');
+      diff += 1;
+    }
   }
 
   vertexAttribute(name: string) {
@@ -659,15 +639,9 @@ class VisualizationState {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
-  /*
-  elementByLabel(label) {
-    return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
+  async clickMenu(item: string) {
+    await this.popup.locator('.context-menu #menu-' + item).click();
   }
-
-  clickMenu(item) {
-    $('.context-menu #menu-' + item).click();
-  }
-  */
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData(): Promise<{ vertices, edges }> {
