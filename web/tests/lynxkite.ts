@@ -735,6 +735,8 @@ export class Splash {
     await page.evaluate(() => {
       // Floating elements can overlap buttons and block clicks.
       document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
+      // Playwright won't click on something that is moving. Disable output plug animation.
+      document.styleSheets[0].insertRule('.plug-progress-in-progress { animation-name: none !important; }');
     });
     const splash = new Splash(page);
     await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
