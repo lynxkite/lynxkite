@@ -549,7 +549,7 @@ class Side {
   }
 
   toggleSampledVisualization() {
-    this.side.element(by.id('sampled-mode-button')).click();
+    this.side.locator('#sampled-mode-button').click();
   }
 
   async toggleBucketedVisualization() {

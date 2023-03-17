@@ -203,7 +203,6 @@ test('sampled mode attribute visualizations', async () => {
 
   // Edge attributes.
   await weight.visualizeAs('width');
-  // await expect(workspace.page.locator('stroke-width')).toBeVisible();
   await expect(async () => {
     graph = await visualization.graphData();
     await expect(graph.edges).toConcur(expectedEdges);
@@ -217,18 +216,58 @@ test('sampled mode attribute visualizations', async () => {
   checkGraphPositions(positions(graph), savedPositions);
 
   await weight.visualizeAs('edge-color');
-  await expect(workspace.page.locator('text=Adam')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.edges).toConcur([
-    { color: LOW },
-    { color: 'rgb(54, 93, 141)' },
-    { color: 'rgb(57, 173, 122)' },
-    { color: HIGH },
-  ]);
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.edges).toConcur([
+      { color: LOW },
+      { color: 'rgb(54, 93, 141)' },
+      { color: 'rgb(57, 173, 122)' },
+      { color: HIGH },
+    ]);
+  }).toPass();
   checkGraphPositions(positions(graph), savedPositions);
 
+  await comment.visualizeAs('edge-label');
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.edges).toConcur([
+      { label: 'Adam loves Eve' },
+      { label: 'Eve loves Adam' },
+      { label: 'Bob envies Adam' },
+      { label: 'Bob loves Eve' },
+    ]);
+  }).toPass();
+  checkGraphPositions(positions(graph), savedPositions);
 
+  // Location attributes.
+  await location.visualizeAs('position');
+  // Toggle off and on to shake off the unpredictable offset from the non-positioned layout.
+  await editor.left.toggleSampledVisualization();
+  await editor.left.toggleSampledVisualization();
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { pos: { x: '>250', y: '>300' } },
+      { pos: { x: '>250', y: '<300' } },
+      { pos: { x: '<250', y: '<100' } },
+    ]);
+  }).toPass();
+
+  await location.visualizeAs('geo-coordinates');
+  await editor.left.toggleSampledVisualization();
+  await editor.left.toggleSampledVisualization();
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { pos: { x: '<100', y: '<200' } },
+      { pos: { x: '>100', y: '<200' } },
+      { pos: { x: '>400', y: '>200' } },
+    ]);
+  }).toPass();
 
 
 });
@@ -460,4 +499,37 @@ test('visualization context menu', async () => {
   const location = editor.left.vertexAttribute('location');
   const weight = editor.left.edgeAttribute('weight');
   const comment = editor.left.edgeAttribute('comment');
+
+  await name.visualizeAs('label');
+  await expect(visualization.popup.locator('text=Eve')).toBeVisible();
+  await visualization.popup.locator('text=Eve').click();
+  await visualization.clickMenu('add-to-centers');
+  await visualization.popup.locator('.apply-visualization-changes').click();
+  await editor.left.setSampleRadius(0);
+
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { label: 'Adam' },
+      { label: 'Eve' },
+    ]);
+    expect(graph.edges).toConcur([
+      { src: 0, dst: 1 },
+      { src: 1, dst: 0 },
+    ]);
+  }).toPass();
+
+  await expect(visualization.popup.locator('text=Adam')).toBeVisible();
+  await visualization.popup.locator('text=Adam').click();
+  await visualization.clickMenu('remove-from-centers');
+  await expect(async () => {
+    graph = await visualization.graphData();
+    await expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { label: 'Eve' },
+    ]);
+    expect(graph.edges).toEqual([]);
+  }).toPass();
+
 });
