@@ -670,7 +670,7 @@ class VisualizationState {
   */
 
   // The currently visualized graph data extracted from the SVG DOM.
-  graphData() {
+  graphData(): Promise<{ vertices, edges }> {
     return this.popup.evaluate(async function () {
       // Vertices as simple objects.
       async function vertexData(svg) {
@@ -737,13 +737,12 @@ class VisualizationState {
     });
   }
 
-  /*
-  vertexCounts(index) {
-    return this.graphView().then(function (gv) {
-      return gv.vertexSets[index].vertices.length;
-    });
+  async expect(fn: (graph: { vertices, edges }) => void) {
+    await expect(async () => {
+      const graph = await this.graphData();
+      fn(graph);
+    }).toPass();
   }
-  */
 }
 
 export class Splash {

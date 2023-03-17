@@ -1,4 +1,4 @@
-// Tests ...
+// Tests for graph visualizations.
 import { test, expect } from '@playwright/test';
 import { Workspace } from './lynxkite';
 
@@ -80,196 +80,189 @@ test('sampled mode attribute visualizations', async () => {
   const comment = editor.left.edgeAttribute('comment');
 
   // No attributes visualized.
-  let graph = await visualization.graphData();
-  await expect(workspace.page.locator('text=3 vertices')).toBeVisible();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.edges).toConcur([
-    { color: '', label: '', width: '>2' },
-    { color: '', label: '', width: '>2' },
-    { color: '', label: '', width: '>2' },
-    { color: '', label: '', width: '>2' },
-  ]);
-  await expect(graph.vertices).toConcur([
-    { color: DEFAULT, icon: 'circle', label: '' },
-    { color: DEFAULT, icon: 'circle', label: '' },
-    { color: DEFAULT, icon: 'circle', label: '' },
-  ]);
-  savedPositions = positions(graph);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.edges).toConcur([
+      { color: '', label: '', width: '>2' },
+      { color: '', label: '', width: '>2' },
+      { color: '', label: '', width: '>2' },
+      { color: '', label: '', width: '>2' },
+    ]);
+    expect(graph.vertices).toConcur([
+      { color: DEFAULT, icon: 'circle', label: '' },
+      { color: DEFAULT, icon: 'circle', label: '' },
+      { color: DEFAULT, icon: 'circle', label: '' },
+    ]);
+    savedPositions = positions(graph);
+  });
 
   await name.visualizeAs('label');
-  await expect(workspace.page.locator('text=Label: name')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam' },
-    { label: 'Eve' },
-    { label: 'Bob' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { label: 'Adam' },
+      { label: 'Eve' },
+      { label: 'Bob' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await gender.visualizeAs('icon');
-  await expect(workspace.page.locator('text=Icon: gender')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { icon: 'male' },
-    { icon: 'female' },
-    { icon: 'male' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { icon: 'male' },
+      { icon: 'female' },
+      { icon: 'male' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await income.visualizeAs('color');
-  await expect(workspace.page.locator('text=Vertex Color: income')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { color: LOW },
-    { color: DEFAULT },
-    { color: HIGH },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { color: LOW },
+      { color: DEFAULT },
+      { color: HIGH },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await age.visualizeAs('size');
-  await expect(workspace.page.locator('text=Size: age')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { size: '<25' },
-    { size: '<25' },
-    { size: '>25' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { size: '<25' },
+      { size: '<25' },
+      { size: '>25' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await age.visualizeAs('opacity');
-  await expect(workspace.page.locator('text=Opacity: age')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { opacity: '<0.5' },
-    { opacity: '<0.5' },
-    { opacity: '1' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { opacity: '<0.5' },
+      { opacity: '<0.5' },
+      { opacity: '1' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await age.visualizeAs('label-size');
-  await expect(workspace.page.locator('text=Label Size: age')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { labelSize: '<15' },
-    { labelSize: '<15' },
-    { labelSize: '>15' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { labelSize: '<15' },
+      { labelSize: '<15' },
+      { labelSize: '>15' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await age.visualizeAs('label-color');
-  await expect(workspace.page.locator('text=Label Color: age')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { labelColor: 'rgb(70, 21, 102)' },
-    { labelColor: LOW },
-    { labelColor: HIGH },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { labelColor: 'rgb(70, 21, 102)' },
+      { labelColor: LOW },
+      { labelColor: HIGH },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   // There is no URL attribute in the example graph. Since we only check the "href"
   // attribute anyway, any string is good enough for the test.
   await name.visualizeAs('image');
-  await expect(workspace.page.locator('text=Image: name')).toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { image: 'Adam' },
-    { image: 'Eve' },
-    { image: 'Bob' },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { image: 'Adam' },
+      { image: 'Eve' },
+      { image: 'Bob' },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   // Try removing some visualizations.
   await age.doNotVisualizeAs('opacity');
   await age.doNotVisualizeAs('label-size');
   await age.doNotVisualizeAs('label-color');
   await name.doNotVisualizeAs('image');
-  await expect(workspace.page.locator('text=Image: name')).not.toBeVisible();
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur(expectedEdges);
-  await expect(graph.vertices).toConcur([
-    { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
-    { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
-    { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
-  ]);
-  checkGraphPositions(positions(graph), savedPositions);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
+    expect(graph.vertices).toConcur([
+      { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
+      { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
+      { opacity: '1', labelSize: '15', labelColor: 'white', image: null },
+    ]);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   // Edge attributes.
   await weight.visualizeAs('width');
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
     expect(graph.edges).toConcur([
       { width: '<10' },
       { width: '<10' },
       { width: '>10' },
       { width: '>10' },
     ]);
-  }).toPass();
-  checkGraphPositions(positions(graph), savedPositions);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await weight.visualizeAs('edge-color');
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
     expect(graph.edges).toConcur([
       { color: LOW },
       { color: 'rgb(54, 93, 141)' },
       { color: 'rgb(57, 173, 122)' },
       { color: HIGH },
     ]);
-  }).toPass();
-  checkGraphPositions(positions(graph), savedPositions);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   await comment.visualizeAs('edge-label');
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
     expect(graph.edges).toConcur([
       { label: 'Adam loves Eve' },
       { label: 'Eve loves Adam' },
       { label: 'Bob envies Adam' },
       { label: 'Bob loves Eve' },
     ]);
-  }).toPass();
-  checkGraphPositions(positions(graph), savedPositions);
+    checkGraphPositions(positions(graph), savedPositions);
+  });
 
   // Location attributes.
   await location.visualizeAs('position');
   // Toggle off and on to shake off the unpredictable offset from the non-positioned layout.
   await editor.left.toggleSampledVisualization();
   await editor.left.toggleSampledVisualization();
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
     expect(graph.vertices).toConcur([
       { pos: { x: '>250', y: '>300' } },
       { pos: { x: '>250', y: '<300' } },
       { pos: { x: '<250', y: '<100' } },
     ]);
-  }).toPass();
+  });
 
   await location.visualizeAs('geo-coordinates');
   await editor.left.toggleSampledVisualization();
   await editor.left.toggleSampledVisualization();
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur(expectedEdges);
     expect(graph.vertices).toConcur([
       { pos: { x: '<100', y: '<200' } },
       { pos: { x: '>100', y: '<200' } },
       { pos: { x: '>400', y: '>200' } },
     ]);
-  }).toPass();
-
-
+  });
 });
 
 test('visualize as slider', async () => {
@@ -279,69 +272,74 @@ test('visualize as slider', async () => {
   const age = editor.left.vertexAttribute('age');
 
   await name.visualizeAs('label');
-  await expect(workspace.page.locator('text=Label: name')).toBeVisible();
   await age.visualizeAs('slider');
-  await expect(workspace.page.locator('text=Slider for age')).toBeVisible();
   const BLUE = 'rgb(57, 188, 243)';
   const ORANGE = 'rgb(255, 136, 0)';
 
-  let graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: ORANGE },
-    { label: 'Eve', color: ORANGE },
-    { label: 'Bob', color: BLUE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: ORANGE },
+      { label: 'Eve', color: ORANGE },
+      { label: 'Bob', color: BLUE },
+    ]);
+  });
 
   const slider = visualization.popup.locator('.slider');
   await slider.click();
 
   await workspace.page.keyboard.press('Home');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: BLUE },
-    { label: 'Eve', color: BLUE },
-    { label: 'Bob', color: BLUE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: BLUE },
+      { label: 'Eve', color: BLUE },
+      { label: 'Bob', color: BLUE },
+    ]);
+  });
 
   await workspace.page.keyboard.press('ArrowRight');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: BLUE },
-    { label: 'Eve', color: 'white' },
-    { label: 'Bob', color: BLUE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: BLUE },
+      { label: 'Eve', color: 'white' },
+      { label: 'Bob', color: BLUE },
+    ]);
+  });
 
   await workspace.page.keyboard.press('ArrowRight');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: BLUE },
-    { label: 'Eve', color: ORANGE },
-    { label: 'Bob', color: BLUE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: BLUE },
+      { label: 'Eve', color: ORANGE },
+      { label: 'Bob', color: BLUE },
+    ]);
+  });
 
   await workspace.page.keyboard.press('End');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: ORANGE },
-    { label: 'Eve', color: ORANGE },
-    { label: 'Bob', color: ORANGE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: ORANGE },
+      { label: 'Eve', color: ORANGE },
+      { label: 'Bob', color: ORANGE },
+    ]);
+  });
 
   await workspace.page.keyboard.press('ArrowLeft');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: ORANGE },
-    { label: 'Eve', color: ORANGE },
-    { label: 'Bob', color: 'white' },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: ORANGE },
+      { label: 'Eve', color: ORANGE },
+      { label: 'Bob', color: 'white' },
+    ]);
+  });
 
   await workspace.page.keyboard.press('ArrowLeft');
-  graph = await visualization.graphData();
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam', color: ORANGE },
-    { label: 'Eve', color: ORANGE },
-    { label: 'Bob', color: BLUE },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.vertices).toConcur([
+      { label: 'Adam', color: ORANGE },
+      { label: 'Eve', color: ORANGE },
+      { label: 'Bob', color: BLUE },
+    ]);
+  });
 });
 
 test('bucketed mode attribute visualizations', async () => {
@@ -351,37 +349,39 @@ test('bucketed mode attribute visualizations', async () => {
   const age = editor.left.vertexAttribute('age');
 
   await editor.left.toggleBucketedVisualization();
-  await expect(workspace.page.locator('text=3 vertices')).not.toBeVisible();
-  let graph = await visualization.graphData();
-  await expect(graph.edges).toConcur([{ src: 0, dst: 0 }]);
-  await expect(graph.vertices).toConcur([{ label: '4' }]);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur([{ src: 0, dst: 0 }]);
+    expect(graph.vertices).toConcur([{ label: '4' }]);
+  });
 
   await gender.visualizeAs('x');
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur([
-    { src: 0, dst: 0, width: '<10' },
-    { src: 0, dst: 1, width: '>10' },
-    { src: 1, dst: 0, width: '<10' },
-  ]);
-  await expect(graph.vertices).toConcur([
-    { label: '3' },
-    { label: '1' },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur([
+      { src: 0, dst: 0, width: '<10' },
+      { src: 0, dst: 1, width: '>10' },
+      { src: 1, dst: 0, width: '<10' },
+    ]);
+    expect(graph.vertices).toConcur([
+      { label: '3' },
+      { label: '1' },
+    ]);
+  });
 
   await age.visualizeAs('y');
-  graph = await visualization.graphData();
-  await expect(graph.edges).toConcur([
-    { src: 1, dst: 3, width: '>2' },
-    { src: 2, dst: 1, width: '>2' },
-    { src: 2, dst: 3, width: '>2' },
-    { src: 3, dst: 1, width: '>2' },
-  ]);
-  await expect(graph.vertices).toConcur([
-    { label: '1' },
-    { label: '1' },
-    { label: '1' },
-    { label: '1' },
-  ]);
+  await visualization.expect(graph => {
+    expect(graph.edges).toConcur([
+      { src: 1, dst: 3, width: '>2' },
+      { src: 2, dst: 1, width: '>2' },
+      { src: 2, dst: 3, width: '>2' },
+      { src: 3, dst: 1, width: '>2' },
+    ]);
+    expect(graph.vertices).toConcur([
+      { label: '1' },
+      { label: '1' },
+      { label: '1' },
+      { label: '1' },
+    ]);
+  });
 });
 
 test('visualization for two open projects', async () => {
@@ -396,47 +396,47 @@ test('visualization for two open projects', async () => {
   await name.visualizeAs('label');
   let leftPositions;
 
-  let graph = await visualization.graphData();
-  leftPositions = positions(graph);
-  expect(graph.vertices.length).toBe(3);
+  await visualization.expect(graph => {
+    leftPositions = positions(graph);
+    expect(graph.vertices.length).toBe(3);
+  });
 
   await editor.left.openSegmentation('seg');
   await editor.right.toggleBucketedVisualization();
   await editor.right.vertexAttribute('gender').visualizeAs('y');
 
-  graph = await visualization.graphData();
-  await expect(visualization.popup.locator('text=gender')).toBeVisible();
-
-  const pos = positions(graph);
-  for (let i = 0; i < leftPositions.length; ++i) {
-    let found = false;
-    for (let j = 0; j < pos.length; ++j) {
-      if (matchPos(pos[j], leftPositions[i])) {
-        found = true;
-        break;
+  await visualization.expect(graph => {
+    const pos = positions(graph);
+    for (let i = 0; i < leftPositions.length; ++i) {
+      let found = false;
+      for (let j = 0; j < pos.length; ++j) {
+        if (matchPos(pos[j], leftPositions[i])) {
+          found = true;
+          break;
+        }
       }
+      expect(found).toBe(true);
     }
-    expect(found).toBe(true);
-  }
-  await expect(graph.edges).toConcur([
-    { src: 0, dst: 1, width: '<10' },
-    { src: 0, dst: 3, width: '<10' },
-    { src: 1, dst: 0, width: '<10' },
-    { src: 1, dst: 4, width: '<10' },
-    { src: 2, dst: 0, width: '<10' },
-    { src: 2, dst: 1, width: '<10' },
-    { src: 2, dst: 3, width: '<10' },
-    { src: 3, dst: 3, width: '<10' },
-    { src: 3, dst: 4, width: '>10' },
-    { src: 4, dst: 3, width: '<10' },
-  ]);
-  await expect(graph.vertices).toConcur([
-    { label: 'Adam' },
-    { label: 'Eve' },
-    { label: 'Bob' },
-    { label: '3' },
-    { label: '1' },
-  ]);
+    expect(graph.edges).toConcur([
+      { src: 0, dst: 1, width: '<10' },
+      { src: 0, dst: 3, width: '<10' },
+      { src: 1, dst: 0, width: '<10' },
+      { src: 1, dst: 4, width: '<10' },
+      { src: 2, dst: 0, width: '<10' },
+      { src: 2, dst: 1, width: '<10' },
+      { src: 2, dst: 3, width: '<10' },
+      { src: 3, dst: 3, width: '<10' },
+      { src: 3, dst: 4, width: '>10' },
+      { src: 4, dst: 3, width: '<10' },
+    ]);
+    expect(graph.vertices).toConcur([
+      { label: 'Adam' },
+      { label: 'Eve' },
+      { label: 'Bob' },
+      { label: '3' },
+      { label: '1' },
+    ]);
+  });
 
   // Check TSV of this complex visualization.
   const copyButton = visualization.popup.locator('.graph-sidebar [data-clipboard-text]');
@@ -479,15 +479,12 @@ test('visualization context menu', async () => {
   const name = editor.left.vertexAttribute('name');
 
   await name.visualizeAs('label');
-  await expect(visualization.popup.locator('text=Eve')).toBeVisible();
-  await visualization.popup.locator('text=Eve').click();
+  await visualization.svg.locator('text=Eve >> .. >> .touch').click();
   await visualization.clickMenu('add-to-centers');
   await visualization.popup.locator('.apply-visualization-changes').click();
   await editor.left.setSampleRadius(0);
 
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
     expect(graph.vertices).toConcur([
       { label: 'Adam' },
       { label: 'Eve' },
@@ -496,18 +493,15 @@ test('visualization context menu', async () => {
       { src: 0, dst: 1 },
       { src: 1, dst: 0 },
     ]);
-  }).toPass();
+  });
 
-  await expect(visualization.popup.locator('text=Adam')).toBeVisible();
-  await visualization.popup.locator('text=Adam').click();
+  await visualization.svg.locator('text=Adam >> .. >> .touch').click();
   await visualization.clickMenu('remove-from-centers');
-  await expect(async () => {
-    graph = await visualization.graphData();
-    await expect(graph.edges).toConcur(expectedEdges);
+  await visualization.expect(graph => {
     expect(graph.vertices).toConcur([
       { label: 'Eve' },
     ]);
     expect(graph.edges).toEqual([]);
-  }).toPass();
+  });
 
 });

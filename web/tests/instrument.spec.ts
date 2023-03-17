@@ -26,12 +26,12 @@ test('visualize with instrument', async () => {
   await popup.setInstrument(0, 'visualize', {});
   await popup.left.vertexAttribute('name').visualizeAs('label');
   await expect(workspace.page.locator('text=Adam')).toBeVisible();
-  const graph = await popup.visualization.graphData();
-  expect(graph.vertices).toConcur([
-    { label: 'Adam' },
-    { label: 'Eve' },
-    { label: 'Bob' },
-  ]);
+  await popup.visualization.expect(graph =>
+    expect(graph.vertices).toConcur([
+      { label: 'Adam' },
+      { label: 'Eve' },
+      { label: 'Bob' },
+    ]));
   await popup.close();
 });
 
