@@ -101,7 +101,7 @@ class DataManager(
   override def getComputedScalarValue[T](e: Scalar[T]): ScalarComputationState[T] = {
     computeProgress(e) match {
       case 1.0 => ScalarComputationState(1, Some(get(e)), None)
-      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e).dependencySet))
+      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e, retry = false).dependencySet))
       case x => ScalarComputationState(x, None, None)
     }
   }
@@ -122,10 +122,12 @@ class DataManager(
     ensure(e, d)
   }
 
-  def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
+  // Returns a future for the scalar value, starting the computation as necessary.
+  // With retry=true earlier failures are retried. With retry=false earlier failures are returned.
+  def getFuture[T](scalar: Scalar[T], retry: Boolean = true): SafeFuture[T] = synchronized {
     val d = whoHas(scalar).getOrElse(whoCanCompute(scalar))
     if (d.canGet(scalar)) {
-      ensure(scalar, d).flatMap(_ => d.get(scalar))
+      ensure(scalar, d, retry).flatMap(_ => d.get(scalar))
     } else {
       val scalarDomain = domains.find(_.canGet(scalar)).get
       ensure(scalar, scalarDomain).flatMap(_ => scalarDomain.get(scalar))
@@ -174,11 +176,13 @@ class DataManager(
     throw new AssertionError(f"Cannot relocate: no path was found from $src to $dst.")
   }
 
-  def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
+  // Returns a future. When that future completes, e will be in d. Computation is started as necessary.
+  // With retry=true earlier failures are retried. With retry=false earlier failures are returned.
+  def ensure(e: MetaGraphEntity, d: Domain, retry: Boolean = true): SafeFuture[Unit] = synchronized {
     val f = futures.get((e.gUID, d))
     if (f.isDefined) {
       if (f.get.hasFailed) { // Retry.
-        futures((e.gUID, d)) = makeFuture(e, d)
+        if (retry) futures((e.gUID, d)) = makeFuture(e, d)
       } else if (f.get.isCompleted) {
         if (d.has(e)) {
           futures((e.gUID, d)) = SafeFuture.successful(()) // Cut future chain.

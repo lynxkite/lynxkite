@@ -133,17 +133,16 @@ frontend-test-save:
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
   USER root
-  # Playwright's "install-deps" wants to run "su" which asks for a password.
-  # Instead we're already root here, so we want to just run the command.
-  RUN cd web && npx playwright install-deps chromium --dry-run 2>/dev/null | sed -n 's/su root/bash/p' | bash
+  RUN cd web && npx playwright install-deps chromium
   USER mambauser
-  RUN cd web && npx playwright install
+  RUN cd web && npx playwright install chromium
   COPY tools/wait_for_port.sh tools/
   COPY tools/with_lk.sh tools/
   COPY web web
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
+  ENV KITE_ALLOW_PYTHON yes
   RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
   # After running the tests we do a little dance to save the report even if the test failed.
   # https://github.com/earthly/earthly/issues/2452

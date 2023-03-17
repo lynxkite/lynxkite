@@ -1,5 +1,6 @@
 // The list of entries.
-import md from 'markdown-it';
+import MarkdownIt from 'markdown-it';
+const md = new MarkdownIt();
 import Tour from 'bootstrap-tourist';
 import '../app';
 import '../util/util';
