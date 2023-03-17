@@ -142,6 +142,7 @@ frontend-test-save:
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
+  ENV KITE_ALLOW_PYTHON yes
   RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
   # After running the tests we do a little dance to save the report even if the test failed.
   # https://github.com/earthly/earthly/issues/2452
