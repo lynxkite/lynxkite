@@ -33,7 +33,7 @@ test('ML with Spark', async ({ page }) => {
   await expect(p.locator('#model-method')).toHaveText('Linear regression');
   await expect(p.locator('#model-label')).toHaveText('age');
   await expect(p.locator('#model-features')).toHaveText('yob');
-  await expect(p.locator('#model-details:visible')).toHaveText(/intercept\s*2015/);
+  await expect(p.locator('#model-details')).toHaveText(/intercept\s*2015/);
   await model.popoff();
   await state.close();
 
