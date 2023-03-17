@@ -276,12 +276,7 @@ test('visualize as slider', async () => {
   const visualization = workspace.getStateView('vz0', 'visualization').visualization;
   const editor = workspace.getVisualizationEditor('vz0');
   const name = editor.left.vertexAttribute('name');
-  const gender = editor.left.vertexAttribute('gender');
-  const income = editor.left.vertexAttribute('income');
   const age = editor.left.vertexAttribute('age');
-  const location = editor.left.vertexAttribute('location');
-  const weight = editor.left.edgeAttribute('weight');
-  const comment = editor.left.edgeAttribute('comment');
 
   await name.visualizeAs('label');
   await expect(workspace.page.locator('text=Label: name')).toBeVisible();
@@ -352,13 +347,8 @@ test('visualize as slider', async () => {
 test('bucketed mode attribute visualizations', async () => {
   const visualization = workspace.getStateView('vz0', 'visualization').visualization;
   const editor = workspace.getVisualizationEditor('vz0');
-  const name = editor.left.vertexAttribute('name');
   const gender = editor.left.vertexAttribute('gender');
-  const income = editor.left.vertexAttribute('income');
   const age = editor.left.vertexAttribute('age');
-  const location = editor.left.vertexAttribute('location');
-  const weight = editor.left.edgeAttribute('weight');
-  const comment = editor.left.edgeAttribute('comment');
 
   await editor.left.toggleBucketedVisualization();
   await expect(workspace.page.locator('text=3 vertices')).not.toBeVisible();
@@ -398,12 +388,6 @@ test('visualization for two open projects', async () => {
   const visualization = workspace.getStateView('vz0', 'visualization').visualization;
   const editor = workspace.getVisualizationEditor('vz0');
   const name = editor.left.vertexAttribute('name');
-  const gender = editor.left.vertexAttribute('gender');
-  const income = editor.left.vertexAttribute('income');
-  const age = editor.left.vertexAttribute('age');
-  const location = editor.left.vertexAttribute('location');
-  const weight = editor.left.edgeAttribute('weight');
-  const comment = editor.left.edgeAttribute('comment');
 
   function matchPos(a, b) {
     return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
@@ -493,12 +477,6 @@ test('visualization context menu', async () => {
   const visualization = workspace.getStateView('vz0', 'visualization').visualization;
   const editor = workspace.getVisualizationEditor('vz0');
   const name = editor.left.vertexAttribute('name');
-  const gender = editor.left.vertexAttribute('gender');
-  const income = editor.left.vertexAttribute('income');
-  const age = editor.left.vertexAttribute('age');
-  const location = editor.left.vertexAttribute('location');
-  const weight = editor.left.edgeAttribute('weight');
-  const comment = editor.left.edgeAttribute('comment');
 
   await name.visualizeAs('label');
   await expect(visualization.popup.locator('text=Eve')).toBeVisible();

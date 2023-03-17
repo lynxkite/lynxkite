@@ -724,9 +724,9 @@ class VisualizationState {
             width: arc.getAttribute('stroke-width'),
           });
         }
-        result.sort(function (a, b) {
-          return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
-        });
+        result.sort((a: any, b: any) =>
+          a.src * vertices.length + a.dst - b.src * vertices.length - b.dst
+        );
         return result;
       }
 
@@ -1008,3 +1008,10 @@ expect.extend({
     return { pass: true };
   }
 });
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R> {
+      toConcur(expected: any): R;
+    }
+  }
+}
