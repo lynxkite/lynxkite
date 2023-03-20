@@ -80,7 +80,7 @@ export class Entity {
   }
 
   async expectHistogramValues(
-    expected: {title: string, size: number, value: number}[], opts?: { precise?: boolean }) {
+    expected: { title: string, size: number, value: number }[], opts?: { precise?: boolean }) {
     const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
     await expect(tds).toHaveCount(expected.length);
@@ -542,6 +542,30 @@ class Side {
     await this.segmentation(segmentationName).clickMenu('open-segmentation');
   }
 
+  async toggleSampledVisualization() {
+    await this.side.locator('#sampled-mode-button').click();
+  }
+
+  async toggleBucketedVisualization() {
+    await this.side.locator('#bucketed-mode-button').click();
+  }
+
+  async setSampleRadius(radius: number) {
+    await this.side.locator('#setting-sample-radius').click();
+    // Playwright can't deal with sliders. https://github.com/microsoft/playwright/issues/4231
+    const slider = this.side.page().locator('#sample-radius-slider');
+    const value = parseInt(await slider.inputValue());
+    let diff = radius - value;
+    while (diff > 0) {
+      await slider.press('ArrowRight');
+      diff -= 1;
+    }
+    while (diff < 0) {
+      await slider.press('ArrowLeft');
+      diff += 1;
+    }
+  }
+
   vertexAttribute(name: string) {
     return new Entity(this.side, 'vertex-attribute', name);
   }
@@ -615,29 +639,12 @@ class VisualizationState {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
-  /*
-  elementByLabel(label) {
-    return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
+  async clickMenu(item: string) {
+    await this.popup.locator('.context-menu #menu-' + item).click();
   }
-
-  clickMenu(item) {
-    $('.context-menu #menu-' + item).click();
-  }
-
-  asTSV() {
-    const copyButton = $('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
-    return copyButton.getAttribute('data-clipboard-text');
-  }
-
-  // The visualization response received from the server.
-  graphView() {
-    return this.svg.evaluate('graph.view');
-  }
-  */
 
   // The currently visualized graph data extracted from the SVG DOM.
-  graphData() {
+  graphData(): Promise<{ vertices, edges }> {
     return this.popup.evaluate(async function () {
       // Vertices as simple objects.
       async function vertexData(svg) {
@@ -691,9 +698,9 @@ class VisualizationState {
             width: arc.getAttribute('stroke-width'),
           });
         }
-        result.sort(function (a, b) {
-          return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
-        });
+        result.sort((a: any, b: any) =>
+          a.src * vertices.length + a.dst - b.src * vertices.length - b.dst
+        );
         return result;
       }
 
@@ -704,13 +711,12 @@ class VisualizationState {
     });
   }
 
-  /*
-  vertexCounts(index) {
-    return this.graphView().then(function (gv) {
-      return gv.vertexSets[index].vertices.length;
-    });
+  async expect(fn: (graph: { vertices, edges }) => void) {
+    await expect(async () => {
+      const graph = await this.graphData();
+      fn(graph);
+    }).toPass();
   }
-  */
 }
 
 export class Splash {
@@ -975,3 +981,10 @@ expect.extend({
     return { pass: true };
   }
 });
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R> {
+      toConcur(expected: any): R;
+    }
+  }
+}
