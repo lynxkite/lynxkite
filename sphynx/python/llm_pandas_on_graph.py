@@ -222,7 +222,8 @@ def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
   pd.options.display.width = 1000
 
   if examples:
-    # Use the provided examples. They have the same data and schema, so we only include them in the first message.
+    # Use the provided examples. They have the same data and schema, so we
+    # only include them in the first message.
     messages = [
         human_msg(question_template.format(nodes=nodes, edges=edges,
                   query=examples[0][0], output_schema=output_schema)),
@@ -236,7 +237,8 @@ def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
         human_msg(variation_template.format(query=query)),
     ]
   else:
-    # Use the default examples. Include the full prompt each time because they have different data and schemas.
+    # Use the default examples. Include the full prompt each time because they
+    # have different data and schemas.
     messages = [
         *itertools.chain.from_iterable(
             [
@@ -269,33 +271,46 @@ def matches_schema(df, schema):
   return True
 
 
+def parse_examples(examples):
+  examples = examples.strip().replace('\t', '  ')
+  if not examples:
+    return None
+  lines = examples.split('\n')
+  parsed = []
+  for line in lines:
+    line = line.rstrip()
+    if not line:
+      continue
+    if line.startswith('  '):
+      parsed[-1][1] += line + '\n'
+    else:
+      parsed.append([line.rstrip(':'), ''])
+  return parsed
+
+
 if __name__ == '__main__':
   d = dict(default_examples[0])
   print(pandas_on_graph(
       nodes=d['nodes'], edges=d['edges'],
       query=sys.argv[1] if len(sys.argv) > 1 else d['query'],
       output_schema='name: str, count: int',
-      examples=[
-    ('find the chef with the most friends',
-     '''
+      examples=parse_examples('''
+find the chef with the most friends:
   nodes = nodes[nodes['job'] == 'chef']
   edges = edges[edges['relationship'] == 'friends']
   nodes['count'] = edges.groupby('src').size()
   return nodes.nlargest(1, 'count')
-     '''),
-    ('find the violinist with the least enemies',
-     '''
+
+find the violinist with the least enemies:
   nodes = nodes[nodes['job'] == 'violinist']
   edges = edges[edges['relationship'] == 'enemies']
   nodes['count'] = edges.groupby('src').size()
   return nodes.nsmallest(1, 'count')
-     '''),
-    ('the three athletes that have the most fans',
-     '''
+
+the three athletes that have the most fans:
   nodes = nodes[nodes['job'] == 'athlete']
   edges = edges[edges['relationship'] == 'fan']
   nodes['count'] = edges.groupby('dst').size()
   return nodes.nlargest(3, 'count')
      '''),
-      ],
-    ))
+  ))
