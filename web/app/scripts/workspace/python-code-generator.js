@@ -191,7 +191,6 @@ angular.module('biggraph').factory('pythonCodeGenerator', ['$uibModal', function
       templateUrl: pythonCodeTemplate,
       controller: 'PythonCodeCtrl',
       resolve: { code: function() { return pythonCode; } },
-      animation: false, // Protractor does not like the animation.
       size: 'lg',
     }).result.then(function() {
       // Ignore value.
