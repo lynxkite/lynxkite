@@ -9,7 +9,7 @@ import sys
 import langchain
 
 
-examples = [
+default_examples = [
     dict(
         query='find the chef with the most friends',
         nodes=pd.DataFrame(dict(
@@ -34,7 +34,7 @@ examples = [
         ), index=[2]),
     ),
     dict(
-        query='goats that jump the highest',
+        query='longest running friendships',
         nodes=pd.DataFrame(dict(
             id=[7, 99, 8],
             species=['goat', 'sheep', 'donkey'],
@@ -43,14 +43,24 @@ examples = [
         edges=pd.DataFrame(dict(
             src=[0, 1, 2],
             dst=[1, 2, 3],
+            start_date=[1999, 2012, 2013],
         )),
-        output_schema='id: str, jump_height: int',
+        output_schema='animal_a: str, animal_b: str, friendship_years: int',
         solution='''
-  goats = nodes[nodes['species'] == 'goat']
-  return goats.nlargest(10, 'jump_height')
+  current_date = 2023
+  edges['friendship_years'] = current_date - edges['start_date']
+  # Convert the IDs to string.
+  edges['animal_a'] = edges['src'].astype(str)
+  edges['animal_b'] = edges['dst'].astype(str)
+  return edges.nlargest(10, 'friendship_years')
         '''.strip(),
         expected_result=pd.DataFrame(dict(
-            id=[7], species=['goat'], jump_height=[13.5],
+            src=[0, 1, 2],
+            dst=[1, 2, 3],
+            start_date=[1999, 2012, 2013],
+            friendship_years=[24, 11, 10],
+            animal_a=['0', '1', '2'],
+            animal_b=['1', '2', '3'],
         )),
     ),
     dict(
@@ -142,6 +152,11 @@ You need to write a function `compute_from_graph(nodes, edges)` for the followin
 The function should return a DataFrame with columns: {output_schema}
 '''.strip()
 
+variation_template = '''
+Change `compute_from_graph(nodes, edges)` to perform the following task:
+- {query}
+'''.strip()
+
 answer_template = '''
 ```python
 def compute_from_graph(nodes, edges):
@@ -171,7 +186,7 @@ def check_examples(examples):
     assert (res.equals(e['expected_result'])), str(res)
 
 
-check_examples(examples)
+check_examples(default_examples)
 
 
 def openai(messages):
@@ -191,30 +206,53 @@ def cleanup(df):
   return df
 
 
-def pandas_on_graph(*, nodes, edges, query, output_schema):
+def human_msg(content):
+  return langchain.schema.HumanMessage(content=content)
+
+
+def ai_msg(content):
+  return langchain.schema.AIMessage(content=content)
+
+
+def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
   nodes = cleanup(nodes)
   edges = cleanup(edges)
   pd.options.display.max_rows = 3 if len(nodes.columns) > 5 or len(edges.columns) > 5 else 10
   pd.options.display.max_columns = 100
   pd.options.display.width = 1000
 
-  messages = list(itertools.chain.from_iterable(
-      [
-          langchain.schema.HumanMessage(content=question_template.format(**e)),
-          langchain.schema.AIMessage(content=answer_template.format(**e)),
-      ]
-      for e in examples))
-  messages.append(langchain.schema.HumanMessage(
-      content=question_template.format(nodes=nodes, edges=edges, query=query, output_schema=output_schema)))
+  if examples:
+    # Use the provided examples. They have the same data and schema, so we only include them in the first message.
+    messages = [
+        human_msg(question_template.format(nodes=nodes, edges=edges,
+                  query=examples[0][0], output_schema=output_schema)),
+        ai_msg(answer_template.format(query=examples[0][0], solution=examples[0][1].strip())),
+        *itertools.chain.from_iterable(
+            [
+                human_msg(variation_template.format(query=e[0])),
+                ai_msg(answer_template.format(query=e[0], solution=e[1].strip())),
+            ]
+            for e in examples[1:]),
+        human_msg(variation_template.format(query=query)),
+    ]
+  else:
+    # Use the default examples. Include the full prompt each time because they have different data and schemas.
+    messages = [
+        *itertools.chain.from_iterable(
+            [
+                human_msg(question_template.format(**e)),
+                ai_msg(answer_template.format(**e)),
+            ]
+            for e in default_examples),
+        human_msg(question_template.format(nodes=nodes, edges=edges,
+                                           query=query, output_schema=output_schema))
+    ]
   msg = openai(messages)
   df = run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
   if matches_schema(df, output_schema):
     return df
   messages.append(msg)
-  messages.append(
-      langchain.schema.HumanMessage(
-          content='Make sure the result has these columns: ' +
-          output_schema))
+  messages.append(human_msg('Make sure the result has these columns: ' + output_schema))
   msg = openai(messages)
   return run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
 
@@ -232,8 +270,32 @@ def matches_schema(df, schema):
 
 
 if __name__ == '__main__':
-  d = dict(examples[0])
+  d = dict(default_examples[0])
   print(pandas_on_graph(
       nodes=d['nodes'], edges=d['edges'],
       query=sys.argv[1] if len(sys.argv) > 1 else d['query'],
-      output_schema=d['output_schema']))
+      output_schema='name: str, count: int',
+      examples=[
+    ('find the chef with the most friends',
+     '''
+  nodes = nodes[nodes['job'] == 'chef']
+  edges = edges[edges['relationship'] == 'friends']
+  nodes['count'] = edges.groupby('src').size()
+  return nodes.nlargest(1, 'count')
+     '''),
+    ('find the violinist with the least enemies',
+     '''
+  nodes = nodes[nodes['job'] == 'violinist']
+  edges = edges[edges['relationship'] == 'enemies']
+  nodes['count'] = edges.groupby('src').size()
+  return nodes.nsmallest(1, 'count')
+     '''),
+    ('the three athletes that have the most fans',
+     '''
+  nodes = nodes[nodes['job'] == 'athlete']
+  edges = edges[edges['relationship'] == 'fan']
+  nodes['count'] = edges.groupby('dst').size()
+  return nodes.nlargest(3, 'count')
+     '''),
+      ],
+    ))
