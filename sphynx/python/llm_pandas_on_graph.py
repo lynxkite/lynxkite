@@ -1,14 +1,12 @@
 '''Generates Pandas code for a graph using OpenAI.'''
+import itertools
 import numpy as np
 import pandas as pd
-import os
+import re
 import sys
-import openai
 # Langchain is not on Conda yet. Run "pip install langchain".
 # https://github.com/hwchase17/langchain/issues/1271
 import langchain
-
-openai.api_key = os.getenv('OPENAI_API_KEY')
 
 
 examples = [
@@ -131,74 +129,59 @@ examples = [
 ]
 
 
-function_def_for_examples = '''
-import pandas as pd
+question_template = '''
+"nodes" is a Pandas DataFrame with the following columns:
+{nodes}
 
-def compute_from_graph(nodes, edges):
-  """
-  Solves the task: {query}
+"edges" is a Pandas DataFrame with the following columns:
+{edges}
 
-  "nodes" is a Pandas DataFrame with the following columns:
-  {nodes}
+You need to write a function `compute_from_graph(nodes, edges)` for the following task:
+- {query}
 
-  "edges" is a Pandas DataFrame with the following columns:
-  {edges}
-
-  Returns a DataFrame with columns: {output_schema}
-  """
-  # {query}
-  {solution}
+The function should return a DataFrame with columns: {output_schema}
 '''.strip()
 
-function_def = function_def_for_examples.replace('{solution}', '')
+answer_template = '''
+```python
+def compute_from_graph(nodes, edges):
+  """{query}"""
+  {solution}
+```
+'''.strip()
 
 
 def run_code(*, nodes, edges, code):
-  func = function_def + code.strip()
-  scope = {}
-  exec(compile(func, 'generated code', 'exec'), scope)
+  scope = {'pd': pd}
+  exec(compile(code, 'generated code', 'exec'), scope)
   return scope['compute_from_graph'](nodes, edges)
 
 
-def init_examples():
+def get_code(s):
+  m = re.search('```python(.*)```', s, re.S)
+  assert m, f'Could not find the Python code in "{s}"'
+  return m[1].strip()
+
+
+def check_examples(examples):
   for e in examples:
     # Validate example.
-    res = run_code(nodes=e['nodes'], edges=e['edges'], code=e['solution'])
+    code = get_code(answer_template).replace('{solution}', '') + e['solution']
+    res = run_code(nodes=e['nodes'], edges=e['edges'], code=code)
     assert (res.equals(e['expected_result'])), str(res)
-    # Remove fields not in the template.
-    del e['expected_result']
 
 
-init_examples()
-
-full_prompt = langchain.FewShotPromptTemplate(
-    examples=examples,
-    example_prompt=langchain.PromptTemplate(
-        input_variables=['query', 'nodes', 'edges', 'output_schema', 'solution'],
-        template=function_def_for_examples,
-    ),
-    suffix=function_def,
-    input_variables=['query', 'nodes', 'edges', 'output_schema'],
-    example_separator='\n\n',
-)
+check_examples(examples)
 
 
-def generate_code(prompt):
-  print(prompt)
+def openai(messages):
+  for m in messages:
+    print(m.content)
   print('waiting for OpenAI...')
-  response = openai.Completion.create(
-      model='code-davinci-002',
-      prompt=prompt,
-      stop=function_def[:10],
-      temperature=0,
-      max_tokens=1000,
-      top_p=1,
-      frequency_penalty=0.0,
-      presence_penalty=0.0,
-  )
-  code = response['choices'][0]['text']
-  print(code)
-  return code
+  chat = langchain.chat_models.ChatOpenAI(temperature=0)
+  response = chat(messages)
+  print(response.content)
+  return response
 
 
 def cleanup(df):
@@ -214,15 +197,26 @@ def pandas_on_graph(*, nodes, edges, query, output_schema):
   pd.options.display.max_rows = 3 if len(nodes.columns) > 5 or len(edges.columns) > 5 else 10
   pd.options.display.max_columns = 100
   pd.options.display.width = 1000
-  prompt = full_prompt.format(nodes=nodes, edges=edges, query=query, output_schema=output_schema)
-  code = generate_code(prompt)
-  df = run_code(nodes=nodes, edges=edges, code=code)
+
+  messages = list(itertools.chain.from_iterable(
+      [
+          langchain.schema.HumanMessage(content=question_template.format(**e)),
+          langchain.schema.AIMessage(content=answer_template.format(**e)),
+      ]
+      for e in examples))
+  messages.append(langchain.schema.HumanMessage(
+      content=question_template.format(nodes=nodes, edges=edges, query=query, output_schema=output_schema)))
+  msg = openai(messages)
+  df = run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
   if matches_schema(df, output_schema):
     return df
-  clue = '  # Make sure the result has columns: ' + output_schema
-  prompt = '\n'.join((prompt + code).split('\n')[:-1] + [clue])
-  code = generate_code(prompt)
-  return run_code(nodes=nodes, edges=edges, code=code)
+  messages.append(msg)
+  messages.append(
+      langchain.schema.HumanMessage(
+          content='Make sure the result has these columns: ' +
+          output_schema))
+  msg = openai(messages)
+  return run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
 
 
 def matches_schema(df, schema):
