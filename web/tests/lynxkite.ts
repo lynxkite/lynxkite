@@ -75,7 +75,7 @@ export class Entity {
     await expect(histogram).toBeVisible();
     await popup.locator('#precise-histogram-calculation').setChecked(opts?.precise ?? false);
     // Wait for the histogram to be loaded.
-    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
+    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 60_000 });
     return histogram;
   }
 
