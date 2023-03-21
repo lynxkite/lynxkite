@@ -3,7 +3,7 @@ import '../util/util';
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 
-angular.module('biggraph').factory('PopupModel', ['$window', 'environment', function($window, environment) {
+angular.module('biggraph').factory('PopupModel', ['$window', function($window) {
   // Creates a new popup model data structure.
   // id: Unique key.
   // content: Description of content to render.
@@ -58,7 +58,6 @@ angular.module('biggraph').factory('PopupModel', ['$window', 'environment', func
 
   PopupModel.prototype.onMouseDown = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
     if (leftButton) {
       this.owner.startMovingPopup(this);
       this.moveOffsetX = this.x - event.pageX;
@@ -68,8 +67,7 @@ angular.module('biggraph').factory('PopupModel', ['$window', 'environment', func
 
   PopupModel.prototype.onMouseMove = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
-    if (leftButton || environment.protractor) {
+    if (leftButton) {
       // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
       if (this.owner.movedPopup === this) {
         this.x = this.moveOffsetX + event.pageX;
@@ -103,8 +101,7 @@ angular.module('biggraph').factory('PopupModel', ['$window', 'environment', func
 
   PopupModel.prototype.bringToFront = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
-    if (leftButton || environment.protractor) {
+    if (leftButton) {
       this.close();
       this.open();
     }

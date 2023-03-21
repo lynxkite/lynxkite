@@ -130,8 +130,7 @@ angular.module('biggraph').directive(
           mouseY = event.workspaceY;
 
           const leftButton = event.buttons & 1;
-          // Protractor omits button data from simulated mouse events.
-          if (leftButton || environment.protractor) {
+          if (leftButton) {
             scope.mouseLogical = {
               x: event.logicalX,
               y: event.logicalY,

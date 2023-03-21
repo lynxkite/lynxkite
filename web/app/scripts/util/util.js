@@ -5,7 +5,6 @@ import firebase from 'firebase/app';
 import 'firebase/analytics';
 
 angular.module('biggraph').service('environment', function() {
-  this.protractor = false; // If we want to handle tests specially somewhere.
   this.vegaConfig = { renderer: 'canvas' }; // Canvas looks better but SVG is more accessible for tests.
 });
 angular.module('biggraph')
@@ -296,7 +295,6 @@ angular.module('biggraph')
           templateUrl: reportErrorTemplate,
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
-          animation: false, // Protractor does not like the animation.
         });
       },
 

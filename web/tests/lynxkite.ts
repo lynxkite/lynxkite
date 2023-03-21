@@ -614,11 +614,6 @@ export class TableBrowser {
   }
 
   async expectDragText(li, expected) {
-    // We cannot do a real drag-and-drop workflow here
-    // because of:
-    // https://github.com/angular/protractor/issues/583
-    // Just doing a simple check for now.
-    // TODO: We're no longer on Protractor! Let's try a drag & drop!
     const span = li.locator('[draggable]');
     expect(await angularEval(span, 'draggableText')).toBe(expected);
   }
