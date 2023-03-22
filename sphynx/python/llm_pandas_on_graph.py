@@ -150,6 +150,8 @@ You need to write a function `compute_from_graph(nodes, edges)` for the followin
 - {query}
 
 The function should return a DataFrame with columns: {output_schema}
+
+You can only use Pandas and Numpy which are already imported as `pd` and `np`.
 '''.strip()
 
 variation_template = '''
@@ -167,7 +169,7 @@ def compute_from_graph(nodes, edges):
 
 
 def run_code(*, nodes, edges, code):
-  scope = {'pd': pd}
+  scope = {'pd': pd, 'np': np}
   exec(compile(code, 'generated code', 'exec'), scope)
   return scope['compute_from_graph'](nodes, edges)
 
@@ -249,14 +251,38 @@ def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
         human_msg(question_template.format(nodes=nodes, edges=edges,
                                            query=query, output_schema=output_schema))
     ]
-  msg = openai(messages)
-  df = run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
-  if matches_schema(df, output_schema):
+  iterations = 3
+  for i in range(iterations):
+    msg = openai(messages)
+    try:
+      df = run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
+    except ImportError:
+      messages.append(msg)
+      messages.append(human_msg(f'''
+Please do it without importing anything. You can use Pandas and Numpy. They are already
+imported as `pd` and `np`. And maybe you can use an existing column instead of computing
+something yourself.
+
+"nodes" is a Pandas DataFrame with the following columns:
+{nodes}
+
+"edges" is a Pandas DataFrame with the following columns:
+{edges}
+        '''.strip()))
+      continue
+    except BaseException as exception:
+      messages.append(msg)
+      messages.append(human_msg(f'''
+I'm getting an exception:
+{exception}
+        '''.strip()))
+      continue
+    if not matches_schema(df, output_schema):
+      messages.append(msg)
+      messages.append(human_msg('Make sure the result has these columns: ' + output_schema))
+      continue
+    # Success!
     return df
-  messages.append(msg)
-  messages.append(human_msg('Make sure the result has these columns: ' + output_schema))
-  msg = openai(messages)
-  return run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
 
 
 def matches_schema(df, schema):
