@@ -31,11 +31,16 @@ vs = pd.DataFrame(vs)
 es = pd.DataFrame(es)
 
 
-def ai(query, output_schema):
+def ai(query, output_schema, examples=None):
   '''A utility for running the default large language model and putting the result in "df".'''
-  from .llm_pandas_on_graph import pandas_on_graph
+  from . import llm_pandas_on_graph as llm
   global df
-  df = pandas_on_graph(nodes=vs, edges=es, query=query, output_schema=output_schema)
+  df = llm.pandas_on_graph(
+      nodes=vs,
+      edges=es,
+      query=query,
+      output_schema=output_schema,
+      examples=llm.parse_examples(examples))
   # Clean up the table in case it has anything unwanted.
   wanted = [col['name'] for col in op.params['outputFields'] if col['parent'] == 'df']
   df = df.reset_index(drop=True)[wanted]
