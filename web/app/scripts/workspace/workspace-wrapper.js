@@ -1,4 +1,8 @@
-'use strict';
+import '../app';
+import './box-wrapper';
+import './plug-wrapper';
+import '../util/util';
+import '../util/long-poll';
 
 // Creates a workspace wrapper object. A workspace is a set of boxes and arrows.
 // This object wraps the actual workspace data representation and
@@ -17,7 +21,7 @@
 // 5. this._build() is invoked again
 
 angular.module('biggraph')
-  .factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, longPoll) {
+  .factory('WorkspaceWrapper', ['BoxWrapper', 'PlugWrapper', 'util', 'longPoll', function(BoxWrapper, PlugWrapper, util, longPoll) {
     function WorkspaceWrapper(name, boxCatalog) {
       this.boxCatalog = boxCatalog; // Updated for the sake of the operation palette.
       this._boxCatalogMap = undefined;
@@ -49,15 +53,14 @@ angular.module('biggraph')
       },
 
       _updateBoxCatalog: function() {
-        const that = this;
         const request = util.nocache('/ajax/boxCatalog', {ref: this.ref()});
-        angular.merge(that.boxCatalog, request);
-        return request.then(function(bc) {
-          angular.merge(that.boxCatalog, request);
-          that._boxCatalogMap = {};
+        angular.merge(this.boxCatalog, request);
+        return request.then((bc) => {
+          angular.merge(this.boxCatalog, request);
+          this._boxCatalogMap = {};
           for (let i = 0; i < bc.boxes.length; ++i) {
             const boxMeta = bc.boxes[i];
-            that._boxCatalogMap[boxMeta.operationId] = boxMeta;
+            this._boxCatalogMap[boxMeta.operationId] = boxMeta;
           }
         });
       },
@@ -163,35 +166,34 @@ angular.module('biggraph')
       _lastLoadRequest: undefined,
       _requestInvalidated: false,
       loadWorkspace: function(workspaceStateRequest) {
-        const that = this;
         const request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
         this._lastLoadRequest = request;
         this._requestInvalidated = false;
         const promise = request
-          .then(function ensureBoxCatalog(response) {
-            if (!that._boxCatalogMap) { // Need to load catalog before processing the response.
-              return that._updateBoxCatalog().then(function() { return response; });
+          .then((response) => {
+            if (!this._boxCatalogMap) { // Need to load catalog before processing the response.
+              return this._updateBoxCatalog().then(function() { return response; });
             } else {
               return response;
             }
           })
           .then(
-            function onSuccess(response) {
-              that.loaded = true;
-              if (request === that._lastLoadRequest && !that._requestInvalidated) {
-                that._init(response);
+            (response) => {
+              this.loaded = true;
+              if (request === this._lastLoadRequest && !this._requestInvalidated) {
+                this._init(response);
               }
             },
-            function onError(error) {
+            (error) => {
               /* eslint-disable no-console */
               console.error('Failed to load workspace.', error);
-              if (that.backendResponse) {
+              if (this.backendResponse) {
                 // We are already displaying a workspace. Revert local changes.
                 // A popup will be displayed for the failed edit.
-                that._init(that.backendResponse);
+                this._init(this.backendResponse);
               } else {
                 // Couldn't load workspace. Display an error in its place.
-                that.error = util.responseToErrorMessage(error);
+                this.error = util.responseToErrorMessage(error);
               }
             });
         this.loading = promise;
@@ -427,14 +429,12 @@ angular.module('biggraph')
 
       undo: function() {
         if (!this.canUndo()) { return; }
-        const that = this;
-        that.loadWorkspace(util.post('/ajax/undoWorkspace', that.ref()));
+        this.loadWorkspace(util.post('/ajax/undoWorkspace', this.ref()));
       },
 
       redo: function() {
         if (!this.canRedo()) { return; }
-        const that = this;
-        that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
+        this.loadWorkspace(util.post('/ajax/redoWorkspace', this.ref()));
       },
 
       startCustomBoxSavingAs: function() {
@@ -596,7 +596,6 @@ angular.module('biggraph')
         });
         this.state.boxes.push(customBox);
         delete this._boxCatalogMap; // Force a catalog refresh.
-        const that = this;
         return {
           customBox: customBox,
           promise: util.post('/ajax/createWorkspace', {
@@ -606,11 +605,11 @@ angular.module('biggraph')
               reference: { top: name, customBoxStack: [] },
               workspace: { boxes: boxes },
             });
-          }).then(function success() {
-            that.saveWorkspace();
-          }, function error(err) {
-            that.loadWorkspace();
-            throw err;
+          }).then(() => {
+            this.saveWorkspace();
+          }, (error) => {
+            this.loadWorkspace();
+            throw error;
           }),
         };
       },
@@ -649,4 +648,4 @@ angular.module('biggraph')
     };
 
     return WorkspaceWrapper;
-  });
+  }]);

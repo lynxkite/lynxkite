@@ -1,0 +1,115 @@
+boxes:
+- id: anchor
+  inputs: {}
+  operationId: Anchor
+  parameters:
+    description: >-
+      Uses OpenAI to generate code that implements your query.
+
+
+      The output table is created by running the AI-generated code on your data.
+
+      There is no guarantee that the generated code perfectly implements your
+      intention.
+
+
+      **"Query"** can be a free-form natural language query. English works best.
+
+      For example, you could type `the 10 most important cities`.
+
+
+      **"Result schema"** is the schema of the output you want to see.
+
+      This is a comma-separated list of columns. For each column the type is
+      indicated after a colon.
+
+      For example, it could be `city: str, importance: float`.
+
+
+      **"Examples"** is optional. Specify a list of queries and the Python code
+      that
+
+      should be generated for them. The Python code should be the body of a
+      function
+
+      that uses the `nodes` and `edges` DataFrames and returns a DataFrame with
+      the answer.
+
+      Format the examples in the following way:
+
+
+      ```python
+
+      the city with the highest population:
+        return nodes.nlargest(1, 'population')
+
+      find the top 3 most important cities:
+        pr = nodes['pagerank']
+        pop = nodes['population']
+        nodes['importance'] = (pr + 1) * np.sqrt(pop)
+        return nodes.nlargest(3, 'importance')
+      ```
+
+
+      If you don't specify custom examples, a list of generic graph queries is
+      used.
+
+      Custom examples are very powerful but often not necessary. Try
+      precomputing
+
+      attributes first. In the example you could precompute your unusual
+      `importance`
+
+      metric instead of trusting the model with it. Using meaningful attribute
+      names
+
+      helps a lot too.
+    icon: >-
+      https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/800px-OpenAI_Logo.svg.png
+    parameters: >-
+      [{"kind":"text","id":"Query","defaultValue":"","$$hashKey":"object:580"},{"kind":"text","id":"Result
+      schema","defaultValue":"","$$hashKey":"object:631"},{"kind":"text","id":"Examp","defaultValue":"","$$hashKey":"object:2531"}]
+  parametricParameters: {}
+  x: 0
+  y: 0
+- id: Compute-in-Python_1
+  inputs:
+    graph:
+      boxId: input-graph
+      id: input
+  operationId: Compute in Python
+  parameters: {}
+  parametricParameters:
+    code: |-
+      ai(
+        '''
+      ${Query}
+        '''.strip(),
+        '''
+      ${`Result schema`}
+        '''.strip())
+    inputs: >-
+      ${vertexAttributes.map("vs."+_.name).mkString(",")},
+      ${edgeAttributes.map("es."+_.name).mkString(",")}, es.src, es.dst
+    outputs: ${`Result schema`.split(",").map(e => "df." + e.strip()).mkString(",")}
+  x: 750
+  y: 50
+- id: input-graph
+  inputs: {}
+  operationId: Input
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 550
+  y: 50
+- id: output-graph
+  inputs:
+    output:
+      boxId: Compute-in-Python_1
+      id: graph
+  operationId: Output
+  parameters:
+    name: graph
+  parametricParameters: {}
+  x: 950
+  y: 50

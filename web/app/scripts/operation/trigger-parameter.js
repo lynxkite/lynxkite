@@ -1,13 +1,15 @@
 // UI for the "trigger" parameter kind.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './trigger-parameter.html?url';
 
-angular.module('biggraph').directive('triggerParameter', function(util) {
+angular.module('biggraph').directive('triggerParameter', ['util', function(util) {
   return {
     scope: {
       box: '=',
       param: '=',
     },
-    templateUrl: 'scripts/operation/trigger-parameter.html',
+    templateUrl,
     link: function(scope) {
       scope.disabled = false;
       scope.computed = false;
@@ -28,4 +30,4 @@ angular.module('biggraph').directive('triggerParameter', function(util) {
       };
     },
   };
-});
+}]);

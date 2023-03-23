@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 
 name := "lynxkite"
 
-javaOptions in Test := Seq(
+Test / javaOptions := Seq(
   "-Dlynxkite.default.partitions.per.core=1",
   "-Djava.security.policy=conf/security.policy",
   "-XX:PermSize=256M")
@@ -28,9 +28,9 @@ javacOptions ++= Seq(
 
 version := Option(System.getenv("VERSION")).getOrElse("0.1-SNAPSHOT")
 
-sources in doc in Compile := List()  // Disable doc generation.
+Compile / doc / sources := List()  // Disable doc generation.
 
-publishArtifact in packageSrc := false  // Don't package source.
+packageSrc / publishArtifact := false  // Don't package source.
 
 scalaVersion := "2.12.13"
 
@@ -50,10 +50,8 @@ libraryDependencies ++= Seq(
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.9.6",
-  // JDBC drivers.
-  "mysql" % "mysql-connector-java" % "8.0.20",
-  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
-  "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
+  // JDBC tests use SQLite.
+  "org.xerial" % "sqlite-jdbc" % "3.40.0.0" % "test",
   "jakarta.ws.rs" % "jakarta.ws.rs-api" % "2.1.6",
   // Geotools
   "org.geotools" % "gt-shapefile" % "20.0",
@@ -94,18 +92,18 @@ excludeDependencies ++= Seq(
   "com.typesafe.akka" % "akka-protobuf-v3_2.12",
 )
 
-assemblyShadeRules in assembly := Seq(
+assembly / assemblyShadeRules := Seq(
   ShadeRule.rename("com.typesafe.config.**" -> "lynxkite_shaded.com.typesafe.config.@1").inAll,
   ShadeRule.rename("com.google.inject.**" -> "lynxkite_shaded.com.google.inject.@1").inAll,
   ShadeRule.rename("com.google.common.**" -> "lynxkite_shaded.com.google.common.@1").inAll,
   ShadeRule.rename("com.google.protobuf.**" -> "lynxkite_shaded.com.google.protobuf.@1").inAll,
 )
 
-mainClass in assembly := Some("com.lynxanalytics.biggraph.LynxKite")
-fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
-assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
+assembly / mainClass := Some("com.lynxanalytics.biggraph.LynxKite")
+assembly / fullClasspath += Attributed.blank(PlayKeys.playPackageAssets.value)
+assembly / assemblyJarName := s"${name.value}-${version.value}.jar"
 
-assemblyMergeStrategy in assembly := {
+assembly / assemblyMergeStrategy := {
   case PathList("mime.types") => MergeStrategy.concat
   case PathList("module-info.class") => MergeStrategy.discard
   case PathList("rootdoc.txt") => MergeStrategy.discard
@@ -141,9 +139,9 @@ def sparkJars() = {
   (jarsDir * "*.jar").get
 }
 
-dependencyClasspath in Compile ++= sparkJars()
+Compile / dependencyClasspath ++= sparkJars()
 
-dependencyClasspath in Test ++= sparkJars()
+Test / dependencyClasspath ++= sparkJars()
 
 resolvers ++= Seq(
   "Geotoolkit.org Repository" at "https://maven.geotoolkit.org",
@@ -165,13 +163,13 @@ def myStage = Command.command("stage") { state =>
 commands += myStage
 
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
-testOptions in Test := Seq(Tests.Argument("-oDF", "-fWDF", "target/sbttest.out", "-l", "Benchmark"))
+Test / testOptions := Seq(Tests.Argument("-oDF", "-fWDF", "target/sbttest.out", "-l", "Benchmark"))
 
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
 
-testOptions in Benchmark := Seq(Tests.Argument("-n", "Benchmark"))
-Global / excludeLintKeys += testOptions in Benchmark
+Benchmark / testOptions := Seq(Tests.Argument("-n", "Benchmark"))
+Global / excludeLintKeys += Benchmark / testOptions
 
 lazy val root = project.in(file("."))
   .enablePlugins(PlayScala)
@@ -189,14 +187,13 @@ def dirContents(baseDir: File, dirs: String*) = {
   }
 }
 
-Compile / resourceDirectory := baseDirectory.value / "conf"
+Compile / resourceDirectory := baseDirectory.value / "resources"
+Compile / unmanagedResourceDirectories += baseDirectory.value / "conf"
 Compile / unmanagedResourceDirectories += baseDirectory.value / "sphynx/.build/zip"
 
-mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
+Assets / sourceDirectory := new File("web/dist")
 
-sourceDirectory in Assets := new File("web/dist")
-
-mappings in Universal ~= {
+Universal / mappings ~= {
   _.filterNot { case (_, relPath) => relPath == "README.md"}
 }
 

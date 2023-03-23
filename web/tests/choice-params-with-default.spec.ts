@@ -4,7 +4,7 @@ import { Workspace } from './lynxkite';
 
 let workspace: Workspace;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'ex0', name: 'Create example graph', x: 100, y: 100 });
 });
 
@@ -25,11 +25,22 @@ test('pagerank default choice values', async () => {
     after: 'pr1',
     params: { name: 'page_rank_incoming', direction: 'incoming edges', iterations: '1' },
   });
-  const state = await workspace.openStateView('pr2', 'graph');
-  const defaultHistogram = await state.left.vertexAttribute('page_rank_default').getHistogramValues();
-  const incomingHistogram = await state.left.vertexAttribute('page_rank_incoming').getHistogramValues();
-  expect(defaultHistogram).not.toEqual(incomingHistogram);
-  state.close();
+
+  await workspace.addBox({
+    id: 'sql', name: 'SQL1', x: 100, y: 400, after: 'pr2',
+    params: { sql: 'select name, page_rank_default, page_rank_incoming from vertices' },
+  });
+  const state = await workspace.openStateView('sql', 'table');
+  await state.table.expect(
+    ['name', 'page_rank_default', 'page_rank_incoming'],
+    ['String', 'Double', 'Double'],
+    [
+      ['Adam', '1.6375', '1'],
+      ['Eve', '1.6375', '1'],
+      ['Bob', '0.3625', '1.425'],
+      ['Isolated Joe', '0.3625', '0.575'],
+    ]);
+  await state.close();
 });
 
 test('editing pagerank default choice values', async () => {
@@ -48,7 +59,7 @@ test('multi-choice default values', async () => {
   await workspace.addBox({
     id: 'discard', name: 'Discard vertex attributes', x: 100, y: 200, after: 'ex'
   });
-  const box = await workspace.openBoxEditor('discard')
+  const box = await workspace.openBoxEditor('discard');
   await box.moveTo(500, 100);
   const state = await workspace.openStateView('discard', 'graph');
   await state.moveTo(500, 400);

@@ -1,12 +1,14 @@
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './table-state-view.html?url';
 
 // Viewer of a table state.
 
 angular.module('biggraph')
-  .directive('tableStateView', function(util) {
+  .directive('tableStateView', ['util', function(util) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/table-state-view.html',
+      templateUrl,
       scope: {
         stateId: '=',
         wizard: '=?',
@@ -69,4 +71,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);

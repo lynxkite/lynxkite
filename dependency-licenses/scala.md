@@ -118,24 +118,24 @@ Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.goo
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.code.gson # gson # 2.9.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | com.typesafe # config # 1.4.2 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | com.typesafe # ssl-config-core_2.12 # 0.4.3 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-actor-typed_2.12 # 2.6.19 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-actor_2.12 # 2.6.19 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-actor-typed_2.12 # 2.6.20 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-actor_2.12 # 2.6.20 | <notextile></notextile>
 Apache | [Apache-2.0](https://opensource.org/licenses/Apache-2.0) | com.typesafe.akka # akka-http-core_2.12 # 10.1.15 | <notextile></notextile>
 Apache | [Apache-2.0](https://opensource.org/licenses/Apache-2.0) | com.typesafe.akka # akka-parsing_2.12 # 10.1.15 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-serialization-jackson_2.12 # 2.6.19 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-slf4j_2.12 # 2.6.19 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-stream_2.12 # 2.6.19 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # build-link # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # filters-helpers_2.12 # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-akka-http-server_2.12 # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-exceptions # 2.8.16 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-serialization-jackson_2.12 # 2.6.20 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-slf4j_2.12 # 2.6.20 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.akka # akka-stream_2.12 # 2.6.20 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # build-link # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # filters-helpers_2.12 # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-akka-http-server_2.12 # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-exceptions # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-functional_2.12 # 2.8.2 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-guice_2.12 # 2.8.16 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-guice_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-json_2.12 # 2.8.2 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-server_2.12 # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-streams_2.12 # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.16 | <notextile></notextile>
-Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.16 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-server_2.12 # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-streams_2.12 # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.19 | <notextile></notextile>
+Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.1 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 2.1.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-storage # 2.1.0 | <notextile></notextile>
@@ -195,7 +195,6 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-firefox-driver # 3.141.59 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-remote-driver # 3.141.59 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-support # 3.141.59 | <notextile></notextile>
-Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.xerial # sqlite-jdbc # 3.8.11.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xalan # serializer # 2.7.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xalan # xalan # 2.7.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | xerces # xercesImpl # 2.12.0 | <notextile></notextile>
@@ -232,7 +231,6 @@ BSD | [BSD](LICENSE.txt) | tec.uom.lib # uom-lib-common # 1.0.2 | <notextile></n
 BSD | [BSD 2-Clause License](https://opensource.org/licenses/BSD-2-Clause) | com.github.luben # zstd-jni # 1.4.9-1 | <notextile></notextile>
 BSD | [BSD 3-clause](https://raw.githubusercontent.com/ThreeTen/threeten-extra/master/LICENSE.txt) | org.threeten # threeten-extra # 1.7.0 | <notextile></notextile>
 BSD | [BSD 3-clause](https://raw.githubusercontent.com/ThreeTen/threetenbp/master/LICENSE.txt) | org.threeten # threetenbp # 1.6.0 | <notextile></notextile>
-BSD | [BSD License](http://jdbc.postgresql.org/license.html) | org.postgresql # postgresql # 9.3-1102-jdbc41 | <notextile></notextile>
 BSD | [BSD License for HSQL](http://svn.osgeo.org/geotools/trunk/licenses/HSQL.html) | org.geotools # gt-epsg-hsql # 20.0 | <notextile></notextile>
 BSD | [BSD New license](http://opensource.org/licenses/BSD-3-Clause) | com.google.auth # google-auth-library-credentials # 1.6.0 | <notextile></notextile>
 BSD | [BSD New license](http://opensource.org/licenses/BSD-3-Clause) | com.google.auth # google-auth-library-oauth2-http # 1.6.0 | <notextile></notextile>
@@ -264,7 +262,6 @@ GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.
 GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-values # 3.5.2 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.transaction # jakarta.transaction-api # 1.3.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.ws.rs # jakarta.ws.rs-api # 2.1.6 | <notextile></notextile>
-GPL | [The GNU General Public License, v2 with FOSS exception](null) | mysql # mysql-connector-java # 8.0.20 | <notextile></notextile>
 GPL with Classpath Extension | [CDDL + GPLv2 with classpath exception](https://github.com/javaee/javax.annotation/blob/master/LICENSE) | javax.annotation # javax.annotation-api # 1.3.2 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-classic # 1.2.11 | <notextile></notextile>
 LGPL | [GNU Lesser General Public License](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | ch.qos.logback # logback-core # 1.2.11 | <notextile></notextile>

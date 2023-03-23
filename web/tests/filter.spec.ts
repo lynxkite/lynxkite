@@ -4,7 +4,7 @@ import { Workspace } from './lynxkite';
 
 let workspace: Workspace;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'ex0', name: 'Create example graph', x: 100, y: 100 });
   await workspace.addBox({
     id: 'filter0',
@@ -21,11 +21,11 @@ test('histograms after hard filters', async () => {
   const state = await workspace.openStateView('filter0', 'graph');
   await expect(state.left.vertexCount).toHaveText('2');
   await expect(state.left.edgeCount).toHaveText('1');
-  expect(await state.left.vertexAttribute('name').getHistogramValues()).toEqual([
+  await state.left.vertexAttribute('name').expectHistogramValues([
     { title: 'Adam', size: 100, value: 1 },
     { title: 'Eve', size: 100, value: 1 },
   ]);
-  expect(await state.left.edgeAttribute('weight').getHistogramValues()).toEqual([
+  await state.left.edgeAttribute('weight').expectHistogramValues([
     { title: '2.00-2.00', size: 100, value: 1 },
   ]);
 });

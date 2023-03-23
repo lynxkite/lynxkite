@@ -1,14 +1,16 @@
 // The links at the bottom of every page, such as "logout".
-'use strict';
+import '../app';
+import './util';
+import templateUrl from './user-menu.html?url';
 
-angular.module('biggraph').directive('userMenu', function($window, util, $rootScope) {
+angular.module('biggraph').directive('userMenu', ['$window', 'util', '$rootScope', function($window, util, $rootScope) {
   return {
     restrict: 'E',
     scope: {
       direction: '@', // Class selector for the dropup menu: "dropup" or "dropdown".
       anonymousUsageStats: '=?',
     },
-    templateUrl: 'scripts/util/user-menu.html',
+    templateUrl,
     link: function(scope) {
       scope.util = util;
 
@@ -32,4 +34,4 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
       };
     },
   };
-});
+}]);

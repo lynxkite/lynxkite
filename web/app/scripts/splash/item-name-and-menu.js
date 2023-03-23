@@ -1,11 +1,14 @@
 // An item name with a drop-down menu providing "rename", "discard", and "duplicate" operations.
-'use strict';
+import ClipboardJS from 'clipboard';
+import '../app';
+import '../util/util';
+import templateUrl from './item-name-and-menu.html?url';
 
-angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util, $location) {
+angular.module('biggraph').directive('itemNameAndMenu', ['$timeout', 'util', '$location', function($timeout, util, $location) {
   return {
     restrict: 'E',
     scope: { object: '=', reload: '&' },
-    templateUrl: 'scripts/splash/item-name-and-menu.html',
+    templateUrl,
     link: function(scope, element) {
       scope.util = util;
 
@@ -49,9 +52,8 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util,
         $location.url('/workspace/' + scope.object.name);
       };
 
-      /* global ClipboardJS */
       const clippy = new ClipboardJS('#menu-copy-to-clipboard');
       scope.$on('$destroy', () => clippy.destroy());
     },
   };
-});
+}]);

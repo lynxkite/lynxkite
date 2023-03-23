@@ -1,13 +1,17 @@
 // The list of entries.
-'use strict';
+import MarkdownIt from 'markdown-it';
+const md = new MarkdownIt();
+import Tour from 'bootstrap-tourist';
+import '../app';
+import '../util/util';
+import templateUrl from './entry-selector.html?url';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
+  ['util', 'hotkeys', '$timeout', '$anchorScroll', '$location', '$routeParams', function(util, hotkeys, $timeout, $anchorScroll, $location, $routeParams) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/splash/entry-selector.html',
+      templateUrl,
       link: function(scope, element) {
-        const md = window.markdownit();
         scope.util = util;
         function defaultSettings() {
           return { privacy: 'public-read' };
@@ -210,26 +214,8 @@ angular.module('biggraph').directive('entrySelector',
         scope.objectClick = function(event, o) {
           if (scope.isWorkspace(o)) { scope.workspaceClick(event, o); }
           if (scope.isWizard(o)) { scope.wizardClick(event, o); }
-          if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
           if (scope.isSnapshot(o)) { scope.snapshotClick(event, o); }
           return;
-        };
-
-        scope.tableClick = function(event, t) {
-          // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
-          if (event.originalEvent.alreadyHandled) { return; }
-          // Ignore clicks on errored tables.
-          if (t.error) { return; }
-          const tableNameParts = t.name.split('/');
-          const tableName = tableNameParts[tableNameParts.length - 1];
-          scope.showSQL = true;
-          $timeout(
-            function() {
-              $anchorScroll('global-sql-box');
-              scope.$broadcast('fill sql-box by clicking on table or view', tableName);
-            },
-            0,
-            false); // Do not invoke apply as we don't change the scope.
         };
 
         scope.wizardClick = function(event, p) {
@@ -281,12 +267,6 @@ angular.module('biggraph').directive('entrySelector',
         scope.isWizard = function(object) {
           return object.objectType.includes('wizard');
         };
-        scope.isTable = function(object) {
-          return object.objectType === 'table';
-        };
-        scope.isView = function(object) {
-          return object.objectType === 'view';
-        };
         scope.isSnapshot = function(object) {
           return object.objectType === 'snapshot';
         };
@@ -315,7 +295,6 @@ angular.module('biggraph').directive('entrySelector',
             && localStorage.getItem('allow data collection')) {
             return;
           }
-          /* global Tour */
           scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',
@@ -423,11 +402,10 @@ angular.module('biggraph').directive('entrySelector',
         scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       },
     };
-  });
+  }]);
 
 // We store this in a global variable because the checkbox is outside of Angular.
 let dataCollectionCheckboxChecked;
-/* eslint-disable no-unused-vars */ // This is used by the tutorial.
-function dataCollectionCheckboxChanged(e) {
+window.dataCollectionCheckboxChanged = (e) => {
   dataCollectionCheckboxChecked = e.checked;
-}
+};

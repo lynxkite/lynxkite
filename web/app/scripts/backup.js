@@ -1,8 +1,9 @@
 // The "/backup" page for the S3 backup of data and metadata.
-'use strict';
+import './app';
+import './util/util';
 
 angular.module('biggraph')
-  .controller('BackupCtrl', function ($scope, util) {
+  .controller('BackupCtrl', ['$scope', 'util', function ($scope, util) {
     $scope.inProgress = false;
     $scope.statusMessage = '';
     $scope.success = false;
@@ -38,4 +39,4 @@ angular.module('biggraph')
       return $scope.success;
     };
 
-  });
+  }]);

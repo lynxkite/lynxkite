@@ -1,5 +1,32 @@
 // Creates the "biggraph" Angular module, sets the routing table, provides utility filters.
-'use strict';
+import chroma from 'chroma-js';
+import './util/jq-global';
+import 'angular';
+import 'angular-cookies';
+import 'angular-hotkeys';
+import 'angular-route';
+import 'angular-sanitize';
+import 'angular-ui-bootstrap';
+import 'angular-ui-ace';
+import splashTemplate from './splash/splash.html?url';
+import workspaceTemplate from './workspace/workspace-entry-point.html?url';
+import wizardTemplate from './wizard/wizard.html?url';
+import logsTemplate from './logs.html?url';
+import backupTemplate from './backup.html?url';
+import demoModeTemplate from './demo-mode.html?url';
+import cleanerTemplate from './cleaner.html?url';
+
+// We import these modules to load the ACE editor. It doesn't have to block the page load.
+async function importACE() {
+  await import('brace');
+  import('brace/mode/json');
+  import('brace/mode/markdown');
+  import('brace/mode/plain_text');
+  import('brace/mode/python');
+  import('brace/mode/scala');
+  import('brace/mode/sql');
+}
+importACE();
 
 angular.module('biggraph', [
   'ngRoute',
@@ -8,7 +35,7 @@ angular.module('biggraph', [
   'cfp.hotkeys',
 ]);
 
-angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
+angular.module('biggraph').config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
   $locationProvider.hashPrefix(''); // https://docs.angularjs.org/guide/migration#commit-aa077e8
   function docTemplate(doc, title) {
     return { template: `
@@ -26,35 +53,35 @@ angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'scripts/splash/splash.html',
+      templateUrl: splashTemplate,
       controller: 'SplashCtrl',
     })
     .when('/dir:directoryName*', {
-      templateUrl: 'scripts/splash/splash.html',
+      templateUrl: splashTemplate,
       controller: 'SplashCtrl',
     })
     .when('/workspace/:workspaceName*', {
-      templateUrl: 'scripts/workspace/workspace-entry-point.html',
+      templateUrl: workspaceTemplate,
       controller: 'WorkspaceEntryPointCtrl',
     })
     .when('/wizard/:name*', {
-      templateUrl: 'scripts/wizard/wizard.html',
+      templateUrl: wizardTemplate,
       controller: 'WizardCtrl',
     })
     .when('/demo-mode', {
-      templateUrl: 'scripts/demo-mode.html',
+      templateUrl: demoModeTemplate,
       controller: 'DemoModeCtrl',
     })
     .when('/cleaner', {
-      templateUrl: 'scripts/cleaner.html',
+      templateUrl: cleanerTemplate,
       controller: 'CleanerCtrl',
     })
     .when('/backup', {
-      templateUrl: 'scripts/backup.html',
+      templateUrl: backupTemplate,
       controller: 'BackupCtrl',
     })
     .when('/logs', {
-      templateUrl: 'scripts/logs.html',
+      templateUrl: logsTemplate,
       controller: 'LogsCtrl',
     })
     .otherwise({
@@ -68,26 +95,12 @@ angular.module('biggraph').config(function ($routeProvider, $locationProvider) {
   for (let k in docs) {
     $routeProvider.when('/' + k, docTemplate(k, docs[k]));
   }
-});
+}]);
 
-angular.module('biggraph').config(function($httpProvider) {
+angular.module('biggraph').config(['$httpProvider', function($httpProvider) {
   // Identify requests from JavaScript by a header.
   $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-});
-
-angular.module('biggraph').factory('$exceptionHandler', function($log, $injector) {
-  return function(error) {
-    // Log as usual.
-    $log.error.apply($log, arguments);
-    // Send to server.
-    // (The injector is used to avoid the circular dependency detection.)
-    $injector.get('util').post('/ajax/jsError', {
-      url: window.location.href,
-      stack: error.stack || '',
-      reportErrors: false,
-    });
-  };
-});
+}]);
 
 // selectFields adds a new $selection attribute to the objects, that is a newline-delimited
 // concatenation of the selected fields. This can be used to filter by searching in multiple
@@ -107,9 +120,9 @@ angular.module('biggraph').filter('selectFields', function() {
   };
 });
 
-angular.module('biggraph').filter('trustAsHtml', function($sce) {
+angular.module('biggraph').filter('trustAsHtml', ['$sce', function($sce) {
   return $sce.trustAsHtml;
-});
+}]);
 
 angular.module('biggraph').filter('decimal', function() {
   return function(x) {
@@ -130,7 +143,7 @@ angular.module('biggraph').filter('decimal', function() {
 angular.module('biggraph').filter('id', function() {
   return function(x) {
     if (x === undefined) { return x; }
-    return x.toLowerCase().replace(/ /g, '-');
+    return x.toLowerCase().replace(/[ !?,./]/g, '-');
   };
 });
 
@@ -141,7 +154,6 @@ angular.module('biggraph').filter('urlencode', function() {
   };
 });
 
-/* global chroma */
 chroma.brewer['LynxKite Classic'] = chroma.brewer['lynxkite classic'] = [
   '#3636a1', '#4b36a1', '#6136a1', '#7636a1', '#8c36a1', '#a136a1',
   '#a1368c', '#a13676', '#a13661', '#a1364b', '#a13636'];

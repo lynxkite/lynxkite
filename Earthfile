@@ -24,11 +24,11 @@ sbt-deps:
   SAVE IMAGE --cache-hint
 
 npm-deps:
-  COPY web/package.json web/yarn.lock web/
-  RUN cd web && yarn --frozen-lockfile
+  COPY web/package.json web/package-lock.json web/full_licenses.py web/
+  RUN cd web && npm i
   RUN mkdir dependency-licenses
-  RUN cd web && yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../dependency-licenses/javascript.md
-  RUN cd web && yarn licenses generate-disclaimer > ../dependency-licenses/javascript.txt
+  RUN cd web && npx license-checker > ../dependency-licenses/javascript.md
+  RUN cd web && python full_licenses.py > ../dependency-licenses/javascript.txt
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules
   SAVE IMAGE --cache-hint
@@ -52,10 +52,9 @@ sphynx-build:
 web-build:
   COPY +npm-deps/node_modules web/node_modules
   COPY web web
-  COPY .eslintrc.yaml .
   COPY tools/gen_templates.py tools/
   COPY conf/kiterc_template conf/
-  RUN cd web && npx gulp
+  RUN cd web && npm run eslint && npm run build
   SAVE ARTIFACT web/dist
   SAVE IMAGE --cache-hint
 
@@ -64,7 +63,7 @@ app-build:
   COPY +grpc/proto app/com/lynxanalytics/biggraph/graph_api/proto
   COPY conf conf
   COPY app app
-  COPY built-ins built-ins
+  COPY resources resources
   RUN sbt compile
   SAVE IMAGE --cache-hint
 
@@ -125,33 +124,37 @@ python-test:
   RUN tools/with_lk.sh python/remote_api/test.sh
   SAVE IMAGE --cache-hint
 
-frontend-test:
+frontend-test-save:
   USER root
-  RUN apt-get update && apt-get install -y xvfb
   RUN apt-get update && apt-get install -y chromium-browser
   USER mambauser
-  COPY web/package.json web/yarn.lock web/
+  COPY python python
+  COPY web/package.json web/package-lock.json web/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
   COPY +npm-deps/node_modules web/node_modules
   USER root
-  # Playwright's "install-deps" wants to run "su" which asks for a password.
-  # Instead we're already root here, so we want to just run the command.
-  RUN cd web && npx playwright install-deps chromium --dry-run 2>/dev/null | sed -n 's/su root/bash/p' | bash
+  RUN cd web && npx playwright install-deps chromium
   USER mambauser
-  RUN cd web && npx playwright install
+  RUN cd web && npx playwright install chromium
   COPY tools/wait_for_port.sh tools/
   COPY tools/with_lk.sh tools/
   COPY web web
   COPY conf/kiterc_template conf/
   COPY test/localhost.self-signed.cert* test/
   ENV CI true
-  RUN cd web && ../tools/with_lk.sh yarn playwright test || touch failed
-  RUN cd web && zip -qr results.zip test-results
-  TRY
-    RUN [ ! -f web/failed ]
-  FINALLY
-    SAVE ARTIFACT web/results.zip AS LOCAL results.zip
-  END
+  ENV KITE_ALLOW_PYTHON yes
+  RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
+  # After running the tests we do a little dance to save the report even if the test failed.
+  # https://github.com/earthly/earthly/issues/2452
+  RUN cd web && zip -qr playwright-report.zip playwright-report
+  SAVE ARTIFACT web/playwright-report.zip
+frontend-test-copy:
+  LOCALLY
+  COPY --keep-ts +frontend-test-save/playwright-report.zip ./
+frontend-test:
+  BUILD +frontend-test-copy
+  FROM +frontend-test-save
+  RUN [ ! -f web/failed ]
 
 docker:
   FROM mambaorg/micromamba:jammy

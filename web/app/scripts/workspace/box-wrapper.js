@@ -1,4 +1,7 @@
-'use strict';
+import MarkdownIt from 'markdown-it';
+const md = new MarkdownIt();
+import '../app';
+import './plug-wrapper';
 
 // Creates a box object for a workspace.
 // This object wraps the actual box data representation and
@@ -10,9 +13,8 @@
 //   coordinates on the workspace and everything related to this
 //   box instance that have to be saved.
 
-angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
+angular.module('biggraph').factory('BoxWrapper', ['PlugWrapper', function(PlugWrapper) {
   function getComment(metadata, instance) {
-    const md = window.markdownit();
     let comment;
     if (metadata.operationId === 'Comment') {
       comment = instance.parameters.comment;
@@ -81,4 +83,4 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   };
 
   return BoxWrapper;
-});
+}]);

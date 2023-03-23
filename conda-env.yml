@@ -18,7 +18,6 @@ dependencies:
 - pyspark==3.3.0
 # For LynxKite frontend.
 - nodejs
-- yarn
 # For Sphynx.
 - go
 # For NetworKit.

@@ -1,8 +1,12 @@
 // The entry for an attribute/scalar/segmentation in the project view.
-'use strict';
+import '../app';
+import '../util/util';
+import './axis-options';
+import Drop from 'tether-drop';
+import chroma from 'chroma-js';
+import templateUrl from './entity.html?url';
 
-angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
-  /* globals chroma */
+angular.module('biggraph').directive('entity', ['$timeout', 'axisOptions', 'util', function($timeout, axisOptions, util) {
   return {
     restrict: 'E',
     scope: {
@@ -10,9 +14,8 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       kind: '@',
       side: '=',
     },
-    templateUrl: 'scripts/project/entity.html',
+    templateUrl,
     link: function(scope, element) {
-      /* global Drop */
       // Angular element for easier access of popup elements.
       const dropElement = element.children('.menu');
       let drop = new Drop({
@@ -346,4 +349,4 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
     },
   };
-});
+}]);

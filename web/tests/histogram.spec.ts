@@ -5,14 +5,14 @@ import { State, Workspace } from './lynxkite';
 let workspace: Workspace;
 let state: State;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'ex0', name: 'Create example graph', x: 100, y: 100 });
   state = await workspace.openStateView('ex0', 'graph');
 });
 
 test('string vertex histogram', async () => {
   await expect(state.left.side).toHaveCount(1);
-  expect(await state.left.vertexAttribute('name').getHistogramValues()).toEqual([
+  await state.left.vertexAttribute('name').expectHistogramValues([
     { title: 'Adam', size: 100, value: 1 },
     { title: 'Bob', size: 100, value: 1 },
     { title: 'Eve', size: 100, value: 1 },
@@ -20,7 +20,7 @@ test('string vertex histogram', async () => {
   ]);
 });
 test('double vertex histogram', async () => {
-  expect(await state.left.vertexAttribute('income').getHistogramValues()).toEqual([
+  await state.left.vertexAttribute('income').expectHistogramValues([
     { title: '1000.0-1050.0', size: 100, value: 1 },
     { title: '1050.0-1100.0', size: 0, value: 0 },
     { title: '1100.0-1150.0', size: 0, value: 0 },
@@ -44,7 +44,7 @@ test('double vertex histogram', async () => {
   ]);
 });
 test('double edge histogram', async () => {
-  expect(await state.left.edgeAttribute('weight').getHistogramValues()).toEqual([
+  await state.left.edgeAttribute('weight').expectHistogramValues([
     { title: '1.00-1.15', size: 100, value: 1 },
     { title: '1.15-1.30', size: 0, value: 0 },
     { title: '1.30-1.45', size: 0, value: 0 },
@@ -71,7 +71,7 @@ test('double edge histogram', async () => {
 test('soft filters are applied to string vertex histogram', async () => {
   await state.left.vertexAttribute('name').setFilter('Adam,Eve,Bob');
   await state.left.vertexAttribute('age').setFilter('<40');
-  expect(await state.left.vertexAttribute('name').getHistogramValues()).toEqual([
+  await state.left.vertexAttribute('name').expectHistogramValues([
     { title: 'Adam', size: 100, value: 1 },
     { title: 'Bob', size: 0, value: 0 },
     { title: 'Eve', size: 100, value: 1 },
@@ -81,7 +81,7 @@ test('soft filters are applied to string vertex histogram', async () => {
 
 test('soft filters are applied to double edge histogram', async () => {
   await state.left.edgeAttribute('weight').setFilter('!1');
-  expect(await state.left.edgeAttribute('weight').getHistogramValues()).toEqual([
+  await state.left.edgeAttribute('weight').expectHistogramValues([
     { title: '1.00-1.15', size: 0, value: 0 },
     { title: '1.15-1.30', size: 0, value: 0 },
     { title: '1.30-1.45', size: 0, value: 0 },
@@ -121,10 +121,10 @@ test('precise mode histogram has precise number for large datasets', async () =>
     params: { name: 'c' },
   });
   const state = await workspace.openStateView('add-attr', 'graph');
-  expect(await state.left.vertexAttribute('c').getHistogramValues()).toEqual([
+  await state.left.vertexAttribute('c').expectHistogramValues([
     { title: '1.00-1.00', size: 100, value: 123450 },
   ]);
-  expect(await state.left.vertexAttribute('c').getHistogramValues({ precise: true })).toEqual([
+  await state.left.vertexAttribute('c').expectHistogramValues([
     { title: '1.00-1.00', size: 100, value: 123456 },
-  ]);
+  ], { precise: true });
 });

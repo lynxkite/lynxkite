@@ -1,8 +1,9 @@
-'use strict';
+import '../app';
+import '../util/util';
 
 const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
 
-angular.module('biggraph').factory('PopupModel', function($window, environment) {
+angular.module('biggraph').factory('PopupModel', ['$window', function($window) {
   // Creates a new popup model data structure.
   // id: Unique key.
   // content: Description of content to render.
@@ -57,7 +58,6 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
 
   PopupModel.prototype.onMouseDown = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
     if (leftButton) {
       this.owner.startMovingPopup(this);
       this.moveOffsetX = this.x - event.pageX;
@@ -67,8 +67,7 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
 
   PopupModel.prototype.onMouseMove = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
-    if (leftButton || environment.protractor) {
+    if (leftButton) {
       // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
       if (this.owner.movedPopup === this) {
         this.x = this.moveOffsetX + event.pageX;
@@ -78,13 +77,11 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
   };
 
   PopupModel.prototype.isOpen = function() {
-    const that = this;
-    return this.owner.popups.find(function(p) { return p.id === that.id; }) !== undefined;
+    return this.owner.popups.find((p) => p.id === this.id) !== undefined;
   };
 
   PopupModel.prototype.close = function() {
-    const that = this;
-    this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
+    this.owner.popups = this.owner.popups.filter((p) => p.id !== this.id);
     lastPositions[this.id] = { x: this.x, y: this.y, width: this.width, height: this.height };
   };
 
@@ -104,8 +101,7 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
 
   PopupModel.prototype.bringToFront = function(event) {
     const leftButton = event.buttons & 1;
-    // Protractor omits button data from simulated mouse events.
-    if (leftButton || environment.protractor) {
+    if (leftButton) {
       this.close();
       this.open();
     }
@@ -212,4 +208,4 @@ angular.module('biggraph').factory('PopupModel', function($window, environment) 
   };
 
   return PopupModel;
-});
+}]);

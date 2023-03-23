@@ -1,13 +1,16 @@
 // UI for defining workspace parameters. In other words, the parameters of a custom operation.
-'use strict';
+import '../app';
+import '../util/util';
+import templateUrl from './parameters-parameter.html?url';
 
-angular.module('biggraph').directive('parametersParameter', function(util) {
+angular.module('biggraph').directive('parametersParameter', ['util', function(util) {
   return {
     restrict: 'E',
     scope: {
       model: '=',
+      onBlur: '&',
     },
-    templateUrl: 'scripts/operation/parameters-parameter.html',
+    templateUrl,
     link: function(scope) {
       scope.validKinds = util.globals.workspaceParameterKinds;
 
@@ -16,6 +19,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       });
       util.deepWatch(scope, 'parameters', function(parameters) {
         scope.model = JSON.stringify(parameters);
+        scope.onBlur();
       });
 
       scope.add = function() {
@@ -27,4 +31,4 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       };
     },
   };
-});
+}]);

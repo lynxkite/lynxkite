@@ -1,16 +1,21 @@
-'use strict';
+import '../app';
+import '../util/util';
+import '../project/side';
+import templateUrl from './project-state-view.html?url';
+import sideUrl from '../project/side.html?url';
 
 // Viewer of a project state.
 
 angular.module('biggraph')
-  .directive('projectStateView', function(util, side) {
+  .directive('projectStateView', ['util', 'side', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/project-state-view.html',
+      templateUrl,
       scope: {
         stateId: '=',
       },
       link: function(scope) {
+        scope.sideUrl = sideUrl;
         scope.sides = [];
         scope.left = new side.Side(scope.sides, 'left');
         scope.left.state.projectPath = '';
@@ -41,4 +46,4 @@ angular.module('biggraph')
           });
       },
     };
-  });
+  }]);

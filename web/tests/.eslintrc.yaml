@@ -1,0 +1,15 @@
+# TODO: Enable type checking after we clean up lynxkite.ts.
+#extends:
+#- "plugin:@typescript-eslint/recommended-requiring-type-checking"
+
+rules:
+  '@typescript-eslint/await-thenable': error
+  '@typescript-eslint/no-floating-promises': error
+  '@typescript-eslint/no-misused-promises': error
+  '@typescript-eslint/no-non-null-assertion': off
+  '@typescript-eslint/no-explicit-any': off
+  '@typescript-eslint/no-namespace': off
+  no-unused-vars: off # in favor of @typescript-eslint/no-unused-vars
+parserOptions:
+  project: tsconfig.json
+

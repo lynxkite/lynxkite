@@ -18,6 +18,7 @@ Example usage::
     lk = lynx.kite.LynxKite()
     lk.createExampleGraph().sql('select * from graph_attributes').df()
 '''
+import atexit
 import copy
 import functools
 import json
@@ -379,6 +380,9 @@ class LynxKite:
       else:
         LynxKite._managed = ManagedLynxKite(spark)
         LynxKite._managed.start()
+        # Play Framework runs on non-daemon threads. We have to shut it down when
+        # Python is finished.
+        atexit.register(LynxKite._managed.stop)
       self._lynxkite = LynxKite._managed
       self._address = self._lynxkite.address
 
@@ -956,6 +960,11 @@ class ManagedLynxKite:
   def importDataFrame(self, df):
     return self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.importDataFrame(df._jdf)
 
+  def getDataFrame(self, guid):
+    jdf = self.spark._jvm.com.lynxanalytics.biggraph.LynxKite.getDataFrame(guid)
+    from pyspark.sql import DataFrame
+    return DataFrame(jdf, self.spark)
+
 
 class State:
   '''Represents a named output plug of a box.
@@ -1065,13 +1074,23 @@ class State:
     data = [[get(c, t) for (c, t) in zip(r, types)] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
-  def spark(self, spark: 'SparkSession'):
-    '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    t = self.persist()
-    t.compute()
-    guid = t._get_state_id()  # The TableOutputState ID is the table GUID.
-    path = t.box.lk.get_prefixed_path('DATA$/tables/' + guid)
-    return spark.read.parquet(path.resolved)
+  def spark(self, spark: Optional['SparkSession'] = None):
+    '''
+    Returns the table as a Spark DataFrame.
+    The "spark" parameter must be set if LynxKite was not started from Python.
+    In this case the DataFrame is read from a Parquet file.
+    '''
+    lk = self.box.lk
+    if spark:
+      t = self.persist()
+      t.compute()
+      guid = t._get_state_id()  # The TableOutputState ID is the table GUID.
+      path = lk.get_prefixed_path('DATA$/tables/' + guid)
+      return spark.read.parquet(path.resolved)
+    else:
+      assert lk._lynxkite, 'Must provide "spark" parameter if LynxKite was not started from Python.'
+      guid = self._get_state_id()
+      return lk._lynxkite.getDataFrame(guid)
 
   def columns(self):
     '''Returns a list of columns if this state is a table.'''

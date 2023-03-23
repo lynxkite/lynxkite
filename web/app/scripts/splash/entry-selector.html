@@ -26,18 +26,6 @@
     </form>
   </div>
 
-  <div class="entry" id="global-sql-box" ng-hide="util.user.wizardOnly">
-    <div class="entry-header" ng-click="showSQL = !showSQL">
-      <span class="icon glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }}"></span>
-      <span class="lead">SQL Interface
-        <help-popup href="global-sql-box" class="pull-right"></help-popup>
-      </span>
-    </div>
-    <div style="padding: 10px;" ng-if="showSQL">
-      <sql-box directory="path"></sql-box>
-    </div>
-  </div>
-
   <div id="directory-browser">
   <div id="current-directory" class="path">
     <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
@@ -100,9 +88,6 @@
 
     <display-error caption="Error loading entry." error="object.error"></display-error>
     <div ng-if="!object.error">
-      <span ng-if="isTable(object)">
-        <value ref="vertexCounts[object.name]"></value> rows.
-      </span>
       {{object.notes}}
     </div>
     <div class="viewer"

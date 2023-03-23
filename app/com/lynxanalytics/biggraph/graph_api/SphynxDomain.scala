@@ -69,10 +69,15 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    source match {
-      case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
-      case _: UnorderedSphynxLocalDisk => client.readFromUnorderedDisk(e)
-      case _ => ???
+    e match {
+      // Tables are always kept on disk in Sphynx and shared across domains. Nothing to do.
+      case _: Table => SafeFuture.successful(())
+      case _ =>
+        source match {
+          case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
+          case _: UnorderedSphynxLocalDisk => client.readFromUnorderedDisk(e)
+          case _ => ???
+        }
     }
   }
 
@@ -115,8 +120,13 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    assert(source.isInstanceOf[SphynxMemory], s"Cannot fetch $e from $source")
-    client.writeToOrderedDisk(e)
+    e match {
+      // Tables are always kept on disk in Sphynx and shared across domains. Nothing to do.
+      case _: Table => SafeFuture.successful(())
+      case _ =>
+        assert(source.isInstanceOf[SphynxMemory], s"Cannot fetch $e from $source")
+        client.writeToOrderedDisk(e)
+    }
   }
 
   def clear(): SafeFuture[Unit] = client.clear("OrderedSphynxDisk")
@@ -272,6 +282,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
           case eb: EdgeBundle => client.writeToUnorderedDisk(eb)
           case a: Attribute[_] => client.writeToUnorderedDisk(a)
           case s: Scalar[_] => client.writeToUnorderedDisk(s)
+          case _: Table => SafeFuture.successful(()) // Shared between Sphynx domains.
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }

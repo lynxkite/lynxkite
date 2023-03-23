@@ -6,6 +6,29 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added an _"Ask OpenAI"_ built-in custom box. [#353](https://github.com/lynxkite/lynxkite/pull/353)
+  It can answer natural language questions about the input graph in the form of a table.
+  (For example, you could ask for _"cities in the same time zone as Paris"_.)
+  Set the `OPENAI_API_KEY` environment variable before using it.
+- _"Compute in Python"_ can now output tables when its input is a graph. [#353](https://github.com/lynxkite/lynxkite/pull/353)
+- DataFrames can now be directly passed between PySpark and LynxKite, if LynxKite is running in a
+  user-provided SparkSession. [#327](https://github.com/lynxkite/lynxkite/pull/327), [#328](https://github.com/lynxkite/lynxkite/pull/328) Example usage:
+
+  ```python
+  import lynx.kite
+  # Start LynxKite in this SparkSession.
+  lk = lynx.kite.LynxKite(spark=spark)
+  # Turn a LynxKite table into a Spark DataFrame.
+  df = lk.createExampleGraph().sql('select name, age from vertices').spark()
+  df = df.filter('age < 30')
+  # Turn a Spark DataFrame into a LynxKite table.
+  g = lk.from_spark(df).useTableAsVertices()
+  ```
+- Removed the SQL interface in the directory browser. ([#332](https://github.com/lynxkite/lynxkite/pull/332))
+  It only worked with snapshots and the results could only be saved to a few file formats.
+  Loading the data in a workspace is a much more powerful alternative.
+- Switched the frontend build from Gulp to Vite. [#356](https://github.com/lynxkite/lynxkite/pull/356)
+
 ### 5.2.0
 
 - The Python API can now be used without a running LynxKite instance. If you pass in a SparkSession

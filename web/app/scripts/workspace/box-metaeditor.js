@@ -1,11 +1,12 @@
 // Box metadata editor.
-'use strict';
+import '../app';
+import templateUrl from './box-metaeditor.html?url';
 
 angular.module('biggraph')
-  .directive('boxMetaeditor', function($timeout) {
+  .directive('boxMetaeditor', ['$timeout', function($timeout) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/box-metaeditor.html',
+      templateUrl,
       scope: {
         workspace: '=',
         boxId: '=',
@@ -64,4 +65,4 @@ angular.module('biggraph')
         });
       },
     };
-  });
+  }]);

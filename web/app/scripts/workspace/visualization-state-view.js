@@ -1,12 +1,15 @@
 // Viewer of a visualization state.
 
-'use strict';
+import '../app';
+import '../util/util';
+import '../project/side';
+import templateUrl from './visualization-state-view.html?url';
 
 angular.module('biggraph')
-  .directive('visualizationStateView', function(util, side, $q) {
+  .directive('visualizationStateView', ['util', 'side', '$q', function(util, side, $q) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/visualization-state-view.html',
+      templateUrl,
       scope: {
         stateId: '=',
         popupModel: '=',
@@ -30,8 +33,9 @@ angular.module('biggraph')
             function() {
               scope.changed = false;
               scope.applyVisualizationData();
-            }, function() {}
-          );
+            }, function() {
+              // Ignore errors.
+            });
         });
 
         scope.applyVisualizationData = function() {
@@ -113,4 +117,4 @@ angular.module('biggraph')
         };
       },
     };
-  });
+  }]);

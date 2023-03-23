@@ -1,10 +1,10 @@
 // Shared testing utilities.
 // TODO: This is being migrated from test-lib.js. We will clean it up at the end.
-import { expect, Locator, Browser, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
-function toId(x) {
-  return x.toLowerCase().replace(/ /g, '-');
+export function toId(x) {
+  return x.toLowerCase().replace(/[ !?,./]/g, '-');
 }
 
 const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
@@ -21,6 +21,10 @@ async function clickAll(elements: Locator, opts) {
   }
 }
 
+export const ROOT = 'automated-tests';
+const isMacOS = process.platform === 'darwin';
+export const CTRL = isMacOS ? 'Meta+' : 'Control+';
+
 export class Entity {
   side: Locator;
   kind: string;
@@ -28,17 +32,19 @@ export class Entity {
   kindName: string;
   element: Locator;
   menu: Locator;
-  constructor(side, kind, name) {
+  value: Locator;
+  constructor(side: Locator, kind: string, name: string) {
     this.side = side;
     this.kind = kind;
     this.name = name;
     this.kindName = kind + '-' + name;
     this.element = side.locator('#' + this.kindName);
     this.menu = side.page().locator('#menu-' + this.kindName);
+    this.value = this.element.locator('span.value');
   }
 
   async popup() {
-    if ((await this.menu.count()) == 0) {
+    if ((await this.menu.count()) === 0) {
       await this.element.click();
     }
     await expect(this.menu).toBeVisible();
@@ -67,59 +73,51 @@ export class Entity {
       await popup.locator('#show-histogram').click();
     }
     await expect(histogram).toBeVisible();
-    if (opts?.precise) {
-      await popup.locator('#precise-histogram-calculation').click();
-    }
+    await popup.locator('#precise-histogram-calculation').setChecked(opts?.precise ?? false);
     // Wait for the histogram to be loaded.
-    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 30_000 });
+    await expect(histogram.locator('.loading')).toHaveCount(0, { timeout: 60_000 });
     return histogram;
   }
 
-  async getHistogramValues(opts?: { precise?: boolean }) {
+  async expectHistogramValues(
+    expected: { title: string, size: number, value: number }[], opts?: { precise?: boolean }) {
     const histogram = await this.openHistogram(opts);
     const tds = histogram.locator('.bar-container');
-    const tdCount = await tds.count();
+    await expect(tds).toHaveCount(expected.length);
     let total = 0;
-    const res = [] as { title: string; value: number; size: number }[];
-    for (let i = 0; i < tdCount; ++i) {
+    for (let i = 0; i < expected.length; ++i) {
       const td = tds.nth(i);
-      const toolTip = await td.getAttribute('drop-tooltip');
-      const style = await td.locator('.bar').getAttribute('style');
-      const [, title, value] = toolTip!.match(/^(.*): (\d+)$/)!;
-      const [, size] = style!.match(/^height: (\d+)%;$/)!;
-      total += parseInt(value);
-      res.push({ title, value: parseInt(value), size: parseInt(size) });
+      const exp = expected[i];
+      await expect(td).toHaveAttribute('drop-tooltip', `${exp.title}: ${exp.value}`);
+      await expect(td.locator('.bar')).toHaveAttribute('style', `height: ${exp.size}%;`);
+      total += exp.value;
     }
     await expect(histogram.locator('#histogram-total')).toContainText(humanize(total));
     await this.popoff();
-    return res;
   }
 
-  async visualizeAs(visualization) {
-    this.popup()
-      .locator('#visualize-as-' + visualization)
-      .click();
-    testLib.expectElement(this.visualizedAs(visualization));
-    this.popoff();
+  async visualizeAs(visualization: string) {
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
+    await expect(this.visualizedAs(visualization)).toBeVisible();
+    await this.popoff();
   }
 
-  async visualizedAs(visualization) {
+  visualizedAs(visualization: string): Locator {
     return this.element.locator('#visualized-as-' + visualization);
   }
 
   async doNotVisualizeAs(visualization) {
-    this.popup()
-      .locator('#visualize-as-' + visualization)
-      .click();
-    testLib.expectNotElement(this.visualizedAs(visualization));
-    this.popoff();
+    const p = await this.popup();
+    await p.locator('#visualize-as-' + visualization).click();
+    await expect(this.visualizedAs(visualization)).not.toBeVisible();
+    await this.popoff();
   }
 
-  async clickMenu(id) {
-    this.popup()
-      .locator('#' + id)
-      .click();
-    this.popoff();
+  async clickMenu(id: string) {
+    const p = await this.popup();
+    await p.locator('#' + id).click();
+    await this.popoff();
   }
 }
 
@@ -136,11 +134,9 @@ export class Workspace {
   }
 
   // Starts with a brand new workspace.
-  static async empty(browser: Browser): Promise<Workspace> {
-    const splash = await Splash.open(browser);
-    const workspace = await splash.openNewWorkspace('test-example');
-    await workspace.expectCurrentWorkspaceIs('test-example');
-    return workspace;
+  static async empty(page: Page, workspaceName?: string): Promise<Workspace> {
+    const splash = await Splash.open(page);
+    return await splash.openNewWorkspace(workspaceName ?? 'test-example');
   }
 
   async expectCurrentWorkspaceIs(name) {
@@ -152,40 +148,18 @@ export class Workspace {
     await this.main.locator('#close-workspace').click();
   }
 
-  async openOperation(name) {
-    this.selector.element(by.id('operation-search')).click();
-    safeSendKeys(this.selector.element(by.id('filter')), name + K.ENTER);
-    return this.selector.locator('operation-selector-entry').get(0);
-  }
-
-  async closeOperationSelector() {
-    this.selector.element(by.id('operation-search')).click();
-  }
-
-  async closeLastPopup() {
-    browser.actions().sendKeys(K.ESCAPE).perform();
-  }
-
-  async addBoxFromSelector(boxName) {
-    browser
-      .actions()
-      .sendKeys('/' + boxName + K.ENTER + K.ESCAPE)
-      .perform();
-  }
-
   async addBox(boxData) {
     const id = boxData.id;
     const after = boxData.after;
     const inputs = boxData.inputs;
     const params = boxData.params;
     await this.page.evaluate(boxData => {
-      $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+      /* global jQuery */
+      jQuery(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
         boxData.name,
         { logicalX: boxData.x, logicalY: boxData.y },
         { boxId: boxData.id });
     }, boxData);
-    // Wait for the backend to save this box.
-    await expect(this.getOutputPlug(id)).not.toHaveClass(/plug-progress-unknown/);
     if (after) {
       await this.connectBoxes(
         after, await this.getOnlyOutputPlugId(after), id, await this.getOnlyInputPlugId(id));
@@ -220,10 +194,6 @@ export class Workspace {
     await expect(this.page.locator('g.box.selected')).toHaveCount(n);
   }
 
-  async expectNumBoxes(n) {
-    await expect(this.root.locator('g.box')).toHaveCount(n);
-  }
-
   async deleteBoxes(boxIds) {
     await this.selectBoxes(boxIds);
     await this.main.locator('#delete-selected-boxes').click();
@@ -235,22 +205,12 @@ export class Workspace {
     await boxEditor.close();
   }
 
-  async addWorkspaceParameter(name, kind, defaultValue) {
-    const boxEditor = await this.openBoxEditor('anchor');
-    await boxEditor.element.locator('#add-parameter').click();
-    await boxEditor.element.locator('#-id').fill(name);
-    await boxEditor.element.locator('#' + name + '-type').selectOption({ label: kind });
-    await this.page.pause();
-    await boxEditor.element.locator('#' + name + '-default').fill(defaultValue);
-    await boxEditor.close();
-  }
-
-  getBox(boxId) {
+  getBox(boxId: string) {
     return this.board.locator('.box#' + boxId);
   }
 
-  getInputPlug(boxId, plugId) {
-    let box = this.getBox(boxId);
+  getInputPlug(boxId: string, plugId?: string) {
+    const box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#inputs #' + plugId + ' circle');
     } else {
@@ -258,8 +218,8 @@ export class Workspace {
     }
   }
 
-  getOutputPlug(boxId, plugId?) {
-    let box = this.getBox(boxId);
+  getOutputPlug(boxId: string, plugId?: string) {
+    const box = this.getBox(boxId);
     if (plugId) {
       return box.locator('#outputs #' + plugId + ' circle');
     } else {
@@ -267,25 +227,25 @@ export class Workspace {
     }
   }
 
-  async toggleStateView(boxId, plugId) {
-    this.getOutputPlug(boxId, plugId).click();
+  async toggleStateView(boxId: string, plugId: string) {
+    await this.getOutputPlug(boxId, plugId).click();
   }
 
-  async clickBox(boxId, opts = {}) {
+  async clickBox(boxId: string, opts = {}) {
     await this.getBox(boxId).locator('#click-target').click(opts);
   }
 
-  async selectBox(boxId) {
+  async selectBox(boxId: string) {
     const box = await this.openBoxEditor(boxId);
     await box.close();
   }
 
-  getBoxEditor(boxId) {
+  getBoxEditor(boxId: string) {
     const popup = this.board.locator('.popup#' + boxId);
     return new BoxEditor(popup);
   }
 
-  async openBoxEditor(boxId) {
+  async openBoxEditor(boxId: string) {
     await this.clickBox(boxId);
     const editor = this.getBoxEditor(boxId);
     await expect(editor.popup).toBeVisible();
@@ -310,7 +270,7 @@ export class Workspace {
     return new State(editor.popup);
   }
 
-  async expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+  async expectConnected(srcBoxId: string, srcPlugId: string, dstBoxId: string, dstPlugId: string) {
     const arrow = this.board.locator(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     await expect(arrow).toBeVisible();
   }
@@ -334,15 +294,16 @@ export class Workspace {
     await this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
-  async getCustomBoxBrowserTree() {
-    this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
-    return this.selector.element(by.css('operation-tree')).element(by.css('operation-tree-node[id="root"]'));
+  async saveWorkspaceAs(newName: string) {
+    await this.main.locator('#save-workspace-as-starter-button').click();
+    await this.main.locator('#save-workspace-as-input input').fill(ROOT + '/' + newName);
+    await this.main.locator('#save-workspace-as-input #ok').click();
   }
 
-  async saveWorkspaceAs(newName) {
-    this.main.locator('#save-workspace-as-starter-button').click();
-    safeSelectAndSendKeys(this.main.locator('#save-workspace-as-input input'), newName);
-    this.main.locator('#save-workspace-as-input #ok').click();
+  async submitInlineInput(selector: string, text: string) {
+    const element = this.main.locator(selector);
+    await element.locator('input').fill(text);
+    await element.locator('#ok').click();
   }
 }
 
@@ -380,8 +341,8 @@ export class BoxEditor extends PopupBase {
     return this.element.locator('operation-parameters #param-' + param + ' .parametric-switch');
   }
 
-  removeParameter(param) {
-    return this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
+  async removeParameter(param) {
+    await this.element.locator('operation-parameters #param-' + param + ' .remove-parameter').click();
   }
 
   async openGroup(group) {
@@ -393,7 +354,7 @@ export class BoxEditor extends PopupBase {
     for (const key in params) {
       await setParameter(this.operationParameter(key), params[key]);
     }
-    this.head().click(); // Make sure the parameters are not focused.
+    await this.head().click(); // Make sure the parameters are not focused.
   }
 
   getParameter(paramName, tag = 'input') {
@@ -435,17 +396,16 @@ export class State extends PopupBase {
   async setInstrument(index, name, params) {
     const toolbar = this.popup.locator(`#state-toolbar-${index}`);
     const editor = this.popup.locator(`#state-editor-${index}`);
-    toolbar.locator(`#instrument-with-${name}`).click();
+    await toolbar.locator(`#instrument-with-${name}`).click();
     params = params || {};
     for (const key in params) {
       const param = editor.locator(`operation-parameters #param-${key} .operation-attribute-entry`);
       await setParameter(param, params[key]);
     }
-    $('#workspace-name').click(); // Make sure the parameters are not focused.
   }
 
-  clearInstrument(index) {
-    this.popup.locator(`#state-toolbar-${index} #clear-instrument`).click();
+  async clearInstrument(index) {
+    await this.popup.locator(`#state-toolbar-${index} #clear-instrument`).click();
   }
 }
 
@@ -463,24 +423,25 @@ class PlotState extends PopupBase {
     const heights: number[] = [];
     const count = await bars.count();
     for (let i = 0; i < count; ++i) {
-      const path = await bars.nth(i).getAttribute('d')!;
+      const path = await bars.nth(i).getAttribute('d');
       // The bars are rectangles with paths like "M1,144h18v56h-18Z", which would be 56 pixels tall.
-      heights.push(parseFloat(path.match(/v([0-9.]+)h/)![1]));
+      heights.push(parseFloat(path!.match(/v([0-9.]+)h/)![1]));
     }
     return heights;
   }
 
   async expectBarHeightsToBe(expected) {
-    // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
-    const heights = await this.barHeights()
-    await expect(heights.length).toEqual(expected.length);
+    const heights = await this.barHeights();
+    expect(heights.length).toEqual(expected.length);
     for (let i = 0; i < heights.length; ++i) {
-      expect(heights[i]).toBeCloseTo(expected[i]);
+      expect(heights[i]).toBeCloseTo(expected[i], 0);
     }
   }
 }
 
 export class TableState extends PopupBase {
+  sample: Locator;
+  control: Locator;
   constructor(popup) {
     super();
     this.popup = popup;
@@ -514,42 +475,35 @@ export class TableState extends PopupBase {
     return this.sample.locator('tbody tr');
   }
 
+  row(n: number) {
+    return this.rows().nth(n).locator('td');
+  }
+
   async expectRowsAre(rows) {
     const r = this.rows();
     await expect(r).toHaveCount(rows.length);
     for (let i = 0; i < rows.length; ++i) {
-      await expect(r.nth(i).locator('td')).toHaveText(rows[i]);
+      await expect(this.row(i)).toHaveText(rows[i]);
     }
   }
 
-  firstRow() {
-    const row = this.sample.locator('tbody tr').first();
-    return row.locator('td');
-  }
-
-  expectFirstRowIs(row) {
-    expect(this.firstRow()).toEqual(row);
-  }
-
-  clickColumn(columnId) {
+  async clickColumn(columnId: string) {
     // for sorting
     const header = this.sample.locator('thead tr th#' + columnId);
-    header.click();
+    await header.click();
   }
 
-  clickShowMoreRows() {
-    const button = this.control.locator('#more-rows-button');
-    button.click();
+  async clickShowMoreRows() {
+    await this.control.locator('#more-rows-button').click();
   }
 
-  setRowCount(num) {
+  async setRowCount(num: number) {
     const input = this.control.locator('#sample-rows');
-    safeSelectAndSendKeys(input, num.toString());
+    await input.fill(num.toString());
   }
 
-  clickShowSample() {
-    const button = this.control.locator('#get-sample-button');
-    button.click();
+  async clickShowSample() {
+    await this.control.locator('#get-sample-button').click();
   }
 }
 
@@ -559,7 +513,10 @@ class Side {
   edgeCount: Locator;
   vertexCount: Locator;
   segmentCount: Locator;
-  attributes: Locator;
+  vertexAttributes: Locator;
+  edgeAttributes: Locator;
+  graphAttributes: Locator;
+  projectName: Locator;
   constructor(popup, direction) {
     this.direction = direction;
     this.side = popup.locator('#side-' + direction);
@@ -567,177 +524,58 @@ class Side {
     this.edgeCount = this.getValue('edge-count');
     this.vertexCount = this.getValue('vertex-count');
     this.segmentCount = this.getValue('segment-count');
-    this.attributes = this.side.locator('entity[kind="vertex-attribute"], entity[kind="edge-attribute"]');
+    this.vertexAttributes = this.side.locator('entity[kind="vertex-attribute"]');
+    this.edgeAttributes = this.side.locator('entity[kind="edge-attribute"]');
+    this.graphAttributes = this.side.locator('entity[kind="scalar"]');
+    this.projectName = this.side.locator('.project-name');
   }
 
-  expectCurrentProjectIs(name) {
-    expect(this.side.locator('.project-name').getText()).toBe(name);
+  async close() {
+    await this.side.locator('#close-project').click();
   }
 
-  close() {
-    this.side.locator('#close-project').click();
-  }
-
-  evaluate(expr) {
-    return this.side.evaluate(expr);
-  }
-
-  applyFilters() {
-    return this.side.element(by.id('apply-filters-button')).click();
-  }
-
-  getCategorySelector(categoryTitle) {
-    return this.toolbox.locator('div.category[tooltip="' + categoryTitle + '"]');
-  }
-
-  getValue(id) {
+  getValue(id: string) {
     return this.side.locator('value#' + id + ' span.value');
   }
 
-  getWorkflowCodeEditor() {
-    return this.side.element(by.id('workflow-code-editor'));
+  async openSegmentation(segmentationName: string) {
+    await this.segmentation(segmentationName).clickMenu('open-segmentation');
   }
 
-  getPythonWorkflowCodeEditor() {
-    return this.side.element(by.id('python-code-editor'));
+  async toggleSampledVisualization() {
+    await this.side.locator('#sampled-mode-button').click();
   }
 
-  getWorkflowDescriptionEditor() {
-    return this.side.element(by.id('workflow-description'));
+  async toggleBucketedVisualization() {
+    await this.side.locator('#bucketed-mode-button').click();
   }
 
-  getWorkflowNameEditor() {
-    return this.side.element(by.id('workflow-name'));
-  }
-
-  clickWorkflowEditButton() {
-    return this.toolbox.element(by.id('edit-operation-button')).click();
-  }
-
-  getWorkflowSaveButton() {
-    return this.side.element(by.id('save-workflow-button'));
-  }
-
-  openOperation(name) {
-    this.toolbox.element(by.id('operation-search')).click();
-    safeSendKeys(this.toolbox.element(by.id('filter')), name, K.ENTER);
-  }
-
-  closeOperation() {
-    this.toolbox.locator('div.category.active').click();
-  }
-
-  openWorkflowSavingDialog() {
-    this.side.element(by.id('save-as-workflow-button')).click();
-  }
-
-  closeWorkflowSavingDialog() {
-    this.side.element(by.id('close-workflow-button')).click();
-  }
-
-  openSegmentation(segmentationName) {
-    this.segmentation(segmentationName).clickMenu('open-segmentation');
-  }
-
-  redoButton() {
-    return this.side.element(by.id('redo-button'));
-  }
-
-  populateOperationInput(parameterId, param) {
-    safeSelectAndSendKeys(this.toolbox.element(by.id(parameterId)), param);
-  }
-
-  expectOperationScalar(name, text) {
-    const cssSelector = 'value[ref="scalars[\'' + name + '\']"';
-    const valueElement = this.toolbox.locator(cssSelector);
-    expect(valueElement.getText()).toBe(text);
-  }
-
-  toggleSampledVisualization() {
-    this.side.element(by.id('sampled-mode-button')).click();
-  }
-
-  toggleBucketedVisualization() {
-    this.side.element(by.id('bucketed-mode-button')).click();
-  }
-
-  undoButton() {
-    return this.side.element(by.id('undo-button'));
-  }
-
-  setSampleRadius(radius) {
-    this.side.locator('#setting-sample-radius').click();
-    const slider = $('#sample-radius-slider');
-    slider.getAttribute('value').then(function (value) {
-      let diff = radius - value;
-      while (diff > 0) {
-        slider.sendKeys(K.RIGHT);
-        diff -= 1;
-      }
-      while (diff < 0) {
-        slider.sendKeys(K.LEFT);
-        diff += 1;
-      }
-    });
-  }
-
-  scalarValue(name) {
-    return this.side.element(by.id('scalar-value-' + toId(name)));
-  }
-
-  saveProjectAs(newName) {
-    this.side.element(by.id('save-as-starter-button')).click();
-    safeSelectAndSendKeys(this.side.element(by.id('save-as-input')), newName);
-    this.side.element(by.id('save-as-button')).click();
-  }
-
-  sqlEditor() {
-    return this.side.element(by.id('sql-editor'));
-  }
-
-  setSql(sql) {
-    testLib.sendKeysToACE(this.sqlEditor(), sql);
-  }
-
-  // If sql is left undefined then we run whatever is already in the query box.
-  runSql(sql) {
-    if (sql !== undefined) {
-      this.setSql(sql);
+  async setSampleRadius(radius: number) {
+    await this.side.locator('#setting-sample-radius').click();
+    // Playwright can't deal with sliders. https://github.com/microsoft/playwright/issues/4231
+    const slider = this.side.page().locator('#sample-radius-slider');
+    const value = parseInt(await slider.inputValue());
+    let diff = radius - value;
+    while (diff > 0) {
+      await slider.press('ArrowRight');
+      diff -= 1;
     }
-    this.side.element(by.id('run-sql-button')).click();
+    while (diff < 0) {
+      await slider.press('ArrowLeft');
+      diff += 1;
+    }
   }
 
-  expectSqlResult(names, types, rows) {
-    const res = this.side.locator('#sql-result');
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  startSqlSaving() {
-    this.side.element(by.id('save-results-opener')).click();
-  }
-
-  clickSqlSort(colId) {
-    const res = this.side.locator('#sql-result');
-    const header = res.locator('thead tr th').get(colId);
-    header.click();
-  }
-
-  executeSqlSaving() {
-    this.side.element(by.id('save-results')).click();
-  }
-
-  vertexAttribute(name) {
+  vertexAttribute(name: string) {
     return new Entity(this.side, 'vertex-attribute', name);
   }
-  edgeAttribute(name) {
+  edgeAttribute(name: string) {
     return new Entity(this.side, 'edge-attribute', name);
   }
-  scalar(name) {
+  graphAttribute(name: string) {
     return new Entity(this.side, 'scalar', name);
   }
-  segmentation(name) {
+  segmentation(name: string) {
     return new Entity(this.side, 'segmentation', name);
   }
 }
@@ -775,27 +613,7 @@ export class TableBrowser {
     await li.locator('.glyphicon').click();
   }
 
-  getColumn(tablePos, columnPos) {
-    const tableLi = this.getTable(tablePos);
-    return tableLi.locator('ul > li').nth(columnPos + 1);
-  }
-
-  async expectColumn(tablePos, columnPos, name) {
-    const columnLi = this.getColumn(tablePos, columnPos);
-    await expect(columnLi).toHaveText(name);
-  }
-
-  async searchTable(searchText) {
-    const searchBox = this.root.locator('#search-for-tables');
-    await searchBox.fill(searchText);
-  }
-
   async expectDragText(li, expected) {
-    // We cannot do a real drag-and-drop workflow here
-    // because of:
-    // https://github.com/angular/protractor/issues/583
-    // Just doing a simple check for now.
-    // TODO: We're no longer on Protractor! Let's try a drag & drop!
     const span = li.locator('[draggable]');
     expect(await angularEval(span, 'draggableText')).toBe(expected);
   }
@@ -810,39 +628,23 @@ export class TableBrowser {
 }
 
 class VisualizationState {
-  constructor(popup) {
+  svg: Locator;
+  popup: Locator;
+  constructor(popup: Locator) {
     this.popup = popup;
     this.svg = popup.locator('svg.graph-view');
   }
-
-  elementByLabel(label) {
-    return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
-  }
-
-  clickMenu(item) {
-    $('.context-menu #menu-' + item).click();
-  }
-
-  asTSV() {
-    const copyButton = $('.graph-sidebar [data-clipboard-text');
-    // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
-    return copyButton.getAttribute('data-clipboard-text');
-  }
-
-  // The visualization response received from the server.
-  graphView() {
-    return this.svg.evaluate('graph.view');
+  async clickMenu(item: string) {
+    await this.popup.locator('.context-menu #menu-' + item).click();
   }
 
   // The currently visualized graph data extracted from the SVG DOM.
-  graphData() {
-    browser.waitForAngular();
-    //browser.pause();
-    return browser.executeScript(function () {
+  graphData(): Promise<{ vertices, edges }> {
+    return this.popup.evaluate(async function () {
       // Vertices as simple objects.
-      function vertexData(svg) {
+      async function vertexData(svg) {
         const vertices = svg.querySelectorAll('g.vertex');
-        const result = [];
+        const result: object[] = [];
         for (let i = 0; i < vertices.length; ++i) {
           const v = vertices[i];
           const touch = v.querySelector('circle.touch');
@@ -868,18 +670,17 @@ class VisualizationState {
       }
 
       // Edges as simple objects.
-      function edgeData(svg, vertices) {
+      async function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
-        let i,
-          byPosition = {};
-        for (i = 0; i < vertices.length; ++i) {
+        const byPosition = {};
+        for (let i = 0; i < vertices.length; ++i) {
           byPosition[vertices[i].pos.string] = i;
         }
 
         // Collect edges.
-        const result = [];
+        const result: object[] = [];
         const edges = svg.querySelectorAll('g.edge');
-        for (i = 0; i < edges.length; ++i) {
+        for (let i = 0; i < edges.length; ++i) {
           const e = edges[i];
           const arc = e.querySelector('path.edge-arc');
           const [, srcPos, dstPos] = arc.getAttribute('d').match(/^M (.*? .*?) .* (.*? .*?)$/);
@@ -892,23 +693,24 @@ class VisualizationState {
             width: arc.getAttribute('stroke-width'),
           });
         }
-        result.sort(function (a, b) {
-          return a.src * vertices.length + a.dst - b.src * vertices.length - b.dst;
-        });
+        result.sort((a: any, b: any) =>
+          a.src * vertices.length + a.dst - b.src * vertices.length - b.dst
+        );
         return result;
       }
 
       const svg = document.querySelector('svg.graph-view');
-      const vertices = vertexData(svg);
-      const edges = edgeData(svg, vertices);
+      const vertices = await vertexData(svg);
+      const edges = await edgeData(svg, vertices);
       return { vertices: vertices, edges: edges };
     });
   }
 
-  vertexCounts(index) {
-    return this.graphView().then(function (gv) {
-      return gv.vertexSets[index].vertices.length;
-    });
+  async expect(fn: (graph: { vertices, edges }) => void) {
+    await expect(async () => {
+      const graph = await this.graphData();
+      fn(graph);
+    }).toPass();
   }
 }
 
@@ -921,8 +723,7 @@ export class Splash {
   }
 
   // Opens the LynxKite directory browser in the root.
-  static async open(browser: Browser): Promise<Splash> {
-    const page = await browser.newPage();
+  static async open(page: Page): Promise<Splash> {
     await page.goto('/#/');
     await page.evaluate(() => {
       window.sessionStorage.clear();
@@ -930,39 +731,35 @@ export class Splash {
       window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
       window.localStorage.setItem('entry-selector tutorial done', 'true');
       window.localStorage.setItem('allow data collection', 'false');
-      // Floating elements can overlap buttons and block clicks.
-      document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
     });
     await page.goto('/#/dir/');
+    await page.evaluate(() => {
+      // Floating elements can overlap buttons and block clicks.
+      document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
+      // Playwright won't click on something that is moving. Disable output plug animation.
+      document.styleSheets[0].insertRule('.plug-progress-in-progress { animation-name: none !important; }');
+    });
     const splash = new Splash(page);
     await splash.expectDirectoryListed('built-ins'); // Make sure the page is loaded.
-    if (await splash.directory('automated-tests').isVisible()) {
-      await splash.deleteDirectory('automated-tests');
+    if (await splash.directory(ROOT).isVisible()) {
+      await splash.deleteDirectory(ROOT);
     }
-    await splash.newDirectory('automated-tests');
+    await splash.newDirectory(ROOT);
     await splash.expectNumWorkspaces(0);
     await splash.expectNumDirectories(0);
     return splash;
   }
 
-  workspace(name) {
+  workspace(name: string) {
     return this.root.locator('#workspace-' + toId(name));
   }
 
-  directory(name) {
+  directory(name: string) {
     return this.root.locator('#directory-' + toId(name));
   }
 
-  table(name) {
-    return this.root.locator('#table-' + toId(name));
-  }
-
-  view(name) {
-    return this.root.locator('#view-' + toId(name));
-  }
-
-  snapshot(name) {
-    return this.root.locator('#snapshow-' + toId(name));
+  snapshot(name: string) {
+    return this.root.locator('#snapshot-' + toId(name));
   }
 
   async expectNumWorkspaces(n) {
@@ -977,27 +774,7 @@ export class Splash {
     await expect(this.root.locator('#current-directory > span.lead')).toHaveText(path);
   }
 
-  async expectNumTables(n) {
-    return expect($$('.table-entry')).toHaveCount(n);
-  }
-
-  async expectNumViews(n) {
-    return expect($$('.view-entry')).toHaveCount(n);
-  }
-
-  async computeTable(name) {
-    this.table(name).element(by.css('.value-retry')).click();
-  }
-
-  // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
-  async expectTableWithNumRows(name, n) {
-    const table = this.table(name);
-    // Look up the number of rows shown inside a <value>
-    // element.
-    return expect(table.locator('value').getText()).toEqual(n.toString());
-  }
-
-  async openNewWorkspace(name) {
+  async openNewWorkspace(name: string) {
     await this.expectWorkspaceNotListed(name);
     await this.root.locator('#new-workspace').click();
     await this.root.locator('#new-workspace-name').fill(name);
@@ -1005,21 +782,19 @@ export class Splash {
     const ws = new Workspace(this.page);
     // This expect() waits for the workspace to load.
     await expect(ws.getBox('anchor')).toBeVisible();
+    await ws.expectCurrentWorkspaceIs(name);
     return ws;
   }
 
-  async startTableImport() {
-    element(by.id('import-table')).click();
+  async openWorkspace(name: string) {
+    await this.workspace(name).click();
+    const ws = new Workspace(this.page);
+    // This expect() waits for the workspace to load.
+    await expect(ws.getBox('anchor')).toBeVisible();
+    return ws;
   }
 
-  async clickAndWaitForCsvImport() {
-    const importCsvButton = element(by.id('import-csv-button'));
-    // Wait for the upload to finish.
-    testLib.waitUntilClickable(importCsvButton);
-    importCsvButton.click();
-  }
-
-  async newDirectory(name) {
+  async newDirectory(name: string) {
     await this.expectDirectoryNotListed(name);
     await expect(this.root.locator('#new-directory')).toHaveText(/New folder/);
     await this.root.locator('#new-directory').click();
@@ -1029,12 +804,7 @@ export class Splash {
     await this.expectCurrentDirectory(new RegExp('\\b' + name + '/\\s*$'));
   }
 
-  async openProject(name) {
-    this.project(name).click();
-    this.hideFloatingElements();
-  }
-
-  async openDirectory(name) {
+  async openDirectory(name: string) {
     await this.directory(name).click();
   }
 
@@ -1049,7 +819,7 @@ export class Splash {
   async renameWorkspace(name, newName) {
     const workspace = this.workspace(name);
     await menuClick(workspace, 'rename');
-    await workspace.locator('#renameBox').fill('automated-tests/' + newName);
+    await workspace.locator('#renameBox').fill(ROOT + '/' + newName);
     await workspace.locator('#renameBox').press('Enter');
   }
 
@@ -1061,44 +831,20 @@ export class Splash {
     await menuClick(this.directory(name), 'discard');
   }
 
-  async editTable(name) {
-    testLib.menuClick(this.table(name), 'edit-import');
-  }
-
-  async editView(name) {
-    testLib.menuClick(this.view(name), 'edit-import');
-  }
-
-  async expectWorkspaceListed(name) {
+  async expectWorkspaceListed(name: string) {
     await expect(this.workspace(name)).toBeVisible();
   }
 
-  async expectWorkspaceNotListed(name) {
+  async expectWorkspaceNotListed(name: string) {
     await expect(this.workspace(name)).not.toBeVisible();
   }
 
-  async expectDirectoryListed(name) {
+  async expectDirectoryListed(name: string) {
     await expect(this.directory(name)).toBeVisible();
   }
 
-  async expectDirectoryNotListed(name) {
+  async expectDirectoryNotListed(name: string) {
     await expect(this.directory(name)).not.toBeVisible();
-  }
-
-  async expectTableListed(name) {
-    testLib.expectElement(this.table(name));
-  }
-
-  async expectTableNotListed(name) {
-    testLib.expectNotElement(this.table(name));
-  }
-
-  async expectViewListed(name) {
-    testLib.expectElement(this.view(name));
-  }
-
-  async expectSnapshotListed(name) {
-    testLib.expectElement(this.snapshot(name));
   }
 
   async enterSearchQuery(query) {
@@ -1110,118 +856,48 @@ export class Splash {
     await this.enterSearchQuery('');
   }
 
-  async globalSqlEditor() {
-    return element(by.id('sql-editor'));
-  }
-  async setGlobalSql(sql) {
-    testLib.sendKeysToACE(this.globalSqlEditor(), sql);
-  }
-
-  async openGlobalSqlBox() {
-    element(by.id('global-sql-box')).click();
-  }
-
-  async runGlobalSql(sql) {
-    this.openGlobalSqlBox();
-    this.setGlobalSql(sql);
-    element(by.id('run-sql-button')).click();
-  }
-
-  async expectGlobalSqlResult(names, types, rows) {
-    const res = element(by.id('sql-result'));
-    expect(res.locator('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
-    expect(res.locator('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
-    expect(res.locator('tbody tr').map(e => e.locator('td').map(e => e.getText()))).toEqual(rows);
-  }
-
-  async saveGlobalSqlToCSV() {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="csv"]').click();
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToTable(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="table"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
-  }
-
-  async saveGlobalSqlToView(name) {
-    element(by.id('save-results-opener')).click();
-    this.root.locator('#exportFormat option[value="view"]').click();
-    safeSendKeys(this.root.locator('#exportKiteTable'), name);
-    element(by.id('save-results')).click();
+  snapshotState(name: string) {
+    const container = this.root.locator(`snapshot-viewer[path="${name}"]`);
+    return new State(container);
   }
 }
 
-function randomPattern() {
-  /* eslint-disable no-bitwise */
-  const crypto = require('crypto');
-  const buf = crypto.randomBytes(16);
-  const sixteenLetters = 'abcdefghijklmnop';
-  let r = '';
-  for (let i = 0; i < buf.length; i++) {
-    const v = buf[i];
-    const lo = v & 0xf;
-    const hi = v >> 4;
-    r += sixteenLetters[lo] + sixteenLetters[hi];
-  }
-  return r;
-}
-
-let lastDownloadList;
-
-export async function menuClick(entry, action) {
+export async function menuClick(entry: Locator, action: string) {
   const menu = entry.locator('.dropdown');
   await menu.locator('a.dropdown-toggle').click();
   await menu.locator('#menu-' + action).click();
 }
 
-const theRandomPattern = randomPattern();
-const protractorDownloads = '/tmp/protractorDownloads.' + process.pid;
-
-function viewerState(name) {
-  const container = $(`snapshot-viewer[path="${name}"]`);
-  return new State(container);
-}
-
-function expectElement(e) {
-  expect(e.isDisplayed()).toBe(true);
-}
-
-function expectNotElement(e) {
-  expect(e.isPresent()).toBe(false);
-}
-
-function helpPopup(helpId) {
-  return $('div[help-id="' + helpId + '"]');
-}
-
 async function sendKeysToACE(e, text) {
   await e.click();
-  await e.page().keyboard.press('Control+a');
+  await e.page().keyboard.press(CTRL + 'a');
   await e.page().keyboard.type(text);
 }
 
 async function angularEval(e: Locator, expr: string) {
-  return await e.evaluate((e, expr) => $(e).scope().$eval(expr), expr);
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$eval(expr), expr);
+}
+async function angularApply(e: Locator, expr: string) {
+  /* global jQuery */
+  return await e.evaluate((e, expr) => jQuery(e).scope().$apply(expr), expr);
 }
 
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
+  await expect(e).toBeVisible();
   const kind = await angularEval(e, '(param.multipleChoice ? "multi-" : "") + param.kind');
   if (kind === 'code') {
     await sendKeysToACE(e, value);
   } else if (kind === 'file') {
-    e.locator('input.form-control').fill(value);
+    await e.locator('input.form-control').fill(value);
   } else if (kind === 'tag-list') {
     const values = value.split(',');
     for (let i = 0; i < values.length; ++i) {
-      e.locator('.dropdown-toggle').click();
-      e.locator('.dropdown-menu #' + values[i]).click();
+      await e.locator('.dropdown-toggle').click();
+      await e.locator('.dropdown-menu #' + values[i]).click();
     }
-  } else if (kind === 'choice') {
+  } else if (kind === 'choice' || kind === 'segmentation') {
     await e.selectOption({ label: value });
   } else if (kind === 'multi-choice') {
     await e.selectOption(value.map(label => ({ label })));
@@ -1230,187 +906,28 @@ async function setParameter(e: Locator, value) {
       await e.locator('.glyphicon-plus').click();
       await e.locator('a#' + value[i]).click();
     }
+  } else if (kind === 'parameters') {
+    // TODO: This is buggy and unsets the ID parameter right away.
+    // await e.locator('#add-parameter').click();
+    // await e.locator('#-id').fill(name);
+    // await e.locator('#' + name + '-type').selectOption({ label: kind });
+    // await e.locator('#' + name + '-default').fill(defaultValue);
+    // Temporary workaround:
+    await angularApply(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
   } else {
     await e.fill(value);
   }
 }
 
-// Expects a window.confirm call from the client code and overrides the user
-// response.
-function expectDialogAndRespond(responseValue) {
-  // I am not particularly happy with this solution. The problem with the nice
-  // solution is that there is a short delay before the alert actually shows up
-  // and protractor does not wait for it. (Error: NoSuchAlertError: no alert open)
-  // See: https://github.com/angular/protractor/issues/1486
-  // Other possible options:
-  // 1. browser.wait for the alert to appear. This introduces a hard timout
-  // and potential flakiness.
-  // 2. Use Jasmine's spyOn. The difficulty there is in getting hold of a
-  // window object from inside the browser, if at all ppossible.
-  // 3. Use a mockable Angular module for window.confirm from our app.
-  browser.executeScript(
-    'window.confirm0 = window.confirm;' +
-    'window.confirm = function() {' +
-    '  window.confirm = window.confirm0;' +
-    '  return ' +
-    responseValue +
-    ';' +
-    '}'
-  );
+export function errors(page: Page) {
+  return page.locator('.top-alert-message');
 }
 
-function checkAndCleanupDialogExpectation() {
-  // Fail if there was no alert.
-  expect(browser.executeScript('return window.confirm === window.confirm0')).toBe(true);
-  browser.executeScript('window.confirm = window.confirm0;');
-}
-
-// Warning, this also sorts the given array parameter in place.
-function sortHistogramValues(values) {
-  return values.sort(function (b1, b2) {
-    if (b1.title < b2.title) {
-      return -1;
-    } else if (b1.title > b2.title) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-}
-
-// A promise of the list of error messages.
-function errors() {
-  return $$('.top-alert-message').map(function (e) {
-    return e.getText();
-  });
-}
-
-// Expects that there will be a single error message and returns it as a promise.
-function error() {
-  return errors().then(function (errors) {
-    expect(errors.length).toBe(1);
-    return errors[0];
-  });
-}
-
-function closeErrors() {
-  $$('.top-alert').each(function (e) {
-    e.element(by.id('close-alert-button')).click();
-  });
-}
-
-// Wait indefinitely.
-// WebDriver 2.45 changed browser.wait() to default to a 0 timeout. This was reverted in 2.46.
-// But the current Protractor version uses 2.45, so we have this wrapper.
-function wait(condition) {
-  return browser.wait(condition, 99999999);
-}
-
-function expectModal(title) {
-  const t = $('.modal-title');
-  testLib.expectElement(t);
-  expect(t.getText()).toEqual(title);
-}
-
-function closeModal() {
-  element(by.id('close-modal-button')).click();
-}
-
-function pythonPopup() {
-  element(by.id('save-boxes-as-python')).click();
-}
-
-function expectPythonCode(expectedCode) {
-  let pythonCode = $('#python-code').getText();
-  expect(pythonCode).toEqual(expectedCode);
-}
-
-function setEnablePopups(enable) {
-  browser.executeScript(
-    'angular.element(document.body).injector()' + '.get("dropTooltipConfig").enabled = ' + enable
-  );
-}
-
-function startDownloadWatch() {
-  browser.controlFlow().execute(function () {
-    expect(lastDownloadList).toBe(undefined);
-    lastDownloadList = fs.readdirSync(testLib.protractorDownloads);
-  });
-}
-
-// Waits for a new downloaded file matching regex and returns its name.
-// Pattern match is needed as chrome first creates some weird temp file.
-function waitForNewDownload(regex) {
-  return testLib.wait(function () {
-    const newList = fs.readdirSync(testLib.protractorDownloads).filter(function (fn) {
-      return fn.match(regex);
-    });
-    // this will be undefined if no new element was found.
-    const result = newList.filter(function (f) {
-      return lastDownloadList.indexOf(f) < 0;
-    })[0];
-    if (result) {
-      lastDownloadList = undefined;
-      return testLib.protractorDownloads + '/' + result;
-    } else {
-      return false;
-    }
-  });
-}
-
-function expectFileContents(filename, expectedContents) {
-  filename.then(function (fn) {
-    expect(fs.readFileSync(fn, 'utf8')).toBe(expectedContents);
-  });
-}
-
-function expectHasClass(element, cls) {
-  expect(element.getAttribute('class')).toBeDefined();
-  element.getAttribute('class').then(function (classes) {
-    expect(classes.split(' ').indexOf(cls)).not.toBe(-1);
-  });
-}
-
-function expectNoClass(element, cls) {
-  expect(element.getAttribute('class')).toBeDefined();
-  element.getAttribute('class').then(function (classes) {
-    expect(classes.split(' ').indexOf(cls)).toBe(-1);
-  });
-}
-
-function expectHasText(element, text) {
-  testLib.expectElement(element);
-  expect(element.getText()).toBe(text);
-}
-
-function switchToWindow(pos) {
-  browser.getAllWindowHandles().then(handles => {
-    browser.driver.switchTo().window(handles[pos]);
-  });
-}
-
-function showSelector() {
-  $('#show-selector-button').click();
-}
-
-function confirmSweetAlert(expectedMessage) {
-  // SweetAlert is not an Angular library. We need to wait until it pops in and out.
-  const EC = protractor.ExpectedConditions;
-  testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
-  expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
-  $('.sweet-alert button.confirm').click();
-  testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
-}
-
-function waitUntilClickable(element) {
-  testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
-}
-
-function submitInlineInput(element, text) {
-  const inputBox = element.locator('input');
-  const okButton = element.locator('#ok');
-  safeSelectAndSendKeys(inputBox, text);
-  okButton.click();
+export async function closeErrors(page: Page) {
+  const n = await errors(page).count();
+  for (let i = 0; i < n; ++i) {
+    await page.locator('#close-alert-button').first().click();
+  }
 }
 
 // A matcher for lists of objects that ignores fields not present in the reference.
@@ -1418,44 +935,51 @@ function submitInlineInput(element, text) {
 //   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
 // Constraints in strings are also accepted for numerical values. E.g. '<5'.
 // Objects are recursively checked.
-function addConcurMatcher() {
-  jasmine.addMatchers({
-    toConcur: function (util, customEqualityTesters) {
-      return {
-        compare: function (actual, expected) {
-          function match(actual, expected) {
-            if (expected === null) {
-              return actual === null;
-            } else if (typeof expected === 'object') {
-              const keys = Object.keys(expected);
-              for (let i = 0; i < keys.length; ++i) {
-                const av = actual[keys[i]];
-                const ev = expected[keys[i]];
-                if (!match(av, ev)) {
-                  return false;
-                }
-              }
-              return true;
-            } else if (typeof expected === 'string' && expected[0] === '<') {
-              return actual < parseFloat(expected.slice(1));
-            } else if (typeof expected === 'string' && expected[0] === '>') {
-              return actual > parseFloat(expected.slice(1));
-            } else {
-              return util.equals(actual, expected, customEqualityTesters);
-            }
+expect.extend({
+  toConcur: function (actual, expected) {
+    function match(actual, expected) {
+      if (expected === null) {
+        return actual === null;
+      } else if (typeof expected === 'object') {
+        const keys = Object.keys(expected);
+        for (let i = 0; i < keys.length; ++i) {
+          const av = actual[keys[i]];
+          const ev = expected[keys[i]];
+          if (!match(av, ev)) {
+            return false;
           }
+        }
+        return true;
+      } else if (typeof expected === 'string' && expected[0] === '<') {
+        return actual < parseFloat(expected.slice(1));
+      } else if (typeof expected === 'string' && expected[0] === '>') {
+        return actual > parseFloat(expected.slice(1));
+      } else {
+        return actual === expected;
+      }
+    }
+    if (actual.length !== expected.length) {
 
-          if (actual.length !== expected.length) {
-            return { pass: false };
-          }
-          for (let i = 0; i < actual.length; ++i) {
-            if (!match(actual[i], expected[i])) {
-              return { pass: false };
-            }
-          }
-          return { pass: true };
-        },
+      return {
+        message: () => `Arrays do not have the same length: \n${JSON.stringify(actual)}, \n !=\n${JSON.stringify(expected)}\n`,
+        pass: false
       };
-    },
-  });
+    }
+    for (let i = 0; i < actual.length; ++i) {
+      if (!match(actual[i], expected[i])) {
+        return {
+          message: () => `Items do not concur: \n${JSON.stringify(actual[i])}, \n !=\n${JSON.stringify(expected[i])}\n`,
+          pass: false
+        };
+      }
+    }
+    return { pass: true };
+  }
+});
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R> {
+      toConcur(expected: any): R;
+    }
+  }
 }

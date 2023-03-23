@@ -1,10 +1,11 @@
 // A tooltip based on the "Drop" popup library.
-'use strict';
+import Drop from 'tether-drop';
+import '../app';
 
 angular.module('biggraph').service('dropTooltipConfig', function() {
   this.enabled = true;
 });
-angular.module('biggraph').directive('dropTooltip', function(dropTooltipConfig) {
+angular.module('biggraph').directive('dropTooltip', ['dropTooltipConfig', function(dropTooltipConfig) {
   return {
     restrict: 'A',
     scope: {
@@ -16,7 +17,6 @@ angular.module('biggraph').directive('dropTooltip', function(dropTooltipConfig) 
       let drop;
       const defaultPosition = 'bottom center';
       scope.createDrop = function() {
-      /* global Drop */
         return new Drop({
           target: element[0],
           content: scope.dropTooltip,
@@ -64,4 +64,4 @@ angular.module('biggraph').directive('dropTooltip', function(dropTooltipConfig) 
       });
     },
   };
-});
+}]);

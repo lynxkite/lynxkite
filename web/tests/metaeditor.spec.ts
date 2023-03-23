@@ -4,7 +4,7 @@ import { Workspace } from './lynxkite';
 
 let workspace: Workspace;
 test.beforeAll(async ({ browser }) => {
-  workspace = await Workspace.empty(browser);
+  workspace = await Workspace.empty(await browser.newPage());
   await workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
 });
 
@@ -29,7 +29,7 @@ test('metaeditor can change box kind and id', async () => {
   await expect(box.getCodeParameter('delimiter')).toHaveText(',');
 
   // Restore.
-  toggle();
+  await toggle();
   await expect(id()).toHaveValue('new-id');
   await expect(operation()).toHaveValue('Import CSV');
   await id().fill('eg0');
