@@ -24,6 +24,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   # Turn a Spark DataFrame into a LynxKite table.
   g = lk.from_spark(df).useTableAsVertices()
   ```
+- Custom boxes can now have parameters that choose from a fixed set of options. ([#371](https://github.com/lynxkite/lynxkite/pull/371))
 - Removed the SQL interface in the directory browser. ([#332](https://github.com/lynxkite/lynxkite/pull/332))
   It only worked with snapshots and the results could only be saved to a few file formats.
   Loading the data in a workspace is a much more powerful alternative.
