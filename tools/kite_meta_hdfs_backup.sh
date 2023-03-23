@@ -7,8 +7,6 @@
 set -eu
 
 BASEDIR="$(dirname "$(readlink -f "$0")")"
-# .kiterc needs SPARK_VERSION
-SPARK_VERSION=$(cat "$BASEDIR/../conf/SPARK_VERSION")
 USER=$(whoami)
 KITERC_FILE=$HOME/.kiterc
 
