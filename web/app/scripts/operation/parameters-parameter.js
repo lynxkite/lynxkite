@@ -8,7 +8,6 @@ angular.module('biggraph').directive('parametersParameter', ['util', function(ut
     restrict: 'E',
     scope: {
       model: '=',
-      onBlur: '&',
     },
     templateUrl,
     link: function(scope) {
@@ -19,11 +18,11 @@ angular.module('biggraph').directive('parametersParameter', ['util', function(ut
       });
       util.deepWatch(scope, 'parameters', function(parameters) {
         scope.model = JSON.stringify(parameters);
-        scope.onBlur();
       });
 
       scope.add = function() {
         scope.parameters.push({ kind: 'text', id: '', defaultValue: '' });
+        setTimeout(() => angular.element('.param-id').last()[0].focus());
       };
 
       scope.discard = function(index) {

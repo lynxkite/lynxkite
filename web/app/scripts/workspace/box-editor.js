@@ -123,6 +123,7 @@ angular.module('biggraph')
                 delete minimized[param.id];
               }
             }
+            scope.oldParameters = minimized;
             scope.workspace.updateBox(
               scope.boxId,
               minimized,
