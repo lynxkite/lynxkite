@@ -8,7 +8,7 @@ class PartitionedParquetTest extends org.scalatest.funsuite.AnyFunSuite with Tes
     val df = ss.createDataFrame(Seq((1, 2), (3, 4))).repartition(12)
     val origPartitions = df.rdd.map(_.toSeq.toList).glom.collect.toList.map(_.toList)
     assert(origPartitions ==
-      List(Nil, List(List(3, 4)), List(List(1, 2)), Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil))
+      List(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, List(List(3, 4)), List(List(1, 2)), Nil))
     df.write.mode("overwrite").parquet("test.parquet")
     val back = ss.read
       .option("partitions", "12")
