@@ -3,7 +3,6 @@
 package com.lynxanalytics.biggraph.graph_util
 
 object KiteInstanceInfo {
-  val sparkVersion = org.apache.spark.SPARK_VERSION
   lazy val kiteVersion =
     try {
       scala.io.Source.fromFile(util.Properties.userDir + "/version").mkString

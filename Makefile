@@ -60,8 +60,5 @@ remote_api-test: .build/remote_api-python-test-passed
 test: backend-test frontend-test remote_api-test
 .PHONY: licenses
 licenses: .build/licenses-done
-.PHONY: local-bd-test
-local-bd-test: .build/backend-done
-	python/big_data_tests/run_test.sh
 .PHONY: sphynx
 sphynx: .build/sphynx-done

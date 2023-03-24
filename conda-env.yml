@@ -15,7 +15,7 @@ dependencies:
 # For LynxKite backend.
 - sbt
 - openjdk==11.0.15
-- pyspark==3.3.0
+- pyspark==3.3.2
 # For LynxKite frontend.
 - nodejs
 # For Sphynx.

@@ -176,8 +176,6 @@ lazy val root = project.in(file("."))
   .disablePlugins(PlayLogback)
   .configs(Benchmark)
 
-bashScriptExtraDefines ++= IO.readLines(baseDirectory.value / "tools" / "call_spark_submit.sh")
-
 def dirContents(baseDir: File, dirs: String*) = {
   val subDir = dirs.foldLeft(baseDir) { (file, dir) => file / dir}
   val pathFinder = subDir * "*"

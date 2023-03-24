@@ -477,12 +477,6 @@ object BigGraphSparkContext {
     LogController.getLogDir.mkdirs
     JdbcDialects.registerDialect(teradataDialect)
 
-    val versionFound = KiteInstanceInfo.sparkVersion
-    val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
-    assert(
-      versionFound == versionRequired,
-      s"Needs Apache Spark version $versionRequired. Found $versionFound.")
-
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
     if (Environment.envOrElse("KITE_CONFIGURE_SPARK", "yes") == "yes") {

@@ -4,8 +4,6 @@ include::recommendations.asciidoc[]
 
 include::requirements.asciidoc[]
 
-include::installing-binaries.asciidoc[]
-
 include::configuration.asciidoc[]
 
 include::kerberos.asciidoc[]

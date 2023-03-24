@@ -6,13 +6,9 @@ Just untar the tarball given by your Lynx Analytics contact, preferably to the s
 as you have your previous version. The newly created files/directories will not collide with
 already installed binaries.
 
-## Install new Spark version if needed
+## Install dependencies
 
-You can download the Spark version matching your Hadoop setup from the
-https://spark.apache.org/downloads.html[Spark webpage]. Your Lynx contact can tell you which
-version you need, or you can find it in the file `kite_x.y.z/conf/SPARK_VERSION`.
-Another option is to run `kite_x.y.z/tools/install_spark.sh`: this script will set up
-the proper kite version.
+Run `conda env create --name lk --file conda-env.yml` to install LynxKite's dependencies.
 
 ## Create backups
 
