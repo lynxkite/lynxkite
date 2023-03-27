@@ -278,14 +278,18 @@ case class Box(
       // them, since we will cache the atomic boxes that make them up anyway.
       getOperation(ctx, inputStates).getOutputs
     } else {
-      ctx.ops.metaGraphManager.boxCache.getOrElseUpdate(
-        id,
-        operationId,
-        parameters,
-        inputStates,
-        parametricParameters,
-        ctx.workspaceParameters) {
-        getOperation(ctx, inputStates).getOutputs
+      val mm = ctx.ops.metaGraphManager
+      // getOutputs will generally lock the metaGraphManager. To avoid deadlock we lock it first.
+      mm.synchronized {
+        mm.boxCache.getOrElseUpdate(
+          id,
+          operationId,
+          parameters,
+          inputStates,
+          parametricParameters,
+          ctx.workspaceParameters) {
+          getOperation(ctx, inputStates).getOutputs
+        }
       }
     }
   }

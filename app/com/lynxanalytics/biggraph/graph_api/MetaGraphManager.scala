@@ -25,6 +25,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 class MetaGraphManager(val repositoryPath: String) {
   val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
   val repositoryRoot = new File(repositoryPath).getParent()
+  // To avoid deadlocks, always synchronize on the MetaGraphManager first.
   val boxCache = new BoxCache(Environment.envOrElse("KITE_BOX_CACHE_SIZE", "100000").toInt)
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
