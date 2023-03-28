@@ -1,5 +1,4 @@
 // Shared testing utilities.
-// TODO: This is being migrated from test-lib.js. We will clean it up at the end.
 import { expect, Locator, Page } from '@playwright/test';
 
 // Mirrors the "id" filter.
@@ -878,10 +877,6 @@ async function angularEval(e: Locator, expr: string) {
   /* global jQuery */
   return await e.evaluate((e, expr) => jQuery(e).scope().$eval(expr), expr);
 }
-async function angularApply(e: Locator, expr: string) {
-  /* global jQuery */
-  return await e.evaluate((e, expr) => jQuery(e).scope().$apply(expr), expr);
-}
 
 async function setParameter(e: Locator, value) {
   // Special parameter types need different handling.
@@ -907,13 +902,12 @@ async function setParameter(e: Locator, value) {
       await e.locator('a#' + value[i]).click();
     }
   } else if (kind === 'parameters') {
-    // TODO: This is buggy and unsets the ID parameter right away.
-    // await e.locator('#add-parameter').click();
-    // await e.locator('#-id').fill(name);
-    // await e.locator('#' + name + '-type').selectOption({ label: kind });
-    // await e.locator('#' + name + '-default').fill(defaultValue);
-    // Temporary workaround:
-    await angularApply(e.locator('table'), 'model = ' + JSON.stringify(JSON.stringify(value)));
+    for (const v of value) {
+      await e.locator('#add-parameter').click();
+      await e.locator('#-id').fill(v.id);
+      await e.locator('#' + v.id + '-type').selectOption({ label: v.kind });
+      await e.locator('#' + v.id + '-default').fill(v.defaultValue);
+    }
   } else {
     await e.fill(value);
   }

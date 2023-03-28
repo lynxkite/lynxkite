@@ -76,6 +76,7 @@ object CustomOperationParameterMeta {
     "text",
     "boolean",
     "code",
+    "choice",
     "vertex attribute",
     "vertex attribute (number)",
     "vertex attribute (String)",
@@ -760,6 +761,7 @@ class CustomBoxOperation(
         case "text" => Param(id, id, dv)
         case "boolean" => Choice(id, id, FEOption.bools)
         case "code" => Code(id, id, "plain_text", dv)
+        case "choice" => Choice(id, id, FEOption.list(dv.split(",").map(_.trim).toList))
         case "vertex attribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
         case "vertex attribute (number)" => Choice(id, id, projects.flatMap(_.vertexAttrList[Double]).toList)
         case "vertex attribute (String)" => Choice(id, id, projects.flatMap(_.vertexAttrList[String]).toList)

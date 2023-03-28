@@ -18,12 +18,15 @@ async function setParametric(boxId: string, param: string, value: string) {
 test('create custom box', async function () {
   await splash.newDirectory('custom_boxes');
   workspace = await splash.openNewWorkspace('test-custom-box');
-  await workspace.editBox('anchor', { parameters: [{ id: 'prname', kind: 'text', defaultValue: 'default_pr' }] });
+  await workspace.editBox('anchor', { parameters: [
+    { id: 'prname', kind: 'text', defaultValue: 'default_' },
+    { id: 'suffix', kind: 'choice', defaultValue: 'pr, pagerank' },
+  ] });
   await workspace.addBox({ id: 'in', name: 'Input', x: 200, y: 0, params: { name: 'in' } });
   // Temporary input for configuration.
   await workspace.addBox({ id: 'eg', name: 'Create example graph', x: 0, y: 110 });
   await workspace.addBox({ id: 'pr', name: 'Compute PageRank', x: 200, y: 100, after: 'eg' });
-  await setParametric('pr', 'name', '$prname');
+  await setParametric('pr', 'name', '$prname$suffix');
   await workspace.addBox({ id: 'cc', name: 'Compute clustering coefficient', x: 200, y: 200, after: 'pr' });
   await workspace.addBox({ id: 'out', name: 'Output', x: 200, y: 300, after: 'cc', params: { name: 'out' } });
   // Time to switch to the real input.
@@ -45,10 +48,10 @@ test('use custom box', async () => {
 });
 
 test('use custom box with a parameter', async () => {
-  await workspace.editBox('cb', { prname: 'custom_pr' });
+  await workspace.editBox('cb', { prname: 'custom_', suffix: 'pagerank' });
   const state = await workspace.openStateView('cb', 'out');
   await expect(state.left.vertexAttribute('default_pr').element).not.toBeVisible();
-  await expect(state.left.vertexAttribute('custom_pr').element).toBeVisible();
+  await expect(state.left.vertexAttribute('custom_pagerank').element).toBeVisible();
   await state.close();
 });
 
@@ -56,7 +59,7 @@ test('dive into custom box', async () => {
   await workspace.selectBox('cb');
   await workspace.main.locator('#dive-down').click();
   let state = await workspace.openStateView('cc', 'graph');
-  await expect(state.left.vertexAttribute('custom_pr').element).toBeVisible();
+  await expect(state.left.vertexAttribute('custom_pagerank').element).toBeVisible();
   await expect(state.left.vertexAttribute('clustering_coefficient').element).toBeVisible();
   await state.close();
 
