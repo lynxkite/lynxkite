@@ -27,7 +27,7 @@ npm-deps:
   COPY web/package.json web/package-lock.json web/full_licenses.py web/
   RUN cd web && npm i
   RUN mkdir dependency-licenses
-  RUN cd web && npx license-checker > ../dependency-licenses/javascript.md
+  RUN cd web && npx license-checker | grep -vE 'path:|licenseFile:' > ../dependency-licenses/javascript.md
   RUN cd web && python full_licenses.py > ../dependency-licenses/javascript.txt
   SAVE ARTIFACT dependency-licenses
   SAVE ARTIFACT web/node_modules

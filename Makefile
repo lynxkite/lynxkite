@@ -37,7 +37,7 @@ dependency-licenses/scala.md: build.sbt
 dependency-licenses/javascript.txt: web/package.json
 	cd web && LC_ALL=C python full_licenses.py > ../$@
 dependency-licenses/javascript.md: web/package.json
-	cd web && npx license-checker --summary > ../$@ && LC_ALL=C npx license-checker --production >> ../$@
+	cd web && npx license-checker --summary > ../$@ && LC_ALL=C npx license-checker --production | grep -vE 'path:|licenseFile:' >> ../$@
 .build/licenses-done: dependency-licenses/scala.md dependency-licenses/javascript.txt dependency-licenses/javascript.md
 	touch $@
 
