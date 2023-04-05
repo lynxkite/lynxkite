@@ -68,7 +68,7 @@ boxes:
       https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/800px-OpenAI_Logo.svg.png
     parameters: >-
       [{"kind":"text","id":"Query","defaultValue":"","$$hashKey":"object:580"},{"kind":"text","id":"Result
-      schema","defaultValue":"","$$hashKey":"object:631"},{"kind":"text","id":"Examp","defaultValue":"","$$hashKey":"object:2531"}]
+      schema","defaultValue":"","$$hashKey":"object:631"},{"kind":"code","id":"Examples","defaultValue":"","$$hashKey":"object:2531"}]
   parametricParameters: {}
   x: 0
   y: 0
@@ -81,16 +81,13 @@ boxes:
   parameters: {}
   parametricParameters:
     code: |-
-      ai(
-        '''
-      ${Query}
-        '''.strip(),
-        '''
-      ${`Result schema`}
-        '''.strip())
+      query = '''$Query'''.strip()
+      output_schema = '''${`Result schema`}'''.strip()
+      examples = '''$Examples'''.strip()
+      ai(query, output_schema, examples or None)
     inputs: >-
-      ${vertexAttributes.map("vs."+_.name).mkString(",")},
-      ${edgeAttributes.map("es."+_.name).mkString(",")}, es.src, es.dst
+      ${(vertexAttributes.map("vs."+_.name) ++
+      edgeAttributes.map("es."+_.name)).mkString(",")}, es.src, es.dst
     outputs: ${`Result schema`.split(",").map(e => "df." + e.strip()).mkString(",")}
   x: 750
   y: 50
