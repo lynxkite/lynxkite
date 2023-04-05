@@ -11,7 +11,7 @@
    scalars="scalars"
    class="description"></p>
 <!-- For custom boxes. -->
-<p ng-if="showHelp && boxMeta.description" class="description"> {{ boxMeta.description }} </p>
+<p ng-if="showHelp && boxMeta.description" class="description" trusted-html="descriptionMarkdown"></p>
 <p ng-if="boxMeta.parameters.length === 0" class="text-center">
   No parameters
 </p>
