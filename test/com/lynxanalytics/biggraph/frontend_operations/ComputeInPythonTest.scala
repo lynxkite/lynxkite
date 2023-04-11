@@ -51,7 +51,7 @@ graph_attributes.average_age = vs.age.mean()
           "inputs" -> "vs.age",
           "outputs" -> "vs.v: np.ndarray",
           "code" -> """
-v = np.array([[1, 2]]) * vs.age[:, None]
+v = np.array([[1, 2]]) * vs.age.to_numpy()[:, None]
 vs['v'] = v.tolist()
           """),
       )
