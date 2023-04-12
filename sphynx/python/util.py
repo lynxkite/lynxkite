@@ -159,7 +159,7 @@ class Op:
     datadir = os.environ.get('UNORDERED_SPHYNX_DATA_DIR', self.datadir)
     path = datadir + '/' + self.outputs[name]
     os.makedirs(path, exist_ok=True)
-    df.to_parquet(path + '/data.parquet')
+    df.to_parquet(path + '/data.parquet', index=False)
     with open(path + '/_SUCCESS', 'w') as f:
       pass
 
