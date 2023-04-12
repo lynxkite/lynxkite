@@ -52,7 +52,7 @@ dependencies:
 # For R API and tools.
 - r
 - r-essentials
-- r-arrow
+- r-arrow==10.0.1 # 11.0.0 isn't built with dataset support.
 - r-htmlwidgets
 - r-openssl
 - r-plotly
