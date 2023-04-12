@@ -34,15 +34,18 @@ es = pd.DataFrame(es)
 def ai(query, output_schema, examples=None):
   '''A utility for running the default large language model and putting the result in "df".'''
   from . import llm_pandas_on_graph as llm
-  global df
-  df = llm.pandas_on_graph(
-      nodes=vs,
-      edges=es,
-      query=query,
-      output_schema=output_schema,
-      examples=llm.parse_examples(examples) if examples else None)
-  # Clean up the table in case it has anything unwanted.
   wanted = [col['name'] for col in op.params['outputFields'] if col['parent'] == 'df']
+  global df
+  if query and query.strip():
+    df = llm.pandas_on_graph(
+        nodes=vs,
+        edges=es,
+        query=query,
+        output_schema=output_schema,
+        examples=llm.parse_examples(examples) if examples else None)
+  else:  # Return empty table for empty prompt.
+    df = pd.DataFrame(columns=wanted)
+  # Clean up the table in case it has anything unwanted.
   df = df.reset_index(drop=True)[wanted]
 
 
