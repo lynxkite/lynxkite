@@ -474,7 +474,7 @@ angular.module('biggraph')
       // A placeholder user instead of a request.
       util.user = {
         $resolved: true,
-        email: 'single-user',
+        email: '(single-user)',
         then: f => f(util.user),
       };
     };
