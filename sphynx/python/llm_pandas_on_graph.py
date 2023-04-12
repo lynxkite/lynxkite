@@ -1,11 +1,14 @@
 '''Generates Pandas code for a graph using OpenAI.'''
 import itertools
 import numpy as np
+import os
 import pandas as pd
 import re
 import sys
 import langchain
 
+assert 'OPENAI_API_KEY' in os.environ, \
+    'Please set OPENAI_API_KEY in the LynxKite running environment.'
 
 default_examples = [
     dict(
