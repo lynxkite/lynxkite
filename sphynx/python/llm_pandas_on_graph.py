@@ -168,6 +168,19 @@ def compute_from_graph(nodes, edges):
 '''.strip()
 
 
+def format_df(df):
+  '''Each column is on a separate line.'''
+  lines = []
+  for c in df.columns:
+    examples = ', '.join(str(x) for x in df[c].values[:3])
+    lines.append(f'- {c}: {examples}')
+  return '\n'.join(lines)
+
+
+# Monkey-patch DataFrame.__str__ so it's used in all prompts.
+pd.DataFrame.__str__ = format_df
+
+
 def run_code(*, nodes, edges, code):
   scope = {'pd': pd, 'np': np}
   exec(compile(code, 'generated code', 'exec'), scope)
