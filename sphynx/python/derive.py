@@ -40,7 +40,7 @@ def ai(query, output_schema, examples=None):
       edges=es,
       query=query,
       output_schema=output_schema,
-      examples=llm.parse_examples(examples))
+      examples=llm.parse_examples(examples) if examples else None)
   # Clean up the table in case it has anything unwanted.
   wanted = [col['name'] for col in op.params['outputFields'] if col['parent'] == 'df']
   df = df.reset_index(drop=True)[wanted]
