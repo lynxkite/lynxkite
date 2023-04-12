@@ -171,7 +171,7 @@ def format_df(df):
   lines = []
   for c in df.columns:
     examples = ', '.join(str(x) for x in df[c].values[:3])
-    lines.append(f'- {c}: {examples}')
+    lines.append(f'- {c} ({df[c].dtype}): {examples}, ...')
   return '\n'.join(lines)
 
 
