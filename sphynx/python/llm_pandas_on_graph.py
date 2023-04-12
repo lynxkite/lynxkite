@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 import re
 import sys
-# Langchain is not on Conda yet. Run "pip install langchain".
-# https://github.com/hwchase17/langchain/issues/1271
 import langchain
 
 
