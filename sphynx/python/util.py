@@ -184,16 +184,19 @@ class Op:
       for m in mounts:
         if dst.startswith(m):  # Already mounted parent.
           return
-      subprocess.run(['mkdir', '-p', dst], check=True)
-      subprocess.run(['mount', '-o', 'bind', src, dst], check=True)
-      subprocess.run(['mount', '--bind', '-o', 'remount,ro', src, dst], check=True)
+      if os.path.isdir(src):
+        subprocess.run(['mkdir', '-p', dst], check=True)
+      else:
+        subprocess.run(['mkdir', '-p', os.path.dirname(dst)], check=True)
+        subprocess.run(['touch', dst], check=True)
+      subprocess.run(['mount', '-o', 'bind,ro', src, dst], check=True)
       mounts.append(dst)
     # Prepare chroot environment.
     jail = tempfile.mkdtemp()
     ADD_TO_PYTHON_JAIL = os.environ.get('ADD_TO_PYTHON_JAIL')
     user_path = ADD_TO_PYTHON_JAIL.split(':') if ADD_TO_PYTHON_JAIL else []
-    for pdir in user_path + sorted(sys.path) + ['/lib']:
-      if os.path.isdir(pdir) and pdir.startswith('/') and pdir != '/':
+    for pdir in user_path + sorted(sys.path) + ['/lib', '/dev/random', '/dev/urandom']:
+      if pdir.startswith('/') and pdir != '/':
         mount(pdir, jail + pdir)
     # We add /lib and /etc/resolv.conf to enable DNS lookups.
     subprocess.run(['mkdir', '-p', jail + '/etc'], check=True)
@@ -209,6 +212,7 @@ class Op:
       os.environ['UNORDERED_SPHYNX_DATA_DIR'] = '/data/tables'
     else:  # Parent. Wait for child and finish the work.
       _, error_and_reason = os.waitpid(pid, 0)
+      print(f'Child process {pid} terminated with {error_and_reason}.')
       if error_and_reason:
         error = error_and_reason // 256
         sys.exit(error)
