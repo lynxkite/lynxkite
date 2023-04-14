@@ -21,7 +21,9 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch('boxMeta.description', function() {
-          scope.descriptionMarkdown = md.render(scope.boxMeta.description);
+          if (scope.boxMeta?.description) {
+            scope.descriptionMarkdown = md.render(scope.boxMeta.description);
+          }
         });
       },
     };
