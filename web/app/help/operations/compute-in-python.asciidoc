@@ -3,7 +3,7 @@
 Executes custom Python code to define new vertex, edge, or graph attributes, to transform a table,
 or to create plots and interactive visualizations.
 
-#### Computing new attributes
+**Computing new attributes**
 
 The following example computes two new vertex attributes (`with_title` and `age_squared`),
 two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
@@ -64,7 +64,7 @@ vs['age_squared']: float = vs.age ** 2
 cover all possibilities. Please list the inputs and outputs explicitly if the inference
 fails.)
 
-#### Working with vectors
+**Working with vectors**
 
 Vector-typed attributes are still stored as single columns in the `vs` and `es` DataFrames.
 
@@ -94,7 +94,7 @@ To use this attribute in another Python box use `np.stack(v)`:
 vs['total_v'] = np.stack(vs.v).sum(axis=1)
 ----
 
-#### Working with tables
+**Working with tables**
 
 If the input of the box is a table, the output will be a transformed table.
 It works the same way as with graphs, but with a single DataFrame called `df`:
@@ -109,7 +109,7 @@ edges. There is no such limitation with tables.
 
 It's also possible to output a table when your input is a graph.
 
-#### Creating plots
+**Creating plots**
 
 Instead of outputting a modified graph or table, you can choose to output a plot
 created in Python. To do this, set the outputs to `matplotlib` or `html`.

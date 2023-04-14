@@ -1,13 +1,14 @@
 '''Generates Pandas code for a graph using OpenAI.'''
 import itertools
 import numpy as np
+import os
 import pandas as pd
 import re
 import sys
-# Langchain is not on Conda yet. Run "pip install langchain".
-# https://github.com/hwchase17/langchain/issues/1271
 import langchain
 
+assert 'OPENAI_API_KEY' in os.environ, \
+    'Please set OPENAI_API_KEY in the LynxKite running environment.'
 
 default_examples = [
     dict(
@@ -173,7 +174,7 @@ def format_df(df):
   lines = []
   for c in df.columns:
     examples = ', '.join(str(x) for x in df[c].values[:3])
-    lines.append(f'- {c}: {examples}')
+    lines.append(f'- {c} ({df[c].dtype}): {examples}, ...')
   return '\n'.join(lines)
 
 

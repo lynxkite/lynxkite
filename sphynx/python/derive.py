@@ -34,15 +34,18 @@ es = pd.DataFrame(es)
 def ai(query, output_schema, examples=None):
   '''A utility for running the default large language model and putting the result in "df".'''
   from . import llm_pandas_on_graph as llm
-  global df
-  df = llm.pandas_on_graph(
-      nodes=vs,
-      edges=es,
-      query=query,
-      output_schema=output_schema,
-      examples=llm.parse_examples(examples))
-  # Clean up the table in case it has anything unwanted.
   wanted = [col['name'] for col in op.params['outputFields'] if col['parent'] == 'df']
+  global df
+  if query and query.strip():
+    df = llm.pandas_on_graph(
+        nodes=vs,
+        edges=es,
+        query=query,
+        output_schema=output_schema,
+        examples=llm.parse_examples(examples) if examples else None)
+  else:  # Return empty table for empty prompt.
+    df = pd.DataFrame(columns=wanted)
+  # Clean up the table in case it has anything unwanted.
   df = df.reset_index(drop=True)[wanted]
 
 
@@ -70,12 +73,12 @@ def assert_no_extra(columns, name):
 
 
 # Save outputs.
+typenames = {
+    f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
 if op.classname.endswith('.DerivePython'):
   assert_no_extra(vs.columns, 'vs')
   assert_no_extra(set(es.columns) - set(['src', 'dst']), 'es')
   assert_no_extra(graph_attributes.__dict__.keys(), 'graph_attributes')
-  typenames = {
-      f['parent'] + '.' + f['name']: f['tpe']['typename'] for f in op.params['outputFields']}
   typemapping = {
       'String': util.StringAttribute,
       'Double': util.DoubleAttribute,
@@ -101,10 +104,24 @@ if op.classname.endswith('.DerivePython'):
       raise
 
 elif op.classname.endswith('.DeriveTableFromGraphPython'):
+  typemapping = {
+      'String': 'string[pyarrow]',
+      'Double': 'float64[pyarrow]',
+      'Long': 'int64[pyarrow]',
+      'Vector[Double]': 'string[pyarrow]',  # Add better type when it's supported.
+  }
   for name in op.outputs:
-    cols = [col['name'] for col in op.params['outputFields'] if col['parent'] == name]
     assert name in globals(), f'You have to put the results in a variable called "{name}"'
-    op.output_table(name, globals()[name][cols])
+    df = globals()[name]
+    df = df.convert_dtypes(dtype_backend='pyarrow')
+    cols = [col['name'] for col in op.params['outputFields'] if col['parent'] == name]
+    # Enforce types.
+    for c in cols:
+      t = typemapping[typenames[name + '.' + c]]
+      if df[c].dtype != t:
+        df[c] = df[c].astype(t)
+    # Write table.
+    op.output_table(name, df[cols])
 
 else:
   raise Exception(f'Unimplemented: {op.classname}')

@@ -37,6 +37,8 @@ dependencies:
 - pytorch::pytorch==1.11.0=*cuda*
 - pyg==2.0.4=*cu113*
 - matplotlib
+- openai
+- langchain
 # PyG dependencies get confused under Mamba.
 - pytorch-cluster=*=*cu113*
 - pytorch-scatter=*=*cu113*

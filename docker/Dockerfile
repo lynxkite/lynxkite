@@ -20,9 +20,6 @@ VOLUME /metadata
 RUN if [ $KITE_ENABLE_CUDA = yes ]; then \
   apt-get update && apt-get install -y libnuma-dev && rm -rf /var/lib/apt/lists/*; fi
 
-RUN /opt/conda/bin/pip install openai langchain
-RUN sed -i 's/example_prompt.format(.*)/\0.replace("{", "{{").replace("}", "}}")/' /opt/conda/lib/python3.9/site-packages/langchain/prompts/few_shot.py
-
 # Install LynxKite.
 COPY lynxkite.jar /
 COPY run.sh /
