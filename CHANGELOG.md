@@ -30,6 +30,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
   It only worked with snapshots and the results could only be saved to a few file formats.
   Loading the data in a workspace is a much more powerful alternative.
 - Switched the frontend build from Gulp to Vite. [#356](https://github.com/lynxkite/lynxkite/pull/356)
+- Switched the frontend test from Protractor to Playwright. [#238](https://github.com/lynxkite/lynxkite/issues/238)
 
 ### 5.2.0
 
