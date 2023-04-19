@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 5.3.0
+
 - Upgraded to Apache Spark 3.3.2. [#369](https://github.com/lynxkite/lynxkite/pull/369)
 - Added an _"Ask OpenAI"_ built-in custom box. [#353](https://github.com/lynxkite/lynxkite/pull/353)
   It can answer natural language questions about the input graph in the form of a table.
