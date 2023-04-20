@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import re
 import sys
+import traceback
 import langchain
 
 assert 'OPENAI_API_KEY' in os.environ, \
@@ -285,7 +286,11 @@ something yourself.
         '''.strip()))
       continue
     except BaseException as exception:
+      # Log the full exception.
+      traceback.print_exc()
+      # Try to ask OpenAI for a fix.
       messages.append(msg)
+      exception = ''.join(traceback.format_exception(None, exception, None))
       messages.append(human_msg(f'''
 I'm getting an exception:
 {exception}
