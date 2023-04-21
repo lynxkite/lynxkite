@@ -477,8 +477,16 @@ test('visualization context menu', async () => {
   const visualization = workspace.getStateView('vz0', 'visualization').visualization;
   const editor = workspace.getVisualizationEditor('vz0');
   const name = editor.left.vertexAttribute('name');
-
   await name.visualizeAs('label');
+
+  // Make sure dismissing the context menu works.
+  await expect(workspace.page.locator('.context-menu')).not.toBeVisible();
+  await visualization.svg.locator('text=Eve >> xpath=.. >> .touch').click();
+  await expect(workspace.page.locator('.context-menu')).toBeVisible();
+  await editor.head().click();
+  await expect(workspace.page.locator('.context-menu')).not.toBeVisible();
+
+  // Try changing centers.
   await visualization.svg.locator('text=Eve >> .. >> .touch').click();
   await visualization.clickMenu('add-to-centers');
   await visualization.popup.locator('.apply-visualization-changes').click();

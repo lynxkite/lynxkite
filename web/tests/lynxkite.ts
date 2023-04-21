@@ -314,9 +314,8 @@ class PopupBase {
   }
 
   async moveTo(x, y) {
-    const head = this.popup.locator('div.popup-head');
     const workspace = this.popup.page().locator('#workspace-drawing-board');
-    await head.dragTo(workspace, { targetPosition: { x, y } });
+    await this.head().dragTo(workspace, { targetPosition: { x, y } });
   }
 
   head() {
