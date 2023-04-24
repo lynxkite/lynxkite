@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lynxkite-client"
+version = "5.3.0"
+authors = [
+  { name="Lynx Analytics", email="lynxkite@lynxkite.com" },
+]
+description = "Python API for LynxKite"
+readme = "README.md"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+  "requests",
+  "pandas",
+]
+
+[project.urls]
+"Homepage" = "https://lynxkite.com/"
+"Repository" = "https://github.com/lynxkite/lynxkite"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lynx"]
