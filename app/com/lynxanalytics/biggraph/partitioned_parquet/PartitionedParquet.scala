@@ -58,7 +58,7 @@ class PartitionedParquetScanBuilder(
     dataSchema: StructType,
     options: CaseInsensitiveStringMap)
     extends ParquetScanBuilder(sparkSession, fileIndex, schema, dataSchema, options) {
-  override def build(): Scan = {
+  override def build(): ParquetScan = {
     new PartitionedParquetScan(
       sparkSession,
       hadoopConf,
@@ -66,7 +66,7 @@ class PartitionedParquetScanBuilder(
       dataSchema,
       readDataSchema(),
       readPartitionSchema(),
-      pushedParquetFilters,
+      pushedDataFilters,
       options)
   }
 }
