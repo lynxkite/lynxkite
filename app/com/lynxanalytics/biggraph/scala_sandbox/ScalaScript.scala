@@ -29,8 +29,10 @@ object ScalaScriptSecurityManager {
 class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
+  val securityEnabled = Environment.envOrElse("KITE_DERIVE_SECURITY_MANAGER", "enabled") == "enabled"
+
   def checkedRun[R](op: => R): R = {
-    shouldCheck.withValue(true) {
+    shouldCheck.withValue(securityEnabled) {
       op
     }
   }
