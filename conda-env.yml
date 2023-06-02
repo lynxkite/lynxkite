@@ -19,6 +19,7 @@ dependencies:
 # For LynxKite frontend.
 - nodejs
 # For Sphynx.
+- _go_select>=2.3.0
 - go
 # For NetworKit.
 - compilers
