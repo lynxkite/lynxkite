@@ -26,9 +26,10 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.grpc # gr
 Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark # perfmark-api # 0.25.0 | <notextile></notextile>
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
 Apache | [Apache License V2.0](https://raw.githubusercontent.com/google/flatbuffers/master/LICENSE.txt) | com.google.flatbuffers # flatbuffers-java # 1.12.0 | <notextile></notextile>
+Apache | [Apache License Version 2.0](http://repository.jboss.org/licenses/apache-2.0.txt) | org.wildfly.openssl # wildfly-openssl # 1.0.7.Final | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
 Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk # 1.7.4 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](https://aws.amazon.com/apache2.0) | com.amazonaws # aws-java-sdk-bundle # 1.12.262 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.9.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.spark # bigquery-connector-common # 0.25.2 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.spark # spark-2.4-bigquery-pushdown_2.12 # 0.25.2 | <notextile></notextile>
@@ -88,7 +89,7 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-lang3 # 3.8 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-lang3 # 3.9 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-text # 1.7 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.hadoop # hadoop-aws # 2.7.3 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.hadoop # hadoop-aws # 3.3.4 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpclient # 4.5.13 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpcore # 4.4.15 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpmime # 4.5.9 | <notextile></notextile>

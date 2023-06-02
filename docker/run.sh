@@ -21,6 +21,4 @@ export KITE_ALLOW_PYTHON=${KITE_ALLOW_PYTHON:-yes}
 export KITE_ALLOW_R=${KITE_ALLOW_R:-yes}
 export KITE_ALLOW_NON_PREFIXED_PATHS=true
 
-exec spark-submit \
-  --conf 'spark.driver.extraJavaOptions=-Dplay.http.secret.key=SECRET-TEST-TEST-TEST-TEST' \
-  /lynxkite.jar
+exec spark-submit /lynxkite.jar
