@@ -16,7 +16,7 @@ SAVE IMAGE --cache-hint
 
 sbt-deps:
   # Compile an empty file, just to trigger downloading of the dependencies.
-  COPY build.sbt .
+  COPY build.sbt .sbtopts .
   COPY project project
   RUN mkdir dependency-licenses && sbt dumpLicenseReport && cp target/license-reports/lynxkite-licenses.md dependency-licenses/scala.md
   SAVE ARTIFACT dependency-licenses
