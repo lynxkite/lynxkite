@@ -180,6 +180,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
+      Param("database", "Neo4j database", placeholder = "Leave empty to use the default database."),
       NonNegInt("version", "Export repetition ID", default = 1),
     )
     lazy val project = projectInput("graph")
@@ -205,6 +206,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         params("url"),
         params("username"),
         params("password"),
+        params("database"),
         params("labels"),
         keys,
         params("version").toInt,
@@ -272,6 +274,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
         Param("username", "Neo4j username", defaultValue = "neo4j"),
         Param("password", "Neo4j password", defaultValue = "neo4j"),
+        Param("database", "Neo4j database", placeholder = "Leave empty to use the default database."),
         NonNegInt("version", "Export repetition ID", default = 1),
         Choice(
           "node_labels",
@@ -304,6 +307,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           params("url"),
           params("username"),
           params("password"),
+          params("database"),
           params("node_labels"),
           params("relationship_type"),
           params("version").toInt)

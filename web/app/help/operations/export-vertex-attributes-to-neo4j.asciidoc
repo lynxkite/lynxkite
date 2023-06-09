@@ -29,6 +29,9 @@ Username for the connection.
 Password for the connection. It will be saved in the workspace and visible to anyone with
 access to the workspace.
 
+[p-database]#Neo4j database#::
+If the Neo4j server has multiple databases, you can specify which one to write to.
+
 [p-version]#Export repetition ID#::
 LynxKite only re-computes outputs if parameters or inputs have changed.
 This is true for exports too. If you want to repeat a previous export, you can increase this
