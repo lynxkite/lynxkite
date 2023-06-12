@@ -15,7 +15,7 @@ go build -x "$@" -o .build/lynxkite-sphynx/lynxkite-sphynx $GO_PKG/lynxkite-sphy
 cd .build
 cp -R ../python lynxkite-sphynx/
 cp -R ../r lynxkite-sphynx/
-LIBS=$(ldd lynxkite-sphynx/lynxkite-sphynx  | sed -n 's/.*=> \(.*anaconda3.*\) (0x.*)/\1/p')
+LIBS=$(ldd lynxkite-sphynx/lynxkite-sphynx  | sed -n 's/.*=> \(.*conda3.*\) (0x.*)/\1/p')
 for f in $LIBS; do cp "$f" lynxkite-sphynx/; done
 mkdir zip
 zip -r zip/lynxkite-sphynx.zip lynxkite-sphynx/
