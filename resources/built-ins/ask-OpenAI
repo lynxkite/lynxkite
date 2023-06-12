@@ -88,7 +88,7 @@ boxes:
     inputs: >-
       ${(vertexAttributes.map("vs."+_.name) ++
       edgeAttributes.map("es."+_.name)).mkString(",")}, es.src, es.dst
-    outputs: ${`Result schema`.split(",").map(e => "df." + e.strip()).mkString(",")}
+    outputs: ${`Result schema`.split(",").map(e => "df." + e.trim()).mkString(",")}
   x: 750
   y: 50
 - id: input-graph
