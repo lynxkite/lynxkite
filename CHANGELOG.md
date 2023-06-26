@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added a _database_ parameter for Neo4j import and export boxes. [#404](https://github.com/lynxkite/lynxkite/pull/404)
+- Fixed an issue with S3 access. [#402](https://github.com/lynxkite/lynxkite/pull/402)
+
 ### 5.3.0
 
 - Upgraded to Apache Spark 3.3.2. [#369](https://github.com/lynxkite/lynxkite/pull/369)

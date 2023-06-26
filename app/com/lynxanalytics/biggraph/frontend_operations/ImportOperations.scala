@@ -172,6 +172,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       Param("url", "Neo4j connection", defaultValue = "bolt://localhost:7687"),
       Param("username", "Neo4j username", defaultValue = "neo4j"),
       Param("password", "Neo4j password", defaultValue = "neo4j"),
+      Param("database", "Neo4j database", placeholder = "Leave empty to use default database."),
       Code("vertex_query", "Vertex query", defaultValue = "MATCH (node) RETURN node", language = ""),
       Code("edge_query", "Edge query", defaultValue = "MATCH ()-[rel]->() RETURN rel", language = ""),
       ImportedDataParam(),
@@ -208,6 +209,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
           .option("authentication.type", "basic")
           .option("authentication.basic.username", params("username"))
           .option("authentication.basic.password", params("password"))
+          .option("database", params("database"))
           .option("url", params("url"))
           .option("schema.strategy", "string")
           .option("query", query)

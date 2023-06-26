@@ -23,6 +23,8 @@ The connection URI for Neo4j.
 The username to use for the connection.
 [p-password]#Neo4j password#::
 The password to use for the connection.
+[p-database]#Neo4j database#::
+If the Neo4j server has multiple databases, you can specify which one to read from.
 [p-vertex_query]#Vertex query#::
 The Cypher query to run on Neo4j to get the vertices. This query must return a node named `node`.
 The default query imports all the nodes from Neo4j. Leave empty to not import vertex attributes.

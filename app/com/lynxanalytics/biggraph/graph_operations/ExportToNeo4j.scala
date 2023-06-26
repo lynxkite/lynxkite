@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import org.apache.spark
 
 object ExportAttributesToNeo4j extends OpFromJson {
+  val databaseParameter = NewParameter("database", "")
   class Input extends MagicInputSignature {
     val t = table
   }
@@ -15,6 +16,7 @@ object ExportAttributesToNeo4j extends OpFromJson {
     (j \ "url").as[String],
     (j \ "username").as[String],
     (j \ "password").as[String],
+    databaseParameter.fromJson(j),
     (j \ "labels").as[String],
     (j \ "keys").as[Seq[String]],
     (j \ "version").as[Long],
@@ -23,13 +25,14 @@ object ExportAttributesToNeo4j extends OpFromJson {
 }
 
 // Makes it easy to send a DataFrame to a specified Neo4j instance.
-case class Neo4jConnectionParameters(url: String, username: String, password: String) {
+case class Neo4jConnectionParameters(url: String, username: String, password: String, database: String) {
   def send(df: spark.sql.DataFrame, query: String) {
     df.write
       .format("org.neo4j.spark.DataSource")
       .option("authentication.type", "basic")
       .option("authentication.basic.username", username)
       .option("authentication.basic.password", password)
+      .option("database", database)
       .option("url", url)
       .option("query", query)
       .mode(spark.sql.SaveMode.Append)
@@ -41,12 +44,13 @@ case class ExportAttributesToNeo4j(
     url: String,
     username: String,
     password: String,
+    database: String,
     labels: String,
     keys: Seq[String],
     version: Long,
     nodesOrRelationships: String)
     extends SparkOperation[ExportAttributesToNeo4j.Input, ExportAttributesToNeo4j.Output] {
-  val neo = Neo4jConnectionParameters(url, username, password)
+  val neo = Neo4jConnectionParameters(url, username, password, database)
   @transient override lazy val inputs = new ExportAttributesToNeo4j.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new ExportAttributesToNeo4j.Output()(instance)
   override def toJson = Json.obj(
@@ -56,7 +60,8 @@ case class ExportAttributesToNeo4j(
     "labels" -> labels,
     "keys" -> keys,
     "version" -> version,
-    "nodesOrRelationships" -> nodesOrRelationships)
+    "nodesOrRelationships" -> nodesOrRelationships,
+  ) ++ ExportAttributesToNeo4j.databaseParameter.toJson(database)
   def execute(
       inputDatas: DataSet,
       o: ExportAttributesToNeo4j.Output,
@@ -77,6 +82,7 @@ case class ExportAttributesToNeo4j(
 }
 
 object ExportGraphToNeo4j extends OpFromJson {
+  val databaseParameter = NewParameter("database", "")
   class Input extends MagicInputSignature {
     val vs = table
     val es = table
@@ -88,6 +94,7 @@ object ExportGraphToNeo4j extends OpFromJson {
     (j \ "url").as[String],
     (j \ "username").as[String],
     (j \ "password").as[String],
+    databaseParameter.fromJson(j),
     (j \ "nodeLabelsColumn").as[String],
     (j \ "relationshipTypeColumn").as[String],
     (j \ "version").as[Long],
@@ -102,12 +109,13 @@ case class ExportGraphToNeo4j(
     url: String,
     username: String,
     password: String,
+    database: String,
     nodeLabelsColumn: String,
     relationshipTypeColumn: String,
     version: Long)
     extends SparkOperation[ExportGraphToNeo4j.Input, ExportGraphToNeo4j.Output] {
   import ExportGraphToNeo4j._
-  val neo = Neo4jConnectionParameters(url, username, password)
+  val neo = Neo4jConnectionParameters(url, username, password, database)
   @transient override lazy val inputs = new ExportGraphToNeo4j.Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new ExportGraphToNeo4j.Output()(instance)
   override def toJson = Json.obj(
@@ -117,7 +125,7 @@ case class ExportGraphToNeo4j(
     "nodeLabelsColumn" -> nodeLabelsColumn,
     "relationshipTypeColumn" -> relationshipTypeColumn,
     "version" -> version,
-  )
+  ) ++ ExportGraphToNeo4j.databaseParameter.toJson(database)
   def execute(
       inputDatas: DataSet,
       o: ExportGraphToNeo4j.Output,
