@@ -53,7 +53,9 @@ case class VertexDiagramSpec(
     // Edge bundle used to find neighborhood of the central vertex.
     sampleSmearEdgeBundleId: String = "",
     attrs: Seq[String] = Seq(),
-    radius: Int = 1)
+    radius: Int = 1,
+    // Now ignored. Kept for compatibility.
+    maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
 
 case class FEVertex(
     // For bucketed view:
@@ -110,7 +112,9 @@ case class EdgeDiagramSpec(
     // Attributes to be returned together with the edges. As one visualized edge can correspond to
     // many actual edges, clients always have to specify an aggregator as well. For now, this only
     // works for small edge set visualizations (i.e. sampled mode).
-    attrs: Seq[AggregatedAttribute] = Seq())
+    attrs: Seq[AggregatedAttribute] = Seq(),
+    // Now ignored. Kept for compatibility.
+    maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
