@@ -53,8 +53,7 @@ case class VertexDiagramSpec(
     // Edge bundle used to find neighborhood of the central vertex.
     sampleSmearEdgeBundleId: String = "",
     attrs: Seq[String] = Seq(),
-    radius: Int = 1,
-    maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
+    radius: Int = 1)
 
 case class FEVertex(
     // For bucketed view:
@@ -111,8 +110,7 @@ case class EdgeDiagramSpec(
     // Attributes to be returned together with the edges. As one visualized edge can correspond to
     // many actual edges, clients always have to specify an aggregator as well. For now, this only
     // works for small edge set visualizations (i.e. sampled mode).
-    attrs: Seq[AggregatedAttribute] = Seq(),
-    maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
+    attrs: Seq[AggregatedAttribute] = Seq())
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
@@ -207,14 +205,15 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val filtered = FEFilters.filter(vertexSet, request.filters)
     loadGUIDsToMemory(request.attrs)
 
+    val maxSize = DrawingThresholds.MaxSampledViewVertices
     val centers =
       if (request.centralVertexIds == Seq("*")) {
         // Try to show the whole graph.
-        val op = graph_operations.SampleVertices(request.maxSize + 1)
+        val op = graph_operations.SampleVertices(maxSize + 1)
         val sample = op(op.vs, filtered).result.sample.value
         assert(
-          sample.size <= request.maxSize,
-          s"The full graph is too large to display (larger than ${request.maxSize}).")
+          sample.size <= maxSize,
+          s"The full graph is too large to display (larger than ${maxSize}).")
         sample
       } else if (request.centralVertexIds == Seq("auto")) {
         // Pick one center.
@@ -232,7 +231,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val nop = graph_operations.ComputeVertexNeighborhood(
           centers,
           request.radius,
-          request.maxSize)
+          maxSize)
         val nopres = nop(
           nop.vertices,
           vertexSet)(
@@ -243,7 +242,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         val neighborhood = nopres.neighborhood.value
         assert(
           centers.isEmpty || neighborhood.nonEmpty,
-          s"Neighborhood is too large to display (larger than ${request.maxSize}).")
+          s"Neighborhood is too large to display (larger than ${maxSize}).")
         neighborhood
       } else {
         centers.toSet
@@ -637,7 +636,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     val vertexDiagrams = request.vertexSets.map(getVertexDiagram(user, _))
     for ((spec, diag) <- request.vertexSets zip vertexDiagrams) {
       assert(
-        diag.size <= spec.maxSize,
+        diag.size <= DrawingThresholds.MaxSampledViewVertices,
         s"Vertex diagram too large to display. Would return ${diag.size} vertices for $spec")
     }
     val idxPattern = "idx\\[(\\d+)\\]".r
@@ -662,7 +661,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
     for ((spec, diag) <- request.edgeBundles zip edgeDiagrams) {
       assert(
-        diag.size <= spec.maxSize,
+        diag.size <= DrawingThresholds.MaxSampledViewEdges,
         s"Edge diagram too large to display. Would return ${diag.size} edges for $spec")
     }
     spark_util.Counters.printAll
