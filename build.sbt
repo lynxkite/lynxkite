@@ -42,10 +42,6 @@ libraryDependencies ++= Seq(
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "3.2.7" % "test",
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-  // For accessing S3 fs from local instance.
-  "org.apache.hadoop" % "hadoop-aws" % "3.3.4" excludeAll(
-    // But we still want to take Hadoop from Spark.
-    ExclusionRule(organization = "org.apache.hadoop", name = "hadoop-common")),
   "net.java.dev.jets3t" % "jets3t" % "0.9.4",
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
