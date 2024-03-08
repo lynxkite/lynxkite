@@ -1,0 +1,24 @@
+### Embed String attribute
+
+Creates a string embedding for the selected edge or vertex attribute.
+The resulting Vector attribute can be used with other machine learning boxes.
+
+====
+[p-attr]#Attribute to embed#::
+The String edge or vertex attribute to use as the input.
+
+[p-save_as]#Save embedding as#::
+The new attribute will be created under this name.
+
+[p-method]#Embedding method#::
+What to use for creating the embedding.
+To use the OpenAI method, the `OPENAI_API_KEY` environment variable must be set.
+The other methods rely on local models that can run on your GPU.
+The models are large and will be downloaded when used for the first time.
+
+[p-model_name]#Model name#::
+Leave empty to use the default model for the selected method.
+The defaults are `text-embedding-3-small` for OpenAI,
+`nomic-ai/nomic-embed-text-v1` for SentenceTransformers,
+and `WhereIsAI/UAE-Large-V1` for AnglE.
+====

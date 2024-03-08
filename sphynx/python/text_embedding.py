@@ -1,11 +1,8 @@
 """Creates a vector embedding based on a string attribute."""
 
 import numpy as np
-import torch
 from . import util
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-torch.set_default_device(device)
 op = util.Op()
 attr = op.input("attr")
 method = op.params["method"]
@@ -24,13 +21,17 @@ if method == "OpenAI":
     ]
 elif method == "SentenceTransformers":
     from sentence_transformers import SentenceTransformer
+    import torch
 
+    torch.set_default_device("cuda" if torch.cuda.is_available() else "cpu")
     model_name = model_name or "nomic-ai/nomic-embed-text-v1"
     model = SentenceTransformer(model_name, trust_remote_code=True)
     embedding = model.encode(attr.tolist())
 elif method == "AnglE":
     from angle_emb import AnglE
+    import torch
 
+    torch.set_default_device("cuda" if torch.cuda.is_available() else "cpu")
     model_name = model_name or "WhereIsAI/UAE-Large-V1"
     angle = AnglE.from_pretrained(model_name, pooling_strategy="cls")
     embedding = angle.encode(attr.tolist(), to_numpy=True)
