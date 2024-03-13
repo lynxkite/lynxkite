@@ -18,7 +18,17 @@ The models are large and will be downloaded when used for the first time.
 
 [p-model_name]#Model name#::
 Leave empty to use the default model for the selected method.
-The defaults are `text-embedding-3-small` for OpenAI,
-`nomic-ai/nomic-embed-text-v1` for SentenceTransformers,
-and `WhereIsAI/UAE-Large-V1` for AnglE.
+- For OpenAI the default is `text-embedding-3-small`.
+  See the https://platform.openai.com/docs/guides/embeddings/embedding-models[OpenAI documentation] for available models.
+- For SentenceTransformers the default is `nomic-ai/nomic-embed-text-v1`.
+  Any model that is loaded with `SentenceTransformer(model_name)` can be used.
+- For AnglE the default is `WhereIsAI/UAE-Large-V1`.
+  Any model loaded with `AnglE.from_pretrained(model_name)` can be used.
+- For causal transformers the default is `microsoft/DialoGPT-small`.
+  Any model loaded with `AutoModelForCausalLM.from_pretrained(model_name)` can be used.
+  The https://arxiv.org/abs/2402.15449[echo embeddings] algorithm is used to generate the sentence embeddings.
+
+[p-batch_size]#Batch size#::
+Leave empty to use the default batch size for the selected method.
+Higher values will use more GPU memory and generate embeddings faster.
 ====
