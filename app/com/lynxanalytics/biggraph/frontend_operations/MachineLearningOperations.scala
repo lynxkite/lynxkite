@@ -429,8 +429,16 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Choice("attr", "Attribute to embed", options = stringAttrs),
       Param("save_as", "Save embedding as", defaultValue = "embedding"),
-      Choice("method", "Embedding method", options = FEOption.list("OpenAI", "SentenceTransformers", "AnglE")),
+      Choice(
+        "method",
+        "Embedding method",
+        options = FEOption.list(
+          "OpenAI",
+          "SentenceTransformers",
+          "AnglE",
+          "Causal Transformer")),
       Param("model_name", "Model name", defaultValue = ""),
+      Param("batch_size", "Batch size", defaultValue = ""),
     )
     def enabled =
       FEStatus.assert(stringAttrs.nonEmpty, "No string vertex or edge attributes")
@@ -444,7 +452,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(name.nonEmpty, "Please set the name of the embedding.")
       val op = graph_operations.TextEmbeddingPython(
         params("method"),
-        params("model_name"))
+        params("model_name"),
+        params("batch_size"))
       if (project.vertexAttrList.find(_.id == params("attr")).isDefined) {
         val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
         project.vertexAttributes(name) = op(op.attr, attr).result.attr
