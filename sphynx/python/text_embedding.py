@@ -53,7 +53,7 @@ class OpenAIEmbedder(Embedder):
 
 
 class SentenceTransformersEmbedder(Embedder):
-    DEFAULT_BATCH_SIZE = 16
+    DEFAULT_BATCH_SIZE = 64
 
     def __init__(self):
         from sentence_transformers import SentenceTransformer
@@ -65,11 +65,14 @@ class SentenceTransformersEmbedder(Embedder):
         self.model.eval()
 
     def embed(self, strings):
-        return self.model.encode(strings)
+        import torch
+
+        with torch.no_grad():
+            return self.model.encode(strings)
 
 
 class AnglEEmbedder(Embedder):
-    DEFAULT_BATCH_SIZE = 16
+    DEFAULT_BATCH_SIZE = 64
 
     def __init__(self):
         from angle_emb import AnglE
@@ -80,11 +83,14 @@ class AnglEEmbedder(Embedder):
         self.angle = AnglE.from_pretrained(m, pooling_strategy="cls")
 
     def embed(self, strings):
-        return self.angle.encode(strings, to_numpy=True)
+        import torch
+
+        with torch.no_grad():
+            return self.angle.encode(strings, to_numpy=True)
 
 
 class CausalTransformerEmbedder(Embedder):
-    DEFAULT_BATCH_SIZE = 2
+    DEFAULT_BATCH_SIZE = 64
 
     def __init__(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -114,7 +120,8 @@ class CausalTransformerEmbedder(Embedder):
         mask = torch.arange(max_length * 2).expand(len(lengths), max_length * 2)
         mask = (mask >= lengths) & (mask < lengths * 2)  # Just the second copy.
         print(mask.shape)
-        res = self.model(input_ids=repeated, output_hidden_states=True)
+        with torch.no_grad():
+            res = self.model(input_ids=repeated, output_hidden_states=True)
         h = res.hidden_states[-1]  # Take the last layer's output.
         print(h.shape)
         masked = h * mask.unsqueeze(2).float()
