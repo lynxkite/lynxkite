@@ -327,6 +327,8 @@ include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
 
+include::embed-string-attribute.asciidoc[]
+
 include::embed-vertices.asciidoc[]
 
 include::export-edge-attributes-to-neo4j.asciidoc[]

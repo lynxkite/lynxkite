@@ -388,6 +388,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.sql.execution.joins.LongToUnsafeRowMap"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.BinaryLogisticBlockAggregator"))
     kryo.register(Class.forName("org.apache.spark.sql.delta.stats.DeltaFileStatistics"))
+    kryo.register(classOf[Array[java.lang.Long]])
+    kryo.register(classOf[Array[java.lang.Integer]])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

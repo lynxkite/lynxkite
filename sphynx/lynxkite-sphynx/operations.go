@@ -159,6 +159,11 @@ type DiskOperation struct {
 	canCompute func(operationDescription OperationDescription) bool
 }
 
+// Operations that need a graph in memory.
 var operationRepository = map[string]Operation{}
+
+// Operations that need a graph on disk. (E.g. Python.)
 var diskOperationRepository = map[string]DiskOperation{}
+
+// Operations that can work on the raw files from Spark. (E.g. operations that work on a table.)
 var unorderedOperationRepository = map[string]DiskOperation{}
