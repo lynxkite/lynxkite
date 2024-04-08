@@ -5,7 +5,8 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class TextEmbeddingPythonTest extends OperationsTestBase {
-  test("embed name", com.lynxanalytics.biggraph.SphynxOnly) {
+  // TODO: Fix sentence-transformers and openjdk Conda conflict to enable this in CI.
+  ignore("embed name", com.lynxanalytics.biggraph.SphynxOnly) {
     val g = box("Create example graph").box("Embed String attribute", Map(
       "attr" -> "name",
       "method" -> "SentenceTransformers",
