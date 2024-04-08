@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- `KITE_DRAWING_OVERALL` now properly controls the limits on the size of visualizations. [#410](https://github.com/lynxkite/lynxkite/pull/410)
+
 ### 5.3.1
 
 - Added a _database_ parameter for Neo4j import and export boxes. [#404](https://github.com/lynxkite/lynxkite/pull/404)
