@@ -41,8 +41,6 @@ class LogisticRegressionTest extends OperationsTestBase {
     val probabilityOf1 =
       project.vertexAttributes("classification_probability_of_1").runtimeSafeCast[Double]
     val probabilityOf1Map = probabilityOf1.rdd.collect.toMap
-
-    // Example graph age: 0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.
     var class1 = 0
     classificationMap.foreach {
       case (id, cl) => {
