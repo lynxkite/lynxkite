@@ -125,6 +125,12 @@ jobs:
     env:
       FORCE_COLOR: 1
     steps:
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 512
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
     - uses: actions/checkout@v3
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
