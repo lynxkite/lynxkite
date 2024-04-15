@@ -146,7 +146,7 @@ frontend-test-save:
   RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
   # After running the tests we do a little dance to save the report even if the test failed.
   # https://github.com/earthly/earthly/issues/2452
-  RUN cd web && zip -qr playwright-report.zip playwright-report
+  RUN cd web && zip -mqr playwright-report.zip playwright-report
   SAVE ARTIFACT web/playwright-report.zip
 frontend-test-copy:
   LOCALLY
