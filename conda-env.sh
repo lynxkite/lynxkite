@@ -28,6 +28,6 @@ if [[ $include_build == 'false' ]]; then
   cfg=$(echo "$cfg" | grep -Pv -- '^#|- (make|sbt|nodejs|go|compilers|swig|autopep8|mypy|zip|wget)\b')
 fi
 if [[ $include_cuda == 'false' ]]; then
-  cfg=$(echo "$cfg" | grep -Pv -- '- (rapidsai|nvidia|cugraph|cudatoolkit)\b' | sed 's/cuda\|cu113/cpu/g')
+  cfg=$(echo "$cfg" | grep -Pv -- '- (rapidsai|nvidia|cugraph|cudatoolkit|pytorch|pyg)\b' | sed 's/cuda\|cu113/cpu/g')
 fi
 echo "$cfg"
