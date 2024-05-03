@@ -91,6 +91,8 @@ backend-test-docker:
 
 backend-test-sphynx:
   FROM +app-build
+  # Install extra dependencies, like PyTorch.
+  RUN ./conda-env.sh build python > env.yml && micromamba install -y -n base -f env.yml
   COPY .scalafmt.conf .
   COPY tools/wait_for_port.sh tools/
   COPY test test
@@ -159,7 +161,7 @@ frontend-test:
 docker:
   FROM mambaorg/micromamba:jammy
   COPY conda-env.* .
-  RUN ./conda-env.sh > env.yml && micromamba install -y -n base -f env.yml
+  RUN ./conda-env.sh python > env.yml && micromamba install -y -n base -f env.yml
   COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
   CMD ["bash", "-c", ". kiterc_template && spark-submit lynxkite.jar"]
