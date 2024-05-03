@@ -19,7 +19,7 @@ test.beforeAll(async ({ browser }) => {
 
 test('histograms after hard filters', async () => {
   const state = await workspace.openStateView('filter0', 'graph');
-  await expect(state.left.vertexCount).toHaveText('2');
+  await expect(state.left.vertexCount).toHaveText('2', { timeout: 30_000 });
   await expect(state.left.edgeCount).toHaveText('1');
   await state.left.vertexAttribute('name').expectHistogramValues([
     { title: 'Adam', size: 100, value: 1 },

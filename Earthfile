@@ -91,6 +91,8 @@ backend-test-docker:
 
 backend-test-sphynx:
   FROM +app-build
+  # Install extra dependencies, like PyTorch.
+  RUN ./conda-env.sh build python > env.yml && micromamba install -y -n base -f env.yml
   COPY .scalafmt.conf .
   COPY tools/wait_for_port.sh tools/
   COPY test test
@@ -146,7 +148,7 @@ frontend-test-save:
   RUN cd web && ../tools/with_lk.sh npx playwright test || touch failed
   # After running the tests we do a little dance to save the report even if the test failed.
   # https://github.com/earthly/earthly/issues/2452
-  RUN cd web && zip -qr playwright-report.zip playwright-report
+  RUN cd web && zip -mqr playwright-report.zip playwright-report
   SAVE ARTIFACT web/playwright-report.zip
 frontend-test-copy:
   LOCALLY
@@ -159,7 +161,7 @@ frontend-test:
 docker:
   FROM mambaorg/micromamba:jammy
   COPY conda-env.* .
-  RUN ./conda-env.sh > env.yml && micromamba install -y -n base -f env.yml
+  RUN ./conda-env.sh python > env.yml && micromamba install -y -n base -f env.yml
   COPY +assembly/lynxkite.jar .
   COPY conf/kiterc_template .
   CMD ["bash", "-c", ". kiterc_template && spark-submit lynxkite.jar"]
