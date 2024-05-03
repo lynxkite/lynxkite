@@ -585,8 +585,10 @@ angular.module('biggraph').directive('graphView', ['util', '$compile', '$timeout
 
   Vertices.prototype.addColorLegend = function(colorMap, title) {
     this.addLegendLine(title);
-    for (let attr in colorMap) {
-      this.addLegendLine(attr || 'undefined', 20).color = colorMap[attr] || UNCOLORED;
+    if (Object.keys(colorMap).length <= 24) {
+      for (let attr in colorMap) {
+        this.addLegendLine(attr || 'undefined', 20).color = colorMap[attr] || UNCOLORED;
+      }
     }
   };
 

@@ -125,15 +125,15 @@ jobs:
     env:
       FORCE_COLOR: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v0'
+      uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/422846954881/locations/global/workloadIdentityPools/github-actions/providers/github'
         service_account: 'github-actions@external-lynxkite.iam.gserviceaccount.com'
         token_format: 'access_token'
-    - uses: 'docker/login-action@v2'
+    - uses: 'docker/login-action@v3'
       with:
         registry: 'us-central1-docker.pkg.dev'
         username: 'oauth2accesstoken'
@@ -148,14 +148,14 @@ jobs:
         fi
         git checkout -b "$branch" || true
     - name: Download latest earthly
-      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.6.30/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/latest/download/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
     - name: Earthly version
       run: earthly --version
     - name: Run frontend test
       run: earthly --remote-cache=us-central1-docker.pkg.dev/external-lynxkite/github-actions-us/earthly:cache +frontend-test
     - name: Save test results
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-test-results
         path: playwright-report.zip
