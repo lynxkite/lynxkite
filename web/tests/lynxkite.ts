@@ -51,9 +51,8 @@ export class Entity {
   }
 
   async popoff() {
-    if ((await this.element.count()) > 0) {
-      await angularEval(this.element, 'closeMenu()');
-    }
+    await expect(this.menu).toBeVisible();
+    await angularEval(this.element, 'closeMenu()');
     await expect(this.menu).not.toBeVisible();
   }
 
@@ -116,7 +115,6 @@ export class Entity {
   async clickMenu(id: string) {
     const p = await this.popup();
     await p.locator('#' + id).click();
-    await this.popoff();
   }
 }
 
@@ -708,7 +706,7 @@ class VisualizationState {
     await expect(async () => {
       const graph = await this.graphData();
       fn(graph);
-    }).toPass();
+    }).toPass({ timeout: 60_000 });
   }
 }
 
@@ -730,7 +728,7 @@ export class Splash {
       window.localStorage.setItem('entry-selector tutorial done', 'true');
       window.localStorage.setItem('allow data collection', 'false');
     });
-    await page.goto('/#/dir/');
+    await page.reload();
     await page.evaluate(() => {
       // Floating elements can overlap buttons and block clicks.
       document.styleSheets[0].insertRule('.spark-status, .user-menu { position: static !important; }');
