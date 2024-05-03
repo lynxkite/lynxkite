@@ -51,8 +51,8 @@ export class Entity {
   }
 
   async popoff() {
-    // Try to close the menu in case it is open. Not waiting for this.
-    void angularEval(this.element, 'closeMenu()');
+    await expect(this.menu).toBeVisible();
+    await angularEval(this.element, 'closeMenu()');
     await expect(this.menu).not.toBeVisible();
   }
 
@@ -115,7 +115,6 @@ export class Entity {
   async clickMenu(id: string) {
     const p = await this.popup();
     await p.locator('#' + id).click();
-    await this.popoff();
   }
 }
 
