@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added an _"Embed String attribute"_ box that can use OpenAI or local models to create vector embeddings.
+  [#414](https://github.com/lynxkite/lynxkite/pull/414) The embeddings can then be used in any machine learning box.
 - `KITE_DRAWING_OVERALL` now properly controls the limits on the size of visualizations. [#410](https://github.com/lynxkite/lynxkite/pull/410)
 
 ### 5.3.1

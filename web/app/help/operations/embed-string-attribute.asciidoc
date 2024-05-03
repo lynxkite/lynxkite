@@ -1,0 +1,34 @@
+### Embed String attribute
+
+Creates a string embedding for the selected edge or vertex attribute.
+The resulting Vector attribute can be used with other machine learning boxes.
+
+====
+[p-attr]#Attribute to embed#::
+The String edge or vertex attribute to use as the input.
+
+[p-save_as]#Save embedding as#::
+The new attribute will be created under this name.
+
+[p-method]#Embedding method#::
+What to use for creating the embedding.
+To use the OpenAI method, the `OPENAI_API_KEY` environment variable must be set.
+The other methods rely on local models that can run on your GPU.
+The models are large and will be downloaded when used for the first time.
+
+[p-model_name]#Model name#::
+Leave empty to use the default model for the selected method.
+- For OpenAI the default is `text-embedding-3-small`.
+  See the https://platform.openai.com/docs/guides/embeddings/embedding-models[OpenAI documentation] for available models.
+- For SentenceTransformers the default is `nomic-ai/nomic-embed-text-v1`.
+  Any model that is loaded with `SentenceTransformer(model_name)` can be used.
+- For AnglE the default is `WhereIsAI/UAE-Large-V1`.
+  Any model loaded with `AnglE.from_pretrained(model_name)` can be used.
+- For causal transformers the default is `microsoft/DialoGPT-small`.
+  Any model loaded with `AutoModelForCausalLM.from_pretrained(model_name)` can be used.
+  The https://arxiv.org/abs/2402.15449[echo embeddings] algorithm is used to generate the sentence embeddings.
+
+[p-batch_size]#Batch size#::
+Leave empty to use the default batch size for the selected method.
+Higher values will use more GPU memory and generate embeddings faster.
+====

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -23,6 +24,7 @@ func pythonOperation(module string) DiskOperation {
 			writer := io.MultiWriter(os.Stdout, &output)
 			cmd.Stdout = writer
 			cmd.Stderr = writer
+			log.Printf("Running %s", cmd)
 			if err := cmd.Run(); err != nil {
 				if output.Len() > 0 {
 					return fmt.Errorf("\n%v", output.String())
@@ -49,4 +51,5 @@ func init() {
 	diskOperationRepository["DeriveHTMLPython"] = pythonOperation("derive_html")
 	unorderedOperationRepository["DeriveHTMLTablePython"] = pythonOperation("derive_html")
 	diskOperationRepository["CreateGraphInPython"] = pythonOperation("create_graph_in_python")
+	diskOperationRepository["TextEmbeddingPython"] = pythonOperation("text_embedding")
 }
