@@ -424,6 +424,46 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
+  register("Embed String attribute")(new ProjectTransformation(_) {
+    def stringAttrs = project.vertexAttrList[String] ++ project.edgeAttrList[String]
+    params ++= List(
+      Choice("attr", "Attribute to embed", options = stringAttrs),
+      Param("save_as", "Save embedding as", defaultValue = "embedding"),
+      Choice(
+        "method",
+        "Embedding method",
+        options = FEOption.list(
+          "OpenAI",
+          "SentenceTransformers",
+          "AnglE",
+          "Causal Transformer")),
+      Param("model_name", "Model name", defaultValue = ""),
+      Param("batch_size", "Batch size", defaultValue = ""),
+    )
+    def enabled =
+      FEStatus.assert(stringAttrs.nonEmpty, "No string vertex or edge attributes")
+    override def summary = {
+      val attrName = params("attr")
+      val method = params("method")
+      s"Embed $attrName with $method"
+    }
+    def apply() = {
+      val name = params("save_as")
+      assert(name.nonEmpty, "Please set the name of the embedding.")
+      val op = graph_operations.TextEmbeddingPython(
+        params("method"),
+        params("model_name"),
+        params("batch_size"))
+      if (project.vertexAttrList.find(_.id == params("attr")).isDefined) {
+        val attr = project.vertexAttributes(params("attr")).runtimeSafeCast[String]
+        project.vertexAttributes(name) = op(op.attr, attr).result.attr
+      } else {
+        val attr = project.edgeAttributes(params("attr")).runtimeSafeCast[String]
+        project.edgeAttributes(name) = op(op.attr, attr).result.attr
+      }
+    }
+  })
+
   register("Train a GCN classifier")(new ProjectTransformation(_) {
     params ++= List(
       Param("save_as", "Save model as", defaultValue = "model"),

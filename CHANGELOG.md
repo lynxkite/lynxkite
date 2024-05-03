@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+- Added an _"Embed String attribute"_ box that can use OpenAI or local models to create vector embeddings.
+  [#414](https://github.com/lynxkite/lynxkite/pull/414) The embeddings can then be used in any machine learning box.
+
 ### 5.3.1
 
 - Added a _database_ parameter for Neo4j import and export boxes. [#404](https://github.com/lynxkite/lynxkite/pull/404)
