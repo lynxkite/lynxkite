@@ -74,8 +74,6 @@ libraryDependencies ++= Seq(
   "org.scalaj" %% "scalaj-http" % "2.4.2",
   // Google Dataproc's spark-bigquery-connector allows interacting with BigQuery tables on Dataproc
   "com.google.cloud.spark" %% "spark-bigquery" % "0.25.2",
-  // For reading Neo4j database files.
-  "org.neo4j" % "neo4j-kernel" % "3.5.2",
   // Spark and Play both pick some Jackson version. Settle their argument.
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.3",
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3",
