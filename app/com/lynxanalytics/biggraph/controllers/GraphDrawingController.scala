@@ -55,7 +55,7 @@ case class VertexDiagramSpec(
     attrs: Seq[String] = Seq(),
     radius: Int = 1,
     // Now ignored. Kept for compatibility.
-    maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
+    maxSize: Option[Int] = None)
 
 case class FEVertex(
     // For bucketed view:
@@ -114,7 +114,7 @@ case class EdgeDiagramSpec(
     // works for small edge set visualizations (i.e. sampled mode).
     attrs: Seq[AggregatedAttribute] = Seq(),
     // Now ignored. Kept for compatibility.
-    maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
+    maxSize: Option[Int] = None)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
