@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 5.4.0
+
+- Changed the license from AGPL to Apache 2.0. [#416](https://github.com/lynxkite/lynxkite/pull/416)
 - Added an _"Embed String attribute"_ box that can use OpenAI or local models to create vector embeddings.
   [#414](https://github.com/lynxkite/lynxkite/pull/414) The embeddings can then be used in any machine learning box.
 - `KITE_DRAWING_OVERALL` now properly controls the limits on the size of visualizations. [#410](https://github.com/lynxkite/lynxkite/pull/410)
