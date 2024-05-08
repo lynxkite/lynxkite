@@ -104,14 +104,14 @@ Available on attributes of type `Vector[number]`. The first two elements of the 
 interpreted as (X, Y) coordinates on the plane and vertices will be laid out on the screen based
 on these coordinates.
 (You can create a `Vector[number]` from two number attributes using the
-<<Bundle vertex attributes into a vector>> operation.)
+<<Bundle vertex attributes into a Vector>> operation.)
 
 Geo coordinates::
 Available on attributes of type `Vector[number]`. The first two elements of the vector will be
 interpreted as latitude-longitude coordinates and vertices will be put on a world map based
 on these coordinates.
 (You can create a `Vector[number]` from two number attributes using the
-<<Bundle vertex attributes into a vector>> operation.)
+<<Bundle vertex attributes into a Vector>> operation.)
 
 Slider::
 Available for `number` attributes. Adds an interactive slider to the visualization.
