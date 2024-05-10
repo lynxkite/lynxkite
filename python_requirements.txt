@@ -1,0 +1,12 @@
+# Python dependencies with the exception of big CUDA libraries.
+autopep8
+matplotlib
+mypy
+numpy
+openai>=1
+pandas>=2
+pyarrow
+requests
+ruamel.yaml
+typed-ast
+types-requests
