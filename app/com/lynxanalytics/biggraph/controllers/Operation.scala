@@ -242,6 +242,7 @@ object Operation {
                 val prefixes = Seq(s"$inputName.") ++ (if (inputs.size == 1) Seq("") else Seq())
                 prefixes.map(prefix => s"$prefix$tableName" -> proto)
             }
+          case (inputName, state) => throw new AssertionError(s"Invalid input for $inputName: $state")
         }
       }
     }
