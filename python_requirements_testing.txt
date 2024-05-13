@@ -1,5 +1,0 @@
-# Python dependencies for CI. These are slower but lighter than the normal dependencies.
---extra-index-url https://download.pytorch.org/whl/cpu
-torch_geometric==2.2.*
-torch==2.3.*
-torch-cluster
