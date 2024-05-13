@@ -91,9 +91,10 @@ backend-test-docker:
 
 backend-test-sphynx:
   FROM +app-build
-  # Install extra dependencies, like PyTorch.
-  COPY python_requirements.txt .
+  COPY python_requirements*.txt .
   RUN pip install -r python_requirements.txt
+  RUN pip install --index-url https://download.pytorch.org/whl/cpu torch==2.3.*
+  RUN pip install torch_geometric==2.2.* torch-cluster torch-scatter torch-sparse
   COPY .scalafmt.conf .
   COPY tools/wait_for_port.sh tools/
   COPY test test
@@ -118,6 +119,8 @@ bash:
   RUN --interactive bash
 
 python-test:
+  COPY python_requirements.txt .
+  RUN pip install -r python_requirements.txt
   COPY tools/wait_for_port.sh tools/
   COPY tools/with_lk.sh tools/
   COPY +assembly/lynxkite.jar target/scala-2.12/lynxkite-0.1-SNAPSHOT.jar
