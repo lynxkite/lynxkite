@@ -2,7 +2,6 @@
 
 Category | License | Dependency | Notes
 --- | --- | --- | ---
-Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.lucene # lucene-core # 5.5.5 | <notextile></notextile>
 Apache | [Apache 2](https://www.apache.org/licenses/LICENSE-2.0) | org.conscrypt # conscrypt-openjdk-uber # 2.5.1 | <notextile></notextile>
 Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.fluentlenium # fluentlenium-core # 3.7.1 | <notextile></notextile>
 Apache | [Apache 2](http://www.apache.org/licenses/LICENSE-2.0) | org.scalaj # scalaj-http_2.12 # 2.4.2 | <notextile></notextile>
@@ -83,7 +82,6 @@ Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.arrow # arrow-vector # 7.0.0 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-compress # 1.20 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-exec # 1.3 | <notextile></notextile>
-Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-lang3 # 3.8 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-lang3 # 3.9 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.commons # commons-text # 1.7 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpclient # 4.5.13 | <notextile></notextile>
@@ -134,7 +132,7 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.1 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.16.0 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.17.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 2.1.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-storage # 2.1.0 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-compiler # 2.12.13 | <notextile></notextile>
@@ -240,25 +238,6 @@ BSD | [New BSD License](http://www.opensource.org/licenses/bsd-license.php) | or
 BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.8 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11 | <notextile></notextile>
 CC0 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/) | org.reactivestreams # reactive-streams # 1.0.3 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-collections # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-common # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-concurrent # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-configuration # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-csv # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-diagnostics # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-graphdb-api # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-index # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-io # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-kernel # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-kernel-api # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-logging # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-lucene-upgrade # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-procedure-api # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-resource # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-spatial-index # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-ssl # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-unsafe # 3.5.2 | <notextile></notextile>
-GPL | [GNU General Public License, Version 3](http://www.gnu.org/licenses/gpl-3.0-standalone.html) | org.neo4j # neo4j-values # 3.5.2 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.transaction # jakarta.transaction-api # 1.3.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.ws.rs # jakarta.ws.rs-api # 2.1.6 | <notextile></notextile>
 GPL with Classpath Extension | [CDDL + GPLv2 with classpath exception](https://github.com/javaee/javax.annotation/blob/master/LICENSE) | javax.annotation # javax.annotation-api # 1.3.2 | <notextile></notextile>
@@ -288,12 +267,9 @@ MIT | [The MIT License(MIT)](http://opensource.org/licenses/MIT) | net.sf.geogra
 Mozilla | [Mozilla Public License, Version 2.0](http://www.mozilla.org/MPL/2.0/index.txt) | net.sourceforge.htmlunit # htmlunit-core-js # 2.36.0 | <notextile></notextile>
 Public Domain | [Public Domain](null) | aopalliance # aopalliance # 1.0 | <notextile></notextile>
 Public Domain | [Public domain](null) | net.iharder # base64 # 2.3.8 | <notextile></notextile>
-unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcpkix-jdk15on # 1.60 | <notextile></notextile>
-unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcprov-jdk15on # 1.60 | <notextile></notextile>
+unrecognized | [Bouncy Castle Licence](http://www.bouncycastle.org/licence.html) | org.bouncycastle # bcprov-jdk15on # 1.52 | <notextile></notextile>
 unrecognized | [EDL 1.0](http://www.eclipse.org/org/documents/edl-v10.php) | jakarta.activation # jakarta.activation-api # 1.2.2 | <notextile></notextile>
 unrecognized | [Eclipse Distribution License - v 1.0](http://www.eclipse.org/org/documents/edl-v10.php) | jakarta.xml.bind # jakarta.xml.bind-api # 2.3.3 | <notextile></notextile>
-unrecognized | [Eclipse Public License - v 1.0](https://www.eclipse.org/legal/epl-v10.html) | org.eclipse.collections # eclipse-collections # 9.2.0 | <notextile></notextile>
-unrecognized | [Eclipse Public License - v 1.0](https://www.eclipse.org/legal/epl-v10.html) | org.eclipse.collections # eclipse-collections-api # 9.2.0 | <notextile></notextile>
 unrecognized | [Eclipse Public License 1.0](http://www.eclipse.org/legal/epl-v10.html) | junit # junit # 4.13.2 | <notextile></notextile>
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts # 1.16.0 | <notextile></notextile>
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts-core # 1.16.0 | <notextile></notextile>

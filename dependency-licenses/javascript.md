@@ -1,7 +1,7 @@
 ├─ MIT: 200
 ├─ ISC: 59
 ├─ BSD-3-Clause: 54
-├─ Apache-2.0: 51
+├─ Apache-2.0: 52
 ├─ BSD-2-Clause: 14
 ├─ 0BSD: 2
 ├─ (CC-BY-4.0 AND OFL-1.1 AND MIT): 1

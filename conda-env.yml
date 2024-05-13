@@ -1,10 +1,6 @@
 # The full list of Conda dependencies for building and running LynxKite.
 # For a more limited list please see conda-env.sh.
 channels:
-- rapidsai
-- pyg
-- nvidia
-- pytorch
 - conda-forge
 - r
 dependencies:
@@ -27,35 +23,12 @@ dependencies:
 - libstdcxx-ng
 - libnetworkit==10.0
 - libtlx==0.5.20200222
-# For Python and ML.
+# For ML.
 - python==3.10.*
-- numpy
-- pandas
-- scikit-learn
-- pyarrow
-- cudatoolkit==11.3.1
-- cugraph
-- pytorch::pytorch==1.13.1=*cuda*
-- pyg==2.2.0=*cu113*
-- matplotlib
-- openai
-- langchain
-# PyG dependencies get confused under Mamba.
-- pytorch-cluster=*=*cu113*
-- pytorch-scatter=*=*cu113*
-- pytorch-sparse=*=*cu113*
-- pytorch-spline-conv=*=*cu113*
-# For Python API and tools.
-- autopep8
-- mypy
-- ruamel.yaml
-- requests
-- typed-ast
-- types-requests
 # For R API and tools.
 - r
 - r-essentials
-- r-arrow==10.0.1 # 11.0.0 isn't built with dataset support.
+- r-arrow=
 - r-htmlwidgets
 - r-openssl
 - r-plotly

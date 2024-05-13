@@ -1,15 +1,17 @@
 '''Generates Pandas code for a graph using OpenAI.'''
 import itertools
 import numpy as np
+import openai
 import os
 import pandas as pd
 import re
 import sys
 import traceback
-import langchain
 
 assert 'OPENAI_API_KEY' in os.environ, \
     'Please set OPENAI_API_KEY in the LynxKite running environment.'
+openai_client = openai.OpenAI()
+openai_model = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
 
 default_examples = [
     dict(
@@ -206,14 +208,17 @@ def check_examples(examples):
 check_examples(default_examples)
 
 
-def openai(messages):
+def ask_openai(messages):
   for m in messages:
-    print(m.content)
+    print(m['content'])
   print('waiting for OpenAI...')
-  chat = langchain.chat_models.ChatOpenAI(temperature=0)
-  response = chat(messages)
-  print(response.content)
-  return response
+  response = openai_client.chat.completions.create(
+      model=openai_model,
+      temperature=0,
+      messages=messages)
+  msg = ai_msg(response.choices[0].message.content)
+  print(msg['content'])
+  return msg
 
 
 def cleanup(df):
@@ -224,11 +229,11 @@ def cleanup(df):
 
 
 def human_msg(content):
-  return langchain.schema.HumanMessage(content=content)
+  return dict(role="user", content=str(content))
 
 
 def ai_msg(content):
-  return langchain.schema.AIMessage(content=content)
+  return dict(role="assistant", content=str(content))
 
 
 def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
@@ -268,9 +273,9 @@ def pandas_on_graph(*, nodes, edges, query, output_schema, examples=None):
     ]
   iterations = 3
   for i in range(iterations):
-    msg = openai(messages)
+    msg = ask_openai(messages)
     try:
-      df = run_code(nodes=nodes, edges=edges, code=get_code(msg.content))
+      df = run_code(nodes=nodes, edges=edges, code=get_code(msg['content']))
     except ImportError:
       messages.append(msg)
       messages.append(human_msg(f'''

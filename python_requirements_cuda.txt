@@ -1,0 +1,15 @@
+# Python dependencies for CUDA operations. They are separated because they are big.
+--extra-index-url https://pypi.nvidia.com
+angle-emb
+cugraph-cu12
+scikit-learn
+sentence-transformers
+torch_geometric==2.2.*
+torch==2.3.*
+transformers
+--find-links https://data.pyg.org/whl/torch-2.3.0+cu121.html
+pyg_lib
+torch_scatter
+torch_sparse
+torch_cluster
+torch_spline_conv
