@@ -201,6 +201,8 @@ class Op:
     # We add /lib and /etc/resolv.conf to enable DNS lookups.
     subprocess.run(['mkdir', '-p', jail + '/etc'], check=True)
     subprocess.run(['cp', '/etc/resolv.conf', jail + '/etc'], check=True)
+    # Create /tmp for temporary files.
+    subprocess.run(['mkdir', '-p', jail + '/tmp'], check=True)
     for e in self.inputs.values():
       mount(f'{self.datadir}/{e}', f'{jail}/data/{e}')
     # Fork and jail the child.
