@@ -14,7 +14,7 @@ docker build . -t lynxkite/lynxkite:latest
 docker build . -t lynxkite/lynxkite:$VERSION
 docker build . --build-arg KITE_ENABLE_CUDA=yes -t lynxkite/lynxkite:latest-cuda
 docker build . --build-arg KITE_ENABLE_CUDA=yes -t lynxkite/lynxkite:$VERSION-cuda
-if [ "$2" == "push" ]; then
+if [ "${2:-}" == "push" ]; then
   docker push lynxkite/lynxkite:$VERSION
   docker push lynxkite/lynxkite:$VERSION-cuda
   docker push lynxkite/lynxkite:latest

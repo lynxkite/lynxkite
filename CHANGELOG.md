@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 5.4.1
+
+- Reduced the size of the released Docker image. [#418](https://github.com/lynxkite/lynxkite/pull/418)
+
 ### 5.4.0
 
 - Changed the license from AGPL to Apache 2.0. [#416](https://github.com/lynxkite/lynxkite/pull/416)
