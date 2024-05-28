@@ -34,9 +34,8 @@ from collections import deque, defaultdict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection, TYPE_CHECKING)
 import requests
-from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import textwrap
-import shutil
 import socketserver
 import lynx.operations
 if TYPE_CHECKING:
@@ -387,8 +386,8 @@ class LynxKite:
   def extra_operation_names(self) -> List[str]:
     '''Synthetic operations that only exist in the API.'''
     return [
-      n + 'Now' for n in self.box_catalog().box_names()
-      if n.startswith('import') or n.startswith('export')]
+        n + 'Now' for n in self.box_catalog().box_names()
+        if n.startswith('import') or n.startswith('export')]
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -1146,7 +1145,7 @@ def _fn_id(fn: Callable):
 
 
 def _is_lambda(f: Callable):
-  def LAMBDA(): return 0
+  LAMBDA = lambda: 0
   return isinstance(f, type(LAMBDA)) and f.__name__ == LAMBDA.__name__
 
 
@@ -1514,8 +1513,6 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
-    tmpfile_list: List[str] = []
-
     with _LKTableContext(lk) as ctx:
       # Find inputs.
       resp = lk.get_workspace(wsname, stack)
@@ -1834,7 +1831,7 @@ class SideEffectCollector:
 
   AUTO: 'SideEffectCollector'  # For @subworkspace.
 
-  def __init__(self):
+  def __init__(self) -> None:
     self.top_level_side_effects: List[Box] = []
 
   def add_box(self, box: Box) -> None:

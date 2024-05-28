@@ -2,6 +2,7 @@
 This document has been automatically generated.
 '''
 
+
 def addConstantEdgeAttribute(name, value, type):
   '''  Adds an attribute with a fixed value to every edge.
 
@@ -10,6 +11,7 @@ def addConstantEdgeAttribute(name, value, type):
   :param type:   The operation can create either `number` (numeric) or `String` typed attributes.
   '''
 
+
 def addConstantVertexAttribute(name, value, type):
   '''  Adds an attribute with a fixed value to every vertex.
 
@@ -17,6 +19,7 @@ def addConstantVertexAttribute(name, value, type):
   :param value:   The attribute value. Should be a number if *Type* is set to `number`.
   :param type:   The operation can create either `number` or `String` typed attributes.
   '''
+
 
 def addPopularityXSimilarityOptimizedEdges(externaldegree, internaldegree, exponent, seed):
   '''  Experimental Feature
@@ -45,17 +48,20 @@ def addPopularityXSimilarityOptimizedEdges(externaldegree, internaldegree, expon
     +
   '''
 
+
 def addRandomEdgeAttribute():
   '''
 
 
   '''
 
+
 def addRandomVertexAttribute():
   '''
 
 
   '''
+
 
 def addRankAttribute(rankattr, keyattr, order):
   '''  Creates a new vertex attribute that is the *rank* of the vertex when ordered by the key
@@ -74,6 +80,7 @@ def addRankAttribute(rankattr, keyattr, order):
     the vertex that is at the end of the alphabet.
   '''
 
+
 def addReversedEdges(distattr):
   '''  For every A→B edge adds a new B→A edge, copying over the attributes of the original.
   Thus this operation will double the number of edges in the graph.
@@ -88,12 +95,14 @@ def addReversedEdges(distattr):
   :param distattr:   The name of the distinguishing edge attribute; leave it empty if the attribute should not be created.
   '''
 
+
 def aggregateEdgeAttributeGlobally(prefix):
   '''  Aggregates edge attributes across the entire graph into one graph attribute for each attribute.
   For example you could use it to calculate the average call duration across an entire call dataset.
 
   :param prefix:   Save the aggregated values with this prefix.
   '''
+
 
 def aggregateEdgeAttributeToVertices(prefix, direction):
   '''  Aggregates an attribute on all the edges going in or out of vertices.
@@ -105,12 +114,14 @@ def aggregateEdgeAttributeToVertices(prefix, direction):
      - `all edges`: Aggregate across all the edges going in or out of each vertex.
   '''
 
+
 def aggregateFromSegmentation(prefix):
   '''  Aggregates vertex attributes across all the segments that a vertex in the base graph belongs to.
   For example, it can calculate the average size of cliques a person belongs to.
 
   :param prefix:   Save the aggregated attributes with this prefix.
   '''
+
 
 def aggregateOnNeighbors(prefix, direction):
   '''  Aggregates across the vertices that are connected to each vertex. You can use
@@ -140,6 +151,7 @@ def aggregateOnNeighbors(prefix, direction):
        that have both an outgoing edge to and an incoming edge from A.
   '''
 
+
 def aggregateToSegmentation():
   '''  Aggregates vertex attributes across all the vertices that belong to a segment.
   For example, it can calculate the average age of each clique.
@@ -147,12 +159,14 @@ def aggregateToSegmentation():
 
   '''
 
+
 def aggregateVertexAttributeGlobally(prefix):
   '''  Aggregates vertex attributes across the entire graph into one graph attribute for each attribute.
   For example you could use it to calculate the average age across an entire dataset of people.
 
   :param prefix:   Save the aggregated values with this prefix.
   '''
+
 
 def anchor(description, parameters):
   '''  This special box represents the workspace itself. There is always exactly one instance of it. It
@@ -171,6 +185,7 @@ def anchor(description, parameters):
     This makes it easy to change the date for all imported files at once later.
   '''
 
+
 def approximateClusteringCoefficient(name, bits):
   '''  Scalable algorithm to calculate the approximate local
   `clustering coefficient <http://en.wikipedia.org/wiki/Clustering_coefficient>`_
@@ -185,6 +200,7 @@ def approximateClusteringCoefficient(name, bits):
     the quality of the approximation and the memory and time consumption of the algorithm.
   '''
 
+
 def approximateEmbeddedness(name, bits):
   '''  Scalable algorithm to calculate the approximate overlap size of vertex neighborhoods
   along the edges. If an A→B edge has an embeddedness of `N`, it means A and B have
@@ -194,6 +210,7 @@ def approximateEmbeddedness(name, bits):
   :param bits:   This algorithm is an approximation. This parameter sets the trade-off between
     the quality of the approximation and the memory and time consumption of the algorithm.
   '''
+
 
 def bundleVertexAttributesIntoAVector(output, elements):
   '''  Bundles the chosen `number` and `Vector[number]` attributes into one `Vector` attribute.
@@ -211,6 +228,7 @@ def bundleVertexAttributesIntoAVector(output, elements):
   :param elements:   The attributes you would like to bundle into a Vector.
   '''
 
+
 def checkCliques(selected, bothdir):
   '''  Validates that the segments of the segmentation are in fact cliques.
 
@@ -219,6 +237,7 @@ def checkCliques(selected, bothdir):
   :param selected:   The validation can be restricted to a subset of the segments, resulting in quicker operation.
   :param bothdir:   Whether edges have to exist in both directions between all members of a clique.
   '''
+
 
 def classifyWithModel(name, model):
   '''  Creates classifications from a model and vertex attributes of the graph. For the classifications
@@ -232,6 +251,7 @@ def classifyWithModel(name, model):
     Every feature of the model needs to be mapped to a vertex attribute.
   '''
 
+
 def findVertexColoring(name):
   '''  Finds a coloring of the vertices of the graph with no two neighbors with the same color. The colors are represented by
   numbers. Tries to find a coloring with few colors.
@@ -242,6 +262,7 @@ def findVertexColoring(name):
 
   :param name:   The new attribute will be created under this name.
   '''
+
 
 def combineSegmentations(name, segmentations):
   '''  Creates a new segmentation from the selected existing segmentations.
@@ -258,6 +279,7 @@ def combineSegmentations(name, segmentations):
   :param segmentations:   The segmentations to combine. Select two or more.
   '''
 
+
 def comment(comment):
   '''  Adds a comment to the workspace. As with any box, you can freely place your comment anywhere on the
   workspace. Adding comments does not have any effect on the computation but can potentially make your
@@ -268,6 +290,7 @@ def comment(comment):
 
   :param comment:   Markdown text to be displayed in the workspace.
   '''
+
 
 def compareSegmentationEdges(golden, test):
   '''  Compares the edge sets of two segmentations and computes *precision* and *recall*.
@@ -284,6 +307,7 @@ def compareSegmentationEdges(golden, test):
   :param test:   Segmentation containing the test edges.
   '''
 
+
 def computeAssortativity(name, attr):
   '''  Assortativity is the correlation in the values of an attribute
   along the edges of the graph. A high assortativity means connected vertices
@@ -294,6 +318,7 @@ def computeAssortativity(name, attr):
   :param name:   The new graph attribute will be created under this name.
   :param attr:   The attribute in which you are interested in correlations along the edges.
   '''
+
 
 def computeCentrality(name, algorithm, direction, weight, samples, maxdiameter, bits):
   '''  Calculates a centrality metric for every vertex. Higher centrality means that
@@ -326,6 +351,7 @@ def computeCentrality(name, algorithm, direction, weight, samples, maxdiameter, 
     a lower number in order to speed up the algorithm or meet memory constraints.
   '''
 
+
 def computeClusteringCoefficient(name):
   '''  Calculates the local
   `clustering coefficient <http://en.wikipedia.org/wiki/Clustering_coefficient>`_
@@ -338,6 +364,7 @@ def computeClusteringCoefficient(name):
   :param name:   The new attribute will be created under this name.
   '''
 
+
 def computeCoverageOfSegmentation(name, weight):
   '''  Computes a scalar for a non-overlapping segmentation.
   Coverage is the fraction of edges that connect vertices within the same segment.
@@ -348,6 +375,7 @@ def computeCoverageOfSegmentation(name, weight):
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   :param weight:   An edge attribute can be used to weight the edges in the coverage computation.
   '''
+
 
 def computeDegree(name, direction):
   '''  For every vertex, this operation calculates either the number of edges it is connected to
@@ -376,6 +404,7 @@ def computeDegree(name, direction):
        that have both an outgoing edge to and an incoming edge from A.
   '''
 
+
 def computeDiameter(name, max_error):
   '''  The diameter of a graph is the maximal shortest-distance path length
   between two vertices. All vertex pairs are at most this far from each
@@ -391,6 +420,7 @@ def computeDiameter(name, max_error):
     upper bounds on the diameter. With 0.1 maximum relative error, for example, the
     upper bound will be no more than 10% greater than the true diameter.
   '''
+
 
 def computeDispersion(name):
   '''  Calculates the extent to which two people's mutual friends are not themselves well-connected.
@@ -408,6 +438,7 @@ def computeDispersion(name):
 
   :param name:   The new edge attribute will be created under this name.
   '''
+
 
 def computeDistanceViaShortestPath(name, edge_distance, starting_distance, iterations):
   '''  Calculates the length of the shortest path from a given set of vertices for every vertex.
@@ -429,6 +460,7 @@ def computeDistanceViaShortestPath(name, edge_distance, starting_distance, itera
   :param iterations:   The maximum number of edges considered for a shortest-distance path.
   '''
 
+
 def computeEdgeCutOfSegmentation(name, weight):
   '''  Computes a scalar for a non-overlapping segmentation.
   Edge cut is the total weight of the edges going between different segments.
@@ -439,6 +471,7 @@ def computeEdgeCutOfSegmentation(name, weight):
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   :param weight:   An edge attribute can be used as edge weight.
   '''
+
 
 def computeEffectiveDiameter(name, ratio, algorithm, bits, approximations):
   '''  The effective diameter is a distance within which a given portion
@@ -466,12 +499,14 @@ def computeEffectiveDiameter(name, ratio, algorithm, bits, approximations):
     http://www.cs.cmu.edu/~christos/PUBLICATIONS/kdd02-anf.pdf
   '''
 
+
 def computeEmbeddedness(name):
   '''  `Edge embeddedness <https://arxiv.org/abs/1009.1686>`_ is the overlap size of vertex neighborhoods along
   the edges. If an A→B edge has an embeddedness of `N`, it means A and B have `N` common neighbors.
 
   :param name:   The new attribute will be created under this name.
   '''
+
 
 def computeHubDominance(name):
   '''  Computes the hub dominance metric for each segment in a segmentation.
@@ -492,6 +527,7 @@ def computeHubDominance(name):
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   '''
 
+
 def computeHyperbolicEdgeProbability(radial, angular):
   '''  Adds edge attribute *hyperbolic edge probability* based on
   hyperbolic distances between vertices. This indicates
@@ -505,6 +541,7 @@ def computeHyperbolicEdgeProbability(radial, angular):
   :param angular:   The vertex attribute to be used as angular coordinates.
     Values should be 0 - 2 * Pi.
   '''
+
 
 def computeInPython(code, inputs, outputs):
   '''  Executes custom Python code to define new vertex, edge, or graph attributes, to transform a table,
@@ -530,6 +567,7 @@ def computeInPython(code, inputs, outputs):
     +
     Set to `matplotlib` or `html` to output a visualization.
   '''
+
 
 def computeInR(code, inputs, outputs):
   '''  Executes custom R code to define new vertex, edge, or graph attributes, to transform a table,
@@ -624,6 +662,7 @@ def computeInR(code, inputs, outputs):
     Set to `plot` or `html` to output visualizations.
   '''
 
+
 def computeInputs():
   '''  Triggers the computations for all entities associated with its input.
 
@@ -633,6 +672,7 @@ def computeInputs():
 
 
   '''
+
 
 def computeModularityOfSegmentation(name, weight):
   '''  Computes a scalar for a non-overlapping segmentation.
@@ -654,6 +694,7 @@ def computeModularityOfSegmentation(name, weight):
   :param weight:   An edge attribute can be used to weight the edges instead of just looking at
     edge counts.
   '''
+
 
 def computePageRank(name, weights, iterations, damping, direction):
   '''  Calculates `PageRank <http://en.wikipedia.org/wiki/PageRank>`_ for every vertex.
@@ -681,6 +722,7 @@ def computePageRank(name, weights, iterations, damping, direction):
      - `all edges`: Simulate random walk in both directions.
   '''
 
+
 def computeSegmentConductance(name, weight):
   '''  Computes the conductance of each segment in a non-overlapping segmentation.
   The conductance of a segment is the number of edges going between the segment
@@ -702,6 +744,7 @@ def computeSegmentConductance(name, weight):
     the total weight of the cut is compared to the weighted degrees.
   '''
 
+
 def computeSegmentDensity(name):
   '''  Computes the density of each segment in a non-overlapping segmentation.
   The density of a segment is the number of internal edges divided by the
@@ -713,10 +756,11 @@ def computeSegmentDensity(name):
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   '''
 
+
 def computeSegmentExpansion(name, weight):
   '''  Computes the expansion of each segment in a non-overlapping segmentation.
   The expansion of a segment is the number of edges going between the segment
-  and the rest of the graph divided by the number of vertices in the segment or 
+  and the rest of the graph divided by the number of vertices in the segment or
   in the rest of the graph (whichever is smaller).
 
   A high expansion value indicates a segment that is strongly connected to the rest
@@ -734,6 +778,7 @@ def computeSegmentExpansion(name, weight):
     the total weight of the cut is compared to the weighted degrees.
   '''
 
+
 def computeSegmentFragmentation(name):
   '''  Computes the fragmentation of each segment in a non-overlapping segmentation.
   The fragmentation of a segment is one minus the ratio of the size of its largest
@@ -748,6 +793,7 @@ def computeSegmentFragmentation(name):
 
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   '''
+
 
 def computeSegmentStability(name):
   '''  Computes the stability of each segment in a non-overlapping segmentation.
@@ -765,6 +811,7 @@ def computeSegmentStability(name):
   :param name:   This box creates a new vertex attribute on the segmentation by this name.
   '''
 
+
 def connectVerticesOnAttribute(fromattr, toattr):
   '''  Creates edges between vertices that are equal in a chosen attribute. If the source attribute of A
   equals the destination attribute of B, an A→B edge will be generated.
@@ -778,6 +825,7 @@ def connectVerticesOnAttribute(fromattr, toattr):
   :param toattr:   An A→B edge is generated when the source attribute on A matches this attribute on B.
   '''
 
+
 def convertEdgeAttributeToNumber(attr):
   '''  Converts the selected `String` typed edge attributes to the `number` type.
 
@@ -786,6 +834,7 @@ def convertEdgeAttributeToNumber(attr):
 
   :param attr:   The attributes to be converted.
   '''
+
 
 def convertEdgeAttributeToString(attr):
   '''  Converts the selected edge attributes to `String` type.
@@ -796,6 +845,7 @@ def convertEdgeAttributeToString(attr):
   :param attr:   The attributes to be converted.
   '''
 
+
 def convertVertexAttributeToNumber(attr):
   '''  Converts the selected `String` typed vertex attributes to the `number` type.
 
@@ -804,6 +854,7 @@ def convertVertexAttributeToNumber(attr):
 
   :param attr:   The attributes to be converted.
   '''
+
 
 def convertVertexAttributeToString(attr):
   '''  Converts the selected vertex attributes to `String` type.
@@ -814,12 +865,14 @@ def convertVertexAttributeToString(attr):
   :param attr:   The attributes to be converted.
   '''
 
+
 def copyEdgeAttribute(name, destination):
   '''  Creates a copy of an edge attribute.
 
-  :param name: 
+  :param name:
   :param destination:
   '''
+
 
 def copyEdgesToBaseGraph():
   '''  Copies the edges from a segmentation to the base graph. The copy is performed along the links
@@ -834,6 +887,7 @@ def copyEdgesToBaseGraph():
 
   '''
 
+
 def copyEdgesToSegmentation():
   '''  Copies the edges from the base graph to the segmentation. The copy is performed along the links
   between the base graph and the segmentation. If a base vertex belongs to no segments, its edges
@@ -842,6 +896,7 @@ def copyEdgesToSegmentation():
 
 
   '''
+
 
 def copyGraphAttributeFromOtherGraph(sourceproject, sourcescalarname, destscalarname):
   '''  This operation can take a graph attribute from another graph and copy it
@@ -858,26 +913,30 @@ def copyGraphAttributeFromOtherGraph(sourceproject, sourcescalarname, destscalar
   :param destscalarname:   This will be the name of the copied graph attribute in this graph.
   '''
 
+
 def copyGraphAttribute(name, destination):
   '''  Creates a copy of a graph attribute.
 
-  :param name: 
+  :param name:
   :param destination:
   '''
+
 
 def copySegmentation(name, destination):
   '''  Creates a copy of a segmentation.
 
-  :param name: 
+  :param name:
   :param destination:
   '''
+
 
 def copyVertexAttribute(name, destination):
   '''  Creates a copy of a vertex attribute.
 
-  :param name: 
+  :param name:
   :param destination:
   '''
+
 
 def copyVertexAttributesFromSegmentation(prefix):
   '''  Copies all vertex attributes from the segmentation to the parent.
@@ -888,6 +947,7 @@ def copyVertexAttributesFromSegmentation(prefix):
   :param prefix:   A prefix for the new attribute names. Leave empty for no prefix.
   '''
 
+
 def copyVertexAttributesToSegmentation(prefix):
   '''  Copies all vertex attributes from the parent to the segmentation.
 
@@ -895,6 +955,7 @@ def copyVertexAttributesToSegmentation(prefix):
 
   :param prefix:   A prefix for the new attribute names. Leave empty for no prefix.
   '''
+
 
 def correlateTwoAttributes(attra, attrb):
   '''  Calculates the Pearson correlation coefficient of two attributes.
@@ -906,6 +967,7 @@ def correlateTwoAttributes(attra, attrb):
   :param attra:   The correlation of these two attributes will be calculated.
   :param attrb:   The correlation of these two attributes will be calculated.
   '''
+
 
 def createAGraphWithCertainDegrees(size, degrees, algorithm, seed):
   '''  Creates a graph in which the distribution of vertex degrees is as specified.
@@ -925,6 +987,7 @@ def createAGraphWithCertainDegrees(size, degrees, algorithm, seed):
     +
   '''
 
+
 def createBarabásiAlbertGraph(size, attachments_per_vertex, connected_at_start, seed):
   '''  Creates a random graph using the https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model[Barabási–Albert model].
   The vertices are created one by one and connected to a set number of randomly chosen
@@ -939,6 +1002,7 @@ def createBarabásiAlbertGraph(size, attachments_per_vertex, connected_at_start,
   :param seed:   The random seed.
     +
   '''
+
 
 def createClusteredRandomGraph(size, clusters, probability_in, probability_out, seed):
   '''  Creates a random graph with a given number of clusters.
@@ -956,6 +1020,7 @@ def createClusteredRandomGraph(size, clusters, probability_in, probability_out, 
     +
   '''
 
+
 def createDorogovtsevMendesRandomGraph(size, seed):
   '''  Creates a planar random graph with a power-law distribution. Starts with a triangle and in each
   step adds a new node that is connected to the two endpoints of a randomly selected edge.
@@ -968,6 +1033,7 @@ def createDorogovtsevMendesRandomGraph(size, seed):
   :param seed:   The random seed.
     +
   '''
+
 
 def createEdgesFromCooccurrence():
   '''  Connects vertices in the base graph if they co-occur in any segments.
@@ -982,11 +1048,13 @@ def createEdgesFromCooccurrence():
 
   '''
 
+
 def createEdgesFromSetOverlaps(minoverlap):
   '''  Connects segments with large enough overlaps.
 
   :param minoverlap:   Two segments will be connected if they have at least this many members in common.
   '''
+
 
 def createErdősRényiGraph(size, probability, seed):
   '''  Creates a random graph using the https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model[Erdős–Rényi model].
@@ -1001,11 +1069,13 @@ def createErdősRényiGraph(size, probability, seed):
     +
   '''
 
+
 def createExampleGraph():
   '''  Creates small test graph with 4 people and 4 edges between them.
 
 
   '''
+
 
 def createGraphInPython(code, outputs):
   '''  Executes custom Python code to define a graph.
@@ -1024,6 +1094,7 @@ def createGraphInPython(code, outputs):
     For example, `vs.my*new*attribute: str, vs.another*new*attribute: float, graph_attributes.also_new: str`.
   '''
 
+
 def createGraphInR(code, outputs):
   '''  Executes custom R code to define a graph.
   Ideal for creating complex graphs programmatically and for loading
@@ -1040,6 +1111,7 @@ def createGraphInR(code, outputs):
     These must be annotated with the type of the attribute.
     For example, `vs.my*new*attribute: character, vs.another*new*attribute: double, graph_attributes.also_new: character`.
   '''
+
 
 def createHyperbolicRandomGraph(size, avg_degree, exponent, temperature, seed):
   '''  Creates a random graph based on randomly placed points on the hyperbolic plane.
@@ -1071,7 +1143,9 @@ def createHyperbolicRandomGraph(size, avg_degree, exponent, temperature, seed):
     +
   '''
 
-def createLFRRandomGraph(size, avg_degree, max_degree, degree_exponent, min_community, max_community, community_exponent, avg_mixing, seed):
+
+def createLFRRandomGraph(size, avg_degree, max_degree, degree_exponent,
+                         min_community, max_community, community_exponent, avg_mixing, seed):
   '''  LFR stands for Lancichinetti, Fortunato, and Radicchi, the authors of
   `Benchmark graphs for testing community detection algorithms <https://arxiv.org/abs/0805.4770>`_
   and `Benchmarks for testing community detection algorithms on directed and weighted graphs with overlapping communities <https://arxiv.org/abs/0904.3940>`_
@@ -1101,6 +1175,7 @@ def createLFRRandomGraph(size, avg_degree, max_degree, degree_exponent, min_comm
     +
   '''
 
+
 def createMocnikRandomGraph(size, dimension, density, seed):
   '''  Creates a random graph as described in
   https://www.mocnik-science.net/publications/2015c%20-%20Franz-Benjamin%20Mocnik%20-%20Modelling%20Spatial%20Structures.pdf[Modelling Spatial Structures] by Mocnik et al.
@@ -1116,6 +1191,7 @@ def createMocnikRandomGraph(size, dimension, density, seed):
   :param seed:   The random seed.
     +
   '''
+
 
 def createP2PRandomGraph(size, dense_areas, max_degree, neighborhood_radius, seed):
   '''  Creates a random graph using the model described in `A distributed diffusive heuristic for clustering a virtual P2P supercomputer <http://parco.iti.kit.edu/henningm/data/distribClust.pdf>`_ by Gehweiler et al.
@@ -1139,6 +1215,7 @@ def createP2PRandomGraph(size, dense_areas, max_degree, neighborhood_radius, see
     +
   '''
 
+
 def createRandomEdges(degree, seed):
   '''  Creates edges randomly, so that each vertex will have a degree uniformly chosen between 0 and
   2 * the provided parameter.
@@ -1151,6 +1228,7 @@ def createRandomEdges(degree, seed):
   :param seed:   The random seed.
     +
   '''
+
 
 def createScalefreeRandomEdges(iterations, periterationmultiplier):
   '''  Creates edges randomly so that the resulting graph is scale-free.
@@ -1167,6 +1245,7 @@ def createScalefreeRandomEdges(iterations, periterationmultiplier):
     as the multiplier you will have _m^N^_ edges by the end.
   '''
 
+
 def createVertices(size):
   '''  Creates a new vertex set with no edges. Two attributes are generated: `id` and `ordinal`. `id`
   is the internal vertex ID, while `ordinal` is an index for the vertex: it goes from zero to the
@@ -1174,6 +1253,7 @@ def createVertices(size):
 
   :param size:   The number of vertices to create.
   '''
+
 
 def customPlot(plot_code):
   '''  Creates a plot from the input table. The plot can be defined using the
@@ -1188,6 +1268,7 @@ def customPlot(plot_code):
   :param plot_code:   The Vega-Lite specification in JSON.
   '''
 
+
 def defineSegmentationLinksFromMatchingAttributes(base_id_attr, seg_id_attr):
   '''  Connect vertices in the base graph with segments based on matching attributes.
 
@@ -1201,12 +1282,14 @@ def defineSegmentationLinksFromMatchingAttributes(base_id_attr, seg_id_attr):
     matches the selected vertex attribute of the segment.
   '''
 
+
 def deriveColumn(name, value):
   '''  Derives a new column on a table input via an SQL expression. Outputs a table.
 
   :param name:   The name of the new column.
   :param value:   The SQL expression to define the new column.
   '''
+
 
 def deriveEdgeAttribute(output, defined_attrs, expr, persist):
   '''  Generates a new attribute based on existing attributes. The value expression can be
@@ -1246,6 +1329,7 @@ def deriveEdgeAttribute(output, defined_attrs, expr, persist):
     at the cost of disk space.
   '''
 
+
 def deriveGraphAttribute(output, expr):
   '''  Generates a new <<graph-attributes, graph attribute>> based on existing graph attributes.
   The value expression can be an arbitrary Scala expression, and it can refer to existing
@@ -1257,6 +1341,7 @@ def deriveGraphAttribute(output, expr):
   :param output:   The new graph attribute will be created under this name.
   :param expr:   The Scala expression. You can enter multiple lines in the editor.
   '''
+
 
 def deriveVertexAttribute(output, defined_attrs, expr, persist):
   '''  Generates a new attribute based on existing vertex attributes. The value expression can be
@@ -1279,11 +1364,13 @@ def deriveVertexAttribute(output, defined_attrs, expr, persist):
     at the cost of disk space.
   '''
 
+
 def discardEdgeAttributes(name):
   '''  Throws away edge attributes.
 
   :param name:   The attributes to discard.
   '''
+
 
 def discardEdges():
   '''  Throws away all edges. This implies discarding all edge attributes too.
@@ -1291,11 +1378,13 @@ def discardEdges():
 
   '''
 
+
 def discardGraphAttributes(name):
   '''  Throws away graph attributes.
 
   :param name:   The graph attributes to discard.
   '''
+
 
 def discardLoopEdges():
   '''  Discards edges that connect a vertex to itself.
@@ -1303,17 +1392,20 @@ def discardLoopEdges():
 
   '''
 
+
 def discardSegmentation(name):
   '''  Throws away a segmentation value.
 
   :param name:   The segmentation to discard.
   '''
 
+
 def discardVertexAttributes(name):
   '''  Throws away vertex attributes.
 
   :param name:   The vertex attributes to discard.
   '''
+
 
 def embedStringAttribute(attr, save_as, method, model_name, batch_size):
   '''  Creates a string embedding for the selected edge or vertex attribute.
@@ -1339,6 +1431,7 @@ def embedStringAttribute(attr, save_as, method, model_name, batch_size):
     Higher values will use more GPU memory and generate embeddings faster.
   '''
 
+
 def embedVertices(save_as, iterations, dimensions, walks_per_node, walk_length, context_size):
   '''  Creates a vertex embedding using the
   `PyTorch Geometric implementation <https://pytorch-geometric.readthedocs.io/en/1.4.1/modules/nn.html#torch_geometric.nn.models.Node2Vec>`_
@@ -1352,6 +1445,7 @@ def embedVertices(save_as, iterations, dimensions, walks_per_node, walk_length, 
   :param context_size:   The random walks will be cut with a rolling window of this size.
     This allows reusing the same walk for multiple vertices.
   '''
+
 
 def exportEdgeAttributesToNeo4j(url, username, password, database, version, labels, keys):
   '''  Exports edge attributes from a graph in LynxKite to a
@@ -1383,8 +1477,10 @@ def exportEdgeAttributesToNeo4j(url, username, password, database, version, labe
     The attribute name must match the property name in Neo4j.
   '''
 
+
 def exportEdgeAttributesToNeo4jNow(url, username, password, database, version, labels, keys):
   '''The immediate version of :py:meth:`exportEdgeAttributesToNeo4j()`.'''
+
 
 def exportGraphToNeo4j(url, username, password, database, version, node_labels, relationship_type):
   '''  Exports a graph from LynxKite to `Neo4j <https://neo4j.com/>`_.
@@ -1417,8 +1513,11 @@ def exportGraphToNeo4j(url, username, password, database, version, node_labels, 
     installed on the Neo4j instance to use this.
   '''
 
-def exportGraphToNeo4jNow(url, username, password, database, version, node_labels, relationship_type):
+
+def exportGraphToNeo4jNow(url, username, password, database,
+                          version, node_labels, relationship_type):
   '''The immediate version of :py:meth:`exportGraphToNeo4j()`.'''
+
 
 def exportToAVRO(path, version, for_download):
   '''  `Apache AVRO <https://avro.apache.org/>`_ is a row-oriented remote procedure call and data serialization framework.
@@ -1438,10 +1537,13 @@ def exportToAVRO(path, version, for_download):
     are used to import the exported data.
   '''
 
+
 def exportToAVRONow(path, version, for_download):
   '''The immediate version of :py:meth:`exportToAVRO()`.'''
 
-def exportToCSV(path, delimiter, quote, quote_all, header, escape, null_value, date_format, timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
+
+def exportToCSV(path, delimiter, quote, quote_all, header, escape, null_value, date_format,
+                timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
   '''  CSV stands for comma-separated values. It is a common human-readable file format where each record
   is on a separate line and fields of the record are simply separated with a comma or other delimiter.
   CSV does not store data types, so all fields become strings when importing from this format.
@@ -1477,8 +1579,11 @@ def exportToCSV(path, delimiter, quote, quote_all, header, escape, null_value, d
     are used to import the exported data.
   '''
 
-def exportToCSVNow(path, delimiter, quote, quote_all, header, escape, null_value, date_format, timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
+
+def exportToCSVNow(path, delimiter, quote, quote_all, header, escape, null_value, date_format,
+                   timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
   '''The immediate version of :py:meth:`exportToCSV()`.'''
+
 
 def exportToDelta(path, version, for_download):
   '''  Export data to a Delta table.
@@ -1498,8 +1603,10 @@ def exportToDelta(path, version, for_download):
     are used to import the exported data.
   '''
 
+
 def exportToDeltaNow(path, version, for_download):
   '''The immediate version of :py:meth:`exportToDelta()`.'''
+
 
 def exportToHive(table, mode, partition_by):
   '''  Export a table directly to `Apache Hive <https://hive.apache.org/>`_.
@@ -1522,8 +1629,10 @@ def exportToHive(table, mode, partition_by):
     be used in conjunction with the "Drop the table if it already exists" mode.
   '''
 
+
 def exportToHiveNow(table, mode, partition_by):
   '''The immediate version of :py:meth:`exportToHive()`.'''
+
 
 def exportToJDBC(url, table, mode):
   '''  JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
@@ -1544,8 +1653,10 @@ def exportToJDBC(url, table, mode):
     table to already exist and it will add the exported data at the end of the existing table.
   '''
 
+
 def exportToJDBCNow(url, table, mode):
   '''The immediate version of :py:meth:`exportToJDBC()`.'''
+
 
 def exportToJSON(path, version, for_download):
   '''  JSON is a rich human-readable data format. It produces larger files than CSV but can represent
@@ -1567,8 +1678,10 @@ def exportToJSON(path, version, for_download):
     are used to import the exported data.
   '''
 
+
 def exportToJSONNow(path, version, for_download):
   '''The immediate version of :py:meth:`exportToJSON()`.'''
+
 
 def exportToORC(path, version, for_download):
   '''  `Apache ORC <https://orc.apache.org/>`_ is a columnar data storage format.
@@ -1588,8 +1701,10 @@ def exportToORC(path, version, for_download):
     are used to import the exported data.
   '''
 
+
 def exportToORCNow(path, version, for_download):
   '''The immediate version of :py:meth:`exportToORC()`.'''
+
 
 def exportToParquet(path, version, for_download):
   '''  `Apache Parquet <https://parquet.apache.org/>`_ is a columnar data storage format.
@@ -1609,8 +1724,10 @@ def exportToParquet(path, version, for_download):
     are used to import the exported data.
   '''
 
+
 def exportToParquetNow(path, version, for_download):
   '''The immediate version of :py:meth:`exportToParquet()`.'''
+
 
 def exportVertexAttributesToNeo4j(url, username, password, database, version, labels, keys):
   '''  Exports vertex attributes from a graph in LynxKite to a
@@ -1642,8 +1759,10 @@ def exportVertexAttributesToNeo4j(url, username, password, database, version, la
     The attribute name must match the property name in Neo4j.
   '''
 
+
 def exportVertexAttributesToNeo4jNow(url, username, password, database, version, labels, keys):
   '''The immediate version of :py:meth:`exportVertexAttributesToNeo4j()`.'''
+
 
 def exposeInternalEdgeID(name):
   '''  Exposes the internal edge ID as an attribute. Useful if you want to identify edges, for example in
@@ -1651,6 +1770,7 @@ def exposeInternalEdgeID(name):
 
   :param name:   The ID attribute will be saved under this name.
   '''
+
 
 def exposeInternalVertexID(name):
   '''  Exposes the internal vertex ID as an attribute. This attribute is automatically generated
@@ -1660,11 +1780,13 @@ def exposeInternalVertexID(name):
   :param name:   The ID attribute will be saved under this name.
   '''
 
+
 def externalComputation1():
   '''
 
 
   '''
+
 
 def externalComputation10():
   '''
@@ -1672,11 +1794,13 @@ def externalComputation10():
 
   '''
 
+
 def externalComputation2():
   '''
 
 
   '''
+
 
 def externalComputation3():
   '''
@@ -1684,11 +1808,13 @@ def externalComputation3():
 
   '''
 
+
 def externalComputation4():
   '''
 
 
   '''
+
 
 def externalComputation5():
   '''
@@ -1696,11 +1822,13 @@ def externalComputation5():
 
   '''
 
+
 def externalComputation6():
   '''
 
 
   '''
+
 
 def externalComputation7():
   '''
@@ -1708,17 +1836,20 @@ def externalComputation7():
 
   '''
 
+
 def externalComputation8():
   '''
 
 
   '''
 
+
 def externalComputation9():
   '''
 
 
   '''
+
 
 def fillEdgeAttributesWithConstantDefaultValues(title):
   '''  An attribute may not be defined on every edge. This operation sets a default value
@@ -1729,6 +1860,7 @@ def fillEdgeAttributesWithConstantDefaultValues(title):
     must be numeric for `number` attributes.
   '''
 
+
 def fillVertexAttributesWithConstantDefaultValues(title):
   '''  An attribute may not be defined on every vertex. This operation sets a default value
   for the vertices where it was not defined.
@@ -1737,6 +1869,7 @@ def fillVertexAttributesWithConstantDefaultValues(title):
     attributes for which the default value is left empty. The default value
     must be numeric for `number` attributes.
   '''
+
 
 def filterByAttributes(ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9):
   '''  Keeps only vertices and edges that match the specified filters.
@@ -1780,7 +1913,7 @@ def filterByAttributes(ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9):
     * `regex(^Abc)` for strings that start with `Abc`.
     * `regex(Abc$)` for strings that end with `Abc`.
     * `regex((.)\1)` for strings with double letters, like `abbc`.
-    * `regex(\d)` or `regex(
+    * `regex(\\d)` or `regex(
   :param ref6:   For the `Vector
   :param ref7:   These filters can be used for attributes whose type is `Vector`.
     The filter `all(...)` will match the `Vector` only when the internal filter matches all elements of the
@@ -1794,6 +1927,7 @@ def filterByAttributes(ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9):
   :param ref9:   If you need a string filter that contains a character with a special meaning (e.g., `>`), use double quotes around
     the string. E.g., `>"
   '''
+
 
 def filterWithSQL(vertex_filter, edge_filter, filter):
   '''  Filters a graph or table with SQL expressions.
@@ -1812,6 +1946,7 @@ def filterWithSQL(vertex_filter, edge_filter, filter):
   :param filter:   Filter with this SQL expression when the input is a table.
     For example you could write ``age > 30 and income < age * 2000``.
   '''
+
 
 def findCommunitiesWithLabelPropagation(name, weight, variant):
   '''  Uses the `label propagation algorithm <https://en.wikipedia.org/wiki/Label*propagation*algorithm>`_
@@ -1835,6 +1970,7 @@ def findCommunitiesWithLabelPropagation(name, weight, variant):
     - **degree-ordered:** A more predictable method that performs the updates in increasing
       order of degree.
   '''
+
 
 def findCommunitiesWithTheLouvainMethod(name, weight, resolution):
   '''  Uses the `Louvain method <https://en.wikipedia.org/wiki/Louvain_method>`_ to identify
@@ -1862,6 +1998,7 @@ def findCommunitiesWithTheLouvainMethod(name, weight, resolution):
     by Joerg Reichardt and Stefan Bornholdt.
   '''
 
+
 def findConnectedComponents(name, directions):
   '''  Creates a segment for every connected component of the graph.
 
@@ -1873,6 +2010,7 @@ def findConnectedComponents(name, directions):
     Require both directions:::
     The algorithm discards non-symmetric edges before calculating the components.
   '''
+
 
 def findInfocomCommunities(cliques_name, communities_name, bothdir, min, adjacency_threshold):
   '''  Creates a segmentation of overlapping communities.
@@ -1894,6 +2032,7 @@ def findInfocomCommunities(cliques_name, communities_name, bothdir, min, adjacen
     their sizes. It is normalized to
   '''
 
+
 def findKcoreDecomposition(name):
   '''  If we deleted all parts of a graph outside of the **k**-core, all vertices would
   still have a degree of at least *k*. More visually, the 0-core is the whole graph.
@@ -1908,6 +2047,7 @@ def findKcoreDecomposition(name):
   :param name:   The new attribute will be created under this name.
   '''
 
+
 def findMaximalCliques(name, bothdir, min):
   '''  Creates a segmentation of vertices based on the maximal cliques they are the member of.
   A maximal clique is a maximal set of vertices where there is an edge between every two vertex.
@@ -1921,6 +2061,7 @@ def findMaximalCliques(name, bothdir, min):
     This improves the performance of the algorithm, and small cliques are often not a good indicator
     anyway.
   '''
+
 
 def findModularClustering(name, weights, max_iterations, min_increment_per_iteration):
   '''  Tries to find a partitioning of the vertices with high
@@ -1937,6 +2078,7 @@ def findModularClustering(name, weights, max_iterations, min_increment_per_itera
   :param min_increment_per_iteration:   If the average modularity increment in the last few iterations goes below this then we stop
     the algorithm and settle with the clustering found.
   '''
+
 
 def findOptimalSpanningTree(name, weight, optimize, seed):
   '''  Finds the https://en.wikipedia.org/wiki/Minimum*spanning*tree[minimum (or maximum) spanning tree]
@@ -1957,6 +2099,7 @@ def findOptimalSpanningTree(name, weight, optimize, seed):
   :param seed:   When multiple trees have the optimal weight, one is chosen at random.
     +
   '''
+
 
 def findSteinerTree(ename, vname, pname, rname, edge_costs, root_costs, gain):
   '''  Given a directed graph in which each vertex has two associated quantities, the "gain",
@@ -1994,6 +2137,7 @@ def findSteinerTree(ename, vname, pname, rname, edge_costs, root_costs, gain):
     vertex in the solution. Negative or undefined values are treated as 0.
   '''
 
+
 def findTriangles(name, bothdir):
   '''  Creates a segment for every triangle in the graph.
   A triangle is defined as 3 pairwise connected vertices, regardless of the direction and number of edges between them.
@@ -2007,6 +2151,7 @@ def findTriangles(name, bothdir):
     If the direction of the edges is not important, set this to `false`. This will allow placing two
     vertices into the same clique even if they are only connected in one direction.
   '''
+
 
 def fingerprintBasedOnAttributes(leftname, rightname, weights, mo, ms, extra):
   '''  In a graph that has two different String identifier attributes (e.g. Facebook ID and
@@ -2031,6 +2176,7 @@ def fingerprintBasedOnAttributes(leftname, rightname, weights, mo, ms, extra):
   :param extra:   You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
     expert if you think you need this.
   '''
+
 
 def graphRejoin(attrs, segs, edge):
   '''  This operation allows the user to join (i.e., carry over) attributes from one graph to another one.
@@ -2068,6 +2214,7 @@ def graphRejoin(attrs, segs, edge):
     the edges of the target graph.
   '''
 
+
 def graphUnion():
   '''  The resulting graph is just a disconnected graph containing the vertices and edges of
   the two originating graphs. All vertex and edge attributes are preserved. If an attribute
@@ -2081,12 +2228,14 @@ def graphUnion():
 
   '''
 
+
 def graphVisualization():
   '''  Creates a visualization from the input graph. You can use the box parameter popup to
   define the parameters and layout of the visualization. See <<graph-visualizations>> for more details.
 
 
   '''
+
 
 def growSegmentation(direction):
   '''  Grows the segmentation along edges of the parent graph.
@@ -2100,6 +2249,7 @@ def growSegmentation(direction):
 
   :param direction:   Adds the neighbors to the segments using this direction.
   '''
+
 
 def hashVertexAttribute(attr, salt):
   '''  Uses the `SHA-256 <https://en.wikipedia.org/wiki/SHA-256>`_ algorithm to hash an attribute: all values
@@ -2127,6 +2277,7 @@ def hashVertexAttribute(attr, salt):
   :param salt:   The value of the salt.
   '''
 
+
 def importAVRO(filename):
   '''  `Apache AVRO <https://avro.apache.org/>`_ is a row-oriented remote procedure call and data serialization framework.
 
@@ -2134,10 +2285,13 @@ def importAVRO(filename):
     paths.
   '''
 
+
 def importAVRONow(filename):
   '''The immediate version of :py:meth:`importAVRO()`.'''
 
-def importCSV(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format, ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
+
+def importCSV(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format,
+              ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
   '''  CSV stands for comma-separated values. It is a common human-readable file format where each record
   is on a separate line and fields of the record are simply separated with a comma or other delimiter.
   CSV does not store data types, so all fields become strings when importing from this format.
@@ -2173,8 +2327,11 @@ def importCSV(filename, columns, delimiter, quote, escape, null_value, date_form
     `Double`. If disabled, all columns are imported as ``String``s.
   '''
 
-def importCSVNow(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format, ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
+
+def importCSVNow(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format,
+                 ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
   '''The immediate version of :py:meth:`importCSV()`.'''
+
 
 def importDelta(filename, version_as_of):
   '''  Import a Delta Table.
@@ -2184,10 +2341,13 @@ def importDelta(filename, version_as_of):
   :param version_as_of:   Version of the Delta table to be imported. The empty string corresponds to the latest version.
   '''
 
+
 def importDeltaNow(filename, version_as_of):
   '''The immediate version of :py:meth:`importDelta()`.'''
 
-def importFromBigQueryRawTable(parent_project_id, project_id, dataset_id, table_id, credentials_file, views_enabled):
+
+def importFromBigQueryRawTable(parent_project_id, project_id, dataset_id,
+                               table_id, credentials_file, views_enabled):
   '''  Import a table from BigQuery without a SQL query. (See also <<Import from BigQuery (Standard SQL result)>>.)
 
   Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
@@ -2207,10 +2367,14 @@ def importFromBigQueryRawTable(parent_project_id, project_id, dataset_id, table_
     See https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#reading-from-views
   '''
 
-def importFromBigQueryRawTableNow(parent_project_id, project_id, dataset_id, table_id, credentials_file, views_enabled):
+
+def importFromBigQueryRawTableNow(parent_project_id, project_id,
+                                  dataset_id, table_id, credentials_file, views_enabled):
   '''The immediate version of :py:meth:`importFromBigQueryRawTable()`.'''
 
-def importFromBigQueryStandardSQLResult(parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
+
+def importFromBigQueryStandardSQLResult(
+        parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
   '''  Execute a BigQuery Standard SQL query and get the result as a table. (See also <<Import from BigQuery (raw table)>>.)
 
   Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
@@ -2228,8 +2392,11 @@ def importFromBigQueryStandardSQLResult(parent_project_id, materialization_proje
     Leave this field empty if running on Dataproc or to use `GOOGLE*APPLICATION*CREDENTIALS`.
   '''
 
-def importFromBigQueryStandardSQLResultNow(parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
+
+def importFromBigQueryStandardSQLResultNow(
+        parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
   '''The immediate version of :py:meth:`importFromBigQueryStandardSQLResult()`.'''
+
 
 def importFromHive(table_name):
   '''  Import an `Apache Hive <https://hive.apache.org/>`_ table directly to LynxKite.
@@ -2237,8 +2404,10 @@ def importFromHive(table_name):
   :param table_name:   The name of the Hive table to import.
   '''
 
+
 def importFromHiveNow(table_name):
   '''The immediate version of :py:meth:`importFromHive()`.'''
+
 
 def importFromNeo4j(url, username, password, database, vertex_query, edge_query):
   '''  Import a graph from the `Neo4j <https://neo4j.com/>`_ graph database.
@@ -2267,8 +2436,10 @@ def importFromNeo4j(url, username, password, database, vertex_query, edge_query)
     The default query imports all the relationships from Neo4j. Leave empty to not import edges.
   '''
 
+
 def importFromNeo4jNow(url, username, password, database, vertex_query, edge_query):
   '''The immediate version of :py:meth:`importFromNeo4j()`.'''
+
 
 def importJDBC(jdbc_url, jdbc_table, key_column, num_partitions, partition_predicates):
   '''  JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
@@ -2311,8 +2482,10 @@ def importJDBC(jdbc_url, jdbc_table, key_column, num_partitions, partition_predi
     For example you could provide `AGE < 30, AGE >
   '''
 
+
 def importJDBCNow(jdbc_url, jdbc_table, key_column, num_partitions, partition_predicates):
   '''The immediate version of :py:meth:`importJDBC()`.'''
+
 
 def importJSON(filename):
   '''  JSON is a rich human-readable data format. JSON files are larger than CSV files but can represent
@@ -2323,8 +2496,10 @@ def importJSON(filename):
     +++<label class
   '''
 
+
 def importJSONNow(filename):
   '''The immediate version of :py:meth:`importJSON()`.'''
+
 
 def importORC(filename):
   '''  `Apache ORC <https://orc.apache.org/>`_ is a columnar data storage format.
@@ -2333,8 +2508,10 @@ def importORC(filename):
     paths.
   '''
 
+
 def importORCNow(filename):
   '''The immediate version of :py:meth:`importORC()`.'''
+
 
 def importParquet(filename, eager, schema):
   '''  `Apache Parquet <https://parquet.apache.org/>`_ is a columnar data storage format.
@@ -2351,8 +2528,10 @@ def importParquet(filename, eager, schema):
     using Apache Spark's syntax. For example: `col1: string; col2: int; col3: decimal(8, 2)`.
   '''
 
+
 def importParquetNow(filename, eager, schema):
   '''The immediate version of :py:meth:`importParquet()`.'''
+
 
 def importSnapshot(path):
   '''  Makes a previously saved snapshot accessible from the workspace.
@@ -2360,8 +2539,10 @@ def importSnapshot(path):
   :param path:   The full path to the snapshot in LynxKite's virtual filesystem.
   '''
 
+
 def importSnapshotNow(path):
   '''The immediate version of :py:meth:`importSnapshot()`.'''
+
 
 def importUnionOfTableSnapshots(paths):
   '''  Makes the union of a list of previously saved table snapshots accessible from the workspace
@@ -2376,8 +2557,10 @@ def importUnionOfTableSnapshots(paths):
      - The output table will union the input tables in the same order as defined here.
   '''
 
+
 def importUnionOfTableSnapshotsNow(paths):
   '''The immediate version of :py:meth:`importUnionOfTableSnapshots()`.'''
+
 
 def importWellknownGraphDataset(name):
   '''  Gives easy access to graph datasets commonly used for benchmarks.
@@ -2388,8 +2571,10 @@ def importWellknownGraphDataset(name):
   :param name:   Which dataset to import.
   '''
 
+
 def importWellknownGraphDatasetNow(name):
   '''The immediate version of :py:meth:`importWellknownGraphDataset()`.'''
+
 
 def input(name):
   '''  This special box represents an input that comes from outside of this workspace.
@@ -2403,6 +2588,7 @@ def input(name):
 
   :param name:   The name of the input, when the workspace is used as a custom box.
   '''
+
 
 def linkBaseGraphAndSegmentationByFingerprint(mo, ms, extra):
   '''  Finds the best matching between a base graph and a segmentation.
@@ -2421,6 +2607,7 @@ def linkBaseGraphAndSegmentationByFingerprint(mo, ms, extra):
   :param extra:   You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
     expert if you think you need this.
   '''
+
 
 def lookupRegion(position, shapefile, attribute, ignoreUnsupportedShapes, output):
   '''  For every `position` vertex attribute looks up features in a Shapefile and returns a specified
@@ -2445,11 +2632,13 @@ def lookupRegion(position, shapefile, attribute, ignoreUnsupportedShapes, output
   :param output:   The name of the new vertex attribute.
   '''
 
+
 def makeAllSegmentsEmpty():
   '''  Throws away all segmentation links.
 
 
   '''
+
 
 def mapHyperbolicCoordinates(seed):
   '''  Experimental Feature
@@ -2468,6 +2657,7 @@ def mapHyperbolicCoordinates(seed):
     +
   '''
 
+
 def mergeParallelEdgesByAttribute(key):
   '''  Multiple edges going from A to B that share the same value of the given edge attribute
   will be merged into a single edge. The edges going from A to B are not merged with edges
@@ -2478,6 +2668,7 @@ def mergeParallelEdgesByAttribute(key):
     include::glossary.asciidoc
   '''
 
+
 def mergeParallelEdges():
   '''  Multiple edges going from A to B will be merged into a single edge.
   The edges going from A to B are not merged with edges going from B to A.
@@ -2486,6 +2677,7 @@ def mergeParallelEdges():
 
 
   '''
+
 
 def mergeParallelSegmentationLinks():
   '''  Multiple segmentation links going from A base vertex to B segmentation vertex
@@ -2499,6 +2691,7 @@ def mergeParallelSegmentationLinks():
 
   '''
 
+
 def mergeTwoEdgeAttributes(name, attr1, attr2):
   '''  An attribute may not be defined on every edge. This operation uses the secondary
   attribute to fill in the values where the primary attribute is undefined. If both are
@@ -2510,6 +2703,7 @@ def mergeTwoEdgeAttributes(name, attr1, attr2):
     secondary attribute's value will be copied to the output variable.
   '''
 
+
 def mergeTwoVertexAttributes(name, attr1, attr2):
   '''  An attribute may not be defined on every vertex. This operation uses the secondary
   attribute to fill in the values where the primary attribute is undefined. If both are
@@ -2520,6 +2714,7 @@ def mergeTwoVertexAttributes(name, attr1, attr2):
   :param attr2:   If the primary attribute is not defined on a vertex but the secondary attribute is, then the
     secondary attribute's value will be copied to the output variable.
   '''
+
 
 def mergeVerticesByAttribute(key):
   '''  Merges each set of vertices that are equal by the chosen attribute. Vertices where the chosen
@@ -2537,6 +2732,7 @@ def mergeVerticesByAttribute(key):
     into a single vertex.
   '''
 
+
 def onehotEncodeAttribute(output, catAttr, categories):
   '''  Encodes a categorical `String` attribute into a `one-hot <https://en.wikipedia.org/wiki/One-hot>`_
   `Vector[number]`. For example, if you apply it to the `name` attribute of the example graph
@@ -2549,6 +2745,7 @@ def onehotEncodeAttribute(output, catAttr, categories):
   :param categories:   Possible categories separated by commas.
   '''
 
+
 def output(name):
   '''  This special box represents an output that goes outside of this workspace.
   When this workspace is used as a custom box in another workspace, the custom box
@@ -2560,6 +2757,7 @@ def output(name):
 
   :param name:   The name of the output, when the workspace is used as a custom box.
   '''
+
 
 def placeVerticesWithEdgeLengths(name, dimensions, length, algorithm, pivots, radius, tolerance):
   '''  These methods create a graph layout as a new ``Vector[number]`` vertex attribute
@@ -2599,7 +2797,9 @@ def placeVerticesWithEdgeLengths(name, dimensions, length, algorithm, pivots, ra
     This parameter allows tuning the solver to provide faster but less accurate solutions.
   '''
 
-def predictEdgesWithHyperbolicPositions(size, externaldegree, internaldegree, exponent, radial, angular):
+
+def predictEdgesWithHyperbolicPositions(
+        size, externaldegree, internaldegree, exponent, radial, angular):
   '''  Creates additional edges in a graph based on
   hyperbolic distances between vertices.
    *2 * size* edges will be added because
@@ -2625,6 +2825,7 @@ def predictEdgesWithHyperbolicPositions(size, externaldegree, internaldegree, ex
   :param angular:   The vertex attribute to be used as angular coordinates.
     Values should be 0 - 2 * Pi.
   '''
+
 
 def predictVertexAttribute(label, features, method):
   '''  If an attribute is defined for some vertices but not for others, machine learning can be used to
@@ -2653,6 +2854,7 @@ def predictVertexAttribute(label, features, method):
      - **Gradient-boosted trees** produce ensembles of decision trees with depth 5 and 32 bins.
   '''
 
+
 def predictWithGCN(save_as, features, label, model):
   '''  Uses a trained `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   to make predictions.
@@ -2664,6 +2866,7 @@ def predictWithGCN(save_as, features, label, model):
   :param model:   The model to use for the prediction.
   '''
 
+
 def predictWithModel(name, model):
   '''  Creates predictions from a model and vertex attributes of the graph.
 
@@ -2674,6 +2877,7 @@ def predictWithModel(name, model):
     Every feature of the model needs to be mapped to a vertex attribute.
   '''
 
+
 def pullSegmentationOneLevelUp():
   '''  Creates a copy of a segmentation in the parent of its parent segmentation.
   In the created segmentation, the set of segments will be the same as in the
@@ -2683,6 +2887,7 @@ def pullSegmentationOneLevelUp():
 
 
   '''
+
 
 def reduceAttributeDimensions(save_as, vector, dimensions, method, perplexity):
   '''  Transforms (embeds) a `Vector` attribute to a lower-dimensional space.
@@ -2699,17 +2904,20 @@ def reduceAttributeDimensions(save_as, vector, dimensions, method, perplexity):
   :param perplexity:   Size of the vertex neighborhood to consider for t-SNE.
   '''
 
+
 def renameEdgeAttributes(title):
   '''  Changes the name of edge attributes.
 
   :param title:   If the new name is empty, the attribute will be discarded.
   '''
 
+
 def renameGraphAttributes(title):
   '''  Changes the name of graph attributes.
 
   :param title:   If the new name is empty, the attribute will be discarded.
   '''
+
 
 def renameSegmentation(before, after):
   '''  Changes the name of a segmentation.
@@ -2720,11 +2928,13 @@ def renameSegmentation(before, after):
   :param after:   The new name.
   '''
 
+
 def renameVertexAttributes(title):
   '''  Changes the name of vertex attributes.
 
   :param title:   If the new name is empty, the attribute will be discarded.
   '''
+
 
 def replaceEdgesWithTriadicClosure():
   '''  For every A→B→C triplet, creates an A→C edge. The original edges are discarded.
@@ -2742,6 +2952,7 @@ def replaceEdgesWithTriadicClosure():
 
   '''
 
+
 def replaceWithEdgeGraph():
   '''  Creates the `edge graph <http://en.wikipedia.org/wiki/Edge_graph>`_ (or line graph),
   where each vertex corresponds to an edge in the current graph.
@@ -2750,6 +2961,7 @@ def replaceWithEdgeGraph():
 
   '''
 
+
 def reverseEdgeDirection():
   '''  Replaces every A→B edge with its reverse edge (B→A).
 
@@ -2757,6 +2969,7 @@ def reverseEdgeDirection():
 
 
   '''
+
 
 def sampleEdgesFromCooccurrence(probability, seed):
   '''  Connects vertices in the parent graph with a given probability
@@ -2770,7 +2983,9 @@ def sampleEdgesFromCooccurrence(probability, seed):
     +
   '''
 
-def sampleGraphByRandomWalks(startpoints, walksfromonepoint, walkabortionprobability, vertexattrname, edgeattrname, seed):
+
+def sampleGraphByRandomWalks(startpoints, walksfromonepoint,
+                             walkabortionprobability, vertexattrname, edgeattrname, seed):
   '''  This operation realizes a random walk on the graph which can be used as a small smart sample to
   test your model on. The walk starts from a randomly selected vertex and at every step either aborts
   the current walk (with probability *Walk abortion probability*) and jumps back to the start point
@@ -2815,12 +3030,14 @@ def sampleGraphByRandomWalks(startpoints, walksfromonepoint, walkabortionprobabi
     +
   '''
 
+
 def saveToSnapshot(path):
   '''  Saves the input to a snapshot. The location of the snapshot has to be specified as
   a full path.
 
   :param path:   The full path of the target snapshot in the LynxKite directory system.
   '''
+
 
 def scoreEdgesWithTheForestFireModel(name, spread_prob, burn_ratio, seed):
   '''  Produces an edge attribute that reflects the importance of each edge in
@@ -2861,6 +3078,7 @@ def scoreEdgesWithTheForestFireModel(name, spread_prob, burn_ratio, seed):
     +
   '''
 
+
 def segmentByNumericAttribute(name, attr, interval_size, overlap):
   '''  Segments the vertices by a `number` vertex attribute.
 
@@ -2877,7 +3095,9 @@ def segmentByNumericAttribute(name, attr, interval_size, overlap):
     less than half the interval size will share at least one segment.
   '''
 
-def segmentByEventSequence(name, time_attr, location, algorithm, sequence_length, time_window_step, time_window_length):
+
+def segmentByEventSequence(name, time_attr, location, algorithm,
+                           sequence_length, time_window_step, time_window_length):
   '''  Treat vertices as people attending events, and segment them by attendance of sequences of events.
   There are several algorithms for generating event sequences, see under
   <<segment-by-event-sequence-algorithm, Algorithm>>.
@@ -2901,6 +3121,7 @@ def segmentByEventSequence(name, time_attr, location, algorithm, sequence_length
   :param time_window_step:   Bucket size used for discretizing events.
   :param time_window_length:   Maximum time difference between first and last event in a segment.
   '''
+
 
 def segmentByGeographicalProximity(name, position, shapefile, distance, ignoreUnsupportedShapes):
   '''  Creates a segmentation from the features in a Shapefile. A vertex is connected to a segment if the
@@ -2926,6 +3147,7 @@ def segmentByGeographicalProximity(name, position, shapefile, distance, ignoreUn
     Otherwise throws an error.
   '''
 
+
 def segmentByInterval(name, begin_attr, end_attr, interval_size, overlap):
   '''  Segments the vertices by a pair of `number` vertex attributes representing intervals.
 
@@ -2942,6 +3164,7 @@ def segmentByInterval(name, begin_attr, end_attr, interval_size, overlap):
     with both the previous and the next interval.
   '''
 
+
 def segmentByStringAttribute(name, attr):
   '''  Segments the vertices by a `String` vertex attribute.
 
@@ -2950,6 +3173,7 @@ def segmentByStringAttribute(name, attr):
   :param name:   The new segmentation will be saved under this name.
   :param attr:   The `String` attribute to segment by.
   '''
+
 
 def segmentByVectorAttribute(name, attr):
   '''  Segments the vertices by a vector vertex attribute.
@@ -2960,6 +3184,7 @@ def segmentByVectorAttribute(name, attr):
   :param name:   The new segmentation will be saved under this name.
   :param attr:   The vector attribute to segment by.
   '''
+
 
 def setEdgeAttributeIcons(title):
   '''  Associates icons with edge attributes. It has no effect beyond highlighting something on the
@@ -2972,6 +3197,7 @@ def setEdgeAttributeIcons(title):
     or add one of the supported icon names, such as `snowman*without*snow`.
   '''
 
+
 def setGraphAttributeIcon(name, icon):
   '''  Associates an icon with a graph attribute. It has no effect beyond highlighting something on the user
   interface.
@@ -2982,6 +3208,7 @@ def setGraphAttributeIcon(name, icon):
   :param name:   The graph attribute to highlight.
   :param icon:   One of the supported icon names, such as `snowman*without*snow`. Leave empty to *remove* the icon.
   '''
+
 
 def setSegmentationIcon(name, icon):
   '''  Associates an icon with a segmentation. It has no effect beyond highlighting something on the user
@@ -2996,6 +3223,7 @@ def setSegmentationIcon(name, icon):
   :param icon:   One of the supported icon names, such as `snowman*without*snow`. Leave empty to *remove* the icon.
   '''
 
+
 def setVertexAttributeIcons(title):
   '''  Associates icons vertex attributes. It has no effect beyond highlighting something on the
   user interface.
@@ -3006,6 +3234,7 @@ def setVertexAttributeIcons(title):
   :param title:   Leave empty to *remove* the icon for the corresponding attribute
     or add one of the supported icon names, such as `snowman*without*snow`.
   '''
+
 
 def createSnowballSample(ratio, radius, attrname, seed):
   '''  This operation creates a small smart sample of a graph. First, a subset of the original vertices is chosen
@@ -3028,6 +3257,7 @@ def createSnowballSample(ratio, radius, attrname, seed):
     +
   '''
 
+
 def splitEdges(rep, idx):
   '''  Split (multiply) edges in a graph. A numeric edge attribute controls how many
   copies of the edge should exist after the operation. If this attribute is
@@ -3049,6 +3279,7 @@ def splitEdges(rep, idx):
     identical copies of the edge.
   '''
 
+
 def splitToTrainAndTestSet(source, test_set_ratio, seed):
   '''  Based on the source attribute, 2 new attributes are created, source*train and source*test.
   The attribute is partitioned, so every instance is copied to either the training or the test set.
@@ -3059,6 +3290,7 @@ def splitToTrainAndTestSet(source, test_set_ratio, seed):
   :param seed:   Random seed.
     +
   '''
+
 
 def splitVertices(rep, idx):
   '''  Split (multiply) vertices in a graph. A numeric vertex attribute controls how many
@@ -3086,6 +3318,7 @@ def splitVertices(rep, idx):
     identical copies of the vertex.
   '''
 
+
 def sql1():
   '''  Executes a SQL query on a single input, which can be either a graph or a table. Outputs a table.
   If the input is a table, it is available in the query as `input`. For example:
@@ -3104,6 +3337,7 @@ def sql1():
 
 
   '''
+
 
 def sql10():
   '''  Executes an SQL query on its ten inputs, which can be either graphs or tables. Outputs a table.
@@ -3132,6 +3366,7 @@ def sql10():
 
   '''
 
+
 def sql2():
   '''  Executes an SQL query on its two inputs, which can be either graphs or tables. Outputs a table.
   The inputs are available in the query as `one` and `two`. For example:
@@ -3144,6 +3379,7 @@ def sql2():
 
 
   '''
+
 
 def sql3():
   '''  Executes an SQL query on its three inputs, which can be either graphs or tables. Outputs a table.
@@ -3158,6 +3394,7 @@ def sql3():
 
 
   '''
+
 
 def sql4():
   '''  Executes an SQL query on its four inputs, which can be either graphs or tables. Outputs a table.
@@ -3178,6 +3415,7 @@ def sql4():
 
 
   '''
+
 
 def sql5():
   '''  Executes an SQL query on its five inputs, which can be either graphs or tables. Outputs a table.
@@ -3200,6 +3438,7 @@ def sql5():
 
   '''
 
+
 def sql6():
   '''  Executes an SQL query on its six inputs, which can be either graphs or tables. Outputs a table.
   The inputs are available in the query as `one`, `two`, `three`, `four`, `five`, `six`. For example:
@@ -3221,6 +3460,7 @@ def sql6():
 
 
   '''
+
 
 def sql7():
   '''  Executes an SQL query on its seven inputs, which can be either graphs or tables. Outputs a table.
@@ -3246,6 +3486,7 @@ def sql7():
 
   '''
 
+
 def sql8():
   '''  Executes an SQL query on its eight inputs, which can be either graphs or tables. Outputs a table.
   The inputs are available in the query as `one`, `two`, `three`, `four`, `five`, `six`, `seven`,
@@ -3270,6 +3511,7 @@ def sql8():
 
 
   '''
+
 
 def sql9():
   '''  Executes an SQL query on its nine inputs, which can be either graphs or tables. Outputs a table.
@@ -3297,6 +3539,7 @@ def sql9():
 
   '''
 
+
 def takeEdgesAsVertices():
   '''  Takes a graph and creates a new one where the vertices correspond to the original graph's
   edges. All edge attributes in the original graph are converted to vertex attributes in the new
@@ -3306,11 +3549,13 @@ def takeEdgesAsVertices():
 
   '''
 
+
 def takeSegmentationAsBaseGraph():
   '''  Takes a segmentation of a graph and returns the segmentation as a base graph itself.
 
 
   '''
+
 
 def takeSegmentationLinksAsBaseGraph():
   '''  Replaces the current graph with the links from its base graph to the selected segmentation, represented
@@ -3320,7 +3565,9 @@ def takeSegmentationLinksAsBaseGraph():
 
   '''
 
-def trainADecisionTreeClassificationModel(name, label, features, impurity, maxbins, maxdepth, mininfogain, minInstancesPerNode, seed):
+
+def trainADecisionTreeClassificationModel(
+        name, label, features, impurity, maxbins, maxdepth, mininfogain, minInstancesPerNode, seed):
   '''  Trains a decision tree classifier model using the graph's vertex attributes.
   The algorithm recursively partitions the feature space into two parts. The tree
   predicts the same label for each bottommost (leaf) partition. Each binary
@@ -3352,7 +3599,9 @@ def trainADecisionTreeClassificationModel(name, label, features, impurity, maxbi
     This random seed is used for selecting the set of splits we consider at a node.
   '''
 
-def trainADecisionTreeRegressionModel(name, label, features, maxbins, maxdepth, mininfogain, minInstancesPerNode, seed):
+
+def trainADecisionTreeRegressionModel(
+        name, label, features, maxbins, maxdepth, mininfogain, minInstancesPerNode, seed):
   '''  Trains a decision tree regression model using the graph's vertex attributes.
   The algorithm recursively partitions the feature space into two parts. The tree
   predicts the same label for each bottommost (leaf) partition. Each binary
@@ -3380,7 +3629,9 @@ def trainADecisionTreeRegressionModel(name, label, features, maxbins, maxdepth, 
     This random seed is used for selecting the set of splits we consider at a node.
   '''
 
-def trainAGCNClassifier(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
+
+def trainAGCNClassifier(save_as, iterations, features, label, forget, batch_size,
+                        learning_rate, hidden_size, num_conv_layers, conv_op, seed):
   '''  Trains a `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   using `Pytorch Geometric <https://pytorch-geometric.readthedocs.io/en/latest/>`_.
   Applicable for classification problems.
@@ -3402,7 +3653,9 @@ def trainAGCNClassifier(save_as, iterations, features, label, forget, batch_size
   :param seed:   Random seed for initializing network weights and choosing training batches.
   '''
 
-def trainAGCNRegressor(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
+
+def trainAGCNRegressor(save_as, iterations, features, label, forget, batch_size,
+                       learning_rate, hidden_size, num_conv_layers, conv_op, seed):
   '''  Trains a `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   using `Pytorch Geometric <https://pytorch-geometric.readthedocs.io/en/latest/>`_.
   Applicable for regression problems.
@@ -3424,6 +3677,7 @@ def trainAGCNRegressor(save_as, iterations, features, label, forget, batch_size,
   :param seed:   Random seed for initializing network weights and choosing training batches.
   '''
 
+
 def trainAKmeansClusteringModel(name, features, k, max_iter, seed):
   '''  Trains a k-means clustering model using the graph's vertex attributes. The
   algorithm converges when the maximum number of iterations is reached or every
@@ -3442,6 +3696,7 @@ def trainAKmeansClusteringModel(name, features, k, max_iter, seed):
   :param max_iter:   The maximum number of iterations (>
   :param seed:   The random seed.
   '''
+
 
 def trainALogisticRegressionModel(name, label, features, max_iter, elastic_net_param, reg_param):
   '''  Trains a logistic regression model using the graph's vertex attributes. The
@@ -3465,6 +3720,7 @@ def trainALogisticRegressionModel(name, label, features, max_iter, elastic_net_p
   :param reg_param:   The parameter of L1/L2 regularization, depending on how the elastic net mixing parameter is set.
   '''
 
+
 def trainLinearRegressionModel(name, label, features, method):
   '''  Trains a linear regression model using the graph's vertex attributes.
 
@@ -3475,6 +3731,7 @@ def trainLinearRegressionModel(name, label, features, method):
   :param method:   The algorithm used to train the linear regression model.
   '''
 
+
 def transform():
   '''  Transforms all columns of a table input via SQL expressions. Outputs a table.
 
@@ -3483,6 +3740,7 @@ def transform():
 
 
   '''
+
 
 def useBaseGraphAsSegmentation(name):
   '''  Creates a new segmentation which is a copy of the base graph. Also creates segmentation links
@@ -3500,6 +3758,7 @@ def useBaseGraphAsSegmentation(name):
   :param name:   The name assigned to the new segmentation. It defaults to the graph's name.
   '''
 
+
 def useMetagraphAsGraph(timestamp):
   '''  Loads the relationships between LynxKite entities such as attributes and operations as a graph.
   This complex graph can be useful for debugging or demonstration purposes. Because it exposes
@@ -3509,6 +3768,7 @@ def useMetagraphAsGraph(timestamp):
     and leave the timestamp unchanged, you will get the same metagraph as before. If you change the
     timestamp, you will get the latest version of the metagraph.
   '''
+
 
 def useOtherGraphAsSegmentation():
   '''  Copies another graph into a new segmentation for this one. There will be no
@@ -3522,6 +3782,7 @@ def useOtherGraphAsSegmentation():
 
 
   '''
+
 
 def useTableAsEdgeAttributes(id_attr, id_column, prefix, unique_keys, if_exists):
   '''  Imports edge attributes for existing edges from a table. This is
@@ -3557,6 +3818,7 @@ def useTableAsEdgeAttributes(id_attr, id_column, prefix, unique_keys, if_exists)
     - **Disallow this**: A name conflict is treated as an error.
   '''
 
+
 def useTableAsEdges(attr, src, dst):
   '''  Imports edges from a table. Your vertices must have an identifying attribute, by which
   the edges can be attached to them.
@@ -3565,6 +3827,7 @@ def useTableAsEdges(attr, src, dst):
   :param src:   The table column that specifies the source of the edge.
   :param dst:   The table column that specifies the destination of the edge.
   '''
+
 
 def useTableAsGraph(src, dst):
   '''  Imports edges from a table. Each line in the table represents one edge.
@@ -3579,9 +3842,10 @@ def useTableAsGraph(src, dst):
   table for vertices. This operation makes it possible to load edges and use them
   as a graph. Note that this graph will never have zero-degree vertices.
 
-  :param src: 
+  :param src:
   :param dst:
   '''
+
 
 def useTableAsSegmentationLinks(base_id_attr, base_id_column, seg_id_attr, seg_id_column):
   '''  Import the connection between the main graph and this segmentation from a table.
@@ -3592,6 +3856,7 @@ def useTableAsSegmentationLinks(base_id_attr, base_id_column, seg_id_attr, seg_i
   :param seg_id_attr:   The `String` vertex attribute that can be joined to the identifying column in the table.
   :param seg_id_column:   The table column that can be joined to the identifying attribute on the segmentation.
   '''
+
 
 def useTableAsSegmentation(name, base_id_attr, base_id_column, seg_id_column):
   '''  Imports a segmentation from a table. The table must have a column identifying an existing vertex by
@@ -3605,6 +3870,7 @@ def useTableAsSegmentation(name, base_id_attr, base_id_column, seg_id_column):
   :param base_id_column:   The table column that identifies vertices.
   :param seg_id_column:   The table column that identifies segments.
   '''
+
 
 def useTableAsVertexAttributes(id_attr, id_column, prefix, unique_keys, if_exists):
   '''  Imports vertex attributes for existing vertices from a table. This is
@@ -3639,12 +3905,14 @@ def useTableAsVertexAttributes(id_attr, id_column, prefix, unique_keys, if_exist
     - **Disallow this**: A name conflict is treated as an error.
   '''
 
+
 def useTableAsVertices():
   '''  Imports vertices (no edges) from a table.
   Each column in the table will be accessible as a vertex attribute.
 
 
   '''
+
 
 def weightedAggregateEdgeAttributeGlobally(prefix, weight):
   '''  Aggregates edge attributes across the entire graph into one graph attribute for each attribute.
@@ -3654,6 +3922,7 @@ def weightedAggregateEdgeAttributeGlobally(prefix, weight):
   :param prefix:   Save the aggregated values with this prefix.
   :param weight:   The `number` attribute to use as weight.
   '''
+
 
 def weightedAggregateEdgeAttributeToVertices(prefix, weight, direction):
   '''  Aggregates an attribute on all the edges going in or out of vertices.
@@ -3666,6 +3935,7 @@ def weightedAggregateEdgeAttributeToVertices(prefix, weight, direction):
      - `all edges`: Aggregate across all the edges going in or out of each vertex.
   '''
 
+
 def weightedAggregateFromSegmentation(prefix, weight):
   '''  Aggregates vertex attributes across all the segments that a vertex in the base graph belongs to.
   For example, it can calculate an average over the cliques a person belongs to, weighted by
@@ -3674,6 +3944,7 @@ def weightedAggregateFromSegmentation(prefix, weight):
   :param prefix:   Save the aggregated attributes with this prefix.
   :param weight:   The `number` attribute to use as weight.
   '''
+
 
 def weightedAggregateOnNeighbors(prefix, weight, direction):
   '''  Aggregates across the vertices that are connected to each vertex. You can use
@@ -3704,12 +3975,14 @@ def weightedAggregateOnNeighbors(prefix, weight, direction):
        that have both an outgoing edge to and an incoming edge from A.
   '''
 
+
 def weightedAggregateToSegmentation(weight):
   '''  Aggregates vertex attributes across all the vertices that belong to a segment.
   For example, it can calculate the average age per kilogram of each clique.
 
   :param weight:   The `number` attribute to use as weight.
   '''
+
 
 def weightedAggregateVertexAttributeGlobally(prefix, weight):
   '''  Aggregates vertex attributes across the entire graph into one graph attribute for each attribute.

@@ -121,6 +121,7 @@ class TestExternalComputation(unittest.TestCase):
         [t.base.operation for t in sec.all_triggerables()])
     deps = lynx.kite.BoxPath.dependencies(list(sec.all_triggerables()))
     # Dependencies are correctly found.
+    self.maxDiff = None
     self.assertEqual({
         'compute_?/join_0/exportToParquet_0': {'compute_?/saveToSnapshot_1'},
         'compute_?/join_0/exportToParquet_1': {'compute_?/saveToSnapshot_1'},
@@ -184,23 +185,22 @@ class TestExternalComputation(unittest.TestCase):
     self.assertEqual(first_entry_list, second_entry_list)
 
   def test_external_box_callable_edge_cases(self):
-    lk = lynx.kite.LynxKite()
-    with self.assertRaises(Exception) as context:
-      f = lynx.kite.external(lambda x: 1)
-      self.assertTrue(
-          'You cannot use lambda functions for external computation.' in str(
-              cm.exception))
+    with self.assertRaises(Exception) as cm:
+      lynx.kite.external(lambda x: 1)
+    self.assertTrue(
+        'You cannot use lambda functions for external computation.' in str(
+            cm.exception))
 
     class A:
       def g(x):
         return 1
 
     o = A()
-    with self.assertRaises(Exception) as context:
-      f = lynx.kite.external(o.g)
-      self.assertTrue(
-          'You cannot use instance methods for external computation.' in str(
-              cm.exception))
+    with self.assertRaises(Exception) as cm:
+      lynx.kite.external(o.g)
+    self.assertTrue(
+        'You cannot use instance methods for external computation.' in str(
+            cm.exception))
 
 
 class TestTmpFilesHandling(unittest.TestCase):
