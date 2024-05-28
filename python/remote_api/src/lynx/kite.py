@@ -1145,7 +1145,7 @@ def _fn_id(fn: Callable):
 
 
 def _is_lambda(f: Callable):
-  LAMBDA = lambda: 0
+  LAMBDA = lambda: 0 # fmt: off (autopep8 wants to turn this into a function.)
   return isinstance(f, type(LAMBDA)) and f.__name__ == LAMBDA.__name__
 
 
