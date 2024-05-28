@@ -232,7 +232,7 @@ def classifyWithModel(name, model):
     Every feature of the model needs to be mapped to a vertex attribute.
   '''
 
-def coloring(name):
+def findVertexColoring(name):
   '''  Finds a coloring of the vertices of the graph with no two neighbors with the same color. The colors are represented by
   numbers. Tries to find a coloring with few colors.
 
@@ -507,7 +507,10 @@ def computeHyperbolicEdgeProbability(radial, angular):
   '''
 
 def computeInPython(code, inputs, outputs):
-  '''  Executes custom Python code to define new vertex, edge, or graph attributes.
+  '''  Executes custom Python code to define new vertex, edge, or graph attributes, to transform a table,
+  or to create plots and interactive visualizations.
+
+  **Computing new attributes**
 
   The following example computes two new vertex attributes (`with_title` and `age_squared`),
   two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
@@ -524,6 +527,101 @@ def computeInPython(code, inputs, outputs):
   :param outputs:   A comma-separated list of attributes that your code generates.
     These must be annotated with the type of the attribute.
     For example, `vs.my*new*attribute: str, vs.another*new*attribute: float, graph_attributes.also_new: str`.
+    +
+    Set to `matplotlib` or `html` to output a visualization.
+  '''
+
+def computeInR(code, inputs, outputs):
+  '''  Executes custom R code to define new vertex, edge, or graph attributes, to transform a table,
+  or to create plots and interactive visualizations.
+
+  #### Computing new attributes
+
+  The following example computes two new vertex attributes (`with_title` and `age_squared`),
+  two new edge attributes (`score` and `names`), and two new graph_attributes (`hello` and `average_age`).
+  (You can try it on the <<Create example graph, example graph>> which
+  has the attributes used in this code.)
+
+  [source,r]
+  ----
+  vs$with_title <- paste("The Honorable", vs$name)
+  vs$age_squared <- vs$age ** 2
+  es$score <- es$weight + nchar(es$comment)
+  es$names <- paste("from", vs$name[es$src], "to", vs$name[es$dst])
+  graph_attributes$hello <- tolower(graph_attributes$greeting)
+  graph_attributes$average_age <- mean(vs$age)
+  ----
+
+  `graph_attributes` is an object you can use to get and set graph attributes.
+
+  `vs` (for "**v**ertice**s**") and `es` (for "**e**dge**s**") are both
+  `tibbles <https://tibble.tidyverse.org/reference/tibble.html>`_.
+  You can write natural R code and use the usual APIs and packages to
+  compute new attributes. Dplyr is already imported.
+  `es` can have `src` and `dst` columns which are the indexes of the source and destination
+  vertex for each edge. These can be used to index into `vs` as in the example.
+
+  Assign the new columns to these same data frames to output new vertex or edge attributes.
+
+  When you write this R code, the input data may not be available yet.
+  And you may want to keep building on the output of the box without having
+  to wait for the R code to execute. To make this possible, LynxKite has
+  to know the inputs and outputs of your code without executing it.
+  You specify them through the *Inputs* and *Outputs* parameters.
+  For outputs you must also declare their types.
+
+  The currently supported types for outputs are:
+
+  - `double` to create a `number`-typed attribute or `Double`-typed table column.
+  - `character` to create a `String`-typed attribute or table column.
+  - `integer` to create a `Long`-typed table column.
+  - `vector` to create a `Vector[number]`-typed attribute.
+
+  In the first example we would set:
+
+  - Inputs: `vs.name, vs.age, es.weight, es.comment, es.src, es.dst, graph_attributes.greeting`
+  - Outputs: `vs.with_title: character, vs.age_squared: double, es.score: double, es.names: character, graph_attributes.hello: character, graph_attributes.average_age: double`
+
+  #### Working with vectors
+
+  Vector-typed attributes are stored as list columns in the `vs` and `es` DataFrames.
+
+  To output a vector-typed attribute, you can create a list column or a matrix:
+
+  [source,r]
+  ----
+  # Put the age and its double into a vector.
+  vs$v <- outer(vs$age, c(1, 2))
+  ----
+
+  On the <<Create example graph, example graph>> this would output:
+
+  ----
+                 v
+  0   [20.3, 40.6]
+  1   [18.2, 36.4]
+  2  [50.3, 100.6]
+  3     [2.0, 4.0]
+  ----
+
+  When a vector attribute is your input, it always appears as a list column.
+  You can use https://dplyr.tidyverse.org/articles/rowwise.html[`rowwise()`]
+  to work with it more comfortably.
+
+  [source,r]
+  ----
+  vs <- vs %>%
+    rowwise() %>%
+    mutate(total_v
+
+  :param code:   The R code you want to run. See the operation description for details.
+  :param inputs:   A comma-separated list of attributes that your code wants to use.
+    For example, `vs.my_attribute, vs.another_attribute, graph_attributes.last_one`.
+  :param outputs:   A comma-separated list of attributes that your code generates.
+    These must be annotated with the type of the attribute.
+    For example, `vs.my*new*attribute: character, vs.another*new*attribute: double, graph_attributes.also_new: character`.
+    +
+    Set to `plot` or `html` to output visualizations.
   '''
 
 def computeInputs():
@@ -557,7 +655,7 @@ def computeModularityOfSegmentation(name, weight):
     edge counts.
   '''
 
-def computePagerank(name, weights, iterations, damping, direction):
+def computePageRank(name, weights, iterations, damping, direction):
   '''  Calculates `PageRank <http://en.wikipedia.org/wiki/PageRank>`_ for every vertex.
   PageRank is calculated by simulating random walks on the graph. Its PageRank
   reflects the likelihood that the walk leads to a specific vertex.
@@ -827,7 +925,7 @@ def createAGraphWithCertainDegrees(size, degrees, algorithm, seed):
     +
   '''
 
-def createBarabSiAlbertGraph(size, attachments_per_vertex, connected_at_start, seed):
+def createBarabásiAlbertGraph(size, attachments_per_vertex, connected_at_start, seed):
   '''  Creates a random graph using the https://en.wikipedia.org/wiki/Barab%C3%A1si%E2%80%93Albert_model[Barabási–Albert model].
   The vertices are created one by one and connected to a set number of randomly chosen
   previously created vertices. This ensures a skewed degree distribution with "older" vertices
@@ -871,7 +969,7 @@ def createDorogovtsevMendesRandomGraph(size, seed):
     +
   '''
 
-def createEdgesFromCoOccurrence():
+def createEdgesFromCooccurrence():
   '''  Connects vertices in the base graph if they co-occur in any segments.
   Multiple co-occurrences will result in multiple parallel edges. Loop edges
   are generated for each segment that a vertex belongs to. The attributes of
@@ -890,7 +988,7 @@ def createEdgesFromSetOverlaps(minoverlap):
   :param minoverlap:   Two segments will be connected if they have at least this many members in common.
   '''
 
-def createErdSRNyiGraph(size, probability, seed):
+def createErdősRényiGraph(size, probability, seed):
   '''  Creates a random graph using the https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model[Erdős–Rényi model].
   In this model each pair of vertices is connected independently with the same probability.
   It creates a very uniform graph with no tendency to skewed degree distributions or clustering.
@@ -926,6 +1024,23 @@ def createGraphInPython(code, outputs):
     For example, `vs.my*new*attribute: str, vs.another*new*attribute: float, graph_attributes.also_new: str`.
   '''
 
+def createGraphInR(code, outputs):
+  '''  Executes custom R code to define a graph.
+  Ideal for creating complex graphs programmatically and for loading
+  datasets in non-standard formats.
+
+  The following example creates a small graph with some attributes.
+
+  [source,r]
+  ----
+  vs <- tibble(name
+
+  :param code:   The R code you want to run. See the operation description for details.
+  :param outputs:   A comma-separated list of attributes that your code generates.
+    These must be annotated with the type of the attribute.
+    For example, `vs.my*new*attribute: character, vs.another*new*attribute: double, graph_attributes.also_new: character`.
+  '''
+
 def createHyperbolicRandomGraph(size, avg_degree, exponent, temperature, seed):
   '''  Creates a random graph based on randomly placed points on the hyperbolic plane.
   The points corresponding to vertices are placed on a disk.
@@ -956,7 +1071,7 @@ def createHyperbolicRandomGraph(size, avg_degree, exponent, temperature, seed):
     +
   '''
 
-def createLfrRandomGraph(size, avg_degree, max_degree, degree_exponent, min_community, max_community, community_exponent, avg_mixing, seed):
+def createLFRRandomGraph(size, avg_degree, max_degree, degree_exponent, min_community, max_community, community_exponent, avg_mixing, seed):
   '''  LFR stands for Lancichinetti, Fortunato, and Radicchi, the authors of
   `Benchmark graphs for testing community detection algorithms <https://arxiv.org/abs/0805.4770>`_
   and `Benchmarks for testing community detection algorithms on directed and weighted graphs with overlapping communities <https://arxiv.org/abs/0904.3940>`_
@@ -1002,7 +1117,7 @@ def createMocnikRandomGraph(size, dimension, density, seed):
     +
   '''
 
-def createP2pRandomGraph(size, dense_areas, max_degree, neighborhood_radius, seed):
+def createP2PRandomGraph(size, dense_areas, max_degree, neighborhood_radius, seed):
   '''  Creates a random graph using the model described in `A distributed diffusive heuristic for clustering a virtual P2P supercomputer <http://parco.iti.kit.edu/henningm/data/distribClust.pdf>`_ by Gehweiler et al.
 
   The vertices are randomly placed in a 2-dimensional unit square with a torus topology.
@@ -1037,7 +1152,7 @@ def createRandomEdges(degree, seed):
     +
   '''
 
-def createScaleFreeRandomEdges(iterations, periterationmultiplier):
+def createScalefreeRandomEdges(iterations, periterationmultiplier):
   '''  Creates edges randomly so that the resulting graph is scale-free.
 
   This is an iterative algorithm. We start with one edge per vertex and in each
@@ -1062,32 +1177,15 @@ def createVertices(size):
 
 def customPlot(plot_code):
   '''  Creates a plot from the input table. The plot can be defined using the
-  `Vegas <https://github.com/vegas-viz/Vegas>`_ plotting API in Scala. This API makes
-  it easy to define `Vega-Lite <https://vega.github.io/vega-lite/>`_ plots in code.
+  `Vega-Lite <https://vega.github.io/vega-lite/docs/>`_ JSON API.
 
-  You code has to evaluate to a `vegas.Vegas` object. For your convenience `vegas._` is already
-  imported. An example of a simple plot would be:
+  The `data` field in the Vega-Lite specification will be automatically filled in
+  by LynxKite, giving you access to the input table. (Limited to 10,000 rows.)
 
-  ```
-  Vegas()
-    .withData(table)
-    .encodeX("name", Nom)
-    .encodeY("age", Quant)
-    .encodeColor("gender", Nom)
-    .mark(Bar)
-  ```
+  LynxKite comes with several <<built-ins>>, many of them based on the Custom plot box. You can dive
+  into these custom boxes to see the code used to build them.
 
-  `Vegas()` is the entry point to the plotting API. You can provide a title if you like: `Vegas("My
-  Favorite Plot")`.
-
-  LynxKite fetches a sample of up to 10,000 rows from your table for the purpose of the plot. This
-  data is made available in the `table` variable (as `Seq[Map[String, Any]]`). `.withData(table)`
-  binds this data to the plot. You can transform the data before plotting if necessary:
-
-  ```
-  val doubled
-
-  :param plot_code:   Scala code for defining the plot.
+  :param plot_code:   The Vega-Lite specification in JSON.
   '''
 
 def defineSegmentationLinksFromMatchingAttributes(base_id_attr, seg_id_attr):
@@ -1217,6 +1315,30 @@ def discardVertexAttributes(name):
   :param name:   The vertex attributes to discard.
   '''
 
+def embedStringAttribute(attr, save_as, method, model_name, batch_size):
+  '''  Creates a string embedding for the selected edge or vertex attribute.
+  The resulting Vector attribute can be used with other machine learning boxes.
+
+  :param attr:   The String edge or vertex attribute to use as the input.
+  :param save_as:   The new attribute will be created under this name.
+  :param method:   What to use for creating the embedding.
+    To use the OpenAI method, the `OPENAI*API*KEY` environment variable must be set.
+    The other methods rely on local models that can run on your GPU.
+    The models are large and will be downloaded when used for the first time.
+  :param model_name:   Leave empty to use the default model for the selected method.
+    - For OpenAI the default is `text-embedding-3-small`.
+      See the `OpenAI documentation <https://platform.openai.com/docs/guides/embeddings/embedding-models>`_ for available models.
+    - For SentenceTransformers the default is `nomic-ai/nomic-embed-text-v1`.
+      Any model that is loaded with `SentenceTransformer(model_name)` can be used.
+    - For AnglE the default is `WhereIsAI/UAE-Large-V1`.
+      Any model loaded with `AnglE.from_pretrained(model_name)` can be used.
+    - For causal transformers the default is `microsoft/DialoGPT-small`.
+      Any model loaded with `AutoModelForCausalLM.from_pretrained(model_name)` can be used.
+      The `echo embeddings <https://arxiv.org/abs/2402.15449>`_ algorithm is used to generate the sentence embeddings.
+  :param batch_size:   Leave empty to use the default batch size for the selected method.
+    Higher values will use more GPU memory and generate embeddings faster.
+  '''
+
 def embedVertices(save_as, iterations, dimensions, walks_per_node, walk_length, context_size):
   '''  Creates a vertex embedding using the
   `PyTorch Geometric implementation <https://pytorch-geometric.readthedocs.io/en/1.4.1/modules/nn.html#torch_geometric.nn.models.Node2Vec>`_
@@ -1231,7 +1353,7 @@ def embedVertices(save_as, iterations, dimensions, walks_per_node, walk_length, 
     This allows reusing the same walk for multiple vertices.
   '''
 
-def exportEdgeAttributesToNeo4j(url, username, password, version, labels, keys):
+def exportEdgeAttributesToNeo4j(url, username, password, database, version, labels, keys):
   '''  Exports edge attributes from a graph in LynxKite to a
   corresponding graph in `Neo4j <https://neo4j.com/>`_.
 
@@ -1250,6 +1372,7 @@ def exportEdgeAttributesToNeo4j(url, username, password, version, labels, keys):
   :param username:   Username for the connection.
   :param password:   Password for the connection. It will be saved in the workspace and visible to anyone with
     access to the workspace.
+  :param database:   If the Neo4j server has multiple databases, you can specify which one to write to.
   :param version:   LynxKite only re-computes outputs if parameters or inputs have changed.
     This is true for exports too. If you want to repeat a previous export, you can increase this
     export repetition ID parameter.
@@ -1260,7 +1383,10 @@ def exportEdgeAttributesToNeo4j(url, username, password, version, labels, keys):
     The attribute name must match the property name in Neo4j.
   '''
 
-def exportGraphToNeo4j(url, username, password, version, node_labels, relationship_type):
+def exportEdgeAttributesToNeo4jNow(url, username, password, database, version, labels, keys):
+  '''The immediate version of :py:meth:`exportEdgeAttributesToNeo4j()`.'''
+
+def exportGraphToNeo4j(url, username, password, database, version, node_labels, relationship_type):
   '''  Exports a graph from LynxKite to `Neo4j <https://neo4j.com/>`_.
   The whole graph will be copied to Neo4j with all attributes.
   No existing data is modified in Neo4j.
@@ -1279,6 +1405,7 @@ def exportGraphToNeo4j(url, username, password, version, node_labels, relationsh
   :param username:   Username for the connection.
   :param password:   Password for the connection. It will be saved in the workspace and visible to anyone with
     access to the workspace.
+  :param database:   If the Neo4j server has multiple databases, you can specify which one to write to.
   :param version:   LynxKite only re-computes outputs if parameters or inputs have changed.
     This is true for exports too. If you want to repeat a previous export, you can increase this
     export repetition ID parameter.
@@ -1290,7 +1417,10 @@ def exportGraphToNeo4j(url, username, password, version, node_labels, relationsh
     installed on the Neo4j instance to use this.
   '''
 
-def exportToAvro(path, version, for_download):
+def exportGraphToNeo4jNow(url, username, password, database, version, node_labels, relationship_type):
+  '''The immediate version of :py:meth:`exportGraphToNeo4j()`.'''
+
+def exportToAVRO(path, version, for_download):
   '''  `Apache AVRO <https://avro.apache.org/>`_ is a row-oriented remote procedure call and data serialization framework.
 
   :param path:   The distributed file-system path of the output file. It defaults to `<auto>`, in which case the
@@ -1308,7 +1438,10 @@ def exportToAvro(path, version, for_download):
     are used to import the exported data.
   '''
 
-def exportToCsv(path, delimiter, quote, quote_all, header, escape, null_value, date_format, timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
+def exportToAVRONow(path, version, for_download):
+  '''The immediate version of :py:meth:`exportToAVRO()`.'''
+
+def exportToCSV(path, delimiter, quote, quote_all, header, escape, null_value, date_format, timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
   '''  CSV stands for comma-separated values. It is a common human-readable file format where each record
   is on a separate line and fields of the record are simply separated with a comma or other delimiter.
   CSV does not store data types, so all fields become strings when importing from this format.
@@ -1344,6 +1477,9 @@ def exportToCsv(path, delimiter, quote, quote_all, header, escape, null_value, d
     are used to import the exported data.
   '''
 
+def exportToCSVNow(path, delimiter, quote, quote_all, header, escape, null_value, date_format, timestamp_format, drop_leading_white_space, drop_trailing_white_space, version, for_download):
+  '''The immediate version of :py:meth:`exportToCSV()`.'''
+
 def exportToDelta(path, version, for_download):
   '''  Export data to a Delta table.
 
@@ -1361,6 +1497,9 @@ def exportToDelta(path, version, for_download):
     result in no such repartition: this performs much better when other, partition-aware tools
     are used to import the exported data.
   '''
+
+def exportToDeltaNow(path, version, for_download):
+  '''The immediate version of :py:meth:`exportToDelta()`.'''
 
 def exportToHive(table, mode, partition_by):
   '''  Export a table directly to `Apache Hive <https://hive.apache.org/>`_.
@@ -1383,7 +1522,10 @@ def exportToHive(table, mode, partition_by):
     be used in conjunction with the "Drop the table if it already exists" mode.
   '''
 
-def exportToJdbc(url, table, mode):
+def exportToHiveNow(table, mode, partition_by):
+  '''The immediate version of :py:meth:`exportToHive()`.'''
+
+def exportToJDBC(url, table, mode):
   '''  JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
   required for connecting to a database.
 
@@ -1402,7 +1544,10 @@ def exportToJdbc(url, table, mode):
     table to already exist and it will add the exported data at the end of the existing table.
   '''
 
-def exportToJson(path, version, for_download):
+def exportToJDBCNow(url, table, mode):
+  '''The immediate version of :py:meth:`exportToJDBC()`.'''
+
+def exportToJSON(path, version, for_download):
   '''  JSON is a rich human-readable data format. It produces larger files than CSV but can represent
   data types. Each line of the file stores one record encoded as a
   `JSON <https://en.wikipedia.org/wiki/JSON>`_ object.
@@ -1422,7 +1567,10 @@ def exportToJson(path, version, for_download):
     are used to import the exported data.
   '''
 
-def exportToOrc(path, version, for_download):
+def exportToJSONNow(path, version, for_download):
+  '''The immediate version of :py:meth:`exportToJSON()`.'''
+
+def exportToORC(path, version, for_download):
   '''  `Apache ORC <https://orc.apache.org/>`_ is a columnar data storage format.
 
   :param path:   The distributed file-system path of the output file. It defaults to `<auto>`, in which case the
@@ -1439,6 +1587,9 @@ def exportToOrc(path, version, for_download):
     result in no such repartition: this performs much better when other, partition-aware tools
     are used to import the exported data.
   '''
+
+def exportToORCNow(path, version, for_download):
+  '''The immediate version of :py:meth:`exportToORC()`.'''
 
 def exportToParquet(path, version, for_download):
   '''  `Apache Parquet <https://parquet.apache.org/>`_ is a columnar data storage format.
@@ -1458,7 +1609,10 @@ def exportToParquet(path, version, for_download):
     are used to import the exported data.
   '''
 
-def exportVertexAttributesToNeo4j(url, username, password, version, labels, keys):
+def exportToParquetNow(path, version, for_download):
+  '''The immediate version of :py:meth:`exportToParquet()`.'''
+
+def exportVertexAttributesToNeo4j(url, username, password, database, version, labels, keys):
   '''  Exports vertex attributes from a graph in LynxKite to a
   corresponding graph in `Neo4j <https://neo4j.com/>`_.
 
@@ -1477,6 +1631,7 @@ def exportVertexAttributesToNeo4j(url, username, password, version, labels, keys
   :param username:   Username for the connection.
   :param password:   Password for the connection. It will be saved in the workspace and visible to anyone with
     access to the workspace.
+  :param database:   If the Neo4j server has multiple databases, you can specify which one to write to.
   :param version:   LynxKite only re-computes outputs if parameters or inputs have changed.
     This is true for exports too. If you want to repeat a previous export, you can increase this
     export repetition ID parameter.
@@ -1487,14 +1642,17 @@ def exportVertexAttributesToNeo4j(url, username, password, version, labels, keys
     The attribute name must match the property name in Neo4j.
   '''
 
-def exposeInternalEdgeId(name):
+def exportVertexAttributesToNeo4jNow(url, username, password, database, version, labels, keys):
+  '''The immediate version of :py:meth:`exportVertexAttributesToNeo4j()`.'''
+
+def exposeInternalEdgeID(name):
   '''  Exposes the internal edge ID as an attribute. Useful if you want to identify edges, for example in
   an exported dataset.
 
   :param name:   The ID attribute will be saved under this name.
   '''
 
-def exposeInternalVertexId(name):
+def exposeInternalVertexID(name):
   '''  Exposes the internal vertex ID as an attribute. This attribute is automatically generated
   by operations that generate new vertex sets. (In most cases this is already available as attribute ‘id’.)
   But you can regenerate it with this operation if necessary.
@@ -1637,7 +1795,7 @@ def filterByAttributes(ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9):
     the string. E.g., `>"
   '''
 
-def filterWithSql(vertex_filter, edge_filter, filter):
+def filterWithSQL(vertex_filter, edge_filter, filter):
   '''  Filters a graph or table with SQL expressions.
 
   This has the same effect as using a SQL box with
@@ -1688,7 +1846,9 @@ def findCommunitiesWithTheLouvainMethod(name, weight, resolution):
   Specifically we compare the edge counts to what we would expect if the clusters
   were chosen at random.
 
-  Uses the `NetworKit <https://networkit.github.io/dev-docs/cpp_api/classNetworKit*1*1PLM.html>`_ implementation.
+
+  Uses the `NetworKit <https://networkit.github.io/dev-docs/cpp_api/classNetworKit*1*1PLM.html>`_
+  implementation otherwise.
 
   :param name:   The name of the newly created segmentation.
   :param weight:   Edges can be weighted to contribute more or less to modularity.
@@ -1734,7 +1894,7 @@ def findInfocomCommunities(cliques_name, communities_name, bothdir, min, adjacen
     their sizes. It is normalized to
   '''
 
-def findKCoreDecomposition(name):
+def findKcoreDecomposition(name):
   '''  If we deleted all parts of a graph outside of the **k**-core, all vertices would
   still have a degree of at least *k*. More visually, the 0-core is the whole graph.
   If we discard the isolated vertices we get the 1-core. If we repeatedly discard
@@ -1967,14 +2127,17 @@ def hashVertexAttribute(attr, salt):
   :param salt:   The value of the salt.
   '''
 
-def importAvro(filename):
+def importAVRO(filename):
   '''  `Apache AVRO <https://avro.apache.org/>`_ is a row-oriented remote procedure call and data serialization framework.
 
   :param filename:   The distributed file-system path of the file. See <<prefixed-paths>> for more details on specifying
     paths.
   '''
 
-def importCsv(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format, ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
+def importAVRONow(filename):
+  '''The immediate version of :py:meth:`importAVRO()`.'''
+
+def importCSV(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format, ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
   '''  CSV stands for comma-separated values. It is a common human-readable file format where each record
   is on a separate line and fields of the record are simply separated with a comma or other delimiter.
   CSV does not store data types, so all fields become strings when importing from this format.
@@ -2010,6 +2173,9 @@ def importCsv(filename, columns, delimiter, quote, escape, null_value, date_form
     `Double`. If disabled, all columns are imported as ``String``s.
   '''
 
+def importCSVNow(filename, columns, delimiter, quote, escape, null_value, date_format, timestamp_format, ignore_leading_white_space, ignore_trailing_white_space, comment, error_handling, infer):
+  '''The immediate version of :py:meth:`importCSV()`.'''
+
 def importDelta(filename, version_as_of):
   '''  Import a Delta Table.
 
@@ -2018,13 +2184,63 @@ def importDelta(filename, version_as_of):
   :param version_as_of:   Version of the Delta table to be imported. The empty string corresponds to the latest version.
   '''
 
+def importDeltaNow(filename, version_as_of):
+  '''The immediate version of :py:meth:`importDelta()`.'''
+
+def importFromBigQueryRawTable(parent_project_id, project_id, dataset_id, table_id, credentials_file, views_enabled):
+  '''  Import a table from BigQuery without a SQL query. (See also <<Import from BigQuery (Standard SQL result)>>.)
+
+  Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
+
+  BigQuery access is provided through the `Apache Spark SQL connector for Google BigQuery <https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#apache-spark-sql-connector-for-google-bigquery>`_.
+
+  :param parent_project_id:   The GCP Project ID for billing purposes. This may be different from the dataset being read.
+    `roles/bigquery.readSessionUser` is required on the billed project.
+    `roles/bigquery.jobUser` is additionally required if using views.
+  :param project_id:   Used together with dataset ID and table ID. Defaults to service account's GCP project if unspecified.
+  :param dataset_id:   Used together with table ID to import. Requires `roles/bigquery.dataEditor` on the dataset to store
+    materialized tables if querying from views.
+  :param table_id:   The BigQuery table/view to import from. Requires `roles/bigquery.dataViewer` on the view AND underlying table.
+  :param credentials_file:   Local path to the service account JSON key to authenticate with GCP.
+    Leave this field empty if running on Dataproc or to use `GOOGLE*APPLICATION*CREDENTIALS`.
+  :param views_enabled:   Allow reading from BigQuery views. Preliminary support.
+    See https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#reading-from-views
+  '''
+
+def importFromBigQueryRawTableNow(parent_project_id, project_id, dataset_id, table_id, credentials_file, views_enabled):
+  '''The immediate version of :py:meth:`importFromBigQueryRawTable()`.'''
+
+def importFromBigQueryStandardSQLResult(parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
+  '''  Execute a BigQuery Standard SQL query and get the result as a table. (See also <<Import from BigQuery (raw table)>>.)
+
+  Some BigQuery-specific datatypes like `ARRAY<STRUCT>` are not fully supported within LynxKite.
+
+  BigQuery access is provided through the `Apache Spark SQL connector for Google BigQuery <https://github.com/GoogleCloudDataproc/spark-bigquery-connector/tree/0.25.0#apache-spark-sql-connector-for-google-bigquery>`_.
+
+  :param parent_project_id:   The GCP Project ID for billing purposes. This may be different from the dataset being read.
+    `roles/bigquery.readSessionUser` and `roles/bigquery.jobUser` are both required on the billed project.
+  :param materialization_project_id:   Used together with dataset ID. Defaults to service account's GCP project if unspecified.
+    Requires `roles/bigquery.dataEditor` on the dataset.
+  :param materialization_dataset_id:   Place to create temporary (24h) tables to store the results of the SQL query.
+    Dataset must already exist with `roles/bigquery.dataEditor` granted on it.
+  :param bq_standard_sql:   The SQL query to run on BigQuery. `roles/bigquery.dataViewer` is required for SELECT.
+  :param credentials_file:   Local path to the service account JSON key to authenticate with GCP.
+    Leave this field empty if running on Dataproc or to use `GOOGLE*APPLICATION*CREDENTIALS`.
+  '''
+
+def importFromBigQueryStandardSQLResultNow(parent_project_id, materialization_project_id, materialization_dataset_id, bq_standard_sql, credentials_file):
+  '''The immediate version of :py:meth:`importFromBigQueryStandardSQLResult()`.'''
+
 def importFromHive(table_name):
   '''  Import an `Apache Hive <https://hive.apache.org/>`_ table directly to LynxKite.
 
   :param table_name:   The name of the Hive table to import.
   '''
 
-def importFromNeo4j(url, username, password, vertex_query, edge_query):
+def importFromHiveNow(table_name):
+  '''The immediate version of :py:meth:`importFromHive()`.'''
+
+def importFromNeo4j(url, username, password, database, vertex_query, edge_query):
   '''  Import a graph from the `Neo4j <https://neo4j.com/>`_ graph database.
 
   Neo4j does not have a strict schema. Different nodes may have different attributes.
@@ -2044,13 +2260,17 @@ def importFromNeo4j(url, username, password, vertex_query, edge_query):
   :param url:   The connection URI for Neo4j.
   :param username:   The username to use for the connection.
   :param password:   The password to use for the connection.
+  :param database:   If the Neo4j server has multiple databases, you can specify which one to read from.
   :param vertex_query:   The Cypher query to run on Neo4j to get the vertices. This query must return a node named `node`.
     The default query imports all the nodes from Neo4j. Leave empty to not import vertex attributes.
   :param edge_query:   The Cypher query to run on Neo4j to get the edges. This query must return a relationship named `rel`.
     The default query imports all the relationships from Neo4j. Leave empty to not import edges.
   '''
 
-def importJdbc(jdbc_url, jdbc_table, key_column, num_partitions, partition_predicates):
+def importFromNeo4jNow(url, username, password, database, vertex_query, edge_query):
+  '''The immediate version of :py:meth:`importFromNeo4j()`.'''
+
+def importJDBC(jdbc_url, jdbc_table, key_column, num_partitions, partition_predicates):
   '''  JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
   required for connecting to a database.
 
@@ -2091,7 +2311,10 @@ def importJdbc(jdbc_url, jdbc_table, key_column, num_partitions, partition_predi
     For example you could provide `AGE < 30, AGE >
   '''
 
-def importJson(filename):
+def importJDBCNow(jdbc_url, jdbc_table, key_column, num_partitions, partition_predicates):
+  '''The immediate version of :py:meth:`importJDBC()`.'''
+
+def importJSON(filename):
   '''  JSON is a rich human-readable data format. JSON files are larger than CSV files but can represent
   data types. Each line of the file in this format stores one record encoded as a
   `JSON <https://en.wikipedia.org/wiki/JSON>`_ object.
@@ -2100,25 +2323,45 @@ def importJson(filename):
     +++<label class
   '''
 
-def importOrc(filename):
+def importJSONNow(filename):
+  '''The immediate version of :py:meth:`importJSON()`.'''
+
+def importORC(filename):
   '''  `Apache ORC <https://orc.apache.org/>`_ is a columnar data storage format.
 
   :param filename:   The distributed file-system path of the file. See <<prefixed-paths>> for more details on specifying
     paths.
   '''
 
-def importParquet(filename):
+def importORCNow(filename):
+  '''The immediate version of :py:meth:`importORC()`.'''
+
+def importParquet(filename, eager, schema):
   '''  `Apache Parquet <https://parquet.apache.org/>`_ is a columnar data storage format.
 
   :param filename:   The distributed file-system path of the file. See <<prefixed-paths>> for more details on specifying
     paths.
+  :param eager:   Importing data into LynxKite normally means reading the source data and writing it to
+    LynxKite's storage directory as a Parquet file. The "Import now" option does this.
+    +
+    When the source data is already a Parquet file, you have the option to avoid copying
+    the data to LynxKite. In this case the schema has to be provided explicitly, so
+    that you can work with the table even before LynxKite first touches it.
+  :param schema:   A semi-colon separated list of column names and types. The types are to be specified
+    using Apache Spark's syntax. For example: `col1: string; col2: int; col3: decimal(8, 2)`.
   '''
+
+def importParquetNow(filename, eager, schema):
+  '''The immediate version of :py:meth:`importParquet()`.'''
 
 def importSnapshot(path):
   '''  Makes a previously saved snapshot accessible from the workspace.
 
   :param path:   The full path to the snapshot in LynxKite's virtual filesystem.
   '''
+
+def importSnapshotNow(path):
+  '''The immediate version of :py:meth:`importSnapshot()`.'''
 
 def importUnionOfTableSnapshots(paths):
   '''  Makes the union of a list of previously saved table snapshots accessible from the workspace
@@ -2133,7 +2376,10 @@ def importUnionOfTableSnapshots(paths):
      - The output table will union the input tables in the same order as defined here.
   '''
 
-def importWellKnownGraphDataset(name):
+def importUnionOfTableSnapshotsNow(paths):
+  '''The immediate version of :py:meth:`importUnionOfTableSnapshots()`.'''
+
+def importWellknownGraphDataset(name):
   '''  Gives easy access to graph datasets commonly used for benchmarks.
 
   See the `PyTorch Geometric documentation <https://pytorch-geometric.readthedocs.io/en/1.4.1/modules/datasets.html>`_
@@ -2141,6 +2387,9 @@ def importWellKnownGraphDataset(name):
 
   :param name:   Which dataset to import.
   '''
+
+def importWellknownGraphDatasetNow(name):
+  '''The immediate version of :py:meth:`importWellknownGraphDataset()`.'''
 
 def input(name):
   '''  This special box represents an input that comes from outside of this workspace.
@@ -2196,7 +2445,7 @@ def lookupRegion(position, shapefile, attribute, ignoreUnsupportedShapes, output
   :param output:   The name of the new vertex attribute.
   '''
 
-def makeAllSegmentsEmpy():
+def makeAllSegmentsEmpty():
   '''  Throws away all segmentation links.
 
 
@@ -2288,7 +2537,7 @@ def mergeVerticesByAttribute(key):
     into a single vertex.
   '''
 
-def oneHotEncodeAttribute(output, catAttr, categories):
+def onehotEncodeAttribute(output, catAttr, categories):
   '''  Encodes a categorical `String` attribute into a `one-hot <https://en.wikipedia.org/wiki/One-hot>`_
   `Vector[number]`. For example, if you apply it to the `name` attribute of the example graph
   with categories `Adam,Eve,Isolated Joe,Sue`, you end up with
@@ -2326,20 +2575,22 @@ def placeVerticesWithEdgeLengths(name, dimensions, length, algorithm, pivots, ra
   :param length:   This edge attribute can specify the length that each edge should be.
   :param algorithm:   The algorithms offered are:
     - **Pivot MDS** picks a number of pivot vertices (spread out as much as possible) and
-      finds a solution that puts all other vertices the right distance from the pivots
-      through an iterative matrix eigendecomposition method.
-      +
-      See `Eigensolver Methods for Progressive Multidimensional Scaling of Large Data <https://kops.uni-konstanz.de/bitstream/handle/123456789/5741/bp*empmdsld*06.pdf>`_
-      by Ulrik Brandes and Christian Pich for the detailed definition and analysis.
+    finds a solution that puts all other vertices the right distance from the pivots
+    through an iterative matrix eigendecomposition method.
+    +
+    See `Eigensolver Methods for Progressive Multidimensional Scaling of Large Data <https://kops.uni-konstanz.de/bitstream/handle/123456789/5741/bp*empmdsld*06.pdf>`_
+    by Ulrik Brandes and Christian Pich for the detailed definition and analysis.
     - **Maxent-Stress** is recommended when there are many different ways to
-      satisfy the edge length constraints. (Such as in graphs with low degrees or in
-      high-dimensional spaces.) It picks from the large solution space by
-      maximizing the solution's entropy.
-      +
-      Cannot handle disconnected graphs.
-      +
-      See `A Maxent-Stress Model for Graph Layout <http://yifanhu.net/PUB/maxent.pdf>`_
-      by Gansner et al for the detailed definition and analysis.
+    satisfy the edge length constraints. (Such as in graphs with low degrees or in
+    high-dimensional spaces.) It picks from the large solution space by
+    maximizing the solution's entropy.
+    +
+    Cannot handle disconnected graphs.
+    +
+    See `A Maxent-Stress Model for Graph Layout <http://yifanhu.net/PUB/maxent.pdf>`_
+    by Gansner et al for the detailed definition and analysis.
+    - *ForceAtlas2* is a force-based method introduced in
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4051631/
   :param pivots:   The number of pivots to choose for Pivot MDS.
     More pivots result in a more accurate layout and a longer computation time.
   :param radius:   Maxent-Stress applies the stress model between vertices within this many
@@ -2402,7 +2653,7 @@ def predictVertexAttribute(label, features, method):
      - **Gradient-boosted trees** produce ensembles of decision trees with depth 5 and 32 bins.
   '''
 
-def predictWithGcn(save_as, features, label, model):
+def predictWithGCN(save_as, features, label, model):
   '''  Uses a trained `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   to make predictions.
 
@@ -2507,7 +2758,7 @@ def reverseEdgeDirection():
 
   '''
 
-def sampleEdgesFromCoOccurrence(probability, seed):
+def sampleEdgesFromCooccurrence(probability, seed):
   '''  Connects vertices in the parent graph with a given probability
   if they co-occur in any segments.
   Multiple co-occurrences will have the same chance of being selected
@@ -2610,7 +2861,7 @@ def scoreEdgesWithTheForestFireModel(name, spread_prob, burn_ratio, seed):
     +
   '''
 
-def segmentByDoubleAttribute(name, attr, interval_size, overlap):
+def segmentByNumericAttribute(name, attr, interval_size, overlap):
   '''  Segments the vertices by a `number` vertex attribute.
 
   The domain of the attribute is split into intervals of the given size and every vertex that
@@ -2756,7 +3007,7 @@ def setVertexAttributeIcons(title):
     or add one of the supported icon names, such as `snowman*without*snow`.
   '''
 
-def snowballSample(ratio, radius, attrname, seed):
+def createSnowballSample(ratio, radius, attrname, seed):
   '''  This operation creates a small smart sample of a graph. First, a subset of the original vertices is chosen
   for start points; the ratio of the size of this subset to the size of the original vertex set
   is the first parameter for the operation.
@@ -3129,7 +3380,7 @@ def trainADecisionTreeRegressionModel(name, label, features, maxbins, maxdepth, 
     This random seed is used for selecting the set of splits we consider at a node.
   '''
 
-def trainAGcnClassifier(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
+def trainAGCNClassifier(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
   '''  Trains a `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   using `Pytorch Geometric <https://pytorch-geometric.readthedocs.io/en/latest/>`_.
   Applicable for classification problems.
@@ -3151,7 +3402,7 @@ def trainAGcnClassifier(save_as, iterations, features, label, forget, batch_size
   :param seed:   Random seed for initializing network weights and choosing training batches.
   '''
 
-def trainAGcnRegressor(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
+def trainAGCNRegressor(save_as, iterations, features, label, forget, batch_size, learning_rate, hidden_size, num_conv_layers, conv_op, seed):
   '''  Trains a `Graph Convolutional Network <https://tkipf.github.io/graph-convolutional-networks/>`_
   using `Pytorch Geometric <https://pytorch-geometric.readthedocs.io/en/latest/>`_.
   Applicable for regression problems.
@@ -3192,7 +3443,7 @@ def trainAKmeansClusteringModel(name, features, k, max_iter, seed):
   :param seed:   The random seed.
   '''
 
-def trainALogisticRegressionModel(name, label, features, max_iter):
+def trainALogisticRegressionModel(name, label, features, max_iter, elastic_net_param, reg_param):
   '''  Trains a logistic regression model using the graph's vertex attributes. The
   algorithm converges when the maximum number of iterations is reached or no
   coefficient has changed in the last iteration. The threshold of the model is
@@ -3209,6 +3460,9 @@ def trainALogisticRegressionModel(name, label, features, max_iter):
     be binary label of either 0.0 or 1.0.
   :param features:   Attributes to be used as inputs for the training algorithm.
   :param max_iter:   The maximum number of iterations (>
+  :param elastic_net_param:   This parameter ("alpha") allows combining L1 and L2 regularization.
+    At alpha
+  :param reg_param:   The parameter of L1/L2 regularization, depending on how the elastic net mixing parameter is set.
   '''
 
 def trainLinearRegressionModel(name, label, features, method):
