@@ -34,9 +34,8 @@ from collections import deque, defaultdict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection, TYPE_CHECKING)
 import requests
-from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import textwrap
-import shutil
 import socketserver
 import lynx.operations
 if TYPE_CHECKING:
@@ -358,17 +357,6 @@ class LynxKite:
     self._session = None
     self._pid = None
     self._operation_names: List[str] = []
-    self._import_box_names: List[str] = [
-        'importCSV', 'importJDBC', 'importJSON',
-        'importORC', 'importParquet', 'importFromHive',
-        'importAVRO', 'importDelta',
-        'importFromNeo4j']
-    self._export_box_names: List[str] = [
-        'exportToCSV', 'exportToJSON', 'exportToParquet',
-        'exportToJDBC', 'exportToORC', 'exportToHive',
-        'exportToAVRO', 'exportToDelta',
-        'exportVertexAttributesToNeo4j', 'exportEdgeAttributesToNeo4j',
-        'exportGraphToNeo4j']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
     self._lynxkite = None
@@ -392,18 +380,14 @@ class LynxKite:
   def operation_names(self) -> List[str]:
     if not self._operation_names:
       box_names = self.box_catalog().box_names()
-      self._operation_names = box_names + self.import_operation_names() + self.export_operation_names()
+      self._operation_names = box_names + self.extra_operation_names()
     return self._operation_names
 
-  def import_operation_names(self) -> List[str]:
-    '''When we use an import operation instead of an import box,
-    "run import" will be triggered automatically.'''
-    return [name + 'Now' for name in self._import_box_names]
-
-  def export_operation_names(self) -> List[str]:
-    '''When we use an export operation instead of an export box,
-    the export will be triggered automatically. '''
-    return [name + 'Now' for name in self._export_box_names]
+  def extra_operation_names(self) -> List[str]:
+    '''Synthetic operations that only exist in the API.'''
+    return [
+        n + 'Now' for n in self.box_catalog().box_names()
+        if n.startswith('import') or n.startswith('export')]
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -428,7 +412,7 @@ class LynxKite:
       return box
 
     def f(*args, **kwargs):
-      if name in self.import_operation_names():
+      if name.startswith('import') and name.endswith('Now'):
         real_name = name[:-len('Now')]
         box = add_box_with_inputs(real_name, args, kwargs)
         # If it is an import operation, we trigger the import here,
@@ -438,7 +422,7 @@ class LynxKite:
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
-      elif name in self.export_operation_names():
+      elif name.startswith('export') and name.endswith('Now'):
         # If it is an export operation, we trigger the export here.
         box = getattr(self, name[:-len('Now')])(*args, **kwargs)
         box.trigger()
@@ -978,12 +962,12 @@ class State:
     self.box = box
 
   def operation_names(self):
-    return self.box.bc.box_names() + self.box.lk.export_operation_names()
+    return self.box.bc.box_names() + self.box.lk.extra_operation_names()
 
   def __getattr__(self, name: str) -> Callable:
 
     def f(**kwargs):
-      if name in self.box.lk.export_operation_names():
+      if name.startswith('export') and name.endswith('Now'):
         export_box = getattr(self, name[:-len('Now')])(**kwargs)
         export_box.trigger()
         return export_box
@@ -1161,7 +1145,7 @@ def _fn_id(fn: Callable):
 
 
 def _is_lambda(f: Callable):
-  def LAMBDA(): return 0
+  LAMBDA = lambda: 0 # fmt: off (autopep8 wants to turn this into a function.)
   return isinstance(f, type(LAMBDA)) and f.__name__ == LAMBDA.__name__
 
 
@@ -1529,8 +1513,6 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
-    tmpfile_list: List[str] = []
-
     with _LKTableContext(lk) as ctx:
       # Find inputs.
       resp = lk.get_workspace(wsname, stack)
@@ -1795,7 +1777,7 @@ class BoxPath:
             box.is_box('input') and self.stack,
             box.is_box('computeInputs'),
             box.is_box('saveToSnapshot'),
-            isinstance(box, AtomicBox) and box.operation in box.lk._export_box_names]):
+            isinstance(box, AtomicBox) and box.operation.startswith('export')]):
       parents = self.parents()
       assert len(parents) == 1, f'Cannot follow parent chain for {box}'
       return parents[0].dependency_representative()
@@ -1849,7 +1831,7 @@ class SideEffectCollector:
 
   AUTO: 'SideEffectCollector'  # For @subworkspace.
 
-  def __init__(self):
+  def __init__(self) -> None:
     self.top_level_side_effects: List[Box] = []
 
   def add_box(self, box: Box) -> None:

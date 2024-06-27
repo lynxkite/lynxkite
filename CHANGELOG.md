@@ -9,6 +9,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### 5.4.1
 
 - Reduced the size of the released Docker image. [#418](https://github.com/lynxkite/lynxkite/pull/418)
+- Added `importFromBigQueryRawTableNow` and `importFromBigQueryStandardSQLResultNow` to the Python API.
+  [#421](https://github.com/lynxkite/lynxkite/pull/421)
 
 ### 5.4.0
 

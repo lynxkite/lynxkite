@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lynxkite-client"
-version = "5.3.0"
+version = "5.4.1"
 authors = [
   { name="Lynx Analytics", email="lynxkite@lynxkite.com" },
 ]
@@ -12,7 +12,7 @@ description = "Python API for LynxKite"
 readme = "README.md"
 classifiers = [
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
 ]
 requires-python = ">=3.6"

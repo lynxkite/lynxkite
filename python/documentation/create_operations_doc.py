@@ -35,7 +35,7 @@ def format_italic(text):
   return italic.sub(r'*\g<text>*', text)
 
 
-def generate_function(operation_name, path):
+def generate_function(path):
   ''' Generates the documentation for a given operation. '''
   content = load_file(path)
 
@@ -53,8 +53,11 @@ def generate_function(operation_name, path):
   # Replace HTML symbols
   content = re.sub(r'&times;', '*', content)
 
+  # Find operation name.
+  operation_name = re.search(r'### (.*)', content).group(1)
+  operation_name = _python_name(operation_name)
   # Grep and format the description of the function.
-  body = re.search(re.compile(r'^$.*(?P<body>[^=]*)', re.MULTILINE), content)
+  body = re.search(r'^$.*(?P<body>[^=]*)', content, re.MULTILINE)
   body = textwrap.indent(body.groups()[0].strip(), '  ')
   body = format_italic(body)
 
@@ -72,13 +75,19 @@ def generate_function(operation_name, path):
     params_desc += textwrap.indent(f':param {name}: {textwrap.indent(desc, "  ")}\n', '  ')
   params_desc = params_desc.rstrip()
 
-  return f'''
+  doc = f'''
 def {operation_name}({params_str}):
   \'\'\'{body}
 
 {params_desc}
   \'\'\'
 '''
+  if operation_name.startswith('import') or operation_name.startswith('export'):
+    doc += f'''
+def {operation_name}Now({params_str}):
+  \'\'\'The immediate version of :py:meth:`{operation_name}()`.\'\'\'
+'''
+  return doc
 
 
 def get_python_name(file_name):
@@ -94,8 +103,7 @@ def generate_documentation(inpath, outpath):
       file_name = os.path.basename(path)
       if file_name in FILES_TO_EXCLUDE:
         continue
-      operation_name = get_python_name(file_name)
-      fh.write(generate_function(operation_name, path))
+      fh.write(generate_function(path))
 
 
 if __name__ == '__main__':
