@@ -195,7 +195,7 @@ class Op:
     jail = tempfile.mkdtemp()
     ADD_TO_PYTHON_JAIL = os.environ.get('ADD_TO_PYTHON_JAIL')
     user_path = ADD_TO_PYTHON_JAIL.split(':') if ADD_TO_PYTHON_JAIL else []
-    for pdir in user_path + sorted(sys.path) + ['/lib', '/dev/random', '/dev/urandom']:
+    for pdir in user_path + sorted(sys.path) + ['/lib', '/dev/random', '/dev/urandom', '/dev/null']:
       if pdir.startswith('/') and pdir != '/':
         mount(pdir, jail + pdir)
     # We add /lib and /etc/resolv.conf to enable DNS lookups.
