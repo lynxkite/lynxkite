@@ -9,7 +9,7 @@ def output_seg(df, key):
   df = df.sort_values('vertex')[['vertex', key]]
   # Mapping to contiguous IDs.
   ids = {v: i for (i, v) in enumerate(df[key].unique().values_host)}
-  df[key] = df[key].replace(ids)
+  df[key] = df[key].astype('uint32').replace(ids)
   op.output_vs('segments', len(ids))
   op.output_es('belongsTo', df.values.T)
 
