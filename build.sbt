@@ -32,7 +32,7 @@ Compile / doc / sources := List()  // Disable doc generation.
 
 packageSrc / publishArtifact := false  // Don't package source.
 
-scalaVersion := "2.12.13"
+scalaVersion := "2.12.16"
 
 libraryDependencies ++= Seq(
   guice, // Dependency injection for Play.
@@ -63,7 +63,7 @@ libraryDependencies ++= Seq(
   // This indirect dependency of ours is broken on Maven.
   "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
   // For Neo4j import/export. Doesn't work, see https://github.com/neo4j-contrib/neo4j-spark-connector/issues/339.
-  "org.neo4j" %% "neo4j-connector-apache-spark" % "4.0.2_for_spark_3",
+  "org.neo4j" %% "neo4j-connector-apache-spark" % "5.3.2_for_spark_3",
   // For Neo4j tests.
   "org.testcontainers" % "testcontainers" % "1.15.2" % Test,
   "org.testcontainers" % "neo4j" % "1.15.2" % Test,

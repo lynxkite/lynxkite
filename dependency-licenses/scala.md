@@ -26,7 +26,7 @@ Apache | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | io.perfmark 
 Apache | [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) | net.java.dev.jets3t # jets3t # 0.9.4 | <notextile></notextile>
 Apache | [Apache License V2.0](https://raw.githubusercontent.com/google/flatbuffers/master/LICENSE.txt) | com.google.flatbuffers # flatbuffers-java # 1.12.0 | <notextile></notextile>
 Apache | [Apache License v2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.java.dev.jna # jna # 5.5.0 | <notextile></notextile>
-Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.2.5 | <notextile></notextile>
+Apache | [Apache License, Version 2](http://www.apache.org/licenses/LICENSE-2.0) | org.neo4j.driver # neo4j-java-driver # 4.4.18 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.clearspring.analytics # stream # 2.9.6 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.spark # bigquery-connector-common # 0.25.2 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.google.cloud.spark # spark-2.4-bigquery-pushdown_2.12 # 0.25.2 | <notextile></notextile>
@@ -88,6 +88,8 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpcore # 4.4.15 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apache.httpcomponents # httpmime # 4.5.9 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](null) | org.atteo.classindex # classindex # 3.4 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12 # 5.3.2_for_spark_3 | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12_common # 5.3.2_for_spark_3 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.slf4j # jcl-over-slf4j # 1.7.36 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.yaml # snakeyaml # 1.30 | <notextile></notextile>
 Apache | [Apache Software License - Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | org.eclipse.jetty # jetty-client # 9.4.20.v20190813 | <notextile></notextile>
@@ -132,12 +134,12 @@ Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typ
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play-test_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # play_2.12 # 2.8.19 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | com.typesafe.play # twirl-api_2.12 # 1.5.1 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.17.0 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | commons-codec # commons-codec # 1.17.2 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-core_2.12 # 2.1.0 | <notextile></notextile>
 Apache | [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.delta # delta-storage # 2.1.0 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-compiler # 2.12.13 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-library # 2.12.13 | <notextile></notextile>
-Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-reflect # 2.12.13 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-compiler # 2.12.16 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-library # 2.12.16 | <notextile></notextile>
+Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang # scala-reflect # 2.12.16 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-java8-compat_2.12 # 0.9.1 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-parser-combinators_2.12 # 1.1.2 | <notextile></notextile>
 Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-lang.modules # scala-xml_2.12 # 1.2.0 | <notextile></notextile>
@@ -145,7 +147,7 @@ Apache | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | org.scala-l
 Apache | [Similar to Apache License but with the acknowledgment clause removed](https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt) | org.jdom # jdom2 # 2.0.6 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-api # 0.31.0 | <notextile></notextile>
 Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | io.opencensus # opencensus-contrib-http-util # 0.31.0 | <notextile></notextile>
-Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.0 | <notextile></notextile>
+Apache | [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.apiguardian # apiguardian-api # 1.1.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.2 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-annotations # 2.13.3 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | com.fasterxml.jackson.core # jackson-core # 2.13.3 | <notextile></notextile>
@@ -183,9 +185,7 @@ Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licens
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-core # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.ejml # ejml-ddense # 0.34 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.lz4 # lz4-java # 1.8.0 | <notextile></notextile>
-Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12 # 4.0.2_for_spark_3 | <notextile></notextile>
-Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-connector-apache-spark_2.12_common # 4.0.2 | <notextile></notextile>
-Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-cypher-dsl # 2020.1.4 | <notextile></notextile>
+Apache | [The Apache Software License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) | org.neo4j # neo4j-cypher-dsl # 2022.11.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # htmlunit-driver # 2.36.0 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-api # 3.141.59 | <notextile></notextile>
 Apache | [The Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | org.seleniumhq.selenium # selenium-firefox-driver # 3.141.59 | <notextile></notextile>
@@ -237,7 +237,6 @@ BSD | [ISC/BSD License](null) | org.mindrot # jbcrypt # 0.3m | <notextile></note
 BSD | [New BSD License](http://www.opensource.org/licenses/bsd-license.php) | org.hamcrest # hamcrest-core # 1.3 | <notextile></notextile>
 BSD | [The BSD License](http://www.antlr.org/license.html) | org.antlr # antlr4-runtime # 4.8 | <notextile></notextile>
 BSD | [Two-clause BSD-style license](http://github.com/sbt/junit-interface/blob/master/LICENSE.txt) | com.novocode # junit-interface # 0.11 | <notextile></notextile>
-CC0 | [CC0](http://creativecommons.org/publicdomain/zero/1.0/) | org.reactivestreams # reactive-streams # 1.0.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.transaction # jakarta.transaction-api # 1.3.3 | <notextile></notextile>
 GPL | [GPL2 w/ CPE](https://www.gnu.org/software/classpath/license.html) | jakarta.ws.rs # jakarta.ws.rs-api # 2.1.6 | <notextile></notextile>
 GPL with Classpath Extension | [CDDL + GPLv2 with classpath exception](https://github.com/javaee/javax.annotation/blob/master/LICENSE) | javax.annotation # javax.annotation-api # 1.3.2 | <notextile></notextile>
@@ -261,6 +260,7 @@ MIT | [MIT License](http://www.opensource.org/licenses/mit-license.php) | org.sl
 MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | com.lihaoyi # fastparse-utils_2.12 # 1.0.0 | <notextile></notextile>
 MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | com.lihaoyi # fastparse_2.12 # 1.0.0 | <notextile></notextile>
 MIT | [MIT license](http://www.opensource.org/licenses/mit-license.php) | org.codehaus.mojo # animal-sniffer-annotations # 1.21 | <notextile></notextile>
+MIT | [MIT-0](https://spdx.org/licenses/MIT-0.html) | org.reactivestreams # reactive-streams # 1.0.4 | <notextile></notextile>
 MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframework # checker-compat-qual # 2.5.5 | <notextile></notextile>
 MIT | [The MIT License](http://opensource.org/licenses/MIT) | org.checkerframework # checker-qual # 3.21.4 | <notextile></notextile>
 MIT | [The MIT License(MIT)](http://opensource.org/licenses/MIT) | net.sf.geographiclib # GeographicLib-Java # 1.49 | <notextile></notextile>
@@ -275,6 +275,5 @@ unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locatio
 unrecognized | [Eclipse Publish License, Version 1.0](https://github.com/locationtech/jts/blob/master/LICENSE_EPLv1.txt) | org.locationtech.jts # jts-core # 1.16.0 | <notextile></notextile>
 unrecognized | [JDL (Java Distribution License)](https://jai.dev.java.net/jdl-jai.pdf) | javax.media # jai_core # 1.1.3 | <notextile></notextile>
 unrecognized | [The JSON License](http://json.org/license.html) | org.json # json # 20200518 | <notextile></notextile>
-unrecognized | [Unknown License](http://asm.ow2.org/license.html) | org.apache.xbean # xbean-asm6-shaded # 4.10 | <notextile></notextile>
 unrecognized | [none specified](none specified) | jgridshift # jgridshift # 1.0 | <notextile></notextile>
 
