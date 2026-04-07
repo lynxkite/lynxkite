@@ -1,6 +1,9 @@
+Current status: The Apache Spark-based LynxKite in this repository is archived.
+For new deployments use the Python-based [LynxKite 2000:MM](https://github.com/lynxkite/lynxkite-2000).
+
 # LynxKite
 
-[LynxKite](https://lynxkite.com/) is a complete graph data science platform for very large graphs
+[LynxKite](https://lynxkite.com/original) is a complete graph data science platform for very large graphs
 and other datasets.
 It seamlessly combines the benefits of a friendly graphical interface and a powerful Python API.
 
