@@ -488,7 +488,6 @@ object BigGraphSparkContext {
         .set(
           "spark.executor.memory",
           Environment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-        .set("spark.local.dir", Environment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
         // Speculative execution will start extra copies of tasks to eliminate long tail latency.
         .set("spark.speculation", "false") // Speculative execution is disabled, see #1907.
         .set("spark.speculation.interval", "1000") // (Milliseconds.) How often to check.
